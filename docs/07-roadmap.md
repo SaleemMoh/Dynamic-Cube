@@ -37,6 +37,7 @@ Delivered in slices:
 | **1d** | Workflow engine + Action Center | ✅ |
 | **1e** | Documents, communication, decision contract, external applicant journey | ✅ |
 | 1f | Service-owned workflows: every service has its own workflow; none is published without one | Next |
+| 1g | E-services portal look: service catalog home and service card page | Planned |
 
 **1a delivered:** the `AppsControl` module (all entities of [§4](04-apps-control.md) except
 delegations, which come with the Action Center), change appliers with code-keyed payloads,
@@ -136,6 +137,24 @@ service:
   workflow of `CLASSIFICATION_NEW`, and the configuration packages are updated to match.
   [ADR-0019](adr/0019-workflow-runtime.md) is revised accordingly.
 
+**1g planned — the e-services portal look.** The external portal follows the reference design (registry portal
+home and service card page, DGA components):
+
+- **Home:** top bar with the entity logo, the main sections as navigation (*My requests* and the service
+  categories), search, language and the signed-in user with the acting context; a hero banner with the portal's
+  title and purpose over an image; a search box with a category filter (and voice input where the browser offers
+  it); category tabs (*All* and one per category); the services as cards in a carousel (icon, name, short
+  description, tags such as audience and category, an arrow to open it) with *View all*; **portal statistics**
+  as KPI tiles (e.g. active, sealed, unsealed, short-lived sources) from configured counts; the last-updated date
+  and the DGA footer; floating help buttons (contact, accessibility).
+- **Service card page:** breadcrumb (category › service), the service name and description, a **Start service**
+  button, tabs for **Steps** (numbered), **Terms of use** and **Required documents**, and a side card with the
+  **target audience**, **service duration** (working days, from the service level), **channels**, **cost** (from
+  the fees, *Free* when none) and the **FAQ link, phone and email** of the service.
+- The new card fields are part of the service definition (bilingual, versioned with it); until the Service Builder
+  arrives they are edited in the service configuration screens. Catalog categories, banner, statistics tiles and
+  help links are portal configuration in Apps Control.
+
 - **Apps Control**: installation, apps, entity, org unit types & org structure, positions,
   users, roles, privileges, menus, Class/Domain with typed attributes and generated views,
   LOVs with grants and data-scope bindings, settings, UI texts, maker-checker.
@@ -153,7 +172,8 @@ service:
 - **Decisions**: decision-step contract; plug in the supplied engine.
 - **Documents**: multi-line certificate, versions, QR verification, HTML→PDF.
 - **Communication**: email/SMS, templates, event notifications.
-- **External system**: login, acting context, service identifier, apply, track, respond.
+- **External system**: login, acting context, service identifier, apply, track, respond; the portal home and
+  service card page of the reference design (1g).
 - Configuration for this phase may be seeded / edited through admin screens; full visual
   builders come later.
 
@@ -170,8 +190,34 @@ service:
 
 ## Phase 3 — Builders and content
 
-- Visual **Form & Wizard Builder**, **Workflow Designer** (canvas), notification rule builder.
-- **Portal Content Manager**.
+Visual designers over the runtime delivered in Phase 1; what they produce is the same versioned configuration,
+saved as change sets with maker-checker, so everything stays reviewable and can be exported as packages.
+
+- **Workflow Designer** (canvas): drag nodes (human task, parallel split / join, gateway, decision, document,
+  notification, integration, timer, end) from a palette, connect them, edit each node in a side panel
+  (assignment, actions, deadlines per service level, display status, conditions in a JSONLogic rule editor),
+  validation as you draw (unreachable nodes, missing ends, unclosed splits), test run with sample data, and
+  publish as a new version of the service's workflow. Replaces hand-written JSON.
+- **Service & Form Builder**: one designer per service, in tabs:
+  - **Form** — steps and sections built from the question bank or new questions by drag and drop; field
+    properties (type, required, limits, LOV, prefill from the party, show/require when, cross-field checks);
+    **layout selection** per form and per section: wizard (one step per page), single page, tabbed sections or
+    accordion, with 1, 2 or 3 columns and field width (full / half / third); live preview in Arabic and English,
+    desktop and mobile.
+  - **Service Card** — what the portal's service page shows: name, description, category and tags, icon, target
+    audience, duration, channels, cost (from the fees), steps, terms of use, FAQ link, phone and email, with a
+    preview of the card and the page.
+  - **Service rules** — eligibility (who may apply, active CR, sanctions), availability windows (e.g. renewal
+    within 90 days of expiry), levels and fees (bracketed, VAT), draft policy.
+  - **Required documents** — the attachments asked for (type, when required, formats and size, one or several),
+    shown on the card and requested in the form.
+  - **Output** — what the service produces: the document type issued (data and line mapping), the decision
+    rules it uses, the notifications it sends.
+  - **Related services** — prerequisite, follow-up and alternative services shown on the card and offered
+    after a result (e.g. renewal, extension, appeal).
+  - **Workflow** — the service's own workflow, opened in the Workflow Designer.
+- Notification rule builder (event, condition, recipients, channels) instead of JSON.
+- **Portal Content Manager**: home banner, categories, statistics tiles, FAQs, help and contact links, pages.
 - Visits: internal field app (offline PWA), external inspection integration, manual entry.
 - Sub-requests (prerequisite / bundled / spawned).
 - Configuration export/import packages with diff preview.
