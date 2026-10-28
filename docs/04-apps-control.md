@@ -331,3 +331,11 @@ with the shared `DynamicForm`. The domain value form is generated from the class
 definitions. Nested lists (privileges, grants, assignments, LOV bindings) are edited as JSON until
 the visual builders of Phase 3. Form fields can reference an LOV (`lov`, `lovParentField` for
 cascading lists); options come from `lovs/{code}/values`, already filtered by the user's grants.
+
+**Branding.** The *Branding* screen (resource `apps-control.installation`) sets the entity logo and the footer
+links shown by every app. Logos (PNG, JPEG, WebP or script-free SVG, ≤ 512 KB) are uploaded to
+`apps.branding_asset` — in the database, so the internal and external hosts both serve them without shared file
+storage — and become current through a change set on the entity (`logoFileKey`, `footerLinks`). Until approved, an
+uploaded image is visible only to Apps Control administrators; the published logo is public
+(`GET branding`, `GET branding/assets/{id}`). Footer wording is the UI texts `footer.copyright` and `footer.owner`
+(`{name}`, `{year}` are filled in). A slot for the DGA registration badge will be added when the asset is provided.

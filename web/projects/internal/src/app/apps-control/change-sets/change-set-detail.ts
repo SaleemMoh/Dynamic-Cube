@@ -7,7 +7,15 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router, RouterLink } from '@angular/router';
-import { AppsControlApi, ChangeItemInfo, ChangeSetDetail as Detail, I18nService, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
+import {
+  AppsControlApi,
+  AuthImageSrc,
+  ChangeItemInfo,
+  ChangeSetDetail as Detail,
+  I18nService,
+  TranslatePipe,
+  problemMessages,
+} from '@dynamic-cube/shared';
 import { Observable, firstValueFrom } from 'rxjs';
 import { ConfirmDialog, ConfirmData } from '../confirm-dialog';
 import { PrivilegesService } from '../privileges.service';
@@ -18,11 +26,23 @@ const CHANGE_SETS = 'apps-control.change-sets';
 /** One change set: items with before/after, and the actions the current user may take in its current status. */
 @Component({
   selector: 'dc-change-set-detail',
-  imports: [DatePipe, JsonPipe, MatButtonModule, MatCardModule, MatIconModule, RouterLink, StatusChip, TranslatePipe],
+  imports: [
+    AuthImageSrc,
+    DatePipe,
+    JsonPipe,
+    MatButtonModule,
+    MatCardModule,
+    MatIconModule,
+    RouterLink,
+    StatusChip,
+    TranslatePipe,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <a matButton routerLink="..">
-      <mat-icon fontSet="material-symbols-outlined">{{ i18n.direction() === 'rtl' ? 'arrow_forward' : 'arrow_back' }}</mat-icon>
+      <mat-icon fontSet="material-symbols-outlined">{{
+        i18n.direction() === 'rtl' ? 'arrow_forward' : 'arrow_back'
+      }}</mat-icon>
       {{ 'changeSets.back' | dcTranslate }}
     </a>
     @if (detail(); as d) {
@@ -30,7 +50,8 @@ const CHANGE_SETS = 'apps-control.change-sets';
         <div>
           <h1>{{ d.changeSet.title }}</h1>
           <div class="dc-muted">
-            {{ 'area.' + d.changeSet.area | dcTranslate }} · {{ 'changeSets.maker' | dcTranslate }}: {{ d.changeSet.createdBy }}
+            {{ 'area.' + d.changeSet.area | dcTranslate }} · {{ 'changeSets.maker' | dcTranslate }}:
+            {{ d.changeSet.createdBy }}
             @if (d.changeSet.reviewedBy) {
               · {{ 'changeSets.reviewer' | dcTranslate }}: {{ d.changeSet.reviewedBy }}
             }
@@ -40,7 +61,9 @@ const CHANGE_SETS = 'apps-control.change-sets';
       </header>
 
       @if (d.changeSet.reviewComment) {
-        <p class="dc-note" data-testid="review-comment">{{ 'changeSets.comment' | dcTranslate }}: {{ d.changeSet.reviewComment }}</p>
+        <p class="dc-note" data-testid="review-comment">
+          {{ 'changeSets.comment' | dcTranslate }}: {{ d.changeSet.reviewComment }}
+        </p>
       }
       @if (errors().length) {
         <ul class="dc-errors" role="alert">
@@ -52,9 +75,17 @@ const CHANGE_SETS = 'apps-control.change-sets';
 
       <div class="dc-actions">
         @if (mineAndDraft()) {
-          <button matButton="filled" (click)="submit()" [disabled]="d.items.length === 0 || busy()" data-testid="submit">
+          <button
+            matButton="filled"
+            (click)="submit()"
+            [disabled]="d.items.length === 0 || busy()"
+            data-testid="submit"
+          >
             <mat-icon fontSet="material-symbols-outlined">send</mat-icon>
-            {{ (d.changeSet.requiresApproval ? 'changeSets.submit' : 'changeSets.submitPublish') | dcTranslate }}
+            {{
+              (d.changeSet.requiresApproval ? 'changeSets.submit' : 'changeSets.submitPublish')
+                | dcTranslate
+            }}
           </button>
         }
         @if (canReview()) {
@@ -68,16 +99,30 @@ const CHANGE_SETS = 'apps-control.change-sets';
           </button>
         }
         @if (d.changeSet.isMine && d.changeSet.status === 'REJECTED') {
-          <button matButton="filled" (click)="run(api.reopen(d.changeSet.id))" [disabled]="busy()" data-testid="reopen">
+          <button
+            matButton="filled"
+            (click)="run(api.reopen(d.changeSet.id))"
+            [disabled]="busy()"
+            data-testid="reopen"
+          >
             {{ 'changeSets.reopen' | dcTranslate }}
           </button>
         }
         @if (d.changeSet.status === 'APPROVED') {
-          <button matButton="filled" (click)="run(api.publish(d.changeSet.id))" [disabled]="busy()" data-testid="publish">
+          <button
+            matButton="filled"
+            (click)="run(api.publish(d.changeSet.id))"
+            [disabled]="busy()"
+            data-testid="publish"
+          >
             {{ 'changeSets.publish' | dcTranslate }}
           </button>
         }
-        @if (d.changeSet.isMine && d.changeSet.status !== 'PUBLISHED' && d.changeSet.status !== 'SUBMITTED') {
+        @if (
+          d.changeSet.isMine &&
+          d.changeSet.status !== 'PUBLISHED' &&
+          d.changeSet.status !== 'SUBMITTED'
+        ) {
           <button matButton (click)="discard()" [disabled]="busy()" data-testid="discard">
             <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
             {{ 'changeSets.discard' | dcTranslate }}
@@ -86,14 +131,25 @@ const CHANGE_SETS = 'apps-control.change-sets';
       </div>
 
       @for (item of d.items; track item.id) {
-        <mat-card appearance="outlined" class="dc-item" [attr.data-item]="item.entityType + ':' + item.entityCode">
+        <mat-card
+          appearance="outlined"
+          class="dc-item"
+          [attr.data-item]="item.entityType + ':' + item.entityCode"
+        >
           <mat-card-header>
             <mat-card-title>
-              <span class="dc-op" [attr.data-op]="item.operation">{{ 'op.' + item.operation | dcTranslate }}</span>
-              {{ 'type.' + item.entityType | dcTranslate }} — <span dir="ltr">{{ item.entityCode }}</span>
+              <span class="dc-op" [attr.data-op]="item.operation">{{
+                'op.' + item.operation | dcTranslate
+              }}</span>
+              {{ 'type.' + item.entityType | dcTranslate }} —
+              <span dir="ltr">{{ item.entityCode }}</span>
             </mat-card-title>
             @if (mineAndDraft()) {
-              <button matIconButton (click)="run(api.removeItem(d.changeSet.id, item.id))" [attr.aria-label]="'changeSets.removeItem' | dcTranslate">
+              <button
+                matIconButton
+                (click)="run(api.removeItem(d.changeSet.id, item.id))"
+                [attr.aria-label]="'changeSets.removeItem' | dcTranslate"
+              >
                 <mat-icon fontSet="material-symbols-outlined">remove_circle</mat-icon>
               </button>
             }
@@ -103,8 +159,21 @@ const CHANGE_SETS = 'apps-control.change-sets';
               @for (field of changedFields(item); track field) {
                 <div class="dc-diff__row">
                   <span class="dc-diff__field">{{ field }}</span>
-                  <code class="dc-diff__before">{{ item.before?.[field] | json }}</code>
-                  <code class="dc-diff__after">{{ item.after?.[field] | json }}</code>
+                  @if (field === 'logoFileKey') {
+                    <span class="dc-diff__before">
+                      @if (item.before?.[field]; as key) {
+                        <img class="dc-diff__img" [dcAuthSrc]="assetUrl(key)" alt="" />
+                      }
+                    </span>
+                    <span class="dc-diff__after">
+                      @if (item.after?.[field]; as key) {
+                        <img class="dc-diff__img" [dcAuthSrc]="assetUrl(key)" alt="" />
+                      }
+                    </span>
+                  } @else {
+                    <code class="dc-diff__before">{{ item.before?.[field] | json }}</code>
+                    <code class="dc-diff__after">{{ item.after?.[field] | json }}</code>
+                  }
                 </div>
               } @empty {
                 <span class="dc-muted">{{ 'changeSets.noFieldChanges' | dcTranslate }}</span>
@@ -162,6 +231,10 @@ const CHANGE_SETS = 'apps-control.change-sets';
       white-space: pre-wrap;
       word-break: break-word;
     }
+    .dc-diff__img {
+      max-height: 3rem;
+      max-width: 12rem;
+    }
     .dc-note {
       padding: 0.75rem 1rem;
       border-radius: var(--dc-radius);
@@ -182,29 +255,43 @@ export class ChangeSetDetail {
   protected readonly busy = signal(false);
   protected readonly errors = signal<string[]>([]);
   private readonly updated = signal<Detail | null>(null);
-  private readonly resource = rxResource({ params: () => this.id(), stream: ({ params }) => this.api.changeSet(params) });
+  private readonly resource = rxResource({
+    params: () => this.id(),
+    stream: ({ params }) => this.api.changeSet(params),
+  });
 
-  protected readonly detail = computed(() => this.updated() ?? (this.resource.hasValue() ? this.resource.value() : null));
+  protected readonly detail = computed(
+    () => this.updated() ?? (this.resource.hasValue() ? this.resource.value() : null),
+  );
   protected readonly mineAndDraft = computed(() => {
     const d = this.detail();
     return !!d && d.changeSet.isMine && d.changeSet.status === 'DRAFT';
   });
   protected readonly canReview = computed(() => {
     const d = this.detail();
-    return !!d && d.changeSet.status === 'SUBMITTED' && !d.changeSet.isMine && this.privileges.can(CHANGE_SETS, 'APPROVE');
+    return (
+      !!d &&
+      d.changeSet.status === 'SUBMITTED' &&
+      !d.changeSet.isMine &&
+      this.privileges.can(CHANGE_SETS, 'APPROVE')
+    );
   });
+
+  protected assetUrl(key: unknown): string {
+    return `/api/apps-control/v1/branding/assets/${String(key)}`;
+  }
 
   protected changedFields(item: ChangeItemInfo): string[] {
     const keys = new Set([...Object.keys(item.before ?? {}), ...Object.keys(item.after ?? {})]);
+    // Key and ownership are not editable fields.
     keys.delete('owner');
+    keys.delete('code');
     if (item.operation === 'UPDATE') {
       for (const key of [...keys]) {
         if (JSON.stringify(item.before?.[key]) === JSON.stringify(item.after?.[key])) {
           keys.delete(key);
         }
       }
-    } else {
-      keys.delete('code');
     }
     return [...keys];
   }
@@ -214,7 +301,11 @@ export class ChangeSetDetail {
   }
 
   protected async approve(): Promise<void> {
-    const comment = await this.ask({ title: this.i18n.translate('changeSets.approveTitle'), confirmLabel: this.i18n.translate('changeSets.approve'), comment: true });
+    const comment = await this.ask({
+      title: this.i18n.translate('changeSets.approveTitle'),
+      confirmLabel: this.i18n.translate('changeSets.approve'),
+      comment: true,
+    });
     if (comment !== undefined) {
       await this.run(this.api.approve(this.id(), comment || undefined));
     }
@@ -234,7 +325,11 @@ export class ChangeSetDetail {
   }
 
   protected async discard(): Promise<void> {
-    const confirmed = await this.ask({ title: this.i18n.translate('changeSets.discardTitle'), confirmLabel: this.i18n.translate('changeSets.discard'), danger: true });
+    const confirmed = await this.ask({
+      title: this.i18n.translate('changeSets.discardTitle'),
+      confirmLabel: this.i18n.translate('changeSets.discard'),
+      danger: true,
+    });
     if (confirmed !== undefined) {
       this.busy.set(true);
       try {
@@ -255,7 +350,9 @@ export class ChangeSetDetail {
       const detail = await firstValueFrom(request);
       this.updated.set(detail);
       if (detail.changeSet.status === 'PUBLISHED') {
-        this.snackBar.open(this.i18n.translate('changeSets.published'), undefined, { duration: 4000 });
+        this.snackBar.open(this.i18n.translate('changeSets.published'), undefined, {
+          duration: 4000,
+        });
       }
     } catch (error) {
       this.errors.set(problemMessages(error));
@@ -267,6 +364,8 @@ export class ChangeSetDetail {
   }
 
   private ask(data: ConfirmData): Promise<string | undefined> {
-    return firstValueFrom(this.dialog.open<ConfirmDialog, ConfirmData, string>(ConfirmDialog, { data }).afterClosed());
+    return firstValueFrom(
+      this.dialog.open<ConfirmDialog, ConfirmData, string>(ConfirmDialog, { data }).afterClosed(),
+    );
   }
 }

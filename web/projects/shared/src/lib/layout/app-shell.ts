@@ -1,6 +1,7 @@
 import { BidiModule } from '@angular/cdk/bidi';
 import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
+import { BrandingService } from '../apps-control/branding';
 import { I18nService } from '../i18n/i18n.service';
 import { LanguageSwitcher } from '../i18n/language-switcher';
 import { AppFooter } from './app-footer';
@@ -20,9 +21,17 @@ import { GovBar } from './gov-bar';
       <header class="dc-shell__header">
         <div class="dc-shell__header-inner" [class.dc-shell__header-inner--fluid]="fluid()">
           <a class="dc-shell__brand" href="/">
-            <span class="dc-shell__logo" aria-hidden="true">
-              <mat-icon fontSet="material-symbols-outlined">deployed_code</mat-icon>
-            </span>
+            @if (branding().logoUrl; as logo) {
+              <img
+                class="dc-shell__logo-img"
+                [src]="logo"
+                [alt]="i18n.localize({ ar: branding().nameAr, en: branding().nameEn })"
+              />
+            } @else {
+              <span class="dc-shell__logo" aria-hidden="true">
+                <mat-icon fontSet="material-symbols-outlined">deployed_code</mat-icon>
+              </span>
+            }
             <span class="dc-shell__title">{{ title() }}</span>
           </a>
           <nav class="dc-shell__nav">
@@ -38,7 +47,10 @@ import { GovBar } from './gov-bar';
       <main class="dc-shell__main" [class.dc-shell__main--fluid]="fluid()">
         <ng-content />
       </main>
-      <dc-app-footer />
+      <dc-app-footer
+        [links]="branding().footerLinks"
+        [entityName]="{ ar: branding().nameAr, en: branding().nameEn }"
+      />
     </div>
   `,
   styles: `
@@ -79,6 +91,12 @@ import { GovBar } from './gov-bar';
       border-radius: 8px;
       background: var(--dga-green-700);
       color: #ffffff;
+    }
+    .dc-shell__logo-img {
+      height: 40px;
+      width: auto;
+      max-width: 12rem;
+      object-fit: contain;
     }
     .dc-shell__title {
       font-size: 18px;
@@ -126,4 +144,5 @@ export class AppShell {
   /** Full-width content without padding (for layouts with their own side navigation). */
   readonly fluid = input(false);
   protected readonly i18n = inject(I18nService);
+  protected readonly branding = inject(BrandingService).branding;
 }

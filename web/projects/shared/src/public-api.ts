@@ -27,3 +27,5 @@ export * from './lib/apps-control/apps-control.api';
 export * from './lib/apps-control/ui-texts';
 export * from './lib/apps-control/lov-source';
 export * from './lib/apps-control/nav-menu';
+export * from './lib/apps-control/branding';
+export * from './lib/apps-control/auth-image';

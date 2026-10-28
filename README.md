@@ -59,6 +59,25 @@ docker compose -f deploy/docker/docker-compose.yml up --build
 
 Add `--profile full` to also start Gotenberg (PDF) and ClamAV (upload scanning).
 
+### Accounts and connections (development)
+
+| What | Where | Sign-in |
+|---|---|---|
+| Internal system | http://localhost:4200 | `admin` (all Apps Control rights), `maker` (drafts changes), `checker` (approves) — password `Dev@12345` |
+| E-services portal | http://localhost:4201 | `1000000001`, `2000000002` (applicants) — password `Dev@12345`; browsing needs no sign-in |
+| Field app | http://localhost:4202 | Same accounts as the internal system |
+| Keycloak admin console | http://localhost:8080/admin | `admin` / `admin` (`KEYCLOAK_ADMIN_PASSWORD`) |
+| PostgreSQL | `localhost:5432`, database `dynamic_cube` | `dynamic_cube` / `dynamic_cube` (`POSTGRES_PASSWORD`) |
+
+To open the database in DataGrip (or DBeaver, pgAdmin): *New → Data Source → PostgreSQL*, host `localhost`, port
+`5432`, database `dynamic_cube`, user `dynamic_cube`, password `dynamic_cube`. Tables are grouped by schema:
+`apps` (Apps Control), `cfg` (change sets), `audit` (audit log), `platform` (outbox, keys).
+
+The **field app** is the inspectors' app for site visits (offline-capable, phone/tablet). It is a shell for now;
+visit forms, offline sync and inspection reports arrive with visits in Phase 3.
+
+These are development values only; change them in `deploy/docker/.env` (see `.env.example`) for anything else.
+
 ### Option B — local development
 
 Requires .NET 10 SDK, Node.js 24 LTS and Docker (for PostgreSQL and Keycloak only). Start the parts **in this

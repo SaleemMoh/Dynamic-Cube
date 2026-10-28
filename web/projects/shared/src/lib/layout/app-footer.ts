@@ -1,32 +1,37 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { TranslatePipe } from '../i18n/translate.pipe';
-
-export interface FooterLink {
-  label: string;
-  url: string;
-}
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { FooterLink } from '../apps-control/apps-control.models';
+import { I18nService } from '../i18n/i18n.service';
+import { LocalizedText } from '../i18n/language';
+import { LocalizePipe } from '../i18n/translate.pipe';
 
 /**
- * DGA footer on the dark green: links, copyright and ownership statement. Texts are UI-text keys
- * (`footer.copyright`, `footer.owner`) so each entity sets its own wording in Apps Control.
+ * DGA footer on the dark green: links and the copyright / ownership lines. Links and the entity name come from
+ * Apps Control branding; the wording is the UI texts `footer.copyright` and `footer.owner` with `{name}` and `{year}`.
  */
 @Component({
   selector: 'dc-app-footer',
-  imports: [TranslatePipe],
+  imports: [LocalizePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <footer class="dc-footer">
       <div class="dc-footer__inner">
         @if (links().length) {
-          <nav class="dc-footer__links" [attr.aria-label]="'footer.links' | dcTranslate">
+          <nav class="dc-footer__links" [attr.aria-label]="i18n.translate('footer.links')">
             @for (link of links(); track link.url) {
-              <a class="dc-footer__link" [href]="link.url">{{ link.label }}</a>
+              <a
+                class="dc-footer__link"
+                [href]="link.url"
+                [attr.target]="isExternal(link.url) ? '_blank' : null"
+                [attr.rel]="isExternal(link.url) ? 'noopener' : null"
+              >
+                {{ { ar: link.labelAr, en: link.labelEn } | dcLocalize }}
+              </a>
             }
           </nav>
         }
         <div class="dc-footer__legal">
-          <p class="dc-footer__caption">{{ 'footer.copyright' | dcTranslate }} © {{ year }}</p>
-          <p>{{ 'footer.owner' | dcTranslate }}</p>
+          <p class="dc-footer__caption">{{ copyright() }}</p>
+          <p>{{ owner() }}</p>
         </div>
       </div>
     </footer>
@@ -70,5 +75,19 @@ export interface FooterLink {
 })
 export class AppFooter {
   readonly links = input<FooterLink[]>([]);
-  protected readonly year = new Date().getFullYear();
+  readonly entityName = input<LocalizedText>({ ar: '', en: '' });
+
+  protected readonly i18n = inject(I18nService);
+  private readonly year = String(new Date().getFullYear());
+  protected readonly copyright = computed(() => this.fill('footer.copyright'));
+  protected readonly owner = computed(() => this.fill('footer.owner'));
+
+  protected isExternal(url: string): boolean {
+    return /^https?:/i.test(url);
+  }
+
+  private fill(key: string): string {
+    const name = this.i18n.localize(this.entityName()) || this.i18n.translate('footer.entity');
+    return this.i18n.translate(key).replace('{name}', name).replace('{year}', this.year);
+  }
 }

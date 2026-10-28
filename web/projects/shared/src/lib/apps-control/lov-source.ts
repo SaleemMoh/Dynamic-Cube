@@ -12,7 +12,16 @@ export function provideLovSource(): EnvironmentProviders {
         const api = inject(AppsControlApi);
         return {
           options: (lov, parent) =>
-            api.lovValues(lov, { parent }).pipe(map((page) => page.items.map((item) => ({ value: item.value, label: { ar: item.labelAr, en: item.labelEn } })))),
+            api
+              .lovValues(lov, { parent })
+              .pipe(
+                map((page) =>
+                  page.items.map((item) => ({
+                    value: item.value,
+                    label: { ar: item.labelAr, en: item.labelEn },
+                  })),
+                ),
+              ),
         };
       },
     },

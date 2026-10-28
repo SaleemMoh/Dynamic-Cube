@@ -18,6 +18,8 @@ internal static class PublicEndpoints
 {
     public static void Map(RouteGroupBuilder group, bool external)
     {
+        BrandingEndpoints.MapPublic(group);
+
         group.MapGet("/ui-texts", async (string? app, AppsControlDbContext db, CancellationToken ct) =>
             {
                 // App-specific texts override global ones with the same key.

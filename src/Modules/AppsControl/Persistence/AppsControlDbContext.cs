@@ -61,6 +61,8 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
 
     public DbSet<ChangeArea> ChangeAreas => Set<ChangeArea>();
 
+    public DbSet<BrandingAsset> BrandingAssets => Set<BrandingAsset>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -68,7 +70,17 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
 
         Config<Installation>(modelBuilder, "installation");
         Config<ChangeArea>(modelBuilder, "change_area");
-        Config<GovernmentEntity>(modelBuilder, "entity");
+        Config<GovernmentEntity>(modelBuilder, "entity", b =>
+            b.Property(e => e.FooterLinks).HasColumnType("jsonb").HasConversion(JsonColumn.Converter<List<FooterLink>>(), JsonColumn.Comparer<List<FooterLink>>()));
+        modelBuilder.Entity<BrandingAsset>(b =>
+        {
+            b.ToTable("branding_asset", Schema);
+            b.Property(e => e.FileName).HasMaxLength(255);
+            b.Property(e => e.ContentType).HasMaxLength(100);
+            b.Property(e => e.Sha256).HasMaxLength(64);
+            b.Property(e => e.CreatedBy).HasMaxLength(128);
+            b.Property(e => e.UpdatedBy).HasMaxLength(128);
+        });
         Config<App>(modelBuilder, "app");
 
         Config<OrgUnitType>(modelBuilder, "org_unit_type");

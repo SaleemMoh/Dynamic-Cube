@@ -18,7 +18,7 @@ import {
 import { forkJoin, map, of } from 'rxjs';
 import { DraftsService } from '../drafts.service';
 import { ConfigField, ConfigType } from './config-types';
-import { emptyToNull, fromDate, fromJsonText, toDate, toJsonText } from './form-values';
+import { emptyToNull, fromDate, fromJsonText, payloadOf, toDate, toJsonText } from './form-values';
 
 export interface ConfigEditorData {
   type: ConfigType;
@@ -94,7 +94,9 @@ export class ConfigEditor {
   protected async save(value: FormValue): Promise<void> {
     this.errors.set([]);
     const type = this.data.type;
+    // Start from the current row so fields edited elsewhere (e.g. the entity's logo and footer links) are kept.
     const payload: Record<string, unknown> = {
+      ...payloadOf(this.data.row),
       nameAr: value['nameAr'],
       nameEn: value['nameEn'],
       isActive: value['isActive'] ?? true,

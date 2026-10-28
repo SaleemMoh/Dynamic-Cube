@@ -61,6 +61,7 @@ internal static class SystemCatalog
         new("apps-control.settings", "الإعدادات", "Settings", "/apps-control/settings", AppsControlResources.Settings, "settings", 90),
         new("apps-control.ui-texts", "نصوص الواجهة", "UI texts", "/apps-control/ui-texts", AppsControlResources.UiTexts, "translate", 100),
         new("apps-control.installation", "النظام والجهة", "Installation & entity", "/apps-control/installation", AppsControlResources.Installation, "domain", 110),
+        new("apps-control.branding", "الهوية والشعار", "Branding", "/apps-control/branding", AppsControlResources.Installation, "palette", 115),
         new("apps-control.approval-policy", "سياسة الاعتماد", "Approval policy", "/apps-control/approval-policy", AppsControlResources.ApprovalPolicy, "rule", 120),
     ];
 

@@ -23,8 +23,9 @@ export const SHARED_TRANSLATIONS: TranslationDictionary = {
     'gov.secureTitle': 'المواقع الحكومية تستخدم بروتوكول HTTPS للتشفير والأمان',
     'gov.secureText': 'المواقع الآمنة في المملكة العربية السعودية تستخدم بروتوكول HTTPS للتشفير.',
     'footer.links': 'روابط مهمة',
-    'footer.copyright': 'جميع الحقوق محفوظة',
-    'footer.owner': 'تم تطويره وصيانته بواسطة الجهة',
+    'footer.copyright': 'جميع الحقوق محفوظة © {year} {name}',
+    'footer.owner': 'تم تطويره وصيانته بواسطة {name}',
+    'footer.entity': 'الجهة',
   },
   en: {
     'language.switch': 'العربية',
@@ -45,7 +46,8 @@ export const SHARED_TRANSLATIONS: TranslationDictionary = {
     'gov.secureTitle': 'Government websites use HTTPS for encryption and security',
     'gov.secureText': 'Secure websites in Saudi Arabia use the HTTPS protocol for encryption.',
     'footer.links': 'Important links',
-    'footer.copyright': 'All rights reserved',
-    'footer.owner': 'Developed and maintained by the entity',
+    'footer.copyright': '© {year} {name}. All rights reserved.',
+    'footer.owner': 'Developed and maintained by {name}',
+    'footer.entity': 'the entity',
   },
 };

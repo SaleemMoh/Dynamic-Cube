@@ -12,7 +12,8 @@ export interface MeInfo {
   positions: string[];
 }
 
-export type MenuItemType = 'GROUP' | 'SCREEN' | 'SERVICE' | 'REPORT' | 'DASHBOARD' | 'QUEUE' | 'URL';
+export type MenuItemType =
+  'GROUP' | 'SCREEN' | 'SERVICE' | 'REPORT' | 'DASHBOARD' | 'QUEUE' | 'URL';
 
 export interface MenuNode {
   code: string;
@@ -114,6 +115,25 @@ export interface DomainItem {
   attributes: Record<string, unknown>;
 }
 
+export interface FooterLink {
+  labelAr: string;
+  labelEn: string;
+  url: string;
+}
+
+/** Entity name, logo and footer links shown by every app's shell. */
+export interface BrandingInfo {
+  nameAr: string;
+  nameEn: string;
+  logoUrl: string | null;
+  footerLinks: FooterLink[];
+}
+
+export interface UploadedAsset {
+  key: string;
+  url: string;
+}
+
 export interface UiTextItem {
   key: string;
   textAr: string;
@@ -132,7 +152,9 @@ export interface ApiProblem {
 export function problemMessages(error: unknown): string[] {
   const problem = (error as { error?: ApiProblem } | null)?.error;
   if (problem?.errors) {
-    return Object.entries(problem.errors).flatMap(([field, messages]) => messages.map((m) => (field ? `${field}: ${m}` : m)));
+    return Object.entries(problem.errors).flatMap(([field, messages]) =>
+      messages.map((m) => (field ? `${field}: ${m}` : m)),
+    );
   }
   if (problem?.detail) {
     return [problem.detail];

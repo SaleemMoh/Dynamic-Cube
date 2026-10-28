@@ -31,3 +31,11 @@ export function fromJsonText(value: unknown): unknown {
 export function emptyToNull(value: unknown): unknown {
   return typeof value === 'string' && value.trim() === '' ? null : value;
 }
+
+/** The editable part of a configuration row: everything except its key and ownership, which are output-only. */
+export function payloadOf(row: Record<string, unknown> | null | undefined): Record<string, unknown> {
+  const payload = { ...(row ?? {}) };
+  delete payload['code'];
+  delete payload['owner'];
+  return payload;
+}

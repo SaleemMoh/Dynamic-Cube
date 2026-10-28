@@ -48,6 +48,7 @@ internal static class AdminEndpoints
     public static void Map(RouteGroupBuilder group)
     {
         var admin = group.MapGroup("/admin").AddEndpointFilter(AppsControlFilters.Errors);
+        BrandingEndpoints.MapAdmin(admin);
 
         admin.MapGet("/types", async (IEnumerable<IAppsControlApplier> appliers, AccessResolver resolver, IChangeApprovalPolicy policy, CancellationToken ct) =>
         {

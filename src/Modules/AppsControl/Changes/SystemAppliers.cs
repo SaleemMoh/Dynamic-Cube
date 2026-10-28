@@ -1,5 +1,6 @@
 using DynamicCube.Modules.AppsControl.Domain;
 using DynamicCube.Modules.AppsControl.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace DynamicCube.Modules.AppsControl.Changes;
 
@@ -90,7 +91,10 @@ public sealed class EntityPayload : ConfigPayload
 
     public string? CrNumber { get; set; }
 
+    /// <summary>Id of an uploaded branding asset (see <c>admin/branding/assets</c>).</summary>
     public string? LogoFileKey { get; set; }
+
+    public List<FooterLink> FooterLinks { get; set; } = [];
 }
 
 internal sealed class EntityApplier : ConfigApplier<GovernmentEntity, EntityPayload>
@@ -121,7 +125,53 @@ internal sealed class EntityApplier : ConfigApplier<GovernmentEntity, EntityPayl
         entity.EntityKind = payload.EntityKind;
         entity.UnifiedNumber = payload.UnifiedNumber;
         entity.CrNumber = payload.CrNumber;
-        entity.LogoFileKey = payload.LogoFileKey;
+
+        entity.LogoFileKey = string.IsNullOrWhiteSpace(payload.LogoFileKey) ? null : payload.LogoFileKey.Trim();
+        if (entity.LogoFileKey is not null
+            && (!Guid.TryParse(entity.LogoFileKey, out var assetId)
+                || !await refs.Context.BrandingAssets.AnyAsync(a => a.Id == assetId, cancellationToken)))
+        {
+            errors.Add("logoFileKey", "Upload the logo first; the key does not match an uploaded image.");
+        }
+
+        if (payload.FooterLinks.Count > MaxFooterLinks)
+        {
+            errors.Add("footerLinks", $"At most {MaxFooterLinks} links.");
+        }
+
+        foreach (var (link, i) in payload.FooterLinks.Select((l, i) => (l, i)))
+        {
+            errors.Required($"footerLinks[{i}].labelAr", link.LabelAr);
+            errors.Required($"footerLinks[{i}].labelEn", link.LabelEn);
+            errors.MaxLength($"footerLinks[{i}].labelAr", link.LabelAr, 100);
+            errors.MaxLength($"footerLinks[{i}].labelEn", link.LabelEn, 100);
+            if (!IsAllowedUrl(link.Url))
+            {
+                errors.Add($"footerLinks[{i}].url", "Use a web address (https://…), a mailto: address or a path starting with /.");
+            }
+        }
+
+        entity.FooterLinks = payload.FooterLinks
+            .Select(l => new FooterLink { LabelAr = l.LabelAr.Trim(), LabelEn = l.LabelEn.Trim(), Url = l.Url.Trim() })
+            .ToList();
+    }
+
+    private const int MaxFooterLinks = 12;
+
+    private static bool IsAllowedUrl(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url) || url.Length > 500)
+        {
+            return false;
+        }
+
+        url = url.Trim();
+        if (url.StartsWith('/') && !url.StartsWith("//", StringComparison.Ordinal))
+        {
+            return true;
+        }
+
+        return Uri.TryCreate(url, UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeMailto);
     }
 
     protected override Task<EntityPayload> ToPayloadAsync(AppsControlDbContext context, GovernmentEntity entity, CancellationToken cancellationToken) =>
@@ -131,6 +181,7 @@ internal sealed class EntityApplier : ConfigApplier<GovernmentEntity, EntityPayl
             UnifiedNumber = entity.UnifiedNumber,
             CrNumber = entity.CrNumber,
             LogoFileKey = entity.LogoFileKey,
+            FooterLinks = entity.FooterLinks,
         });
 
     protected override Task BeforeDeleteAsync(AppsControlDbContext context, GovernmentEntity entity, CancellationToken cancellationToken) =>

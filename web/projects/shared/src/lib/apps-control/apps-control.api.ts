@@ -6,6 +6,7 @@ import {
   ChangeSetDetail,
   ChangeSetStatus,
   ChangeSetSummary,
+  BrandingInfo,
   ConfigRow,
   DomainItem,
   EntityTypeInfo,
@@ -13,6 +14,7 @@ import {
   MeInfo,
   MenuGroupNode,
   UiTextItem,
+  UploadedAsset,
 } from './apps-control.models';
 
 export const APPS_CONTROL_API = '/api/apps-control/v1';
@@ -34,7 +36,9 @@ export class AppsControlApi {
   }
 
   menu(app?: string): Observable<MenuGroupNode[]> {
-    return this.http.get<MenuGroupNode[]>(`${APPS_CONTROL_API}/me/menu`, { params: params({ app }) });
+    return this.http.get<MenuGroupNode[]>(`${APPS_CONTROL_API}/me/menu`, {
+      params: params({ app }),
+    });
   }
 
   privileges(): Observable<Record<string, string[]>> {
@@ -42,11 +46,27 @@ export class AppsControlApi {
   }
 
   lovValues(code: string, request: LovRequest = {}): Observable<LovPage> {
-    return this.http.get<LovPage>(`${APPS_CONTROL_API}/lovs/${encodeURIComponent(code)}/values`, { params: params({ ...request }) });
+    return this.http.get<LovPage>(`${APPS_CONTROL_API}/lovs/${encodeURIComponent(code)}/values`, {
+      params: params({ ...request }),
+    });
   }
 
   classDomains(classCode: string, parent?: string | null): Observable<DomainItem[]> {
-    return this.http.get<DomainItem[]>(`${APPS_CONTROL_API}/classes/${encodeURIComponent(classCode)}/domains`, { params: params({ parent }) });
+    return this.http.get<DomainItem[]>(
+      `${APPS_CONTROL_API}/classes/${encodeURIComponent(classCode)}/domains`,
+      { params: params({ parent }) },
+    );
+  }
+
+  branding(): Observable<BrandingInfo> {
+    return this.http.get<BrandingInfo>(`${APPS_CONTROL_API}/branding`);
+  }
+
+  /** Uploads an image (logo); it becomes visible to everyone once a change set referencing it is published. */
+  uploadBrandingAsset(file: File): Observable<UploadedAsset> {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    return this.http.post<UploadedAsset>(`${APPS_CONTROL_API}/admin/branding/assets`, form);
   }
 
   uiTexts(app: string): Observable<UiTextItem[]> {
@@ -58,15 +78,23 @@ export class AppsControlApi {
   }
 
   list(entityType: string, parent?: string | null): Observable<ConfigRow[]> {
-    return this.http.get<ConfigRow[]>(`${APPS_CONTROL_API}/admin/${entityType}`, { params: params({ parent }) });
+    return this.http.get<ConfigRow[]>(`${APPS_CONTROL_API}/admin/${entityType}`, {
+      params: params({ parent }),
+    });
   }
 
   get(entityType: string, code: string): Observable<ConfigRow> {
-    return this.http.get<ConfigRow>(`${APPS_CONTROL_API}/admin/${entityType}/${code.split('/').map(encodeURIComponent).join('/')}`);
+    return this.http.get<ConfigRow>(
+      `${APPS_CONTROL_API}/admin/${entityType}/${code.split('/').map(encodeURIComponent).join('/')}`,
+    );
   }
 
-  changeSets(filter: { status?: ChangeSetStatus; area?: string; mine?: boolean } = {}): Observable<ChangeSetSummary[]> {
-    return this.http.get<ChangeSetSummary[]>(`${APPS_CONTROL_API}/change-sets`, { params: params({ ...filter }) });
+  changeSets(
+    filter: { status?: ChangeSetStatus; area?: string; mine?: boolean } = {},
+  ): Observable<ChangeSetSummary[]> {
+    return this.http.get<ChangeSetSummary[]>(`${APPS_CONTROL_API}/change-sets`, {
+      params: params({ ...filter }),
+    });
   }
 
   changeSet(id: string): Observable<ChangeSetDetail> {
@@ -77,17 +105,40 @@ export class AppsControlApi {
     return this.http.post<ChangeSetDetail>(`${APPS_CONTROL_API}/change-sets`, { area, title });
   }
 
-  addItem(id: string, entityType: string, entityCode: string, operation: ChangeOperation, payload: unknown): Observable<ChangeSetDetail> {
-    return this.http.post<ChangeSetDetail>(`${APPS_CONTROL_API}/change-sets/${id}/items`, { entityType, entityCode, operation, payload });
+  addItem(
+    id: string,
+    entityType: string,
+    entityCode: string,
+    operation: ChangeOperation,
+    payload: unknown,
+  ): Observable<ChangeSetDetail> {
+    return this.http.post<ChangeSetDetail>(`${APPS_CONTROL_API}/change-sets/${id}/items`, {
+      entityType,
+      entityCode,
+      operation,
+      payload,
+    });
   }
 
   /** Saves and publishes one change in an area that needs no approval. */
-  applyNow(entityType: string, entityCode: string, operation: ChangeOperation, payload: unknown): Observable<ChangeSetDetail> {
-    return this.http.post<ChangeSetDetail>(`${APPS_CONTROL_API}/change-sets/apply`, { entityType, entityCode, operation, payload });
+  applyNow(
+    entityType: string,
+    entityCode: string,
+    operation: ChangeOperation,
+    payload: unknown,
+  ): Observable<ChangeSetDetail> {
+    return this.http.post<ChangeSetDetail>(`${APPS_CONTROL_API}/change-sets/apply`, {
+      entityType,
+      entityCode,
+      operation,
+      payload,
+    });
   }
 
   removeItem(id: string, itemId: string): Observable<ChangeSetDetail> {
-    return this.http.delete<ChangeSetDetail>(`${APPS_CONTROL_API}/change-sets/${id}/items/${itemId}`);
+    return this.http.delete<ChangeSetDetail>(
+      `${APPS_CONTROL_API}/change-sets/${id}/items/${itemId}`,
+    );
   }
 
   submit(id: string): Observable<ChangeSetDetail> {
@@ -95,11 +146,15 @@ export class AppsControlApi {
   }
 
   approve(id: string, comment?: string): Observable<ChangeSetDetail> {
-    return this.http.post<ChangeSetDetail>(`${APPS_CONTROL_API}/change-sets/${id}/approve`, { comment });
+    return this.http.post<ChangeSetDetail>(`${APPS_CONTROL_API}/change-sets/${id}/approve`, {
+      comment,
+    });
   }
 
   reject(id: string, comment: string): Observable<ChangeSetDetail> {
-    return this.http.post<ChangeSetDetail>(`${APPS_CONTROL_API}/change-sets/${id}/reject`, { comment });
+    return this.http.post<ChangeSetDetail>(`${APPS_CONTROL_API}/change-sets/${id}/reject`, {
+      comment,
+    });
   }
 
   reopen(id: string): Observable<ChangeSetDetail> {

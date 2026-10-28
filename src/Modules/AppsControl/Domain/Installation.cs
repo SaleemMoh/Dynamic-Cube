@@ -40,7 +40,11 @@ public sealed class GovernmentEntity : ConfigEntity
 
     public string? CrNumber { get; set; }
 
+    /// <summary>Id of the <see cref="BrandingAsset"/> shown as the entity logo in headers.</summary>
     public string? LogoFileKey { get; set; }
+
+    /// <summary>Links shown in the footer of every app.</summary>
+    public List<FooterLink> FooterLinks { get; set; } = [];
 }
 
 public enum AppType
