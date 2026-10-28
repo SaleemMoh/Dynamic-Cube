@@ -275,6 +275,14 @@ internal sealed class DocumentRegistry(
         document.Status = to == DocumentStatus.Active && document.ExpiresAt <= now ? DocumentStatus.Expired : to;
         document.StatusChangedAt = now;
         context.Events.Add(new DocumentEvent { DocumentId = id, At = now, Type = eventType, Actor = user.UserName ?? user.UserId, Version = document.CurrentVersion, Comment = comment.Trim() });
+        var type = await context.DocumentTypes.AsNoTracking().SingleAsync(t => t.Id == document.DocumentTypeId, cancellationToken);
+        var notification = to switch
+        {
+            DocumentStatus.Suspended => DocumentNotifications.Suspended,
+            DocumentStatus.Cancelled => DocumentNotifications.Cancelled,
+            _ => DocumentNotifications.Reinstated,
+        };
+        DocumentNotifications.Raise(context, clock, notification, document, type, renderer.VerifyUrl(document.VerificationCode), comment.Trim());
         try
         {
             await context.SaveChangesAsync(cancellationToken);

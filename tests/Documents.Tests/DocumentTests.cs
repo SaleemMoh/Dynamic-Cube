@@ -163,6 +163,43 @@ public sealed class DocumentTests(DatabaseFixture fixture)
     }
 
     [Fact]
+    public async Task Holders_are_reminded_once_on_each_reminder_day_and_told_of_changes()
+    {
+        await using var host = new DocumentHost(fixture);
+        var type = await host.TypeAsync(validityMonths: 12, alerts: [90, 30, 7]);
+        var holder = Guid.CreateVersion7();
+        var issued = await host.IssueAsync(type, holder, "Riyadh", ("ICT", 1));
+        var expires = issued.ExpiresAt!.Value;
+
+        async Task<List<string>> RunAsync(DateTimeOffset at)
+        {
+            host.Clock.Now = at;
+            await host.Host.AsAsync("worker", sp => sp.GetRequiredService<DocumentDates>().RunAsync(CancellationToken.None));
+            return [.. (await host.Host.RaisedAsync(issued.Id)).Select(e => e.Code)];
+        }
+
+        (await RunAsync(expires.AddDays(-120))).ShouldBe(["DOCUMENT_ISSUED"]);
+        (await RunAsync(expires.AddDays(-89))).ShouldBe(["DOCUMENT_ISSUED", "DOCUMENT_EXPIRING"]);
+        (await RunAsync(expires.AddDays(-88))).Count.ShouldBe(2, "each reminder is sent once");
+
+        // A run that comes late sends the nearest reminder only.
+        var late = await RunAsync(expires.AddDays(-5));
+        late.Count(c => c == "DOCUMENT_EXPIRING").ShouldBe(2);
+        var reminder = (await host.Host.RaisedAsync(issued.Id))[^1];
+        reminder.PartyId.ShouldBe(holder);
+        reminder.SubjectNumber.ShouldBe(issued.Number);
+        reminder.Facts["document"]!["alertDays"]!.GetValue<int>().ShouldBe(7);
+        reminder.Facts["document"]!["daysLeft"]!.GetValue<int>().ShouldBe(5);
+        reminder.Facts["document"]!["verifyUrl"]!.GetValue<string>().ShouldStartWith("http://localhost:4201/verify/");
+
+        await host.Host.AsAsync("officer", sp => sp.GetRequiredService<DocumentRegistry>().SuspendAsync(issued.Id, "Inspection", CancellationToken.None));
+        (await RunAsync(expires.AddDays(1)))[^1].ShouldBe("DOCUMENT_EXPIRED");
+        var events = await host.Host.RaisedAsync(issued.Id);
+        events.Select(e => e.Code).ShouldContain("DOCUMENT_SUSPENDED");
+        events.Single(e => e.Code == "DOCUMENT_SUSPENDED").Facts["document"]!["reason"]!.GetValue<string>().ShouldBe("Inspection");
+    }
+
+    [Fact]
     public async Task Gotenberg_prints_arabic_pdfs_when_it_is_available()
     {
         var url = Environment.GetEnvironmentVariable("DYNAMICCUBE_TEST_GOTENBERG");

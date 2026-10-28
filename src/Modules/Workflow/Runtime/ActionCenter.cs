@@ -474,6 +474,10 @@ internal sealed class ActionCenter(
         task.Assignee = assignee;
         task.AssignedAt = clock.GetUtcNow();
         task.AssignedBy = by;
+        if (assignee != by)
+        {
+            TaskNotifications.Raise(context, clock, TaskNotifications.Assigned, task);
+        }
     }
 
     private WorkflowEvent Event(WorkTask task, string actor, string type, string? target = null, string? comment = null) => new()

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using DynamicCube.Modules.AppsControl;
+using DynamicCube.Modules.Communication;
 using DynamicCube.Modules.Decisions;
 using DynamicCube.Modules.Documents;
 using DynamicCube.Modules.Integration;
@@ -8,7 +9,10 @@ using DynamicCube.Modules.Services;
 using DynamicCube.Modules.Workflow;
 using DynamicCube.Platform;
 using DynamicCube.Platform.ChangeSets;
+using DynamicCube.Platform.Communication;
+using DynamicCube.Platform.Persistence;
 using DynamicCube.Platform.Security;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -61,6 +65,7 @@ public sealed class TestHost : IAsyncDisposable
         services.AddWorkflow(configuration);
         services.AddDocuments(configuration);
         services.AddDecisions(configuration);
+        services.AddCommunication(configuration);
         configure?.Invoke(services);
         services.AddSingleton(Provider);
         services.AddHttpClient(IntegrationModule.HttpClientName).ConfigurePrimaryHttpMessageHandler(sp => sp.GetRequiredService<FakeProvider>());
@@ -109,6 +114,16 @@ public sealed class TestHost : IAsyncDisposable
         });
         return id;
     }
+
+    /// <summary>The notification events raised for a subject (still in the outbox: tests run no worker).</summary>
+    public Task<List<CommunicationEvent>> RaisedAsync(Guid subjectId) =>
+        AsAsync("admin", async sp =>
+        {
+            var rows = await sp.GetRequiredService<PlatformDbContext>().OutboxMessages
+                .FromSql($"SELECT * FROM platform.outbox_messages WHERE type = 'comm.event' AND payload->>'subjectId' = {subjectId.ToString()}")
+                .AsNoTracking().ToListAsync();
+            return rows.OrderBy(r => r.OccurredAt).Select(r => JsonSerializer.Deserialize<CommunicationEvent>(r.Payload, JsonSerializerOptions.Web)!).ToList();
+        });
 
     public static IChangeSetWorkflow Workflow(IServiceProvider services, string entityType) =>
         services.GetServices<IChangeSetWorkflow>().Single(w => w.OwnsEntityType(entityType));

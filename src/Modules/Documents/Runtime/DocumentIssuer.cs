@@ -23,7 +23,7 @@ public sealed record RenderDocumentMessage(Guid VersionId) : IOutboxMessage
 /// Issues documents: a new number (<c>PREFIX-YYYY-000001</c>) and verification code, or — for types with one document per
 /// holder — a new version of the holder's active document. The PDF is printed afterwards by the worker.
 /// </summary>
-internal sealed class DocumentIssuer(DocumentsDbContext context, IServiceProvider services, ICurrentUser user, TimeProvider clock) : IDocumentIssuer
+internal sealed class DocumentIssuer(DocumentsDbContext context, DocumentRenderer renderer, IServiceProvider services, ICurrentUser user, TimeProvider clock) : IDocumentIssuer
 {
     private const string CodeAlphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
@@ -107,6 +107,7 @@ internal sealed class DocumentIssuer(DocumentsDbContext context, IServiceProvide
             Comment = issue.Reason,
         });
         context.Enqueue(new RenderDocumentMessage(version.Id), clock);
+        DocumentNotifications.Raise(context, clock, amended ? DocumentNotifications.Amended : DocumentNotifications.Issued, document, type, renderer.VerifyUrl(document.VerificationCode), issue.Reason);
         await context.SaveChangesAsync(cancellationToken);
         return new IssuedDocumentInfo(document.Id, document.Number, version.Version, amended, document.ExpiresAt);
     }

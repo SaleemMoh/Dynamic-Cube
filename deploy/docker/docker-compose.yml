@@ -123,11 +123,25 @@ services:
         ASSEMBLY: DynamicCube.Worker.dll
     environment:
       <<: *dotnet-env
+      Documents__GotenbergUrl: http://gotenberg:3000
+      # Development mail catcher: every email the platform sends shows at http://localhost:8025.
+      Communication__Email__Host: mailpit
+      Communication__Email__Port: "1025"
+      Communication__Email__Security: None
+      Communication__Email__From: no-reply@dynamic-cube.local
+      Communication__Email__FromName: Dynamic Cube
     volumes:
       - files:/data/files
     depends_on:
       migrator:
         condition: service_completed_successfully
+
+  # Catches outgoing email in development (SMTP on 1025, web UI on http://localhost:8025).
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports:
+      - "8025:8025"
+      - "1025:1025"
 
   web-internal:
     build:

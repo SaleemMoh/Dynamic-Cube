@@ -52,7 +52,7 @@ internal sealed class StaffDirectory(AppsControlDbContext context, AccessResolve
     private async Task<IReadOnlyList<StaffMember>> LoadAsync(IQueryable<UserAccount> users, CancellationToken cancellationToken)
     {
         var today = Today();
-        var rows = await users.Select(u => new { u.Id, u.Code, u.NameAr, u.NameEn }).ToListAsync(cancellationToken);
+        var rows = await users.Select(u => new { u.Id, u.Code, u.NameAr, u.NameEn, u.Email, u.Mobile }).ToListAsync(cancellationToken);
         var ids = rows.Select(r => r.Id).ToList();
         var roles = await context.UserRoles.AsNoTracking()
             .Where(r => ids.Contains(r.UserId) && r.Role!.IsActive && (r.EffectiveFrom == null || r.EffectiveFrom <= today) && (r.EffectiveTo == null || r.EffectiveTo >= today))
@@ -69,6 +69,8 @@ internal sealed class StaffDirectory(AppsControlDbContext context, AccessResolve
             r.NameEn,
             [.. roles.Where(x => x.UserId == r.Id).Select(x => x.Code).Distinct()],
             [.. assignments.Where(x => x.UserId == r.Id).Select(x => x.Unit).Distinct()],
-            [.. assignments.Where(x => x.UserId == r.Id && x.Position != null).Select(x => x.Position!).Distinct()]))];
+            [.. assignments.Where(x => x.UserId == r.Id && x.Position != null).Select(x => x.Position!).Distinct()],
+            r.Email,
+            r.Mobile))];
     }
 }

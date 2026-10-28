@@ -104,6 +104,18 @@ public sealed class WorkflowRequestTests(DatabaseFixture fixture) : IAsyncLifeti
         var approved = await Requests(s => s.GetAsync(id, CancellationToken.None));
         approved.Request.Status.ShouldBe(StatusCategory.Approved);
         approved.Timeline.Select(t => t.Type).ShouldBe(["CREATED", "SUBMITTED", "STATUS_CHANGED", "RETURNED", "RESUBMITTED", "STATUS_CHANGED", "APPROVED"]);
+
+        // Each step the applicant hears about raised its notification event, with the reason and the beneficiary.
+        var raised = await _applicant.Host.RaisedAsync(id);
+        raised.Select(e => e.Code).Where(c => c.StartsWith("REQUEST_", StringComparison.Ordinal))
+            .ShouldBe(["REQUEST_SUBMITTED", "REQUEST_RETURNED", "REQUEST_RESUBMITTED", "REQUEST_APPROVED"]);
+        var returnedEvent = raised.Single(e => e.Code == "REQUEST_RETURNED");
+        returnedEvent.Facts["request"]!["comment"]!.GetValue<string>().ShouldBe("Correct the number of employees.");
+        returnedEvent.Facts["request"]!["status"]!.GetValue<string>().ShouldBe("PENDING_CUSTOMER");
+        returnedEvent.PartyId.ShouldNotBeNull();
+        returnedEvent.Facts["request"]!["serviceNameEn"]!.GetValue<string>().ShouldBe(approved.Request.ServiceNameEn);
+        returnedEvent.SubjectNumber.ShouldBe(approved.Request.Number);
+        raised.Select(e => e.Code).ShouldContain("TASK_CREATED");
     }
 
     [Fact]

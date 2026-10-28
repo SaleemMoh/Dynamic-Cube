@@ -4,6 +4,7 @@ using DynamicCube.Modules.Workflow.Persistence;
 using DynamicCube.Modules.Workflow.Runtime;
 using DynamicCube.Platform;
 using DynamicCube.Platform.ChangeSets;
+using DynamicCube.Platform.Communication;
 using DynamicCube.Platform.Security;
 using DynamicCube.Platform.Workflow;
 using Microsoft.AspNetCore.Builder;
@@ -39,6 +40,7 @@ public static class WorkflowModule
         services.AddScoped<IWorkflowRuntime>(sp => sp.GetRequiredService<WorkflowEngine>());
         services.AddScoped<ActionCenter>();
         services.AddScoped<SlaMonitor>();
+        services.AddCommunicationEvents(TaskNotifications.Types);
         return services;
     }
 

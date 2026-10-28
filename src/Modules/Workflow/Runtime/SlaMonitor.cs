@@ -27,7 +27,7 @@ internal sealed class SlaMonitor(WorkflowDbContext context, DefinitionCache defi
             changed += await ChangeAsync(task.InstanceId, async () =>
                 await context.Tasks.Where(t => t.Id == task.Id && t.Status == WorkTaskStatus.Open && t.Sla == SlaState.OnTrack)
                     .ExecuteUpdateAsync(u => u.SetProperty(t => t.Sla, SlaState.Warning), cancellationToken) == 1
-                    ? Event(task, WorkflowEventTypes.SlaWarning, now)
+                    ? Notify(TaskNotifications.SlaWarning, task, Event(task, WorkflowEventTypes.SlaWarning, now))
                     : null, cancellationToken);
         }
 
@@ -44,7 +44,7 @@ internal sealed class SlaMonitor(WorkflowDbContext context, DefinitionCache defi
             changed += await ChangeAsync(task.InstanceId, async () =>
                 await context.Tasks.Where(t => t.Id == task.Id && t.Status == WorkTaskStatus.Open && t.Sla != SlaState.Breached)
                     .ExecuteUpdateAsync(u => u.SetProperty(t => t.Sla, SlaState.Breached).SetProperty(t => t.EscalatedToRole, role), cancellationToken) == 1
-                    ? Event(task, WorkflowEventTypes.SlaBreached, now, role)
+                    ? Notify(TaskNotifications.SlaBreached, Escalated(task, role), Event(task, WorkflowEventTypes.SlaBreached, now, role))
                     : null, cancellationToken);
         }
 
@@ -82,6 +82,19 @@ internal sealed class SlaMonitor(WorkflowDbContext context, DefinitionCache defi
         await context.SaveChangesAsync(cancellationToken);
         await work.CommitAsync(cancellationToken);
         return 1;
+    }
+
+    /// <summary>Raises the task's notification event with the change (saved together by <see cref="ChangeAsync"/>).</summary>
+    private WorkflowEvent Notify(string code, WorkTask task, WorkflowEvent recorded)
+    {
+        TaskNotifications.Raise(context, clock, code, task);
+        return recorded;
+    }
+
+    private static WorkTask Escalated(WorkTask task, string? role)
+    {
+        task.EscalatedToRole = role;
+        return task;
     }
 
     private static WorkflowEvent Event(WorkTask task, string type, DateTimeOffset now, string? target = null) => new()

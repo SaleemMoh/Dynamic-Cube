@@ -4,6 +4,7 @@ using DynamicCube.Modules.Services.Persistence;
 using DynamicCube.Modules.Services.Runtime;
 using DynamicCube.Platform;
 using DynamicCube.Platform.ChangeSets;
+using DynamicCube.Platform.Communication;
 using DynamicCube.Platform.Security;
 using DynamicCube.Platform.Workflow;
 using Microsoft.AspNetCore.Builder;
@@ -43,6 +44,7 @@ public static class ServicesModule
         services.AddScoped<RequestService>();
         services.AddScoped<IWorkflowSubject, RequestSubject>();
         services.AddScoped<RequestAdminService>();
+        services.AddCommunicationEvents(RequestNotifications.Types);
         return services;
     }
 

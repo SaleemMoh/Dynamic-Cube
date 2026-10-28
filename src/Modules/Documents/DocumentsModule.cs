@@ -4,6 +4,7 @@ using DynamicCube.Modules.Documents.Persistence;
 using DynamicCube.Modules.Documents.Runtime;
 using DynamicCube.Platform;
 using DynamicCube.Platform.ChangeSets;
+using DynamicCube.Platform.Communication;
 using DynamicCube.Platform.Documents;
 using DynamicCube.Platform.Security;
 using DynamicCube.Platform.Templates;
@@ -46,6 +47,7 @@ public static class DocumentsModule
         services.AddScoped<DocumentDates>();
         services.AddScoped<RenderDocumentHandler>();
         services.AddOutboxHandler<RenderDocumentMessage, RenderDocumentHandler>();
+        services.AddCommunicationEvents(DocumentNotifications.Types);
         return services;
     }
 

@@ -436,6 +436,8 @@ internal sealed class WorkflowEngine(
             run.Event(WorkflowEventTypes.Assigned, task, null, null, target: task.Assignee);
         }
 
+        TaskNotifications.Raise(context, clock, task.Assignee is null ? TaskNotifications.Created : TaskNotifications.Assigned, task);
+
         run.Update(SubjectStatus.InProgress, node.DisplayStatus ?? "UNDER_REVIEW", "STATUS_CHANGED", null);
     }
 

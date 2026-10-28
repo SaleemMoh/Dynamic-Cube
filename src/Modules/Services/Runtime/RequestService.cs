@@ -234,6 +234,7 @@ internal sealed class RequestService(
         entity.DraftExpiresAt = null;
         entity.CurrentStep = null;
         AddEvent(entity, RequestEventTypes.Submitted, StatusCategory.Draft, StatusCategory.Submitted, null);
+        RequestNotifications.Raise(context, clock, RequestNotifications.Submitted, entity, service.NameAr, service.NameEn, null);
 
         // The request and its workflow start together, or not at all.
         await using (var work = await unitOfWork.BeginAsync(cancellationToken))
@@ -272,6 +273,7 @@ internal sealed class RequestService(
         AddEvent(entity, RequestEventTypes.Resubmitted, StatusCategory.PendingCustomer, StatusCategory.InProgress, null);
         entity.StatusCategory = StatusCategory.InProgress;
         entity.DisplayStatus = "RESUBMITTED";
+        RequestNotifications.Raise(context, clock, RequestNotifications.Resubmitted, entity, service.NameAr, service.NameEn, null);
         await using (var work = await unitOfWork.BeginAsync(cancellationToken))
         {
             await context.SaveChangesAsync(cancellationToken);

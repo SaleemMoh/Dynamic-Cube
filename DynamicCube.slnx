@@ -12,6 +12,7 @@
   </Folder>
   <Folder Name="/src/Modules/">
     <Project Path="src/Modules/AppsControl/DynamicCube.Modules.AppsControl.csproj" />
+    <Project Path="src/Modules/Communication/DynamicCube.Modules.Communication.csproj" />
     <Project Path="src/Modules/Decisions/DynamicCube.Modules.Decisions.csproj" />
     <Project Path="src/Modules/Documents/DynamicCube.Modules.Documents.csproj" />
     <Project Path="src/Modules/Integration/DynamicCube.Modules.Integration.csproj" />
@@ -37,6 +38,7 @@
     <Project Path="tests/Integration.Tests/DynamicCube.Modules.Integration.Tests.csproj" />
     <Project Path="tests/Parties.Tests/DynamicCube.Modules.Parties.Tests.csproj" />
     <Project Path="tests/Services.Tests/DynamicCube.Modules.Services.Tests.csproj" />
+    <Project Path="tests/Communication.Tests/DynamicCube.Modules.Communication.Tests.csproj" />
     <Project Path="tests/Decisions.Tests/DynamicCube.Modules.Decisions.Tests.csproj" />
     <Project Path="tests/Documents.Tests/DynamicCube.Modules.Documents.Tests.csproj" />
     <Project Path="tests/Workflow.Tests/DynamicCube.Modules.Workflow.Tests.csproj" />

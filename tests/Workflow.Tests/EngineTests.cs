@@ -257,6 +257,12 @@ public sealed class EngineTests(DatabaseFixture fixture)
 
         (await host.OpenTasksAsync(small)).Single().NodeCode.ShouldBe("SMALL");
         (await host.OpenTasksAsync(big)).Single().NodeCode.ShouldBe("BIG");
+
+        // A task waiting in a role's queue tells the role (notification event).
+        var created = (await host.Host.RaisedAsync(big)).ShouldHaveSingleItem();
+        created.Code.ShouldBe("TASK_CREATED");
+        created.Facts["task"]!["role"]!.GetValue<string>().ShouldBe(roles[0]);
+        created.Facts["task"]!["node"]!.GetValue<string>().ShouldBe("BIG");
     }
 
     [Fact]
@@ -316,5 +322,9 @@ public sealed class EngineTests(DatabaseFixture fixture)
         (await host.OpenTasksAsync(subject)).Single().Sla.ShouldBe(SlaState.Breached);
         (await host.InstanceAsync(subject)).Sla.ShouldBe(SlaState.Breached);
         (await host.AsAsync(escalation, c => c.InboxAsync(InboxBox.Escalated, null, 0, 50, CancellationToken.None))).Items.ShouldHaveSingleItem().Id.ShouldBe(task.Id);
+
+        var raised = await host.Host.RaisedAsync(subject);
+        raised.Select(e => e.Code).ShouldBe(["TASK_CREATED", "TASK_SLA_WARNING", "TASK_SLA_BREACHED"]);
+        raised[^1].Facts["task"]!["escalatedToRole"]!.GetValue<string>().ShouldBe(roles[1]);
     }
 }

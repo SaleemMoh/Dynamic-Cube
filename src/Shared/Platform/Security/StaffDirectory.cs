@@ -7,7 +7,9 @@ public sealed record StaffMember(
     string NameEn,
     IReadOnlyList<string> Roles,
     IReadOnlyList<string> OrgUnits,
-    IReadOnlyList<string> Positions);
+    IReadOnlyList<string> Positions,
+    string? Email = null,
+    string? Mobile = null);
 
 /// <summary>Employees holding a role, working in an org unit and/or a position (each criterion optional; all must hold).</summary>
 public sealed record StaffQuery(string? Role = null, string? OrgUnit = null, string? Position = null);

@@ -58,6 +58,12 @@ internal sealed class RequestSubject(ServicesDbContext context, IPartyFacts part
         }
 
         context.RequestEvents.Add(new RequestEvent { RequestId = request.Id, At = now, UserId = user.UserId, Type = update.EventType, FromStatus = from, ToStatus = to, Comment = update.Comment });
+        if (from != to && RequestNotifications.For(to) is { } code)
+        {
+            var service = await context.Services.AsNoTracking().Where(s => s.Id == request.ServiceId).Select(s => new { s.NameAr, s.NameEn }).SingleAsync(cancellationToken);
+            RequestNotifications.Raise(context, clock, code, request, service.NameAr, service.NameEn, update.Comment);
+        }
+
         await context.SaveChangesAsync(cancellationToken);
     }
 
