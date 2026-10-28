@@ -7,6 +7,7 @@ using DynamicCube.Modules.AppsControl.Persistence;
 using DynamicCube.Modules.AppsControl.Seeding;
 using DynamicCube.Platform;
 using DynamicCube.Platform.ChangeSets;
+using DynamicCube.Platform.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -74,6 +75,7 @@ public static class AppsControlModule
         services.AddScoped<IChangeSetPublishHook<AppsControlDbContext>, AccessCacheInvalidator>();
 
         services.AddScoped<AccessResolver>();
+        services.AddScoped<IAccessChecker, AccessChecker>();
         services.AddScoped<MenuService>();
         services.AddScoped<GrantResolver>();
         services.AddScoped<LovService>();

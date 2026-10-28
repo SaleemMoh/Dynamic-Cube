@@ -52,6 +52,7 @@ jobs:
           dotnet tool restore
           dotnet ef migrations has-pending-model-changes --project src/Shared/Platform --no-build --configuration Release
           dotnet ef migrations has-pending-model-changes --project src/Modules/AppsControl --no-build --configuration Release
+          dotnet ef migrations has-pending-model-changes --project src/Modules/Integration --no-build --configuration Release
 
   frontend:
     name: Frontend (Angular)

@@ -246,24 +246,6 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
     }
 
     private static void Config<T>(ModelBuilder modelBuilder, string table, Action<EntityTypeBuilder<T>>? configure = null, bool uniqueCode = true)
-        where T : ConfigEntity
-    {
-        modelBuilder.Entity<T>(b =>
-        {
-            b.ToTable(table, Schema);
-            b.HasKey(e => e.Id);
-            b.Property(e => e.Code).HasMaxLength(100).IsRequired();
-            if (uniqueCode)
-            {
-                b.HasIndex(e => e.Code).IsUnique();
-            }
-
-            b.Property(e => e.NameAr).HasMaxLength(500).IsRequired();
-            b.Property(e => e.NameEn).HasMaxLength(500).IsRequired();
-            b.Property(e => e.CreatedBy).HasMaxLength(128);
-            b.Property(e => e.UpdatedBy).HasMaxLength(128);
-            b.Property<uint>("RowVersion").IsRowVersion();
-            configure?.Invoke(b);
-        });
-    }
+        where T : ConfigEntity =>
+        modelBuilder.ConfigTable(Schema, table, configure, uniqueCode);
 }

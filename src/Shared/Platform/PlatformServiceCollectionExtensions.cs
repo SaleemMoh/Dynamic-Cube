@@ -42,6 +42,7 @@ public static class PlatformServiceCollectionExtensions
         services.TryAddScoped<IChangeApprovalPolicy, OptionsChangeApprovalPolicy>();
 
         services.TryAddScoped<AuditSaveChangesInterceptor>();
+        services.TryAddSingleton<ISecretStore>(new ConfigurationSecretStore(configuration));
 
         services.AddModuleDbContext<PlatformDbContext>(configuration, PlatformSchemas.Platform);
         return services;

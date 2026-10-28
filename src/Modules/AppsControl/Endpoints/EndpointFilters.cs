@@ -7,18 +7,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace DynamicCube.Modules.AppsControl.Endpoints;
 
-public static class PrivilegeEndpointExtensions
-{
-    /// <summary>Requires the current user to hold <paramref name="action"/> on <paramref name="resourceCode"/> (Apps Control privileges).</summary>
-    public static TBuilder RequirePrivilege<TBuilder>(this TBuilder builder, string resourceCode, string action)
-        where TBuilder : IEndpointConventionBuilder =>
-        builder.AddEndpointFilter(async (context, next) =>
-        {
-            var access = await context.HttpContext.RequestServices.GetRequiredService<AccessResolver>().GetAsync(context.HttpContext.RequestAborted);
-            return access.Can(resourceCode, action) ? await next(context) : Results.Problem(statusCode: StatusCodes.Status403Forbidden, detail: $"Requires {action} on {resourceCode}.");
-        });
-}
-
 /// <summary>Rejects locked or disabled accounts and maps Apps Control exceptions to problem responses.</summary>
 internal static class AppsControlFilters
 {
