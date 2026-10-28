@@ -2,6 +2,7 @@ using System.Text.Json.Nodes;
 using DynamicCube.Modules.AppsControl.Changes;
 using DynamicCube.Modules.Workflow.Changes;
 using DynamicCube.Platform.ChangeSets;
+using DynamicCube.Platform.Parties;
 using DynamicCube.Platform.Workflow;
 using DynamicCube.Tests.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -30,8 +31,16 @@ public sealed class TestSubject : IWorkflowSubject
 
     public SubjectUpdate Last(Guid id) => Updates[id][^1];
 
+    /// <summary>The party a subject is for (documents are issued to it); the subject id itself by default.</summary>
+    public Dictionary<Guid, Guid> Parties { get; } = [];
+
     public Task<JsonObject> GetRuleContextAsync(Guid subjectId, CancellationToken cancellationToken) =>
-        Task.FromResult(new JsonObject { ["data"] = Data.TryGetValue(subjectId, out var data) ? data.DeepClone() : new JsonObject(), ["level"] = null });
+        Task.FromResult(new JsonObject
+        {
+            ["data"] = Data.TryGetValue(subjectId, out var data) ? data.DeepClone() : new JsonObject(),
+            ["level"] = null,
+            ["party"] = new JsonObject { ["id"] = (Parties.TryGetValue(subjectId, out var party) ? party : subjectId).ToString() },
+        });
 
     public Task UpdateAsync(Guid subjectId, SubjectUpdate update, CancellationToken cancellationToken)
     {
@@ -49,6 +58,14 @@ public sealed class TestSubject : IWorkflowSubject
     }
 }
 
+/// <summary>Every party exists, as an establishment named after its id.</summary>
+public sealed class TestParties : IPartyFacts
+{
+    public Task<PartyFacts?> GetAsync(Guid partyId, bool refreshProfile, CancellationToken cancellationToken) =>
+        Task.FromResult<PartyFacts?>(new PartyFacts(
+            partyId, PartyKind.Establishment, "منشأة " + partyId.ToString()[..4], "Establishment " + partyId.ToString()[..4], new Dictionary<string, string>(), new Dictionary<string, JsonNode?>(), [], []));
+}
+
 /// <summary>A test host with the test subject and clock, plus helpers to define staff and workflows.</summary>
 internal sealed class WorkflowHost : IAsyncDisposable
 {
@@ -60,6 +77,7 @@ internal sealed class WorkflowHost : IAsyncDisposable
             s.AddSingleton<IWorkflowSubject>(Subject);
             s.AddSingleton(Clock);
             s.AddSingleton<TimeProvider>(Clock);
+            s.AddSingleton<IPartyFacts>(new TestParties());
         });
     }
 

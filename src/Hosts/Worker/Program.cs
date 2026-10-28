@@ -1,5 +1,6 @@
 using DynamicCube.Hosting;
 using DynamicCube.Modules.AppsControl;
+using DynamicCube.Modules.Decisions;
 using DynamicCube.Modules.Documents;
 using DynamicCube.Modules.Workflow;
 using DynamicCube.Platform.Security;
@@ -14,6 +15,7 @@ builder.Services.AddHostedService<OutboxBackgroundService>();
 builder.Services.AddAppsControl(builder.Configuration, managesUsers: false);
 builder.Services.AddWorkflow(builder.Configuration);
 builder.Services.AddDocuments(builder.Configuration);
+builder.Services.AddDecisions(builder.Configuration);
 builder.Services.AddHostedService<SlaBackgroundService>();
 builder.Services.AddHostedService<DocumentDatesBackgroundService>();
 

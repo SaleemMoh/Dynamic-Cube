@@ -1,14 +1,15 @@
 using System.Text.Json.Nodes;
 using DynamicCube.Modules.Services.Domain;
 using DynamicCube.Modules.Services.Persistence;
+using DynamicCube.Platform.Parties;
 using DynamicCube.Platform.Security;
 using DynamicCube.Platform.Workflow;
 using Microsoft.EntityFrameworkCore;
 
 namespace DynamicCube.Modules.Services.Runtime;
 
-/// <summary>Service requests as workflow subjects: gateways read their answers; actions set their status and timeline.</summary>
-internal sealed class RequestSubject(ServicesDbContext context, ICurrentUser user, TimeProvider clock) : IWorkflowSubject
+/// <summary>Service requests as workflow subjects: rules read their answers, level and party; actions set their status and timeline.</summary>
+internal sealed class RequestSubject(ServicesDbContext context, IPartyFacts parties, ICurrentUser user, TimeProvider clock) : IWorkflowSubject
 {
     public const string Type = "SERVICE_REQUEST";
 
@@ -17,11 +18,16 @@ internal sealed class RequestSubject(ServicesDbContext context, ICurrentUser use
     public async Task<JsonObject> GetRuleContextAsync(Guid subjectId, CancellationToken cancellationToken)
     {
         var request = await LoadAsync(subjectId, cancellationToken);
+        var party = await parties.GetAsync(request.BeneficiaryPartyId, refreshProfile: false, cancellationToken);
         return new JsonObject
         {
             ["data"] = JsonNode.Parse(request.Data),
             ["level"] = request.LevelCode,
             ["service"] = request.ServiceCode,
+            ["number"] = request.Number,
+            ["submitterPartyId"] = request.SubmitterPartyId.ToString(),
+            // The beneficiary: decisions and documents read its profile, identifiers and credentials.
+            ["party"] = party?.ToJson() ?? new JsonObject { ["id"] = request.BeneficiaryPartyId.ToString() },
         };
     }
 

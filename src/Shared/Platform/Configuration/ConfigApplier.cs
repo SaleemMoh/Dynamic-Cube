@@ -56,6 +56,9 @@ public class ConfigRefs<TContext>(TContext context, ChangeSet? draft)
 
     public bool IsValidating => draft is not null;
 
+    /// <summary>The change set being checked (null when publishing): lets an item read another pending item's payload.</summary>
+    public ChangeSet? Draft => draft;
+
     public bool IsPendingCreate(string entityType, string code) =>
         draft is not null && draft.Items.Any(i => i.EntityType == entityType && i.EntityCode == code && i.Operation == ChangeOperation.Create);
 

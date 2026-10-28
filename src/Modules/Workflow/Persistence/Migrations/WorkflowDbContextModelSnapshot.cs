@@ -451,6 +451,11 @@ namespace DynamicCube.Modules.Workflow.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("due_at");
 
+                    b.Property<string>("Facts")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("facts");
+
                     b.Property<string>("LevelCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")

@@ -97,6 +97,49 @@ internal static partial class DefinitionValidator
 
                 Target(node.Default, field + ".default", nodes, errors, required: true);
                 break;
+            case NodeType.Decision:
+                errors.Required(field + ".ruleSet", node.RuleSet);
+                if (node.Result is not null && !ResultName().IsMatch(node.Result))
+                {
+                    errors.Add(field + ".result", "Use letters, digits and _.");
+                }
+
+                foreach (var (name, rule) in node.Input)
+                {
+                    CheckRule(rule, $"{field}.input.{name}", evaluator, errors);
+                }
+
+                Target(node.Next, field + ".next", nodes, errors, required: true);
+                break;
+            case NodeType.Document:
+                errors.Required(field + ".documentType", node.DocumentType);
+                CheckRule(node.Holder, field + ".holder", evaluator, errors);
+                foreach (var (name, rule) in node.Data)
+                {
+                    CheckRule(rule, $"{field}.data.{name}", evaluator, errors);
+                }
+
+                if (node.Lines is { } lines)
+                {
+                    if (lines.Source is null)
+                    {
+                        errors.Add(field + ".lines.source", "Give the rule that lists the lines.");
+                    }
+
+                    CheckRule(lines.Source, field + ".lines.source", evaluator, errors);
+                    if (lines.Fields.Count == 0)
+                    {
+                        errors.Add(field + ".lines.fields", "Give the fields of a line.");
+                    }
+
+                    foreach (var (name, rule) in lines.Fields)
+                    {
+                        CheckRule(rule, $"{field}.lines.fields.{name}", evaluator, errors);
+                    }
+                }
+
+                Target(node.Next, field + ".next", nodes, errors, required: true);
+                break;
             case NodeType.End:
                 if (node.Outcome is null)
                 {
@@ -267,11 +310,17 @@ internal static partial class DefinitionValidator
     [GeneratedRegex("^[A-Z][A-Z0-9_\\-]{0,50}$")]
     private static partial Regex Code();
 
-    /// <summary>What gateway rules see: the subject's answers and level and the last action of each task.</summary>
+    [GeneratedRegex("^[A-Za-z_][A-Za-z0-9_]{0,63}$")]
+    private static partial Regex ResultName();
+
+    /// <summary>What rules see: the subject's facts, the last action of each task, decisions and documents so far.</summary>
     private static readonly JsonObject SampleContext = new()
     {
         ["data"] = new JsonObject(),
         ["level"] = null,
+        ["party"] = new JsonObject(),
         ["actions"] = new JsonObject(),
+        ["decisions"] = new JsonObject(),
+        ["documents"] = new JsonObject(),
     };
 }

@@ -52,6 +52,9 @@ public sealed class WorkflowInstance : IAuditable
 
     public string? Outcome { get; set; }
 
+    /// <summary>What automatic steps produced (JSON): <c>decisions</c> and <c>documents</c> by node, read by later rules.</summary>
+    public string Facts { get; set; } = "{}";
+
     public DateTimeOffset StartedAt { get; set; }
 
     public DateTimeOffset? CompletedAt { get; set; }
@@ -234,6 +237,9 @@ public static class WorkflowEventTypes
     public const string SlaWarning = "SLA_WARNING";
     public const string SlaBreached = "SLA_BREACHED";
     public const string Completed = "COMPLETED";
+    public const string Decided = "DECIDED";
+    public const string DocumentIssued = "DOCUMENT_ISSUED";
+    public const string DocumentAmended = "DOCUMENT_AMENDED";
 }
 
 /// <summary>Out of office: the delegate works on the delegator's assigned tasks between the dates.</summary>

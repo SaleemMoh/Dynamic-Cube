@@ -3,11 +3,14 @@ using DynamicCube.Modules.Workflow.Definitions;
 using DynamicCube.Modules.Workflow.Domain;
 using DynamicCube.Modules.Workflow.Persistence;
 using DynamicCube.Platform.Calendars;
+using DynamicCube.Platform.Decisions;
+using DynamicCube.Platform.Documents;
 using DynamicCube.Platform.Expressions;
 using DynamicCube.Platform.Persistence;
 using DynamicCube.Platform.Security;
 using DynamicCube.Platform.Workflow;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DynamicCube.Modules.Workflow.Runtime;
 
@@ -23,6 +26,7 @@ internal sealed class WorkflowEngine(
     IWorkingCalendarProvider calendars,
     IUnitOfWork unitOfWork,
     JsonLogicEvaluator evaluator,
+    IServiceProvider services,
     TimeProvider clock) : IWorkflowRuntime
 {
     public const string System = "system";
@@ -209,11 +213,107 @@ internal sealed class WorkflowEngine(
                 await AdvanceAsync(run, token, cancellationToken);
                 break;
 
+            case NodeType.Decision:
+                await DecideAsync(run, node, cancellationToken);
+                token.NodeCode = node.Next!;
+                await AdvanceAsync(run, token, cancellationToken);
+                break;
+
+            case NodeType.Document:
+                await IssueAsync(run, node, cancellationToken);
+                token.NodeCode = node.Next!;
+                await AdvanceAsync(run, token, cancellationToken);
+                break;
+
             case NodeType.End:
                 token.Status = TokenStatus.Done;
                 Complete(run, node);
                 break;
         }
+    }
+
+    /// <summary>Evaluates the node's rule set (Decisions module) and keeps the results as <c>decisions.&lt;result&gt;</c>.</summary>
+    private async Task DecideAsync(Run run, NodeDefinition node, CancellationToken cancellationToken)
+    {
+        var decisions = services.GetService<IDecisionService>() ?? throw new WorkflowConflictException("Decision rules are not installed.");
+        var facts = await RuleContextAsync(run, cancellationToken);
+        var input = node.Input.Count == 0 ? facts : Map(node.Input, facts);
+        DecisionResult result;
+        try
+        {
+            result = await decisions.EvaluateAsync(new DecisionRequest(node.RuleSet!, input, run.Instance.SubjectType, run.Instance.SubjectId, run.Instance.SubjectNumber), cancellationToken);
+        }
+        catch (DecisionException ex)
+        {
+            throw new WorkflowConflictException($"Step '{node.Code}': {ex.Message}");
+        }
+
+        var output = (JsonObject)result.Output.DeepClone();
+        output["evaluationId"] = result.EvaluationId.ToString();
+        output["version"] = result.Version;
+        SetFact(run, "decisions", node.Result ?? node.Code, output);
+        run.Event(WorkflowEventTypes.Decided, null, null, $"{result.RuleSetCode}/{result.Version}", node: node.Code);
+    }
+
+    /// <summary>Issues the node's document (Documents module) for the holder and keeps its number as <c>documents.&lt;node&gt;</c>.</summary>
+    private async Task IssueAsync(Run run, NodeDefinition node, CancellationToken cancellationToken)
+    {
+        var issuer = services.GetService<IDocumentIssuer>() ?? throw new WorkflowConflictException("Documents are not installed.");
+        var facts = await RuleContextAsync(run, cancellationToken);
+        var holderValue = evaluator.Evaluate(node.Holder ?? new JsonObject { ["var"] = "party.id" }, facts);
+        if (holderValue is not JsonValue holderText || !Guid.TryParse(holderText.ToString(), out var holder))
+        {
+            throw new WorkflowConflictException($"Step '{node.Code}': the holder is not a party id.");
+        }
+
+        var lines = new JsonArray();
+        if (node.Lines is { } definition)
+        {
+            var name = definition.As ?? "item";
+            foreach (var element in evaluator.Evaluate(definition.Source, facts) as JsonArray ?? [])
+            {
+                var scope = (JsonObject)facts.DeepClone();
+                scope[name] = element?.DeepClone();
+                lines.Add(Map(definition.Fields, scope));
+            }
+        }
+
+        IssuedDocumentInfo issued;
+        try
+        {
+            issued = await issuer.IssueAsync(
+                new DocumentIssue(node.DocumentType!, holder, Map(node.Data, facts), lines, run.Instance.SubjectType, run.Instance.SubjectId, run.Instance.SubjectNumber, node.Reason),
+                cancellationToken);
+        }
+        catch (DocumentIssueException ex)
+        {
+            throw new WorkflowConflictException($"Step '{node.Code}': {ex.Message}");
+        }
+
+        SetFact(run, "documents", node.Code, new JsonObject
+        {
+            ["id"] = issued.Id.ToString(),
+            ["number"] = issued.Number,
+            ["version"] = issued.Version,
+            ["amended"] = issued.Amended,
+        });
+        run.Event(issued.Amended ? WorkflowEventTypes.DocumentAmended : WorkflowEventTypes.DocumentIssued, null, null, $"{issued.Number} v{issued.Version}", node: node.Code);
+    }
+
+    private JsonObject Map(Dictionary<string, JsonNode?> fields, JsonObject facts) =>
+        new(fields.Select(f => KeyValuePair.Create(f.Key, evaluator.Evaluate(f.Value, facts)?.DeepClone())));
+
+    private static void SetFact(Run run, string group, string key, JsonNode value)
+    {
+        var facts = JsonNode.Parse(run.Instance.Facts)?.AsObject() ?? [];
+        if (facts[group] is not JsonObject entries)
+        {
+            entries = [];
+            facts[group] = entries;
+        }
+
+        entries[key] = value;
+        run.Instance.Facts = facts.ToJsonString();
     }
 
     private async Task JoinAsync(Run run, WorkflowToken token, NodeDefinition node, CancellationToken cancellationToken)
@@ -383,7 +483,7 @@ internal sealed class WorkflowEngine(
         }
     }
 
-    /// <summary>What gateway rules see: the subject's facts plus the last action taken on each task.</summary>
+    /// <summary>What rules see: the subject's facts, the last action taken on each task, and decisions and documents so far.</summary>
     private async Task<JsonObject> RuleContextAsync(Run run, CancellationToken cancellationToken)
     {
         var facts = await Subject(run.Instance.SubjectType).GetRuleContextAsync(run.Instance.SubjectId, cancellationToken);
@@ -395,6 +495,9 @@ internal sealed class WorkflowEngine(
 
         facts["actions"] = actions;
         facts["level"] ??= run.Instance.LevelCode;
+        var produced = JsonNode.Parse(run.Instance.Facts)?.AsObject() ?? [];
+        facts["decisions"] = produced["decisions"]?.DeepClone() ?? new JsonObject();
+        facts["documents"] = produced["documents"]?.DeepClone() ?? new JsonObject();
         return facts;
     }
 
@@ -495,7 +598,7 @@ internal sealed class WorkflowEngine(
         public void Update(SubjectStatus status, string displayStatus, string eventType, string? comment) =>
             Pending = new SubjectUpdate(status, displayStatus, eventType, comment);
 
-        public void Event(string type, WorkTask? task, string? action, string? comment = null, bool visible = false, string? target = null) =>
+        public void Event(string type, WorkTask? task, string? action, string? comment = null, bool visible = false, string? target = null, string? node = null) =>
             Events.Add(new WorkflowEvent
             {
                 InstanceId = Instance.Id,
@@ -504,7 +607,7 @@ internal sealed class WorkflowEngine(
                 Actor = actor,
                 OnBehalfOf = onBehalfOf,
                 Type = type,
-                NodeCode = task?.NodeCode,
+                NodeCode = task?.NodeCode ?? node,
                 ActionCode = action,
                 Target = target,
                 Comment = comment,

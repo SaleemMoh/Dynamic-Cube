@@ -27,6 +27,12 @@ public enum NodeType
 
     /// <summary>Routes by the first rule that holds, else the default.</summary>
     Gateway,
+
+    /// <summary>Evaluates a decision rule set (e.g. grading); the results are kept for later rules and documents.</summary>
+    Decision,
+
+    /// <summary>Issues (or amends) a document for the holder, e.g. the certificate.</summary>
+    Document,
     End,
 }
 
@@ -72,6 +78,42 @@ public sealed class NodeDefinition
 
     /// <summary>End: the result for the applicant.</summary>
     public EndOutcome? Outcome { get; set; }
+
+    /// <summary>Decision: the rule set to evaluate (its current published version).</summary>
+    public string? RuleSet { get; set; }
+
+    /// <summary>Decision: input field → JSONLogic over the workflow facts; empty passes all the facts.</summary>
+    public Dictionary<string, JsonNode?> Input { get; set; } = [];
+
+    /// <summary>Decision: where the results go, as <c>decisions.&lt;Result&gt;</c> (default: the node code).</summary>
+    public string? Result { get; set; }
+
+    /// <summary>Document: the document type to issue.</summary>
+    public string? DocumentType { get; set; }
+
+    /// <summary>Document: JSONLogic giving the holder's party id (default: the subject's party).</summary>
+    public JsonNode? Holder { get; set; }
+
+    /// <summary>Document: data field → JSONLogic over the workflow facts.</summary>
+    public Dictionary<string, JsonNode?> Data { get; set; } = [];
+
+    /// <summary>Document: the line items (e.g. one per sector with its grade).</summary>
+    public DocumentLines? Lines { get; set; }
+
+    /// <summary>Document: why it is issued (kept in the document's history).</summary>
+    public string? Reason { get; set; }
+}
+
+/// <summary>Line items built from a list: one line per element, each field a JSONLogic rule.</summary>
+public sealed class DocumentLines
+{
+    /// <summary>JSONLogic giving the list, e.g. <c>{"var": "decisions.GRADING.items"}</c>.</summary>
+    public JsonNode? Source { get; set; }
+
+    /// <summary>Name the element is read by in the field rules (default <c>item</c>).</summary>
+    public string? As { get; set; }
+
+    public Dictionary<string, JsonNode?> Fields { get; set; } = [];
 }
 
 public enum TargetKind

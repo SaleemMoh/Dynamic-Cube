@@ -1,5 +1,6 @@
 using DynamicCube.Hosting;
 using DynamicCube.Modules.AppsControl;
+using DynamicCube.Modules.Decisions;
 using DynamicCube.Modules.Documents;
 using DynamicCube.Modules.Integration;
 using DynamicCube.Modules.Parties;
@@ -20,6 +21,7 @@ builder.Services.AddParties(builder.Configuration);
 builder.Services.AddServices(builder.Configuration);
 builder.Services.AddWorkflow(builder.Configuration);
 builder.Services.AddDocuments(builder.Configuration);
+builder.Services.AddDecisions(builder.Configuration);
 
 var app = builder.Build();
 app.MapDynamicCubeDefaults();
@@ -29,6 +31,7 @@ app.MapPartiesInternal();
 app.MapServicesInternal();
 app.MapWorkflowInternal();
 app.MapDocumentsInternal();
+app.MapDecisionsInternal();
 
 app.Run();
 
