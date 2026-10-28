@@ -164,3 +164,23 @@ export function problemMessages(error: unknown): string[] {
   }
   return [(error as { message?: string } | null)?.message ?? 'Request failed'];
 }
+
+/** One item of a checked package: whether its row exists and what is wrong with it (field → messages). */
+export interface PackageItemCheck {
+  index: number;
+  entityType: string | null;
+  entityCode: string | null;
+  operation: string | null;
+  area: string | null;
+  exists: boolean;
+  payload: Record<string, unknown> | null;
+  errors: Record<string, string[]>;
+}
+
+/** A package checked without saving anything. */
+export interface PackageCheck {
+  title: string | null;
+  isValid: boolean;
+  errors: Record<string, string[]>;
+  items: PackageItemCheck[];
+}

@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import {
   ChangeOperation,
   ChangeSetDetail,
+  PackageCheck,
   ChangeSetStatus,
   ChangeSetSummary,
   BrandingInfo,
@@ -120,11 +121,17 @@ export class AppsControlApi {
     });
   }
 
-  /** Saves and publishes one change in an area that needs no approval. */
   /** Imports a configuration package as draft change sets (one per area). */
   importPackage(pkg: { title: string; items: unknown[] }): Observable<ChangeSetDetail[]> {
     return this.http.post<ChangeSetDetail[]>(`${APPS_CONTROL_API}/change-sets/import`, pkg);
   }
+
+  /** Checks a package as the import would, keeping nothing: problems of the package and of each item. */
+  checkPackage(pkg: unknown): Observable<PackageCheck> {
+    return this.http.post<PackageCheck>(`${APPS_CONTROL_API}/change-sets/import/check`, pkg);
+  }
+
+  /** Saves and publishes one change in an area that needs no approval. */
 
   applyNow(
     entityType: string,

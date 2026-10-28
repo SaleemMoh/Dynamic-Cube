@@ -4,6 +4,7 @@ using DynamicCube.Modules.AppsControl.Changes;
 using DynamicCube.Modules.AppsControl.Domain;
 using DynamicCube.Modules.AppsControl.Persistence;
 using DynamicCube.Platform.ChangeSets;
+using DynamicCube.Platform.Persistence;
 using DynamicCube.Platform.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -22,6 +23,20 @@ public sealed record ReviewRequest(string? Comment);
 
 /// <summary>A configuration package: changes of any modules, drafted as one change set per area.</summary>
 public sealed record ImportPackageRequest(string Title, List<AddChangeItemRequest> Items);
+
+/// <summary>One item of a package as the dry run found it: whether its row exists and what is wrong with it.</summary>
+public sealed record PackageItemCheck(
+    int Index,
+    string? EntityType,
+    string? EntityCode,
+    string? Operation,
+    string? Area,
+    bool Exists,
+    JsonElement? Payload,
+    IReadOnlyDictionary<string, string[]> Errors);
+
+/// <summary>A package checked without saving anything: problems of the package itself and of each item.</summary>
+public sealed record PackageCheck(string? Title, bool IsValid, IReadOnlyDictionary<string, string[]> Errors, IReadOnlyList<PackageItemCheck> Items);
 
 public sealed record ChangeSetSummary(
     Guid Id,
@@ -251,6 +266,12 @@ internal static class AdminEndpoints
             return Results.Ok(details);
         }).RequirePrivilege(AppsControlResources.ChangeSets, PrivilegeActions.Create).WithName("ImportConfigurationPackage");
 
+        // Dry run of an import: every item is checked as the import would (references to earlier items included), then
+        // nothing is kept. Accepts any JSON so the reviewer sees every problem, not just the first.
+        sets.MapPost("/import/check", async (JsonElement package, ChangeSetRouter router, AccessResolver resolver, IUnitOfWork unitOfWork, CancellationToken ct) =>
+            TypedResults.Ok(await CheckPackageAsync(package, router, resolver, unitOfWork, ct)))
+            .RequirePrivilege(AppsControlResources.ChangeSets, PrivilegeActions.Create).WithName("CheckConfigurationPackage");
+
         sets.MapDelete("/{id:guid}/items/{itemId:guid}", async (Guid id, Guid itemId, ChangeSetRouter router, AppsControlDbContext db, ICurrentUser user, CancellationToken ct) =>
         {
             var service = await router.ForChangeSetAsync(id, ct);
@@ -330,14 +351,29 @@ internal static class AdminEndpoints
     private static async Task<(IConfigApplier? Applier, string? Payload, IResult? Problem)> AuthorizeChangeAsync(
         AddChangeItemRequest request, IReadOnlyList<IConfigApplier> appliers, AccessResolver resolver, CancellationToken ct)
     {
-        var applier = Find(appliers, request.EntityType);
+        var (applier, payload, error) = await CheckChangeAccessAsync(request.EntityType, request.Operation, request.Payload, appliers, resolver, ct);
+        return error switch
+        {
+            null => (applier, payload, null),
+            { Forbidden: true } => (applier, null, Results.Problem(statusCode: StatusCodes.Status403Forbidden, detail: error.Message)),
+            _ => (null, null, Results.ValidationProblem(new Dictionary<string, string[]> { [error.Field] = [error.Message] })),
+        };
+    }
+
+    private sealed record AccessError(string Field, string Message, bool Forbidden);
+
+    /// <summary>The applier of an item and its payload as stored (explanations such as <c>_help</c> removed), or why it is refused.</summary>
+    private static async Task<(IConfigApplier? Applier, string? Payload, AccessError? Error)> CheckChangeAccessAsync(
+        string? entityType, ChangeOperation operation, JsonElement? body, IReadOnlyList<IConfigApplier> appliers, AccessResolver resolver, CancellationToken ct)
+    {
+        var applier = Find(appliers, entityType ?? string.Empty);
         if (applier is null)
         {
-            return (null, null, Results.ValidationProblem(new Dictionary<string, string[]> { ["entityType"] = [$"Unknown entity type '{request.EntityType}'."] }));
+            return (null, null, new AccessError("entityType", $"Unknown entity type '{entityType}'.", false));
         }
 
         var access = await resolver.GetAsync(ct);
-        var action = request.Operation switch
+        var action = operation switch
         {
             ChangeOperation.Create => PrivilegeActions.Create,
             ChangeOperation.Delete => PrivilegeActions.Delete,
@@ -345,16 +381,132 @@ internal static class AdminEndpoints
         };
         if (!access.Can(applier.ResourceCode, action))
         {
-            return (applier, null, Forbidden(applier.ResourceCode, action));
+            return (applier, null, new AccessError("entityType", $"Requires {action} on {applier.ResourceCode}.", true));
         }
 
-        var payload = request.Payload is { ValueKind: not JsonValueKind.Null and not JsonValueKind.Undefined } p ? p.GetRawText() : null;
+        var payload = body is { ValueKind: not JsonValueKind.Null and not JsonValueKind.Undefined } p ? WithoutHelp(p) : null;
         if (applier.EntityType == AppsControlChangeTypes.Lov && payload is not null && UsesRestrictedSql(payload) && !access.Can(AppsControlResources.LovSql, PrivilegeActions.Edit))
         {
-            return (applier, null, Forbidden(AppsControlResources.LovSql, PrivilegeActions.Edit));
+            return (applier, null, new AccessError("payload.sourceType", $"Requires {PrivilegeActions.Edit} on {AppsControlResources.LovSql}.", true));
         }
 
         return (applier, payload, null);
+    }
+
+    /// <summary>Templates explain each property under <c>_help</c>; explanations are not configuration.</summary>
+    private static string WithoutHelp(JsonElement payload)
+    {
+        if (payload.ValueKind != JsonValueKind.Object || !payload.TryGetProperty("_help", out _))
+        {
+            return payload.GetRawText();
+        }
+
+        var node = System.Text.Json.Nodes.JsonObject.Create(payload)!;
+        node.Remove("_help");
+        return node.ToJsonString();
+    }
+
+    private static async Task<PackageCheck> CheckPackageAsync(JsonElement package, ChangeSetRouter router, AccessResolver resolver, IUnitOfWork unitOfWork, CancellationToken ct)
+    {
+        var errors = new Dictionary<string, string[]>();
+        if (package.ValueKind != JsonValueKind.Object)
+        {
+            return new PackageCheck(null, false, new Dictionary<string, string[]> { ["package"] = ["A package is a JSON object with a title and items."] }, []);
+        }
+
+        var title = package.TryGetProperty("title", out var t) && t.ValueKind == JsonValueKind.String ? t.GetString() : null;
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            errors["title"] = ["Give the package a title."];
+        }
+
+        var items = package.TryGetProperty("items", out var i) && i.ValueKind == JsonValueKind.Array ? i.EnumerateArray().ToList() : null;
+        if (items is not { Count: > 0 and <= 500 })
+        {
+            errors["items"] = ["Give 1 to 500 items."];
+            items ??= [];
+        }
+
+        var results = new List<PackageItemCheck>();
+        await using (var work = await unitOfWork.BeginAsync(ct))
+        {
+            var drafts = new Dictionary<string, (IChangeSetWorkflow Workflow, Guid Id)>(StringComparer.Ordinal);
+            for (var index = 0; index < Math.Min(items.Count, 500); index++)
+            {
+                results.Add(await CheckItemAsync(index, items[index], title ?? "check", drafts, router, resolver, ct));
+            }
+
+            // Nothing of the dry run is kept: the unit of work ends without a commit.
+        }
+
+        return new PackageCheck(title, errors.Count == 0 && results.All(r => r.Errors.Count == 0), errors, results);
+    }
+
+    private static async Task<PackageItemCheck> CheckItemAsync(
+        int index, JsonElement item, string title, Dictionary<string, (IChangeSetWorkflow Workflow, Guid Id)> drafts, ChangeSetRouter router, AccessResolver resolver, CancellationToken ct)
+    {
+        string? Text(string name) => item.ValueKind == JsonValueKind.Object && item.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
+        var entityType = Text("entityType");
+        var entityCode = Text("entityCode")?.Trim();
+        var operationText = Text("operation");
+        JsonElement? payload = item.ValueKind == JsonValueKind.Object && item.TryGetProperty("payload", out var p) ? p.Clone() : null;
+        PackageItemCheck Result(string? area, bool exists, Dictionary<string, string[]> errors) =>
+            new(index, entityType, entityCode, operationText, area, exists, payload, errors);
+
+        if (item.ValueKind != JsonValueKind.Object)
+        {
+            return Result(null, false, new() { ["item"] = ["Each item is an object with entityType, entityCode, operation and payload."] });
+        }
+
+        var problems = new Dictionary<string, string[]>();
+        if (string.IsNullOrEmpty(entityCode))
+        {
+            problems["entityCode"] = ["Required."];
+        }
+
+        if (!Enum.TryParse<ChangeOperation>(operationText, ignoreCase: true, out var operation) || int.TryParse(operationText, out _))
+        {
+            problems["operation"] = ["Use CREATE, UPDATE or DELETE."];
+        }
+
+        var (applier, body, error) = await CheckChangeAccessAsync(entityType, operation, payload, router.Appliers, resolver, ct);
+        if (error is not null)
+        {
+            problems[error.Field] = [error.Message];
+        }
+
+        if (applier is not null && operation != ChangeOperation.Delete && body is null)
+        {
+            problems["payload"] = ["Required for CREATE and UPDATE."];
+        }
+
+        var exists = applier is not null && !string.IsNullOrEmpty(entityCode) && await applier.GetAsync(entityCode, ct) is not null;
+        if (problems.Count > 0 || applier is null)
+        {
+            return Result(applier?.Area, exists, problems);
+        }
+
+        if (!drafts.TryGetValue(applier.Area, out var draft))
+        {
+            var workflow = router.ForArea(applier.Area);
+            draft = (workflow, (await workflow.CreateAsync(applier.Area, title, ct)).Id);
+            drafts[applier.Area] = draft;
+        }
+
+        try
+        {
+            await draft.Workflow.AddItemAsync(draft.Id, applier.EntityType, entityCode!, operation, body, ct);
+        }
+        catch (ChangeValidationException ex)
+        {
+            return Result(applier.Area, exists, ex.Errors.ToDictionary(e => e.Key, e => e.Value.ToArray()));
+        }
+        catch (ChangeSetException ex)
+        {
+            return Result(applier.Area, exists, new() { ["item"] = [ex.Message] });
+        }
+
+        return Result(applier.Area, exists, problems);
     }
 
     private static IConfigApplier? Find(IEnumerable<IConfigApplier> appliers, string type) =>

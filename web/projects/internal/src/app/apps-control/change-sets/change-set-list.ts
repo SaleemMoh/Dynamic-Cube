@@ -7,10 +7,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
-import { AppsControlApi, ChangeSetStatus, I18nService, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
+import { MatDialog } from '@angular/material/dialog';
+import { AppsControlApi, ChangeSetStatus, I18nService, TranslatePipe } from '@dynamic-cube/shared';
 import { firstValueFrom } from 'rxjs';
 import { PrivilegesService } from '../privileges.service';
+import { PackageReviewData, PackageReviewDialog } from './package-review-dialog';
 import { StatusChip } from './status-chip';
+import { TemplateDialog } from './template-dialog';
 
 type Filter = 'TO_REVIEW' | 'MINE' | 'ALL';
 
@@ -28,20 +31,19 @@ type Filter = 'TO_REVIEW' | 'MINE' | 'ALL';
         <mat-button-toggle value="ALL">{{ 'changeSets.all' | dcTranslate }}</mat-button-toggle>
       </mat-button-toggle-group>
       @if (privileges.can('apps-control.change-sets', 'CREATE')) {
-        <button matButton="outlined" (click)="file.click()" data-testid="import-package">
-          <mat-icon fontSet="material-symbols-outlined">upload_file</mat-icon>
-          {{ 'changeSets.import' | dcTranslate }}
-        </button>
+        <span class="dc-change-sets__actions">
+          <button matButton="outlined" (click)="template()" data-testid="package-template">
+            <mat-icon fontSet="material-symbols-outlined">download</mat-icon>
+            {{ 'packages.template' | dcTranslate }}
+          </button>
+          <button matButton="outlined" (click)="file.click()" data-testid="import-package">
+            <mat-icon fontSet="material-symbols-outlined">upload_file</mat-icon>
+            {{ 'changeSets.import' | dcTranslate }}
+          </button>
+        </span>
         <input #file type="file" accept="application/json,.json" hidden (change)="importPackage(file)" data-testid="import-file" />
       }
     </header>
-    @if (importErrors().length) {
-      <ul class="dc-errors" role="alert">
-        @for (error of importErrors(); track $index) {
-          <li>{{ error }}</li>
-        }
-      </ul>
-    }
 
     @if (rows().length === 0) {
       <p class="dc-empty">{{ 'changeSets.empty' | dcTranslate }}</p>
@@ -75,13 +77,20 @@ type Filter = 'TO_REVIEW' | 'MINE' | 'ALL';
       </table>
     }
   `,
+  styles: `
+    .dc-change-sets__actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+  `,
 })
 export class ChangeSetList {
   private readonly api = inject(AppsControlApi);
   private readonly i18n = inject(I18nService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly dialog = inject(MatDialog);
   protected readonly privileges = inject(PrivilegesService);
-  protected readonly importErrors = signal<string[]>([]);
   protected readonly filter = signal<Filter>('TO_REVIEW');
   protected readonly columns = ['title', 'status', 'items', 'maker', 'created'];
 
@@ -93,20 +102,25 @@ export class ChangeSetList {
         : this.api.changeSets(params === 'MINE' ? { mine: true } : {}),
   });
 
-  /** Drafts a configuration package (JSON with title and items) as change sets the user then reviews and submits. */
+  /** Downloads a documented package template for the chosen entity types. */
+  protected template(): void {
+    this.dialog.open(TemplateDialog, { width: '56rem', maxWidth: '95vw' });
+  }
+
+  /** Reviews a configuration package (checked on the server, nothing saved) and drafts it as change sets on confirmation. */
   protected async importPackage(input: HTMLInputElement): Promise<void> {
     const file = input.files?.[0];
     input.value = '';
     if (!file) return;
-    this.importErrors.set([]);
-    try {
-      const pkg = JSON.parse(await file.text()) as { title: string; items: unknown[] };
-      const created = await firstValueFrom(this.api.importPackage(pkg));
-      this.snackBar.open(this.i18n.translate('changeSets.imported').replace('{count}', String(created.length)), undefined, { duration: 6000 });
+    const created = await firstValueFrom(
+      this.dialog
+        .open<PackageReviewDialog, PackageReviewData, number>(PackageReviewDialog, { data: { fileName: file.name, text: await file.text() }, width: '64rem', maxWidth: '95vw' })
+        .afterClosed(),
+    );
+    if (created) {
+      this.snackBar.open(this.i18n.translate('changeSets.imported').replace('{count}', String(created)), undefined, { duration: 6000 });
       this.filter.set('MINE');
       this.resource.reload();
-    } catch (error) {
-      this.importErrors.set(error instanceof SyntaxError ? [this.i18n.translate('form.invalidJson')] : problemMessages(error));
     }
   }
 

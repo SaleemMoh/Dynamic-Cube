@@ -197,6 +197,48 @@ public sealed class ApiTests(DatabaseFixture fixture) : IAsyncLifetime
         mine.EnumerateArray().ShouldNotContain(c => c.GetProperty("title").GetString() == title);
     }
 
+    [Fact]
+    public async Task Checking_a_package_reports_every_problem_per_item_and_keeps_nothing()
+    {
+        fixture.RequireConnectionString();
+        var ct = TestContext.Current.CancellationToken;
+        using var maker = Client("maker");
+        var provider = TestHost.Unique("CHK");
+        var title = $"Checked package {provider}";
+
+        var response = await maker.PostAsJsonAsync("/api/apps-control/v1/change-sets/import/check", new
+        {
+            title,
+            _help = new { title = "What the package is for." },
+            items = new object[]
+            {
+                new { entityType = IntegrationChangeTypes.Provider, entityCode = provider, operation = "CREATE", payload = new { nameAr = "جهة", nameEn = "Provider", _help = new { nameAr = "Arabic name" } } },
+                new { entityType = IntegrationChangeTypes.Connection, entityCode = TestHost.Unique("C"), operation = "CREATE", payload = new { nameAr = "اتصال", nameEn = "Connection", providerCode = provider, baseUrl = "not a url" } },
+                new { entityType = "nothing.here", entityCode = "X", operation = "CREATE", payload = new { } },
+                new { entityType = IntegrationChangeTypes.Provider, entityCode = "Y", operation = "MAKE", payload = new { nameAr = "س", nameEn = "S" } },
+            },
+        }, ct);
+        response.EnsureSuccessStatusCode();
+        var check = await response.Content.ReadFromJsonAsync<JsonElement>(ct);
+
+        check.GetProperty("isValid").GetBoolean().ShouldBeFalse();
+        var items = check.GetProperty("items").EnumerateArray().ToList();
+        items[0].GetProperty("errors").EnumerateObject().ShouldBeEmpty();
+        items[0].GetProperty("area").GetString().ShouldBe("integ.integrations");
+        items[1].GetProperty("errors").TryGetProperty("baseUrl", out _).ShouldBeTrue();
+        items[2].GetProperty("errors").TryGetProperty("entityType", out _).ShouldBeTrue();
+        items[3].GetProperty("errors").TryGetProperty("operation", out _).ShouldBeTrue();
+        var mine = await maker.GetFromJsonAsync<JsonElement>("/api/apps-control/v1/change-sets?mine=true", ct);
+        mine.EnumerateArray().ShouldNotContain(c => c.GetProperty("title").GetString() == title);
+
+        var valid = await maker.PostAsJsonAsync("/api/apps-control/v1/change-sets/import/check", new
+        {
+            title,
+            items = new object[] { new { entityType = IntegrationChangeTypes.Provider, entityCode = provider, operation = "CREATE", payload = new { nameAr = "جهة", nameEn = "Provider" } } },
+        }, ct);
+        (await valid.Content.ReadFromJsonAsync<JsonElement>(ct)).GetProperty("isValid").GetBoolean().ShouldBeTrue();
+    }
+
     private static string RepositoryFile(string relative)
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
