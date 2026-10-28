@@ -44,6 +44,7 @@ public sealed record RequestView(
     string? CurrentStep,
     JsonObject Data,
     IReadOnlyList<FeeLine> Fees,
+    IReadOnlyDictionary<string, IReadOnlyList<FeeLine>> FeesByLevel,
     ResolvedVersion Version,
     IReadOnlyList<FieldError> StepErrors);
 
@@ -53,7 +54,8 @@ public sealed record RequestDetail(RequestView View, Guid SubmitterPartyId, stri
 
 public sealed record CreateRequest(string ServiceCode);
 
-public sealed record SaveRequest(JsonObject? Data, string? LevelCode, string? CurrentStep);
+/// <param name="ValidateStep">The step being left: its problems are returned and the request stays on it while there are any.</param>
+public sealed record SaveRequest(JsonObject? Data, string? LevelCode, string? CurrentStep, string? ValidateStep = null);
 
 public sealed record SubmitRequest(bool DeclarationAccepted);
 

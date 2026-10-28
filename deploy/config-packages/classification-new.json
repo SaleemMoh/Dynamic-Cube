@@ -1,0 +1,885 @@
+{
+  "title": "New classification certificate service",
+  "items": [
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_CR_NUMBER",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "رقم السجل التجاري",
+        "nameEn": "CR number",
+        "type": "TEXT",
+        "prefill": "party.identifiers.CR_NUMBER",
+        "validation": {
+          "pattern": "^[0-9]{10}$"
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_CR_CITY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مدينة السجل",
+        "nameEn": "CR city",
+        "type": "TEXT",
+        "prefill": "party.profile.CR_CITY",
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_SECTORS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "القطاعات المطلوب التصنيف فيها",
+        "nameEn": "Sectors to be classified in",
+        "type": "SELECT",
+        "options": [
+          {
+            "value": "CONSTRUCTION",
+            "labelAr": "التشييد والبناء",
+            "labelEn": "Construction & building"
+          },
+          {
+            "value": "ICT",
+            "labelAr": "الاتصالات وتقنية المعلومات",
+            "labelEn": "ICT"
+          },
+          {
+            "value": "OM",
+            "labelAr": "التشغيل والصيانة والخدمات",
+            "labelEn": "Operation, maintenance & services"
+          },
+          {
+            "value": "REAL_ESTATE",
+            "labelAr": "التطوير العقاري",
+            "labelEn": "Real estate development"
+          },
+          {
+            "value": "CATERING",
+            "labelAr": "الإعاشة والتغذية",
+            "labelEn": "Catering & subsistence"
+          },
+          {
+            "value": "EXHIBITIONS",
+            "labelAr": "المعارض والمؤتمرات",
+            "labelEn": "Exhibitions & conferences"
+          },
+          {
+            "value": "SURVEYING",
+            "labelAr": "المساحة والمعلومات الجيومكانية",
+            "labelEn": "Surveying & geospatial"
+          },
+          {
+            "value": "CYBER",
+            "labelAr": "الأمن السيبراني",
+            "labelEn": "Cybersecurity"
+          },
+          {
+            "value": "CONSULTANCY",
+            "labelAr": "المكاتب والشركات الهندسية الاستشارية",
+            "labelEn": "Engineering consultancy"
+          }
+        ],
+        "multiple": true,
+        "hintAr": "يمكن اختيار أكثر من قطاع في طلب واحد",
+        "hintEn": "You can choose several sectors in one request",
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_PRIMARY_SECTOR",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "القطاع الرئيسي",
+        "nameEn": "Primary sector",
+        "type": "SELECT",
+        "options": [
+          {
+            "value": "CONSTRUCTION",
+            "labelAr": "التشييد والبناء",
+            "labelEn": "Construction & building"
+          },
+          {
+            "value": "ICT",
+            "labelAr": "الاتصالات وتقنية المعلومات",
+            "labelEn": "ICT"
+          },
+          {
+            "value": "OM",
+            "labelAr": "التشغيل والصيانة والخدمات",
+            "labelEn": "Operation, maintenance & services"
+          },
+          {
+            "value": "REAL_ESTATE",
+            "labelAr": "التطوير العقاري",
+            "labelEn": "Real estate development"
+          },
+          {
+            "value": "CATERING",
+            "labelAr": "الإعاشة والتغذية",
+            "labelEn": "Catering & subsistence"
+          },
+          {
+            "value": "EXHIBITIONS",
+            "labelAr": "المعارض والمؤتمرات",
+            "labelEn": "Exhibitions & conferences"
+          },
+          {
+            "value": "SURVEYING",
+            "labelAr": "المساحة والمعلومات الجيومكانية",
+            "labelEn": "Surveying & geospatial"
+          },
+          {
+            "value": "CYBER",
+            "labelAr": "الأمن السيبراني",
+            "labelEn": "Cybersecurity"
+          },
+          {
+            "value": "CONSULTANCY",
+            "labelAr": "المكاتب والشركات الهندسية الاستشارية",
+            "labelEn": "Engineering consultancy"
+          }
+        ],
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_EMPLOYEES",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إجمالي عدد الموظفين",
+        "nameEn": "Total employees",
+        "type": "NUMBER",
+        "validation": {
+          "min": 1,
+          "max": 1000000
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_SAUDI_EMPLOYEES",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "عدد الموظفين السعوديين",
+        "nameEn": "Saudi employees",
+        "type": "NUMBER",
+        "validation": {
+          "min": 0,
+          "max": 1000000
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_ENGINEERS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "عدد المهندسين",
+        "nameEn": "Engineers",
+        "type": "NUMBER",
+        "validation": {
+          "min": 0,
+          "max": 1000000
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_TECHNICIANS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "عدد الفنيين",
+        "nameEn": "Technicians",
+        "type": "NUMBER",
+        "validation": {
+          "min": 0,
+          "max": 1000000
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_DGA_CATEGORY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "فئة التصنيف لدى هيئة الحكومة الرقمية",
+        "nameEn": "DGA classification category",
+        "type": "SELECT",
+        "options": [
+          {
+            "value": "PLATINUM",
+            "labelAr": "بلاتيني",
+            "labelEn": "Platinum"
+          },
+          {
+            "value": "GOLD",
+            "labelAr": "ذهبي",
+            "labelEn": "Gold"
+          },
+          {
+            "value": "SILVER",
+            "labelAr": "فضي",
+            "labelEn": "Silver"
+          },
+          {
+            "value": "BEGINNER",
+            "labelAr": "ناشئ",
+            "labelEn": "Beginner"
+          }
+        ],
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_SCE_LICENSE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "رقم ترخيص الهيئة السعودية للمهندسين",
+        "nameEn": "Saudi Council of Engineers license number",
+        "type": "TEXT",
+        "validation": {
+          "maxLength": 30
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_PROJECTS_COUNT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "عدد المشاريع المنجزة خلال 10 سنوات",
+        "nameEn": "Projects completed in the last 10 years",
+        "type": "NUMBER",
+        "validation": {
+          "min": 0,
+          "max": 100000
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_PROJECTS_VALUE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "القيمة التراكمية للمشاريع (مليون ريال)",
+        "nameEn": "Cumulative project value (SAR million)",
+        "type": "NUMBER",
+        "validation": {
+          "min": 0
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_LARGEST_PROJECT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "قيمة أكبر مشروع (مليون ريال)",
+        "nameEn": "Largest project value (SAR million)",
+        "type": "NUMBER",
+        "validation": {
+          "min": 0
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_GOV_BOARD",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "يوجد مجلس إدارة",
+        "nameEn": "There is a board of directors",
+        "type": "CHECKBOX",
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_GOV_ERP",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "يوجد نظام تخطيط موارد المؤسسة (ERP)",
+        "nameEn": "An ERP system is in use",
+        "type": "CHECKBOX",
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_GOV_PMS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "يوجد نظام لإدارة المشاريع",
+        "nameEn": "A project management system is in use",
+        "type": "CHECKBOX",
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_GOV_ORG",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "يوجد هيكل تنظيمي معتمد",
+        "nameEn": "There is an approved organization structure",
+        "type": "CHECKBOX",
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_GOV_ISO",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "توجد شهادة ISO أو شهادة سلامة",
+        "nameEn": "There is an ISO or safety certificate",
+        "type": "CHECKBOX",
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_ANNUAL_REVENUE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإيرادات السنوية (ريال)",
+        "nameEn": "Annual revenue (SAR)",
+        "type": "NUMBER",
+        "validation": {
+          "min": 0
+        },
+        "hintAr": "حسب آخر قوائم مالية مدققة في منصة قوائم",
+        "hintEn": "From the latest audited financial statements in Qawaem"
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_FINANCIAL_YEAR_END",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تاريخ نهاية آخر سنة مالية",
+        "nameEn": "End of the last fiscal year",
+        "type": "DATE",
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.service",
+      "entityCode": "CLASSIFICATION_NEW",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إصدار شهادة تصنيف مقدمي خدمات المدن",
+        "nameEn": "City service providers classification — new certificate",
+        "descriptionAr": "تقييم قدرات المنشأة المالية والفنية والإدارية والتنفيذية لتصنيفها في قطاع ونشاط ودرجة.",
+        "descriptionEn": "Assessment of the establishment's financial, technical, administrative and execution capabilities to place it in a sector, activity and grade.",
+        "archetype": "ISSUANCE",
+        "categoryCode": "CLASSIFICATION",
+        "icon": "workspace_premium",
+        "displayOrder": 10,
+        "partyKinds": [
+          "ESTABLISHMENT"
+        ],
+        "isListed": true,
+        "draftsAllowed": true,
+        "draftExpiryDays": 30,
+        "onNewVersion": "CONTINUE",
+        "numberPrefix": "CLS"
+      }
+    },
+    {
+      "entityType": "svc.service-version",
+      "entityCode": "CLASSIFICATION_NEW/1",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 1 — دليل أبريل 2026",
+        "nameEn": "Version 1 — April 2026 guide",
+        "definition": {
+          "levels": [
+            {
+              "code": "REGULAR",
+              "nameAr": "عادي",
+              "nameEn": "Regular",
+              "descriptionAr": "بدون رسوم",
+              "descriptionEn": "Free of charge",
+              "slaWorkingDays": 60
+            },
+            {
+              "code": "PREMIUM",
+              "nameAr": "مميز",
+              "nameEn": "Premium",
+              "descriptionAr": "رسوم حسب الإيرادات السنوية",
+              "descriptionEn": "Fee by annual revenue",
+              "slaWorkingDays": 35
+            },
+            {
+              "code": "DIAMOND",
+              "nameAr": "ماسي",
+              "nameEn": "Diamond",
+              "descriptionAr": "المسار الأسرع",
+              "descriptionEn": "The fastest track",
+              "slaWorkingDays": 10
+            }
+          ],
+          "steps": [
+            {
+              "code": "LEVEL",
+              "type": "LEVEL",
+              "titleAr": "مستوى الخدمة",
+              "titleEn": "Service level",
+              "sections": []
+            },
+            {
+              "code": "SECTORS",
+              "type": "FORM",
+              "titleAr": "المنشأة والقطاعات",
+              "titleEn": "Establishment & sectors",
+              "sections": [
+                {
+                  "code": "ESTABLISHMENT",
+                  "titleAr": "بيانات المنشأة",
+                  "titleEn": "Establishment",
+                  "questions": [
+                    {
+                      "code": "CLS_CR_NUMBER",
+                      "required": true,
+                      "readonly": true
+                    },
+                    {
+                      "code": "CLS_CR_CITY",
+                      "required": false,
+                      "readonly": true
+                    }
+                  ]
+                },
+                {
+                  "code": "SECTOR_CHOICE",
+                  "titleAr": "القطاعات",
+                  "titleEn": "Sectors",
+                  "questions": [
+                    {
+                      "code": "CLS_SECTORS",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_PRIMARY_SECTOR",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "PROFILE",
+              "type": "FORM",
+              "titleAr": "الكوادر والقدرات",
+              "titleEn": "Staff & capabilities",
+              "sections": [
+                {
+                  "code": "STAFF",
+                  "titleAr": "الموظفون",
+                  "titleEn": "Staff",
+                  "questions": [
+                    {
+                      "code": "CLS_EMPLOYEES",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_SAUDI_EMPLOYEES",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ]
+                },
+                {
+                  "code": "ENGINEERING",
+                  "titleAr": "الكوادر الهندسية والفنية",
+                  "titleEn": "Engineers & technicians",
+                  "visibleWhen": {
+                    "or": [
+                      {
+                        "in": [
+                          "CONSTRUCTION",
+                          {
+                            "var": "CLS_SECTORS"
+                          }
+                        ]
+                      },
+                      {
+                        "in": [
+                          "OM",
+                          {
+                            "var": "CLS_SECTORS"
+                          }
+                        ]
+                      },
+                      {
+                        "in": [
+                          "SURVEYING",
+                          {
+                            "var": "CLS_SECTORS"
+                          }
+                        ]
+                      },
+                      {
+                        "in": [
+                          "CONSULTANCY",
+                          {
+                            "var": "CLS_SECTORS"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "questions": [
+                    {
+                      "code": "CLS_ENGINEERS",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_TECHNICIANS",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_EMPLOYEES",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ]
+                },
+                {
+                  "code": "ICT",
+                  "titleAr": "الاتصالات وتقنية المعلومات",
+                  "titleEn": "ICT",
+                  "visibleWhen": {
+                    "in": [
+                      "ICT",
+                      {
+                        "var": "CLS_SECTORS"
+                      }
+                    ]
+                  },
+                  "questions": [
+                    {
+                      "code": "CLS_DGA_CATEGORY",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ]
+                },
+                {
+                  "code": "CONSULTANCY",
+                  "titleAr": "الاستشارات الهندسية",
+                  "titleEn": "Engineering consultancy",
+                  "visibleWhen": {
+                    "in": [
+                      "CONSULTANCY",
+                      {
+                        "var": "CLS_SECTORS"
+                      }
+                    ]
+                  },
+                  "questions": [
+                    {
+                      "code": "CLS_SCE_LICENSE",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_ENGINEERS",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "PROJECTS",
+              "type": "FORM",
+              "titleAr": "سجل الأداء",
+              "titleEn": "Performance record",
+              "sections": [
+                {
+                  "code": "PROJECTS",
+                  "titleAr": "المشاريع",
+                  "titleEn": "Projects",
+                  "questions": [
+                    {
+                      "code": "CLS_PROJECTS_COUNT",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_PROJECTS_VALUE",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        ">": [
+                          {
+                            "var": "CLS_PROJECTS_COUNT"
+                          },
+                          0
+                        ]
+                      }
+                    },
+                    {
+                      "code": "CLS_LARGEST_PROJECT",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        ">": [
+                          {
+                            "var": "CLS_PROJECTS_COUNT"
+                          },
+                          0
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "GOVERNANCE",
+              "type": "FORM",
+              "titleAr": "الحوكمة",
+              "titleEn": "Governance",
+              "sections": [
+                {
+                  "code": "GOVERNANCE",
+                  "titleAr": "أسئلة الحوكمة",
+                  "titleEn": "Governance questions",
+                  "questions": [
+                    {
+                      "code": "CLS_GOV_BOARD",
+                      "required": false,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_GOV_ERP",
+                      "required": false,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_GOV_PMS",
+                      "required": false,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_GOV_ORG",
+                      "required": false,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_GOV_ISO",
+                      "required": false,
+                      "readonly": false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "FINANCIAL",
+              "type": "FORM",
+              "titleAr": "البيانات المالية",
+              "titleEn": "Financial data",
+              "sections": [
+                {
+                  "code": "FINANCIAL",
+                  "titleAr": "القوائم المالية",
+                  "titleEn": "Financial statements",
+                  "questions": [
+                    {
+                      "code": "CLS_ANNUAL_REVENUE",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_FINANCIAL_YEAR_END",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "FEES",
+              "type": "FEES",
+              "titleAr": "الرسوم",
+              "titleEn": "Fees",
+              "sections": []
+            },
+            {
+              "code": "REVIEW",
+              "type": "REVIEW",
+              "titleAr": "مراجعة الطلب",
+              "titleEn": "Review",
+              "sections": []
+            },
+            {
+              "code": "DECLARATION",
+              "type": "DECLARATION",
+              "titleAr": "الإقرار والتعهد",
+              "titleEn": "Declaration & pledge",
+              "sections": [],
+              "textAr": "أقر بأن جميع البيانات والمستندات المقدمة صحيحة ومحدثة، وأتعهد بإبلاغ الوزارة بأي تغيير عليها، وأتحمل المسؤولية النظامية عن صحتها.",
+              "textEn": "I confirm that all data and documents submitted are correct and up to date, undertake to inform the ministry of any change, and bear legal responsibility for their accuracy."
+            }
+          ],
+          "eligibility": [
+            {
+              "code": "CR_ACTIVE",
+              "rule": {
+                "==": [
+                  {
+                    "var": "party.profile.CR_STATUS"
+                  },
+                  "نشط"
+                ]
+              },
+              "messageAr": "يجب أن يكون السجل التجاري نشطاً لدى وزارة التجارة.",
+              "messageEn": "The commercial registration must be active at the Ministry of Commerce."
+            }
+          ],
+          "validations": [
+            {
+              "code": "PRIMARY_IN_SECTORS",
+              "step": "SECTORS",
+              "rule": {
+                "in": [
+                  {
+                    "var": "data.CLS_PRIMARY_SECTOR"
+                  },
+                  {
+                    "var": "data.CLS_SECTORS"
+                  }
+                ]
+              },
+              "messageAr": "يجب أن يكون القطاع الرئيسي من القطاعات المختارة.",
+              "messageEn": "The primary sector must be one of the chosen sectors."
+            },
+            {
+              "code": "SAUDIS_WITHIN_TOTAL",
+              "step": "PROFILE",
+              "rule": {
+                "<=": [
+                  {
+                    "var": "data.CLS_SAUDI_EMPLOYEES"
+                  },
+                  {
+                    "var": "data.CLS_EMPLOYEES"
+                  }
+                ]
+              },
+              "messageAr": "عدد الموظفين السعوديين لا يمكن أن يتجاوز إجمالي الموظفين.",
+              "messageEn": "Saudi employees cannot exceed total employees."
+            },
+            {
+              "code": "LARGEST_WITHIN_TOTAL",
+              "step": "PROJECTS",
+              "rule": {
+                "<=": [
+                  {
+                    "var": "data.CLS_LARGEST_PROJECT"
+                  },
+                  {
+                    "var": "data.CLS_PROJECTS_VALUE"
+                  }
+                ]
+              },
+              "messageAr": "قيمة أكبر مشروع لا يمكن أن تتجاوز القيمة التراكمية للمشاريع.",
+              "messageEn": "The largest project cannot exceed the cumulative value."
+            }
+          ],
+          "fees": [
+            {
+              "code": "PREMIUM_FEE",
+              "nameAr": "رسوم المسار المميز",
+              "nameEn": "Premium track fee",
+              "levels": [
+                "PREMIUM"
+              ],
+              "bracket": {
+                "of": {
+                  "var": "data.CLS_ANNUAL_REVENUE"
+                },
+                "rows": [
+                  {
+                    "from": 0,
+                    "to": 10000000,
+                    "amount": 1000
+                  },
+                  {
+                    "from": 10000000,
+                    "to": 50000000,
+                    "amount": 5000
+                  },
+                  {
+                    "from": 50000000,
+                    "to": 200000000,
+                    "amount": 15000
+                  },
+                  {
+                    "from": 200000000,
+                    "amount": 30000
+                  }
+                ]
+              },
+              "vatRate": 0.15,
+              "vatIncluded": true
+            },
+            {
+              "code": "DIAMOND_FEE",
+              "nameAr": "رسوم المسار الماسي",
+              "nameEn": "Diamond track fee",
+              "levels": [
+                "DIAMOND"
+              ],
+              "bracket": {
+                "of": {
+                  "var": "data.CLS_ANNUAL_REVENUE"
+                },
+                "rows": [
+                  {
+                    "from": 0,
+                    "to": 10000000,
+                    "amount": 60000
+                  },
+                  {
+                    "from": 10000000,
+                    "to": 50000000,
+                    "amount": 70000
+                  },
+                  {
+                    "from": 50000000,
+                    "to": 200000000,
+                    "amount": 90000
+                  },
+                  {
+                    "from": 200000000,
+                    "amount": 120000
+                  }
+                ]
+              },
+              "vatRate": 0.15,
+              "vatIncluded": true
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

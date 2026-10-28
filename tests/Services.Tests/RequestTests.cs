@@ -51,8 +51,9 @@ public sealed class RequestTests(DatabaseFixture fixture) : IAsyncLifetime
         draft.Request.Number.ShouldBeNull();
 
         // Step check: sectors are required; the read-only CR number comes from the party even when the answer is cleared.
-        var empty = await Requests(s => s.SaveAsync(draft.Request.Id, new SaveRequest(Answers(), "PREMIUM", "SECTORS"), CancellationToken.None));
+        var empty = await Requests(s => s.SaveAsync(draft.Request.Id, new SaveRequest(Answers(), "PREMIUM", "DETAILS", "SECTORS"), CancellationToken.None));
         empty.StepErrors.Select(e => (e.Field, e.Code)).ShouldBe([(_sample.Sectors, "REQUIRED")]);
+        empty.CurrentStep.ShouldBe("SECTORS");
 
         // ICT only: the construction section and its answers drop out; the shared employee question is asked once.
         var answers = Answers(
@@ -63,8 +64,9 @@ public sealed class RequestTests(DatabaseFixture fixture) : IAsyncLifetime
             (_sample.BuildingProjects, 3),
             (_sample.Revenue, 20_000_000),
             ("NOT_A_QUESTION", "x"));
-        var saved = await Requests(s => s.SaveAsync(draft.Request.Id, new SaveRequest(answers, "PREMIUM", "DETAILS"), CancellationToken.None));
+        var saved = await Requests(s => s.SaveAsync(draft.Request.Id, new SaveRequest(answers, "PREMIUM", "FEES", "DETAILS"), CancellationToken.None));
         saved.StepErrors.ShouldBeEmpty();
+        saved.CurrentStep.ShouldBe("FEES");
         saved.Data.ContainsKey("NOT_A_QUESTION").ShouldBeFalse();
         saved.Fees.Single().Total.ShouldBe(5000m);
 

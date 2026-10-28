@@ -97,6 +97,31 @@ A Service Version contains:
 Service-to-service links support offers such as a paid advisory service proposed after a
 result.
 
+**Implementation (1c)** — module `Services`, schema `svc`, configured through change sets (area
+`svc.services`, one area so a version can use questions created in the same change set):
+
+- **Service** — names, archetype, who may apply (individuals, establishments), catalog listing, draft
+  policy (expiry days; on a new version drafts *continue* or *restart*), request number prefix.
+- **Question bank** — typed questions (text, long text, number, date, choice with options or an Apps
+  Control LOV with a parent question, yes/no), limits (min, max, length, pattern) and a *prefill* path
+  into the applicant's facts (`party.identifiers.CR_NUMBER`, `party.profile.CR_CITY`).
+- **Service version** `SERVICE/N` — the definition: levels (SLA working days), steps (`FORM`, `LEVEL`,
+  `FEES`, `REVIEW`, `DECLARATION`), sections shown by JSONLogic over the answers, question uses
+  (required, required-when, visible-when, read-only), eligibility and validation rules with bilingual
+  messages, fees (fixed, formula or bracket table by any value, VAT included or added). Numbers are
+  consecutive; publishing stores the version with **snapshots of its questions**, and afterwards only
+  its names and the *retired* flag change.
+- **Rules** see `data` (answers by question code), `level`, `today`, `party` (the beneficiary's
+  identifiers, profile, sanctions in force, credentials) and `applicant` (relationship of the person
+  filling in); visibility rules see the answers only, exactly as in the wizard.
+- **Shared questions** are asked once: where a question first shows (across sections and steps); the
+  wizard and the server apply the same rule.
+- **Eligibility** — built in: who may apply, delegation scope (a delegate's services), sanctions that
+  block applications; then the version's rules. Checked when listing, starting and submitting.
+- **Server-side validation** repeats the wizard's rules and adds types, choices, LOV grants, limits,
+  patterns and cross-field rules; hidden and unknown answers are dropped, read-only prefilled answers are
+  taken from the party's data.
+
 ---
 
 ## 3.3 Request
@@ -111,7 +136,7 @@ A **Request** is one application instance.
 | `submitter_party_id`, `beneficiary_party_id` | Individual and acting party |
 | `status_category` | Fixed system category (below) |
 | `display_status_code` | Configurable display status (below) |
-| `data` | JSONB payload of the form; frequently queried fields promoted to columns |
+| `data` | JSONB payload of the form (answers by question code); frequently queried fields promoted to columns |
 | `region_code`, `amanah_code`, `org_unit_id` | Routing & reporting dimensions |
 | `parent_request_id`, `relation_type` | Sub-request structure |
 | `document_id` | Issued Document produced or acted on |

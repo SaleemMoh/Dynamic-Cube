@@ -40,6 +40,11 @@ export interface FormField {
   multiple?: boolean;
   /** Shown but not editable (still submitted). */
   readonly?: boolean;
+  /** Limits checked in the browser and again on the server. */
+  min?: number;
+  max?: number;
+  maxLength?: number;
+  pattern?: string;
 }
 
 export interface FormOption {

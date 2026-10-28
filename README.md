@@ -10,13 +10,14 @@ Kubernetes or on classic N-tier servers.
 
 ## Status
 
-**Phase 0 (foundations)**, **Phase 1a (Apps Control + sign-in)** and **Phase 1b (Integration Manager + Party
-Registry)** are in place: platform kernel, API hosts, worker, migrator, Angular workspace, Keycloak realms,
+**Phase 0 (foundations)**, **Phase 1a (Apps Control + sign-in)**, **Phase 1b (Integration Manager + Party
+Registry)** and **Phase 1c (Services)** are in place: platform kernel, API hosts, worker, migrator, Angular workspace, Keycloak realms,
 containers and CI; the Apps Control module (org structure, users, roles and privileges, menus, Class/Domain with
 typed attributes, LOVs with grants and data scopes, settings, UI texts); the Integration Manager (government APIs
 connected by configuration, test console, masked call log) and the Party Registry (individuals, establishments,
-acting contexts from MCI, profile data, credentials, projects, sanctions). Every module's configuration is edited
-through the same maker-checker change sets. See the [roadmap](docs/07-roadmap.md) for what comes next.
+acting contexts from MCI, profile data, credentials, projects, sanctions); Services (versioned service definitions
+with a question bank, levels, fees and eligibility; the applicant's wizard with drafts and submission). Every module's
+configuration is edited through the same maker-checker change sets. See the [roadmap](docs/07-roadmap.md) for what comes next.
 
 ## Repository layout
 
@@ -28,6 +29,7 @@ src/
   Modules/AppsControl  Configuration & user management (schema apps): API, change appliers, LOV engine, access
   Modules/Integration  Integration Manager (schema integ): connections, operations, gateway, call log
   Modules/Parties      Party Registry (schema party): parties, relationships, acting contexts, profile, sanctions
+  Modules/Services     Services (schema svc): services, question bank, versions, requests, eligibility, fees
   Shared/Platform      Kernel: persistence base, audit, outbox, change sets, files, JSONLogic, i18n
   Shared/Hosting       Shared host setup: logging, telemetry, health, Keycloak JWT
   Tools/Migrator       Applies database migrations (run before upgrades)
@@ -38,6 +40,7 @@ tests/
   AppsControl.Tests    Apps Control integration and API tests (PostgreSQL)
   Integration.Tests    Gateway behaviour against a fake provider, configuration and API tests
   Parties.Tests        Acting contexts, registry operations, portal API tests
+  Services.Tests       Versions, drafts, validation, fees, eligibility, portal API and package tests
   shared/ModuleTests   Test database, fake provider and MoMRAH samples shared by the module test projects
   Hosts.Tests          API host smoke tests
   shared/              Cases shared by the .NET and Angular JSONLogic evaluators
@@ -81,8 +84,8 @@ Add `--profile full` to also start Gotenberg (PDF) and ClamAV (upload scanning).
 
 To open the database in DataGrip (or DBeaver, pgAdmin): *New → Data Source → PostgreSQL*, host `localhost`, port
 `5432`, database `dynamic_cube`, user `dynamic_cube`, password `dynamic_cube`. Tables are grouped by schema:
-`apps` (Apps Control), `integ` (Integration Manager), `party` (Party Registry), `cfg` (change sets), `audit` (audit
-log), `platform` (outbox, keys).
+`apps` (Apps Control), `integ` (Integration Manager), `party` (Party Registry), `svc` (Services), `cfg` (change sets),
+`audit` (audit log), `platform` (outbox, keys).
 
 The **field app** is the inspectors' app for site visits (offline-capable, phone/tablet). It is a shell for now;
 visit forms, offline sync and inspection reports arrive with visits in Phase 3.
@@ -101,6 +104,12 @@ These are development values only; change them in `deploy/docker/.env` (see `.en
    and partner; the board seat and the expired CR are left out). The chosen one is sent with every API call.
 5. **Party registry → Parties** shows the establishments registered from MCI; *Refresh data* fills their profile
    from `MCI_CR_INFO`.
+
+6. Import `deploy/config-packages/classification-new.json` the same way and approve it. In the portal, acting for
+   the establishment, open **Services → City service providers classification**: choose a level, sectors (the
+   sections follow the choice; shared questions are asked once), staff, projects, governance and financial data,
+   see the fee, review, accept the pledge and submit. The request appears under **My requests** with its number and
+   in the internal system under **Services → Requests**.
 
 The gateway credentials come from the secret store (`Secrets__MOMRAH_GATEWAY__clientId` / `__clientSecret`), never
 from the database; development values are in `appsettings.Development.json` and the compose file.

@@ -96,3 +96,45 @@ describe('DynamicForm', () => {
     expect(emitted[1]).toEqual({ name: 'مكتب الهندسة المتقدمة', kind: 'contractor', pledge: true });
   });
 });
+
+describe('DynamicForm with a question in two sections', () => {
+  const shared: FormSchema = {
+    code: 'shared',
+    sections: [
+      { code: 'staff', title: { ar: 'الموظفون', en: 'Staff' }, fields: [{ code: 'employees', type: 'number', label: { ar: 'عدد', en: 'Count' }, required: true, min: 1 }] },
+      {
+        code: 'engineering',
+        title: { ar: 'هندسي', en: 'Engineering' },
+        visibleWhen: { in: ['BUILDING', { var: 'sectors' }] },
+        fields: [{ code: 'employees', type: 'number', label: { ar: 'عدد', en: 'Count' }, required: true }],
+      },
+    ],
+  };
+
+  async function render(context: FormValue): Promise<ComponentFixture<DynamicForm>> {
+    await TestBed.configureTestingModule({ imports: [DynamicForm] }).compileComponents();
+    const fixture = TestBed.createComponent(DynamicForm);
+    fixture.componentRef.setInput('schema', shared);
+    fixture.componentRef.setInput('context', context);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    return fixture;
+  }
+
+  it('shows it once and keeps it editable when a later section is hidden', async () => {
+    const fixture = await render({ sectors: ['ICT'] });
+    const inputs = (fixture.nativeElement as HTMLElement).querySelectorAll('input#employees');
+
+    expect(inputs.length).toBe(1);
+    expect((inputs[0] as HTMLInputElement).disabled).toBe(false);
+  });
+
+  it('shows it once when both sections are visible, using rules from the context', async () => {
+    const fixture = await render({ sectors: ['BUILDING'] });
+    const element = fixture.nativeElement as HTMLElement;
+
+    expect(element.querySelector('[data-section="engineering"]')).not.toBeNull();
+    expect(element.querySelectorAll('input#employees').length).toBe(1);
+    expect(fixture.componentInstance.formGroup().controls['employees'].hasError('required')).toBe(true);
+  });
+});

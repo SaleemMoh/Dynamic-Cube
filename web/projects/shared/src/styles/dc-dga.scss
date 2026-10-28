@@ -20,8 +20,13 @@
   --dga-error: #b42318;
 }
 
+/* The page colour also behind content taller than the window (html is 100% high). */
+html,
 body {
   background: var(--dga-page);
+}
+
+body {
   color: var(--dga-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

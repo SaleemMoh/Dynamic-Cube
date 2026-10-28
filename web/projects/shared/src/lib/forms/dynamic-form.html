@@ -5,7 +5,7 @@
         <legend class="dc-form__legend">{{ section.title | dcLocalize }}</legend>
         <div class="dc-form__grid">
           @for (field of section.fields; track field.code) {
-            @if (isVisible(field.code)) {
+            @if (isShown(section.code, field.code)) {
               <div
                 class="dc-form__field"
                 [class.dc-form__field--wide]="
@@ -111,7 +111,7 @@
                       @if (field.hint) {
                         <mat-hint>{{ field.hint | dcLocalize }}</mat-hint>
                       }
-                      <mat-error>{{ 'form.required' | dcTranslate }}</mat-error>
+                      <mat-error>{{ errorText(field.code).key | dcTranslate }}{{ errorText(field.code).value }}</mat-error>
                     </mat-form-field>
                   }
                 }
@@ -125,10 +125,10 @@
 
   <div class="dc-form__actions">
     @if (cancellable()) {
-      <button matButton type="button" (click)="cancel()">{{ 'form.cancel' | dcTranslate }}</button>
+      <button matButton type="button" (click)="cancel()" data-testid="form-cancel">{{ cancelLabel() ?? ('form.cancel' | dcTranslate) }}</button>
     }
-    <button matButton="filled" type="submit">
-      <mat-icon fontSet="material-symbols-outlined">send</mat-icon>
+    <button matButton="filled" type="submit" data-testid="form-submit">
+      <mat-icon fontSet="material-symbols-outlined">{{ submitIcon() }}</mat-icon>
       {{ submitLabel() ?? ('form.submit' | dcTranslate) }}
     </button>
   </div>

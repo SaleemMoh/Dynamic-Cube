@@ -275,5 +275,91 @@ export const PARTY_SECTIONS: ConfigSection[] = [
   },
 ];
 
+/** Services configuration screens (internal system → Services); versions have their own screen. */
+export const SERVICE_SECTIONS: ConfigSection[] = [
+  {
+    path: 'catalog',
+    title: t('الخدمات', 'Services'),
+    resource: 'services.config',
+    types: [
+      {
+        entityType: 'svc.service',
+        title: t('الخدمات', 'Services'),
+        key: 'code',
+        columns: ['archetype', 'numberPrefix', 'isListed'],
+        fields: [
+          { code: 'descriptionAr', type: 'textarea', label: t('الوصف بالعربية', 'Arabic description') },
+          { code: 'descriptionEn', type: 'textarea', label: t('الوصف بالإنجليزية', 'English description') },
+          {
+            code: 'archetype',
+            type: 'select',
+            label: t('النمط', 'Archetype'),
+            required: true,
+            defaultValue: 'ISSUANCE',
+            options: [opt('ISSUANCE', 'إصدار', 'Issuance'), opt('AMENDMENT', 'تعديل', 'Amendment'), opt('VISIT_REQUEST', 'طلب زيارة', 'Visit request'), opt('ATTESTATION', 'تصديق', 'Attestation')],
+          },
+          { code: 'partyKinds', type: 'select', label: t('من يحق له التقديم', 'Who may apply'), options: partyKinds, multiple: true, required: true, defaultValue: ['ESTABLISHMENT'] },
+          { code: 'categoryCode', type: 'text', label: t('التصنيف', 'Category') },
+          { code: 'icon', type: 'text', label: t('الأيقونة', 'Icon'), hint: t('اسم أيقونة Material Symbols', 'A Material Symbols icon name') },
+          number('displayOrder', t('الترتيب', 'Display order'), 0),
+          { code: 'isListed', type: 'checkbox', label: t('تظهر في دليل الخدمات', 'Shown in the service catalog'), defaultValue: true },
+          { code: 'numberPrefix', type: 'text', label: t('بادئة رقم الطلب', 'Request number prefix'), hint: t('مثال: CLS ← CLS-2026-000001', 'e.g. CLS → CLS-2026-000001') },
+          { code: 'draftsAllowed', type: 'checkbox', label: t('السماح بحفظ المسودات', 'Drafts allowed'), defaultValue: true },
+          number('draftExpiryDays', t('صلاحية المسودة (يوم)', 'Draft expiry (days)'), 30),
+          {
+            code: 'onNewVersion',
+            type: 'select',
+            label: t('المسودات عند نشر إصدار جديد', 'Drafts when a new version is published'),
+            defaultValue: 'CONTINUE',
+            options: [opt('CONTINUE', 'تكمل على إصدارها', 'Continue on their version'), opt('RESTART', 'تنتقل للإصدار الجديد', 'Move to the new version')],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    path: 'questions',
+    title: t('بنك الأسئلة', 'Question bank'),
+    resource: 'services.config',
+    types: [
+      {
+        entityType: 'svc.question',
+        title: t('بنك الأسئلة', 'Question bank'),
+        key: 'code',
+        columns: ['type', 'lov', 'prefill'],
+        nameLabels: { ar: t('نص السؤال بالعربية', 'Arabic label'), en: t('نص السؤال بالإنجليزية', 'English label') },
+        fields: [
+          {
+            code: 'type',
+            type: 'select',
+            label: t('نوع الإجابة', 'Answer type'),
+            required: true,
+            defaultValue: 'TEXT',
+            options: [
+              opt('TEXT', 'نص', 'Text'),
+              opt('TEXTAREA', 'نص طويل', 'Long text'),
+              opt('NUMBER', 'رقم', 'Number'),
+              opt('DATE', 'تاريخ', 'Date'),
+              opt('SELECT', 'اختيار', 'Choice'),
+              opt('CHECKBOX', 'نعم/لا', 'Yes/no'),
+            ],
+          },
+          { code: 'hintAr', type: 'text', label: t('تلميح بالعربية', 'Arabic hint') },
+          { code: 'hintEn', type: 'text', label: t('تلميح بالإنجليزية', 'English hint') },
+          { code: 'lov', type: 'select', label: t('قائمة القيم', 'List of values'), ref: 'apps.lov', visibleWhen: { '==': [{ var: 'type' }, 'SELECT'] } },
+          { code: 'lovParentQuestion', type: 'select', label: t('السؤال الأب', 'Parent question'), ref: 'svc.question', visibleWhen: { '!!': [{ var: 'lov' }] } },
+          {
+            ...json('options', t('الخيارات', 'Options'), t('[{"value": "ICT", "labelAr": "…", "labelEn": "…"}] — عند عدم استخدام قائمة قيم', '[{"value": "ICT", "labelAr": "…", "labelEn": "…"}] — when no list of values is used')),
+            visibleWhen: { '==': [{ var: 'type' }, 'SELECT'] },
+          },
+          { code: 'multiple', type: 'checkbox', label: t('اختيار متعدد', 'Several choices'), visibleWhen: { '==': [{ var: 'type' }, 'SELECT'] } },
+          json('validation', t('القيود', 'Limits'), t('{"min": 0, "max": 100, "maxLength": 200, "pattern": "^[0-9]{10}$"}', '{"min": 0, "max": 100, "maxLength": 200, "pattern": "^[0-9]{10}$"}'), {}),
+          { code: 'prefill', type: 'text', label: t('تعبئة من بيانات المتعامل', 'Prefill from the party'), hint: t('مثال: party.identifiers.CR_NUMBER أو party.profile.CR_CAPITAL', 'e.g. party.identifiers.CR_NUMBER or party.profile.CR_CAPITAL') },
+        ],
+      },
+    ],
+  },
+];
+
 /** Every configuration screen, by path (paths are unique across modules). */
-export const ALL_CONFIG_SECTIONS: ConfigSection[] = [...CONFIG_SECTIONS, ...INTEGRATION_SECTIONS, ...PARTY_SECTIONS];
+export const ALL_CONFIG_SECTIONS: ConfigSection[] = [...CONFIG_SECTIONS, ...INTEGRATION_SECTIONS, ...PARTY_SECTIONS, ...SERVICE_SECTIONS];

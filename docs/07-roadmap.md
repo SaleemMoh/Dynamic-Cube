@@ -33,8 +33,8 @@ Delivered in slices:
 |---|---|---|
 | **1a** | Apps Control + sign-in | ✅ |
 | **1b** | Party Registry + Integration Manager | ✅ |
-| 1c | Services: definitions, forms, wizard, drafts, fees, eligibility | Next |
-| 1d | Workflow engine + Action Center | |
+| **1c** | Services: definitions, forms, wizard, drafts, fees, eligibility | ✅ |
+| 1d | Workflow engine + Action Center | Next |
 | 1e | Documents, communication, decision contract, external applicant journey | |
 
 **1a delivered:** the `AppsControl` module (all entities of [§4](04-apps-control.md) except
@@ -64,6 +64,19 @@ test console, call log, party list and detail, the portal's acting-context selec
 Still open from 1b: LOVs sourced from integrations, SOAP operations and OpenAPI import, NIC and the
 other connectors of [§5.5](05-integration-manager.md#55-initial-connectors-for-the-reference-service)
 (configuration only, added as packages when their credentials are available), call-log retention job.
+
+**1c delivered:** the `Services` module ([§3.2](03-domain-model.md#32-service-definition)): services,
+the question bank and immutable numbered versions with levels, wizard steps, composable sections,
+eligibility and validation rules and fees; requests pinned to their version with submitter and
+beneficiary, drafts prefilled from the party's data and saved at every step, draft expiry and the
+new-version policy, eligibility (who may apply, delegation scope, sanctions, rules), fee calculation
+with VAT, server-side validation mirroring the wizard, submission with yearly numbers and a timeline.
+Screens: the portal's catalog, service page, wizard and *My requests* (acting for the chosen party);
+internal services, question bank, versions with JSON authoring and wizard preview, and the request
+viewer. Reference package `classification-new.json` (the classification certificate's levels, fees,
+sectors and pledge). The dynamic form gained rule context across steps, limits and shared questions.
+Still open from 1c: attachments, payment (SADAD), availability rules and document-based services,
+sub-requests, service links and the visual service builder (JSON authoring with preview for now).
 
 - **Apps Control**: installation, apps, entity, org unit types & org structure, positions,
   users, roles, privileges, menus, Class/Domain with typed attributes and generated views,

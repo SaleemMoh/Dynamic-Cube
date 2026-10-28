@@ -145,11 +145,22 @@ internal sealed class RequestService(
         }
 
         entity.LevelCode = request.LevelCode ?? entity.LevelCode;
-        entity.CurrentStep = request.CurrentStep ?? entity.CurrentStep;
-        await context.SaveChangesAsync(cancellationToken);
-
         var facts = await FactsAsync(acting, refresh: false, cancellationToken);
-        return await ViewAsync(entity, service, version, facts, acting, request.CurrentStep, cancellationToken);
+        IReadOnlyList<FieldError> stepErrors = [];
+        if (request.ValidateStep is not null)
+        {
+            var data = JsonNode.Parse(entity.Data)!.AsObject();
+            stepErrors = (await validator.CheckAsync(version, data, Context(facts, acting, data, entity.LevelCode), request.ValidateStep, cancellationToken)).Errors;
+            if (version.Definition.Steps.FirstOrDefault(s => s.Code == request.ValidateStep)?.Type == StepType.Level && entity.LevelCode is null)
+            {
+                stepErrors = [.. stepErrors, new FieldError("level", "REQUIRED", "اختر مستوى الخدمة.", "Choose a service level.", request.ValidateStep)];
+            }
+        }
+
+        entity.CurrentStep = stepErrors.Count > 0 ? request.ValidateStep : request.CurrentStep ?? entity.CurrentStep;
+        await context.SaveChangesAsync(cancellationToken);
+        var view = await ViewAsync(entity, service, version, facts, acting, null, cancellationToken);
+        return view with { StepErrors = stepErrors };
     }
 
     public async Task<RequestView> SubmitAsync(Guid id, SubmitRequest request, CancellationToken cancellationToken)
@@ -224,7 +235,10 @@ internal sealed class RequestService(
             ? fees.Compute(version.Definition, entity.LevelCode, Context(facts, acting, data, entity.LevelCode))
             : entity.Fees;
         var stepErrors = step is null ? [] : (await validator.CheckAsync(version, data, Context(facts, acting, data, entity.LevelCode), step, cancellationToken)).Errors;
-        return new RequestView(Summary(entity, (service.NameAr, service.NameEn)), entity.VersionNumber, entity.LevelCode, entity.CurrentStep, data, lines, version, stepErrors);
+        var byLevel = entity.StatusCategory == StatusCategory.Draft
+            ? version.Definition.Levels.ToDictionary(l => l.Code, l => fees.Compute(version.Definition, l.Code, Context(facts, acting, data, l.Code)))
+            : new Dictionary<string, IReadOnlyList<FeeLine>>();
+        return new RequestView(Summary(entity, (service.NameAr, service.NameEn)), entity.VersionNumber, entity.LevelCode, entity.CurrentStep, data, lines, byLevel, version, stepErrors);
     }
 
     /// <summary>Expires a draft past its date, or moves it to the current version when the service says so. True when expired.</summary>

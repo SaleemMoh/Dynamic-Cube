@@ -42,6 +42,13 @@ export class DynamicForm {
   readonly submitLabel = input<string | undefined>(undefined);
   /** Shows a secondary cancel button that emits {@link cancelled}. */
   readonly cancellable = input(false);
+  readonly cancelLabel = input<string | undefined>(undefined);
+  readonly submitIcon = input('send');
+  /**
+   * Values outside this form that rules may refer to (e.g. answers given in earlier wizard steps). The form's own values
+   * win over them.
+   */
+  readonly context = input<FormValue>({});
   readonly submitted = output<FormValue>();
   readonly cancelled = output<void>();
 
@@ -58,6 +65,7 @@ export class DynamicForm {
   constructor() {
     effect((onCleanup) => {
       const group = this.formGroup();
+      this.context();
       this.lovParents.clear();
       this.applyRules(group);
       this.loadLovOptions(group);
@@ -77,8 +85,24 @@ export class DynamicForm {
     return this.visibleCodes().has(code);
   }
 
+  /** Whether this placement of a field is the one shown (a code placed in several sections shows once). */
+  protected isShown(section: string, code: string): boolean {
+    return this.visibleCodes().has(`${section}/${code}`);
+  }
+
   protected isRequired(code: string): boolean {
     return this.requiredCodes().has(code);
+  }
+
+  /** Translation key and value of the first problem of a field. */
+  protected errorText(code: string): { key: string; value: string } {
+    const errors = this.control(code).errors ?? {};
+    const field = this.allFields().find((f) => f.code === code);
+    if (errors['min']) return { key: 'form.min', value: String(field?.min ?? '') };
+    if (errors['max']) return { key: 'form.max', value: String(field?.max ?? '') };
+    if (errors['maxlength']) return { key: 'form.maxLength', value: String(field?.maxLength ?? '') };
+    if (errors['pattern']) return { key: 'form.pattern', value: '' };
+    return { key: 'form.required', value: '' };
   }
 
   protected control(code: string): FormControl {
@@ -156,9 +180,12 @@ export class DynamicForm {
   }
 
   private applyRules(group: FormGroup): void {
-    const data = group.getRawValue() as JsonValue;
+    const data = { ...this.context(), ...group.getRawValue() } as JsonValue;
     const visible = new Set<string>();
     const required = new Set<string>();
+    // A code may be placed in several sections (a shared question): its one control is enabled when any placement is
+    // visible, and only the first visible placement is shown.
+    const shownAt = new Map<string, { key: string; field: FormField }>();
 
     for (const section of this.schema().sections) {
       const sectionVisible = section.visibleWhen === undefined || jsonLogic.evaluateTruthy(section.visibleWhen, data);
@@ -168,26 +195,39 @@ export class DynamicForm {
 
       for (const field of section.fields) {
         const fieldVisible = sectionVisible && (field.visibleWhen === undefined || jsonLogic.evaluateTruthy(field.visibleWhen, data));
-        const fieldRequired =
-          fieldVisible && (field.required === true || (field.requiredWhen !== undefined && jsonLogic.evaluateTruthy(field.requiredWhen, data)));
-        if (fieldVisible) {
-          visible.add(field.code);
+        if (!fieldVisible) {
+          continue;
         }
-        if (fieldRequired) {
+        if (!shownAt.has(field.code)) {
+          shownAt.set(field.code, { key: `${section.code}/${field.code}`, field });
+        }
+        if (field.required === true || (field.requiredWhen !== undefined && jsonLogic.evaluateTruthy(field.requiredWhen, data))) {
           required.add(field.code);
         }
-
-        const control = group.controls[field.code];
-        const enabled = fieldVisible && !field.readonly;
-        if (enabled && control.disabled) {
-          control.enable({ emitEvent: false });
-        } else if (!enabled && control.enabled) {
-          control.disable({ emitEvent: false });
-        }
-        const validators: ValidatorFn[] = fieldRequired ? [field.type === 'checkbox' ? Validators.requiredTrue : Validators.required] : [];
-        control.setValidators(validators);
-        control.updateValueAndValidity({ emitEvent: false });
       }
+    }
+
+    for (const field of this.allFields()) {
+      const shown = shownAt.get(field.code);
+      if (shown) {
+        visible.add(field.code);
+        visible.add(shown.key);
+      }
+      const control = group.controls[field.code];
+      const enabled = !!shown && !shown.field.readonly;
+      if (enabled && control.disabled) {
+        control.enable({ emitEvent: false });
+      } else if (!enabled && control.enabled) {
+        control.disable({ emitEvent: false });
+      }
+      const rules = shown?.field ?? field;
+      const validators: ValidatorFn[] = required.has(field.code) ? [rules.type === 'checkbox' ? Validators.requiredTrue : Validators.required] : [];
+      if (rules.min !== undefined) validators.push(Validators.min(rules.min));
+      if (rules.max !== undefined) validators.push(Validators.max(rules.max));
+      if (rules.maxLength !== undefined) validators.push(Validators.maxLength(rules.maxLength));
+      if (rules.pattern) validators.push(Validators.pattern(rules.pattern));
+      control.setValidators(validators);
+      control.updateValueAndValidity({ emitEvent: false });
     }
 
     group.updateValueAndValidity({ emitEvent: false });

@@ -52,7 +52,7 @@ internal sealed class RequestAdminService(ServicesDbContext context, ServiceCata
             .Select(e => new TimelineEntry(e.At, e.UserId, e.Type, e.FromStatus, e.ToStatus, e.Comment))
             .ToListAsync(cancellationToken);
         var view = new RequestView(RequestService.Summary(entity, (service.NameAr, service.NameEn)), entity.VersionNumber, entity.LevelCode, entity.CurrentStep,
-            JsonNode.Parse(entity.Data)!.AsObject(), entity.Fees, version, []);
+            JsonNode.Parse(entity.Data)!.AsObject(), entity.Fees, new Dictionary<string, IReadOnlyList<FeeLine>>(), version, []);
         return new RequestDetail(view, entity.SubmitterPartyId, entity.SubmitterName, entity.BeneficiaryPartyId, timeline);
     }
 

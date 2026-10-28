@@ -51,7 +51,8 @@ internal sealed class FormValidator(JsonLogicEvaluator evaluator, ILovValidator 
                 continue;
             }
 
-            if (IsEmpty(value))
+            // A required checkbox must be ticked (e.g. a pledge), as in the wizard.
+            if (IsEmpty(value) || (info.Required && question.Type == QuestionType.Checkbox && value!.GetValueKind() == JsonValueKind.False))
             {
                 if (info.Required)
                 {

@@ -15,3 +15,10 @@ per service, existing drafts either continue on the old version (default) or res
 ## Consequences
 - Predictable behaviour and auditability.
 - Several versions of a service may run concurrently; reports group by service, not version.
+
+## Implementation notes
+- Service versions are configuration rows keyed `SERVICE/N`: a draft version is an item of a draft change
+  set; publishing makes it immutable and stores it with snapshots of the questions it uses, so later edits
+  of the question bank never reach running requests (1c).
+- Requests store the version id; drafts of services with the *restart* policy move to the newest version
+  when opened, keeping the answers to questions it still asks.

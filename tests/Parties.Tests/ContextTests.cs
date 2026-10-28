@@ -59,6 +59,7 @@ public sealed class ContextTests(DatabaseFixture fixture) : IAsyncLifetime
         result.Contexts.Select(c => (c.Identifier, c.RelationshipCode)).ShouldBe([(owned, "OWNER"), (partner, "PARTNER")]);
         result.Contexts[0].NameAr.ShouldBe("مؤسسة مشعل للنظارات");
         result.Contexts[0].Kind.ShouldBe(PartyKind.Establishment);
+        result.Contexts.ShouldAllBe(c => c.Services.Count == 0);
 
         // Board membership is recorded but gives no acting context.
         var relationships = await _host.AsAsync("admin", sp => sp.GetRequiredService<PartiesDbContext>().Relationships

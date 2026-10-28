@@ -187,7 +187,10 @@ internal sealed partial class ContextService(
 
             relationship.ValidFrom = Date(JsonPaths.ReadText(item, source.ValidFromPath));
             relationship.ValidTo = Date(JsonPaths.ReadText(item, source.ValidToPath));
-            var services = Items(JsonPaths.Read(item, source.ServicesPath)).Select(JsonPaths.Text).Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s!).ToList();
+            // No services path means the relationship covers every service (an empty path would read the whole item).
+            var services = source.ServicesPath is null
+                ? []
+                : Items(JsonPaths.Read(item, source.ServicesPath)).Select(JsonPaths.Text).Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s!).ToList();
             if (!relationship.Services.SequenceEqual(services))
             {
                 relationship.Services = services;
