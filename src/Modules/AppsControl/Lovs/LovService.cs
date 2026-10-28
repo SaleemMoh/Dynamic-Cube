@@ -58,7 +58,7 @@ public sealed class LovService(AppsControlDbContext context, GrantResolver grant
         {
             LovSourceType.Class => await ClassValuesAsync(lov, access, query.Parent, search, grant, pageSize + 1, offset, cancellationToken),
             LovSourceType.DataObject => await DataObjectValuesAsync(lov, query.Parent, search, grant, pageSize + 1, offset, cancellationToken),
-            LovSourceType.Sql => await sqlRunner.QueryAsync(lov.SqlText!, lov.ParentColumn, access.User, query.Parent, search, grant, pageSize + 1, offset, cancellationToken),
+            LovSourceType.Sql => await sqlRunner.QueryAsync(lov.SqlText!, SqlLovColumns.From(lov.ValueColumn, lov.DisplayArColumn, lov.DisplayEnColumn, lov.ParentColumn), access.User, query.Parent, search, grant, pageSize + 1, offset, cancellationToken),
             _ => [],
         };
 

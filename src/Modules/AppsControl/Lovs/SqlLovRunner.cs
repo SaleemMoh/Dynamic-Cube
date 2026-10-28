@@ -7,12 +7,15 @@ namespace DynamicCube.Modules.AppsControl.Lovs;
 
 /// <summary>
 /// Runs restricted-SQL LOVs on a separate, read-only database role, inside a read-only transaction with a statement
-/// timeout. The SQL must return <c>value</c>, <c>display_ar</c> and <c>display_en</c> columns and may use the bound
-/// parameters <c>@user_id</c>, <c>@username</c>, <c>@org_unit</c> and <c>@app</c>.
+/// timeout. The SQL may query any table or view the read-only role can read. Its value and label columns are named on
+/// the LOV (default <c>value</c>, <c>display_ar</c>, <c>display_en</c>), so existing queries can be used as they are.
+/// Bound parameters available: <c>@user_id</c>, <c>@username</c>, <c>@org_unit</c> and <c>@app</c>.
 /// </summary>
 public sealed class SqlLovRunner : IDisposable
 {
-    private static readonly string[] RequiredColumns = ["value", "display_ar", "display_en"];
+    public const string DefaultValueColumn = "value";
+    public const string DefaultDisplayArColumn = "display_ar";
+    public const string DefaultDisplayEnColumn = "display_en";
 
     private readonly NpgsqlDataSource? _dataSource;
     private readonly int _timeoutSeconds;
@@ -30,7 +33,7 @@ public sealed class SqlLovRunner : IDisposable
     public bool IsEnabled => _dataSource is not null;
 
     /// <summary>Returns a problem description, or null when the SQL is usable.</summary>
-    public async Task<string?> CheckAsync(string sql, string? parentColumn, CancellationToken cancellationToken)
+    public async Task<string?> CheckAsync(string sql, SqlLovColumns columns, CancellationToken cancellationToken)
     {
         if (sql.Contains(';', StringComparison.Ordinal))
         {
@@ -39,14 +42,14 @@ public sealed class SqlLovRunner : IDisposable
 
         try
         {
-            var columns = new List<string>();
+            var returned = new List<string>();
             await RunAsync($"SELECT * FROM ({sql}) AS src LIMIT 0", UserContext.Sample(), _ => { }, async reader =>
             {
                 var schema = await reader.GetColumnSchemaAsync(cancellationToken);
-                columns.AddRange(schema.Select(c => c.ColumnName));
+                returned.AddRange(schema.Select(c => c.ColumnName));
             }, cancellationToken);
 
-            var missing = RequiredColumns.Concat(string.IsNullOrWhiteSpace(parentColumn) ? [] : [parentColumn]).Except(columns).ToList();
+            var missing = columns.All.Except(returned).ToList();
             return missing.Count == 0 ? null : $"The query must return the column(s): {string.Join(", ", missing)}.";
         }
         catch (PostgresException ex)
@@ -57,7 +60,7 @@ public sealed class SqlLovRunner : IDisposable
 
     public async Task<List<LovItem>> QueryAsync(
         string sql,
-        string? parentColumn,
+        SqlLovColumns columns,
         UserContext user,
         string? parent,
         string? search,
@@ -66,13 +69,16 @@ public sealed class SqlLovRunner : IDisposable
         int offset,
         CancellationToken cancellationToken)
     {
-        var parentExpression = string.IsNullOrWhiteSpace(parentColumn) ? "NULL" : $"src.\"{parentColumn.Replace("\"", "\"\"", StringComparison.Ordinal)}\"::text";
+        var value = Column(columns.Value);
+        var displayAr = Column(columns.DisplayAr);
+        var displayEn = Column(columns.DisplayEn);
+        var parentExpression = columns.Parent is null ? "NULL" : Column(columns.Parent);
         var text = $"""
-            SELECT src.value::text, src.display_ar::text, src.display_en::text, {parentExpression}
+            SELECT {value}, {displayAr}, {displayEn}, {parentExpression}
             FROM ({sql}) AS src
             WHERE (@p_parent::text IS NULL OR {parentExpression} = @p_parent)
-              AND (@p_search::text IS NULL OR src.display_ar::text ILIKE @p_search OR src.display_en::text ILIKE @p_search OR src.value::text ILIKE @p_search)
-              AND (@p_all OR src.value::text = ANY(@p_values))
+              AND (@p_search::text IS NULL OR {displayAr} ILIKE @p_search OR {displayEn} ILIKE @p_search OR {value} ILIKE @p_search)
+              AND (@p_all OR {value} = ANY(@p_values))
             ORDER BY 2
             LIMIT @p_limit OFFSET @p_offset
             """;
@@ -100,6 +106,8 @@ public sealed class SqlLovRunner : IDisposable
     }
 
     public void Dispose() => _dataSource?.Dispose();
+
+    private static string Column(string name) => "src.\"" + name.Replace("\"", "\"\"", StringComparison.Ordinal) + "\"::text";
 
     internal static string LikeEscape(string value) =>
         value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("%", "\\%", StringComparison.Ordinal).Replace("_", "\\_", StringComparison.Ordinal);
@@ -131,4 +139,17 @@ public sealed class SqlLovRunner : IDisposable
 
         await transaction.RollbackAsync(cancellationToken);
     }
+}
+
+/// <summary>Output columns of a restricted-SQL LOV; unset names fall back to <c>value</c>, <c>display_ar</c>, <c>display_en</c>.</summary>
+public sealed record SqlLovColumns(string Value, string DisplayAr, string DisplayEn, string? Parent)
+{
+    public IEnumerable<string> All => Parent is null ? [Value, DisplayAr, DisplayEn] : [Value, DisplayAr, DisplayEn, Parent];
+
+    public static SqlLovColumns From(string? value, string? displayAr, string? displayEn, string? parent) =>
+        new(
+            string.IsNullOrWhiteSpace(value) ? SqlLovRunner.DefaultValueColumn : value.Trim(),
+            string.IsNullOrWhiteSpace(displayAr) ? SqlLovRunner.DefaultDisplayArColumn : displayAr.Trim(),
+            string.IsNullOrWhiteSpace(displayEn) ? SqlLovRunner.DefaultDisplayEnColumn : displayEn.Trim(),
+            string.IsNullOrWhiteSpace(parent) ? null : parent.Trim());
 }

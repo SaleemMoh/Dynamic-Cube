@@ -233,21 +233,31 @@ internal sealed class LovApplier(JsonLogicEvaluator evaluator, SqlLovRunner sqlR
             case LovSourceType.Sql:
                 errors.Required("sqlText", payload.SqlText);
                 errors.MaxLength("sqlText", payload.SqlText, 8000);
+                var columns = SqlLovColumns.From(payload.ValueColumn, payload.DisplayArColumn, payload.DisplayEnColumn, payload.ParentColumn);
+                foreach (var (field, name) in new[] { ("valueColumn", payload.ValueColumn), ("displayArColumn", payload.DisplayArColumn), ("displayEnColumn", payload.DisplayEnColumn), ("parentColumn", payload.ParentColumn) })
+                {
+                    errors.MaxLength(field, name, 63);
+                }
+
                 if (!sqlRunner.IsEnabled)
                 {
                     errors.Add("sourceType", "Restricted SQL is not enabled on this installation.");
                 }
                 else if (!string.IsNullOrWhiteSpace(payload.SqlText))
                 {
-                    var problem = await sqlRunner.CheckAsync(payload.SqlText, payload.ParentColumn, cancellationToken);
+                    var problem = await sqlRunner.CheckAsync(payload.SqlText, columns, cancellationToken);
                     if (problem is not null)
                     {
                         errors.Add("sqlText", problem);
                     }
                 }
 
+                // Store only names that differ from the defaults, so the payload stays as the admin wrote it.
                 entity.SqlText = payload.SqlText;
-                entity.ValueColumn = entity.DisplayArColumn = entity.DisplayEnColumn = null;
+                entity.ValueColumn = string.IsNullOrWhiteSpace(payload.ValueColumn) ? null : columns.Value;
+                entity.DisplayArColumn = string.IsNullOrWhiteSpace(payload.DisplayArColumn) ? null : columns.DisplayAr;
+                entity.DisplayEnColumn = string.IsNullOrWhiteSpace(payload.DisplayEnColumn) ? null : columns.DisplayEn;
+                entity.ParentColumn = columns.Parent;
                 break;
             case LovSourceType.Integration:
                 errors.Add("sourceType", "Integration LOVs become available with the Integration Manager.");

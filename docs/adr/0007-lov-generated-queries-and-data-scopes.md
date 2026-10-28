@@ -10,8 +10,7 @@ external host), and grants only filtered dropdowns.
 
 ## Decision
 - An LOV is a definition over a registered source: Class, Data Object (catalogued table/view),
-  Integration operation, or restricted SQL (read-only role, `lov` schema views only, bound
-  parameters, limits).
+  Integration operation, or restricted SQL (read-only database role, bound parameters, limits).
 - The platform generates the query and returns value + Arabic + English display.
 - Grants per role × LOV: `ALL`, `VALUES`, `RULE` (JSONLogic over user context), `NONE`;
   optional per-screen override; default value.
@@ -21,7 +20,8 @@ external host), and grants only filtered dropdowns.
 ## Consequences
 - Same concept as today, enforced consistently on the server.
 - Rule-based grants remove per-user maintenance (e.g. "own region").
-- Complex legacy SQL LOVs must be rewritten as views in the `lov` schema.
+- Existing SQL LOVs can be reused: the LOV names the query's value and label columns, and the query
+  may read any table or view the read-only role is allowed to read (no separate schema needed).
 
 ## Refinement (Phase 1a implementation)
 - Every grant **resolves to a value set** for the signed-in user — "all values" or an explicit

@@ -199,10 +199,12 @@ Tables or views that LOVs and data scopes may use. Only registered objects are q
 The platform **generates** the query:
 `SELECT value, display_ar, display_en FROM <source> WHERE <static filter> AND <parameters> AND <grant predicate>`.
 
-**Restricted SQL** is an escape hatch for genuinely complex cases: executed with a read-only
-database role, only against views in a dedicated `lov` schema, bound parameters only, declared
-output columns, validated on save, row limit and timeout, editable only with a dedicated
-privilege.
+**Restricted SQL** keeps existing LOV queries usable: executed with a separate read-only database
+role (it can read only the tables and views it was granted), one SELECT statement, bound parameters
+only (`@user_id`, `@username`, `@org_unit`, `@app`), validated on save, row limit and timeout,
+editable only with a dedicated privilege. The LOV names the query's value, Arabic and English label
+(and optional parent) columns; when left empty they default to `value`, `display_ar`, `display_en`,
+so queries can be pasted as they are.
 
 ### `lov_binding` (screen ↔ LOV)
 
