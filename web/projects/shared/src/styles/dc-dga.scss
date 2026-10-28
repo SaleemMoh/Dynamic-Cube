@@ -185,3 +185,11 @@ a {
   --mat-snack-bar-container-color: var(--dga-green-950);
   --mat-snack-bar-button-color: #ffffff;
 }
+
+/* Content panel: white surface with the DGA border. */
+.dc-card {
+  padding: 16px 24px;
+  border: 1px solid var(--dga-border);
+  border-radius: 16px;
+  background: #ffffff;
+}

@@ -11,6 +11,8 @@ export const routes: Routes = [
     children: [
       { path: '', loadComponent: () => import('./home/home').then((m) => m.Home) },
       { path: 'apps-control', loadChildren: () => import('./apps-control/apps-control.routes').then((m) => m.APPS_CONTROL_ROUTES) },
+      { path: 'integration', loadChildren: () => import('./integration/integration.routes').then((m) => m.INTEGRATION_ROUTES) },
+      { path: 'party', loadChildren: () => import('./party/party.routes').then((m) => m.PARTY_ROUTES) },
     ],
   },
   { path: '**', redirectTo: '' },

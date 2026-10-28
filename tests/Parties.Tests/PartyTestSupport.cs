@@ -64,7 +64,7 @@ internal static class PartyTestSupport
     /// <summary>Answers the token endpoint and the test's own paths; 404 for everything else.</summary>
     public static void Answer(TestHost host, string prefix, Func<RecordedRequest, (HttpStatusCode, string)> api) =>
         host.Provider.Respond = r =>
-            r.Url.AbsolutePath == "/oauth/v1/token" ? (HttpStatusCode.OK, MomrahSamples.Token("t"))
+            r.Url.ToString() == "https://gateway.test/oauth/v1/token" ? (HttpStatusCode.OK, MomrahSamples.Token("t"))
             : r.Url.AbsolutePath.StartsWith(prefix, StringComparison.Ordinal) ? api(r)
             : (HttpStatusCode.NotFound, string.Empty);
 

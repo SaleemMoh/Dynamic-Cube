@@ -121,6 +121,11 @@ export class AppsControlApi {
   }
 
   /** Saves and publishes one change in an area that needs no approval. */
+  /** Imports a configuration package as draft change sets (one per area). */
+  importPackage(pkg: { title: string; items: unknown[] }): Observable<ChangeSetDetail[]> {
+    return this.http.post<ChangeSetDetail[]>(`${APPS_CONTROL_API}/change-sets/import`, pkg);
+  }
+
   applyNow(
     entityType: string,
     entityCode: string,

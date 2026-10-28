@@ -42,6 +42,31 @@ At login an external user selects the **acting context**: themselves, or an esta
 are delegated for. Every request records both the **submitter** (individual) and the
 **beneficiary** (party).
 
+**Implementation (1b)** — module `Parties`, schema `party`:
+
+- **Identity** — on first portal sign-in the individual is registered from the token's `national_id`
+  claim (mapped from Nafath in Keycloak); `1…` numbers are national IDs, `2…` iqamas. Parties carry typed
+  identifiers (national ID, iqama, GCC ID, passport, CR number, unified number), unique per type.
+- **Acting contexts** — *context sources* (configuration) name an integration operation called with the
+  individual's ID number and say where the items, identifiers, names, relation codes, statuses, validity
+  and delegated services are in its result. The MCI source lists the CRs of a person with their relation
+  type; provider codes are translated through the relationship types' external codes (seeded with the MCI
+  guide's codes: owner, partners, managers can act; board members and other roles are recorded but cannot).
+  Contexts are refreshed when older than the source's period or on request; relationships the provider no
+  longer reports are ended, and when the provider fails the last known contexts stay (with a warning).
+  Relationships recorded by employees (e.g. an authorized delegate for some services) are never ended by a
+  refresh.
+- **Acting party** — the portal sends the chosen party in the `X-Acting-Party` header; the API checks it
+  against the applicant's active relationships whose type can act (`IActingPartyAccessor` in the kernel).
+- **Profile fields** — integration-sourced fields name an operation, an output and which identifier feeds
+  which input; one call per operation fills all its fields, and values older than the field's refresh period
+  are fetched again. Manual fields are entered by employees.
+- **Credentials, projects, sanctions** — recorded with source and validity; credentials keep nested data as
+  JSON. A sanction must be lifted by someone other than who recorded it.
+- Configuration (relationship types, context sources, profile fields, credential and sanction types) goes
+  through change sets (area `party.registry`); registry operations are on the internal API, the acting
+  contexts on the external API.
+
 ---
 
 ## 3.2 Service Definition

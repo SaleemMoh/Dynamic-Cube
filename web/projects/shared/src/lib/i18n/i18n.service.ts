@@ -50,9 +50,8 @@ export class I18nService {
     this.overrides.set(dictionary);
   }
 
-  /** Translates a key; returns the key itself when missing so gaps are visible. */
-  translate(key: string): string {
-    const language = this.language();
+  /** Translates a key (in the current language unless given); returns the key itself when missing so gaps are visible. */
+  translate(key: string, language: Language = this.language()): string {
     const override = this.overrides()[language][key];
     if (override !== undefined) {
       return override;

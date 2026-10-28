@@ -20,6 +20,9 @@ public sealed record AddChangeItemRequest(string EntityType, string EntityCode, 
 
 public sealed record ReviewRequest(string? Comment);
 
+/// <summary>A configuration package: changes of any modules, drafted as one change set per area.</summary>
+public sealed record ImportPackageRequest(string Title, List<AddChangeItemRequest> Items);
+
 public sealed record ChangeSetSummary(
     Guid Id,
     string Area,
@@ -193,6 +196,60 @@ internal static class AdminEndpoints
             var changeSet = await service.SaveAndPublishAsync(applier.Area, title, applier.EntityType, code, request.Operation, payload, ct);
             return Results.Ok(await DetailAsync(db, await service.GetAsync(changeSet.Id, ct), user.UserId, ct));
         }).RequirePrivilege(AppsControlResources.ChangeSets, PrivilegeActions.Create).WithName("ApplyChange");
+
+        // Configuration packages (e.g. a ready-made connector set): drafted per area, then submitted and approved as usual.
+        sets.MapPost("/import", async (ImportPackageRequest request, ChangeSetRouter router, AccessResolver resolver, AppsControlDbContext db, ICurrentUser user, CancellationToken ct) =>
+        {
+            if (string.IsNullOrWhiteSpace(request.Title) || request.Items is not { Count: > 0 and <= 500 })
+            {
+                return Results.ValidationProblem(new Dictionary<string, string[]> { ["items"] = ["Give a title and 1 to 500 items."] });
+            }
+
+            var prepared = new List<(IConfigApplier Applier, AddChangeItemRequest Item, string? Payload)>();
+            foreach (var item in request.Items)
+            {
+                var (applier, payload, problem) = await AuthorizeChangeAsync(item, router.Appliers, resolver, ct);
+                if (problem is not null)
+                {
+                    return problem;
+                }
+
+                prepared.Add((applier!, item, payload));
+            }
+
+            var created = new List<(IChangeSetWorkflow Workflow, Guid Id)>();
+            try
+            {
+                foreach (var group in prepared.GroupBy(p => p.Applier.Area))
+                {
+                    var workflow = router.ForArea(group.Key);
+                    var changeSet = await workflow.CreateAsync(group.Key, request.Title.Trim(), ct);
+                    created.Add((workflow, changeSet.Id));
+                    foreach (var (applier, item, payload) in group)
+                    {
+                        await workflow.AddItemAsync(changeSet.Id, applier.EntityType, item.EntityCode?.Trim() ?? string.Empty, item.Operation, payload, ct);
+                    }
+                }
+            }
+            catch
+            {
+                // All or nothing: drop the drafts created so far.
+                foreach (var (workflow, id) in created)
+                {
+                    await workflow.DiscardAsync(id, CancellationToken.None);
+                }
+
+                throw;
+            }
+
+            var details = new List<ChangeSetDetail>();
+            foreach (var (workflow, id) in created)
+            {
+                details.Add(await DetailAsync(db, await workflow.GetAsync(id, ct), user.UserId, ct));
+            }
+
+            return Results.Ok(details);
+        }).RequirePrivilege(AppsControlResources.ChangeSets, PrivilegeActions.Create).WithName("ImportConfigurationPackage");
 
         sets.MapDelete("/{id:guid}/items/{itemId:guid}", async (Guid id, Guid itemId, ChangeSetRouter router, AppsControlDbContext db, ICurrentUser user, CancellationToken ct) =>
         {

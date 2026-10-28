@@ -29,3 +29,8 @@ export * from './lib/apps-control/lov-source';
 export * from './lib/apps-control/nav-menu';
 export * from './lib/apps-control/branding';
 export * from './lib/apps-control/auth-image';
+export * from './lib/integration/integration.api';
+export * from './lib/party/party.models';
+export * from './lib/party/party.api';
+export * from './lib/party/acting-party';
+export * from './lib/party/acting-context-selector';

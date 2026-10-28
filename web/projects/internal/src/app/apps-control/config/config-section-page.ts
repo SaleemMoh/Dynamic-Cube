@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { MatTabsModule } from '@angular/material/tabs';
 import { LocalizePipe, TranslatePipe } from '@dynamic-cube/shared';
 import { ConfigTable } from './config-table';
-import { CONFIG_SECTIONS } from './config-types';
+import { ALL_CONFIG_SECTIONS } from './module-sections';
 
 /** An Apps Control screen showing one or more configuration types (tabs). */
 @Component({
@@ -33,5 +33,5 @@ export class ConfigSectionPage {
   /** Section path, from route data. */
   readonly section = input.required<string>();
 
-  protected readonly sectionDefinition = computed(() => CONFIG_SECTIONS.find((s) => s.path === this.section()));
+  protected readonly sectionDefinition = computed(() => ALL_CONFIG_SECTIONS.find((s) => s.path === this.section()));
 }

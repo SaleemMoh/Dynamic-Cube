@@ -102,7 +102,7 @@ public sealed class ApiTests(DatabaseFixture fixture) : IAsyncLifetime
         row.GetProperty("connectionCode").GetString().ShouldBe(connection);
         row.GetProperty("isIdempotent").GetBoolean().ShouldBeTrue();
 
-        _provider.Respond = r => r.Url.AbsolutePath == "/oauth/v1/token" ? (HttpStatusCode.OK, MomrahSamples.Token("t")) : (HttpStatusCode.OK, MomrahSamples.CrInformation);
+        _provider.Respond = r => r.Url.ToString() == "https://gateway.test/oauth/v1/token" ? (HttpStatusCode.OK, MomrahSamples.Token("t")) : (HttpStatusCode.OK, MomrahSamples.CrInformation);
         var tested = await maker.PostAsJsonAsync($"/api/integration/v1/operations/{operation}/test", new { inputs = new { idNumber = "1003721519" } }, ct);
         tested.EnsureSuccessStatusCode();
         var result = await tested.Content.ReadFromJsonAsync<JsonElement>(ct);
@@ -135,6 +135,74 @@ public sealed class ApiTests(DatabaseFixture fixture) : IAsyncLifetime
         draft.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         test.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         logs.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task The_mci_configuration_package_imports_and_publishes()
+    {
+        fixture.RequireConnectionString();
+        var ct = TestContext.Current.CancellationToken;
+        using var maker = Client("maker");
+        using var checker = Client("checker");
+        var package = JsonDocument.Parse(await File.ReadAllTextAsync(RepositoryFile("deploy/config-packages/momrah-mci.json"), ct)).RootElement;
+
+        var imported = await maker.PostAsJsonAsync("/api/apps-control/v1/change-sets/import", package, ct);
+        if (!imported.IsSuccessStatusCode)
+        {
+            Assert.Fail(await imported.Content.ReadAsStringAsync(ct));
+        }
+
+        var drafts = await imported.Content.ReadFromJsonAsync<JsonElement>(ct);
+        drafts.EnumerateArray().Select(d => d.GetProperty("changeSet").GetProperty("area").GetString()).ShouldBe(["integ.integrations", "party.registry"]);
+        foreach (var draft in drafts.EnumerateArray())
+        {
+            var id = draft.GetProperty("changeSet").GetProperty("id").GetString();
+            (await maker.PostAsync(new Uri($"/api/apps-control/v1/change-sets/{id}/submit", UriKind.Relative), null, ct)).EnsureSuccessStatusCode();
+            var approved = await checker.PostAsJsonAsync($"/api/apps-control/v1/change-sets/{id}/approve", new { comment = "ok" }, ct);
+            approved.EnsureSuccessStatusCode();
+            (await approved.Content.ReadFromJsonAsync<JsonElement>(ct)).GetProperty("changeSet").GetProperty("status").GetString().ShouldBe("PUBLISHED");
+        }
+
+        var connection = await maker.GetFromJsonAsync<JsonElement>("/api/apps-control/v1/admin/integ.connection/MOMRAH_GATEWAY", ct);
+        connection.GetProperty("authType").GetString().ShouldBe("OAUTH2_CLIENT_CREDENTIALS");
+        var source = await maker.GetFromJsonAsync<JsonElement>("/api/apps-control/v1/admin/party.context-source/MCI_CRS", ct);
+        source.GetProperty("operationCode").GetString().ShouldBe("MCI_CR_BY_ID_NUMBER");
+        var fields = await maker.GetFromJsonAsync<JsonElement>("/api/apps-control/v1/admin/party.profile-field", ct);
+        fields.GetArrayLength().ShouldBeGreaterThanOrEqualTo(5);
+    }
+
+    [Fact]
+    public async Task A_package_with_an_invalid_item_leaves_no_drafts()
+    {
+        fixture.RequireConnectionString();
+        var ct = TestContext.Current.CancellationToken;
+        using var maker = Client("maker");
+        var provider = TestHost.Unique("PKG");
+        var before = (await maker.GetFromJsonAsync<JsonElement>("/api/apps-control/v1/change-sets?mine=true", ct)).GetArrayLength();
+
+        var response = await maker.PostAsJsonAsync("/api/apps-control/v1/change-sets/import", new
+        {
+            title = "Broken package",
+            items = new object[]
+            {
+                new { entityType = IntegrationChangeTypes.Provider, entityCode = provider, operation = "CREATE", payload = new { nameAr = "جهة", nameEn = "Provider" } },
+                new { entityType = IntegrationChangeTypes.Connection, entityCode = TestHost.Unique("C"), operation = "CREATE", payload = new { nameAr = "اتصال", nameEn = "Connection", providerCode = provider, baseUrl = "not a url" } },
+            },
+        }, ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await maker.GetFromJsonAsync<JsonElement>("/api/apps-control/v1/change-sets?mine=true", ct)).GetArrayLength().ShouldBe(before);
+    }
+
+    private static string RepositoryFile(string relative)
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "DynamicCube.slnx")))
+        {
+            directory = directory.Parent;
+        }
+
+        return Path.Combine(directory?.FullName ?? throw new InvalidOperationException("Repository root not found."), relative);
     }
 
     private static async Task AddAsync(HttpClient client, string? id, string type, string code, object payload, CancellationToken ct)

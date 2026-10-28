@@ -28,7 +28,7 @@ public sealed class GatewayTests(DatabaseFixture fixture) : IAsyncLifetime
         _host.AsAsync("admin", sp => sp.GetRequiredService<IIntegrationGateway>().InvokeAsync(operation, new Dictionary<string, string?> { ["idNumber"] = idNumber }, CancellationToken.None));
 
     private void Answer(Func<RecordedRequest, (HttpStatusCode, string)> api) =>
-        _host.Provider.Respond = r => r.Url.AbsolutePath == "/oauth/v1/token" ? (HttpStatusCode.OK, MomrahSamples.Token("token-1")) : api(r);
+        _host.Provider.Respond = r => r.Url.ToString() == "https://gateway.test/oauth/v1/token" ? (HttpStatusCode.OK, MomrahSamples.Token("token-1")) : api(r);
 
     [Fact]
     public async Task Reads_the_envelope_maps_outputs_and_reuses_the_token()
@@ -49,6 +49,7 @@ public sealed class GatewayTests(DatabaseFixture fixture) : IAsyncLifetime
         call.Url.ToString().ShouldBe("https://gateway.test/v1/MCI-DIP/cr-information-id-number/1003721519");
         call.Authorization.ShouldBe("Bearer token-1");
         _host.Provider.Requests[0].Authorization.ShouldBe("Basic " + Convert.ToBase64String("consumer-key:consumer-secret"u8.ToArray()));
+        _host.Provider.Requests[0].Url.ToString().ShouldBe("https://gateway.test/oauth/v1/token");
     }
 
     [Fact]

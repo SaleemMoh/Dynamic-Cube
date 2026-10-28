@@ -21,3 +21,4 @@ Status values: Proposed · Accepted · Superseded.
 | [0014](0014-pluggable-decision-engine.md) | Decision engine behind a platform contract | Accepted |
 | [0015](0015-angular-material.md) | Angular + Angular Material front-end | Accepted (revised) |
 | [0016](0016-dga-design-system.md) | DGA design system for all user interfaces | Accepted |
+| [0017](0017-module-configuration-in-the-kernel.md) | Module configuration through one kernel framework | Accepted |

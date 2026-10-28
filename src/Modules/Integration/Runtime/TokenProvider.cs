@@ -62,7 +62,8 @@ internal sealed class TokenProvider(IHttpClientFactory httpClients, IMemoryCache
 
     private async Task<(string Token, int ExpiresIn)> RequestTokenAsync(Connection connection, CancellationToken cancellationToken)
     {
-        var url = Uri.TryCreate(connection.TokenUrl, UriKind.Absolute, out var absolute)
+        // "/oauth/v1/token" parses as an absolute file URI on Unix, so only http(s) URLs count as absolute.
+        var url = Uri.TryCreate(connection.TokenUrl, UriKind.Absolute, out var absolute) && (absolute.Scheme == Uri.UriSchemeHttps || absolute.Scheme == Uri.UriSchemeHttp)
             ? absolute
             : new Uri(connection.BaseUrl + "/" + connection.TokenUrl!.TrimStart('/'));
         using var request = new HttpRequestMessage(HttpMethod.Post, url)

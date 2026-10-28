@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using DynamicCube.Platform.Integration;
 
 namespace DynamicCube.Modules.Integration.Domain;
@@ -21,6 +22,7 @@ public enum AuthType
     ApiKey,
 
     /// <summary>Secret keys <c>clientId</c>, <c>clientSecret</c>; the token is cached until it expires.</summary>
+    [JsonStringEnumMemberName("OAUTH2_CLIENT_CREDENTIALS")]
     OAuth2ClientCredentials,
 }
 

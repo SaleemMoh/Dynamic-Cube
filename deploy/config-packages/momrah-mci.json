@@ -1,0 +1,346 @@
+{
+  "title": "MCI connectors (MoMRAH gateway)",
+  "items": [
+    {
+      "entityType": "integ.provider",
+      "entityCode": "MCI",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "وزارة التجارة",
+        "nameEn": "Ministry of Commerce",
+        "descriptionAr": "خدمات السجل التجاري عبر بوابة الوزارة",
+        "descriptionEn": "Commercial registration services through the MoMRAH gateway"
+      }
+    },
+    {
+      "entityType": "integ.connection",
+      "entityCode": "MOMRAH_GATEWAY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "بوابة خدمات الوزارة",
+        "nameEn": "MoMRAH API gateway",
+        "providerCode": "MCI",
+        "baseUrl": "http://localhost:5090",
+        "authType": "OAUTH2_CLIENT_CREDENTIALS",
+        "secretName": "MOMRAH_GATEWAY",
+        "tokenUrl": "/oauth/v1/token",
+        "timeoutSeconds": 30,
+        "retryCount": 2,
+        "circuitBreakerFailures": 5,
+        "circuitBreakerSeconds": 60,
+        "headers": []
+      }
+    },
+    {
+      "entityType": "integ.envelope-profile",
+      "entityCode": "MOMRAH",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "استجابة بوابة الوزارة",
+        "nameEn": "MoMRAH gateway envelope",
+        "statusCodePath": "statusDetails.code",
+        "statusMessagePath": "statusDetails.message",
+        "successStatusCodes": [
+          "200"
+        ],
+        "businessCodePath": "data.responseCode",
+        "businessMessagePath": "data.responseMessage",
+        "successBusinessCodes": [
+          "1"
+        ],
+        "resultPath": "data.result",
+        "responseCodes": []
+      }
+    },
+    {
+      "entityType": "integ.operation",
+      "entityCode": "MCI_CR_BY_ID_NUMBER",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "السجلات التجارية بدلالة رقم الهوية",
+        "nameEn": "Commercial registrations by ID number",
+        "connectionCode": "MOMRAH_GATEWAY",
+        "envelopeProfileCode": "MOMRAH",
+        "method": "GET",
+        "pathTemplate": "/v1/MCI-DIP/cr-information-id-number/{idNumber}",
+        "parameters": [
+          {
+            "name": "idNumber",
+            "location": "PATH",
+            "isRequired": true,
+            "isMasked": true,
+            "sampleValue": "1000000001"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "crNumbers",
+            "path": "Licenses[*].Commercial_NO"
+          },
+          {
+            "name": "crNames",
+            "path": "Licenses[*].Commercial_Name"
+          }
+        ],
+        "responseCodes": [
+          {
+            "code": "001-000001",
+            "outcome": "NOT_FOUND",
+            "messageAr": "لا توجد سجلات تجارية مطابقة.",
+            "messageEn": "No matching commercial registration was found."
+          },
+          {
+            "code": "001-000003",
+            "outcome": "BUSINESS_ERROR",
+            "messageAr": "يوجد سجل تجاري منتهي الصلاحية.",
+            "messageEn": "At least one commercial registration has expired."
+          },
+          {
+            "code": "001-000004",
+            "outcome": "BUSINESS_ERROR",
+            "messageAr": "يوجد سجل تجاري موقوف.",
+            "messageEn": "At least one commercial registration is suspended."
+          },
+          {
+            "code": "001-000006",
+            "outcome": "TECHNICAL_ERROR",
+            "messageAr": "الجهة غير مصرح لها بالخدمة لدى وزارة التجارة.",
+            "messageEn": "The entity is not authorized for this Ministry of Commerce service."
+          },
+          {
+            "code": "001-000007",
+            "outcome": "BUSINESS_ERROR",
+            "messageAr": "نوع الهوية غير صحيح.",
+            "messageEn": "The ID type is not valid."
+          },
+          {
+            "code": "001-000008",
+            "outcome": "BUSINESS_ERROR",
+            "messageAr": "رقم الهوية غير صحيح.",
+            "messageEn": "The ID number is not valid."
+          }
+        ],
+        "maskFields": [],
+        "cacheSeconds": 0,
+        "isIdempotent": true
+      }
+    },
+    {
+      "entityType": "integ.operation",
+      "entityCode": "MCI_CR_INFO",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "بيانات السجل التجاري",
+        "nameEn": "Commercial registration information",
+        "connectionCode": "MOMRAH_GATEWAY",
+        "envelopeProfileCode": "MOMRAH",
+        "method": "GET",
+        "pathTemplate": "/v1/MCI-DIP/CR-Information/{crNumber}",
+        "parameters": [
+          {
+            "name": "crNumber",
+            "location": "PATH",
+            "isRequired": true,
+            "isMasked": false,
+            "sampleValue": "1010000001"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "crName",
+            "path": "crName"
+          },
+          {
+            "name": "unifiedNumber",
+            "path": "crEntityNumber"
+          },
+          {
+            "name": "status",
+            "path": "status.name"
+          },
+          {
+            "name": "expiryDate",
+            "path": "expiryDate"
+          },
+          {
+            "name": "city",
+            "path": "location.name"
+          },
+          {
+            "name": "capital",
+            "path": "capital"
+          },
+          {
+            "name": "activities",
+            "path": "activities[*].name"
+          }
+        ],
+        "responseCodes": [
+          {
+            "code": "001-000001",
+            "outcome": "NOT_FOUND",
+            "messageAr": "لا توجد سجلات تجارية مطابقة.",
+            "messageEn": "No matching commercial registration was found."
+          },
+          {
+            "code": "001-000003",
+            "outcome": "BUSINESS_ERROR",
+            "messageAr": "يوجد سجل تجاري منتهي الصلاحية.",
+            "messageEn": "At least one commercial registration has expired."
+          },
+          {
+            "code": "001-000004",
+            "outcome": "BUSINESS_ERROR",
+            "messageAr": "يوجد سجل تجاري موقوف.",
+            "messageEn": "At least one commercial registration is suspended."
+          },
+          {
+            "code": "001-000006",
+            "outcome": "TECHNICAL_ERROR",
+            "messageAr": "الجهة غير مصرح لها بالخدمة لدى وزارة التجارة.",
+            "messageEn": "The entity is not authorized for this Ministry of Commerce service."
+          },
+          {
+            "code": "001-000007",
+            "outcome": "BUSINESS_ERROR",
+            "messageAr": "نوع الهوية غير صحيح.",
+            "messageEn": "The ID type is not valid."
+          },
+          {
+            "code": "001-000008",
+            "outcome": "BUSINESS_ERROR",
+            "messageAr": "رقم الهوية غير صحيح.",
+            "messageEn": "The ID number is not valid."
+          }
+        ],
+        "maskFields": [],
+        "cacheSeconds": 3600,
+        "isIdempotent": true
+      }
+    },
+    {
+      "entityType": "party.context-source",
+      "entityCode": "MCI_CRS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "السجلات التجارية من وزارة التجارة",
+        "nameEn": "Commercial registrations (MCI)",
+        "operationCode": "MCI_CR_BY_ID_NUMBER",
+        "inputParameter": "idNumber",
+        "itemsPath": "Licenses",
+        "principalKind": "ESTABLISHMENT",
+        "principalIdentifierType": "CR_NUMBER",
+        "identifierPath": "Commercial_NO",
+        "nameArPath": "Commercial_Name",
+        "relationCodePath": "RelationTypeInfo.Id",
+        "relationProvider": "MCI",
+        "statusPath": "Status",
+        "activeStatuses": [
+          "Active"
+        ],
+        "refreshMinutes": 60,
+        "displayOrder": 10
+      }
+    },
+    {
+      "entityType": "party.profile-field",
+      "entityCode": "CR_STATUS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "حالة السجل التجاري",
+        "nameEn": "CR status",
+        "partyKind": "ESTABLISHMENT",
+        "dataType": "TEXT",
+        "operationCode": "MCI_CR_INFO",
+        "outputName": "status",
+        "inputs": [
+          {
+            "parameter": "crNumber",
+            "identifierType": "CR_NUMBER"
+          }
+        ],
+        "refreshHours": 24
+      }
+    },
+    {
+      "entityType": "party.profile-field",
+      "entityCode": "CR_EXPIRY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تاريخ انتهاء السجل (هجري)",
+        "nameEn": "CR expiry (Hijri)",
+        "partyKind": "ESTABLISHMENT",
+        "dataType": "TEXT",
+        "operationCode": "MCI_CR_INFO",
+        "outputName": "expiryDate",
+        "inputs": [
+          {
+            "parameter": "crNumber",
+            "identifierType": "CR_NUMBER"
+          }
+        ],
+        "refreshHours": 24
+      }
+    },
+    {
+      "entityType": "party.profile-field",
+      "entityCode": "CR_CITY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مدينة السجل",
+        "nameEn": "CR city",
+        "partyKind": "ESTABLISHMENT",
+        "dataType": "TEXT",
+        "operationCode": "MCI_CR_INFO",
+        "outputName": "city",
+        "inputs": [
+          {
+            "parameter": "crNumber",
+            "identifierType": "CR_NUMBER"
+          }
+        ],
+        "refreshHours": 24
+      }
+    },
+    {
+      "entityType": "party.profile-field",
+      "entityCode": "CR_CAPITAL",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "رأس المال",
+        "nameEn": "Capital",
+        "partyKind": "ESTABLISHMENT",
+        "dataType": "NUMBER",
+        "operationCode": "MCI_CR_INFO",
+        "outputName": "capital",
+        "inputs": [
+          {
+            "parameter": "crNumber",
+            "identifierType": "CR_NUMBER"
+          }
+        ],
+        "refreshHours": 24
+      }
+    },
+    {
+      "entityType": "party.profile-field",
+      "entityCode": "CR_ACTIVITIES",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الأنشطة",
+        "nameEn": "Activities",
+        "partyKind": "ESTABLISHMENT",
+        "dataType": "JSON",
+        "operationCode": "MCI_CR_INFO",
+        "outputName": "activities",
+        "inputs": [
+          {
+            "parameter": "crNumber",
+            "identifierType": "CR_NUMBER"
+          }
+        ],
+        "refreshHours": 24
+      }
+    }
+  ]
+}

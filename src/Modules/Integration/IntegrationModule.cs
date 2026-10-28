@@ -85,6 +85,7 @@ internal static class IntegrationCatalog
         [
             new("integration.operations", "العمليات", "Operations", "/integration/operations", IntegrationResources.Config, "api", 10),
             new("integration.connections", "الاتصالات", "Connections", "/integration/connections", IntegrationResources.Config, "cable", 20),
+            new("integration.test-console", "تجربة العمليات", "Test console", "/integration/test-console", IntegrationResources.TestConsole, "science", 25),
             new("integration.envelopes", "أنماط الاستجابة", "Response envelopes", "/integration/envelopes", IntegrationResources.Config, "mail", 30),
             new("integration.providers", "الجهات المزودة", "Providers", "/integration/providers", IntegrationResources.Config, "corporate_fare", 40),
             new("integration.call-log", "سجل الاستدعاءات", "Call log", "/integration/call-log", IntegrationResources.CallLog, "history", 50),

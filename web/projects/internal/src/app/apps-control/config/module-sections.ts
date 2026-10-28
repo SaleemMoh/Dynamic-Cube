@@ -1,0 +1,279 @@
+import { FormOption, LocalizedText } from '@dynamic-cube/shared';
+import { CONFIG_SECTIONS, ConfigField, ConfigSection } from './config-types';
+
+const t = (ar: string, en: string): LocalizedText => ({ ar, en });
+const opt = (value: string, ar: string, en: string): FormOption => ({ value, label: t(ar, en) });
+const number = (code: string, label: LocalizedText, defaultValue: number, hint?: LocalizedText): ConfigField => ({ code, type: 'number', label, defaultValue, hint });
+const path = (code: string, label: LocalizedText, hint?: LocalizedText): ConfigField => ({ code, type: 'text', label, hint });
+const json = (code: string, label: LocalizedText, hint: LocalizedText, defaultValue: unknown = []): ConfigField => ({ code, type: 'json', label, hint, defaultValue });
+
+const partyKinds = [opt('INDIVIDUAL', 'فرد', 'Individual'), opt('ESTABLISHMENT', 'منشأة', 'Establishment')];
+const outcomes = 'SUCCESS | NOT_FOUND | BUSINESS_ERROR | TECHNICAL_ERROR';
+const responseCodesHint = t(
+  `[{"code": "001-000001", "outcome": "NOT_FOUND", "messageAr": "…", "messageEn": "…"}] — النتائج: ${outcomes}`,
+  `[{"code": "001-000001", "outcome": "NOT_FOUND", "messageAr": "…", "messageEn": "…"}] — outcomes: ${outcomes}`,
+);
+
+/** Integration Manager configuration screens (internal system → Integrations). */
+export const INTEGRATION_SECTIONS: ConfigSection[] = [
+  {
+    path: 'providers',
+    title: t('الجهات المزودة', 'Providers'),
+    resource: 'integration.config',
+    types: [
+      {
+        entityType: 'integ.provider',
+        title: t('الجهات المزودة', 'Providers'),
+        key: 'code',
+        fields: [
+          { code: 'descriptionAr', type: 'textarea', label: t('الوصف بالعربية', 'Arabic description') },
+          { code: 'descriptionEn', type: 'textarea', label: t('الوصف بالإنجليزية', 'English description') },
+        ],
+      },
+    ],
+  },
+  {
+    path: 'connections',
+    title: t('الاتصالات', 'Connections'),
+    resource: 'integration.config',
+    types: [
+      {
+        entityType: 'integ.connection',
+        title: t('الاتصالات', 'Connections'),
+        key: 'code',
+        columns: ['providerCode', 'baseUrl', 'authType'],
+        fields: [
+          { code: 'providerCode', type: 'select', label: t('الجهة المزودة', 'Provider'), ref: 'integ.provider', required: true },
+          { code: 'baseUrl', type: 'text', label: t('العنوان الأساسي', 'Base URL'), required: true, hint: t('مثال: https://apiservicesstg.balady.gov.sa', 'e.g. https://apiservicesstg.balady.gov.sa') },
+          {
+            code: 'authType',
+            type: 'select',
+            label: t('طريقة التوثيق', 'Authentication'),
+            required: true,
+            defaultValue: 'OAUTH2_CLIENT_CREDENTIALS',
+            options: [
+              opt('NONE', 'بدون', 'None'),
+              opt('BASIC', 'اسم مستخدم وكلمة مرور', 'Basic'),
+              opt('API_KEY', 'مفتاح API', 'API key'),
+              opt('OAUTH2_CLIENT_CREDENTIALS', 'OAuth2 (بيانات العميل)', 'OAuth2 client credentials'),
+            ],
+          },
+          {
+            code: 'secretName',
+            type: 'text',
+            label: t('اسم بيانات الاعتماد', 'Credentials name'),
+            hint: t('القيم تُضبط في مخزن الأسرار: Secrets__الاسم__clientId …، ولا تُحفظ في قاعدة البيانات', 'Values are set in the secret store (Secrets__NAME__clientId …), never in the database'),
+            requiredWhen: { '!=': [{ var: 'authType' }, 'NONE'] },
+            visibleWhen: { '!=': [{ var: 'authType' }, 'NONE'] },
+          },
+          {
+            code: 'tokenUrl',
+            type: 'text',
+            label: t('عنوان الحصول على الرمز', 'Token URL'),
+            defaultValue: '/oauth/v1/token',
+            requiredWhen: { '==': [{ var: 'authType' }, 'OAUTH2_CLIENT_CREDENTIALS'] },
+            visibleWhen: { '==': [{ var: 'authType' }, 'OAUTH2_CLIENT_CREDENTIALS'] },
+          },
+          { code: 'apiKeyHeader', type: 'text', label: t('ترويسة المفتاح', 'API key header'), visibleWhen: { '==': [{ var: 'authType' }, 'API_KEY'] } },
+          number('timeoutSeconds', t('مهلة الاستجابة (ثانية)', 'Timeout (seconds)'), 30),
+          number('retryCount', t('عدد مرات إعادة المحاولة', 'Retries'), 2, t('للعمليات الآمنة للتكرار فقط', 'Idempotent operations only')),
+          number('circuitBreakerFailures', t('الإخفاقات قبل الإيقاف المؤقت', 'Failures before pausing'), 5),
+          number('circuitBreakerSeconds', t('مدة الإيقاف المؤقت (ثانية)', 'Pause (seconds)'), 60),
+          json('headers', t('ترويسات ثابتة', 'Fixed headers'), t('[{"name": "Accept-Language", "value": "ar"}]', '[{"name": "Accept-Language", "value": "ar"}]')),
+        ],
+      },
+    ],
+  },
+  {
+    path: 'envelopes',
+    title: t('أنماط الاستجابة', 'Response envelopes'),
+    resource: 'integration.config',
+    types: [
+      {
+        entityType: 'integ.envelope-profile',
+        title: t('أنماط الاستجابة', 'Response envelopes'),
+        key: 'code',
+        columns: ['statusCodePath', 'businessCodePath'],
+        fields: [
+          path('statusCodePath', t('مسار رمز الحالة', 'Status code path'), t('مثال: statusDetails.code', 'e.g. statusDetails.code')),
+          path('statusMessagePath', t('مسار رسالة الحالة', 'Status message path')),
+          json('successStatusCodes', t('رموز الحالة الناجحة', 'Success status codes'), t('["200"]', '["200"]')),
+          path('businessCodePath', t('مسار رمز العمل', 'Business code path'), t('مثال: data.responseCode', 'e.g. data.responseCode')),
+          path('businessMessagePath', t('مسار رسالة العمل', 'Business message path')),
+          json('successBusinessCodes', t('رموز العمل الناجحة', 'Success business codes'), t('["1"]', '["1"]')),
+          path('resultPath', t('مسار البيانات', 'Result path'), t('مثال: data.result', 'e.g. data.result')),
+          json('responseCodes', t('رموز الاستجابة المشتركة', 'Shared response codes'), responseCodesHint),
+        ],
+      },
+    ],
+  },
+  {
+    path: 'operations',
+    title: t('العمليات', 'Operations'),
+    resource: 'integration.config',
+    types: [
+      {
+        entityType: 'integ.operation',
+        title: t('العمليات', 'Operations'),
+        key: 'code',
+        columns: ['connectionCode', 'method', 'pathTemplate'],
+        fields: [
+          { code: 'connectionCode', type: 'select', label: t('الاتصال', 'Connection'), ref: 'integ.connection', required: true },
+          { code: 'envelopeProfileCode', type: 'select', label: t('نمط الاستجابة', 'Response envelope'), ref: 'integ.envelope-profile' },
+          {
+            code: 'method',
+            type: 'select',
+            label: t('الطريقة', 'Method'),
+            required: true,
+            defaultValue: 'GET',
+            options: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].map((m) => opt(m, m, m)),
+          },
+          { code: 'pathTemplate', type: 'text', label: t('المسار', 'Path'), required: true, hint: t('مثال: /v1/MCI-DIP/CR-Information/{crNumber}', 'e.g. /v1/MCI-DIP/CR-Information/{crNumber}') },
+          { code: 'descriptionAr', type: 'textarea', label: t('الوصف بالعربية', 'Arabic description') },
+          { code: 'descriptionEn', type: 'textarea', label: t('الوصف بالإنجليزية', 'English description') },
+          json(
+            'parameters',
+            t('المدخلات', 'Inputs'),
+            t('[{"name": "crNumber", "location": "PATH", "isRequired": true, "isMasked": false, "sampleValue": "1010000000"}] — المواقع: PATH | QUERY | HEADER | BODY', '[{"name": "crNumber", "location": "PATH", "isRequired": true, "isMasked": false, "sampleValue": "1010000000"}] — locations: PATH | QUERY | HEADER | BODY'),
+          ),
+          json('outputs', t('المخرجات', 'Outputs'), t('[{"name": "crNumbers", "path": "Licenses[*].Commercial_NO"}]', '[{"name": "crNumbers", "path": "Licenses[*].Commercial_NO"}]')),
+          json('responseCodes', t('رموز الاستجابة', 'Response codes'), responseCodesHint),
+          json('maskFields', t('حقول تُخفى في السجل', 'Fields masked in the log'), t('["Commercial_Name", "phoneNumber"]', '["Commercial_Name", "phoneNumber"]')),
+          number('cacheSeconds', t('مدة التخزين المؤقت (ثانية)', 'Cache (seconds)'), 0, t('0 = بدون تخزين', '0 = no caching')),
+          { code: 'isIdempotent', type: 'checkbox', label: t('آمنة لإعادة المحاولة', 'Safe to retry') },
+        ],
+      },
+    ],
+  },
+];
+
+const identifierTypes = (kind: 'INDIVIDUAL' | 'ESTABLISHMENT') =>
+  (kind === 'INDIVIDUAL'
+    ? [opt('NATIONAL_ID', 'هوية وطنية', 'National ID'), opt('IQAMA', 'إقامة', 'Iqama'), opt('GCC_ID', 'هوية خليجية', 'GCC ID'), opt('PASSPORT', 'جواز سفر', 'Passport')]
+    : [opt('CR_NUMBER', 'سجل تجاري', 'CR number'), opt('UNIFIED_NUMBER', 'الرقم الموحد', 'Unified number')]);
+
+/** Party Registry configuration screens (internal system → Party registry). */
+export const PARTY_SECTIONS: ConfigSection[] = [
+  {
+    path: 'relationship-types',
+    title: t('أنواع العلاقات', 'Relationship types'),
+    resource: 'party.config',
+    types: [
+      {
+        entityType: 'party.relationship-type',
+        title: t('أنواع العلاقات', 'Relationship types'),
+        key: 'code',
+        columns: ['canAct', 'displayOrder'],
+        fields: [
+          { code: 'canAct', type: 'checkbox', label: t('يحق له التمثيل في البوابة', 'May act for the party in the portal') },
+          number('displayOrder', t('الترتيب', 'Display order'), 0),
+          json('externalCodes', t('رموز الجهات الخارجية', 'Provider codes'), t('[{"provider": "MCI", "code": "1"}]', '[{"provider": "MCI", "code": "1"}]')),
+        ],
+      },
+    ],
+  },
+  {
+    path: 'context-sources',
+    title: t('مصادر صفة التمثيل', 'Acting context sources'),
+    resource: 'party.config',
+    types: [
+      {
+        entityType: 'party.context-source',
+        title: t('مصادر صفة التمثيل', 'Acting context sources'),
+        key: 'code',
+        columns: ['operationCode', 'principalKind', 'refreshMinutes'],
+        fields: [
+          { code: 'operationCode', type: 'select', label: t('عملية التكامل', 'Integration operation'), ref: 'integ.operation', required: true },
+          { code: 'inputParameter', type: 'text', label: t('مُدخل رقم الهوية', 'ID number input'), required: true, defaultValue: 'idNumber' },
+          path('itemsPath', t('مسار القائمة', 'Items path'), t('مثال: Licenses', 'e.g. Licenses')),
+          { code: 'principalKind', type: 'select', label: t('نوع الطرف الممثَّل', 'Represented party kind'), options: partyKinds, required: true, defaultValue: 'ESTABLISHMENT' },
+          { code: 'principalIdentifierType', type: 'select', label: t('نوع المعرّف', 'Identifier type'), options: identifierTypes('ESTABLISHMENT'), defaultValue: 'CR_NUMBER' },
+          path('identifierPath', t('مسار المعرّف', 'Identifier path'), t('مثال: Commercial_NO', 'e.g. Commercial_NO')),
+          path('nameArPath', t('مسار الاسم بالعربية', 'Arabic name path'), t('مثال: Commercial_Name', 'e.g. Commercial_Name')),
+          path('nameEnPath', t('مسار الاسم بالإنجليزية', 'English name path')),
+          path('relationCodePath', t('مسار رمز الصفة', 'Relation code path'), t('مثال: RelationTypeInfo.Id', 'e.g. RelationTypeInfo.Id')),
+          { code: 'relationProvider', type: 'text', label: t('جهة رموز الصفة', 'Relation codes provider'), hint: t('مثال: MCI', 'e.g. MCI') },
+          { code: 'defaultRelationshipCode', type: 'select', label: t('نوع العلاقة الافتراضي', 'Default relationship type'), ref: 'party.relationship-type' },
+          path('statusPath', t('مسار الحالة', 'Status path'), t('مثال: Status', 'e.g. Status')),
+          json('activeStatuses', t('الحالات المقبولة', 'Accepted statuses'), t('["Active"]', '["Active"]')),
+          path('validFromPath', t('مسار تاريخ البداية', 'Valid-from path')),
+          path('validToPath', t('مسار تاريخ النهاية', 'Valid-to path')),
+          path('servicesPath', t('مسار الخدمات المفوضة', 'Delegated services path')),
+          number('refreshMinutes', t('التحديث كل (دقيقة)', 'Refresh every (minutes)'), 60),
+          number('displayOrder', t('الترتيب', 'Display order'), 0),
+        ],
+      },
+    ],
+  },
+  {
+    path: 'profile-fields',
+    title: t('بيانات الملف', 'Profile fields'),
+    resource: 'party.config',
+    types: [
+      {
+        entityType: 'party.profile-field',
+        title: t('بيانات الملف', 'Profile fields'),
+        key: 'code',
+        columns: ['partyKind', 'dataType', 'operationCode'],
+        fields: [
+          { code: 'partyKind', type: 'select', label: t('نوع الطرف', 'Party kind'), options: partyKinds, required: true, defaultValue: 'ESTABLISHMENT' },
+          {
+            code: 'dataType',
+            type: 'select',
+            label: t('نوع البيانات', 'Data type'),
+            required: true,
+            defaultValue: 'TEXT',
+            options: [opt('TEXT', 'نص', 'Text'), opt('NUMBER', 'رقم', 'Number'), opt('DATE', 'تاريخ', 'Date'), opt('BOOL', 'نعم/لا', 'Yes/no'), opt('JSON', 'بيانات مركبة', 'Structured')],
+          },
+          { code: 'operationCode', type: 'select', label: t('عملية التكامل', 'Integration operation'), ref: 'integ.operation', hint: t('اتركه فارغاً للإدخال اليدوي', 'Leave empty for manual entry') },
+          { code: 'outputName', type: 'text', label: t('المُخرج', 'Output'), requiredWhen: { '!!': [{ var: 'operationCode' }] }, visibleWhen: { '!!': [{ var: 'operationCode' }] } },
+          {
+            ...json('inputs', t('المدخلات', 'Inputs'), t('[{"parameter": "crNumber", "identifierType": "CR_NUMBER"}]', '[{"parameter": "crNumber", "identifierType": "CR_NUMBER"}]')),
+            visibleWhen: { '!!': [{ var: 'operationCode' }] },
+          },
+          number('refreshHours', t('التحديث كل (ساعة)', 'Refresh every (hours)'), 24),
+          number('displayOrder', t('الترتيب', 'Display order'), 0),
+        ],
+      },
+    ],
+  },
+  {
+    path: 'credential-types',
+    title: t('أنواع الشهادات', 'Credential types'),
+    resource: 'party.config',
+    types: [
+      {
+        entityType: 'party.credential-type',
+        title: t('أنواع الشهادات', 'Credential types'),
+        key: 'code',
+        columns: ['partyKind', 'issuerAr'],
+        fields: [
+          { code: 'partyKind', type: 'select', label: t('نوع الطرف', 'Party kind'), options: partyKinds, required: true, defaultValue: 'ESTABLISHMENT' },
+          { code: 'issuerAr', type: 'text', label: t('جهة الإصدار بالعربية', 'Issuer (Arabic)') },
+          { code: 'issuerEn', type: 'text', label: t('جهة الإصدار بالإنجليزية', 'Issuer (English)') },
+          { code: 'hasExpiry', type: 'checkbox', label: t('لها تاريخ انتهاء', 'Has an expiry date'), defaultValue: true },
+        ],
+      },
+    ],
+  },
+  {
+    path: 'sanction-types',
+    title: t('أنواع الجزاءات', 'Sanction types'),
+    resource: 'party.config',
+    types: [
+      {
+        entityType: 'party.sanction-type',
+        title: t('أنواع الجزاءات', 'Sanction types'),
+        key: 'code',
+        columns: ['blocksApplications', 'defaultDays'],
+        fields: [
+          { code: 'blocksApplications', type: 'checkbox', label: t('يمنع تقديم الطلبات', 'Blocks new requests'), defaultValue: true },
+          { code: 'defaultDays', type: 'number', label: t('المدة الافتراضية (يوم)', 'Default duration (days)') },
+        ],
+      },
+    ],
+  },
+];
+
+/** Every configuration screen, by path (paths are unique across modules). */
+export const ALL_CONFIG_SECTIONS: ConfigSection[] = [...CONFIG_SECTIONS, ...INTEGRATION_SECTIONS, ...PARTY_SECTIONS];

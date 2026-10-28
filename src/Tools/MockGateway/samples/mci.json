@@ -1,0 +1,14 @@
+{
+  "byIdNumber": {
+    "1000000001": [
+      { "Commercial_NO": "1010000001", "Commercial_Name": "مؤسسة العتيبي للمقاولات", "LicenseType": { "Id": "0", "Name": "Main" }, "RelationTypeInfo": { "Id": "1", "Name": "مالك المؤسسة" }, "Source_Name": "الرياض", "Status": "Active" },
+      { "Commercial_NO": "1010000002", "Commercial_Name": "شركة البناء الحديث للاستشارات الهندسية", "LicenseType": { "Id": "0", "Name": "Main" }, "RelationTypeInfo": { "Id": "2", "Name": "شــريك" }, "Source_Name": "الرياض", "Status": "Active" },
+      { "Commercial_NO": "4030000003", "Commercial_Name": "مؤسسة الساحل التجارية", "LicenseType": { "Id": "1", "Name": "Branch" }, "RelationTypeInfo": { "Id": "12", "Name": "عضومجلس إدارة" }, "Source_Name": "جدة", "Status": "Active" },
+      { "Commercial_NO": "1010000004", "Commercial_Name": "مؤسسة قديمة", "LicenseType": { "Id": "0", "Name": "Main" }, "RelationTypeInfo": { "Id": "1", "Name": "مالك المؤسسة" }, "Source_Name": "الرياض", "Status": "Expired" }
+    ]
+  },
+  "byCrNumber": {
+    "1010000001": { "crNumber": "1010000001", "crName": "مؤسسة العتيبي للمقاولات", "crEntityNumber": "7000000001", "status": { "id": "1", "name": "نشط" }, "issueDate": "1440/05/12", "expiryDate": "1447/05/12", "location": { "id": "1", "name": "الرياض" }, "capital": 500000, "activities": [{ "id": "410010", "name": "الإنشاءات العامة للمباني السكنية" }] },
+    "1010000002": { "crNumber": "1010000002", "crName": "شركة البناء الحديث للاستشارات الهندسية", "crEntityNumber": "7000000002", "status": { "id": "1", "name": "نشط" }, "issueDate": "1438/02/01", "expiryDate": "1448/02/01", "location": { "id": "1", "name": "الرياض" }, "capital": 2000000, "activities": [{ "id": "711021", "name": "الاستشارات الهندسية" }] }
+  }
+}

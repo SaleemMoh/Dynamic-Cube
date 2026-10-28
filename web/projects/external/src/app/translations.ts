@@ -9,6 +9,8 @@ export const APP_TRANSLATIONS: TranslationDictionary = {
     'home.api.unavailable': 'غير متاح',
     'home.preview': 'معاينة نموذج ديناميكي',
     'home.preview.result': 'البيانات المرسلة',
+    'home.acting': 'صفة التقديم',
+    'home.actingNow': 'تقدّم الطلبات حالياً باسم:',
   },
   en: {
     'app.title': 'Dynamic Cube — E-Services Portal',
@@ -18,5 +20,7 @@ export const APP_TRANSLATIONS: TranslationDictionary = {
     'home.api.unavailable': 'Unavailable',
     'home.preview': 'Dynamic form preview',
     'home.preview.result': 'Submitted data',
+    'home.acting': 'Applying as',
+    'home.actingNow': 'Your requests are currently made for:',
   },
 };

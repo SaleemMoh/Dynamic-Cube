@@ -32,8 +32,8 @@ Delivered in slices:
 | Slice | Content | Status |
 |---|---|---|
 | **1a** | Apps Control + sign-in | ✅ |
-| 1b | Party Registry + Integration Manager | Next |
-| 1c | Services: definitions, forms, wizard, drafts, fees, eligibility | |
+| **1b** | Party Registry + Integration Manager | ✅ |
+| 1c | Services: definitions, forms, wizard, drafts, fees, eligibility | Next |
 | 1d | Workflow engine + Action Center | |
 | 1e | Documents, communication, decision contract, external applicant journey | |
 
@@ -45,7 +45,25 @@ roles, the `/api/apps-control/v1` API (public subset on the external host), SYST
 migrator; OIDC + PKCE sign-in in all three SPAs with runtime `config.json`; the internal system's
 Apps Control screens (menu from Apps Control, change-set inbox with before/after review, classes and
 values with generated forms, generic editors for the other types); LOV-backed fields in
-`DynamicForm`; data-protection keys in PostgreSQL. Integration LOV sources wait for 1b.
+`DynamicForm`; data-protection keys in PostgreSQL.
+
+**1b delivered:** the configuration framework moved to the kernel so every module's configuration
+goes through the same change sets, inbox and approval policy ([ADR-0017](adr/0017-module-configuration-in-the-kernel.md));
+modules contribute their resources, menus and built-in role privileges to Apps Control. The
+`Integration` module ([§5.6](05-integration-manager.md#56-implementation-1b)): providers, connections
+(OAuth2 client credentials, basic, API key; credentials only from the secret store), response
+envelopes, operations with parameters, outputs, response-code maps and masking; the gateway with
+token cache, timeouts, retries for idempotent calls, circuit breaker and result cache; the masked call
+log; test console. The `Parties` module ([§3.1](03-domain-model.md#31-party-registry)): individuals
+registered on first portal sign-in, establishments, relationships with service scope and validity,
+acting contexts from configurable context sources (MCI by ID number, relation codes translated),
+`X-Acting-Party` validation, profile fields refreshed from integrations, credentials, projects and
+sanctions. Configuration packages (`deploy/config-packages`) imported as draft change sets; the MCI
+package; a development mock of the MoMRAH gateway. Screens: integration and party configuration,
+test console, call log, party list and detail, the portal's acting-context selector.
+Still open from 1b: LOVs sourced from integrations, SOAP operations and OpenAPI import, NIC and the
+other connectors of [§5.5](05-integration-manager.md#55-initial-connectors-for-the-reference-service)
+(configuration only, added as packages when their credentials are available), call-log retention job.
 
 - **Apps Control**: installation, apps, entity, org unit types & org structure, positions,
   users, roles, privileges, menus, Class/Domain with typed attributes and generated views,

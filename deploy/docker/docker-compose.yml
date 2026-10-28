@@ -6,6 +6,11 @@ name: dynamic-cube
 x-dotnet-env: &dotnet-env
   ConnectionStrings__DynamicCube: Host=postgres;Database=dynamic_cube;Username=dynamic_cube;Password=${POSTGRES_PASSWORD:-dynamic_cube}
 
+# Credentials of the MoMRAH gateway connection (development values for the mock gateway; real ones come from the secret store).
+x-gateway-secrets: &gateway-secrets
+  Secrets__MOMRAH_GATEWAY__clientId: ${MOMRAH_CLIENT_ID:-dev-consumer-key}
+  Secrets__MOMRAH_GATEWAY__clientSecret: ${MOMRAH_CLIENT_SECRET:-dev-consumer-secret}
+
 services:
   postgres:
     image: postgres:17-alpine
@@ -60,7 +65,7 @@ services:
         PROJECT: src/Hosts/Internal.Api/DynamicCube.Internal.Api.csproj
         ASSEMBLY: DynamicCube.Internal.Api.dll
     environment:
-      <<: *dotnet-env
+      <<: [*dotnet-env, *gateway-secrets]
       Authentication__Internal__Authority: http://keycloak:8080/realms/dynamic-cube-internal
       Authentication__Internal__RequireHttpsMetadata: "false"
       # Development users get their Apps Control roles on first sign-in.
@@ -85,7 +90,7 @@ services:
         PROJECT: src/Hosts/External.Api/DynamicCube.External.Api.csproj
         ASSEMBLY: DynamicCube.External.Api.dll
     environment:
-      <<: *dotnet-env
+      <<: [*dotnet-env, *gateway-secrets]
       Authentication__External__Authority: http://keycloak:8080/realms/dynamic-cube-external
       Authentication__External__RequireHttpsMetadata: "false"
     volumes:
@@ -97,6 +102,17 @@ services:
         condition: service_started
     ports:
       - "5081:8080"
+
+  # Development stand-in for the MoMRAH gateway (MCI operations); connection base URL http://mock-gateway:8080.
+  mock-gateway:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/dotnet.Dockerfile
+      args:
+        PROJECT: src/Tools/MockGateway/DynamicCube.MockGateway.csproj
+        ASSEMBLY: DynamicCube.MockGateway.dll
+    ports:
+      - "5090:8080"
 
   worker:
     build:

@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { AppShell, I18nService, TranslatePipe, UserMenu } from '@dynamic-cube/shared';
+import { MODULE_TRANSLATIONS } from './module-translations';
 import { APP_TRANSLATIONS } from './translations';
 
 @Component({
@@ -17,5 +18,6 @@ import { APP_TRANSLATIONS } from './translations';
 export class App {
   constructor() {
     inject(I18nService).register(APP_TRANSLATIONS);
+    inject(I18nService).register(MODULE_TRANSLATIONS);
   }
 }

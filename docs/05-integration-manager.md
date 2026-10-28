@@ -77,3 +77,49 @@ This confirms the design below: a shared connection and envelope, many operation
 | CIS | Create inspection |
 
 Applicability and priority to be confirmed per sector.
+
+## 5.6 Implementation (1b)
+
+Module `Integration`, schema `integ`. All configuration is edited through change sets (area
+`integ.integrations`) in the Apps Control inbox; screens are under **Integrations** in the internal
+system.
+
+| Table | Holds |
+|---|---|
+| `provider` | External parties (`MCI`, `NIC`, …) |
+| `connection` | Base URL, auth type, **secret name**, token URL, timeout, retries, circuit breaker, fixed headers |
+| `envelope_profile` | Paths of status code / message, business code / message, result; success codes; shared code map |
+| `operation` | Method, path template, parameters (path / query / header / body, masked or not), outputs (paths), code map, masked response fields, cache seconds, idempotency |
+| `call_log` | Every call: operation, user, app, correlation id, duration, attempts, HTTP status, code, outcome, masked URL and bodies |
+
+**Paths** are dot paths into the provider's JSON: `data.result`, `Licenses[0].Commercial_NO`,
+`Licenses[*].Commercial_NO` (all elements). A property read on an array reads its first element, so
+`statusDetails.code` works for MCI (array) and NIC (object) alike.
+
+**Outcome** of a call: the operation's code map, then the envelope's, decide when they know the code
+(business code, else status code, else `HTTP_<status>`). Otherwise: 5xx, 401/403/408/429, a gateway
+status outside the success list, or an unreadable body → `TECHNICAL_ERROR`; 404 without a business code →
+`NOT_FOUND`; other 4xx → `BUSINESS_ERROR`; a business code in the success list → `SUCCESS`, another one →
+`BUSINESS_ERROR`. Technical errors always show the same bilingual "service not available" message;
+the provider's raw text is kept in the call log only.
+
+**Credentials** never live in tables: a connection names a secret, and the API hosts read
+`Secrets:{name}:{key}` (`clientId`/`clientSecret`, `username`/`password` or `apiKey`) from their
+configuration — environment variables, Kubernetes secrets or a vault provider.
+
+**Resilience**: timeout per connection; retries with exponential back-off only for idempotent
+operations (GET/PUT/DELETE unless configured otherwise) after timeouts, network errors and 5xx; an
+OAuth2 token rejected with 401 is fetched again once; after *N* consecutive technical failures the
+connection's circuit opens for a while and calls fail fast (per API instance).
+
+**Caching**: OAuth2 tokens until shortly before `expires_in`; successful and not-found results for the
+operation's cache seconds (keyed by inputs). Publishing integration configuration clears both.
+
+**Use from other modules**: the kernel interface `IIntegrationGateway.InvokeAsync(operation, inputs)`
+returns the outcome, code, bilingual message, mapped outputs and the result data — never URLs or
+credentials. The Party Registry uses it for acting contexts and profile fields.
+
+**Configuration packages**: `deploy/config-packages/momrah-mci.json` holds the MCI connectors (two
+operations with the guide's business codes and messages) plus the Party Registry settings that use them;
+importing it creates draft change sets for review. `src/Tools/MockGateway` answers like the MoMRAH gateway
+(token endpoint and MCI operations with sample data) for development and demos.

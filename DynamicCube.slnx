@@ -22,7 +22,9 @@
   <Folder Name="/src/Shared/Platform/">
     <Project Path="src/Shared/Platform/DynamicCube.Platform.csproj" />
   </Folder>
-  <Folder Name="/src/Tools/" />
+  <Folder Name="/src/Tools/">
+    <Project Path="src/Tools/MockGateway/DynamicCube.MockGateway.csproj" />
+  </Folder>
   <Folder Name="/src/Tools/Migrator/">
     <Project Path="src/Tools/Migrator/DynamicCube.Migrator.csproj" />
   </Folder>
