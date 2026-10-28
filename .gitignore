@@ -1,0 +1,27 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+TestResults/
+*.trx
+coverage/
+
+# Node / Angular
+node_modules/
+web/dist/
+web/.angular/
+web/coverage/
+
+# IDE / OS
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+
+# Local runtime data
+deploy/docker/.env
+storage/
+*.log

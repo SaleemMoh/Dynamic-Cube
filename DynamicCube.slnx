@@ -1,0 +1,34 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/Hosts/" />
+  <Folder Name="/src/Hosts/External.Api/">
+    <Project Path="src/Hosts/External.Api/DynamicCube.External.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/Hosts/Internal.Api/">
+    <Project Path="src/Hosts/Internal.Api/DynamicCube.Internal.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/Hosts/Worker/">
+    <Project Path="src/Hosts/Worker/DynamicCube.Worker.csproj" />
+  </Folder>
+  <Folder Name="/src/Shared/" />
+  <Folder Name="/src/Shared/Hosting/">
+    <Project Path="src/Shared/Hosting/DynamicCube.Hosting.csproj" />
+  </Folder>
+  <Folder Name="/src/Shared/Platform/">
+    <Project Path="src/Shared/Platform/DynamicCube.Platform.csproj" />
+  </Folder>
+  <Folder Name="/src/Tools/" />
+  <Folder Name="/src/Tools/Migrator/">
+    <Project Path="src/Tools/Migrator/DynamicCube.Migrator.csproj" />
+  </Folder>
+  <Folder Name="/tests/" />
+  <Folder Name="/tests/Hosts.Tests/">
+    <Project Path="tests/Hosts.Tests/DynamicCube.Hosts.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Platform.IntegrationTests/">
+    <Project Path="tests/Platform.IntegrationTests/DynamicCube.Platform.IntegrationTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Platform.Tests/">
+    <Project Path="tests/Platform.Tests/DynamicCube.Platform.Tests.csproj" />
+  </Folder>
+</Solution>

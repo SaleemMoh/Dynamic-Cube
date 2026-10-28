@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>DynamicCube.Platform.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Shouldly" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Shared\Platform\DynamicCube.Platform.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\shared\jsonlogic-cases.json" Link="jsonlogic-cases.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

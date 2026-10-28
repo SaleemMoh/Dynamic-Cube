@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>DynamicCube.Hosts.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Both hosts declare a global Program class; aliases keep them apart. -->
+    <ProjectReference Include="..\..\src\Hosts\Internal.Api\DynamicCube.Internal.Api.csproj" Aliases="InternalApi" />
+    <ProjectReference Include="..\..\src\Hosts\External.Api\DynamicCube.External.Api.csproj" Aliases="ExternalApi" />
+  </ItemGroup>
+
+</Project>
