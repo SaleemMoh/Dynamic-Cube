@@ -17,7 +17,7 @@ public sealed class ResourcePayload : ConfigPayload
     public List<string> AvailableActions { get; set; } = [PrivilegeActions.View];
 }
 
-internal sealed class ResourceApplier : ConfigApplier<Resource, ResourcePayload>
+internal sealed class ResourceApplier(AppsControlDbContext db) : ConfigApplier<Resource, ResourcePayload>(db)
 {
     public override string EntityType => AppsControlChangeTypes.Resource;
 
@@ -104,7 +104,7 @@ public sealed class RolePayload : ConfigPayload
     public List<GrantPayload> Grants { get; set; } = [];
 }
 
-internal sealed class RoleApplier(JsonLogicEvaluator evaluator) : ConfigApplier<Role, RolePayload>
+internal sealed class RoleApplier(AppsControlDbContext db, JsonLogicEvaluator evaluator) : ConfigApplier<Role, RolePayload>(db)
 {
     private static readonly string[] FieldRuleValues = ["HIDDEN", "READONLY"];
 
@@ -303,7 +303,7 @@ public sealed class UserPayload : ConfigPayload
     public List<UserRolePayload> Roles { get; set; } = [];
 }
 
-internal sealed class UserApplier : ConfigApplier<UserAccount, UserPayload>
+internal sealed class UserApplier(AppsControlDbContext db) : ConfigApplier<UserAccount, UserPayload>(db)
 {
     public override string EntityType => AppsControlChangeTypes.User;
 

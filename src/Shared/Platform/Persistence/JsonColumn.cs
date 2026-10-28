@@ -2,10 +2,10 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
-namespace DynamicCube.Modules.AppsControl.Persistence;
+namespace DynamicCube.Platform.Persistence;
 
 /// <summary>Stores small typed object graphs as JSON text in a <c>jsonb</c> column.</summary>
-internal static class JsonColumn
+public static class JsonColumn
 {
     public static ValueConverter<T, string> Converter<T>()
         where T : new() =>

@@ -50,7 +50,7 @@ internal static class AdminEndpoints
         var admin = group.MapGroup("/admin").AddEndpointFilter(AppsControlFilters.Errors);
         BrandingEndpoints.MapAdmin(admin);
 
-        admin.MapGet("/types", async (IEnumerable<IAppsControlApplier> appliers, AccessResolver resolver, IChangeApprovalPolicy policy, CancellationToken ct) =>
+        admin.MapGet("/types", async (IEnumerable<IConfigApplier> appliers, AccessResolver resolver, IChangeApprovalPolicy policy, CancellationToken ct) =>
         {
             var access = await resolver.GetAsync(ct);
             var approval = new Dictionary<string, bool>(StringComparer.Ordinal);
@@ -71,7 +71,7 @@ internal static class AdminEndpoints
                 .ToList());
         }).WithName("GetAdminTypes");
 
-        admin.MapGet("/{type}", async (string type, string? parent, IEnumerable<IAppsControlApplier> appliers, AccessResolver resolver, AppsControlDbContext db, CancellationToken ct) =>
+        admin.MapGet("/{type}", async (string type, string? parent, IEnumerable<IConfigApplier> appliers, AccessResolver resolver, AppsControlDbContext db, CancellationToken ct) =>
         {
             var applier = Find(appliers, type);
             if (applier is null)
@@ -81,11 +81,11 @@ internal static class AdminEndpoints
 
             var access = await resolver.GetAsync(ct);
             return access.Can(applier.ResourceCode, PrivilegeActions.View)
-                ? Results.Ok(await applier.ListAsync(db, parent, ct))
+                ? Results.Ok(await applier.ListAsync(parent, ct))
                 : Forbidden(applier.ResourceCode, PrivilegeActions.View);
         }).WithName("ListConfiguration");
 
-        admin.MapGet("/{type}/{**code}", async (string type, string code, IEnumerable<IAppsControlApplier> appliers, AccessResolver resolver, AppsControlDbContext db, CancellationToken ct) =>
+        admin.MapGet("/{type}/{**code}", async (string type, string code, IEnumerable<IConfigApplier> appliers, AccessResolver resolver, AppsControlDbContext db, CancellationToken ct) =>
         {
             var applier = Find(appliers, type);
             if (applier is null)
@@ -99,7 +99,7 @@ internal static class AdminEndpoints
                 return Forbidden(applier.ResourceCode, PrivilegeActions.View);
             }
 
-            var row = await applier.GetAsync(db, code, ct);
+            var row = await applier.GetAsync(code, ct);
             return row is null ? Results.NotFound() : Results.Ok(row);
         }).WithName("GetConfiguration");
 
@@ -110,7 +110,7 @@ internal static class AdminEndpoints
     {
         sets.MapGet("/", async (string? status, string? area, bool? mine, AppsControlDbContext db, ICurrentUser user, CancellationToken ct) =>
         {
-            var query = db.ChangeSets.AsNoTracking().Where(c => c.Area.StartsWith("apps."));
+            var query = db.ChangeSets.AsNoTracking();
             if (status is not null)
             {
                 // Statuses are written UPPER_SNAKE in the API (e.g. SUBMITTED).
@@ -137,9 +137,9 @@ internal static class AdminEndpoints
             return Results.Ok(rows.Select(c => Summary(c, names, user.UserId)).ToList());
         }).RequirePrivilege(AppsControlResources.ChangeSets, PrivilegeActions.View).WithName("ListChangeSets");
 
-        sets.MapPost("/", async (CreateChangeSetRequest request, ChangeSetService<AppsControlDbContext> service, IEnumerable<IAppsControlApplier> appliers, AppsControlDbContext db, ICurrentUser user, CancellationToken ct) =>
+        sets.MapPost("/", async (CreateChangeSetRequest request, ChangeSetRouter router, AppsControlDbContext db, ICurrentUser user, CancellationToken ct) =>
         {
-            if (!appliers.Any(a => a.Area == request.Area))
+            if (!router.IsKnownArea(request.Area))
             {
                 return Results.ValidationProblem(new Dictionary<string, string[]> { ["area"] = [$"Unknown area '{request.Area}'."] });
             }
@@ -149,16 +149,18 @@ internal static class AdminEndpoints
                 return Results.ValidationProblem(new Dictionary<string, string[]> { ["title"] = ["Required, at most 500 characters."] });
             }
 
-            var changeSet = await service.CreateAsync(request.Area, request.Title.Trim(), ct);
+            var changeSet = await router.ForArea(request.Area).CreateAsync(request.Area, request.Title.Trim(), ct);
             return Results.Created($"/api/apps-control/v1/change-sets/{changeSet.Id}", await DetailAsync(db, changeSet, user.UserId, ct));
         }).RequirePrivilege(AppsControlResources.ChangeSets, PrivilegeActions.Create).WithName("CreateChangeSet");
 
-        sets.MapGet("/{id:guid}", async (Guid id, ChangeSetService<AppsControlDbContext> service, AppsControlDbContext db, ICurrentUser user, CancellationToken ct) =>
-            TypedResults.Ok(await DetailAsync(db, await service.GetAsync(id, ct), user.UserId, ct)))
+        sets.MapGet("/{id:guid}", async (Guid id, ChangeSetRouter router, AppsControlDbContext db, ICurrentUser user, CancellationToken ct) =>
+            TypedResults.Ok(await DetailAsync(db, await (await router.ForChangeSetAsync(id, ct)).GetAsync(id, ct), user.UserId, ct)))
             .RequirePrivilege(AppsControlResources.ChangeSets, PrivilegeActions.View).WithName("GetChangeSet");
 
-        sets.MapPost("/{id:guid}/items", async (Guid id, AddChangeItemRequest request, ChangeSetService<AppsControlDbContext> service, IEnumerable<IAppsControlApplier> appliers, AccessResolver resolver, AppsControlDbContext db, ICurrentUser user, CancellationToken ct) =>
+        sets.MapPost("/{id:guid}/items", async (Guid id, AddChangeItemRequest request, ChangeSetRouter router, AccessResolver resolver, AppsControlDbContext db, ICurrentUser user, CancellationToken ct) =>
         {
+            var service = await router.ForChangeSetAsync(id, ct);
+            var appliers = router.Appliers;
             var changeSet = await RequireOwnAsync(service, id, user, ct);
             var (applier, payload, problem) = await AuthorizeChangeAsync(request, appliers, resolver, ct);
             if (problem is not null)
@@ -176,13 +178,15 @@ internal static class AdminEndpoints
         }).RequirePrivilege(AppsControlResources.ChangeSets, PrivilegeActions.Create).WithName("AddChangeItem");
 
         // Areas without approval: one change, saved and published at once (still recorded with before/after).
-        sets.MapPost("/apply", async (AddChangeItemRequest request, ChangeSetService<AppsControlDbContext> service, IEnumerable<IAppsControlApplier> appliers, AccessResolver resolver, AppsControlDbContext db, ICurrentUser user, CancellationToken ct) =>
+        sets.MapPost("/apply", async (AddChangeItemRequest request, ChangeSetRouter router, AccessResolver resolver, AppsControlDbContext db, ICurrentUser user, CancellationToken ct) =>
         {
-            var (applier, payload, problem) = await AuthorizeChangeAsync(request, appliers, resolver, ct);
+            var (applier, payload, problem) = await AuthorizeChangeAsync(request, router.Appliers, resolver, ct);
             if (problem is not null)
             {
                 return problem;
             }
+
+            var service = router.ForEntityType(applier!.EntityType);
 
             var code = request.EntityCode?.Trim() ?? string.Empty;
             var title = $"{request.Operation.ToString().ToUpperInvariant()} {applier!.EntityType} {code}";
@@ -190,15 +194,17 @@ internal static class AdminEndpoints
             return Results.Ok(await DetailAsync(db, await service.GetAsync(changeSet.Id, ct), user.UserId, ct));
         }).RequirePrivilege(AppsControlResources.ChangeSets, PrivilegeActions.Create).WithName("ApplyChange");
 
-        sets.MapDelete("/{id:guid}/items/{itemId:guid}", async (Guid id, Guid itemId, ChangeSetService<AppsControlDbContext> service, AppsControlDbContext db, ICurrentUser user, CancellationToken ct) =>
+        sets.MapDelete("/{id:guid}/items/{itemId:guid}", async (Guid id, Guid itemId, ChangeSetRouter router, AppsControlDbContext db, ICurrentUser user, CancellationToken ct) =>
         {
+            var service = await router.ForChangeSetAsync(id, ct);
             await RequireOwnAsync(service, id, user, ct);
             await service.RemoveItemAsync(id, itemId, ct);
             return TypedResults.Ok(await DetailAsync(db, await service.GetAsync(id, ct), user.UserId, ct));
         }).RequirePrivilege(AppsControlResources.ChangeSets, PrivilegeActions.Create).WithName("RemoveChangeItem");
 
-        sets.MapPost("/{id:guid}/submit", async (Guid id, ChangeSetService<AppsControlDbContext> service, AppsControlDbContext db, ICurrentUser user, CancellationToken ct) =>
+        sets.MapPost("/{id:guid}/submit", async (Guid id, ChangeSetRouter router, AppsControlDbContext db, ICurrentUser user, CancellationToken ct) =>
         {
+            var service = await router.ForChangeSetAsync(id, ct);
             await RequireOwnAsync(service, id, user, ct);
             await service.SubmitAsync(id, ct);
             var changeSet = await service.GetAsync(id, ct);
@@ -211,15 +217,17 @@ internal static class AdminEndpoints
             return TypedResults.Ok(await DetailAsync(db, await service.GetAsync(id, ct), user.UserId, ct));
         }).RequirePrivilege(AppsControlResources.ChangeSets, PrivilegeActions.Create).WithName("SubmitChangeSet");
 
-        sets.MapPost("/{id:guid}/approve", async (Guid id, ReviewRequest? request, ChangeSetService<AppsControlDbContext> service, AppsControlDbContext db, ICurrentUser user, CancellationToken ct) =>
+        sets.MapPost("/{id:guid}/approve", async (Guid id, ReviewRequest? request, ChangeSetRouter router, AppsControlDbContext db, ICurrentUser user, CancellationToken ct) =>
         {
+            var service = await router.ForChangeSetAsync(id, ct);
             await service.ApproveAsync(id, request?.Comment, ct);
             await service.PublishAsync(id, ct);
             return TypedResults.Ok(await DetailAsync(db, await service.GetAsync(id, ct), user.UserId, ct));
         }).RequirePrivilege(AppsControlResources.ChangeSets, PrivilegeActions.Approve).WithName("ApproveChangeSet");
 
-        sets.MapPost("/{id:guid}/reject", async (Guid id, ReviewRequest request, ChangeSetService<AppsControlDbContext> service, AppsControlDbContext db, ICurrentUser user, CancellationToken ct) =>
+        sets.MapPost("/{id:guid}/reject", async (Guid id, ReviewRequest request, ChangeSetRouter router, AppsControlDbContext db, ICurrentUser user, CancellationToken ct) =>
         {
+            var service = await router.ForChangeSetAsync(id, ct);
             if (string.IsNullOrWhiteSpace(request.Comment))
             {
                 return Results.ValidationProblem(new Dictionary<string, string[]> { ["comment"] = ["Explain why the change set is rejected."] });
@@ -229,15 +237,17 @@ internal static class AdminEndpoints
             return Results.Ok(await DetailAsync(db, await service.GetAsync(id, ct), user.UserId, ct));
         }).RequirePrivilege(AppsControlResources.ChangeSets, PrivilegeActions.Approve).WithName("RejectChangeSet");
 
-        sets.MapPost("/{id:guid}/reopen", async (Guid id, ChangeSetService<AppsControlDbContext> service, AppsControlDbContext db, ICurrentUser user, CancellationToken ct) =>
+        sets.MapPost("/{id:guid}/reopen", async (Guid id, ChangeSetRouter router, AppsControlDbContext db, ICurrentUser user, CancellationToken ct) =>
         {
+            var service = await router.ForChangeSetAsync(id, ct);
             await RequireOwnAsync(service, id, user, ct);
             await service.ReopenAsync(id, ct);
             return TypedResults.Ok(await DetailAsync(db, await service.GetAsync(id, ct), user.UserId, ct));
         }).RequirePrivilege(AppsControlResources.ChangeSets, PrivilegeActions.Create).WithName("ReopenChangeSet");
 
-        sets.MapPost("/{id:guid}/publish", async (Guid id, ChangeSetService<AppsControlDbContext> service, AccessResolver resolver, AppsControlDbContext db, ICurrentUser user, CancellationToken ct) =>
+        sets.MapPost("/{id:guid}/publish", async (Guid id, ChangeSetRouter router, AccessResolver resolver, AppsControlDbContext db, ICurrentUser user, CancellationToken ct) =>
         {
+            var service = await router.ForChangeSetAsync(id, ct);
             // Retry for an approved change set whose publication failed: its maker or a checker may retry.
             var changeSet = await service.GetAsync(id, ct);
             var access = await resolver.GetAsync(ct);
@@ -250,8 +260,9 @@ internal static class AdminEndpoints
             return Results.Ok(await DetailAsync(db, await service.GetAsync(id, ct), user.UserId, ct));
         }).RequirePrivilege(AppsControlResources.ChangeSets, PrivilegeActions.View).WithName("PublishChangeSet");
 
-        sets.MapDelete("/{id:guid}", async (Guid id, ChangeSetService<AppsControlDbContext> service, ICurrentUser user, CancellationToken ct) =>
+        sets.MapDelete("/{id:guid}", async (Guid id, ChangeSetRouter router, ICurrentUser user, CancellationToken ct) =>
         {
+            var service = await router.ForChangeSetAsync(id, ct);
             await RequireOwnAsync(service, id, user, ct);
             await service.DiscardAsync(id, ct);
             return TypedResults.NoContent();
@@ -259,8 +270,8 @@ internal static class AdminEndpoints
     }
 
     /// <summary>Checks the entity type and the user's privilege for the operation (and restricted SQL); returns the raw payload.</summary>
-    private static async Task<(IAppsControlApplier? Applier, string? Payload, IResult? Problem)> AuthorizeChangeAsync(
-        AddChangeItemRequest request, IEnumerable<IAppsControlApplier> appliers, AccessResolver resolver, CancellationToken ct)
+    private static async Task<(IConfigApplier? Applier, string? Payload, IResult? Problem)> AuthorizeChangeAsync(
+        AddChangeItemRequest request, IReadOnlyList<IConfigApplier> appliers, AccessResolver resolver, CancellationToken ct)
     {
         var applier = Find(appliers, request.EntityType);
         if (applier is null)
@@ -289,7 +300,7 @@ internal static class AdminEndpoints
         return (applier, payload, null);
     }
 
-    private static IAppsControlApplier? Find(IEnumerable<IAppsControlApplier> appliers, string type) =>
+    private static IConfigApplier? Find(IEnumerable<IConfigApplier> appliers, string type) =>
         appliers.FirstOrDefault(a => string.Equals(a.EntityType, type, StringComparison.OrdinalIgnoreCase));
 
     private static IResult Forbidden(string resource, string action) =>
@@ -303,7 +314,7 @@ internal static class AdminEndpoints
             && string.Equals(source.GetString(), "SQL", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static async Task<ChangeSet> RequireOwnAsync(ChangeSetService<AppsControlDbContext> service, Guid id, ICurrentUser user, CancellationToken ct)
+    private static async Task<ChangeSet> RequireOwnAsync(IChangeSetWorkflow service, Guid id, ICurrentUser user, CancellationToken ct)
     {
         var changeSet = await service.GetAsync(id, ct);
         return changeSet.CreatedBy == user.UserId

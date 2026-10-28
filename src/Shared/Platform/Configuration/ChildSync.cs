@@ -1,6 +1,6 @@
-namespace DynamicCube.Modules.AppsControl.Changes;
+namespace DynamicCube.Platform.Configuration;
 
-internal static class ChildSync
+public static class ChildSync
 {
     /// <summary>
     /// Makes <paramref name="existing"/> match <paramref name="desired"/> by key: updates matches in place, adds new

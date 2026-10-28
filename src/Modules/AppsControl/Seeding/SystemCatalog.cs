@@ -1,26 +1,23 @@
 using DynamicCube.Modules.AppsControl.Changes;
 using DynamicCube.Modules.AppsControl.Domain;
+using DynamicCube.Platform.Security;
 
 namespace DynamicCube.Modules.AppsControl.Seeding;
 
 /// <summary>Product-owned (SYSTEM) Apps Control rows. Product upgrades insert and update these; entities cannot change them.</summary>
 internal static class SystemCatalog
 {
-    public const string SystemAdminRole = "SYSTEM_ADMIN";
-    public const string ConfigMakerRole = "CONFIG_MAKER";
-    public const string ConfigCheckerRole = "CONFIG_CHECKER";
+    public const string SystemAdminRole = BuiltInRoles.SystemAdmin;
+    public const string ConfigMakerRole = BuiltInRoles.ConfigMaker;
+    public const string ConfigCheckerRole = BuiltInRoles.ConfigChecker;
     public const string AppsControlMenuGroup = "APPS_CONTROL";
     public const string HomeResource = "internal.home";
 
     public sealed record AppDef(string Code, string NameAr, string NameEn, AppType Type, int Order);
 
-    public sealed record ResourceDef(string Code, string NameAr, string NameEn, string App, string? Parent, string[] Actions, ResourceType Type = ResourceType.Screen);
-
-    public sealed record MenuDef(string Code, string NameAr, string NameEn, string Target, string Resource, string Icon, int Order);
-
     public sealed record ClassDef(string Code, string NameAr, string NameEn, (string Code, string NameAr, string NameEn)[] Values);
 
-    private static readonly string[] EditActions = [PrivilegeActions.View, PrivilegeActions.Create, PrivilegeActions.Edit, PrivilegeActions.Delete];
+    private static readonly string[] EditActions = [.. CatalogActions.Edits];
 
     public static IReadOnlyList<AppDef> Apps { get; } =
     [
@@ -29,7 +26,10 @@ internal static class SystemCatalog
         new("FIELD", "تطبيق الزيارات الميدانية", "Field app", AppType.Field, 3),
     ];
 
-    public static IReadOnlyList<ResourceDef> Resources { get; } =
+    /// <summary>Only the administrator: makers and checkers get no privilege.</summary>
+    private static readonly Dictionary<string, string[]> NoRole = new() { [ConfigMakerRole] = [], [ConfigCheckerRole] = [] };
+
+    private static readonly CatalogResource[] Resources =
     [
         new(HomeResource, "الرئيسية", "Home", "INTERNAL", null, [PrivilegeActions.View]),
         new(AppsControlResources.Root, "التحكم بالتطبيقات", "Apps Control", "INTERNAL", null, [PrivilegeActions.View]),
@@ -41,14 +41,19 @@ internal static class SystemCatalog
         new(AppsControlResources.Menus, "القوائم", "Menus", "INTERNAL", AppsControlResources.Root, EditActions),
         new(AppsControlResources.Classes, "التصنيفات والقيم", "Classes & domains", "INTERNAL", AppsControlResources.Root, EditActions),
         new(AppsControlResources.Lovs, "قوائم القيم", "Lists of values", "INTERNAL", AppsControlResources.Root, EditActions),
-        new(AppsControlResources.LovSql, "استعلامات قوائم القيم", "LOV restricted SQL", "INTERNAL", AppsControlResources.Lovs, [PrivilegeActions.Edit], ResourceType.Api),
+        new(AppsControlResources.LovSql, "استعلامات قوائم القيم", "LOV restricted SQL", "INTERNAL", AppsControlResources.Lovs, [PrivilegeActions.Edit], CatalogResourceTypes.Api, NoRole),
         new(AppsControlResources.Settings, "الإعدادات", "Settings", "INTERNAL", AppsControlResources.Root, EditActions),
         new(AppsControlResources.UiTexts, "نصوص الواجهة", "UI texts", "INTERNAL", AppsControlResources.Root, EditActions),
-        new(AppsControlResources.ChangeSets, "طلبات التغيير", "Change sets", "INTERNAL", AppsControlResources.Root, [PrivilegeActions.View, PrivilegeActions.Create, PrivilegeActions.Approve]),
+        new(AppsControlResources.ChangeSets, "طلبات التغيير", "Change sets", "INTERNAL", AppsControlResources.Root, [PrivilegeActions.View, PrivilegeActions.Create, PrivilegeActions.Approve],
+            RoleActions: new Dictionary<string, string[]>
+            {
+                [ConfigMakerRole] = [PrivilegeActions.View, PrivilegeActions.Create],
+                [ConfigCheckerRole] = [PrivilegeActions.View, PrivilegeActions.Approve],
+            }),
         new(AppsControlResources.ApprovalPolicy, "سياسة الاعتماد", "Approval policy", "INTERNAL", AppsControlResources.Root, [PrivilegeActions.View, PrivilegeActions.Edit]),
     ];
 
-    public static IReadOnlyList<MenuDef> AppsControlMenus { get; } =
+    private static readonly CatalogMenu[] Menus =
     [
         new("apps-control.change-sets", "طلبات التغيير", "Change sets", "/apps-control/change-sets", AppsControlResources.ChangeSets, "fact_check", 10),
         new("apps-control.classes", "التصنيفات والقيم", "Classes & domains", "/apps-control/classes", AppsControlResources.Classes, "category", 20),
@@ -64,6 +69,15 @@ internal static class SystemCatalog
         new("apps-control.branding", "الهوية والشعار", "Branding", "/apps-control/branding", AppsControlResources.Installation, "palette", 115),
         new("apps-control.approval-policy", "سياسة الاعتماد", "Approval policy", "/apps-control/approval-policy", AppsControlResources.ApprovalPolicy, "rule", 120),
     ];
+
+    /// <summary>Apps Control's own resources and menus, seeded like every other module's contribution.</summary>
+    public static SystemCatalogContribution Contribution { get; } = new()
+    {
+        Module = "apps-control",
+        Resources = Resources,
+        MenuGroup = new CatalogMenuGroup(AppsControlMenuGroup, "التحكم بالتطبيقات", "Apps Control", "INTERNAL", "tune", 900),
+        Menus = Menus,
+    };
 
     public static IReadOnlyList<ClassDef> Classes { get; } =
     [
@@ -81,22 +95,16 @@ internal static class SystemCatalog
         ("MANAGER", "مدير", "Manager"),
     ];
 
-    /// <summary>Role → actions granted per resource; <c>null</c> means no privilege on that resource.</summary>
-    public static IReadOnlyDictionary<string, (string NameAr, string NameEn, Func<ResourceDef, string[]?> Actions)> Roles { get; } =
-        new Dictionary<string, (string, string, Func<ResourceDef, string[]?>)>
+    /// <summary>Built-in roles and their default actions on a resource; <see cref="CatalogResource.RoleActions"/> overrides them.</summary>
+    public static IReadOnlyDictionary<string, (string NameAr, string NameEn, Func<CatalogResource, IReadOnlyList<string>> Actions)> Roles { get; } =
+        new Dictionary<string, (string, string, Func<CatalogResource, IReadOnlyList<string>>)>
         {
             [SystemAdminRole] = ("مدير النظام", "System administrator", r => r.Actions),
-            [ConfigMakerRole] = ("مُعد الإعدادات", "Configuration maker", r => r.Code switch
-            {
-                AppsControlResources.ChangeSets => [PrivilegeActions.View, PrivilegeActions.Create],
-                AppsControlResources.LovSql => null,
-                _ => r.Actions,
-            }),
-            [ConfigCheckerRole] = ("مُعتمد الإعدادات", "Configuration checker", r => r.Code switch
-            {
-                AppsControlResources.ChangeSets => [PrivilegeActions.View, PrivilegeActions.Approve],
-                AppsControlResources.LovSql => null,
-                _ => r.Actions.Contains(PrivilegeActions.View) ? [PrivilegeActions.View] : null,
-            }),
+            [ConfigMakerRole] = ("مُعد الإعدادات", "Configuration maker", r => r.Actions),
+            [ConfigCheckerRole] = ("مُعتمد الإعدادات", "Configuration checker", r => r.Actions.Contains(PrivilegeActions.View) ? [PrivilegeActions.View] : []),
         };
+
+    /// <summary>Actions of a built-in role on a resource; empty means no privilege.</summary>
+    public static IReadOnlyList<string> ActionsOf(string role, CatalogResource resource) =>
+        resource.RoleActions is not null && resource.RoleActions.TryGetValue(role, out var actions) ? actions : Roles[role].Actions(resource);
 }

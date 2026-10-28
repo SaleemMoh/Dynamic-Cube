@@ -13,7 +13,7 @@ public sealed class OrgUnitTypePayload : ConfigPayload
     public List<string> AllowedParentTypes { get; set; } = [];
 }
 
-internal sealed class OrgUnitTypeApplier : ConfigApplier<OrgUnitType, OrgUnitTypePayload>
+internal sealed class OrgUnitTypeApplier(AppsControlDbContext db) : ConfigApplier<OrgUnitType, OrgUnitTypePayload>(db)
 {
     public override string EntityType => AppsControlChangeTypes.OrgUnitType;
 
@@ -55,7 +55,7 @@ public sealed class OrgUnitPayload : ConfigPayload
     public DateOnly? EffectiveTo { get; set; }
 }
 
-internal sealed class OrgUnitApplier : ConfigApplier<OrgUnit, OrgUnitPayload>
+internal sealed class OrgUnitApplier(AppsControlDbContext db) : ConfigApplier<OrgUnit, OrgUnitPayload>(db)
 {
     public override string EntityType => AppsControlChangeTypes.OrgUnit;
 
@@ -161,7 +161,7 @@ internal sealed class OrgUnitApplier : ConfigApplier<OrgUnit, OrgUnitPayload>
 
 public sealed class PositionPayload : ConfigPayload;
 
-internal sealed class PositionApplier : ConfigApplier<Position, PositionPayload>
+internal sealed class PositionApplier(AppsControlDbContext db) : ConfigApplier<Position, PositionPayload>(db)
 {
     public override string EntityType => AppsControlChangeTypes.Position;
 

@@ -9,44 +9,40 @@ namespace DynamicCube.Modules.AppsControl.Changes;
 /// Resolves references by code. While validating a draft, rows created by earlier items of the same change set count
 /// as existing (their id is not known yet, so <see cref="Guid.Empty"/> is returned).
 /// </summary>
-internal sealed class RefResolver(AppsControlDbContext context, ChangeSet? draft)
+internal sealed class RefResolver(AppsControlDbContext context, ChangeSet? draft) : ConfigRefs<AppsControlDbContext>(context, draft)
 {
-    public AppsControlDbContext Context => context;
-
-    public bool IsValidating => draft is not null;
-
     public Task<Guid?> AppAsync(string? code, string field, ValidationErrors errors, CancellationToken ct) =>
-        ResolveAsync(context.Apps, AppsControlChangeTypes.App, code, field, errors, ct);
+        ResolveAsync(Context.Apps, AppsControlChangeTypes.App, code, field, errors, ct);
 
     public Task<Guid?> OrgUnitTypeAsync(string? code, string field, ValidationErrors errors, CancellationToken ct) =>
-        ResolveAsync(context.OrgUnitTypes, AppsControlChangeTypes.OrgUnitType, code, field, errors, ct);
+        ResolveAsync(Context.OrgUnitTypes, AppsControlChangeTypes.OrgUnitType, code, field, errors, ct);
 
     public Task<Guid?> OrgUnitAsync(string? code, string field, ValidationErrors errors, CancellationToken ct) =>
-        ResolveAsync(context.OrgUnits, AppsControlChangeTypes.OrgUnit, code, field, errors, ct);
+        ResolveAsync(Context.OrgUnits, AppsControlChangeTypes.OrgUnit, code, field, errors, ct);
 
     public Task<Guid?> PositionAsync(string? code, string field, ValidationErrors errors, CancellationToken ct) =>
-        ResolveAsync(context.Positions, AppsControlChangeTypes.Position, code, field, errors, ct);
+        ResolveAsync(Context.Positions, AppsControlChangeTypes.Position, code, field, errors, ct);
 
     public Task<Guid?> RoleAsync(string? code, string field, ValidationErrors errors, CancellationToken ct) =>
-        ResolveAsync(context.Roles, AppsControlChangeTypes.Role, code, field, errors, ct);
+        ResolveAsync(Context.Roles, AppsControlChangeTypes.Role, code, field, errors, ct);
 
     public Task<Guid?> ResourceAsync(string? code, string field, ValidationErrors errors, CancellationToken ct) =>
-        ResolveAsync(context.Resources, AppsControlChangeTypes.Resource, code, field, errors, ct);
+        ResolveAsync(Context.Resources, AppsControlChangeTypes.Resource, code, field, errors, ct);
 
     public Task<Guid?> MenuGroupAsync(string? code, string field, ValidationErrors errors, CancellationToken ct) =>
-        ResolveAsync(context.MenuGroups, AppsControlChangeTypes.MenuGroup, code, field, errors, ct);
+        ResolveAsync(Context.MenuGroups, AppsControlChangeTypes.MenuGroup, code, field, errors, ct);
 
     public Task<Guid?> MenuAsync(string? code, string field, ValidationErrors errors, CancellationToken ct) =>
-        ResolveAsync(context.Menus, AppsControlChangeTypes.Menu, code, field, errors, ct);
+        ResolveAsync(Context.Menus, AppsControlChangeTypes.Menu, code, field, errors, ct);
 
     public Task<Guid?> ClassAsync(string? code, string field, ValidationErrors errors, CancellationToken ct) =>
-        ResolveAsync(context.Classes, AppsControlChangeTypes.Class, code, field, errors, ct);
+        ResolveAsync(Context.Classes, AppsControlChangeTypes.Class, code, field, errors, ct);
 
     public Task<Guid?> DataObjectAsync(string? code, string field, ValidationErrors errors, CancellationToken ct) =>
-        ResolveAsync(context.DataObjects, AppsControlChangeTypes.DataObject, code, field, errors, ct);
+        ResolveAsync(Context.DataObjects, AppsControlChangeTypes.DataObject, code, field, errors, ct);
 
     public Task<Guid?> LovAsync(string? code, string field, ValidationErrors errors, CancellationToken ct) =>
-        ResolveAsync(context.Lovs, AppsControlChangeTypes.Lov, code, field, errors, ct);
+        ResolveAsync(Context.Lovs, AppsControlChangeTypes.Lov, code, field, errors, ct);
 
     /// <summary>Resolves a domain value of a class (pending creates count while validating).</summary>
     public async Task<Guid?> DomainAsync(string classCode, string? code, string field, ValidationErrors errors, CancellationToken ct)
@@ -56,7 +52,7 @@ internal sealed class RefResolver(AppsControlDbContext context, ChangeSet? draft
             return null;
         }
 
-        var id = await context.Domains.Where(d => d.Class!.Code == classCode && d.Code == code).Select(d => (Guid?)d.Id).SingleOrDefaultAsync(ct);
+        var id = await Context.Domains.Where(d => d.Class!.Code == classCode && d.Code == code).Select(d => (Guid?)d.Id).SingleOrDefaultAsync(ct);
         if (id is null && IsPendingCreate(AppsControlChangeTypes.Domain, DomainKey.Format(classCode, code)))
         {
             return Guid.Empty;
@@ -65,31 +61,6 @@ internal sealed class RefResolver(AppsControlDbContext context, ChangeSet? draft
         if (id is null)
         {
             errors.Add(field, $"'{code}' is not a value of class {classCode}.");
-        }
-
-        return id;
-    }
-
-    public bool IsPendingCreate(string entityType, string code) =>
-        draft is not null && draft.Items.Any(i => i.EntityType == entityType && i.EntityCode == code && i.Operation == ChangeOperation.Create);
-
-    private async Task<Guid?> ResolveAsync<T>(DbSet<T> set, string entityType, string? code, string field, ValidationErrors errors, CancellationToken ct)
-        where T : ConfigEntity
-    {
-        if (string.IsNullOrWhiteSpace(code))
-        {
-            return null;
-        }
-
-        var id = await set.Where(e => e.Code == code).Select(e => (Guid?)e.Id).SingleOrDefaultAsync(ct);
-        if (id is null && IsPendingCreate(entityType, code))
-        {
-            return Guid.Empty;
-        }
-
-        if (id is null)
-        {
-            errors.Add(field, $"'{code}' does not exist.");
         }
 
         return id;

@@ -46,7 +46,7 @@ public sealed class DataObjectPayload : ConfigPayload
     public List<ScopeBindingPayload> ScopeBindings { get; set; } = [];
 }
 
-internal sealed class DataObjectApplier(IOptions<AppsControlOptions> options) : ConfigApplier<DataObject, DataObjectPayload>
+internal sealed class DataObjectApplier(AppsControlDbContext db, IOptions<AppsControlOptions> options) : ConfigApplier<DataObject, DataObjectPayload>(db)
 {
     public override string EntityType => AppsControlChangeTypes.DataObject;
 
@@ -193,7 +193,7 @@ public sealed class LovPayload : ConfigPayload
     public List<LovBindingPayload> Bindings { get; set; } = [];
 }
 
-internal sealed class LovApplier(JsonLogicEvaluator evaluator, SqlLovRunner sqlRunner) : ConfigApplier<Lov, LovPayload>
+internal sealed class LovApplier(AppsControlDbContext db, JsonLogicEvaluator evaluator, SqlLovRunner sqlRunner) : ConfigApplier<Lov, LovPayload>(db)
 {
     public const int MaxRowsLimit = 5000;
 

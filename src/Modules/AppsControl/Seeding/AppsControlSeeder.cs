@@ -2,15 +2,21 @@ using DynamicCube.Modules.AppsControl.Changes;
 using DynamicCube.Modules.AppsControl.Domain;
 using DynamicCube.Modules.AppsControl.Lookups;
 using DynamicCube.Modules.AppsControl.Persistence;
+using DynamicCube.Platform.ChangeSets;
+using DynamicCube.Platform.Security;
 using Microsoft.EntityFrameworkCore;
 
 namespace DynamicCube.Modules.AppsControl.Seeding;
 
 /// <summary>
-/// Inserts and updates the SYSTEM rows of <see cref="SystemCatalog"/> and creates the singleton installation and entity
+/// Inserts and updates the SYSTEM rows of <see cref="SystemCatalog"/> and of every module's
+/// <see cref="SystemCatalogContribution"/> and creates the singleton installation and entity
 /// rows (ENTITY-owned) when missing. Idempotent; run by the migrator after migrations.
 /// </summary>
-public sealed class AppsControlSeeder(AppsControlDbContext context)
+public sealed class AppsControlSeeder(
+    AppsControlDbContext context,
+    IEnumerable<ChangeAreaDefinition> changeAreas,
+    IEnumerable<SystemCatalogContribution> contributions)
 {
     public async Task SeedAsync(CancellationToken cancellationToken)
     {
@@ -28,9 +34,9 @@ public sealed class AppsControlSeeder(AppsControlDbContext context)
 
         // Approval policy rows belong to the entity: added with the product default when missing, never overwritten.
         var areas = await context.ChangeAreas.Select(a => a.Code).ToListAsync(cancellationToken);
-        foreach (var (code, nameAr, nameEn, requiresApproval) in AppsControlAreas.Configurable.Where(a => !areas.Contains(a.Code)))
+        foreach (var area in changeAreas.Where(a => !areas.Contains(a.Code)))
         {
-            context.ChangeAreas.Add(new ChangeArea { Code = code, NameAr = nameAr, NameEn = nameEn, RequiresApproval = requiresApproval });
+            context.ChangeAreas.Add(new ChangeArea { Code = area.Code, NameAr = area.NameAr, NameEn = area.NameEn, RequiresApproval = area.RequiresApprovalByDefault });
         }
 
         var apps = await UpsertAsync(context.Apps, SystemCatalog.Apps.Select(a => (a.Code, a.NameAr, a.NameEn, (Action<App>)(e =>
@@ -40,14 +46,16 @@ public sealed class AppsControlSeeder(AppsControlDbContext context)
         }))), cancellationToken);
         await context.SaveChangesAsync(cancellationToken);
 
-        var resources = await UpsertAsync(context.Resources, SystemCatalog.Resources.Select(r => (r.Code, r.NameAr, r.NameEn, (Action<Resource>)(e =>
+        var catalog = contributions.ToList();
+        var definitions = catalog.SelectMany(c => c.Resources).ToList();
+        var resources = await UpsertAsync(context.Resources, definitions.Select(r => (r.Code, r.NameAr, r.NameEn, (Action<Resource>)(e =>
         {
             e.AppId = apps[r.App].Id;
-            e.ResourceType = r.Type;
+            e.ResourceType = Enum.Parse<ResourceType>(r.Type, ignoreCase: true);
             e.AvailableActions = [.. r.Actions];
         }))), cancellationToken);
         await context.SaveChangesAsync(cancellationToken);
-        foreach (var definition in SystemCatalog.Resources.Where(r => r.Parent is not null))
+        foreach (var definition in definitions.Where(r => r.Parent is not null))
         {
             resources[definition.Code].ParentId = resources[definition.Parent!].Id;
         }
@@ -56,14 +64,14 @@ public sealed class AppsControlSeeder(AppsControlDbContext context)
             context.Roles.Include(r => r.Privileges),
             SystemCatalog.Roles.Select(r => (r.Key, r.Value.NameAr, r.Value.NameEn, (Action<Role>)(_ => { }))),
             cancellationToken);
-        foreach (var (code, definition) in SystemCatalog.Roles)
+        foreach (var code in SystemCatalog.Roles.Keys)
         {
             var role = roles[code];
-            foreach (var resource in SystemCatalog.Resources)
+            foreach (var resource in definitions)
             {
-                var actions = definition.Actions(resource);
+                var actions = SystemCatalog.ActionsOf(code, resource);
                 var privilege = role.Privileges.SingleOrDefault(p => p.ResourceId == resources[resource.Code].Id);
-                if (actions is null)
+                if (actions.Count == 0)
                 {
                     if (privilege is not null)
                     {
@@ -84,25 +92,30 @@ public sealed class AppsControlSeeder(AppsControlDbContext context)
             }
         }
 
-        var groups = await UpsertAsync(context.MenuGroups, [(SystemCatalog.AppsControlMenuGroup, "التحكم بالتطبيقات", "Apps Control", (Action<MenuGroup>)(g =>
+        var groupDefinitions = catalog.Where(c => c.MenuGroup is not null).Select(c => c.MenuGroup!).ToList();
+        var groups = await UpsertAsync(context.MenuGroups, groupDefinitions.Select(g => (g.Code, g.NameAr, g.NameEn, (Action<MenuGroup>)(e =>
         {
-            g.AppId = apps["INTERNAL"].Id;
-            g.DisplayOrder = 900;
-            g.Icon = "tune";
-        }))], cancellationToken);
+            e.AppId = apps[g.App].Id;
+            e.DisplayOrder = g.Order;
+            e.Icon = g.Icon;
+        }))), cancellationToken);
         await context.SaveChangesAsync(cancellationToken);
 
-        await UpsertAsync(context.Menus, SystemCatalog.AppsControlMenus.Select(m => (m.Code, m.NameAr, m.NameEn, (Action<Menu>)(e =>
+        foreach (var contribution in catalog.Where(c => c.Menus.Count > 0))
         {
-            e.AppId = apps["INTERNAL"].Id;
-            e.MenuGroupId = groups[SystemCatalog.AppsControlMenuGroup].Id;
-            e.ItemType = MenuItemType.Screen;
-            e.Target = m.Target;
-            e.ResourceId = resources[m.Resource].Id;
-            e.Icon = m.Icon;
-            e.DisplayOrder = m.Order;
-            e.IsVisible = true;
-        }))), cancellationToken);
+            var group = contribution.MenuGroup ?? throw new InvalidOperationException($"Module '{contribution.Module}' contributes menus without a menu group.");
+            await UpsertAsync(context.Menus, contribution.Menus.Select(m => (m.Code, m.NameAr, m.NameEn, (Action<Menu>)(e =>
+            {
+                e.AppId = apps[group.App].Id;
+                e.MenuGroupId = groups[group.Code].Id;
+                e.ItemType = MenuItemType.Screen;
+                e.Target = m.Target;
+                e.ResourceId = resources[m.Resource].Id;
+                e.Icon = m.Icon;
+                e.DisplayOrder = m.Order;
+                e.IsVisible = true;
+            }))), cancellationToken);
+        }
 
         await UpsertAsync(context.Positions, SystemCatalog.Positions.Select(p => (p.Code, p.NameAr, p.NameEn, (Action<Position>)(_ => { }))), cancellationToken);
 

@@ -4,6 +4,7 @@ using DynamicCube.Platform.Expressions;
 using DynamicCube.Platform.Files;
 using DynamicCube.Platform.Outbox;
 using DynamicCube.Platform.Persistence;
+using DynamicCube.Platform.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -83,8 +84,17 @@ public static class PlatformServiceCollectionExtensions
         where TContext : ModuleDbContext
     {
         services.TryAddScoped<ChangeSetService<TContext>>();
+        services.AddScoped<IChangeSetWorkflow>(sp => sp.GetRequiredService<ChangeSetService<TContext>>());
         return services;
     }
+
+    /// <summary>Registers a configuration area so its approval policy can be set by the entity.</summary>
+    public static IServiceCollection AddChangeArea(this IServiceCollection services, string code, string nameAr, string nameEn, bool requiresApprovalByDefault = true) =>
+        services.AddSingleton(new ChangeAreaDefinition(code, nameAr, nameEn, requiresApprovalByDefault));
+
+    /// <summary>Registers the resources, menus and built-in role privileges a module contributes to Apps Control.</summary>
+    public static IServiceCollection AddSystemCatalog(this IServiceCollection services, SystemCatalogContribution contribution) =>
+        services.AddSingleton(contribution);
 }
 
 /// <summary>Deferred registration applied to the <see cref="OutboxHandlerRegistry"/> when it is first resolved.</summary>

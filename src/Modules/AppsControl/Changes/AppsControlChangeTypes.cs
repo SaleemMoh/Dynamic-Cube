@@ -36,19 +36,6 @@ public static class AppsControlAreas
 
     /// <summary>The approval policy itself; always needs approval so nobody can switch approval off alone.</summary>
     public const string Governance = "apps.governance";
-
-    /// <summary>Areas whose approval policy the entity configures: display names and the initial policy of a new installation.</summary>
-    public static IReadOnlyList<(string Code, string NameAr, string NameEn, bool RequiresApproval)> Configurable { get; } =
-    [
-        (System, "النظام والجهة", "Installation & entity", true),
-        (Organization, "الهيكل التنظيمي", "Organization structure", true),
-        (Security, "المستخدمون والصلاحيات", "Users & privileges", true),
-        (Menus, "القوائم", "Menus", true),
-        (Lookups, "التصنيفات والقيم", "Classes & domains", true),
-        (Lovs, "قوائم القيم", "Lists of values", true),
-        (Settings, "الإعدادات", "Settings", true),
-        (UiTexts, "نصوص الواجهة", "UI texts", false),
-    ];
 }
 
 /// <summary>Codes of the SYSTEM resources that guard Apps Control screens and APIs.</summary>

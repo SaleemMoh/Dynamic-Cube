@@ -1,10 +1,10 @@
 using System.Text.RegularExpressions;
 using DynamicCube.Platform.ChangeSets;
 
-namespace DynamicCube.Modules.AppsControl.Changes;
+namespace DynamicCube.Platform.Configuration;
 
 /// <summary>Collects field-level problems and throws them together.</summary>
-internal sealed partial class ValidationErrors
+public sealed partial class ValidationErrors
 {
     private readonly Dictionary<string, List<string>> _errors = new(StringComparer.Ordinal);
 

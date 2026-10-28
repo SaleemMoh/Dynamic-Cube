@@ -36,6 +36,18 @@ public static class AppsControlModule
         services.AddSingleton<AccessCache>();
         services.AddSingleton<SqlLovRunner>();
 
+        // Areas whose approval policy the entity configures, with the initial policy of a new installation.
+        services.AddChangeArea(AppsControlAreas.System, "النظام والجهة", "Installation & entity");
+        services.AddChangeArea(AppsControlAreas.Organization, "الهيكل التنظيمي", "Organization structure");
+        services.AddChangeArea(AppsControlAreas.Security, "المستخدمون والصلاحيات", "Users & privileges");
+        services.AddChangeArea(AppsControlAreas.Menus, "القوائم", "Menus");
+        services.AddChangeArea(AppsControlAreas.Lookups, "التصنيفات والقيم", "Classes & domains");
+        services.AddChangeArea(AppsControlAreas.Lovs, "قوائم القيم", "Lists of values");
+        services.AddChangeArea(AppsControlAreas.Settings, "الإعدادات", "Settings");
+        services.AddChangeArea(AppsControlAreas.UiTexts, "نصوص الواجهة", "UI texts", requiresApprovalByDefault: false);
+
+        services.AddSystemCatalog(SystemCatalog.Contribution);
+        services.AddScoped<ChangeSetRouter>();
         AddApplier<InstallationApplier>(services);
         AddApplier<EntityApplier>(services);
         AddApplier<AppApplier>(services);
@@ -89,10 +101,10 @@ public static class AppsControlModule
     }
 
     private static void AddApplier<T>(IServiceCollection services)
-        where T : class, IAppsControlApplier
+        where T : class, IConfigApplier, IChangeApplier<AppsControlDbContext>
     {
         services.AddScoped<T>();
-        services.AddScoped<IAppsControlApplier>(sp => sp.GetRequiredService<T>());
+        services.AddScoped<IConfigApplier>(sp => sp.GetRequiredService<T>());
         services.AddScoped<IChangeApplier<AppsControlDbContext>>(sp => sp.GetRequiredService<T>());
     }
 }

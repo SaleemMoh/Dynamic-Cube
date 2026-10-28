@@ -10,7 +10,7 @@ public sealed class ChangeAreaPayload : ConfigPayload
 }
 
 /// <summary>Edits the approval policy of the configurable areas (rows are created by the migrator; they cannot be added or deleted).</summary>
-internal sealed class ChangeAreaApplier : ConfigApplier<ChangeArea, ChangeAreaPayload>
+internal sealed class ChangeAreaApplier(AppsControlDbContext db, IEnumerable<ChangeAreaDefinition> areas) : ConfigApplier<ChangeArea, ChangeAreaPayload>(db)
 {
     public override string EntityType => AppsControlChangeTypes.ChangeArea;
 
@@ -22,7 +22,7 @@ internal sealed class ChangeAreaApplier : ConfigApplier<ChangeArea, ChangeAreaPa
 
     protected override void ValidateKey(string entityCode, ValidationErrors errors)
     {
-        if (AppsControlAreas.Configurable.All(a => a.Code != entityCode))
+        if (areas.All(a => a.Code != entityCode))
         {
             errors.Add("code", $"'{entityCode}' is not a configurable area.");
         }

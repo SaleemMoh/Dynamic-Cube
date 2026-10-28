@@ -21,7 +21,7 @@ public sealed class InstallationPayload : ConfigPayload
     public string? LogoFileKey { get; set; }
 }
 
-internal sealed class InstallationApplier : ConfigApplier<Installation, InstallationPayload>
+internal sealed class InstallationApplier(AppsControlDbContext db) : ConfigApplier<Installation, InstallationPayload>(db)
 {
     public override string EntityType => AppsControlChangeTypes.Installation;
 
@@ -97,7 +97,7 @@ public sealed class EntityPayload : ConfigPayload
     public List<FooterLink> FooterLinks { get; set; } = [];
 }
 
-internal sealed class EntityApplier : ConfigApplier<GovernmentEntity, EntityPayload>
+internal sealed class EntityApplier(AppsControlDbContext db) : ConfigApplier<GovernmentEntity, EntityPayload>(db)
 {
     public const string EntityKindClass = "ENTITY_KIND";
 
@@ -197,7 +197,7 @@ public sealed class AppPayload : ConfigPayload
     public int DisplayOrder { get; set; }
 }
 
-internal sealed class AppApplier : ConfigApplier<App, AppPayload>
+internal sealed class AppApplier(AppsControlDbContext db) : ConfigApplier<App, AppPayload>(db)
 {
     public override string EntityType => AppsControlChangeTypes.App;
 

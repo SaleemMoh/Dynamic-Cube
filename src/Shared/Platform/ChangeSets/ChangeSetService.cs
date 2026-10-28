@@ -11,7 +11,7 @@ public sealed class ChangeSetService<TContext>(
     IEnumerable<IChangeSetPublishHook<TContext>> publishHooks,
     IChangeApprovalPolicy approvalPolicy,
     ICurrentUser currentUser,
-    TimeProvider timeProvider)
+    TimeProvider timeProvider) : IChangeSetWorkflow
     where TContext : ModuleDbContext
 {
     private readonly Dictionary<string, IChangeApplier<TContext>> _appliers =
@@ -58,7 +58,7 @@ public sealed class ChangeSetService<TContext>(
         await context.ChangeSets.Include(c => c.Items).SingleOrDefaultAsync(c => c.Id == id, cancellationToken)
             ?? throw new ChangeSetException($"Change set {id} was not found.");
 
-    public bool IsKnownEntityType(string entityType) => _appliers.ContainsKey(entityType);
+    public bool OwnsEntityType(string entityType) => _appliers.ContainsKey(entityType);
 
     /// <summary>
     /// Validates and adds an item. The "before" snapshot is taken from the current state by the applier.

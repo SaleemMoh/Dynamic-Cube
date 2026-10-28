@@ -13,7 +13,7 @@ public sealed class MenuGroupPayload : ConfigPayload
     public string? Icon { get; set; }
 }
 
-internal sealed class MenuGroupApplier : ConfigApplier<MenuGroup, MenuGroupPayload>
+internal sealed class MenuGroupApplier(AppsControlDbContext db) : ConfigApplier<MenuGroup, MenuGroupPayload>(db)
 {
     public override string EntityType => AppsControlChangeTypes.MenuGroup;
 
@@ -64,7 +64,7 @@ public sealed class MenuPayload : ConfigPayload
     public bool IsVisible { get; set; } = true;
 }
 
-internal sealed class MenuApplier : ConfigApplier<Menu, MenuPayload>
+internal sealed class MenuApplier(AppsControlDbContext db) : ConfigApplier<Menu, MenuPayload>(db)
 {
     public override string EntityType => AppsControlChangeTypes.Menu;
 

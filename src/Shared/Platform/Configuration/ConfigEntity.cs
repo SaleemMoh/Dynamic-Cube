@@ -1,6 +1,6 @@
 using DynamicCube.Platform.Persistence;
 
-namespace DynamicCube.Modules.AppsControl.Domain;
+namespace DynamicCube.Platform.Configuration;
 
 /// <summary>Who maintains a configuration row: product upgrades (<see cref="System"/>) or the entity's administrators.</summary>
 public enum Ownership
@@ -9,7 +9,7 @@ public enum Ownership
     Entity,
 }
 
-/// <summary>Common shape of Apps Control configuration rows: stable code, bilingual name, ownership, audit columns.</summary>
+/// <summary>Common shape of configuration rows in every module: stable code, bilingual name, ownership, audit columns.</summary>
 public abstract class ConfigEntity : IAuditable, IHasAuditColumns
 {
     public Guid Id { get; set; } = Guid.CreateVersion7();

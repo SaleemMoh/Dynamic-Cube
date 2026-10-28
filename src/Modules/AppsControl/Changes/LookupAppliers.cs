@@ -44,7 +44,7 @@ public sealed class ClassPayload : ConfigPayload
     public List<AttributeDefinitionPayload> Attributes { get; set; } = [];
 }
 
-internal sealed class ClassApplier : ConfigApplier<LookupClass, ClassPayload>
+internal sealed class ClassApplier(AppsControlDbContext db) : ConfigApplier<LookupClass, ClassPayload>(db)
 {
     public override string EntityType => AppsControlChangeTypes.Class;
 
@@ -255,7 +255,7 @@ public sealed class DomainPayload : ConfigPayload
     public List<ExternalCodePayload> ExternalCodes { get; set; } = [];
 }
 
-internal sealed class DomainApplier : ConfigApplier<DomainValue, DomainPayload>
+internal sealed class DomainApplier(AppsControlDbContext db) : ConfigApplier<DomainValue, DomainPayload>(db)
 {
     public override string EntityType => AppsControlChangeTypes.Domain;
 

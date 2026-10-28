@@ -44,7 +44,7 @@ public sealed class SettingPayload : ConfigPayload
     public bool IsPublic { get; set; }
 }
 
-internal sealed class SettingApplier : ConfigApplier<Setting, SettingPayload>
+internal sealed class SettingApplier(AppsControlDbContext db) : ConfigApplier<Setting, SettingPayload>(db)
 {
     public const string Masked = "********";
 
@@ -121,7 +121,7 @@ public sealed class UiTextPayload : ConfigPayload
 }
 
 /// <summary>UI text override; <c>nameAr</c> / <c>nameEn</c> hold the texts.</summary>
-internal sealed class UiTextApplier : ConfigApplier<UiText, UiTextPayload>
+internal sealed class UiTextApplier(AppsControlDbContext db) : ConfigApplier<UiText, UiTextPayload>(db)
 {
     public override string EntityType => AppsControlChangeTypes.UiText;
 

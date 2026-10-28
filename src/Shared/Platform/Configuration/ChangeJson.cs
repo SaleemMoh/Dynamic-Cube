@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace DynamicCube.Modules.AppsControl.Changes;
+namespace DynamicCube.Platform.Configuration;
 
 /// <summary>JSON conventions for change payloads and the Apps Control API: camelCase, enums as UPPER_SNAKE text.</summary>
 public static class ChangeJson
