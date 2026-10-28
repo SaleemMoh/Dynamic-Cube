@@ -36,6 +36,7 @@ Delivered in slices:
 | **1c** | Services: definitions, forms, wizard, drafts, fees, eligibility | ✅ |
 | **1d** | Workflow engine + Action Center | ✅ |
 | **1e** | Documents, communication, decision contract, external applicant journey | ✅ |
+| 1f | Service-owned workflows: every service has its own workflow; none is published without one | Next |
 
 **1a delivered:** the `AppsControl` module (all entities of [§4](04-apps-control.md) except
 delegations, which come with the Action Center), change appliers with code-keyed payloads,
@@ -117,6 +118,24 @@ Still open from 1e: the financial axis and adjusters of the grading, the public 
 follow-up services by document dates (Phase 2), push notifications, schedule-based rules (draft expiry), email
 attachments.
 
+**1f planned — service-owned workflows.** Today a workflow is a shared configuration item that a service version
+may name, and a version without one is published with no processing at all. From 1f the workflow is part of the
+service:
+
+- **One service, its own workflow.** A workflow belongs to exactly one service and is created, versioned and
+  shown with it (a *Workflow* tab on the service; the workflow screens list workflows by service). Workflows are
+  not shared between services; to reuse one, copy it into the other service.
+- **No publishing without a workflow.** A service version is checked on publish: it must use a published
+  version of its service's workflow. The check runs when the change set is validated, so the maker sees it before
+  approval, and configuration packages are held to the same rule.
+- **A default workflow for every service.** Creating a service creates its workflow with a first version that
+  needs no approval or review: *Start → Completed (approved)*. A submitted request completes at once, and the
+  documents and notifications the version defines still happen. Adding review steps is a new workflow version,
+  so requests in progress keep the version they started on.
+- **Existing configuration.** Services without a workflow get the default one; `CLASSIFICATION` becomes the
+  workflow of `CLASSIFICATION_NEW`, and the configuration packages are updated to match.
+  [ADR-0019](adr/0019-workflow-runtime.md) is revised accordingly.
+
 - **Apps Control**: installation, apps, entity, org unit types & org structure, positions,
   users, roles, privileges, menus, Class/Domain with typed attributes and generated views,
   LOVs with grants and data-scope bindings, settings, UI texts, maker-checker.
@@ -128,7 +147,8 @@ attachments.
 - **Services**: service definition & versions, composable forms with question bank, wizard,
   drafts, service levels, fees (bracketed), eligibility.
 - **Workflow engine**: human tasks, **parallel split/join**, distribution by manager,
-  maker-checker, return for correction, SLA timers on the working calendar.
+  maker-checker, return for correction, SLA timers on the working calendar. Each service owns its
+  workflow, starting from a default one that needs no approval (1f).
 - **Action Center**: inboxes, distribution, task view, actions, timeline.
 - **Decisions**: decision-step contract; plug in the supplied engine.
 - **Documents**: multi-line certificate, versions, QR verification, HTML→PDF.
