@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "DynamicCube.External.Api": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:64756;http://localhost:64758"
+    }
+  }
+}
