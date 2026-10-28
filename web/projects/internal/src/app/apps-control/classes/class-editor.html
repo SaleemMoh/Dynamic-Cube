@@ -1,0 +1,220 @@
+<h2 mat-dialog-title>
+  @if (isNew()) {
+    {{ 'classes.new' | dcTranslate }}
+  } @else if (data.cls; as c) {
+    {{ { ar: c.nameAr, en: c.nameEn } | dcLocalize }}
+    <span class="mono dc-muted">{{ c.code }}</span>
+  }
+</h2>
+<mat-dialog-content>
+  @if (isSystem()) {
+    <p class="dc-note">{{ 'classes.systemHint' | dcTranslate }}</p>
+  }
+  @if (errors().length) {
+    <ul class="dc-errors" role="alert">
+      @for (error of errors(); track $index) {
+        <li>{{ error }}</li>
+      }
+    </ul>
+  }
+  <form
+    [formGroup]="form"
+    id="dc-class-form"
+    (ngSubmit)="saveClass()"
+    class="dc-class-form"
+    novalidate
+  >
+    <div class="dc-grid">
+      <div class="dc-field">
+        <label class="dc-field-label" for="class-code">{{ 'config.code' | dcTranslate }}</label>
+        <mat-form-field>
+          <input
+            matInput
+            id="class-code"
+            formControlName="code"
+            dir="ltr"
+            data-testid="class-code"
+          />
+          <mat-hint>{{ 'classes.codeHint' | dcTranslate }}</mat-hint>
+        </mat-form-field>
+      </div>
+      <div class="dc-field">
+        <label class="dc-field-label" for="class-nameAr">{{ 'config.nameAr' | dcTranslate }}</label>
+        <mat-form-field>
+          <input matInput id="class-nameAr" formControlName="nameAr" data-testid="class-name-ar" />
+        </mat-form-field>
+      </div>
+      <div class="dc-field">
+        <label class="dc-field-label" for="class-nameEn">{{ 'config.nameEn' | dcTranslate }}</label>
+        <mat-form-field>
+          <input matInput id="class-nameEn" formControlName="nameEn" data-testid="class-name-en" />
+        </mat-form-field>
+      </div>
+      <div class="dc-field">
+        <label class="dc-field-label" for="class-parentClassCode">{{
+          'classes.parentClass' | dcTranslate
+        }}</label>
+        <mat-form-field>
+          <mat-select id="class-parentClassCode" formControlName="parentClassCode">
+            <mat-option [value]="null">—</mat-option>
+            @for (c of otherClasses; track c.code) {
+              <mat-option [value]="c.code"
+                >{{ { ar: c.nameAr, en: c.nameEn } | dcLocalize }} ({{ c.code }})</mat-option
+              >
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="dc-field">
+        <label class="dc-field-label" for="class-descriptionAr">{{
+          'classes.descriptionAr' | dcTranslate
+        }}</label>
+        <mat-form-field>
+          <input matInput id="class-descriptionAr" formControlName="descriptionAr" />
+        </mat-form-field>
+      </div>
+      <div class="dc-field">
+        <label class="dc-field-label" for="class-descriptionEn">{{
+          'classes.descriptionEn' | dcTranslate
+        }}</label>
+        <mat-form-field>
+          <input matInput id="class-descriptionEn" formControlName="descriptionEn" />
+        </mat-form-field>
+      </div>
+    </div>
+    <div class="dc-flags">
+      <mat-checkbox formControlName="isHierarchical">{{
+        'classes.hierarchical' | dcTranslate
+      }}</mat-checkbox>
+      <mat-checkbox formControlName="isActive">{{ 'config.active' | dcTranslate }}</mat-checkbox>
+    </div>
+
+    <h3>{{ 'classes.attributes' | dcTranslate }}</h3>
+    <p class="dc-muted">{{ 'classes.attributesHint' | dcTranslate }}</p>
+    <div formArrayName="attributes" class="dc-attributes">
+      @for (attribute of attributes.controls; track attribute; let i = $index) {
+        <div class="dc-attribute" [formGroupName]="i" [attr.data-attribute]="i">
+          <div class="dc-field">
+            <label class="dc-field-label" [for]="'attr-code-' + i">{{
+              'config.code' | dcTranslate
+            }}</label>
+            <mat-form-field>
+              <input
+                matInput
+                [id]="'attr-code-' + i"
+                formControlName="code"
+                dir="ltr"
+                data-testid="attribute-code"
+              />
+            </mat-form-field>
+          </div>
+          <div class="dc-field">
+            <label class="dc-field-label" [for]="'attr-nameAr-' + i">{{
+              'config.nameAr' | dcTranslate
+            }}</label>
+            <mat-form-field>
+              <input
+                matInput
+                [id]="'attr-nameAr-' + i"
+                formControlName="nameAr"
+                data-testid="attribute-name-ar"
+              />
+            </mat-form-field>
+          </div>
+          <div class="dc-field">
+            <label class="dc-field-label" [for]="'attr-nameEn-' + i">{{
+              'config.nameEn' | dcTranslate
+            }}</label>
+            <mat-form-field>
+              <input
+                matInput
+                [id]="'attr-nameEn-' + i"
+                formControlName="nameEn"
+                data-testid="attribute-name-en"
+              />
+            </mat-form-field>
+          </div>
+          <div class="dc-field">
+            <label class="dc-field-label" [for]="'attr-dataType-' + i">{{
+              'classes.dataType' | dcTranslate
+            }}</label>
+            <mat-form-field>
+              <mat-select
+                [id]="'attr-dataType-' + i"
+                formControlName="dataType"
+                data-testid="attribute-type"
+              >
+                @for (type of dataTypes; track type) {
+                  <mat-option [value]="type">{{ 'dataType.' + type | dcTranslate }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
+          @if (attribute.controls.dataType.value === 'DOMAIN_REF') {
+            <div class="dc-field">
+              <label class="dc-field-label" [for]="'attr-refClassCode-' + i">{{
+                'classes.refClass' | dcTranslate
+              }}</label>
+              <mat-form-field>
+                <mat-select [id]="'attr-refClassCode-' + i" formControlName="refClassCode">
+                  @for (c of otherClasses; track c.code) {
+                    <mat-option [value]="c.code">{{ c.code }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            </div>
+          }
+          <div class="dc-field">
+            <label class="dc-field-label" [for]="'attr-attributeGroup-' + i">{{
+              'classes.group' | dcTranslate
+            }}</label>
+            <mat-form-field>
+              <mat-select [id]="'attr-attributeGroup-' + i" formControlName="attributeGroup">
+                <mat-option value="ATTRIBUTE">{{
+                  'classes.groupAttribute' | dcTranslate
+                }}</mat-option>
+                <mat-option value="PARAMETER">{{
+                  'classes.groupParameter' | dcTranslate
+                }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <mat-checkbox formControlName="isRequired" data-testid="attribute-required">{{
+            'classes.required' | dcTranslate
+          }}</mat-checkbox>
+          <mat-checkbox formControlName="isReportable">{{
+            'classes.reportable' | dcTranslate
+          }}</mat-checkbox>
+          @if (canEdit()) {
+            <button
+              matIconButton
+              type="button"
+              (click)="removeAttribute(i)"
+              [attr.aria-label]="'config.delete' | dcTranslate"
+            >
+              <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
+            </button>
+          }
+        </div>
+      }
+    </div>
+    @if (canEdit()) {
+      <div class="dc-actions">
+        <button matButton type="button" (click)="addAttribute()" data-testid="add-attribute">
+          <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+          {{ 'classes.addAttribute' | dcTranslate }}
+        </button>
+      </div>
+    }
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button matButton="outlined" mat-dialog-close>
+    {{ (canEdit() ? 'form.cancel' : 'common.close') | dcTranslate }}
+  </button>
+  @if (canEdit()) {
+    <button matButton="filled" type="submit" form="dc-class-form" data-testid="save-class">
+      {{ drafts.saveLabel('apps.class') | dcTranslate }}
+    </button>
+  }
+</mat-dialog-actions>

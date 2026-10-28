@@ -89,6 +89,31 @@ internal static class AdminEndpoints
                 .ToList());
         }).WithName("GetAdminTypes");
 
+        // How many rows hang under each row of a type, for the master lists: values per class, users per role, menus per group.
+        admin.MapGet("/counts/{type}", async (string type, IEnumerable<IConfigApplier> appliers, AccessResolver resolver, AppsControlDbContext db, CancellationToken ct) =>
+        {
+            var applier = Find(appliers, type);
+            if (applier is null)
+            {
+                return Results.NotFound();
+            }
+
+            var access = await resolver.GetAsync(ct);
+            if (!access.Can(applier.ResourceCode, PrivilegeActions.View))
+            {
+                return Forbidden(applier.ResourceCode, PrivilegeActions.View);
+            }
+
+            Dictionary<string, int>? counts = type switch
+            {
+                AppsControlChangeTypes.Class => await db.Domains.GroupBy(d => d.Class!.Code).ToDictionaryAsync(g => g.Key, g => g.Count(), ct),
+                AppsControlChangeTypes.Role => await db.UserRoles.GroupBy(r => r.Role!.Code).ToDictionaryAsync(g => g.Key, g => g.Select(r => r.UserId).Distinct().Count(), ct),
+                AppsControlChangeTypes.MenuGroup => await db.Menus.Where(m => m.MenuGroup != null).GroupBy(m => m.MenuGroup!.Code).ToDictionaryAsync(g => g.Key, g => g.Count(), ct),
+                _ => null,
+            };
+            return counts is null ? Results.NotFound() : Results.Ok(counts);
+        }).WithName("CountConfigurationChildren");
+
         admin.MapGet("/{type}", async (string type, string? parent, IEnumerable<IConfigApplier> appliers, AccessResolver resolver, AppsControlDbContext db, CancellationToken ct) =>
         {
             var applier = Find(appliers, type);

@@ -115,6 +115,12 @@ public sealed class ApiTests(AppsControlFixture fixture) : IAsyncLifetime
         var row = await checker.GetFromJsonAsync<JsonElement>($"/api/apps-control/v1/admin/apps.domain/{cls}/RUH", ct);
         row.GetProperty("code").GetString().ShouldBe($"{cls}/RUH");
         row.GetProperty("owner").GetString().ShouldBe("ENTITY");
+
+        var counts = await checker.GetFromJsonAsync<Dictionary<string, int>>("/api/apps-control/v1/admin/counts/apps.class", ct);
+        counts![cls].ShouldBe(1);
+        var roles = await checker.GetFromJsonAsync<Dictionary<string, int>>("/api/apps-control/v1/admin/counts/apps.role", ct);
+        roles!["CONFIG_CHECKER"].ShouldBeGreaterThanOrEqualTo(1);
+        (await checker.GetAsync("/api/apps-control/v1/admin/counts/apps.lov", ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     [Fact]

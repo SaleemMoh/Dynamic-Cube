@@ -21,6 +21,13 @@ shell of ADR-0016 (government bar, 72px header, green footer).
 - **Side navigation** opens and closes from the top bar (remembered in the browser; over the page below
   992px, where it starts closed); each section opens and closes from its title (remembered too). The shared
   menu reads its colours from `--dc-nav-*` variables, so the portal keeps the DGA green.
+- **Two-panel screens** for a list and what hangs under each row (classes and their values, roles and their
+  screens and permissions, menu groups and their menus): a searchable list on the start side (`.dc-split`,
+  `.dc-panel`) whose rows show name, code and a count pill (values, users, menus) with view / edit / delete
+  (delete disabled while the row still has content), and the chosen row's content on the end side. The URL
+  carries the chosen row (`/apps-control/classes/REGION`). Roles are edited in one dialog: names and code,
+  *available screens* and *role screens* side by side (search each, move the picked ones or all), then one card
+  per role screen with its actions and those of the menus and actions inside it.
 - Tables: gray-50 header with 13px/600 labels, 14px rows with hairlines, gray-50 hover, the selected row
   (`.dc-row--selected`) on gold-50 with a 3px gold edge at the start. Dialogs: 12px radius, hairlines around the
   title and the actions, actions at the end. Buttons: 40px, 8px radius, 14px/600; disabled at half opacity.

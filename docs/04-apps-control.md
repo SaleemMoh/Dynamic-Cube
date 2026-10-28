@@ -328,8 +328,12 @@ of the primary unit), `user.subtreeOrgUnits` (assigned units and everything belo
 **Front end.** The internal system builds its side menu from `me/menu`; Apps Control screens are
 generated from field definitions (`web/projects/internal/src/app/apps-control/config`) and render
 with the shared `DynamicForm`. The domain value form is generated from the class's attribute
-definitions. Nested lists (privileges, grants, assignments, LOV bindings) are edited as JSON until
-the visual builders of Phase 3. Form fields can reference an LOV (`lov`, `lovParentField` for
+definitions. *Classes & domains*, *Roles & privileges* and *Menus* are two-panel screens (the list on one
+side, the chosen row's values, permissions or menus on the other; counts from
+`GET admin/counts/{apps.class|apps.role|apps.menu-group}`); a role's privileges are picked as screens and then
+ticked per action, including the sub-resources of each screen ([ADR-0018](adr/0018-internal-system-look.md)).
+The other nested lists (LOV grants, assignments, LOV bindings) are edited as JSON until the visual builders of
+Phase 3. Form fields can reference an LOV (`lov`, `lovParentField` for
 cascading lists); options come from `lovs/{code}/values`, already filtered by the user's grants.
 
 **Branding.** The *Branding* screen (resource `apps-control.installation`) sets the entity logo and the footer

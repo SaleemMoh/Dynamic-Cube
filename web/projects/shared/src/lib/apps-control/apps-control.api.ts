@@ -84,6 +84,11 @@ export class AppsControlApi {
     });
   }
 
+  /** Rows under each row of a type (values per class, users per role, menus per group), keyed by code. */
+  counts(entityType: 'apps.class' | 'apps.role' | 'apps.menu-group'): Observable<Record<string, number>> {
+    return this.http.get<Record<string, number>>(`${APPS_CONTROL_API}/admin/counts/${entityType}`);
+  }
+
   get(entityType: string, code: string): Observable<ConfigRow> {
     return this.http.get<ConfigRow>(
       `${APPS_CONTROL_API}/admin/${entityType}/${code.split('/').map(encodeURIComponent).join('/')}`,

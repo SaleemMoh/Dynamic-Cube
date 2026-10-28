@@ -24,6 +24,8 @@ export interface ConfigEditorData {
   type: ConfigType;
   /** Existing row (edit) or null (new). */
   row: ConfigRow | null;
+  /** Starting values of a new row (e.g. the menu group a new menu goes into). */
+  defaults?: Record<string, unknown>;
 }
 
 /** Edits one configuration row with a {@link DynamicForm}; saving adds the change to the user's draft change set. */
@@ -167,7 +169,7 @@ export class ConfigEditor {
       value['code'] = row.code.slice(row.code.indexOf('/') + 1);
     }
     for (const field of this.data.type.fields) {
-      const current = row ? row[field.code] : field.defaultValue;
+      const current = row ? row[field.code] : (this.data.defaults?.[field.code] ?? field.defaultValue);
       switch (field.type) {
         case 'date':
           value[field.code] = toDate(current);

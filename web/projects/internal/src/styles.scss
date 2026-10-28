@@ -384,6 +384,99 @@ textarea:not(.mat-mdc-input-element):focus-visible,
   unicode-bidi: isolate;
 }
 
+/* Two panels side by side: a list on the start side, the chosen row's content on the end side (stacked on narrow screens). */
+.dc-split {
+  display: grid;
+  grid-template-columns: minmax(18rem, 26rem) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .dc-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.dc-panel {
+  min-width: 0;
+  border: 1px solid var(--dga-gray-200);
+  border-radius: var(--shell-radius-lg);
+  background: #ffffff;
+  box-shadow: var(--shell-shadow-sm);
+  overflow: hidden;
+}
+
+.dc-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--dga-gray-200);
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--dga-gray-900);
+  }
+
+  .mono {
+    display: block;
+    margin-top: 4px;
+    color: var(--dga-gray-500);
+  }
+}
+
+.dc-panel__search {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--dga-gray-200);
+
+  .mat-mdc-form-field {
+    width: 100%;
+    max-width: 24rem;
+  }
+}
+
+.dc-panel__body {
+  padding: 16px 20px;
+}
+
+/* A table inside a panel takes the panel's frame. */
+.dc-panel .dc-table.mat-mdc-table {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Pills: a tinted label without a dot (in use, not used, counts, states). */
+.dc-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 9999px;
+  background: var(--dga-gray-100);
+  color: var(--dga-gray-600);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+
+  &--green {
+    background: var(--dynamic-cube-green-50);
+    color: var(--dynamic-cube-green-700);
+  }
+
+  &--gold {
+    background: var(--dynamic-cube-gold-50);
+    color: var(--dynamic-cube-gold-700);
+  }
+}
+
 /* Toasts: top-centre on the dark neutral. */
 .mat-mdc-snack-bar-container {
   --mat-snack-bar-container-color: var(--dga-gray-900);
