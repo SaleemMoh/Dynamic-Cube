@@ -4,13 +4,26 @@ Built as **vertical slices**: each phase delivers working end-to-end behaviour, 
 Classification Certificate reference service. No phase builds a designer before the runtime it
 configures exists.
 
-## Phase 0 — Foundations
+## Phase 0 — Foundations ✅
 
-- Repository, solution layout, CI (build, tests, lint), container images, Docker Compose.
-- Platform kernel: audit log, outbox, change sets, file storage abstraction, localization,
-  JSONLogic evaluation (server + Angular).
-- Keycloak realms (internal / external), Nafath integration stub.
-- Angular workspace: design system on PrimeNG, RTL, shared form renderer skeleton.
+Delivered:
+
+- Repository and solution layout; central package management; analyzers as errors; `dotnet format` and ESLint
+  checks; CI (build, format, tests incl. PostgreSQL integration tests, migration drift check, container image builds).
+- Platform kernel: module DbContext base, snake_case PostgreSQL conventions, audit log interceptor, transactional
+  outbox (leased, retries with backoff, dead-lettering), configuration change sets with maker-checker, file storage
+  abstraction, bilingual text, JSONLogic evaluation — identical in .NET and Angular, verified by shared cases.
+- `Internal.Api` / `External.Api` (health, OpenAPI, Keycloak JWT per realm), `Worker` (outbox), `Migrator`.
+- Keycloak realms (internal / external) with development users; external tokens carry `national_id`
+  (stand-in for Nafath until the identity provider is connected).
+- Angular 22 workspace (`internal`, `external`, `field`, `shared`) on Angular Material: Arabic-first RTL shell,
+  language switching, Material 3 theme, bundled fonts/icons, schema-driven `DynamicForm` with JSONLogic rules.
+- Container images for every process, Nginx SPA image with API reverse proxy, Docker Compose for local / small sites.
+
+Carried into Phase 1:
+
+- Front-end login (OIDC + PKCE) against the realms; data-protection key persistence.
+- Helm chart and N-tier install scripts (`deploy/helm`, `deploy/ntier`).
 
 ## Phase 1 — Core runtime + Apps Control (first slice: new classification request)
 

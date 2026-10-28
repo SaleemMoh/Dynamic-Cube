@@ -19,4 +19,4 @@ Status values: Proposed · Accepted · Superseded.
 | [0012](0012-maker-checker-change-sets.md) | Configuration change sets with maker-checker | Accepted |
 | [0013](0013-apps-control-api-contract.md) | Apps Control owns its schema and a versioned API | Accepted |
 | [0014](0014-pluggable-decision-engine.md) | Decision engine behind a platform contract | Accepted |
-| [0015](0015-angular-primeng.md) | Angular + PrimeNG front-end | Accepted |
+| [0015](0015-angular-material.md) | Angular + Angular Material front-end | Accepted (revised) |

@@ -1,0 +1,26 @@
+// Base styles shared by all Dynamic Cube apps.
+@use './dc-theme';
+
+:root {
+  --dc-font-family: 'IBM Plex Sans Arabic', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --dc-radius: 12px;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  font-family: var(--dc-font-family);
+  background: var(--mat-sys-surface-container-lowest);
+  color: var(--mat-sys-on-surface);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.material-symbols-outlined {
+  font-size: 1.25rem;
+}

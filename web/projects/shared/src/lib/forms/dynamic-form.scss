@@ -1,0 +1,52 @@
+:host {
+  display: block;
+}
+
+.dc-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.dc-form__section {
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--dc-radius);
+  padding: 1.25rem;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 0.5rem 1.5rem;
+}
+
+.dc-form__legend {
+  font-weight: 600;
+  padding-inline: 0.5rem;
+}
+
+.dc-form__field {
+  display: flex;
+  flex-direction: column;
+
+  mat-form-field {
+    width: 100%;
+  }
+}
+
+.dc-form__field--wide {
+  grid-column: 1 / -1;
+}
+
+.dc-form__hint {
+  color: var(--mat-sys-on-surface-variant);
+  padding-inline-start: 2.5rem;
+}
+
+.dc-form__error {
+  padding-inline-start: 2.5rem;
+  font-size: 0.75rem;
+}
+
+.dc-form__actions {
+  display: flex;
+  justify-content: flex-end;
+}

@@ -1,0 +1,20 @@
+// Material 3 theme for Dynamic Cube. Fonts and icons are bundled from npm via angular.json "styles"
+// (no CDN), so on-prem deployments work without internet access.
+@use '@angular/material' as mat;
+
+html {
+  color-scheme: light;
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$green-palette,
+        tertiary: mat.$cyan-palette,
+      ),
+      typography: (
+        plain-family: 'IBM Plex Sans Arabic',
+        brand-family: 'IBM Plex Sans Arabic',
+      ),
+      density: 0,
+    )
+  );
+}

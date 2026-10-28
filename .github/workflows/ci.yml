@@ -1,0 +1,125 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (.NET)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: dynamic_cube
+          POSTGRES_PASSWORD: dynamic_cube
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U dynamic_cube"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DOTNET_NOLOGO: "true"
+      DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+      DYNAMICCUBE_TEST_POSTGRES: Host=localhost;Port=5432;Username=dynamic_cube;Password=dynamic_cube;Database=postgres
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+      - name: Restore
+        run: dotnet restore DynamicCube.slnx
+      - name: Check formatting
+        run: dotnet format DynamicCube.slnx --verify-no-changes --no-restore
+      - name: Build
+        run: dotnet build DynamicCube.slnx -c Release --no-restore
+      - name: Test (unit, PostgreSQL integration, hosts)
+        run: dotnet test --solution DynamicCube.slnx -c Release --no-build
+      - name: Check migrations are up to date
+        run: |
+          dotnet tool restore
+          dotnet ef migrations has-pending-model-changes --project src/Shared/Platform --no-build --configuration Release
+
+  frontend:
+    name: Frontend (Angular)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - name: Lint
+        run: npm run lint
+      - name: Test (includes shared JSONLogic conformance cases)
+        run: npm test
+      - name: Build all apps
+        run: npm run build
+
+  images:
+    name: Container image (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: internal-api
+            dockerfile: deploy/docker/dotnet.Dockerfile
+            args: |
+              PROJECT=src/Hosts/Internal.Api/DynamicCube.Internal.Api.csproj
+              ASSEMBLY=DynamicCube.Internal.Api.dll
+          - name: external-api
+            dockerfile: deploy/docker/dotnet.Dockerfile
+            args: |
+              PROJECT=src/Hosts/External.Api/DynamicCube.External.Api.csproj
+              ASSEMBLY=DynamicCube.External.Api.dll
+          - name: worker
+            dockerfile: deploy/docker/dotnet.Dockerfile
+            args: |
+              PROJECT=src/Hosts/Worker/DynamicCube.Worker.csproj
+              ASSEMBLY=DynamicCube.Worker.dll
+          - name: migrator
+            dockerfile: deploy/docker/dotnet.Dockerfile
+            args: |
+              PROJECT=src/Tools/Migrator/DynamicCube.Migrator.csproj
+              ASSEMBLY=DynamicCube.Migrator.dll
+          - name: web-internal
+            dockerfile: deploy/docker/web.Dockerfile
+            args: APP=internal
+          - name: web-external
+            dockerfile: deploy/docker/web.Dockerfile
+            args: APP=external
+          - name: web-field
+            dockerfile: deploy/docker/web.Dockerfile
+            args: APP=field
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          build-args: ${{ matrix.args }}
+          push: false
+          tags: dynamic-cube/${{ matrix.name }}:ci
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}

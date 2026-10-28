@@ -1,0 +1,125 @@
+{
+  "realm": "dynamic-cube-internal",
+  "displayName": "ديناميك كيوب — النظام الداخلي",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "bruteForceProtected": true,
+  "internationalizationEnabled": true,
+  "supportedLocales": [
+    "ar",
+    "en"
+  ],
+  "defaultLocale": "ar",
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "loginWithEmailAllowed": true,
+  "clients": [
+    {
+      "clientId": "dynamic-cube-internal-web",
+      "name": "Internal system (SPA)",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "implicitFlowEnabled": false,
+      "redirectUris": [
+        "http://localhost:4200/*"
+      ],
+      "webOrigins": [
+        "http://localhost:4200"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:4200/*"
+      },
+      "protocolMappers": [
+        {
+          "name": "audience-dynamic-cube-internal-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "dynamic-cube-internal-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "dynamic-cube-dev-tools",
+      "name": "Development tools (password grant, dev only)",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "protocolMappers": [
+        {
+          "name": "audience-dynamic-cube-internal-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "dynamic-cube-internal-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "dynamic-cube-internal-api",
+      "name": "Internal API (token audience)",
+      "enabled": true,
+      "bearerOnly": true
+    }
+  ],
+  "users": [
+    {
+      "username": "admin",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "System",
+      "lastName": "Administrator",
+      "email": "admin@dynamic-cube.local",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Dev@12345",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "maker",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Configuration",
+      "lastName": "Maker",
+      "email": "maker@dynamic-cube.local",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Dev@12345",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "checker",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Configuration",
+      "lastName": "Checker",
+      "email": "checker@dynamic-cube.local",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Dev@12345",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}

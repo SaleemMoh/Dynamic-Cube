@@ -1,0 +1,160 @@
+# Local / small-site deployment of Dynamic Cube.
+#   docker compose -f deploy/docker/docker-compose.yml up --build
+# Optional services (PDF rendering, virus scanning): add --profile full
+name: dynamic-cube
+
+x-dotnet-env: &dotnet-env
+  ConnectionStrings__DynamicCube: Host=postgres;Database=dynamic_cube;Username=dynamic_cube;Password=${POSTGRES_PASSWORD:-dynamic_cube}
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: dynamic_cube
+      POSTGRES_USER: dynamic_cube
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dynamic_cube}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dynamic_cube -d dynamic_cube"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.1
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      # Browsers reach Keycloak on localhost:8080; containers on keycloak:8080. Tokens keep one issuer.
+      KC_HOSTNAME: http://localhost:8080
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+    volumes:
+      - ../keycloak/realms:/opt/keycloak/data/import:ro
+    ports:
+      - "8080:8080"
+
+  migrator:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/dotnet.Dockerfile
+      args:
+        PROJECT: src/Tools/Migrator/DynamicCube.Migrator.csproj
+        ASSEMBLY: DynamicCube.Migrator.dll
+    environment:
+      <<: *dotnet-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  internal-api:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/dotnet.Dockerfile
+      args:
+        PROJECT: src/Hosts/Internal.Api/DynamicCube.Internal.Api.csproj
+        ASSEMBLY: DynamicCube.Internal.Api.dll
+    environment:
+      <<: *dotnet-env
+      Authentication__Internal__Authority: http://keycloak:8080/realms/dynamic-cube-internal
+      Authentication__Internal__RequireHttpsMetadata: "false"
+    volumes:
+      - files:/data/files
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
+      keycloak:
+        condition: service_started
+    ports:
+      - "5080:8080"
+
+  external-api:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/dotnet.Dockerfile
+      args:
+        PROJECT: src/Hosts/External.Api/DynamicCube.External.Api.csproj
+        ASSEMBLY: DynamicCube.External.Api.dll
+    environment:
+      <<: *dotnet-env
+      Authentication__External__Authority: http://keycloak:8080/realms/dynamic-cube-external
+      Authentication__External__RequireHttpsMetadata: "false"
+    volumes:
+      - files:/data/files
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
+      keycloak:
+        condition: service_started
+    ports:
+      - "5081:8080"
+
+  worker:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/dotnet.Dockerfile
+      args:
+        PROJECT: src/Hosts/Worker/DynamicCube.Worker.csproj
+        ASSEMBLY: DynamicCube.Worker.dll
+    environment:
+      <<: *dotnet-env
+    volumes:
+      - files:/data/files
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
+
+  web-internal:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/web.Dockerfile
+      args:
+        APP: internal
+    environment:
+      API_UPSTREAM: http://internal-api:8080
+    depends_on:
+      - internal-api
+    ports:
+      - "4200:8080"
+
+  web-external:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/web.Dockerfile
+      args:
+        APP: external
+    environment:
+      API_UPSTREAM: http://external-api:8080
+    depends_on:
+      - external-api
+    ports:
+      - "4201:8080"
+
+  web-field:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/web.Dockerfile
+      args:
+        APP: field
+    environment:
+      API_UPSTREAM: http://internal-api:8080
+    depends_on:
+      - internal-api
+    ports:
+      - "4202:8080"
+
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    profiles: ["full"]
+
+  clamav:
+    image: clamav/clamav:1.4
+    profiles: ["full"]
+
+volumes:
+  postgres-data:
+  files:

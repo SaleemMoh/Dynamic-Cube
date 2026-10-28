@@ -10,8 +10,82 @@ Kubernetes or on classic N-tier servers.
 
 ## Status
 
-Design phase. The architecture and domain model are documented under [`docs/`](docs/README.md).
-No application code yet.
+**Phase 0 (foundations) is in place**: solution layout, platform kernel, API hosts, worker, migrator,
+Angular workspace, Keycloak realms, container images, Docker Compose and CI. See the
+[roadmap](docs/07-roadmap.md) for what comes next.
+
+## Repository layout
+
+```
+src/
+  Hosts/Internal.Api   Internal API (employees, builders, Apps Control) — internal network only
+  Hosts/External.Api   External API (applicants) — internet-facing
+  Hosts/Worker         Outbox delivery, notifications, integrations, timers
+  Shared/Platform      Kernel: persistence base, audit, outbox, change sets, files, JSONLogic, i18n
+  Shared/Hosting       Shared host setup: logging, telemetry, health, Keycloak JWT
+  Tools/Migrator       Applies database migrations (run before upgrades)
+tests/
+  Platform.Tests       Unit tests
+  Platform.IntegrationTests  PostgreSQL integration tests
+  Hosts.Tests          API host smoke tests
+  shared/              Cases shared by the .NET and Angular JSONLogic evaluators
+web/                   Angular workspace: internal, external, field apps + shared library
+deploy/docker          Dockerfiles, Nginx template, docker-compose.yml
+deploy/keycloak        Realm definitions (internal + external) for development
+docs/                  Architecture, domain model, ADRs
+```
+
+## Getting started
+
+### Option A — everything in containers
+
+Requires Docker.
+
+```bash
+docker compose -f deploy/docker/docker-compose.yml up --build
+```
+
+| URL | What |
+|---|---|
+| http://localhost:4200 | Internal system |
+| http://localhost:4201 | E-services portal (external) |
+| http://localhost:4202 | Field app |
+| http://localhost:8080 | Keycloak (admin / admin) |
+| http://localhost:5080/health/ready | Internal API readiness |
+
+Add `--profile full` to also start Gotenberg (PDF) and ClamAV (upload scanning).
+
+### Option B — local development
+
+Requires .NET 10 SDK, Node.js 24 LTS, PostgreSQL 16+ and (for login) Keycloak 26.
+
+```bash
+# Database (once): role/database dynamic_cube / dynamic_cube on localhost:5432
+dotnet tool restore
+dotnet run --project src/Tools/Migrator            # applies migrations
+
+dotnet run --project src/Hosts/Internal.Api --urls http://localhost:5080
+dotnet run --project src/Hosts/External.Api --urls http://localhost:5081
+dotnet run --project src/Hosts/Worker
+
+cd web && npm ci
+npm run start:internal                              # http://localhost:4200 (proxies /api to :5080)
+npm run start:external                              # http://localhost:4201 (proxies /api to :5081)
+```
+
+Keycloak for development: import `deploy/keycloak/realms/*.json` (see
+[deploy/keycloak/README.md](deploy/keycloak/README.md) for users and production notes).
+
+### Tests
+
+```bash
+# .NET — PostgreSQL integration tests run when this variable is set, otherwise they are skipped
+export DYNAMICCUBE_TEST_POSTGRES="Host=localhost;Username=dynamic_cube;Password=dynamic_cube;Database=postgres"
+dotnet test
+
+# Angular
+cd web && npm test && npm run lint
+```
 
 ## Documentation
 
@@ -29,6 +103,6 @@ No application code yet.
 
 ## Technology (summary)
 
-.NET 10 (ASP.NET Core) · Angular + PrimeNG · PostgreSQL · Keycloak · Quartz.NET ·
+.NET 10 (ASP.NET Core) · Angular 22 + Angular Material · PostgreSQL · Keycloak · Quartz.NET ·
 Gotenberg (HTML→PDF) · Docker / Helm / N-tier. Permissive open-source licenses only
 (see [ADR-0006](docs/adr/0006-permissive-licenses-only.md)).

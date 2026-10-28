@@ -173,14 +173,16 @@ kept light — no mediator library, no auto-mapper.
 | PDF | Gotenberg | MIT |
 | Identity | Keycloak | Apache-2.0 |
 | Logs / traces | Serilog, OpenTelemetry | Apache-2.0 |
-| Front-end | Angular, PrimeNG | MIT |
+| Front-end | Angular 22, Angular Material + CDK | MIT |
+| Icons / font | Material Symbols, IBM Plex Sans Arabic (bundled, no CDN) | Apache-2.0 / OFL |
+| Build tooling | Node.js 24 LTS, Vitest, ESLint | MIT |
 | Workflow canvas | Foblex Flow or ngx-vflow | MIT |
 | Charts | Apache ECharts | Apache-2.0 |
 | Tests | xUnit, Shouldly, Testcontainers | Apache / BSD / MIT |
 | Upload scanning | ClamAV (separate process) | GPL (not linked) |
 
 Not used, because of licensing: MediatR, AutoMapper, MassTransit v9+, FluentAssertions v8+,
-QuestPDF, Duende IdentityServer. See [ADR-0006](adr/0006-permissive-licenses-only.md).
+QuestPDF, Duende IdentityServer, PrimeNG (PrimeUI License). See [ADR-0006](adr/0006-permissive-licenses-only.md).
 
 ## 2.7 Deployment models
 

@@ -1,0 +1,11 @@
+**/bin/
+**/obj/
+**/node_modules/
+web/dist/
+web/.angular/
+.git/
+docs/
+**/*.md
+!web/**/*.md
+storage/
+deploy/docker/.env
