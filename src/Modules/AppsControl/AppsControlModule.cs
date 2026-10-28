@@ -6,6 +6,7 @@ using DynamicCube.Modules.AppsControl.Lovs;
 using DynamicCube.Modules.AppsControl.Persistence;
 using DynamicCube.Modules.AppsControl.Seeding;
 using DynamicCube.Platform;
+using DynamicCube.Platform.Calendars;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Lovs;
 using DynamicCube.Platform.Security;
@@ -51,6 +52,7 @@ public static class AppsControlModule
         services.AddSystemCatalog(SystemCatalog.Contribution);
         services.AddScoped<ChangeSetRouter>();
         AddApplier<InstallationApplier>(services);
+        AddApplier<HolidayApplier>(services);
         AddApplier<EntityApplier>(services);
         AddApplier<AppApplier>(services);
         AddApplier<OrgUnitTypeApplier>(services);
@@ -77,6 +79,8 @@ public static class AppsControlModule
 
         services.AddScoped<AccessResolver>();
         services.AddScoped<IAccessChecker, AccessChecker>();
+        services.AddScoped<IStaffDirectory, StaffDirectory>();
+        services.AddScoped<IWorkingCalendarProvider, WorkingCalendarProvider>();
         services.AddScoped<MenuService>();
         services.AddScoped<GrantResolver>();
         services.AddScoped<LovService>();

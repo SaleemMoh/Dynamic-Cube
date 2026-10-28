@@ -224,3 +224,49 @@ internal sealed class AppApplier(AppsControlDbContext db) : ConfigApplier<App, A
     protected override Task<AppPayload> ToPayloadAsync(AppsControlDbContext context, App entity, CancellationToken cancellationToken) =>
         Task.FromResult(new AppPayload { AppType = entity.AppType, BaseUrl = entity.BaseUrl, DisplayOrder = entity.DisplayOrder });
 }
+
+public sealed class HolidayPayload : ConfigPayload
+{
+    public DateOnly FromDate { get; set; }
+
+    /// <summary>Last day of the holiday; the same as <see cref="FromDate"/> when empty.</summary>
+    public DateOnly? ToDate { get; set; }
+}
+
+/// <summary>Public holidays of the working calendar (e.g. <c>EID_AL_FITR_2027</c>).</summary>
+internal sealed class HolidayApplier(AppsControlDbContext db) : ConfigApplier<Holiday, HolidayPayload>(db)
+{
+    public override string EntityType => AppsControlChangeTypes.Holiday;
+
+    public override string Area => AppsControlAreas.System;
+
+    public override string ResourceCode => AppsControlResources.Installation;
+
+    protected override IQueryable<Holiday> Query(AppsControlDbContext context) => context.Holidays;
+
+    protected override IQueryable<Holiday> ListQuery(AppsControlDbContext context, string? parent) => Query(context).OrderBy(h => h.FromDate);
+
+    protected override Task ApplyAsync(Holiday entity, HolidayPayload payload, RefResolver refs, ValidationErrors errors, Holiday? existing, CancellationToken cancellationToken)
+    {
+        var to = payload.ToDate ?? payload.FromDate;
+        if (payload.FromDate == default)
+        {
+            errors.Add("fromDate", "Required.");
+        }
+        else if (to < payload.FromDate)
+        {
+            errors.Add("toDate", "Must not be before the first day.");
+        }
+        else if (to.DayNumber - payload.FromDate.DayNumber > 60)
+        {
+            errors.Add("toDate", "A holiday lasts at most 60 days.");
+        }
+
+        entity.FromDate = payload.FromDate;
+        entity.ToDate = to;
+        return Task.CompletedTask;
+    }
+
+    protected override Task<HolidayPayload> ToPayloadAsync(AppsControlDbContext context, Holiday entity, CancellationToken cancellationToken) =>
+        Task.FromResult(new HolidayPayload { FromDate = entity.FromDate, ToDate = entity.ToDate });
+}

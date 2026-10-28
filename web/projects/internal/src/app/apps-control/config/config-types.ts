@@ -137,6 +137,21 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
         ],
       },
       {
+        entityType: 'apps.holiday',
+        title: t('العطل الرسمية', 'Holidays'),
+        key: 'code',
+        columns: ['fromDate', 'toDate'],
+        fields: [
+          { code: 'fromDate', type: 'date', label: t('من', 'From'), required: true },
+          {
+            code: 'toDate',
+            type: 'date',
+            label: t('إلى', 'To'),
+            hint: t('فارغ ليوم واحد', 'Empty for one day'),
+          },
+        ],
+      },
+      {
         entityType: 'apps.app',
         title: t('التطبيقات', 'Apps'),
         key: 'code',

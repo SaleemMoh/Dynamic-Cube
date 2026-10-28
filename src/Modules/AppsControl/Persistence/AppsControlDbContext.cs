@@ -11,6 +11,8 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
 
     public DbSet<Installation> Installations => Set<Installation>();
 
+    public DbSet<Holiday> Holidays => Set<Holiday>();
+
     public DbSet<GovernmentEntity> Entities => Set<GovernmentEntity>();
 
     public DbSet<App> Apps => Set<App>();
@@ -69,6 +71,7 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
         modelBuilder.HasPostgresExtension("ltree");
 
         Config<Installation>(modelBuilder, "installation");
+        Config<Holiday>(modelBuilder, "holiday");
         Config<ChangeArea>(modelBuilder, "change_area");
         Config<GovernmentEntity>(modelBuilder, "entity", b =>
             b.Property(e => e.FooterLinks).HasColumnType("jsonb").HasConversion(JsonColumn.Converter<List<FooterLink>>(), JsonColumn.Comparer<List<FooterLink>>()));

@@ -56,17 +56,18 @@ public static class PlatformServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
-        services.AddDbContext<TContext>((serviceProvider, options) =>
+        // All module contexts of a scope share one connection, so a unit of work can span modules.
+        services.TryAddScoped(_ =>
         {
             var connectionString = configuration.GetConnectionString(PostgresOptionsExtensions.ConnectionStringName);
-            if (string.IsNullOrWhiteSpace(connectionString))
-            {
-                throw new InvalidOperationException($"Connection string '{PostgresOptionsExtensions.ConnectionStringName}' is not configured.");
-            }
-
-            options.UseDynamicCubePostgres(connectionString, historySchema, typeof(TContext).Assembly.GetName().Name)
-                .AddInterceptors(serviceProvider.GetRequiredService<AuditSaveChangesInterceptor>());
+            return string.IsNullOrWhiteSpace(connectionString)
+                ? throw new InvalidOperationException($"Connection string '{PostgresOptionsExtensions.ConnectionStringName}' is not configured.")
+                : new ModuleConnection(connectionString);
         });
+        services.TryAddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddDbContext<TContext>((serviceProvider, options) =>
+            options.UseDynamicCubePostgres(serviceProvider.GetRequiredService<ModuleConnection>().Connection, historySchema, typeof(TContext).Assembly.GetName().Name)
+                .AddInterceptors(serviceProvider.GetRequiredService<AuditSaveChangesInterceptor>()));
         return services;
     }
 

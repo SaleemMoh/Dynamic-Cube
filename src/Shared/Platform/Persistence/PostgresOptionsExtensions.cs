@@ -1,4 +1,6 @@
+using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
 
 namespace DynamicCube.Platform.Persistence;
 
@@ -19,15 +21,28 @@ public static class PostgresOptionsExtensions
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
 
-        return builder
-            .UseNpgsql(connectionString, npgsql =>
-            {
-                npgsql.MigrationsHistoryTable("__ef_migrations_history", historySchema);
-                if (migrationsAssembly is not null)
-                {
-                    npgsql.MigrationsAssembly(migrationsAssembly);
-                }
-            })
-            .UseSnakeCaseNamingConvention();
+        return builder.UseNpgsql(connectionString, npgsql => Configure(npgsql, historySchema, migrationsAssembly)).UseSnakeCaseNamingConvention();
+    }
+
+    /// <summary>The same configuration on a connection shared with other module contexts (see <see cref="ModuleConnection"/>).</summary>
+    public static DbContextOptionsBuilder UseDynamicCubePostgres(
+        this DbContextOptionsBuilder builder,
+        DbConnection connection,
+        string historySchema,
+        string? migrationsAssembly = null)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+        ArgumentNullException.ThrowIfNull(connection);
+
+        return builder.UseNpgsql(connection, npgsql => Configure(npgsql, historySchema, migrationsAssembly)).UseSnakeCaseNamingConvention();
+    }
+
+    private static void Configure(NpgsqlDbContextOptionsBuilder npgsql, string historySchema, string? migrationsAssembly)
+    {
+        npgsql.MigrationsHistoryTable("__ef_migrations_history", historySchema);
+        if (migrationsAssembly is not null)
+        {
+            npgsql.MigrationsAssembly(migrationsAssembly);
+        }
     }
 }

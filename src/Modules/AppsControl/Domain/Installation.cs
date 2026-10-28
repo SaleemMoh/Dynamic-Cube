@@ -28,6 +28,14 @@ public sealed class Installation : ConfigEntity
     public string? LogoFileKey { get; set; }
 }
 
+/// <summary>A public holiday (one day or a range) that does not count as a working day in SLA calculations.</summary>
+public sealed class Holiday : ConfigEntity
+{
+    public DateOnly FromDate { get; set; }
+
+    public DateOnly ToDate { get; set; }
+}
+
 /// <summary>The government entity (ministry, authority or company) that owns the installation.</summary>
 public sealed class GovernmentEntity : ConfigEntity
 {

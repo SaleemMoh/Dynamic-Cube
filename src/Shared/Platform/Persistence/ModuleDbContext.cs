@@ -18,6 +18,18 @@ public abstract class ModuleDbContext(DbContextOptions options) : DbContext(opti
 
     public DbSet<ChangeSet> ChangeSets => Set<ChangeSet>();
 
+    public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    {
+        await UnitOfWorkEnlistment.EnlistAsync(this, cancellationToken);
+        return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+    }
+
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    {
+        UnitOfWorkEnlistment.EnlistAsync(this, CancellationToken.None).GetAwaiter().GetResult();
+        return base.SaveChanges(acceptAllChangesOnSuccess);
+    }
+
     /// <summary>True only for the context that creates and migrates the kernel tables.</summary>
     protected virtual bool OwnsPlatformTables => false;
 
