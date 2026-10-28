@@ -1,157 +1,173 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { ActingPartyService, AuthService, HostInfo, HostInfoService, LocalizePipe, TranslatePipe } from '@dynamic-cube/shared';
-import { MatCardModule } from '@angular/material/card';
-import { catchError, map, of } from 'rxjs';
+import { DatePipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { Router, RouterLink } from '@angular/router';
+import { AuthService, I18nService, LocalizePipe, TranslatePipe } from '@dynamic-cube/shared';
+import { PortalStore } from '../portal/portal-store';
+import { ServiceTile } from '../portal/service-tile';
+import { ActingPanel } from './acting-panel';
+import { StatisticsTiles } from './statistics-tiles';
+import { VoiceSearch } from '../portal/voice-search';
 
-
-type ApiStatus = { state: 'loading' } | { state: 'connected'; info: HostInfo } | { state: 'unavailable' };
-
+/**
+ * The portal home: a hero banner with the portal's purpose and a search by category, the services by category in a
+ * carousel, the statistics tiles and the last update. Signed-in applicants also see who they are applying for.
+ */
 @Component({
   selector: 'dc-home',
-  imports: [MatCardModule, LocalizePipe, TranslatePipe],
+  imports: [DatePipe, FormsModule, MatButtonModule, MatIconModule, RouterLink, LocalizePipe, TranslatePipe, ActingPanel, ServiceTile, StatisticsTiles],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <p class="dc-home__description">{{ 'app.description' | dcTranslate }}</p>
-
-    @if (auth.isAuthenticated()) {
-      <mat-card appearance="outlined" data-testid="acting-card">
-        <mat-card-header><mat-card-title>{{ 'home.acting' | dcTranslate }}</mat-card-title></mat-card-header>
-        <mat-card-content>
-          @if (acting.current(); as current) {
-            <p>
-              {{ 'home.actingNow' | dcTranslate }}
-              <strong data-testid="acting-current">{{ { ar: current.nameAr, en: current.nameEn } | dcLocalize }}</strong>
-            </p>
-          }
-          <ul class="dc-home__contexts">
-            @if (acting.individual(); as me) {
-              <li>
-                <button class="dc-home__context" [class.dc-home__context--current]="acting.current()?.partyId === me.partyId" (click)="acting.select(null)">
-                  <span>{{ { ar: me.nameAr, en: me.nameEn } | dcLocalize }}</span>
-                  <span class="dc-muted">{{ 'acting.self' | dcTranslate }} · <span dir="ltr">{{ me.identifier }}</span></span>
-                </button>
-              </li>
+    <section class="dc-hero" [style.--dc-hero-image]="bannerImage()" data-testid="hero">
+      <div class="dc-hero__inner">
+        <h1 class="dc-hero__title">{{ store.heroTitle({ ar: 'بوابة الخدمات الإلكترونية', en: 'E-services portal' }) | dcLocalize }}</h1>
+        <p class="dc-hero__text">{{ store.heroText(defaultText) | dcLocalize }}</p>
+        <form class="dc-search" role="search" (ngSubmit)="search()">
+          <label class="dc-search__field">
+            <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">search</mat-icon>
+            <input
+              name="q"
+              type="search"
+              [ngModel]="query()"
+              (ngModelChange)="query.set($event)"
+              [attr.aria-label]="'portal.searchLabel' | dcTranslate"
+              [placeholder]="'portal.searchPlaceholder' | dcTranslate"
+              data-testid="hero-search"
+            />
+            @if (voice.supported) {
+              <button
+                type="button"
+                class="dc-search__voice"
+                [class.dc-search__voice--on]="voice.listening()"
+                (click)="listen()"
+                [attr.aria-label]="'portal.voiceSearch' | dcTranslate"
+              >
+                <mat-icon fontSet="material-symbols-outlined">mic</mat-icon>
+              </button>
             }
-            @for (c of acting.contexts(); track c.partyId) {
-              <li>
-                <button class="dc-home__context" [class.dc-home__context--current]="acting.current()?.partyId === c.partyId" (click)="acting.select(c.partyId)" [attr.data-testid]="'context-' + c.identifier">
-                  <span>{{ { ar: c.nameAr, en: c.nameEn } | dcLocalize }}</span>
-                  <span class="dc-muted">{{ { ar: c.relationshipNameAr ?? '', en: c.relationshipNameEn ?? '' } | dcLocalize }} · <span dir="ltr">{{ c.identifier }}</span></span>
-                </button>
-              </li>
+          </label>
+          <select
+            class="dc-search__category"
+            name="category"
+            [ngModel]="searchCategory()"
+            (ngModelChange)="searchCategory.set($event)"
+            [attr.aria-label]="'portal.category' | dcTranslate"
+            data-testid="hero-category"
+          >
+            <option value="">{{ 'portal.allCategories' | dcTranslate }}</option>
+            @for (c of store.categories(); track c.code) {
+              <option [value]="c.code">{{ { ar: c.nameAr, en: c.nameEn } | dcLocalize }}</option>
+            }
+          </select>
+          <button matButton="filled" type="submit" class="dc-search__submit" data-testid="hero-search-submit">{{ 'portal.search' | dcTranslate }}</button>
+        </form>
+      </div>
+    </section>
+
+    <div class="dc-home">
+      @if (auth.isAuthenticated()) {
+        <dc-acting-panel />
+      }
+
+      <section class="dc-services" aria-labelledby="dc-services-title">
+        <div class="dc-section-head">
+          <h2 id="dc-services-title">{{ 'portal.services' | dcTranslate }}</h2>
+          <a class="dc-section-head__all" [routerLink]="['/services']" [queryParams]="tab() ? { category: tab() } : {}" data-testid="view-all">
+            {{ 'portal.viewAll' | dcTranslate }}
+            <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">arrow_back</mat-icon>
+          </a>
+        </div>
+        <div class="dc-tabs" role="tablist" [attr.aria-label]="'portal.categories' | dcTranslate">
+          <button role="tab" class="dc-tabs__tab" [class.dc-tabs__tab--active]="tab() === ''" [attr.aria-selected]="tab() === ''" (click)="tab.set('')" data-testid="tab-all">
+            {{ 'portal.all' | dcTranslate }}
+          </button>
+          @for (c of store.categories(); track c.code) {
+            <button
+              role="tab"
+              class="dc-tabs__tab"
+              [class.dc-tabs__tab--active]="tab() === c.code"
+              [attr.aria-selected]="tab() === c.code"
+              (click)="tab.set(c.code)"
+              [attr.data-testid]="'tab-' + c.code"
+            >
+              @if (c.icon) {
+                <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">{{ c.icon }}</mat-icon>
+              }
+              {{ { ar: c.nameAr, en: c.nameEn } | dcLocalize }}
+            </button>
+          }
+        </div>
+        <div class="dc-carousel">
+          <button type="button" class="dc-carousel__nav dc-carousel__nav--prev" (click)="scroll(-1)" [attr.aria-label]="'portal.previous' | dcTranslate">
+            <mat-icon fontSet="material-symbols-outlined">chevron_right</mat-icon>
+          </button>
+          <ul class="dc-carousel__track" #track data-testid="carousel">
+            @for (s of shown(); track s.code) {
+              <li class="dc-carousel__item"><dc-service-tile [service]="s" /></li>
+            } @empty {
+              <li class="dc-muted dc-carousel__empty">{{ (store.catalog.isLoading() ? 'portal.loading' : 'catalog.empty') | dcTranslate }}</li>
             }
           </ul>
-          @for (w of acting.warnings(); track w.source) {
-            <p class="dc-home__warning" role="status">{{ { ar: w.messageAr ?? '', en: w.messageEn ?? '' } | dcLocalize }}</p>
-          }
-        </mat-card-content>
-      </mat-card>
-    }
+          <button type="button" class="dc-carousel__nav dc-carousel__nav--next" (click)="scroll(1)" [attr.aria-label]="'portal.next' | dcTranslate">
+            <mat-icon fontSet="material-symbols-outlined">chevron_left</mat-icon>
+          </button>
+        </div>
+      </section>
 
-    <mat-card appearance="outlined">
-      <mat-card-header><mat-card-title>{{ 'home.api' | dcTranslate }}</mat-card-title></mat-card-header>
-      <mat-card-content>
-      @switch (status().state) {
-        @case ('connected') {
-          @if (status(); as s) {
-            @if (s.state === 'connected') {
-              <span class="dc-tag dc-tag--success">{{ 'home.api.connected' | dcTranslate }}</span>
-              <span class="dc-home__version" dir="ltr">{{ s.info.app }} · {{ s.info.version }}</span>
-            }
-          }
-        }
-        @case ('unavailable') {
-          <span class="dc-tag dc-tag--danger">{{ 'home.api.unavailable' | dcTranslate }}</span>
-        }
-        @default {
-          <span class="dc-tag">…</span>
-        }
+      <dc-statistics-tiles />
+
+      @if (store.catalog.value()?.lastUpdated; as updated) {
+        <p class="dc-updated" data-testid="last-updated">
+          {{ 'portal.lastUpdated' | dcTranslate }} <span dir="ltr">{{ updated | date: 'yyyy-MM-dd' }}</span>
+        </p>
       }
-      </mat-card-content>
-    </mat-card>
-
+    </div>
   `,
-  styles: `
-    :host {
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-    }
-    .dc-home__description {
-      margin: 0;
-      color: var(--mat-sys-on-surface-variant);
-    }
-    mat-card-content {
-      padding-top: 1rem;
-    }
-    .dc-tag {
-      display: inline-block;
-      padding: 0.125rem 0.625rem;
-      border-radius: 999px;
-      font-size: 0.8125rem;
-      font-weight: 600;
-      background: var(--mat-sys-surface-container-high);
-    }
-    .dc-tag--success {
-      background: var(--mat-sys-primary-container);
-      color: var(--mat-sys-on-primary-container);
-    }
-    .dc-tag--danger {
-      background: var(--mat-sys-error-container);
-      color: var(--mat-sys-on-error-container);
-    }
-    .dc-home__contexts {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
-      gap: 0.75rem;
-      margin: 0;
-      padding: 0;
-      list-style: none;
-    }
-    .dc-home__context {
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-      width: 100%;
-      padding: 0.75rem 1rem;
-      border: 1px solid var(--dga-border, #d2d6db);
-      border-radius: 8px;
-      background: #fff;
-      font: inherit;
-      text-align: start;
-      cursor: pointer;
-    }
-    .dc-home__context--current {
-      border-color: var(--dga-primary, #1b8354);
-      box-shadow: inset 0 0 0 1px var(--dga-primary, #1b8354);
-    }
-    .dc-home__warning {
-      color: #b54708;
-    }
-    .dc-home__version {
-      margin-inline-start: 0.75rem;
-      font-family: monospace;
-    }
-    .dc-home__result {
-      background: var(--mat-sys-surface-container);
-      padding: 1rem;
-      border-radius: var(--dc-radius);
-      overflow: auto;
-    }
-  `,
+  styleUrl: './home.scss',
 })
 export class Home {
   protected readonly auth = inject(AuthService);
-  protected readonly acting = inject(ActingPartyService);
-  protected readonly status = toSignal(
-    inject(HostInfoService)
-      .get()
-      .pipe(
-        map((info): ApiStatus => ({ state: 'connected', info })),
-        catchError(() => of<ApiStatus>({ state: 'unavailable' })),
-      ),
-    { initialValue: { state: 'loading' } as ApiStatus },
-  );
+  protected readonly store = inject(PortalStore);
+  protected readonly voice = inject(VoiceSearch);
+  private readonly i18n = inject(I18nService);
+  private readonly router = inject(Router);
+  private readonly track = viewChild<ElementRef<HTMLElement>>('track');
 
+  protected readonly defaultText = {
+    ar: 'قدّم طلباتك وتابعها واستلم شهاداتك إلكترونيًا، في أي وقت ومن أي مكان.',
+    en: 'Apply, follow your requests and receive your certificates online, any time and anywhere.',
+  };
+  protected readonly query = signal('');
+  protected readonly searchCategory = signal('');
+  protected readonly tab = signal('');
+  protected readonly shown = computed(() => {
+    const tab = this.tab();
+    return this.store.services().filter((s) => !tab || s.categoryCode === tab);
+  });
+  protected readonly bannerImage = computed(() => {
+    const url = this.store.setting.value()?.bannerUrl;
+    return url ? `url("${encodeURI(url)}")` : null;
+  });
+
+  protected search(): void {
+    const queryParams: Record<string, string> = {};
+    if (this.query().trim()) queryParams['q'] = this.query().trim();
+    if (this.searchCategory()) queryParams['category'] = this.searchCategory();
+    void this.router.navigate(['/services'], { queryParams });
+  }
+
+  protected async listen(): Promise<void> {
+    const heard = await this.voice.listen(this.i18n.language());
+    if (heard) this.query.set(heard);
+  }
+
+  /** Moves the carousel by one view; "next" goes towards the reading direction's end. */
+  protected scroll(step: 1 | -1): void {
+    const el = this.track()?.nativeElement;
+    if (!el) return;
+    const sign = this.i18n.direction() === 'rtl' ? -1 : 1;
+    el.scrollBy({ left: sign * step * el.clientWidth * 0.9, behavior: 'smooth' });
+  }
 }

@@ -61,6 +61,86 @@ export interface VersionDefinition {
   eligibility: unknown[];
   validations: unknown[];
   fees: unknown[];
+  card?: ServiceCardDefinition;
+}
+
+export type ServiceChannel = 'PORTAL' | 'MOBILE_APP' | 'BRANCH' | 'CALL_CENTER';
+
+/** What the portal's service card says before the service is started. */
+export interface ServiceCardDefinition {
+  audienceAr: string | null;
+  audienceEn: string | null;
+  steps: { textAr: string; textEn: string }[];
+  termsAr: string | null;
+  termsEn: string | null;
+  requiredDocuments: { nameAr: string; nameEn: string; noteAr: string | null; noteEn: string | null }[];
+  channels: ServiceChannel[];
+  faqUrl: string | null;
+  phone: string | null;
+  email: string | null;
+}
+
+export interface PortalCategory {
+  code: string;
+  nameAr: string;
+  nameEn: string;
+  descriptionAr: string | null;
+  descriptionEn: string | null;
+  icon: string | null;
+}
+
+/** SAR with VAT; `max` is null when a fee is a formula. */
+export interface CostRange {
+  min: number;
+  max: number | null;
+  dependsOnRequest: boolean;
+}
+
+export interface PortalServiceSummary {
+  code: string;
+  nameAr: string;
+  nameEn: string;
+  descriptionAr: string | null;
+  descriptionEn: string | null;
+  categoryCode: string | null;
+  icon: string | null;
+  partyKinds: PartyKind[];
+  audienceAr: string | null;
+  audienceEn: string | null;
+  duration: { min: number; max: number } | null;
+  cost: CostRange;
+}
+
+export interface PortalCatalog {
+  categories: PortalCategory[];
+  services: PortalServiceSummary[];
+  lastUpdated: string | null;
+}
+
+export interface PortalLevel {
+  code: string;
+  nameAr: string;
+  nameEn: string;
+  descriptionAr: string | null;
+  descriptionEn: string | null;
+  slaWorkingDays: number | null;
+  cost: CostRange;
+}
+
+export interface ServiceCard {
+  service: PortalServiceSummary;
+  category: PortalCategory | null;
+  levels: PortalLevel[];
+  card: ServiceCardDefinition;
+  versionNumber: number;
+  publishedAt: string | null;
+}
+
+export interface PortalStatistics {
+  services: number;
+  requests: number;
+  inProgress: number;
+  completed: number;
 }
 
 export interface ResolvedVersion {

@@ -137,6 +137,32 @@ import { GovBar } from './gov-bar';
       padding: 0;
       max-width: none;
     }
+    /* Phones: the brand keeps its logo only and the navigation moves to its own scrolling row. */
+    @media (max-width: 48rem) {
+      .dc-shell__header-inner {
+        flex-wrap: wrap;
+        gap: 0 8px;
+        padding-inline: 1rem;
+      }
+      .dc-shell__title {
+        display: none;
+      }
+      .dc-shell__nav {
+        order: 3;
+        width: 100%;
+        min-height: 48px;
+        margin-inline-start: 0;
+        overflow-x: auto;
+      }
+      .dc-shell__actions ::ng-deep .mat-mdc-button {
+        height: 56px;
+        min-width: 48px;
+        padding: 8px;
+      }
+      .dc-shell__main:not(.dc-shell__main--fluid) {
+        padding: 1rem;
+      }
+    }
   `,
 })
 export class AppShell {

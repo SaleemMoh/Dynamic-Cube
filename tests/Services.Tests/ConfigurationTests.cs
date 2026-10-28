@@ -68,6 +68,41 @@ public sealed class ConfigurationTests(DatabaseFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Services_belong_to_existing_categories_and_cards_are_checked()
+    {
+        var sample = new ServiceSamples();
+        var category = TestHost.Unique("CAT");
+        ServicePayload Payload(string? categoryCode) => new() { NameAr = "خدمة", NameEn = "Service", PartyKinds = [Platform.Parties.PartyKind.Establishment], CategoryCode = categoryCode };
+
+        var missing = await Should.ThrowAsync<ChangeValidationException>(() => _host.PublishAsync(ServiceChangeTypes.Area,
+            new Change(ServiceChangeTypes.Service, sample.Service, ChangeOperation.Create, Payload(category))));
+        missing.Errors["categoryCode"].Single().ShouldContain("does not exist");
+
+        // A category created in the same change set is fine.
+        await _host.PublishAsync(ServiceChangeTypes.Area,
+            [.. sample.Questions(),
+            new Change(ServiceChangeTypes.Category, category, ChangeOperation.Create, new ServiceCategoryPayload { NameAr = "التصاريح", NameEn = "Permits", Icon = "event" }),
+            new Change(ServiceChangeTypes.Service, sample.Service, ChangeOperation.Create, Payload(category))]);
+        await Should.ThrowAsync<ChangeSetException>(() => _host.PublishAsync(ServiceChangeTypes.Area, new Change(ServiceChangeTypes.Category, category, ChangeOperation.Delete, null)));
+
+        var bad = sample.Definition();
+        bad.Card = new ServiceCardDefinition
+        {
+            Steps = [new CardText { TextAr = "التقديم" }],
+            RequiredDocuments = [new RequiredDocument { NameAr = "السجل", NameEn = "CR" }],
+            Channels = [ServiceChannel.Portal, ServiceChannel.Portal],
+            FaqUrl = "javascript:alert(1)",
+            Phone = "call us",
+            Email = "nobody",
+        };
+        var card = await Should.ThrowAsync<ChangeValidationException>(() => _host.PublishAsync(ServiceChangeTypes.Area, sample.Version(1, bad)));
+        card.Errors.Keys.Order().ShouldBe(["definition.card.channels", "definition.card.email", "definition.card.faqUrl", "definition.card.phone", "definition.card.steps[0].textEn"]);
+
+        bad.Card = new ServiceCardDefinition { Steps = [new CardText { TextAr = "التقديم", TextEn = "Apply" }], Channels = [ServiceChannel.Portal], FaqUrl = "/help", Phone = "+966 11 000-0000", Email = "help@example.gov.sa" };
+        await _host.PublishAsync(ServiceChangeTypes.Area, sample.Version(1, bad));
+    }
+
+    [Fact]
     public async Task Definitions_are_checked_before_publishing()
     {
         var sample = new ServiceSamples();

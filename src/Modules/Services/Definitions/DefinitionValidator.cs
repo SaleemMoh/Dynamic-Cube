@@ -104,7 +104,63 @@ internal static partial class DefinitionValidator
         Rules(definition.Eligibility, "definition.eligibility", evaluator, errors, null);
         Rules(definition.Validations, "definition.validations", evaluator, errors, definition.Steps.Select(s => s.Code).ToHashSet());
         Fees(definition, evaluator, errors);
+        Card(definition.Card, errors);
     }
+
+    private static void Card(ServiceCardDefinition card, ValidationErrors errors)
+    {
+        const string field = "definition.card";
+        errors.MaxLength(field + ".audienceAr", card.AudienceAr, 500);
+        errors.MaxLength(field + ".audienceEn", card.AudienceEn, 500);
+        errors.MaxLength(field + ".termsAr", card.TermsAr, 8000);
+        errors.MaxLength(field + ".termsEn", card.TermsEn, 8000);
+        for (var i = 0; i < card.Steps.Count; i++)
+        {
+            errors.Required($"{field}.steps[{i}].textAr", card.Steps[i].TextAr);
+            errors.Required($"{field}.steps[{i}].textEn", card.Steps[i].TextEn);
+            errors.MaxLength($"{field}.steps[{i}].textAr", card.Steps[i].TextAr, 1000);
+            errors.MaxLength($"{field}.steps[{i}].textEn", card.Steps[i].TextEn, 1000);
+        }
+
+        for (var i = 0; i < card.RequiredDocuments.Count; i++)
+        {
+            var document = card.RequiredDocuments[i];
+            errors.Required($"{field}.requiredDocuments[{i}].nameAr", document.NameAr);
+            errors.Required($"{field}.requiredDocuments[{i}].nameEn", document.NameEn);
+            errors.MaxLength($"{field}.requiredDocuments[{i}].noteAr", document.NoteAr, 1000);
+            errors.MaxLength($"{field}.requiredDocuments[{i}].noteEn", document.NoteEn, 1000);
+        }
+
+        if (card.Channels.Distinct().Count() != card.Channels.Count)
+        {
+            errors.Add(field + ".channels", "A channel is listed more than once.");
+        }
+
+        // Links open from the public portal, so only web pages (or paths of the portal itself) are allowed.
+        if (card.FaqUrl is { Length: > 0 } url && !(WebUrl().IsMatch(url) || (url.StartsWith('/') && !url.StartsWith("//", StringComparison.Ordinal))))
+        {
+            errors.Add(field + ".faqUrl", "Use an http(s) address or a path starting with /.");
+        }
+
+        if (card.Phone is { Length: > 0 } phone && !Phone().IsMatch(phone))
+        {
+            errors.Add(field + ".phone", "Digits, spaces, + and - only.");
+        }
+
+        if (card.Email is { Length: > 0 } email && !Email().IsMatch(email))
+        {
+            errors.Add(field + ".email", "Not an email address.");
+        }
+    }
+
+    [GeneratedRegex("^https?://[^\\s]{1,500}$", RegexOptions.IgnoreCase)]
+    private static partial Regex WebUrl();
+
+    [GeneratedRegex("^\\+?[0-9][0-9 \\-]{2,30}$")]
+    private static partial Regex Phone();
+
+    [GeneratedRegex("^[^@\\s]{1,100}@[^@\\s]{1,150}\\.[^@\\s]{2,30}$")]
+    private static partial Regex Email();
 
     private static void Rules(List<RuleDefinition> rules, string field, JsonLogicEvaluator evaluator, ValidationErrors errors, HashSet<string>? steps)
     {

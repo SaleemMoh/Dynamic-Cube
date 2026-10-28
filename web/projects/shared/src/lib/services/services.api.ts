@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { CatalogEntry, RequestDetail, RequestSummary, RequestView, ResolvedVersion, ServiceView, StatusCategory, VersionDefinition } from './service.models';
+import { CatalogEntry, PortalCatalog, PortalStatistics, RequestDetail, ServiceCard, RequestSummary, RequestView, ResolvedVersion, ServiceView, StatusCategory, VersionDefinition } from './service.models';
 
 export const SERVICES_API = '/api/services/v1';
 
@@ -9,6 +9,19 @@ export const SERVICES_API = '/api/services/v1';
 @Injectable({ providedIn: 'root' })
 export class ServicesApi {
   private readonly http = inject(HttpClient);
+
+  /** The public catalog: categories and listed services (no sign-in needed). */
+  portalCatalog(): Observable<PortalCatalog> {
+    return this.http.get<PortalCatalog>(`${SERVICES_API}/portal/catalog`);
+  }
+
+  serviceCard(code: string): Observable<ServiceCard> {
+    return this.http.get<ServiceCard>(`${SERVICES_API}/portal/services/${encodeURIComponent(code)}`);
+  }
+
+  portalStatistics(): Observable<PortalStatistics> {
+    return this.http.get<PortalStatistics>(`${SERVICES_API}/portal/statistics`);
+  }
 
   catalog(): Observable<CatalogEntry[]> {
     return this.http.get<CatalogEntry[]>(`${SERVICES_API}/catalog`);

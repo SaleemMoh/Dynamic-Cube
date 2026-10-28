@@ -1,1 +1,14 @@
 // App-specific global styles. Shared base styles come from projects/shared/src/styles/dc-base.scss.
+
+// High contrast (portal accessibility tools): darker secondary text and borders, underlined links.
+.dc-high-contrast {
+  --dga-text-2: #000000;
+  --dga-text-3: #161616;
+  --dga-border: #4d5761;
+  --dga-gray-100: #e5e7eb;
+  --dga-green-700: #0b5c39;
+
+  a {
+    text-decoration: underline !important;
+  }
+}

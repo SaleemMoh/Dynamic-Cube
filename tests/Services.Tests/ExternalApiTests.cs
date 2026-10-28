@@ -90,6 +90,50 @@ public sealed class ExternalApiTests(DatabaseFixture fixture) : IAsyncLifetime
         mine.EnumerateArray().Select(r => r.GetProperty("id").GetString()).ShouldContain(id);
     }
 
+    [Fact]
+    public async Task Anyone_browses_the_portal_catalog_and_service_cards()
+    {
+        var connectionString = fixture.RequireConnectionString();
+        var ct = TestContext.Current.CancellationToken;
+        await using (var host = new TestHost(connectionString))
+        {
+            await host.PublishAsync(ServiceChangeTypes.Area, [.. Packages.Items("portal-services.json").Where(i => i.EntityType.StartsWith("svc.", StringComparison.Ordinal))]);
+        }
+
+        // No sign-in: the categories, the listed services with duration and cost, and the statistics.
+        using var client = _factory.CreateClient();
+        var catalog = await client.GetFromJsonAsync<JsonElement>("/api/services/v1/portal/catalog", ct);
+        var categories = catalog.GetProperty("categories").EnumerateArray().Select(c => c.GetProperty("code").GetString()).ToList();
+        categories.ShouldContain("PERMITS");
+        categories.IndexOf("PERMITS").ShouldBeLessThan(categories.IndexOf("CERTIFICATES"));
+        var services = catalog.GetProperty("services");
+        var permit = Entry(services, "EVENT_PERMIT");
+        permit.GetProperty("categoryCode").GetString().ShouldBe("PERMITS");
+        permit.GetProperty("duration").GetProperty("max").GetInt32().ShouldBe(5);
+        permit.GetProperty("cost").GetProperty("min").GetDecimal().ShouldBe(500m);
+        permit.GetProperty("cost").GetProperty("max").GetDecimal().ShouldBe(500m);
+        permit.GetProperty("cost").GetProperty("dependsOnRequest").GetBoolean().ShouldBeFalse();
+        var signboard = Entry(services, "SIGNBOARD_LICENSE").GetProperty("cost");
+        (signboard.GetProperty("min").GetDecimal(), signboard.GetProperty("max").GetDecimal()).ShouldBe((200m, 1500m));
+        signboard.GetProperty("dependsOnRequest").GetBoolean().ShouldBeTrue();
+        Entry(services, "COMPLETION_CERTIFICATE").GetProperty("cost").GetProperty("max").GetDecimal().ShouldBe(0m);
+        catalog.GetProperty("lastUpdated").GetDateTimeOffset().ShouldBeGreaterThan(DateTimeOffset.UtcNow.AddMinutes(-5));
+
+        var card = await client.GetFromJsonAsync<JsonElement>("/api/services/v1/portal/services/EVENT_PERMIT", ct);
+        card.GetProperty("category").GetProperty("nameEn").GetString().ShouldBe("Permits");
+        card.GetProperty("levels")[0].GetProperty("slaWorkingDays").GetInt32().ShouldBe(5);
+        card.GetProperty("card").GetProperty("steps").GetArrayLength().ShouldBe(3);
+        card.GetProperty("card").GetProperty("requiredDocuments")[1].GetProperty("noteEn").GetString().ShouldBe("For private sites");
+        card.GetProperty("card").GetProperty("channels").EnumerateArray().Select(c => c.GetString()).ShouldBe(["PORTAL", "MOBILE_APP"]);
+        (await client.GetAsync("/api/services/v1/portal/services/NO_SUCH_SERVICE", ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        var statistics = await client.GetFromJsonAsync<JsonElement>("/api/services/v1/portal/statistics", ct);
+        statistics.GetProperty("services").GetInt32().ShouldBeGreaterThanOrEqualTo(4);
+
+        // The applicant's own catalog still needs a sign-in.
+        (await client.GetAsync("/api/services/v1/catalog", ct)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
     private static JsonElement Entry(JsonElement catalog, string code) => catalog.EnumerateArray().Single(e => e.GetProperty("code").GetString() == code);
 }
 

@@ -37,7 +37,7 @@ Delivered in slices:
 | **1d** | Workflow engine + Action Center | ✅ |
 | **1e** | Documents, communication, decision contract, external applicant journey | ✅ |
 | **1f** | Service-owned workflows: every service has its own workflow; none is published without one | ✅ |
-| 1g | E-services portal look: service catalog home and service card page | Next |
+| **1g** | E-services portal look: service catalog home and service card page | ✅ |
 
 **1a delivered:** the `AppsControl` module (all entities of [§4](04-apps-control.md) except
 delegations, which come with the Action Center), change appliers with code-keyed payloads,
@@ -143,23 +143,34 @@ part of the service:
 Still open from 1f: a *Workflow* tab inside the service screen and copying a workflow between services (both come
 with the Service Builder and Workflow Designer of Phase 3).
 
-**1g planned — the e-services portal look.** The external portal follows the reference design (registry portal
-home and service card page, DGA components):
+**1g delivered — the e-services portal look**, after the reference design (registry portal home and service card
+page, DGA components). Browsing needs no sign-in; starting a service does.
 
-- **Home:** top bar with the entity logo, the main sections as navigation (*My requests* and the service
-  categories), search, language and the signed-in user with the acting context; a hero banner with the portal's
-  title and purpose over an image; a search box with a category filter (and voice input where the browser offers
-  it); category tabs (*All* and one per category); the services as cards in a carousel (icon, name, short
-  description, tags such as audience and category, an arrow to open it) with *View all*; **portal statistics**
-  as KPI tiles (e.g. active, sealed, unsealed, short-lived sources) from configured counts; the last-updated date
-  and the DGA footer; floating help buttons (contact, accessibility).
-- **Service card page:** breadcrumb (category › service), the service name and description, a **Start service**
-  button, tabs for **Steps** (numbered), **Terms of use** and **Required documents**, and a side card with the
-  **target audience**, **service duration** (working days, from the service level), **channels**, **cost** (from
-  the fees, *Free* when none) and the **FAQ link, phone and email** of the service.
-- The new card fields are part of the service definition (bilingual, versioned with it); until the Service Builder
-  arrives they are edited in the service configuration screens. Catalog categories, banner, statistics tiles and
-  help links are portal configuration in Apps Control.
+- **Home:** the header has *Home*, *Services* (a menu of the categories), *My requests* and *My documents* when
+  signed in, search, language and the user with the acting context. A hero banner shows the portal's title and
+  purpose over the configured image (or a green pattern), with a search box, a category filter and voice input
+  where the browser offers it. Category tabs (*All* and one per category) filter the services, shown as cards in a
+  carousel (icon, name, short description, audience and category tags, an arrow to the card) with *View all*. The
+  **statistics tiles** count listed services, submitted, in-progress and completed requests, or show fixed values;
+  then the last-updated date and the DGA footer. Floating help buttons offer contact (phone, email, contact page)
+  and accessibility tools (larger text, high contrast, remembered on the device). Signed-in applicants also see
+  who they apply for. *All services* searches and filters by category, and tells a signed-in applicant which
+  services the acting party cannot use and why.
+- **Service card page:** breadcrumb (home › category › service), the name and description, **Start service**
+  (sign-in first, then the eligibility check of the acting party), tabs for **Steps** (numbered), **Terms of use**,
+  **Required documents** and **Service levels** (duration and cost, or the applicant's own fee table when signed
+  in), and a side card with the **target audience** (or the party kinds), **service duration** (working days from the
+  levels), **channels**, **cost** (from the fees: *Free*, an amount, a range or *depends on the request*, VAT
+  included) and the **FAQ link, phone and email**.
+- **Configuration.** `svc.category` (Services configuration → *Service categories*: names, description, icon,
+  order) groups services; a service's category must exist, and categories in use cannot be deleted (existing
+  category codes became categories). The card fields are `definition.card` of a service version (audience,
+  steps, terms, required documents, channels, FAQ link, phone, email; bilingual, versioned and checked on publish).
+  The public setting `PORTAL_HOME` in Apps Control holds the hero title and text, banner image, statistics tiles and
+  help links. Anonymous endpoints: `GET /api/services/v1/portal/catalog`, `/portal/services/{code}` and
+  `/portal/statistics`. Package `portal-services.json`: the setting, three categories and four sample services.
+Still open from 1g: a structured card editor (until the Service Builder of Phase 3 the card is part of the version's
+JSON), uploading the banner image, statistics from other modules (e.g. certificates issued), FAQ pages.
 
 - **Apps Control**: installation, apps, entity, org unit types & org structure, positions,
   users, roles, privileges, menus, Class/Domain with typed attributes and generated views,

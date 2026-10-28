@@ -311,7 +311,7 @@ export const SERVICE_SECTIONS: ConfigSection[] = [
             options: [opt('ISSUANCE', 'إصدار', 'Issuance'), opt('AMENDMENT', 'تعديل', 'Amendment'), opt('VISIT_REQUEST', 'طلب زيارة', 'Visit request'), opt('ATTESTATION', 'تصديق', 'Attestation')],
           },
           { code: 'partyKinds', type: 'select', label: t('من يحق له التقديم', 'Who may apply'), options: partyKinds, multiple: true, required: true, defaultValue: ['ESTABLISHMENT'] },
-          { code: 'categoryCode', type: 'text', label: t('التصنيف', 'Category') },
+          { code: 'categoryCode', type: 'select', label: t('التصنيف', 'Category'), ref: 'svc.category' },
           { code: 'icon', type: 'text', label: t('الأيقونة', 'Icon'), hint: t('اسم أيقونة Material Symbols', 'A Material Symbols icon name') },
           number('displayOrder', t('الترتيب', 'Display order'), 0),
           { code: 'isListed', type: 'checkbox', label: t('تظهر في دليل الخدمات', 'Shown in the service catalog'), defaultValue: true },
@@ -325,6 +325,26 @@ export const SERVICE_SECTIONS: ConfigSection[] = [
             defaultValue: 'CONTINUE',
             options: [opt('CONTINUE', 'تكمل على إصدارها', 'Continue on their version'), opt('RESTART', 'تنتقل للإصدار الجديد', 'Move to the new version')],
           },
+        ],
+      },
+    ],
+  },
+  {
+    path: 'categories',
+    title: t('تصنيفات الخدمات', 'Service categories'),
+    resource: 'services.config',
+    types: [
+      {
+        entityType: 'svc.category',
+        title: t('تصنيفات الخدمات', 'Service categories'),
+        key: 'code',
+        columns: ['icon', 'displayOrder'],
+        // The portal shows a tab per category on its home page and a filter in its search.
+        fields: [
+          { code: 'descriptionAr', type: 'textarea', label: t('الوصف بالعربية', 'Arabic description') },
+          { code: 'descriptionEn', type: 'textarea', label: t('الوصف بالإنجليزية', 'English description') },
+          { code: 'icon', type: 'text', label: t('الأيقونة', 'Icon'), hint: t('اسم أيقونة Material Symbols', 'A Material Symbols icon name') },
+          number('displayOrder', t('الترتيب', 'Display order'), 0),
         ],
       },
     ],

@@ -4,10 +4,11 @@ namespace DynamicCube.Modules.Services.Changes;
 public static class ServiceChangeTypes
 {
     public const string Service = "svc.service";
+    public const string Category = "svc.category";
     public const string Question = "svc.question";
     public const string Version = "svc.service-version";
 
-    /// <summary>Services, the question bank and service versions (one area so a version can use new questions).</summary>
+    /// <summary>Categories, services, the question bank and service versions (one area so a version can use new questions).</summary>
     public const string Area = "svc.services";
 }
 

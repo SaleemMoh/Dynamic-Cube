@@ -1,0 +1,765 @@
+{
+  "title": "Portal home and sample services",
+  "items": [
+    {
+      "entityType": "apps.setting",
+      "entityCode": "PORTAL_HOME",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الصفحة الرئيسية للبوابة",
+        "nameEn": "Portal home page",
+        "dataType": "JSON",
+        "isPublic": true,
+        "description": "Hero banner, statistics tiles and help links of the e-services portal home page.",
+        "value": {
+          "heroTitleAr": "بوابة الخدمات الإلكترونية",
+          "heroTitleEn": "E-services portal",
+          "heroTextAr": "قدّم طلباتك وتابعها واستلم شهاداتك إلكترونيًا، في أي وقت ومن أي مكان.",
+          "heroTextEn": "Apply, follow your requests and receive your certificates online, any time and anywhere.",
+          "bannerUrl": null,
+          "statistics": [
+            {
+              "metric": "SERVICES",
+              "icon": "apps",
+              "labelAr": "خدمة إلكترونية",
+              "labelEn": "E-services"
+            },
+            {
+              "metric": "REQUESTS",
+              "icon": "send",
+              "labelAr": "طلب مقدم",
+              "labelEn": "Requests submitted"
+            },
+            {
+              "metric": "IN_PROGRESS",
+              "icon": "pending_actions",
+              "labelAr": "طلب قيد المعالجة",
+              "labelEn": "Requests in progress"
+            },
+            {
+              "metric": "COMPLETED",
+              "icon": "task_alt",
+              "labelAr": "طلب مكتمل",
+              "labelEn": "Requests completed"
+            }
+          ],
+          "help": {
+            "phone": "199040",
+            "email": "info@example.gov.sa",
+            "contactUrl": null,
+            "accessibilityUrl": null
+          }
+        }
+      }
+    },
+    {
+      "entityType": "svc.category",
+      "entityCode": "PERMITS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "التصاريح",
+        "nameEn": "Permits",
+        "descriptionAr": "تصاريح الفعاليات والأنشطة المؤقتة.",
+        "descriptionEn": "Permits for events and temporary activities.",
+        "icon": "event_available",
+        "displayOrder": 20
+      }
+    },
+    {
+      "entityType": "svc.category",
+      "entityCode": "LICENSES",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الرخص",
+        "nameEn": "Licences",
+        "descriptionAr": "رخص اللوحات والمحلات.",
+        "descriptionEn": "Signboard and shop licences.",
+        "icon": "storefront",
+        "displayOrder": 30
+      }
+    },
+    {
+      "entityType": "svc.category",
+      "entityCode": "CERTIFICATES",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الشهادات",
+        "nameEn": "Certificates",
+        "descriptionAr": "شهادات إتمام الأعمال والزيارات الميدانية.",
+        "descriptionEn": "Works completion certificates and site visits.",
+        "icon": "verified",
+        "displayOrder": 40
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "PRT_EVENT_NAME",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "اسم الفعالية",
+        "nameEn": "Event name",
+        "type": "TEXT",
+        "validation": {
+          "maxLength": 200
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "PRT_EVENT_DATE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تاريخ الفعالية",
+        "nameEn": "Event date",
+        "type": "DATE",
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "PRT_LOCATION",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الموقع",
+        "nameEn": "Location",
+        "type": "TEXT",
+        "validation": {
+          "maxLength": 300
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "PRT_ATTENDEES",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "عدد الحضور المتوقع",
+        "nameEn": "Expected attendees",
+        "type": "NUMBER",
+        "validation": {
+          "min": 1,
+          "max": 100000
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "PRT_SIGN_TEXT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "نص اللوحة",
+        "nameEn": "Signboard text",
+        "type": "TEXT",
+        "validation": {
+          "maxLength": 200
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "PRT_SIGN_AREA",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مساحة اللوحة (م²)",
+        "nameEn": "Signboard area (m²)",
+        "type": "NUMBER",
+        "validation": {
+          "min": 0.5,
+          "max": 200
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "PRT_PROJECT_NAME",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "اسم المشروع",
+        "nameEn": "Project name",
+        "type": "TEXT",
+        "validation": {
+          "maxLength": 300
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "PRT_CONTRACT_NO",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "رقم العقد",
+        "nameEn": "Contract number",
+        "type": "TEXT",
+        "validation": {
+          "maxLength": 50
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "PRT_VISIT_REASON",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "سبب الزيارة",
+        "nameEn": "Reason for the visit",
+        "type": "TEXTAREA",
+        "validation": {
+          "maxLength": 2000
+        }
+      }
+    },
+    {
+      "entityType": "svc.service",
+      "entityCode": "EVENT_PERMIT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تصريح فعالية مؤقتة",
+        "nameEn": "Temporary event permit",
+        "descriptionAr": "إصدار تصريح لإقامة فعالية مؤقتة في موقع عام أو خاص.",
+        "descriptionEn": "A permit to hold a temporary event at a public or private site.",
+        "archetype": "ISSUANCE",
+        "categoryCode": "PERMITS",
+        "icon": "celebration",
+        "displayOrder": 20,
+        "partyKinds": [
+          "INDIVIDUAL",
+          "ESTABLISHMENT"
+        ],
+        "isListed": true,
+        "draftsAllowed": true,
+        "draftExpiryDays": 30,
+        "onNewVersion": "CONTINUE",
+        "numberPrefix": "EVT"
+      }
+    },
+    {
+      "entityType": "svc.service",
+      "entityCode": "SIGNBOARD_LICENSE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "رخصة لوحة إعلانية",
+        "nameEn": "Signboard licence",
+        "descriptionAr": "ترخيص لوحة المحل أو المنشأة التجارية.",
+        "descriptionEn": "A licence for the signboard of a shop or business.",
+        "archetype": "ISSUANCE",
+        "categoryCode": "LICENSES",
+        "icon": "signpost",
+        "displayOrder": 30,
+        "partyKinds": [
+          "ESTABLISHMENT"
+        ],
+        "isListed": true,
+        "draftsAllowed": true,
+        "draftExpiryDays": 30,
+        "onNewVersion": "CONTINUE",
+        "numberPrefix": "SGN"
+      }
+    },
+    {
+      "entityType": "svc.service",
+      "entityCode": "COMPLETION_CERTIFICATE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "شهادة إتمام أعمال",
+        "nameEn": "Works completion certificate",
+        "descriptionAr": "إصدار شهادة بإتمام أعمال مشروع منفذ لصالح الجهة.",
+        "descriptionEn": "A certificate that the works of a project carried out for the entity are complete.",
+        "archetype": "ISSUANCE",
+        "categoryCode": "CERTIFICATES",
+        "icon": "task",
+        "displayOrder": 40,
+        "partyKinds": [
+          "ESTABLISHMENT"
+        ],
+        "isListed": true,
+        "draftsAllowed": true,
+        "draftExpiryDays": 30,
+        "onNewVersion": "CONTINUE",
+        "numberPrefix": "CMP"
+      }
+    },
+    {
+      "entityType": "svc.service",
+      "entityCode": "SITE_VISIT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "طلب زيارة ميدانية",
+        "nameEn": "Site visit request",
+        "descriptionAr": "طلب زيارة ميدانية من مختصي الجهة للموقع.",
+        "descriptionEn": "Ask the entity's specialists to visit a site.",
+        "archetype": "VISIT_REQUEST",
+        "categoryCode": "CERTIFICATES",
+        "icon": "location_on",
+        "displayOrder": 50,
+        "partyKinds": [
+          "INDIVIDUAL",
+          "ESTABLISHMENT"
+        ],
+        "isListed": true,
+        "draftsAllowed": true,
+        "draftExpiryDays": 30,
+        "onNewVersion": "CONTINUE",
+        "numberPrefix": "VST"
+      }
+    },
+    {
+      "entityType": "svc.service-version",
+      "entityCode": "EVENT_PERMIT/1",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 1",
+        "nameEn": "Version 1",
+        "definition": {
+          "levels": [
+            {
+              "code": "STANDARD",
+              "nameAr": "عادي",
+              "nameEn": "Standard",
+              "slaWorkingDays": 5
+            }
+          ],
+          "steps": [
+            {
+              "code": "DETAILS",
+              "type": "FORM",
+              "titleAr": "البيانات",
+              "titleEn": "Details",
+              "sections": [
+                {
+                  "code": "DETAILS_S",
+                  "titleAr": "البيانات",
+                  "titleEn": "Details",
+                  "questions": [
+                    {
+                      "code": "PRT_EVENT_NAME",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "PRT_EVENT_DATE",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "PRT_LOCATION",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "PRT_ATTENDEES",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "FEES",
+              "type": "FEES",
+              "titleAr": "الرسوم",
+              "titleEn": "Fees",
+              "sections": []
+            },
+            {
+              "code": "REVIEW",
+              "type": "REVIEW",
+              "titleAr": "مراجعة الطلب",
+              "titleEn": "Review",
+              "sections": []
+            },
+            {
+              "code": "DECLARATION",
+              "type": "DECLARATION",
+              "titleAr": "الإقرار",
+              "titleEn": "Declaration",
+              "sections": [],
+              "textAr": "أقر بصحة البيانات المقدمة وأتحمل المسؤولية النظامية عنها.",
+              "textEn": "I confirm the data submitted is correct and bear legal responsibility for it."
+            }
+          ],
+          "eligibility": [],
+          "validations": [],
+          "fees": [
+            {
+              "code": "PERMIT_FEE",
+              "nameAr": "رسوم التصريح",
+              "nameEn": "Permit fee",
+              "fixed": 500,
+              "vatRate": 0.15,
+              "vatIncluded": true
+            }
+          ],
+          "card": {
+            "audienceAr": "الأفراد والمنشآت",
+            "audienceEn": "Individuals and establishments",
+            "steps": [
+              {
+                "textAr": "تعبئة بيانات الفعالية وموقعها وعدد الحضور",
+                "textEn": "Fill in the event, its location and attendance"
+              },
+              {
+                "textAr": "سداد الرسوم وتقديم الطلب",
+                "textEn": "Pay the fee and submit"
+              },
+              {
+                "textAr": "استلام التصريح",
+                "textEn": "Receive the permit"
+              }
+            ],
+            "termsAr": "أن تكون البيانات المقدمة صحيحة ومحدثة.\nيحق للجهة رفض الطلب إذا لم يستوفِ الشروط.",
+            "termsEn": "The data submitted is correct and up to date.\nThe entity may reject a request that does not meet the conditions.",
+            "requiredDocuments": [
+              {
+                "nameAr": "مخطط الموقع",
+                "nameEn": "Site plan"
+              },
+              {
+                "nameAr": "موافقة مالك الموقع",
+                "nameEn": "Site owner's consent",
+                "noteAr": "للمواقع الخاصة",
+                "noteEn": "For private sites"
+              }
+            ],
+            "channels": [
+              "PORTAL",
+              "MOBILE_APP"
+            ],
+            "phone": "199040",
+            "email": "info@example.gov.sa"
+          }
+        }
+      }
+    },
+    {
+      "entityType": "svc.service-version",
+      "entityCode": "SIGNBOARD_LICENSE/1",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 1",
+        "nameEn": "Version 1",
+        "definition": {
+          "levels": [
+            {
+              "code": "STANDARD",
+              "nameAr": "عادي",
+              "nameEn": "Standard",
+              "slaWorkingDays": 3
+            }
+          ],
+          "steps": [
+            {
+              "code": "DETAILS",
+              "type": "FORM",
+              "titleAr": "البيانات",
+              "titleEn": "Details",
+              "sections": [
+                {
+                  "code": "DETAILS_S",
+                  "titleAr": "البيانات",
+                  "titleEn": "Details",
+                  "questions": [
+                    {
+                      "code": "PRT_SIGN_TEXT",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "PRT_SIGN_AREA",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "PRT_LOCATION",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "FEES",
+              "type": "FEES",
+              "titleAr": "الرسوم",
+              "titleEn": "Fees",
+              "sections": []
+            },
+            {
+              "code": "REVIEW",
+              "type": "REVIEW",
+              "titleAr": "مراجعة الطلب",
+              "titleEn": "Review",
+              "sections": []
+            },
+            {
+              "code": "DECLARATION",
+              "type": "DECLARATION",
+              "titleAr": "الإقرار",
+              "titleEn": "Declaration",
+              "sections": [],
+              "textAr": "أقر بصحة البيانات المقدمة وأتحمل المسؤولية النظامية عنها.",
+              "textEn": "I confirm the data submitted is correct and bear legal responsibility for it."
+            }
+          ],
+          "eligibility": [],
+          "validations": [],
+          "fees": [
+            {
+              "code": "SIGN_FEE",
+              "nameAr": "رسوم الترخيص",
+              "nameEn": "Licence fee",
+              "bracket": {
+                "of": {
+                  "var": "data.PRT_SIGN_AREA"
+                },
+                "rows": [
+                  {
+                    "from": 0,
+                    "to": 10,
+                    "amount": 200
+                  },
+                  {
+                    "from": 10,
+                    "to": 50,
+                    "amount": 600
+                  },
+                  {
+                    "from": 50,
+                    "amount": 1500
+                  }
+                ]
+              },
+              "vatRate": 0.15,
+              "vatIncluded": true
+            }
+          ],
+          "card": {
+            "audienceAr": "المنشآت التجارية",
+            "audienceEn": "Businesses",
+            "steps": [
+              {
+                "textAr": "تعبئة بيانات اللوحة ومساحتها وموقعها",
+                "textEn": "Fill in the signboard, its area and location"
+              },
+              {
+                "textAr": "سداد الرسوم حسب المساحة",
+                "textEn": "Pay the fee by area"
+              },
+              {
+                "textAr": "استلام الرخصة",
+                "textEn": "Receive the licence"
+              }
+            ],
+            "termsAr": "أن تكون البيانات المقدمة صحيحة ومحدثة.\nيحق للجهة رفض الطلب إذا لم يستوفِ الشروط.",
+            "termsEn": "The data submitted is correct and up to date.\nThe entity may reject a request that does not meet the conditions.",
+            "requiredDocuments": [
+              {
+                "nameAr": "صورة تصميم اللوحة",
+                "nameEn": "Signboard design"
+              },
+              {
+                "nameAr": "رخصة المحل",
+                "nameEn": "Shop licence"
+              }
+            ],
+            "channels": [
+              "PORTAL"
+            ],
+            "phone": "199040",
+            "email": "info@example.gov.sa"
+          }
+        }
+      }
+    },
+    {
+      "entityType": "svc.service-version",
+      "entityCode": "COMPLETION_CERTIFICATE/1",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 1",
+        "nameEn": "Version 1",
+        "definition": {
+          "levels": [
+            {
+              "code": "STANDARD",
+              "nameAr": "عادي",
+              "nameEn": "Standard",
+              "slaWorkingDays": 7
+            }
+          ],
+          "steps": [
+            {
+              "code": "DETAILS",
+              "type": "FORM",
+              "titleAr": "البيانات",
+              "titleEn": "Details",
+              "sections": [
+                {
+                  "code": "DETAILS_S",
+                  "titleAr": "البيانات",
+                  "titleEn": "Details",
+                  "questions": [
+                    {
+                      "code": "PRT_PROJECT_NAME",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "PRT_CONTRACT_NO",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "REVIEW",
+              "type": "REVIEW",
+              "titleAr": "مراجعة الطلب",
+              "titleEn": "Review",
+              "sections": []
+            },
+            {
+              "code": "DECLARATION",
+              "type": "DECLARATION",
+              "titleAr": "الإقرار",
+              "titleEn": "Declaration",
+              "sections": [],
+              "textAr": "أقر بصحة البيانات المقدمة وأتحمل المسؤولية النظامية عنها.",
+              "textEn": "I confirm the data submitted is correct and bear legal responsibility for it."
+            }
+          ],
+          "eligibility": [],
+          "validations": [],
+          "fees": [],
+          "card": {
+            "audienceAr": "المقاولون المتعاقدون مع الجهة",
+            "audienceEn": "Contractors working for the entity",
+            "steps": [
+              {
+                "textAr": "تعبئة بيانات المشروع والعقد",
+                "textEn": "Fill in the project and contract"
+              },
+              {
+                "textAr": "تقديم الطلب",
+                "textEn": "Submit"
+              },
+              {
+                "textAr": "استلام الشهادة",
+                "textEn": "Receive the certificate"
+              }
+            ],
+            "termsAr": "أن تكون البيانات المقدمة صحيحة ومحدثة.\nيحق للجهة رفض الطلب إذا لم يستوفِ الشروط.",
+            "termsEn": "The data submitted is correct and up to date.\nThe entity may reject a request that does not meet the conditions.",
+            "requiredDocuments": [
+              {
+                "nameAr": "محضر الاستلام الابتدائي",
+                "nameEn": "Preliminary handover report"
+              }
+            ],
+            "channels": [
+              "PORTAL",
+              "BRANCH"
+            ],
+            "phone": "199040",
+            "email": "info@example.gov.sa"
+          }
+        }
+      }
+    },
+    {
+      "entityType": "svc.service-version",
+      "entityCode": "SITE_VISIT/1",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 1",
+        "nameEn": "Version 1",
+        "definition": {
+          "levels": [
+            {
+              "code": "STANDARD",
+              "nameAr": "عادي",
+              "nameEn": "Standard",
+              "slaWorkingDays": 10
+            }
+          ],
+          "steps": [
+            {
+              "code": "DETAILS",
+              "type": "FORM",
+              "titleAr": "البيانات",
+              "titleEn": "Details",
+              "sections": [
+                {
+                  "code": "DETAILS_S",
+                  "titleAr": "البيانات",
+                  "titleEn": "Details",
+                  "questions": [
+                    {
+                      "code": "PRT_LOCATION",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "PRT_VISIT_REASON",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "REVIEW",
+              "type": "REVIEW",
+              "titleAr": "مراجعة الطلب",
+              "titleEn": "Review",
+              "sections": []
+            },
+            {
+              "code": "DECLARATION",
+              "type": "DECLARATION",
+              "titleAr": "الإقرار",
+              "titleEn": "Declaration",
+              "sections": [],
+              "textAr": "أقر بصحة البيانات المقدمة وأتحمل المسؤولية النظامية عنها.",
+              "textEn": "I confirm the data submitted is correct and bear legal responsibility for it."
+            }
+          ],
+          "eligibility": [],
+          "validations": [],
+          "fees": [],
+          "card": {
+            "audienceAr": "الأفراد والمنشآت",
+            "audienceEn": "Individuals and establishments",
+            "steps": [
+              {
+                "textAr": "تحديد الموقع وسبب الزيارة",
+                "textEn": "Give the site and the reason"
+              },
+              {
+                "textAr": "تحديد موعد الزيارة",
+                "textEn": "A visit date is set"
+              },
+              {
+                "textAr": "استلام تقرير الزيارة",
+                "textEn": "Receive the visit report"
+              }
+            ],
+            "termsAr": "أن تكون البيانات المقدمة صحيحة ومحدثة.\nيحق للجهة رفض الطلب إذا لم يستوفِ الشروط.",
+            "termsEn": "The data submitted is correct and up to date.\nThe entity may reject a request that does not meet the conditions.",
+            "requiredDocuments": [],
+            "channels": [
+              "PORTAL",
+              "CALL_CENTER"
+            ],
+            "phone": "199040",
+            "email": "info@example.gov.sa"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -121,6 +121,12 @@ result.
 - **Server-side validation** repeats the wizard's rules and adds types, choices, LOV grants, limits,
   patterns and cross-field rules; hidden and unknown answers are dropped, read-only prefilled answers are
   taken from the party's data.
+- **Category** (1g) `svc.category` — names, description, icon and order; a service names an existing category,
+  which groups it in the portal (home tabs, search filter, header menu).
+- **Service card** (1g) — `definition.card` of a version: target audience, numbered steps, terms of use,
+  required documents (with notes), channels (`PORTAL`, `MOBILE_APP`, `BRANCH`, `CALL_CENTER`), FAQ link, phone and
+  email. Duration comes from the levels and cost from the fees (fixed amounts and bracket ranges; *depends on the
+  request* for formulas and conditional fees), so the card never repeats them.
 
 ---
 

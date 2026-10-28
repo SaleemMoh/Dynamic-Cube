@@ -34,6 +34,7 @@ public static class ServicesModule
         services.AddChangeArea(ServiceChangeTypes.Area, "الخدمات", "Services");
         services.AddSystemCatalog(ServicesCatalog.Contribution);
 
+        AddApplier<ServiceCategoryApplier>(services);
         AddApplier<ServiceDefinitionApplier>(services);
         AddApplier<QuestionApplier>(services);
         AddApplier<ServiceVersionApplier>(services);
@@ -47,6 +48,7 @@ public static class ServicesModule
         services.AddScoped<RequestService>();
         services.AddScoped<IWorkflowSubject, RequestSubject>();
         services.AddScoped<RequestAdminService>();
+        services.AddScoped<PortalCatalogService>();
         services.AddCommunicationEvents(RequestNotifications.Types);
         return services;
     }
@@ -59,11 +61,12 @@ public static class ServicesModule
         return endpoints;
     }
 
-    /// <summary>External host: catalog, drafts and submission for the signed-in applicant and their acting party.</summary>
+    /// <summary>External host: the public catalog and service cards; catalog, drafts and submission for the signed-in applicant and their acting party.</summary>
     public static IEndpointRouteBuilder MapServicesExternal(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup(ApiPrefix).RequireAuthorization().AddEndpointFilter(ServiceEndpoints.Errors).WithTags("Services");
         ServiceEndpoints.MapExternal(group);
+        ServiceEndpoints.MapPortal(group);
         return endpoints;
     }
 
@@ -97,6 +100,7 @@ internal static class ServicesCatalog
             new("services.catalog", "الخدمات", "Services", "/services/catalog", ServiceResources.Config, "design_services", 20),
             new("services.versions", "إصدارات الخدمات", "Service versions", "/services/versions", ServiceResources.Config, "history_edu", 30),
             new("services.questions", "بنك الأسئلة", "Question bank", "/services/questions", ServiceResources.Config, "quiz", 40),
+            new("services.categories", "تصنيفات الخدمات", "Service categories", "/services/categories", ServiceResources.Config, "category", 50),
         ],
     };
 }

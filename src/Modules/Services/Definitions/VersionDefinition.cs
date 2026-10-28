@@ -21,6 +21,9 @@ public sealed class VersionDefinition
 
     public List<FeeDefinition> Fees { get; set; } = [];
 
+    /// <summary>The service card of the portal: steps, terms of use, required documents, audience, channels and contacts.</summary>
+    public ServiceCardDefinition Card { get; set; } = new();
+
     /// <summary>
     /// Read only, from versions published before 1f: the workflow they named. Requests are now processed by the service's
     /// own workflow, so new versions leave it out.
@@ -173,4 +176,61 @@ public sealed class BracketRow
     public decimal? To { get; set; }
 
     public decimal Amount { get; set; }
+}
+
+/// <summary>Where a service can be used, shown on its card.</summary>
+public enum ServiceChannel
+{
+    Portal,
+    MobileApp,
+    Branch,
+    CallCenter,
+}
+
+/// <summary>
+/// What the portal's service card says about the service before it is started. Duration comes from the service levels and
+/// cost from the fees, so they are not repeated here.
+/// </summary>
+public sealed class ServiceCardDefinition
+{
+    /// <summary>Who the service is for, e.g. <em>City service providers</em> (the party kinds are shown when empty).</summary>
+    public string? AudienceAr { get; set; }
+
+    public string? AudienceEn { get; set; }
+
+    /// <summary>The numbered steps the applicant goes through.</summary>
+    public List<CardText> Steps { get; set; } = [];
+
+    /// <summary>Terms of use, one paragraph per line.</summary>
+    public string? TermsAr { get; set; }
+
+    public string? TermsEn { get; set; }
+
+    public List<RequiredDocument> RequiredDocuments { get; set; } = [];
+
+    public List<ServiceChannel> Channels { get; set; } = [];
+
+    public string? FaqUrl { get; set; }
+
+    public string? Phone { get; set; }
+
+    public string? Email { get; set; }
+}
+
+public sealed class CardText
+{
+    public string TextAr { get; set; } = string.Empty;
+
+    public string TextEn { get; set; } = string.Empty;
+}
+
+public sealed class RequiredDocument
+{
+    public string NameAr { get; set; } = string.Empty;
+
+    public string NameEn { get; set; } = string.Empty;
+
+    public string? NoteAr { get; set; }
+
+    public string? NoteEn { get; set; }
 }

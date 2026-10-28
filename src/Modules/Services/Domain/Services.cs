@@ -20,6 +20,18 @@ public enum NewVersionPolicy
     Restart,
 }
 
+/// <summary>A group of services in the portal catalog (a tab on the home page and a filter of the search).</summary>
+public sealed class ServiceCategory : ConfigEntity
+{
+    public string? DescriptionAr { get; set; }
+
+    public string? DescriptionEn { get; set; }
+
+    public string? Icon { get; set; }
+
+    public int DisplayOrder { get; set; }
+}
+
 /// <summary>A service applicants can request; what it asks and charges lives in its published versions.</summary>
 public sealed class Service : ConfigEntity
 {
@@ -29,7 +41,7 @@ public sealed class Service : ConfigEntity
 
     public ServiceArchetype Archetype { get; set; }
 
-    /// <summary>Lookup value code grouping services in the catalog.</summary>
+    /// <summary>The <see cref="ServiceCategory"/> grouping the service in the catalog.</summary>
     public string? CategoryCode { get; set; }
 
     public string? Icon { get; set; }

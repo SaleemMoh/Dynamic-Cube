@@ -29,6 +29,56 @@ internal abstract class ServiceApplier<TEntity, TPayload>(ServicesDbContext cont
     protected static string? Blank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
 
+public sealed class ServiceCategoryPayload : ConfigPayload
+{
+    public string? DescriptionAr { get; set; }
+
+    public string? DescriptionEn { get; set; }
+
+    public string? Icon { get; set; }
+
+    public int DisplayOrder { get; set; }
+}
+
+internal sealed class ServiceCategoryApplier(ServicesDbContext db) : ServiceApplier<ServiceCategory, ServiceCategoryPayload>(db)
+{
+    public override string EntityType => ServiceChangeTypes.Category;
+
+    protected override IQueryable<ServiceCategory> Query(ServicesDbContext context) => context.Categories;
+
+    protected override IQueryable<ServiceCategory> ListQuery(ServicesDbContext context, string? parent) =>
+        Query(context).OrderBy(c => c.DisplayOrder).ThenBy(c => c.Code);
+
+    protected override Task ApplyAsync(ServiceCategory entity, ServiceCategoryPayload payload, ConfigRefs<ServicesDbContext> refs, ValidationErrors errors, ServiceCategory? existing, CancellationToken cancellationToken)
+    {
+        errors.MaxLength("descriptionAr", payload.DescriptionAr, 1000);
+        errors.MaxLength("descriptionEn", payload.DescriptionEn, 1000);
+        errors.MaxLength("icon", payload.Icon, 100);
+        entity.DescriptionAr = Blank(payload.DescriptionAr);
+        entity.DescriptionEn = Blank(payload.DescriptionEn);
+        entity.Icon = Blank(payload.Icon);
+        entity.DisplayOrder = payload.DisplayOrder;
+        return Task.CompletedTask;
+    }
+
+    protected override Task<ServiceCategoryPayload> ToPayloadAsync(ServicesDbContext context, ServiceCategory entity, CancellationToken cancellationToken) =>
+        Task.FromResult(new ServiceCategoryPayload
+        {
+            DescriptionAr = entity.DescriptionAr,
+            DescriptionEn = entity.DescriptionEn,
+            Icon = entity.Icon,
+            DisplayOrder = entity.DisplayOrder,
+        });
+
+    protected override async Task BeforeDeleteAsync(ServicesDbContext context, ServiceCategory entity, CancellationToken cancellationToken)
+    {
+        if (await context.Services.AnyAsync(s => s.CategoryCode == entity.Code, cancellationToken))
+        {
+            throw new ChangeSetException($"Services are in category '{entity.Code}'; move them first.");
+        }
+    }
+}
+
 public sealed class ServicePayload : ConfigPayload
 {
     public string? DescriptionAr { get; set; }
@@ -65,8 +115,9 @@ internal sealed partial class ServiceDefinitionApplier(ServicesDbContext db) : S
     protected override IQueryable<Service> ListQuery(ServicesDbContext context, string? parent) =>
         Query(context).OrderBy(s => s.DisplayOrder).ThenBy(s => s.Code);
 
-    protected override Task ApplyAsync(Service entity, ServicePayload payload, ConfigRefs<ServicesDbContext> refs, ValidationErrors errors, Service? existing, CancellationToken cancellationToken)
+    protected override async Task ApplyAsync(Service entity, ServicePayload payload, ConfigRefs<ServicesDbContext> refs, ValidationErrors errors, Service? existing, CancellationToken cancellationToken)
     {
+        await refs.ResolveAsync(refs.Context.Categories, ServiceChangeTypes.Category, Blank(payload.CategoryCode), "categoryCode", errors, cancellationToken);
         errors.MaxLength("descriptionAr", payload.DescriptionAr, 4000);
         errors.MaxLength("descriptionEn", payload.DescriptionEn, 4000);
         if (payload.PartyKinds.Count == 0)
@@ -97,7 +148,6 @@ internal sealed partial class ServiceDefinitionApplier(ServicesDbContext db) : S
         entity.DraftExpiryDays = payload.DraftExpiryDays;
         entity.OnNewVersion = payload.OnNewVersion;
         entity.NumberPrefix = prefix;
-        return Task.CompletedTask;
     }
 
     protected override Task<ServicePayload> ToPayloadAsync(ServicesDbContext context, Service entity, CancellationToken cancellationToken) =>

@@ -154,6 +154,12 @@ These are development values only; change them in `deploy/docker/.env` (see `.en
      **Documents → Print templates** (edit with live preview), **Decisions → Rule-set versions** (try a version on
      an input, see the evaluations), **Notifications → Message log** and the bell (staff are told about tasks
      assigned to them).
+9. Import `deploy/config-packages/portal-services.json` and approve its two change sets (portal setting, services).
+   Open http://localhost:4201 without signing in: the home page has the search with categories, the category tabs,
+   the services in a carousel and the statistics tiles. Open a service: its card page shows the steps, terms,
+   required documents, duration, channels and cost; **Start service** asks you to sign in and then starts a draft.
+   Categories are edited under **Services → Service categories**, the home page under **Apps Control → Settings**
+   (`PORTAL_HOME`) and a service's card in its version (`definition.card`).
 
 The gateway credentials come from the secret store (`Secrets__MOMRAH_GATEWAY__clientId` / `__clientSecret`), never
 from the database; development values are in `appsettings.Development.json` and the compose file.

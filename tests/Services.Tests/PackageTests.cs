@@ -81,27 +81,20 @@ public sealed class PackageTests(DatabaseFixture fixture)
         weak["items"]![0]!["grade"]!.GetValue<double>().ShouldBe(6);
     }
 
+    [Fact]
+    public async Task The_portal_home_setting_publishes_as_a_public_setting()
+    {
+        await using var host = new TestHost(fixture.RequireConnectionString());
+        var setting = Items("portal-services.json").Single(i => i.EntityType == AppsControlChangeTypes.Setting);
+        await host.PublishAsync(AppsControlAreas.Settings, setting);
+
+        var row = await host.AsAsync("admin", sp => sp.GetRequiredService<AppsControl.Persistence.AppsControlDbContext>().Settings.AsNoTracking().SingleAsync(s => s.Code == "PORTAL_HOME"));
+        row.IsPublic.ShouldBeTrue();
+        JsonNode.Parse(row.Value)!["statistics"]!.AsArray().Select(t => t!["metric"]!.GetValue<string>()).ShouldBe(["SERVICES", "REQUESTS", "IN_PROGRESS", "COMPLETED"]);
+    }
+
     private static Task<JsonObject> GradeAsync(TestHost host, JsonObject input) =>
         host.AsAsync("analyst", async sp => (await sp.GetRequiredService<IDecisionService>().EvaluateAsync(new DecisionRequest("CLS_GRADING", input, "TEST", Guid.CreateVersion7(), null), CancellationToken.None)).Output);
 
-    private static List<Change> Items(string file)
-    {
-        using var package = JsonDocument.Parse(File.ReadAllText(RepositoryFile("deploy/config-packages/" + file)));
-        return [.. package.RootElement.GetProperty("items").EnumerateArray().Select(i => new Change(
-            i.GetProperty("entityType").GetString()!,
-            i.GetProperty("entityCode").GetString()!,
-            Enum.Parse<ChangeOperation>(i.GetProperty("operation").GetString()!, ignoreCase: true),
-            i.GetProperty("payload").Clone()))];
-    }
-
-    private static string RepositoryFile(string relative)
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "DynamicCube.slnx")))
-        {
-            directory = directory.Parent;
-        }
-
-        return Path.Combine(directory!.FullName, relative);
-    }
+    private static List<Change> Items(string file) => Packages.Items(file);
 }

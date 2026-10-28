@@ -33,6 +33,17 @@ internal static class ServiceEndpoints
         }).WithName("CancelDraft");
     }
 
+    /// <summary>Portal, before or after sign-in: categories, listed services, service cards and statistics.</summary>
+    public static void MapPortal(RouteGroupBuilder group)
+    {
+        group.MapGet("/portal/catalog", async (PortalCatalogService portal, CancellationToken ct) => TypedResults.Ok(await portal.CatalogAsync(ct)))
+            .AllowAnonymous().WithName("GetPortalCatalog");
+        group.MapGet("/portal/services/{code}", async (string code, PortalCatalogService portal, CancellationToken ct) => TypedResults.Ok(await portal.CardAsync(code, ct)))
+            .AllowAnonymous().WithName("GetServiceCard");
+        group.MapGet("/portal/statistics", async (PortalCatalogService portal, CancellationToken ct) => TypedResults.Ok(await portal.StatisticsAsync(ct)))
+            .AllowAnonymous().WithName("GetPortalStatistics");
+    }
+
     /// <summary>Internal system: requests (read) and version previews.</summary>
     public static void MapInternal(RouteGroupBuilder group)
     {

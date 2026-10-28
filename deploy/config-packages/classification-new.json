@@ -370,6 +370,19 @@
       }
     },
     {
+      "entityType": "svc.category",
+      "entityCode": "CLASSIFICATION",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "التصنيف",
+        "nameEn": "Classification",
+        "descriptionAr": "تصنيف مقدمي خدمات المدن في القطاعات والدرجات.",
+        "descriptionEn": "Classifying city service providers into sectors and grades.",
+        "icon": "workspace_premium",
+        "displayOrder": 10
+      }
+    },
+    {
       "entityType": "svc.service",
       "entityCode": "CLASSIFICATION_NEW",
       "operation": "CREATE",
@@ -877,7 +890,64 @@
               "vatRate": 0.15,
               "vatIncluded": true
             }
-          ]
+          ],
+          "card": {
+            "audienceAr": "المنشآت من مقدمي خدمات المدن: المقاولون والمكاتب والشركات الهندسية الاستشارية",
+            "audienceEn": "City service provider establishments: contractors and engineering consultancy offices and companies",
+            "steps": [
+              {
+                "textAr": "اختيار المنشأة التي تتقدم باسمها",
+                "textEn": "Choose the establishment you apply for"
+              },
+              {
+                "textAr": "اختيار مستوى الخدمة (عادي أو مميز أو ماسي)",
+                "textEn": "Choose the service level (Regular, Premium or Diamond)"
+              },
+              {
+                "textAr": "اختيار القطاعات وتعبئة بيانات المنشأة والكوادر والمشاريع والحوكمة والبيانات المالية",
+                "textEn": "Choose the sectors and fill in the establishment, staff, projects, governance and financial data"
+              },
+              {
+                "textAr": "مراجعة الرسوم والإقرار ثم تقديم الطلب",
+                "textEn": "Review the fees, accept the pledge and submit"
+              },
+              {
+                "textAr": "متابعة الطلب واستلام شهادة التصنيف",
+                "textEn": "Follow the request and receive the classification certificate"
+              }
+            ],
+            "termsAr": "أن يكون السجل التجاري (أو الترخيص الهندسي للمكاتب الاستشارية) ساريًا ويشمل الأنشطة الخاضعة للتصنيف.\nأن تكون القوائم المالية المدققة لآخر سنة مالية مرفوعة في منصة قوائم.\nألا تكون على المنشأة عقوبة سارية تمنع التقديم.\nتُعد البيانات المقدمة إقرارًا من المنشأة بصحتها، ويحق للجهة التحقق منها.",
+            "termsEn": "The commercial registration (or the engineering licence of consultancy offices) is valid and covers the activities to be classified.\nThe audited financial statements of the last fiscal year are uploaded to Qawaem.\nThe establishment has no active sanction that bans applications.\nThe data submitted is the establishment's declaration of its accuracy; the entity may verify it.",
+            "requiredDocuments": [
+              {
+                "nameAr": "السجل التجاري",
+                "nameEn": "Commercial registration",
+                "noteAr": "يُجلب تلقائيًا من وزارة التجارة",
+                "noteEn": "Fetched automatically from the Ministry of Commerce"
+              },
+              {
+                "nameAr": "القوائم المالية المدققة لآخر سنة مالية",
+                "nameEn": "Audited financial statements of the last fiscal year",
+                "noteAr": "من منصة قوائم",
+                "noteEn": "From Qawaem"
+              },
+              {
+                "nameAr": "رخصة سكن العمال الجماعي",
+                "nameEn": "Collective labour housing licence",
+                "noteAr": "لقطاعات البناء والتشغيل والصيانة والتطوير العقاري",
+                "noteEn": "For construction, operation and maintenance, and real estate development"
+              },
+              {
+                "nameAr": "الرخصة التجارية (البلدية)",
+                "nameEn": "Commercial (municipal) licence"
+              }
+            ],
+            "channels": [
+              "PORTAL"
+            ],
+            "phone": "199040",
+            "email": "classification@example.gov.sa"
+          }
         }
       }
     }
