@@ -15,7 +15,7 @@ public sealed class AppsControlOptions
 
     /// <summary>
     /// Connection string of a read-only database role used for restricted-SQL LOVs. Restricted SQL is disabled when empty.
-    /// The role should only be able to read views in the <c>lov</c> schema.
+    /// Grant this role SELECT only on the tables and views that LOV queries may read.
     /// </summary>
     public string? LovSqlConnectionString { get; init; }
 

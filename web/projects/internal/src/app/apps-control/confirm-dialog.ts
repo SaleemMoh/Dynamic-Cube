@@ -28,9 +28,9 @@ export interface ConfirmData {
         <p>{{ data.message }}</p>
       }
       @if (data.comment) {
+        <label class="dc-field-label" for="dc-confirm-comment">{{ 'changeSets.comment' | dcTranslate }}</label>
         <mat-form-field class="dc-confirm__comment">
-          <mat-label>{{ 'changeSets.comment' | dcTranslate }}</mat-label>
-          <textarea matInput rows="3" [(ngModel)]="text" name="comment" [required]="data.commentRequired ?? false" data-testid="confirm-comment"></textarea>
+          <textarea id="dc-confirm-comment" matInput rows="3" [(ngModel)]="text" name="comment" [required]="data.commentRequired ?? false" data-testid="confirm-comment"></textarea>
         </mat-form-field>
       }
     </mat-dialog-content>

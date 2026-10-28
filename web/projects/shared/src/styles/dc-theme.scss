@@ -1,5 +1,6 @@
-// Material 3 theme for Dynamic Cube. Fonts and icons are bundled from npm via angular.json "styles"
-// (no CDN), so on-prem deployments work without internet access.
+// Material 3 theme aligned with the DGA (Digital Government Authority) design system: IBM Plex Sans Arabic for
+// Arabic and English, the DGA greens and neutrals, 4px controls, 8px tables and dialogs, 16px cards.
+// Fonts and icons are bundled from npm via angular.json "styles" (no CDN), so on-prem sites work offline.
 @use '@angular/material' as mat;
 
 html {
@@ -15,6 +16,124 @@ html {
         brand-family: 'IBM Plex Sans Arabic',
       ),
       density: 0,
+    )
+  );
+
+  // DGA palette mapped onto the Material system tokens.
+  @include mat.theme-overrides(
+    (
+      primary: #1b8354,
+      on-primary: #ffffff,
+      primary-container: #ecfdf3,
+      on-primary-container: #085d3a,
+      secondary-container: #ecfdf3,
+      on-secondary-container: #085d3a,
+      tertiary-container: #eff8ff,
+      on-tertiary-container: #1849a9,
+      error: #b42318,
+      on-error: #ffffff,
+      error-container: #fef3f2,
+      on-error-container: #b42318,
+      surface: #ffffff,
+      on-surface: #161616,
+      on-surface-variant: #384250,
+      surface-container-lowest: #ffffff,
+      surface-container-low: #f9fafb,
+      surface-container: #f3f4f6,
+      surface-container-high: #e5e7eb,
+      surface-container-highest: #e5e7eb,
+      outline: #9da4ae,
+      outline-variant: #d2d6db,
+      corner-extra-small: 4px,
+      corner-small: 4px,
+      corner-medium: 8px,
+      corner-large: 16px,
+    )
+  );
+
+  @include mat.button-overrides(
+    (
+      filled-container-shape: 4px,
+      filled-container-height: 40px,
+      filled-label-text-size: 16px,
+      filled-label-text-weight: 500,
+      filled-horizontal-padding: 16px,
+      outlined-container-shape: 4px,
+      outlined-container-height: 40px,
+      outlined-label-text-size: 16px,
+      outlined-label-text-weight: 500,
+      outlined-outline-color: #d2d6db,
+      outlined-label-text-color: #161616,
+      text-container-shape: 4px,
+      text-container-height: 40px,
+      text-label-text-size: 16px,
+      text-label-text-weight: 500,
+      tonal-container-shape: 4px,
+      tonal-container-height: 40px,
+      tonal-container-color: #f3f4f6,
+      tonal-label-text-color: #161616,
+      protected-container-shape: 4px,
+      protected-container-height: 40px,
+    )
+  );
+
+  @include mat.form-field-overrides(
+    (
+      outlined-container-shape: 4px,
+      outlined-outline-color: #9da4ae,
+      outlined-hover-outline-color: #6c737f,
+      outlined-focus-outline-color: #1b8354,
+      outlined-focus-outline-width: 1px,
+      outlined-error-outline-color: #b42318,
+      container-height: 40px,
+      container-vertical-padding: 8px,
+    )
+  );
+
+  @include mat.checkbox-overrides(
+    (
+      selected-icon-color: #1b8354,
+      selected-hover-icon-color: #1b8354,
+      selected-focus-icon-color: #1b8354,
+      selected-pressed-icon-color: #1b8354,
+      unselected-icon-color: #6c737f,
+    )
+  );
+
+  @include mat.table-overrides(
+    (
+      header-container-height: 48px,
+      header-headline-color: #384250,
+      header-headline-size: 12px,
+      header-headline-weight: 500,
+      row-item-container-height: 56px,
+      row-item-label-text-color: #161616,
+      row-item-label-text-size: 16px,
+      row-item-outline-color: #d2d6db,
+    )
+  );
+
+  @include mat.dialog-overrides(
+    (
+      container-shape: 8px,
+      subhead-size: 20px,
+      subhead-weight: 700,
+      supporting-text-color: #384250,
+    )
+  );
+
+  @include mat.card-overrides(
+    (
+      outlined-container-shape: 16px,
+      outlined-outline-color: #d2d6db,
+    )
+  );
+
+  @include mat.list-overrides(
+    (
+      active-indicator-color: #1b8354,
+      active-indicator-shape: 4px,
+      list-item-container-shape: 4px,
     )
   );
 }

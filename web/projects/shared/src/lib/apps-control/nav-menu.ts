@@ -9,7 +9,14 @@ import { MenuGroupNode, MenuNode } from './apps-control.models';
 /** Side navigation built from the user's Apps Control menu (only items the user may view are returned by the API). */
 @Component({
   selector: 'dc-nav-menu',
-  imports: [NgTemplateOutlet, MatIconModule, MatListModule, RouterLink, RouterLinkActive, LocalizePipe],
+  imports: [
+    NgTemplateOutlet,
+    MatIconModule,
+    MatListModule,
+    RouterLink,
+    RouterLinkActive,
+    LocalizePipe,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <nav class="dc-nav">
@@ -17,7 +24,9 @@ import { MenuGroupNode, MenuNode } from './apps-control.models';
         @if (group.code) {
           <h3 class="dc-nav__group">
             @if (group.icon) {
-              <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">{{ group.icon }}</mat-icon>
+              <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">{{
+                group.icon
+              }}</mat-icon>
             }
             {{ { ar: group.nameAr, en: group.nameEn } | dcLocalize }}
           </h3>
@@ -32,8 +41,16 @@ import { MenuGroupNode, MenuNode } from './apps-control.models';
 
     <ng-template #node let-item>
       @if (item.itemType === 'URL') {
-        <a mat-list-item [href]="item.target" target="_blank" rel="noopener" [attr.data-menu]="item.code">
-          <mat-icon matListItemIcon fontSet="material-symbols-outlined">{{ item.icon ?? 'open_in_new' }}</mat-icon>
+        <a
+          mat-list-item
+          [href]="item.target"
+          target="_blank"
+          rel="noopener"
+          [attr.data-menu]="item.code"
+        >
+          <mat-icon matListItemIcon fontSet="material-symbols-outlined">{{
+            item.icon ?? 'open_in_new'
+          }}</mat-icon>
           <span matListItemTitle>{{ label(item) | dcLocalize }}</span>
         </a>
       } @else if (item.itemType === 'GROUP') {
@@ -42,8 +59,17 @@ import { MenuGroupNode, MenuNode } from './apps-control.models';
           <ng-container *ngTemplateOutlet="node; context: { $implicit: child }" />
         }
       } @else {
-        <a mat-list-item [routerLink]="item.target" routerLinkActive #active="routerLinkActive" [activated]="active.isActive" [attr.data-menu]="item.code">
-          <mat-icon matListItemIcon fontSet="material-symbols-outlined">{{ item.icon ?? 'chevron_left' }}</mat-icon>
+        <a
+          mat-list-item
+          [routerLink]="item.target"
+          routerLinkActive
+          #active="routerLinkActive"
+          [activated]="active.isActive"
+          [attr.data-menu]="item.code"
+        >
+          <mat-icon matListItemIcon fontSet="material-symbols-outlined">{{
+            item.icon ?? 'chevron_left'
+          }}</mat-icon>
           <span matListItemTitle>{{ label(item) | dcLocalize }}</span>
         </a>
       }
@@ -57,6 +83,33 @@ import { MenuGroupNode, MenuNode } from './apps-control.models';
       margin: 1rem 1rem 0.25rem;
       font: var(--mat-sys-title-small);
       color: var(--mat-sys-on-surface-variant);
+    }
+    /* DGA nav: 4px items, the active one green with white text and a light-green selector at its start. */
+    .mat-mdc-list-item {
+      border-radius: 4px;
+      margin-inline: 8px;
+      width: auto;
+    }
+    .mat-mdc-list-item.mdc-list-item--activated {
+      background: var(--dga-green-700);
+      --mat-list-list-item-label-text-color: #ffffff;
+      --mat-list-list-item-hover-label-text-color: #ffffff;
+      --mat-list-list-item-focus-label-text-color: #ffffff;
+      --mat-list-list-item-leading-icon-color: #ffffff;
+      --mat-list-list-item-hover-leading-icon-color: #ffffff;
+      position: relative;
+    }
+    .mat-mdc-list-item.mdc-list-item--activated::after {
+      content: '';
+      position: absolute;
+      inset-block: 8px;
+      inset-inline-start: 0;
+      width: 4px;
+      border-radius: 9999px;
+      background: var(--dga-green-400);
+    }
+    .mat-mdc-list-item.mdc-list-item--activated .mdc-list-item__primary-text {
+      font-weight: 600;
     }
     .dc-nav__subgroup {
       padding: 0.5rem 1rem 0;

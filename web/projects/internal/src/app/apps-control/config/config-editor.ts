@@ -198,6 +198,7 @@ export class ConfigEditor {
       label: f.label,
       hint: f.hint,
       required: f.required,
+      requiredWhen: f.requiredWhen,
       multiple: f.multiple,
       visibleWhen: f.visibleWhen,
       // App-scoped keys cannot move to another app on edit.

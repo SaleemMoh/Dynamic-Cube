@@ -20,3 +20,4 @@ Status values: Proposed · Accepted · Superseded.
 | [0013](0013-apps-control-api-contract.md) | Apps Control owns its schema and a versioned API | Accepted |
 | [0014](0014-pluggable-decision-engine.md) | Decision engine behind a platform contract | Accepted |
 | [0015](0015-angular-material.md) | Angular + Angular Material front-end | Accepted (revised) |
+| [0016](0016-dga-design-system.md) | DGA design system for all user interfaces | Accepted |

@@ -10,6 +10,8 @@ export * from './lib/i18n/language-switcher';
 export * from './lib/forms/form-schema';
 export * from './lib/forms/dynamic-form';
 export * from './lib/layout/app-shell';
+export * from './lib/layout/gov-bar';
+export * from './lib/layout/app-footer';
 export * from './lib/theme/theme';
 export * from './lib/api/host-info.service';
 export * from './lib/forms/lov-source';

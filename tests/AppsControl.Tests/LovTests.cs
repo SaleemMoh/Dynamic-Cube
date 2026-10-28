@@ -185,6 +185,19 @@ public sealed class LovTests(AppsControlFixture fixture) : IAsyncLifetime
 
         (await ValuesAsync("admin", lov, new LovQuery(Search: "ict"))).Items.ShouldHaveSingleItem().LabelEn.ShouldBe("ICT");
 
+        // An existing query used as it is: the LOV names its value and label columns.
+        var mapped = Harness.Unique("LOV");
+        var legacySql = $"SELECT code, name_ar, name_en FROM apps.v_class_{_class.ToLowerInvariant()}";
+        await _harness.PublishAsync(AppsControlAreas.Lovs, Lov(mapped, new { sourceType = "SQL", sqlText = legacySql, valueColumn = "code", displayArColumn = "name_ar", displayEnColumn = "name_en" }));
+        var mappedItem = (await ValuesAsync("admin", mapped, new LovQuery(Search: "تقنية"))).Items.ShouldHaveSingleItem();
+        mappedItem.Value.ShouldBe("ICT");
+        mappedItem.LabelEn.ShouldBe("ICT");
+
+        var wrongColumn = await Should.ThrowAsync<ChangeValidationException>(() => _harness.DraftAsync(
+            AppsControlAreas.Lovs,
+            Lov(Harness.Unique("LOV"), new { sourceType = "SQL", sqlText = legacySql, valueColumn = "id" })));
+        wrongColumn.Errors["sqlText"].ShouldContain(m => m.Contains("id", StringComparison.Ordinal));
+
         var missingColumns = await Should.ThrowAsync<ChangeValidationException>(() => _harness.DraftAsync(
             AppsControlAreas.Lovs,
             Lov(Harness.Unique("LOV"), new { sourceType = "SQL", sqlText = "SELECT 1 AS value" })));

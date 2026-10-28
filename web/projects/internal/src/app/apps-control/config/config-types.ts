@@ -7,6 +7,8 @@ export interface ConfigField {
   label: LocalizedText;
   hint?: LocalizedText;
   required?: boolean;
+  /** JSONLogic over the form value; when truthy the field is required. */
+  requiredWhen?: JsonLogicRule;
   options?: FormOption[];
   /** Options are the rows of another entity type (value = code). */
   ref?: string;
@@ -459,22 +461,34 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
             code: 'valueColumn',
             type: 'text',
             label: t('عمود القيمة', 'Value column'),
-            visibleWhen: { '==': [{ var: 'sourceType' }, 'DATA_OBJECT'] },
-            required: true,
+            visibleWhen: { '!=': [{ var: 'sourceType' }, 'CLASS'] },
+            requiredWhen: { '==': [{ var: 'sourceType' }, 'DATA_OBJECT'] },
+            hint: t(
+              'للاستعلام: اختياري، الافتراضي value و display_ar و display_en',
+              'For SQL: optional; defaults to value, display_ar, display_en',
+            ),
           },
           {
             code: 'displayArColumn',
             type: 'text',
             label: t('عمود الاسم العربي', 'Arabic label column'),
-            visibleWhen: { '==': [{ var: 'sourceType' }, 'DATA_OBJECT'] },
-            required: true,
+            visibleWhen: { '!=': [{ var: 'sourceType' }, 'CLASS'] },
+            requiredWhen: { '==': [{ var: 'sourceType' }, 'DATA_OBJECT'] },
+            hint: t(
+              'للاستعلام: اختياري، الافتراضي value و display_ar و display_en',
+              'For SQL: optional; defaults to value, display_ar, display_en',
+            ),
           },
           {
             code: 'displayEnColumn',
             type: 'text',
             label: t('عمود الاسم الإنجليزي', 'English label column'),
-            visibleWhen: { '==': [{ var: 'sourceType' }, 'DATA_OBJECT'] },
-            required: true,
+            visibleWhen: { '!=': [{ var: 'sourceType' }, 'CLASS'] },
+            requiredWhen: { '==': [{ var: 'sourceType' }, 'DATA_OBJECT'] },
+            hint: t(
+              'للاستعلام: اختياري، الافتراضي value و display_ar و display_en',
+              'For SQL: optional; defaults to value, display_ar, display_en',
+            ),
           },
           {
             code: 'parentColumn',
@@ -489,8 +503,8 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
             visibleWhen: { '==': [{ var: 'sourceType' }, 'SQL'] },
             required: true,
             hint: t(
-              'يُرجع value و display_ar و display_en',
-              'Returns value, display_ar, display_en',
+              'أي استعلام SELECT؛ حدد أعمدة القيمة والأسماء إن اختلفت عن الافتراضي',
+              'Any SELECT; name its value and label columns if they differ from the defaults',
             ),
           },
           {

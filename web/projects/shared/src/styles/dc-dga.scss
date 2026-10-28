@@ -1,0 +1,187 @@
+// DGA design-system patterns that are not Material components: government bar, header, footer, badges, labels
+// above fields, tables and visible keyboard focus. Values follow the DGA Figma kit.
+
+:root {
+  --dga-green-950: #074d31;
+  --dga-green-800: #166a45;
+  --dga-green-700: #1b8354;
+  --dga-green-600: #079455;
+  --dga-green-400: #54c08a;
+  --dga-green-50: #f7fdf9;
+  --dga-text: #161616;
+  --dga-text-2: #1f2a37;
+  --dga-text-3: #384250;
+  --dga-gray-50: #f9fafb;
+  --dga-gray-100: #f3f4f6;
+  --dga-gray-200: #e5e7eb;
+  --dga-border: #d2d6db;
+  --dga-input-border: #9da4ae;
+  --dga-page: #f8f9fa;
+  --dga-error: #b42318;
+}
+
+body {
+  background: var(--dga-page);
+  color: var(--dga-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  color: var(--dga-text);
+  font-weight: 600;
+}
+
+/* Keyboard focus is always visible; a click leaves no ring (DGA accessibility). */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--dga-green-700);
+  outline-offset: 2px;
+}
+
+a {
+  color: var(--dga-green-700);
+}
+
+/* Filled buttons: darker green on hover. */
+.mat-mdc-unelevated-button:not(:disabled):hover {
+  --mat-button-filled-container-color: var(--dga-green-800);
+}
+
+/* Labels above inputs: 14px semibold, 8px above a 40px field; red asterisk when required. */
+.dc-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.dc-field-label {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  color: var(--dga-text);
+}
+
+.dc-required {
+  margin-inline-start: 2px;
+  color: var(--dga-error);
+}
+
+.mat-mdc-form-field {
+  font-size: 16px;
+}
+
+.mat-mdc-text-field-wrapper {
+  background: #ffffff;
+}
+
+.mdc-text-field--disabled .mat-mdc-text-field-wrapper,
+.mat-mdc-form-field-disabled .mat-mdc-text-field-wrapper {
+  background: var(--dga-gray-100);
+}
+
+/* Tables: 8px outline, grey header, striped rows, green links. */
+.dc-table.mat-mdc-table {
+  border: 1px solid var(--dga-border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #ffffff;
+
+  .mat-mdc-header-row {
+    background: var(--dga-gray-100);
+  }
+
+  .mat-mdc-header-cell + .mat-mdc-header-cell {
+    border-inline-start: 1px solid var(--dga-border);
+  }
+
+  .mat-mdc-row:nth-child(even) .mat-mdc-cell {
+    background: var(--dga-gray-50);
+  }
+
+  .mat-mdc-row:last-child .mat-mdc-cell {
+    border-bottom: 0;
+  }
+
+  .mat-mdc-cell,
+  .mat-mdc-header-cell {
+    padding-inline: 16px;
+  }
+}
+
+/* Status badges: pill with a coloured dot (neutral, success, warning, danger, info). */
+.dc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 9999px;
+  background: var(--dga-gray-50);
+  color: var(--dga-text-2);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  white-space: nowrap;
+
+  &::before {
+    content: '';
+    flex: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 9999px;
+    background: #4d5761;
+  }
+
+  &--success {
+    background: #ecfdf3;
+    color: #085d3a;
+    &::before {
+      background: #079455;
+    }
+  }
+
+  &--warning {
+    background: #fffaeb;
+    color: #b54708;
+    &::before {
+      background: #dc6803;
+    }
+  }
+
+  &--danger {
+    background: #fef3f2;
+    color: #b42318;
+    &::before {
+      background: #d92d20;
+    }
+  }
+
+  &--info {
+    background: #eff8ff;
+    color: #1849a9;
+    &::before {
+      background: #1570ef;
+    }
+  }
+}
+
+/* Dialogs: title at the start, actions centred. */
+.mat-mdc-dialog-actions {
+  justify-content: center;
+  gap: 8px;
+}
+
+/* Snack bars on the DGA dark green. */
+.mat-mdc-snack-bar-container {
+  --mat-snack-bar-container-color: var(--dga-green-950);
+  --mat-snack-bar-button-color: #ffffff;
+}
