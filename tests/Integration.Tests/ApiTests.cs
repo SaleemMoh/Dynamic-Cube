@@ -178,11 +178,13 @@ public sealed class ApiTests(DatabaseFixture fixture) : IAsyncLifetime
         var ct = TestContext.Current.CancellationToken;
         using var maker = Client("maker");
         var provider = TestHost.Unique("PKG");
-        var before = (await maker.GetFromJsonAsync<JsonElement>("/api/apps-control/v1/change-sets?mine=true", ct)).GetArrayLength();
+
+        // Other tests create change sets as the same maker in parallel, so look for this package's title rather than counting.
+        var title = $"Broken package {provider}";
 
         var response = await maker.PostAsJsonAsync("/api/apps-control/v1/change-sets/import", new
         {
-            title = "Broken package",
+            title,
             items = new object[]
             {
                 new { entityType = IntegrationChangeTypes.Provider, entityCode = provider, operation = "CREATE", payload = new { nameAr = "جهة", nameEn = "Provider" } },
@@ -191,7 +193,8 @@ public sealed class ApiTests(DatabaseFixture fixture) : IAsyncLifetime
         }, ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        (await maker.GetFromJsonAsync<JsonElement>("/api/apps-control/v1/change-sets?mine=true", ct)).GetArrayLength().ShouldBe(before);
+        var mine = await maker.GetFromJsonAsync<JsonElement>("/api/apps-control/v1/change-sets?mine=true", ct);
+        mine.EnumerateArray().ShouldNotContain(c => c.GetProperty("title").GetString() == title);
     }
 
     private static string RepositoryFile(string relative)
