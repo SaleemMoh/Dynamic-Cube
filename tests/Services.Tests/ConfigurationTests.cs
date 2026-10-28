@@ -1,0 +1,108 @@
+using System.Text.Json;
+using DynamicCube.Modules.Services.Changes;
+using DynamicCube.Modules.Services.Definitions;
+using DynamicCube.Modules.Services.Domain;
+using DynamicCube.Modules.Services.Persistence;
+using DynamicCube.Platform.ChangeSets;
+using DynamicCube.Tests.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Shouldly;
+
+namespace DynamicCube.Modules.Services.Tests;
+
+public sealed class ConfigurationTests(DatabaseFixture fixture) : IAsyncLifetime
+{
+    private TestHost _host = null!;
+
+    public ValueTask InitializeAsync()
+    {
+        _host = new TestHost(fixture.RequireConnectionString());
+        return ValueTask.CompletedTask;
+    }
+
+    public async ValueTask DisposeAsync() => await _host.DisposeAsync();
+
+    private Task<ServiceVersion> VersionAsync(string code) =>
+        _host.AsAsync("admin", sp => sp.GetRequiredService<ServicesDbContext>().Versions.AsNoTracking().SingleAsync(v => v.Code == code));
+
+    [Fact]
+    public async Task Publishing_a_version_snapshots_its_questions()
+    {
+        var sample = new ServiceSamples();
+        await _host.PublishAsync(ServiceChangeTypes.Area, sample.All());
+
+        // Later edits of the bank do not reach version 1; version 2 sees them.
+        var relabel = new QuestionPayload { NameAr = "عدد العاملين", NameEn = "Staff count", Type = QuestionType.Number, Validation = new QuestionValidation { Min = 1 } };
+        await _host.PublishAsync(ServiceChangeTypes.Area, new Change(ServiceChangeTypes.Question, sample.Employees, ChangeOperation.Update, relabel), sample.Version(2));
+
+        var v1 = JsonSerializer.Deserialize<ResolvedVersion>((await VersionAsync($"{sample.Service}/1")).Resolved!, ChangeJson.Options)!;
+        var v2 = JsonSerializer.Deserialize<ResolvedVersion>((await VersionAsync($"{sample.Service}/2")).Resolved!, ChangeJson.Options)!;
+
+        v1.Questions.Count.ShouldBe(6);
+        v1.Questions[sample.Employees].LabelEn.ShouldBe("Employees");
+        v2.Questions[sample.Employees].LabelEn.ShouldBe("Staff count");
+        v1.Number.ShouldBe(1);
+        v1.Definition.Fees.Single().Bracket!.Rows.Count.ShouldBe(3);
+        (await VersionAsync($"{sample.Service}/1")).PublishedAt.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public async Task Published_versions_cannot_change_but_can_be_retired()
+    {
+        var sample = new ServiceSamples();
+        await _host.PublishAsync(ServiceChangeTypes.Area, sample.All());
+        var changed = sample.Definition();
+        changed.Levels.RemoveAt(1);
+        changed.Steps[0].TitleEn = "Level";
+
+        var errors = await Should.ThrowAsync<ChangeValidationException>(() => _host.PublishAsync(ServiceChangeTypes.Area,
+            new Change(ServiceChangeTypes.Version, $"{sample.Service}/1", ChangeOperation.Update, new ServiceVersionPayload { NameAr = "x", NameEn = "x", Definition = changed })));
+        var skipped = await Should.ThrowAsync<ChangeValidationException>(() => _host.PublishAsync(ServiceChangeTypes.Area, sample.Version(3)));
+        await _host.PublishAsync(ServiceChangeTypes.Area,
+            new Change(ServiceChangeTypes.Version, $"{sample.Service}/1", ChangeOperation.Update, new ServiceVersionPayload { NameAr = "الإصدار 1", NameEn = "Version 1", IsRetired = true, Definition = sample.Definition() }));
+
+        errors.Errors.Keys.ShouldBe(["definition"]);
+        skipped.Errors["code"].Single().ShouldContain("is 2");
+        (await VersionAsync($"{sample.Service}/1")).IsRetired.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task Definitions_are_checked_before_publishing()
+    {
+        var sample = new ServiceSamples();
+        await _host.PublishAsync(ServiceChangeTypes.Area, [.. sample.Questions(), sample.ServiceChange()]);
+        var bad = sample.Definition();
+        bad.Steps[1].Sections[0].Questions.Add(new QuestionUse { Code = "NO_SUCH_QUESTION" });
+        bad.Steps[2].Sections[0].VisibleWhen = ServiceSamples.Rule("""{"unknown_operation": [1]}""");
+        bad.Steps[4].TextEn = null;
+        bad.Fees[0].Levels.Add("GOLDEN");
+        bad.Fees[0].Bracket!.Rows[1].From = 5_000_000;
+        bad.Eligibility.Add(new RuleDefinition { Code = "NOT_BANNED", Rule = ServiceSamples.Rule("true"), MessageAr = "x", MessageEn = "x" });
+
+        var errors = await Should.ThrowAsync<ChangeValidationException>(() => _host.PublishAsync(ServiceChangeTypes.Area, sample.Version(1, bad)));
+
+        errors.Errors.Keys.ShouldBe(
+            [
+                "definition.steps[1].sections[0].questions[2].code",
+                "definition.steps[2].sections[0].visibleWhen",
+                "definition.steps[4].textEn",
+                "definition.fees[0].levels",
+                "definition.fees[0].bracket.rows[1].from",
+                "definition.eligibility",
+            ],
+            ignoreOrder: true);
+    }
+
+    [Fact]
+    public async Task Questions_used_by_versions_cannot_be_deleted()
+    {
+        var sample = new ServiceSamples();
+        await _host.PublishAsync(ServiceChangeTypes.Area, sample.All());
+
+        var error = await Should.ThrowAsync<ChangeSetException>(() => _host.PublishAsync(ServiceChangeTypes.Area,
+            new Change(ServiceChangeTypes.Question, sample.Revenue, ChangeOperation.Delete, null)));
+
+        error.Message.ShouldContain("used by service versions");
+    }
+}

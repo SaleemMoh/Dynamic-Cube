@@ -3,6 +3,7 @@ using DynamicCube.Modules.AppsControl.Seeding;
 using DynamicCube.Modules.Integration.Persistence;
 using DynamicCube.Modules.Parties.Persistence;
 using DynamicCube.Modules.Parties.Seeding;
+using DynamicCube.Modules.Services.Persistence;
 using DynamicCube.Platform.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,7 +13,7 @@ namespace DynamicCube.Tests.Infrastructure;
 
 /// <summary>
 /// Throw-away database on the server given by <c>DYNAMICCUBE_TEST_POSTGRES</c> with the migrations and system rows of
-/// the platform and the Apps Control, Integration and Party modules. Database tests are skipped when the variable is not set.
+/// the platform and the Apps Control, Integration, Party and Services modules. Database tests are skipped when the variable is not set.
 /// Shared (as linked source) by the module test projects; each registers it with <c>[assembly: AssemblyFixture]</c>.
 /// </summary>
 public sealed class DatabaseFixture : IAsyncLifetime
@@ -43,6 +44,7 @@ public sealed class DatabaseFixture : IAsyncLifetime
             await sp.GetRequiredService<AppsControlDbContext>().Database.MigrateAsync();
             await sp.GetRequiredService<IntegrationDbContext>().Database.MigrateAsync();
             await sp.GetRequiredService<PartiesDbContext>().Database.MigrateAsync();
+            await sp.GetRequiredService<ServicesDbContext>().Database.MigrateAsync();
             await sp.GetRequiredService<AppsControlSeeder>().SeedAsync(CancellationToken.None);
             await sp.GetRequiredService<PartiesSeeder>().SeedAsync(CancellationToken.None);
         });

@@ -7,6 +7,7 @@ using DynamicCube.Modules.AppsControl.Persistence;
 using DynamicCube.Modules.AppsControl.Seeding;
 using DynamicCube.Platform;
 using DynamicCube.Platform.ChangeSets;
+using DynamicCube.Platform.Lovs;
 using DynamicCube.Platform.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -79,6 +80,7 @@ public static class AppsControlModule
         services.AddScoped<MenuService>();
         services.AddScoped<GrantResolver>();
         services.AddScoped<LovService>();
+        services.AddScoped<ILovValidator, LovValidator>();
         services.AddScoped<DataScopeService>();
         services.AddScoped<AppsControlSeeder>();
         return services;

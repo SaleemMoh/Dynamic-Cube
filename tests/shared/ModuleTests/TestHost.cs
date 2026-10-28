@@ -2,6 +2,7 @@ using System.Text.Json;
 using DynamicCube.Modules.AppsControl;
 using DynamicCube.Modules.Integration;
 using DynamicCube.Modules.Parties;
+using DynamicCube.Modules.Services;
 
 using DynamicCube.Platform;
 using DynamicCube.Platform.ChangeSets;
@@ -54,6 +55,7 @@ public sealed class TestHost : IAsyncDisposable
         services.AddAppsControl(configuration, managesUsers: true);
         services.AddIntegration(configuration);
         services.AddParties(configuration);
+        services.AddServices(configuration);
         configure?.Invoke(services);
         services.AddSingleton(Provider);
         services.AddHttpClient(IntegrationModule.HttpClientName).ConfigurePrimaryHttpMessageHandler(sp => sp.GetRequiredService<FakeProvider>());

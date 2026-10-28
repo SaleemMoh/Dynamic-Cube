@@ -43,6 +43,7 @@ public static class PartiesModule
         services.AddScoped<ProfileService>();
         services.AddScoped<PartyAdminService>();
         services.AddScoped<IActingPartyAccessor, ActingPartyAccessor>();
+        services.AddScoped<IPartyFacts, PartyFactsProvider>();
         services.AddScoped<PartiesSeeder>();
         return services;
     }

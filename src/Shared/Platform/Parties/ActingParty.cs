@@ -10,9 +10,13 @@ public enum PartyKind
 /// Who a portal request is for: the signed-in individual acting for themselves or for a party they are allowed to
 /// represent (owner, manager, delegate…). Requests record both (submitter and beneficiary).
 /// </summary>
-public sealed record ActingParty(Guid IndividualId, Guid PartyId, PartyKind Kind, string NameAr, string NameEn, string? RelationshipCode)
+/// <param name="Services">Service codes the relationship covers; empty means all services.</param>
+public sealed record ActingParty(Guid IndividualId, Guid PartyId, PartyKind Kind, string NameAr, string NameEn, string? RelationshipCode, IReadOnlyList<string> Services)
 {
     public bool IsSelf => IndividualId == PartyId;
+
+    /// <summary>Whether the relationship lets the individual use the service for the party.</summary>
+    public bool Covers(string serviceCode) => IsSelf || Services.Count == 0 || Services.Contains(serviceCode, StringComparer.OrdinalIgnoreCase);
 }
 
 /// <summary>Resolves and validates the acting party of the current external request (header <see cref="Header"/>).</summary>

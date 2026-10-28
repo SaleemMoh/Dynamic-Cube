@@ -22,7 +22,7 @@ internal sealed class ActingPartyAccessor(IHttpContextAccessor accessor, Context
         var header = accessor.HttpContext?.Request.Headers[IActingPartyAccessor.Header].ToString();
         if (string.IsNullOrWhiteSpace(header) || (Guid.TryParse(header, out var requested) && requested == individual.Id))
         {
-            return _resolved = new ActingParty(individual.Id, individual.Id, individual.Kind, individual.NameAr, individual.NameEn, null);
+            return _resolved = new ActingParty(individual.Id, individual.Id, individual.Kind, individual.NameAr, individual.NameEn, null, []);
         }
 
         if (!Guid.TryParse(header, out requested))
@@ -32,6 +32,6 @@ internal sealed class ActingPartyAccessor(IHttpContextAccessor accessor, Context
 
         var context = (await contexts.ListAsync(individual.Id, cancellationToken)).FirstOrDefault(c => c.PartyId == requested)
             ?? throw new ActingPartyException("You are not authorized to act for this party.");
-        return _resolved = new ActingParty(individual.Id, context.PartyId, context.Kind, context.NameAr, context.NameEn, context.RelationshipCode);
+        return _resolved = new ActingParty(individual.Id, context.PartyId, context.Kind, context.NameAr, context.NameEn, context.RelationshipCode, context.Services);
     }
 }

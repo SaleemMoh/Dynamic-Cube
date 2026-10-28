@@ -25,6 +25,7 @@
     <ProjectReference Include="..\..\src\Modules\AppsControl\DynamicCube.Modules.AppsControl.csproj" />
     <ProjectReference Include="..\..\src\Modules\Integration\DynamicCube.Modules.Integration.csproj" />
     <ProjectReference Include="..\..\src\Modules\Parties\DynamicCube.Modules.Parties.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Services\DynamicCube.Modules.Services.csproj" />
     <ProjectReference Include="..\..\src\Hosts\Internal.Api\DynamicCube.Internal.Api.csproj" Aliases="InternalApi" />
   </ItemGroup>
 
