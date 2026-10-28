@@ -1,17 +1,19 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { ActingContextSelector, AppShell, I18nService, TranslatePipe, UserMenu } from '@dynamic-cube/shared';
+import { ActingContextSelector, ActingPartyService, AppShell, I18nService, NotificationBell, TranslatePipe, UserMenu } from '@dynamic-cube/shared';
 import { APP_TRANSLATIONS } from './translations';
 
 @Component({
   selector: 'dc-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, ActingContextSelector, AppShell, TranslatePipe, UserMenu],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, ActingContextSelector, AppShell, NotificationBell, TranslatePipe, UserMenu],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <dc-app-shell [title]="'app.title' | dcTranslate">
       <a dcShellNav class="dc-nav-link" routerLink="/services" routerLinkActive="dc-nav-link--active" data-testid="nav-services">{{ 'nav.services' | dcTranslate }}</a>
       <a dcShellNav class="dc-nav-link" routerLink="/requests" routerLinkActive="dc-nav-link--active" data-testid="nav-requests">{{ 'nav.requests' | dcTranslate }}</a>
+      <a dcShellNav class="dc-nav-link" routerLink="/documents" routerLinkActive="dc-nav-link--active" data-testid="nav-documents">{{ 'documents.mine' | dcTranslate }}</a>
       <dc-acting-context-selector dcShellActions />
+      <dc-notification-bell dcShellActions [scope]="acting.current()?.partyId" />
       <dc-user-menu dcShellActions />
       <router-outlet />
     </dc-app-shell>
@@ -33,6 +35,8 @@ import { APP_TRANSLATIONS } from './translations';
   `,
 })
 export class App {
+  protected readonly acting = inject(ActingPartyService);
+
   constructor() {
     inject(I18nService).register(APP_TRANSLATIONS);
   }

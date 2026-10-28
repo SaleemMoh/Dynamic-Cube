@@ -32,7 +32,7 @@ internal sealed class DocumentDates(DocumentsDbContext context, DocumentRenderer
         var types = await context.DocumentTypes.AsNoTracking().ToDictionaryAsync(t => t.Id, cancellationToken);
         var expired = await context.Documents
             .Where(d => (d.Status == DocumentStatus.Active || d.Status == DocumentStatus.Suspended) && d.ExpiresAt <= now)
-            .Take(BatchSize).ToListAsync(cancellationToken);
+            .OrderBy(d => d.ExpiresAt).Take(BatchSize).ToListAsync(cancellationToken);
         foreach (var document in expired)
         {
             document.Status = DocumentStatus.Expired;

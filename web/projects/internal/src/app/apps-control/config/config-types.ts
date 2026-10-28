@@ -1,3 +1,4 @@
+import { Type } from '@angular/core';
 import { FormFieldType, FormOption, JsonLogicRule, LocalizedText } from '@dynamic-cube/shared';
 
 /** A field of a configuration editor. Besides form field types: `json` (nested data) and `refList` (codes → objects). */
@@ -20,6 +21,8 @@ export interface ConfigField {
   itemKey?: string;
   /** Default for new rows. */
   defaultValue?: unknown;
+  /** Options come from an API returning `{ code, nameAr, nameEn }[]` (e.g. the events modules raise). */
+  optionsUrl?: string;
 }
 
 export interface ConfigType {
@@ -32,6 +35,8 @@ export interface ConfigType {
   fields: ConfigField[];
   /** Labels of the name fields, when they hold something else (UI texts). */
   nameLabels?: { ar: LocalizedText; en: LocalizedText };
+  /** A dialog that edits rows instead of the generic form (it receives `ConfigEditorData`); loaded when first opened. */
+  editor?: () => Promise<Type<unknown>>;
 }
 
 export interface ConfigSection {

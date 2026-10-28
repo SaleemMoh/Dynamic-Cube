@@ -154,7 +154,14 @@ export class ConfigTable {
       return;
     }
     await firstValueFrom(
-      this.dialog.open<ConfigEditor, ConfigEditorData, boolean>(ConfigEditor, { data: { type: this.type(), row }, autoFocus: 'first-tabbable', width: '52rem', maxWidth: '95vw' }).afterClosed(),
+      this.dialog
+        .open<unknown, ConfigEditorData, boolean>(this.type().editor ? await this.type().editor!() : ConfigEditor, {
+          data: { type: this.type(), row },
+          autoFocus: 'first-tabbable',
+          width: this.type().editor ? '96rem' : '52rem',
+          maxWidth: '96vw',
+        })
+        .afterClosed(),
     );
   }
 

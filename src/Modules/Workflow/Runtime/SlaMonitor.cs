@@ -21,7 +21,7 @@ internal sealed class SlaMonitor(WorkflowDbContext context, DefinitionCache defi
 
         var warnings = await context.Tasks.AsNoTracking()
             .Where(t => t.Status == WorkTaskStatus.Open && t.Sla == SlaState.OnTrack && t.WarnAt <= now && t.DueAt > now)
-            .Take(BatchSize).ToListAsync(cancellationToken);
+            .OrderBy(t => t.WarnAt).Take(BatchSize).ToListAsync(cancellationToken);
         foreach (var task in warnings)
         {
             changed += await ChangeAsync(task.InstanceId, async () =>
@@ -33,7 +33,7 @@ internal sealed class SlaMonitor(WorkflowDbContext context, DefinitionCache defi
 
         var overdue = await context.Tasks.AsNoTracking()
             .Where(t => t.Status == WorkTaskStatus.Open && t.Sla != SlaState.Breached && t.DueAt <= now)
-            .Take(BatchSize).ToListAsync(cancellationToken);
+            .OrderBy(t => t.DueAt).Take(BatchSize).ToListAsync(cancellationToken);
         var instanceIds = overdue.Select(t => t.InstanceId).Distinct().ToList();
         var versions = await context.Instances.AsNoTracking()
             .Where(i => instanceIds.Contains(i.Id))
@@ -51,7 +51,7 @@ internal sealed class SlaMonitor(WorkflowDbContext context, DefinitionCache defi
         // An instance's clock stands still while it waits for the applicant.
         var late = await context.Instances.AsNoTracking()
             .Where(i => i.Status == InstanceStatus.Running && i.Sla != SlaState.Breached && i.DueAt <= now)
-            .Select(i => i.Id)
+            .OrderBy(i => i.DueAt).Select(i => i.Id)
             .Take(BatchSize).ToListAsync(cancellationToken);
         foreach (var id in late)
         {

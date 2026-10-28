@@ -382,4 +382,140 @@ export const WORKFLOW_SECTIONS: ConfigSection[] = [
   },
 ];
 
-export const ALL_CONFIG_SECTIONS: ConfigSection[] = [...CONFIG_SECTIONS, ...INTEGRATION_SECTIONS, ...PARTY_SECTIONS, ...SERVICE_SECTIONS, ...WORKFLOW_SECTIONS];
+const fieldLabelsHint = t(
+  '[{"code": "city", "nameAr": "المدينة", "nameEn": "City", "isPublic": true}] — isPublic: يظهر في صفحة التحقق العامة',
+  '[{"code": "city", "nameAr": "المدينة", "nameEn": "City", "isPublic": true}] — isPublic: shown on the public verification page',
+);
+
+/** Document configuration screens (internal system → Documents); the print template editor shows a live preview. */
+export const DOCUMENT_SECTIONS: ConfigSection[] = [
+  {
+    path: 'document-types',
+    title: t('أنواع المستندات', 'Document types'),
+    resource: 'documents.config',
+    types: [
+      {
+        entityType: 'doc.document-type',
+        title: t('أنواع المستندات', 'Document types'),
+        key: 'code',
+        columns: ['numberPrefix', 'validityMonths', 'onePerHolder', 'templateCode'],
+        fields: [
+          { code: 'descriptionAr', type: 'textarea', label: t('الوصف بالعربية', 'Arabic description') },
+          { code: 'descriptionEn', type: 'textarea', label: t('الوصف بالإنجليزية', 'English description') },
+          { code: 'numberPrefix', type: 'text', label: t('بادئة الرقم', 'Number prefix'), required: true, hint: t('مثال: CC ← CC-2026-000001', 'e.g. CC → CC-2026-000001') },
+          { code: 'validityMonths', type: 'number', label: t('مدة الصلاحية (شهر)', 'Validity (months)'), hint: t('فارغ: لا ينتهي', 'Empty: does not expire') },
+          { code: 'onePerHolder', type: 'checkbox', label: t('مستند واحد لكل صاحب (الإصدار مرة أخرى يعدّله)', 'One per holder (issuing again amends it)') },
+          { code: 'amendResetsValidity', type: 'checkbox', label: t('التعديل يبدأ الصلاحية من جديد', 'An amendment restarts the validity'), visibleWhen: { '!!': [{ var: 'onePerHolder' }] } },
+          { code: 'templateCode', type: 'select', label: t('قالب الطباعة', 'Print template'), ref: 'doc.template', required: true },
+          json('alertDaysBefore', t('أيام التذكير قبل الانتهاء', 'Reminder days before expiry'), t('مثال: [90, 30]', 'e.g. [90, 30]')),
+          json('fields', t('حقول البيانات', 'Data fields'), fieldLabelsHint),
+          json('lineFields', t('حقول البنود', 'Line-item fields'), fieldLabelsHint),
+        ],
+      },
+    ],
+  },
+  {
+    path: 'document-templates',
+    title: t('قوالب الطباعة', 'Print templates'),
+    resource: 'documents.config',
+    types: [
+      {
+        entityType: 'doc.template',
+        title: t('قوالب الطباعة', 'Print templates'),
+        key: 'code',
+        columns: ['pageSize', 'landscape'],
+        editor: () => import('../../documents/template-editor').then((m) => m.DocumentTemplateEditor),
+        fields: [],
+      },
+    ],
+  },
+];
+
+/** Decision rule configuration screens (internal system → Decisions); versions have their own screen. */
+export const DECISION_SECTIONS: ConfigSection[] = [
+  {
+    path: 'rule-sets',
+    title: t('مجموعات القواعد', 'Rule sets'),
+    resource: 'decisions.config',
+    types: [
+      {
+        entityType: 'dec.rule-set',
+        title: t('مجموعات القواعد', 'Rule sets'),
+        key: 'code',
+        columns: ['engine', 'isPublic'],
+        fields: [
+          { code: 'descriptionAr', type: 'textarea', label: t('الوصف بالعربية', 'Arabic description') },
+          { code: 'descriptionEn', type: 'textarea', label: t('الوصف بالإنجليزية', 'English description') },
+          { code: 'engine', type: 'select', label: t('محرك القواعد', 'Engine'), required: true, defaultValue: 'RULES', optionsUrl: '/api/decisions/v1/engines' },
+          { code: 'isPublic', type: 'checkbox', label: t('حاسبة عامة في البوابة (بدون تسجيل دخول)', 'Public calculator on the portal (no sign-in)') },
+        ],
+      },
+    ],
+  },
+];
+
+const channels = [opt('IN_APP', 'داخل المنصة', 'In-app'), opt('EMAIL', 'البريد الإلكتروني', 'Email'), opt('SMS', 'رسالة نصية', 'SMS')];
+
+/** Notification screens (internal system → Notifications); the message template editor previews on an event's sample. */
+export const COMMUNICATION_SECTIONS: ConfigSection[] = [
+  {
+    path: 'notification-rules',
+    title: t('قواعد التنبيه', 'Notification rules'),
+    resource: 'communication.config',
+    types: [
+      {
+        entityType: 'com.rule',
+        title: t('قواعد التنبيه', 'Notification rules'),
+        key: 'code',
+        columns: ['eventCode', 'templateCode', 'channels'],
+        fields: [
+          { code: 'eventCode', type: 'select', label: t('الحدث', 'Event'), required: true, optionsUrl: '/api/communication/v1/events' },
+          { code: 'templateCode', type: 'select', label: t('قالب الرسالة', 'Message template'), ref: 'com.template', required: true },
+          { code: 'channels', type: 'select', label: t('القنوات', 'Channels'), options: channels, multiple: true, required: true, defaultValue: ['IN_APP'] },
+          json(
+            'recipients',
+            t('المستلمون', 'Recipients'),
+            t(
+              '[{"kind": "PARTY"}, {"kind": "ROLE", "value": "CLS_MANAGER"}, {"kind": "USER", "value": {"var": "task.assignee"}}] — PARTY: المتعامل (افتراضياً party.id)',
+              '[{"kind": "PARTY"}, {"kind": "ROLE", "value": "CLS_MANAGER"}, {"kind": "USER", "value": {"var": "task.assignee"}}] — PARTY: the party (party.id by default)',
+            ),
+            [{ kind: 'PARTY' }],
+          ),
+          json('condition', t('الشرط (JSONLogic)', 'Condition (JSONLogic)'), t('فارغ: دائماً. مثال: {"==": [{"var": "document.alertDays"}, 90]}', 'Empty: always. e.g. {"==": [{"var": "document.alertDays"}, 90]}'), null),
+          {
+            code: 'language',
+            type: 'select',
+            label: t('لغة البريد والرسائل النصية', 'Language of email and SMS'),
+            defaultValue: 'AR',
+            options: [opt('AR', 'العربية', 'Arabic'), opt('EN', 'الإنجليزية', 'English')],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    path: 'message-templates',
+    title: t('قوالب الرسائل', 'Message templates'),
+    resource: 'communication.config',
+    types: [
+      {
+        entityType: 'com.template',
+        title: t('قوالب الرسائل', 'Message templates'),
+        key: 'code',
+        editor: () => import('../../communication/message-template-editor').then((m) => m.MessageTemplateEditor),
+        fields: [],
+      },
+    ],
+  },
+];
+
+export const ALL_CONFIG_SECTIONS: ConfigSection[] = [
+  ...CONFIG_SECTIONS,
+  ...INTEGRATION_SECTIONS,
+  ...PARTY_SECTIONS,
+  ...SERVICE_SECTIONS,
+  ...WORKFLOW_SECTIONS,
+  ...DOCUMENT_SECTIONS,
+  ...DECISION_SECTIONS,
+  ...COMMUNICATION_SECTIONS,
+];

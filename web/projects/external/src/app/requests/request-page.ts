@@ -17,6 +17,7 @@ import {
   requestErrors,
 } from '@dynamic-cube/shared';
 import { firstValueFrom } from 'rxjs';
+import { RequestDocuments } from '../documents/request-documents';
 
 /**
  * A request: the wizard while it is a draft (saved at every step), then its answers, fees, status and history. A request
@@ -24,7 +25,7 @@ import { firstValueFrom } from 'rxjs';
  */
 @Component({
   selector: 'dc-request-page',
-  imports: [DatePipe, MatButtonModule, MatIconModule, MatProgressBarModule, RouterLink, FeeTable, LocalizePipe, RequestAnswers, ServiceWizard, TranslatePipe],
+  imports: [RequestDocuments, DatePipe, MatButtonModule, MatIconModule, MatProgressBarModule, RouterLink, FeeTable, LocalizePipe, RequestAnswers, ServiceWizard, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <a routerLink="/requests" class="dc-link">{{ 'requests.title' | dcTranslate }}</a>
@@ -100,6 +101,7 @@ import { firstValueFrom } from 'rxjs';
         </section>
       }
       @if (v.request.status !== 'DRAFT') {
+        <dc-request-documents [requestId]="v.request.id" />
         <section class="dc-card">
           <h2>{{ 'requests.history' | dcTranslate }}</h2>
           <ol class="dc-history" data-testid="request-history">

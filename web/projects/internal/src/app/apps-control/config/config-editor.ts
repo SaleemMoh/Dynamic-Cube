@@ -1,3 +1,4 @@
+import { HttpClient } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -67,6 +68,7 @@ export class ConfigEditor {
   protected readonly data = inject<ConfigEditorData>(MAT_DIALOG_DATA);
   protected readonly ref = inject(MatDialogRef<ConfigEditor, boolean>);
   private readonly api = inject(AppsControlApi);
+  private readonly http = inject(HttpClient);
   protected readonly drafts = inject(DraftsService);
   private readonly i18n = inject(I18nService);
 
@@ -77,11 +79,15 @@ export class ConfigEditor {
   protected readonly schema = rxResource({
     stream: () => {
       const fields = this.data.type.fields;
-      const lookups = fields.filter((f) => f.ref || f.refDomains);
+      const lookups = fields.filter((f) => f.ref || f.refDomains || f.optionsUrl);
+      const coded = (rows: { code: string; nameAr: string; nameEn: string }[]) =>
+        rows.map((r): FormOption => ({ value: r.code, label: { ar: `${r.nameAr} (${r.code})`, en: `${r.nameEn} (${r.code})` } }));
       const sources = lookups.map((f) =>
         f.ref
-          ? this.api.list(f.ref).pipe(map((rows) => rows.map((r): FormOption => ({ value: r.code, label: { ar: `${r.nameAr} (${r.code})`, en: `${r.nameEn} (${r.code})` } }))))
-          : this.api.classDomains(f.refDomains!).pipe(map((rows) => rows.map((r): FormOption => ({ value: r.code, label: { ar: r.nameAr, en: r.nameEn } })))),
+          ? this.api.list(f.ref).pipe(map(coded))
+          : f.optionsUrl
+            ? this.http.get<{ code: string; nameAr: string; nameEn: string }[]>(f.optionsUrl).pipe(map(coded))
+            : this.api.classDomains(f.refDomains!).pipe(map((rows) => rows.map((r): FormOption => ({ value: r.code, label: { ar: r.nameAr, en: r.nameEn } })))),
       );
       return (sources.length ? forkJoin(sources) : of([] as FormOption[][])).pipe(
         map((lists) => this.buildSchema(new Map(lookups.map((f, i) => [f.code, lists[i]])))),
@@ -143,7 +149,8 @@ export class ConfigEditor {
         return fromDate(raw);
       case 'json':
         try {
-          return fromJsonText(raw);
+          // An emptied list stays a list (the server's payload lists are not nullable).
+          return fromJsonText(raw) ?? (Array.isArray(field.defaultValue) ? [] : null);
         } catch {
           throw new Error(`${this.i18n.localize(field.label)}: ${this.i18n.translate('form.invalidJson')}`);
         }

@@ -1,3 +1,4 @@
+import { DOCUMENT_TRANSLATIONS } from '../documents/documents.translations';
 import { Language } from './language';
 
 export type TranslationDictionary = Record<Language, Record<string, string>>;
@@ -5,6 +6,7 @@ export type TranslationDictionary = Record<Language, Record<string, string>>;
 /** Texts used by shared components. Apps register their own dictionaries; UI texts become configurable in Apps Control. */
 export const SHARED_TRANSLATIONS: TranslationDictionary = {
   ar: {
+    ...DOCUMENT_TRANSLATIONS.ar,
     'language.switch': 'English',
     'language.switch.aria': 'التبديل إلى الإنجليزية',
     'form.required': 'هذا الحقل مطلوب',
@@ -86,6 +88,7 @@ export const SHARED_TRANSLATIONS: TranslationDictionary = {
     'footer.entity': 'الجهة',
   },
   en: {
+    ...DOCUMENT_TRANSLATIONS.en,
     'language.switch': 'العربية',
     'language.switch.aria': 'Switch to Arabic',
     'form.required': 'This field is required',
