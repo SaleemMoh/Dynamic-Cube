@@ -145,7 +145,7 @@ export class ConfigTable {
 
   protected async edit(listed: ConfigRow | null): Promise<void> {
     this.errors.set([]);
-    let row = listed;
+    let row: ConfigRow | null;
     try {
       // List rows may leave out nested data (a role's privileges, a user's roles); edit the full row.
       row = listed ? await firstValueFrom(this.api.get(this.type().entityType, listed.code)) : null;
