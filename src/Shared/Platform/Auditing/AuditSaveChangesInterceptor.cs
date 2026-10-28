@@ -150,6 +150,24 @@ public sealed class AuditSaveChangesInterceptor(ICurrentUser currentUser, TimePr
         return string.Join('|', key.Properties.Select(p => Convert.ToString(entry.Property(p.Name).CurrentValue, System.Globalization.CultureInfo.InvariantCulture)));
     }
 
-    private static JsonNode? ToNode(object? value) =>
-        value is null ? null : JsonSerializer.SerializeToNode(value, value.GetType());
+    private static JsonNode? ToNode(object? value)
+    {
+        switch (value)
+        {
+            case null:
+                return null;
+            case LTree path:
+                return JsonValue.Create(path.ToString());
+        }
+
+        try
+        {
+            return JsonSerializer.SerializeToNode(value, value.GetType());
+        }
+        catch (Exception ex) when (ex is NotSupportedException or InvalidOperationException)
+        {
+            // Provider-specific types without a JSON shape are recorded by their text form.
+            return JsonValue.Create(value.ToString());
+        }
+    }
 }

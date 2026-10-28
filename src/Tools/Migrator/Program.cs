@@ -1,4 +1,7 @@
 using DynamicCube.Hosting;
+using DynamicCube.Modules.AppsControl;
+using DynamicCube.Modules.AppsControl.Persistence;
+using DynamicCube.Modules.AppsControl.Seeding;
 using DynamicCube.Platform.Persistence;
 using DynamicCube.Platform.Security;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +14,7 @@ using Microsoft.Extensions.Logging;
 var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings { Args = args, ContentRootPath = AppContext.BaseDirectory });
 builder.AddDynamicCubeDefaults("MIGRATOR");
 builder.Services.AddSingleton<ICurrentUser>(new SystemUser("MIGRATOR"));
+builder.Services.AddAppsControl(builder.Configuration, managesUsers: false);
 
 using var host = builder.Build();
 var logger = host.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Migrator");
@@ -18,7 +22,15 @@ var logger = host.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Mi
 try
 {
     await MigrateAsync<PlatformDbContext>(host.Services, logger);
-    // Module contexts are appended here as modules are added (Apps Control first).
+    await MigrateAsync<AppsControlDbContext>(host.Services, logger);
+
+    // Product-owned configuration (SYSTEM rows) is inserted or refreshed on every run.
+    using (var scope = host.Services.CreateScope())
+    {
+        await scope.ServiceProvider.GetRequiredService<AppsControlSeeder>().SeedAsync(CancellationToken.None);
+        logger.LogInformation("Apps Control system data seeded");
+    }
+
     logger.LogInformation("All migrations applied");
     return 0;
 }

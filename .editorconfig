@@ -55,3 +55,7 @@ dotnet_diagnostic.CA1707.severity = none
 [**/Migrations/*.cs]
 generated_code = true
 dotnet_diagnostic.IDE0005.severity = none
+
+[tests/**/*.cs]
+# Test data is written inline for readability.
+dotnet_diagnostic.CA1861.severity = none

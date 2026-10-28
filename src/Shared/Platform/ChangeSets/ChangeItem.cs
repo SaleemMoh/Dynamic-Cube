@@ -38,4 +38,6 @@ public sealed class ChangeItem
 
     /// <summary>JSON snapshot after the change (null for delete).</summary>
     public string? After { get; private set; }
+
+    internal void Resequence(int sequence) => Sequence = sequence;
 }

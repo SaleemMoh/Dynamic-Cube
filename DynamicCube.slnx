@@ -10,6 +10,9 @@
   <Folder Name="/src/Hosts/Worker/">
     <Project Path="src/Hosts/Worker/DynamicCube.Worker.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/">
+    <Project Path="src/Modules/AppsControl/DynamicCube.Modules.AppsControl.csproj" />
+  </Folder>
   <Folder Name="/src/Shared/" />
   <Folder Name="/src/Shared/Hosting/">
     <Project Path="src/Shared/Hosting/DynamicCube.Hosting.csproj" />
@@ -21,7 +24,9 @@
   <Folder Name="/src/Tools/Migrator/">
     <Project Path="src/Tools/Migrator/DynamicCube.Migrator.csproj" />
   </Folder>
-  <Folder Name="/tests/" />
+  <Folder Name="/tests/">
+    <Project Path="tests/AppsControl.Tests/DynamicCube.Modules.AppsControl.Tests.csproj" />
+  </Folder>
   <Folder Name="/tests/Hosts.Tests/">
     <Project Path="tests/Hosts.Tests/DynamicCube.Hosts.Tests.csproj" />
   </Folder>

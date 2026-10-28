@@ -9,6 +9,7 @@ namespace DynamicCube.Platform.ChangeSets;
 public sealed class ChangeSetService<TContext>(
     TContext context,
     IEnumerable<IChangeApplier<TContext>> appliers,
+    IEnumerable<IChangeSetPublishHook<TContext>> publishHooks,
     IOptions<ChangeSetOptions> options,
     ICurrentUser currentUser,
     TimeProvider timeProvider)
@@ -29,17 +30,37 @@ public sealed class ChangeSetService<TContext>(
         await context.ChangeSets.Include(c => c.Items).SingleOrDefaultAsync(c => c.Id == id, cancellationToken)
             ?? throw new ChangeSetException($"Change set {id} was not found.");
 
-    public async Task<ChangeItem> AddItemAsync(Guid id, string entityType, string entityCode, ChangeOperation operation, string? before, string? after, CancellationToken cancellationToken)
+    public bool IsKnownEntityType(string entityType) => _appliers.ContainsKey(entityType);
+
+    /// <summary>
+    /// Validates and adds an item. The "before" snapshot is taken from the current state by the applier.
+    /// </summary>
+    public async Task<ChangeItem> AddItemAsync(Guid id, string entityType, string entityCode, ChangeOperation operation, string? payload, CancellationToken cancellationToken)
     {
-        if (!_appliers.ContainsKey(entityType))
+        if (!_appliers.TryGetValue(entityType, out var applier))
         {
             throw new ChangeSetException($"No change applier is registered for entity type '{entityType}'.");
         }
 
         var changeSet = await GetAsync(id, cancellationToken);
-        var item = changeSet.AddItem(entityType, entityCode, operation, before, after);
+        await applier.ValidateAsync(context, changeSet, entityCode, operation, payload, cancellationToken);
+        var before = await applier.GetSnapshotAsync(context, entityCode, cancellationToken);
+        var item = changeSet.AddItem(entityType, entityCode, operation, before, operation == ChangeOperation.Delete ? null : payload);
         await context.SaveChangesAsync(cancellationToken);
         return item;
+    }
+
+    public async Task RemoveItemAsync(Guid id, Guid itemId, CancellationToken cancellationToken)
+    {
+        var changeSet = await GetAsync(id, cancellationToken);
+        var item = changeSet.Items.SingleOrDefault(i => i.Id == itemId);
+        changeSet.RemoveItem(itemId);
+        if (item is not null)
+        {
+            context.Remove(item);
+        }
+
+        await context.SaveChangesAsync(cancellationToken);
     }
 
     public Task SubmitAsync(Guid id, CancellationToken cancellationToken) =>
@@ -54,6 +75,20 @@ public sealed class ChangeSetService<TContext>(
     public Task ReopenAsync(Guid id, CancellationToken cancellationToken) =>
         MutateAsync(id, c => c.Reopen(), cancellationToken);
 
+    /// <summary>Deletes a change set that was not published (draft, rejected, or approved but failed to publish).</summary>
+    public async Task DiscardAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var changeSet = await GetAsync(id, cancellationToken);
+        if (changeSet.Status is not (ChangeSetStatus.Draft or ChangeSetStatus.Rejected or ChangeSetStatus.Approved))
+        {
+            throw new ChangeSetException($"A {changeSet.Status} change set cannot be discarded.");
+        }
+
+        context.RemoveRange(changeSet.Items);
+        context.Remove(changeSet);
+        await context.SaveChangesAsync(cancellationToken);
+    }
+
     /// <summary>Applies all items in order and marks the change set published, atomically.</summary>
     public async Task PublishAsync(Guid id, CancellationToken cancellationToken)
     {
@@ -67,11 +102,27 @@ public sealed class ChangeSetService<TContext>(
                 throw new ChangeSetException($"No change applier is registered for entity type '{item.EntityType}'.");
             }
 
-            await applier.ApplyAsync(context, item, cancellationToken);
+            try
+            {
+                await applier.ApplyAsync(context, item, cancellationToken);
+                await context.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException ex)
+            {
+                throw new ChangeSetException(
+                    $"Item {item.Sequence} ({item.EntityType} '{item.EntityCode}') could not be applied: {ex.InnerException?.Message ?? ex.Message}",
+                    ex);
+            }
         }
 
         changeSet.MarkPublished(currentUser.UserId, timeProvider.GetUtcNow());
         await context.SaveChangesAsync(cancellationToken);
+
+        foreach (var hook in publishHooks)
+        {
+            await hook.OnPublishedAsync(context, changeSet, cancellationToken);
+        }
+
         await transaction.CommitAsync(cancellationToken);
     }
 

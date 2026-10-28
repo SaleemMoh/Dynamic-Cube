@@ -24,7 +24,7 @@ public sealed class ChangeSetPublishTests(PostgresFixture database)
             var changes = scope.ServiceProvider.GetRequiredService<ChangeSetService<TestModuleDbContext>>();
             var changeSet = await changes.CreateAsync("test.settings", "Add setting", ct);
             id = changeSet.Id;
-            await changes.AddItemAsync(id, EntityType, code, ChangeOperation.Create, null, """{ "valueAr": "نعم", "valueEn": "yes" }""", ct);
+            await changes.AddItemAsync(id, EntityType, code, ChangeOperation.Create, """{ "valueAr": "نعم", "valueEn": "yes" }""", ct);
             await changes.SubmitAsync(id, ct);
         }
 
@@ -67,8 +67,8 @@ public sealed class ChangeSetPublishTests(PostgresFixture database)
             var changes = scope.ServiceProvider.GetRequiredService<ChangeSetService<TestModuleDbContext>>();
             var changeSet = await changes.CreateAsync("test.unchecked", "Two settings", ct);
             id = changeSet.Id;
-            await changes.AddItemAsync(id, EntityType, code, ChangeOperation.Create, null, """{ "valueAr": "أ", "valueEn": "a" }""", ct);
-            await changes.AddItemAsync(id, EntityType, "BOOM", ChangeOperation.Create, null, """{ "valueAr": "ب", "valueEn": "b" }""", ct);
+            await changes.AddItemAsync(id, EntityType, code, ChangeOperation.Create, """{ "valueAr": "أ", "valueEn": "a" }""", ct);
+            await changes.AddItemAsync(id, EntityType, "BOOM", ChangeOperation.Create, """{ "valueAr": "ب", "valueEn": "b" }""", ct);
             await changes.SubmitAsync(id, ct);
         }
 
@@ -96,6 +96,6 @@ public sealed class ChangeSetPublishTests(PostgresFixture database)
         var changeSet = await changes.CreateAsync("test.settings", "Bad item", ct);
 
         await Should.ThrowAsync<ChangeSetException>(() =>
-            changes.AddItemAsync(changeSet.Id, "unknown.type", "X", ChangeOperation.Create, null, "{}", ct));
+            changes.AddItemAsync(changeSet.Id, "unknown.type", "X", ChangeOperation.Create, "{}", ct));
     }
 }

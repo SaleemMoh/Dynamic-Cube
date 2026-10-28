@@ -76,6 +76,22 @@ public sealed class ChangeSet
         return item;
     }
 
+    public void RemoveItem(Guid itemId)
+    {
+        EnsureStatus(ChangeSetStatus.Draft, "remove items");
+        var index = _items.FindIndex(i => i.Id == itemId);
+        if (index < 0)
+        {
+            throw new ChangeSetException($"Item {itemId} is not part of this change set.");
+        }
+
+        _items.RemoveAt(index);
+        for (var i = index; i < _items.Count; i++)
+        {
+            _items[i].Resequence(i + 1);
+        }
+    }
+
     public void Submit(string userId, DateTimeOffset now)
     {
         EnsureStatus(ChangeSetStatus.Draft, "submit");
