@@ -1,6 +1,7 @@
 using DynamicCube.Hosting;
 using DynamicCube.Modules.AppsControl;
 using DynamicCube.Modules.Integration;
+using DynamicCube.Modules.Parties;
 
 // Internal API: employees, builders and Apps Control. Reachable only from the entity's internal network.
 var builder = WebApplication.CreateBuilder(args);
@@ -12,11 +13,13 @@ builder.AddDynamicCubeApi(new ApiHostOptions
 });
 builder.Services.AddAppsControl(builder.Configuration, managesUsers: true);
 builder.Services.AddIntegration(builder.Configuration);
+builder.Services.AddParties(builder.Configuration);
 
 var app = builder.Build();
 app.MapDynamicCubeDefaults();
 app.MapAppsControlInternal();
 app.MapIntegrationInternal();
+app.MapPartiesInternal();
 
 app.Run();
 

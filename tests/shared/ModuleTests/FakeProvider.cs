@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using System.Net;
 using System.Text;
 
-namespace DynamicCube.Modules.Integration.Tests.Infrastructure;
+namespace DynamicCube.Tests.Infrastructure;
 
 public sealed record RecordedRequest(HttpMethod Method, Uri Url, string? Authorization, string? Body);
 

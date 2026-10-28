@@ -13,6 +13,7 @@
   <Folder Name="/src/Modules/">
     <Project Path="src/Modules/AppsControl/DynamicCube.Modules.AppsControl.csproj" />
     <Project Path="src/Modules/Integration/DynamicCube.Modules.Integration.csproj" />
+    <Project Path="src/Modules/Parties/DynamicCube.Modules.Parties.csproj" />
   </Folder>
   <Folder Name="/src/Shared/" />
   <Folder Name="/src/Shared/Hosting/">
@@ -28,6 +29,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/AppsControl.Tests/DynamicCube.Modules.AppsControl.Tests.csproj" />
     <Project Path="tests/Integration.Tests/DynamicCube.Modules.Integration.Tests.csproj" />
+    <Project Path="tests/Parties.Tests/DynamicCube.Modules.Parties.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/Hosts.Tests/">
     <Project Path="tests/Hosts.Tests/DynamicCube.Hosts.Tests.csproj" />

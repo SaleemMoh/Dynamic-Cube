@@ -1,14 +1,14 @@
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 
-namespace DynamicCube.Modules.Integration.Runtime;
+namespace DynamicCube.Platform.Integration;
 
 /// <summary>
 /// Minimal paths into provider JSON: <c>data.result.Licenses[0].Commercial_NO</c>, <c>Licenses[*].Commercial_NO</c>
 /// (all elements). A property read on an array reads its first element, so <c>statusDetails.code</c> works whether the
 /// provider sends <c>statusDetails</c> as an object (NIC) or as a one-element array (MCI).
 /// </summary>
-internal static partial class JsonPaths
+public static partial class JsonPaths
 {
     [GeneratedRegex(@"^[A-Za-z_$][\w$-]*(\[(\d+|\*)\])*(\.[A-Za-z_$][\w$-]*(\[(\d+|\*)\])*)*$")]
     private static partial Regex ReadPattern();

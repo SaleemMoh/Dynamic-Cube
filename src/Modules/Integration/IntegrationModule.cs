@@ -18,6 +18,9 @@ public static class IntegrationModule
 {
     public const string ApiPrefix = "/api/integration/v1";
 
+    /// <summary>Named HttpClient used for provider calls (tests replace its primary handler).</summary>
+    public const string HttpClientName = "dynamic-cube-integration";
+
     /// <summary>Registers the Integration Manager: configuration (change sets), the gateway and the call log.</summary>
     public static IServiceCollection AddIntegration(this IServiceCollection services, IConfiguration configuration)
     {
@@ -28,7 +31,7 @@ public static class IntegrationModule
         services.AddChangeArea(IntegrationChangeTypes.Area, "التكاملات", "Integrations");
         services.AddSystemCatalog(IntegrationCatalog.Contribution);
         services.AddMemoryCache();
-        services.AddHttpClient(IntegrationGateway.HttpClientName, client => client.Timeout = Timeout.InfiniteTimeSpan);
+        services.AddHttpClient(HttpClientName, client => client.Timeout = Timeout.InfiniteTimeSpan);
 
         AddApplier<ProviderApplier>(services);
         AddApplier<ConnectionApplier>(services);

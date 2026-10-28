@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json.Nodes;
 using DynamicCube.Modules.Integration.Domain;
+using DynamicCube.Platform.Integration;
 using DynamicCube.Platform.Security;
 using Microsoft.Extensions.Caching.Memory;
 

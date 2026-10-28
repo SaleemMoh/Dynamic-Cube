@@ -4,6 +4,9 @@ using DynamicCube.Modules.AppsControl.Persistence;
 using DynamicCube.Modules.AppsControl.Seeding;
 using DynamicCube.Modules.Integration;
 using DynamicCube.Modules.Integration.Persistence;
+using DynamicCube.Modules.Parties;
+using DynamicCube.Modules.Parties.Persistence;
+using DynamicCube.Modules.Parties.Seeding;
 using DynamicCube.Platform.Persistence;
 using DynamicCube.Platform.Security;
 using Microsoft.EntityFrameworkCore;
@@ -18,6 +21,7 @@ builder.AddDynamicCubeDefaults("MIGRATOR");
 builder.Services.AddSingleton<ICurrentUser>(new SystemUser("MIGRATOR"));
 builder.Services.AddAppsControl(builder.Configuration, managesUsers: false);
 builder.Services.AddIntegration(builder.Configuration);
+builder.Services.AddParties(builder.Configuration);
 
 using var host = builder.Build();
 var logger = host.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Migrator");
@@ -27,11 +31,13 @@ try
     await MigrateAsync<PlatformDbContext>(host.Services, logger);
     await MigrateAsync<AppsControlDbContext>(host.Services, logger);
     await MigrateAsync<IntegrationDbContext>(host.Services, logger);
+    await MigrateAsync<PartiesDbContext>(host.Services, logger);
 
     // Product-owned configuration (SYSTEM rows) is inserted or refreshed on every run.
     using (var scope = host.Services.CreateScope())
     {
         await scope.ServiceProvider.GetRequiredService<AppsControlSeeder>().SeedAsync(CancellationToken.None);
+        await scope.ServiceProvider.GetRequiredService<PartiesSeeder>().SeedAsync(CancellationToken.None);
         logger.LogInformation("System data seeded");
     }
 

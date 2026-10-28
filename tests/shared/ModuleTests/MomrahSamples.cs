@@ -1,13 +1,13 @@
 using DynamicCube.Modules.Integration.Changes;
 using DynamicCube.Modules.Integration.Domain;
-using DynamicCube.Modules.Integration.Tests.Infrastructure;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Integration;
+using DynamicCube.Tests.Infrastructure;
 
-namespace DynamicCube.Modules.Integration.Tests;
+namespace DynamicCube.Tests.Infrastructure;
 
 /// <summary>MoMRAH gateway configuration and sample responses as given in the MCI and NIC integration guides.</summary>
-internal static class MomrahSamples
+public static class MomrahSamples
 {
     public const string CrInformation = """
         {
@@ -54,14 +54,14 @@ internal static class MomrahSamples
         ],
     };
 
-    public static OperationPayload CrByIdNumber(string connection, string envelope, int cacheSeconds = 0) => new()
+    public static OperationPayload CrByIdNumber(string connection, string envelope, int cacheSeconds = 0, string path = "/v1/MCI-DIP/cr-information-id-number/{idNumber}") => new()
     {
         NameAr = "السجلات التجارية برقم الهوية",
         NameEn = "CRs by ID number",
         ConnectionCode = connection,
         EnvelopeProfileCode = envelope,
         Method = "GET",
-        PathTemplate = "/v1/MCI-DIP/cr-information-id-number/{idNumber}",
+        PathTemplate = path,
         Parameters = [new() { Name = "idNumber", Location = ParameterLocation.Path, IsMasked = true }],
         Outputs =
         [

@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using DynamicCube.Modules.Integration.Runtime;
+using DynamicCube.Platform.Integration;
 using Shouldly;
 
 namespace DynamicCube.Modules.Integration.Tests;

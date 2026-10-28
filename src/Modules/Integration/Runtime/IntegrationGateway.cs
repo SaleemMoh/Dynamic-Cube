@@ -35,7 +35,7 @@ internal sealed partial class IntegrationGateway(
     TimeProvider clock,
     ILogger<IntegrationGateway> logger) : IIntegrationGateway
 {
-    public const string HttpClientName = "dynamic-cube-integration";
+    public const string HttpClientName = IntegrationModule.HttpClientName;
 
     private const string UnavailableAr = "الخدمة الخارجية غير متاحة حالياً، يرجى المحاولة لاحقاً.";
     private const string UnavailableEn = "The external service is not available right now. Please try again later.";

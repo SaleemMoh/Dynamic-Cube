@@ -7,7 +7,7 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using DynamicCube.Modules.Integration.Changes;
 using DynamicCube.Modules.Integration.Runtime;
-using DynamicCube.Modules.Integration.Tests.Infrastructure;
+using DynamicCube.Tests.Infrastructure;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -20,7 +20,7 @@ using Shouldly;
 namespace DynamicCube.Modules.Integration.Tests;
 
 /// <summary>Integration configuration through the Apps Control change-set API, then the test console and call log.</summary>
-public sealed class ApiTests(IntegrationFixture fixture) : IAsyncLifetime
+public sealed class ApiTests(DatabaseFixture fixture) : IAsyncLifetime
 {
     private readonly FakeProvider _provider = new();
     private WebApplicationFactory<InternalApi::Program> _factory = null!;
@@ -39,7 +39,7 @@ public sealed class ApiTests(IntegrationFixture fixture) : IAsyncLifetime
             builder.UseSetting($"Secrets:{TestHost.SecretName}:clientSecret", "consumer-secret");
             builder.ConfigureTestServices(services =>
             {
-                services.AddHttpClient(IntegrationGateway.HttpClientName).ConfigurePrimaryHttpMessageHandler(() => _provider);
+                services.AddHttpClient(IntegrationModule.HttpClientName).ConfigurePrimaryHttpMessageHandler(() => _provider);
                 services
                     .AddAuthentication(options =>
                     {

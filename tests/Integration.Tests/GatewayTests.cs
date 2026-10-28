@@ -3,16 +3,16 @@ using DynamicCube.Modules.Integration.Changes;
 using DynamicCube.Modules.Integration.Domain;
 using DynamicCube.Modules.Integration.Persistence;
 using DynamicCube.Modules.Integration.Runtime;
-using DynamicCube.Modules.Integration.Tests.Infrastructure;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Integration;
+using DynamicCube.Tests.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 
 namespace DynamicCube.Modules.Integration.Tests;
 
-public sealed class GatewayTests(IntegrationFixture fixture) : IAsyncLifetime
+public sealed class GatewayTests(DatabaseFixture fixture) : IAsyncLifetime
 {
     private TestHost _host = null!;
 

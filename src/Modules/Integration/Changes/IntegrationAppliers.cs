@@ -2,6 +2,7 @@ using DynamicCube.Modules.Integration.Domain;
 using DynamicCube.Modules.Integration.Persistence;
 using DynamicCube.Modules.Integration.Runtime;
 using DynamicCube.Platform.ChangeSets;
+using DynamicCube.Platform.Integration;
 using Microsoft.EntityFrameworkCore;
 
 namespace DynamicCube.Modules.Integration.Changes;

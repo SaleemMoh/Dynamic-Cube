@@ -1,13 +1,15 @@
 using System.Text.Json;
 using DynamicCube.Modules.AppsControl;
-using DynamicCube.Modules.Integration.Runtime;
+using DynamicCube.Modules.Integration;
+using DynamicCube.Modules.Parties;
+
 using DynamicCube.Platform;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace DynamicCube.Modules.Integration.Tests.Infrastructure;
+namespace DynamicCube.Tests.Infrastructure;
 
 public sealed record Change(string EntityType, string EntityCode, ChangeOperation Operation, object? Payload);
 
@@ -25,7 +27,7 @@ public sealed class TestUser(string userName) : ICurrentUser
     public string AppCode => "INTERNAL";
 }
 
-/// <summary>Platform, Apps Control and Integration services against the test database, with a fake provider gateway.</summary>
+/// <summary>Platform and module services against the test database, with a fake provider gateway.</summary>
 public sealed class TestHost : IAsyncDisposable
 {
     public const string SecretName = "MOMRAH_GATEWAY";
@@ -33,7 +35,7 @@ public sealed class TestHost : IAsyncDisposable
     private readonly TestUser _user = new("admin");
     private readonly ServiceProvider _services;
 
-    public TestHost(string connectionString)
+    public TestHost(string connectionString, Action<IServiceCollection>? configure = null)
     {
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
         {
@@ -51,8 +53,10 @@ public sealed class TestHost : IAsyncDisposable
         services.AddPlatform(configuration);
         services.AddAppsControl(configuration, managesUsers: true);
         services.AddIntegration(configuration);
+        services.AddParties(configuration);
+        configure?.Invoke(services);
         services.AddSingleton(Provider);
-        services.AddHttpClient(IntegrationGateway.HttpClientName).ConfigurePrimaryHttpMessageHandler(sp => sp.GetRequiredService<FakeProvider>());
+        services.AddHttpClient(IntegrationModule.HttpClientName).ConfigurePrimaryHttpMessageHandler(sp => sp.GetRequiredService<FakeProvider>());
         _services = services.BuildServiceProvider(validateScopes: true);
     }
 
