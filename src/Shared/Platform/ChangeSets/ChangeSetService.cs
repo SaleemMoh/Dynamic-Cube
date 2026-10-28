@@ -1,7 +1,6 @@
 using DynamicCube.Platform.Persistence;
 using DynamicCube.Platform.Security;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 
 namespace DynamicCube.Platform.ChangeSets;
 
@@ -10,7 +9,7 @@ public sealed class ChangeSetService<TContext>(
     TContext context,
     IEnumerable<IChangeApplier<TContext>> appliers,
     IEnumerable<IChangeSetPublishHook<TContext>> publishHooks,
-    IOptions<ChangeSetOptions> options,
+    IChangeApprovalPolicy approvalPolicy,
     ICurrentUser currentUser,
     TimeProvider timeProvider)
     where TContext : ModuleDbContext
@@ -20,9 +19,38 @@ public sealed class ChangeSetService<TContext>(
 
     public async Task<ChangeSet> CreateAsync(string area, string title, CancellationToken cancellationToken)
     {
-        var changeSet = ChangeSet.Create(area, title, options.Value.RequiresApproval(area), currentUser.UserId, timeProvider.GetUtcNow());
+        var changeSet = ChangeSet.Create(area, title, await approvalPolicy.RequiresApprovalAsync(area, cancellationToken), currentUser.UserId, timeProvider.GetUtcNow());
         context.ChangeSets.Add(changeSet);
         await context.SaveChangesAsync(cancellationToken);
+        return changeSet;
+    }
+
+    /// <summary>
+    /// For areas without approval: records one change as a change set (so its before/after is kept like any other) and
+    /// publishes it at once. Nothing is stored when the change is invalid.
+    /// </summary>
+    public async Task<ChangeSet> SaveAndPublishAsync(string area, string title, string entityType, string entityCode, ChangeOperation operation, string? payload, CancellationToken cancellationToken)
+    {
+        if (await approvalPolicy.RequiresApprovalAsync(area, cancellationToken))
+        {
+            throw new ChangeSetException($"Changes in area '{area}' need approval; add them to a change set and submit it.");
+        }
+
+        if (!_appliers.TryGetValue(entityType, out var applier))
+        {
+            throw new ChangeSetException($"No change applier is registered for entity type '{entityType}'.");
+        }
+
+        var now = timeProvider.GetUtcNow();
+        var changeSet = ChangeSet.Create(area, title, requiresApproval: false, currentUser.UserId, now);
+        await applier.ValidateAsync(context, changeSet, entityCode, operation, payload, cancellationToken);
+        var before = await applier.GetSnapshotAsync(context, entityCode, cancellationToken);
+        changeSet.AddItem(entityType, entityCode, operation, before, operation == ChangeOperation.Delete ? null : payload);
+        changeSet.Submit(currentUser.UserId, now);
+        context.ChangeSets.Add(changeSet);
+        await context.SaveChangesAsync(cancellationToken);
+
+        await PublishAsync(changeSet.Id, cancellationToken);
         return changeSet;
     }
 

@@ -1,3 +1,4 @@
+using DynamicCube.Modules.AppsControl.Changes;
 using DynamicCube.Modules.AppsControl.Domain;
 using DynamicCube.Modules.AppsControl.Lookups;
 using DynamicCube.Modules.AppsControl.Persistence;
@@ -23,6 +24,13 @@ public sealed class AppsControlSeeder(AppsControlDbContext context)
         if (!await context.Entities.AnyAsync(cancellationToken))
         {
             context.Entities.Add(new GovernmentEntity { Code = GovernmentEntity.SingletonCode, NameAr = "الجهة", NameEn = "Entity" });
+        }
+
+        // Approval policy rows belong to the entity: added with the product default when missing, never overwritten.
+        var areas = await context.ChangeAreas.Select(a => a.Code).ToListAsync(cancellationToken);
+        foreach (var (code, nameAr, nameEn, requiresApproval) in AppsControlAreas.Configurable.Where(a => !areas.Contains(a.Code)))
+        {
+            context.ChangeAreas.Add(new ChangeArea { Code = code, NameAr = nameAr, NameEn = nameEn, RequiresApproval = requiresApproval });
         }
 
         var apps = await UpsertAsync(context.Apps, SystemCatalog.Apps.Select(a => (a.Code, a.NameAr, a.NameEn, (Action<App>)(e =>

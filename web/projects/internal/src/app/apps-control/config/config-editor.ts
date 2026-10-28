@@ -50,7 +50,7 @@ export interface ConfigEditorData {
         <dc-dynamic-form
           [schema]="schema.value()"
           [initialValue]="initial"
-          [submitLabel]="'config.addToDraft' | dcTranslate"
+          [submitLabel]="drafts.saveLabel(data.type.entityType) | dcTranslate"
           [cancellable]="true"
           (submitted)="save($event)"
           (cancelled)="ref.close()"
@@ -65,7 +65,7 @@ export class ConfigEditor {
   protected readonly data = inject<ConfigEditorData>(MAT_DIALOG_DATA);
   protected readonly ref = inject(MatDialogRef<ConfigEditor, boolean>);
   private readonly api = inject(AppsControlApi);
-  private readonly drafts = inject(DraftsService);
+  protected readonly drafts = inject(DraftsService);
   private readonly i18n = inject(I18nService);
 
   protected readonly errors = signal<string[]>([]);

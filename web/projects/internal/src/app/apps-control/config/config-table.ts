@@ -137,6 +137,9 @@ export class ConfigTable {
     if (value === null || value === undefined) {
       return '';
     }
+    if (typeof value === 'boolean') {
+      return value ? '✓' : '—';
+    }
     return Array.isArray(value) ? value.map((v) => (typeof v === 'object' ? JSON.stringify(v) : String(v))).join('، ') : typeof value === 'object' ? JSON.stringify(value) : String(value);
   }
 

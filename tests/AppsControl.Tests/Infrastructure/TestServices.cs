@@ -13,7 +13,6 @@ public static class TestServices
         {
             ["ConnectionStrings:DynamicCube"] = connectionString,
             ["ChangeSets:RequireApprovalByDefault"] = "true",
-            ["ChangeSets:Areas:apps.ui-texts"] = "false",
             ["AppsControl:BootstrapUsers:admin:0"] = "SYSTEM_ADMIN",
             ["AppsControl:BootstrapUsers:maker:0"] = "CONFIG_MAKER",
             ["AppsControl:BootstrapUsers:checker:0"] = "CONFIG_CHECKER",

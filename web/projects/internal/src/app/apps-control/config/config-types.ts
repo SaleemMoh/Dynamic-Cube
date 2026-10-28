@@ -42,11 +42,31 @@ export interface ConfigSection {
 const t = (ar: string, en: string): LocalizedText => ({ ar, en });
 const opt = (value: string, ar: string, en: string): FormOption => ({ value, label: t(ar, en) });
 
-const appRef: ConfigField = { code: 'appCode', type: 'select', label: t('التطبيق', 'App'), ref: 'apps.app' };
-const displayOrder: ConfigField = { code: 'displayOrder', type: 'number', label: t('الترتيب', 'Display order'), defaultValue: 0 };
-const effectiveFrom: ConfigField = { code: 'effectiveFrom', type: 'date', label: t('يسري من', 'Effective from') };
-const effectiveTo: ConfigField = { code: 'effectiveTo', type: 'date', label: t('يسري حتى', 'Effective to') };
-const actions = ['VIEW', 'CREATE', 'EDIT', 'DELETE', 'APPROVE', 'EXPORT', 'PRINT'].map((a) => opt(a, a, a));
+const appRef: ConfigField = {
+  code: 'appCode',
+  type: 'select',
+  label: t('التطبيق', 'App'),
+  ref: 'apps.app',
+};
+const displayOrder: ConfigField = {
+  code: 'displayOrder',
+  type: 'number',
+  label: t('الترتيب', 'Display order'),
+  defaultValue: 0,
+};
+const effectiveFrom: ConfigField = {
+  code: 'effectiveFrom',
+  type: 'date',
+  label: t('يسري من', 'Effective from'),
+};
+const effectiveTo: ConfigField = {
+  code: 'effectiveTo',
+  type: 'date',
+  label: t('يسري حتى', 'Effective to'),
+};
+const actions = ['VIEW', 'CREATE', 'EDIT', 'DELETE', 'APPROVE', 'EXPORT', 'PRINT'].map((a) =>
+  opt(a, a, a),
+);
 
 /** Apps Control screens built from field definitions. Nested lists are edited as JSON until visual editors arrive. */
 export const CONFIG_SECTIONS: ConfigSection[] = [
@@ -61,7 +81,12 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
         key: { singleton: 'ENTITY' },
         columns: ['entityKind'],
         fields: [
-          { code: 'entityKind', type: 'select', label: t('نوع الجهة', 'Entity kind'), refDomains: 'ENTITY_KIND' },
+          {
+            code: 'entityKind',
+            type: 'select',
+            label: t('نوع الجهة', 'Entity kind'),
+            refDomains: 'ENTITY_KIND',
+          },
           { code: 'unifiedNumber', type: 'text', label: t('الرقم الموحد', 'Unified number') },
           { code: 'crNumber', type: 'text', label: t('السجل التجاري', 'CR number') },
         ],
@@ -72,11 +97,40 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
         key: { singleton: 'INSTALLATION' },
         columns: ['defaultLanguage', 'timeZone'],
         fields: [
-          { code: 'systemType', type: 'text', label: t('نوع البيئة', 'System type'), required: true },
-          { code: 'defaultLanguage', type: 'select', label: t('اللغة الافتراضية', 'Default language'), options: [opt('ar', 'العربية', 'Arabic'), opt('en', 'الإنجليزية', 'English')], required: true },
-          { code: 'timeZone', type: 'text', label: t('المنطقة الزمنية', 'Time zone'), required: true },
-          { code: 'calendarDisplay', type: 'select', label: t('عرض التقويم', 'Calendar display'), options: [opt('GREGORIAN', 'ميلادي', 'Gregorian'), opt('HIJRI', 'هجري', 'Hijri'), opt('BOTH', 'كلاهما', 'Both')] },
-          { code: 'weekendDays', type: 'json', label: t('أيام العطلة (1=الاثنين … 7=الأحد)', 'Weekend days (1=Mon … 7=Sun)') },
+          {
+            code: 'systemType',
+            type: 'text',
+            label: t('نوع البيئة', 'System type'),
+            required: true,
+          },
+          {
+            code: 'defaultLanguage',
+            type: 'select',
+            label: t('اللغة الافتراضية', 'Default language'),
+            options: [opt('ar', 'العربية', 'Arabic'), opt('en', 'الإنجليزية', 'English')],
+            required: true,
+          },
+          {
+            code: 'timeZone',
+            type: 'text',
+            label: t('المنطقة الزمنية', 'Time zone'),
+            required: true,
+          },
+          {
+            code: 'calendarDisplay',
+            type: 'select',
+            label: t('عرض التقويم', 'Calendar display'),
+            options: [
+              opt('GREGORIAN', 'ميلادي', 'Gregorian'),
+              opt('HIJRI', 'هجري', 'Hijri'),
+              opt('BOTH', 'كلاهما', 'Both'),
+            ],
+          },
+          {
+            code: 'weekendDays',
+            type: 'json',
+            label: t('أيام العطلة (1=الاثنين … 7=الأحد)', 'Weekend days (1=Mon … 7=Sun)'),
+          },
           { code: 'copyright', type: 'text', label: t('حقوق النشر', 'Copyright') },
         ],
       },
@@ -86,7 +140,18 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
         key: 'code',
         columns: ['appType'],
         fields: [
-          { code: 'appType', type: 'select', label: t('النوع', 'Type'), options: [opt('INTERNAL', 'داخلي', 'Internal'), opt('EXTERNAL', 'خارجي', 'External'), opt('FIELD', 'ميداني', 'Field'), opt('OTHER', 'أخرى', 'Other')], required: true },
+          {
+            code: 'appType',
+            type: 'select',
+            label: t('النوع', 'Type'),
+            options: [
+              opt('INTERNAL', 'داخلي', 'Internal'),
+              opt('EXTERNAL', 'خارجي', 'External'),
+              opt('FIELD', 'ميداني', 'Field'),
+              opt('OTHER', 'أخرى', 'Other'),
+            ],
+            required: true,
+          },
           { code: 'baseUrl', type: 'text', label: t('الرابط', 'Base URL') },
           displayOrder,
         ],
@@ -104,9 +169,25 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
         key: 'code',
         columns: ['typeCode', 'parentCode'],
         fields: [
-          { code: 'typeCode', type: 'select', label: t('نوع الوحدة', 'Unit type'), ref: 'apps.org-unit-type', required: true },
-          { code: 'parentCode', type: 'select', label: t('الوحدة الأعلى', 'Parent unit'), ref: 'apps.org-unit' },
-          { code: 'attributes', type: 'json', label: t('خصائص (المنطقة، الأمانة…)', 'Attributes (region, amanah…)'), defaultValue: {} },
+          {
+            code: 'typeCode',
+            type: 'select',
+            label: t('نوع الوحدة', 'Unit type'),
+            ref: 'apps.org-unit-type',
+            required: true,
+          },
+          {
+            code: 'parentCode',
+            type: 'select',
+            label: t('الوحدة الأعلى', 'Parent unit'),
+            ref: 'apps.org-unit',
+          },
+          {
+            code: 'attributes',
+            type: 'json',
+            label: t('خصائص (المنطقة، الأمانة…)', 'Attributes (region, amanah…)'),
+            defaultValue: {},
+          },
           effectiveFrom,
           effectiveTo,
         ],
@@ -116,7 +197,16 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
         title: t('أنواع الوحدات', 'Unit types'),
         key: 'code',
         columns: ['allowedParentTypes'],
-        fields: [displayOrder, { code: 'allowedParentTypes', type: 'select', multiple: true, label: t('الأنواع المسموح بها كأعلى', 'Allowed parent types'), ref: 'apps.org-unit-type' }],
+        fields: [
+          displayOrder,
+          {
+            code: 'allowedParentTypes',
+            type: 'select',
+            multiple: true,
+            label: t('الأنواع المسموح بها كأعلى', 'Allowed parent types'),
+            ref: 'apps.org-unit-type',
+          },
+        ],
       },
       { entityType: 'apps.position', title: t('المسميات', 'Positions'), key: 'code', fields: [] },
     ],
@@ -135,10 +225,42 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
           { code: 'email', type: 'text', label: t('البريد الإلكتروني', 'Email') },
           { code: 'mobile', type: 'text', label: t('الجوال', 'Mobile') },
           { code: 'nationalId', type: 'text', label: t('رقم الهوية', 'National ID') },
-          { code: 'status', type: 'select', label: t('الحالة', 'Status'), options: [opt('ACTIVE', 'نشط', 'Active'), opt('LOCKED', 'مقفل', 'Locked'), opt('DISABLED', 'معطل', 'Disabled')], required: true, defaultValue: 'ACTIVE' },
-          { code: 'preferredLanguage', type: 'select', label: t('اللغة', 'Language'), options: [opt('ar', 'العربية', 'Arabic'), opt('en', 'الإنجليزية', 'English')] },
-          { code: 'roles', type: 'refList', multiple: true, itemKey: 'roleCode', label: t('الأدوار', 'Roles'), ref: 'apps.role' },
-          { code: 'assignments', type: 'json', label: t('التكليفات (الوحدة والمسمى)', 'Assignments (unit and position)'), defaultValue: [], hint: t('[{"orgUnitCode": "...", "positionCode": "...", "isPrimary": true}]', '[{"orgUnitCode": "...", "positionCode": "...", "isPrimary": true}]') },
+          {
+            code: 'status',
+            type: 'select',
+            label: t('الحالة', 'Status'),
+            options: [
+              opt('ACTIVE', 'نشط', 'Active'),
+              opt('LOCKED', 'مقفل', 'Locked'),
+              opt('DISABLED', 'معطل', 'Disabled'),
+            ],
+            required: true,
+            defaultValue: 'ACTIVE',
+          },
+          {
+            code: 'preferredLanguage',
+            type: 'select',
+            label: t('اللغة', 'Language'),
+            options: [opt('ar', 'العربية', 'Arabic'), opt('en', 'الإنجليزية', 'English')],
+          },
+          {
+            code: 'roles',
+            type: 'refList',
+            multiple: true,
+            itemKey: 'roleCode',
+            label: t('الأدوار', 'Roles'),
+            ref: 'apps.role',
+          },
+          {
+            code: 'assignments',
+            type: 'json',
+            label: t('التكليفات (الوحدة والمسمى)', 'Assignments (unit and position)'),
+            defaultValue: [],
+            hint: t(
+              '[{"orgUnitCode": "...", "positionCode": "...", "isPrimary": true}]',
+              '[{"orgUnitCode": "...", "positionCode": "...", "isPrimary": true}]',
+            ),
+          },
         ],
       },
     ],
@@ -156,8 +278,26 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
         fields: [
           appRef,
           { code: 'referenceCode', type: 'text', label: t('الرمز المرجعي', 'Reference code') },
-          { code: 'privileges', type: 'json', label: t('الصلاحيات', 'Privileges'), defaultValue: [], hint: t('[{"resourceCode": "...", "actions": ["VIEW"]}]', '[{"resourceCode": "...", "actions": ["VIEW"]}]') },
-          { code: 'grants', type: 'json', label: t('صلاحيات القيم', 'LOV grants'), defaultValue: [], hint: t('[{"lovCode": "...", "grantType": "VALUES", "grantedValues": ["..."]}]', '[{"lovCode": "...", "grantType": "VALUES", "grantedValues": ["..."]}]') },
+          {
+            code: 'privileges',
+            type: 'json',
+            label: t('الصلاحيات', 'Privileges'),
+            defaultValue: [],
+            hint: t(
+              '[{"resourceCode": "...", "actions": ["VIEW"]}]',
+              '[{"resourceCode": "...", "actions": ["VIEW"]}]',
+            ),
+          },
+          {
+            code: 'grants',
+            type: 'json',
+            label: t('صلاحيات القيم', 'LOV grants'),
+            defaultValue: [],
+            hint: t(
+              '[{"lovCode": "...", "grantType": "VALUES", "grantedValues": ["..."]}]',
+              '[{"lovCode": "...", "grantType": "VALUES", "grantedValues": ["..."]}]',
+            ),
+          },
         ],
       },
     ],
@@ -174,9 +314,30 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
         columns: ['appCode', 'resourceType'],
         fields: [
           appRef,
-          { code: 'resourceType', type: 'select', label: t('النوع', 'Type'), required: true, defaultValue: 'SCREEN', options: ['SCREEN', 'API', 'REPORT', 'SERVICE', 'WORKFLOW_ACTION', 'FIELD'].map((v) => opt(v, v, v)) },
-          { code: 'parentCode', type: 'select', label: t('المورد الأعلى', 'Parent resource'), ref: 'apps.resource' },
-          { code: 'availableActions', type: 'select', multiple: true, label: t('الإجراءات المتاحة', 'Available actions'), options: actions, defaultValue: ['VIEW'] },
+          {
+            code: 'resourceType',
+            type: 'select',
+            label: t('النوع', 'Type'),
+            required: true,
+            defaultValue: 'SCREEN',
+            options: ['SCREEN', 'API', 'REPORT', 'SERVICE', 'WORKFLOW_ACTION', 'FIELD'].map((v) =>
+              opt(v, v, v),
+            ),
+          },
+          {
+            code: 'parentCode',
+            type: 'select',
+            label: t('المورد الأعلى', 'Parent resource'),
+            ref: 'apps.resource',
+          },
+          {
+            code: 'availableActions',
+            type: 'select',
+            multiple: true,
+            label: t('الإجراءات المتاحة', 'Available actions'),
+            options: actions,
+            defaultValue: ['VIEW'],
+          },
         ],
       },
     ],
@@ -193,16 +354,53 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
         columns: ['appCode', 'groupCode', 'target'],
         fields: [
           { ...appRef, required: true },
-          { code: 'groupCode', type: 'select', label: t('المجموعة', 'Group'), ref: 'apps.menu-group' },
-          { code: 'parentCode', type: 'select', label: t('العنصر الأعلى', 'Parent item'), ref: 'apps.menu' },
-          { code: 'itemType', type: 'select', label: t('النوع', 'Type'), required: true, defaultValue: 'SCREEN', options: ['GROUP', 'SCREEN', 'SERVICE', 'REPORT', 'DASHBOARD', 'QUEUE', 'URL'].map((v) => opt(v, v, v)) },
-          { code: 'target', type: 'text', label: t('الوجهة (مسار، رمز، رابط)', 'Target (route, code, URL)'), visibleWhen: { '!=': [{ var: 'itemType' }, 'GROUP'] } },
-          { code: 'resourceCode', type: 'select', label: t('المورد (صلاحية العرض)', 'Resource (view privilege)'), ref: 'apps.resource' },
+          {
+            code: 'groupCode',
+            type: 'select',
+            label: t('المجموعة', 'Group'),
+            ref: 'apps.menu-group',
+          },
+          {
+            code: 'parentCode',
+            type: 'select',
+            label: t('العنصر الأعلى', 'Parent item'),
+            ref: 'apps.menu',
+          },
+          {
+            code: 'itemType',
+            type: 'select',
+            label: t('النوع', 'Type'),
+            required: true,
+            defaultValue: 'SCREEN',
+            options: ['GROUP', 'SCREEN', 'SERVICE', 'REPORT', 'DASHBOARD', 'QUEUE', 'URL'].map(
+              (v) => opt(v, v, v),
+            ),
+          },
+          {
+            code: 'target',
+            type: 'text',
+            label: t('الوجهة (مسار، رمز، رابط)', 'Target (route, code, URL)'),
+            visibleWhen: { '!=': [{ var: 'itemType' }, 'GROUP'] },
+          },
+          {
+            code: 'resourceCode',
+            type: 'select',
+            label: t('المورد (صلاحية العرض)', 'Resource (view privilege)'),
+            ref: 'apps.resource',
+          },
           { code: 'icon', type: 'text', label: t('الأيقونة', 'Icon') },
           displayOrder,
           { code: 'isVisible', type: 'checkbox', label: t('ظاهر', 'Visible'), defaultValue: true },
-          { code: 'descriptionAr', type: 'textarea', label: t('الوصف بالعربية', 'Description (Arabic)') },
-          { code: 'descriptionEn', type: 'textarea', label: t('الوصف بالإنجليزية', 'Description (English)') },
+          {
+            code: 'descriptionAr',
+            type: 'textarea',
+            label: t('الوصف بالعربية', 'Description (Arabic)'),
+          },
+          {
+            code: 'descriptionEn',
+            type: 'textarea',
+            label: t('الوصف بالإنجليزية', 'Description (English)'),
+          },
         ],
       },
       {
@@ -210,7 +408,11 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
         title: t('مجموعات القوائم', 'Menu groups'),
         key: 'code',
         columns: ['appCode'],
-        fields: [{ ...appRef, required: true }, displayOrder, { code: 'icon', type: 'text', label: t('الأيقونة', 'Icon') }],
+        fields: [
+          { ...appRef, required: true },
+          displayOrder,
+          { code: 'icon', type: 'text', label: t('الأيقونة', 'Icon') },
+        ],
       },
     ],
   },
@@ -225,20 +427,110 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
         key: 'code',
         columns: ['sourceType', 'classCode'],
         fields: [
-          { code: 'sourceType', type: 'select', label: t('المصدر', 'Source'), required: true, defaultValue: 'CLASS', options: [opt('CLASS', 'تصنيف', 'Class'), opt('DATA_OBJECT', 'كائن بيانات', 'Data object'), opt('SQL', 'استعلام مقيد', 'Restricted SQL')] },
-          { code: 'classCode', type: 'select', label: t('التصنيف', 'Class'), ref: 'apps.class', visibleWhen: { '==': [{ var: 'sourceType' }, 'CLASS'] }, required: true },
-          { code: 'dataObjectCode', type: 'select', label: t('كائن البيانات', 'Data object'), ref: 'apps.data-object', visibleWhen: { '==': [{ var: 'sourceType' }, 'DATA_OBJECT'] }, required: true },
-          { code: 'valueColumn', type: 'text', label: t('عمود القيمة', 'Value column'), visibleWhen: { '==': [{ var: 'sourceType' }, 'DATA_OBJECT'] }, required: true },
-          { code: 'displayArColumn', type: 'text', label: t('عمود الاسم العربي', 'Arabic label column'), visibleWhen: { '==': [{ var: 'sourceType' }, 'DATA_OBJECT'] }, required: true },
-          { code: 'displayEnColumn', type: 'text', label: t('عمود الاسم الإنجليزي', 'English label column'), visibleWhen: { '==': [{ var: 'sourceType' }, 'DATA_OBJECT'] }, required: true },
-          { code: 'parentColumn', type: 'text', label: t('عمود القيمة الأعلى', 'Parent column'), visibleWhen: { '!=': [{ var: 'sourceType' }, 'CLASS'] } },
-          { code: 'sqlText', type: 'textarea', label: t('الاستعلام', 'SQL'), visibleWhen: { '==': [{ var: 'sourceType' }, 'SQL'] }, required: true, hint: t('يُرجع value و display_ar و display_en', 'Returns value, display_ar, display_en') },
-          { code: 'staticFilter', type: 'json', label: t('شرط ثابت (JSONLogic)', 'Static filter (JSONLogic)'), visibleWhen: { '==': [{ var: 'sourceType' }, 'CLASS'] } },
-          { code: 'searchMode', type: 'select', label: t('البحث', 'Search'), defaultValue: 'FULL', options: [opt('FULL', 'قائمة كاملة', 'Full list'), opt('TYPEAHEAD', 'بحث أثناء الكتابة', 'Type-ahead')] },
-          { code: 'maxRows', type: 'number', label: t('الحد الأقصى للصفوف', 'Max rows'), defaultValue: 500 },
-          { code: 'requiresGrant', type: 'checkbox', label: t('تتطلب صلاحية قيم', 'Requires a grant') },
-          { code: 'isPublic', type: 'checkbox', label: t('متاحة للبوابة الخارجية', 'Available to the external portal') },
-          { code: 'bindings', type: 'json', label: t('الربط بالشاشات', 'Screen bindings'), defaultValue: [] },
+          {
+            code: 'sourceType',
+            type: 'select',
+            label: t('المصدر', 'Source'),
+            required: true,
+            defaultValue: 'CLASS',
+            options: [
+              opt('CLASS', 'تصنيف', 'Class'),
+              opt('DATA_OBJECT', 'كائن بيانات', 'Data object'),
+              opt('SQL', 'استعلام مقيد', 'Restricted SQL'),
+            ],
+          },
+          {
+            code: 'classCode',
+            type: 'select',
+            label: t('التصنيف', 'Class'),
+            ref: 'apps.class',
+            visibleWhen: { '==': [{ var: 'sourceType' }, 'CLASS'] },
+            required: true,
+          },
+          {
+            code: 'dataObjectCode',
+            type: 'select',
+            label: t('كائن البيانات', 'Data object'),
+            ref: 'apps.data-object',
+            visibleWhen: { '==': [{ var: 'sourceType' }, 'DATA_OBJECT'] },
+            required: true,
+          },
+          {
+            code: 'valueColumn',
+            type: 'text',
+            label: t('عمود القيمة', 'Value column'),
+            visibleWhen: { '==': [{ var: 'sourceType' }, 'DATA_OBJECT'] },
+            required: true,
+          },
+          {
+            code: 'displayArColumn',
+            type: 'text',
+            label: t('عمود الاسم العربي', 'Arabic label column'),
+            visibleWhen: { '==': [{ var: 'sourceType' }, 'DATA_OBJECT'] },
+            required: true,
+          },
+          {
+            code: 'displayEnColumn',
+            type: 'text',
+            label: t('عمود الاسم الإنجليزي', 'English label column'),
+            visibleWhen: { '==': [{ var: 'sourceType' }, 'DATA_OBJECT'] },
+            required: true,
+          },
+          {
+            code: 'parentColumn',
+            type: 'text',
+            label: t('عمود القيمة الأعلى', 'Parent column'),
+            visibleWhen: { '!=': [{ var: 'sourceType' }, 'CLASS'] },
+          },
+          {
+            code: 'sqlText',
+            type: 'textarea',
+            label: t('الاستعلام', 'SQL'),
+            visibleWhen: { '==': [{ var: 'sourceType' }, 'SQL'] },
+            required: true,
+            hint: t(
+              'يُرجع value و display_ar و display_en',
+              'Returns value, display_ar, display_en',
+            ),
+          },
+          {
+            code: 'staticFilter',
+            type: 'json',
+            label: t('شرط ثابت (JSONLogic)', 'Static filter (JSONLogic)'),
+            visibleWhen: { '==': [{ var: 'sourceType' }, 'CLASS'] },
+          },
+          {
+            code: 'searchMode',
+            type: 'select',
+            label: t('البحث', 'Search'),
+            defaultValue: 'FULL',
+            options: [
+              opt('FULL', 'قائمة كاملة', 'Full list'),
+              opt('TYPEAHEAD', 'بحث أثناء الكتابة', 'Type-ahead'),
+            ],
+          },
+          {
+            code: 'maxRows',
+            type: 'number',
+            label: t('الحد الأقصى للصفوف', 'Max rows'),
+            defaultValue: 500,
+          },
+          {
+            code: 'requiresGrant',
+            type: 'checkbox',
+            label: t('تتطلب صلاحية قيم', 'Requires a grant'),
+          },
+          {
+            code: 'isPublic',
+            type: 'checkbox',
+            label: t('متاحة للبوابة الخارجية', 'Available to the external portal'),
+          },
+          {
+            code: 'bindings',
+            type: 'json',
+            label: t('الربط بالشاشات', 'Screen bindings'),
+            defaultValue: [],
+          },
         ],
       },
       {
@@ -248,10 +540,39 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
         columns: ['dbSchema', 'dbObject'],
         fields: [
           { code: 'dbSchema', type: 'text', label: t('المخطط', 'Schema'), required: true },
-          { code: 'dbObject', type: 'text', label: t('الجدول أو العرض', 'Table or view'), required: true },
-          { code: 'objectType', type: 'select', label: t('النوع', 'Type'), defaultValue: 'VIEW', options: [opt('VIEW', 'عرض', 'View'), opt('TABLE', 'جدول', 'Table')] },
-          { code: 'columns', type: 'json', label: t('الأعمدة', 'Columns'), defaultValue: [], hint: t('[{"name": "code", "searchable": true}]', '[{"name": "code", "searchable": true}]') },
-          { code: 'scopeBindings', type: 'json', label: t('نطاقات البيانات', 'Data scopes'), defaultValue: [], hint: t('[{"columnName": "sector_code", "lovCode": "LOV_SECTOR"}]', '[{"columnName": "sector_code", "lovCode": "LOV_SECTOR"}]') },
+          {
+            code: 'dbObject',
+            type: 'text',
+            label: t('الجدول أو العرض', 'Table or view'),
+            required: true,
+          },
+          {
+            code: 'objectType',
+            type: 'select',
+            label: t('النوع', 'Type'),
+            defaultValue: 'VIEW',
+            options: [opt('VIEW', 'عرض', 'View'), opt('TABLE', 'جدول', 'Table')],
+          },
+          {
+            code: 'columns',
+            type: 'json',
+            label: t('الأعمدة', 'Columns'),
+            defaultValue: [],
+            hint: t(
+              '[{"name": "code", "searchable": true}]',
+              '[{"name": "code", "searchable": true}]',
+            ),
+          },
+          {
+            code: 'scopeBindings',
+            type: 'json',
+            label: t('نطاقات البيانات', 'Data scopes'),
+            defaultValue: [],
+            hint: t(
+              '[{"columnName": "sector_code", "lovCode": "LOV_SECTOR"}]',
+              '[{"columnName": "sector_code", "lovCode": "LOV_SECTOR"}]',
+            ),
+          },
         ],
       },
     ],
@@ -268,11 +589,22 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
         columns: ['appCode', 'dataType', 'value'],
         fields: [
           appRef,
-          { code: 'dataType', type: 'select', label: t('النوع', 'Type'), required: true, defaultValue: 'TEXT', options: ['TEXT', 'NUMBER', 'BOOL', 'JSON'].map((v) => opt(v, v, v)) },
+          {
+            code: 'dataType',
+            type: 'select',
+            label: t('النوع', 'Type'),
+            required: true,
+            defaultValue: 'TEXT',
+            options: ['TEXT', 'NUMBER', 'BOOL', 'JSON'].map((v) => opt(v, v, v)),
+          },
           { code: 'value', type: 'json', label: t('القيمة (JSON)', 'Value (JSON)') },
           { code: 'description', type: 'textarea', label: t('الوصف', 'Description') },
           { code: 'isSecret', type: 'checkbox', label: t('سري', 'Secret') },
-          { code: 'isPublic', type: 'checkbox', label: t('متاح للبوابة الخارجية', 'Available to the external portal') },
+          {
+            code: 'isPublic',
+            type: 'checkbox',
+            label: t('متاح للبوابة الخارجية', 'Available to the external portal'),
+          },
         ],
       },
     ],
@@ -287,8 +619,31 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
         title: t('نصوص الواجهة', 'UI texts'),
         key: 'appScoped',
         columns: ['appCode'],
-        nameLabels: { ar: t('النص بالعربية', 'Arabic text'), en: t('النص بالإنجليزية', 'English text') },
+        nameLabels: {
+          ar: t('النص بالعربية', 'Arabic text'),
+          en: t('النص بالإنجليزية', 'English text'),
+        },
         fields: [appRef],
+      },
+    ],
+  },
+  {
+    path: 'approval-policy',
+    title: t('سياسة الاعتماد', 'Approval policy'),
+    resource: 'apps-control.approval-policy',
+    types: [
+      {
+        entityType: 'apps.change-area',
+        title: t('مجالات الإعدادات', 'Configuration areas'),
+        key: 'code',
+        columns: ['requiresApproval'],
+        fields: [
+          {
+            code: 'requiresApproval',
+            type: 'checkbox',
+            label: t('يتطلب اعتماد مستخدم آخر', 'Needs approval by a second user'),
+          },
+        ],
       },
     ],
   },

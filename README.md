@@ -61,29 +61,40 @@ Add `--profile full` to also start Gotenberg (PDF) and ClamAV (upload scanning).
 
 ### Option B — local development
 
-Requires .NET 10 SDK, Node.js 24 LTS, PostgreSQL 16+ and (for login) Keycloak 26.
+Requires .NET 10 SDK, Node.js 24 LTS and Docker (for PostgreSQL and Keycloak only). Start the parts **in this
+order**, each in its own terminal, from the repository root:
 
 ```bash
-# Database (once): role/database dynamic_cube / dynamic_cube on localhost:5432
-dotnet tool restore
-dotnet run --project src/Tools/Migrator            # applies migrations
+# 1. Database and identity provider (PostgreSQL on :5432, Keycloak on :8080 with the dev realms)
+docker compose -f deploy/docker/docker-compose.yml up -d postgres keycloak
 
-dotnet run --project src/Hosts/Internal.Api --urls http://localhost:5080
-dotnet run --project src/Hosts/External.Api --urls http://localhost:5081
-dotnet run --project src/Hosts/Worker
+# 2. Create / upgrade the database (run again after pulling changes)
+dotnet run --project src/Tools/Migrator
 
+# 3. APIs — the web dev servers forward /api to these ports
+dotnet run --project src/Hosts/Internal.Api        # http://localhost:5080
+dotnet run --project src/Hosts/External.Api        # http://localhost:5081
+dotnet run --project src/Hosts/Worker              # background jobs (optional for now)
+
+# 4. Front ends
 cd web && npm ci
-npm run start:internal                              # http://localhost:4200 (proxies /api to :5080)
-npm run start:external                              # http://localhost:4201 (proxies /api to :5081)
+npm run start:internal                              # http://localhost:4200  → Internal.Api
+npm run start:external                              # http://localhost:4201  → External.Api
 ```
 
-Keycloak for development: import `deploy/keycloak/realms/*.json` (see
-[deploy/keycloak/README.md](deploy/keycloak/README.md) for users and production notes). Sign in to the internal
-system as `maker` to draft configuration changes and as `checker` to approve them (password `Dev@12345`);
-`admin` holds every Apps Control privilege.
+Ports and the `Development` environment come from each project's `Properties/launchSettings.json`, so plain
+`dotnet run` (or F5 in Visual Studio / Rider) needs no extra arguments.
 
-The SPAs read their identity-provider settings from `/config.json` (`web/projects/*/public/config.json` in
-development; generated from `APP_CODE`, `AUTH_AUTHORITY`, `AUTH_CLIENT_ID`, `AUTH_REQUIRED` in the web image).
+| Symptom | Cause |
+|---|---|
+| `[vite] http proxy error … ECONNREFUSED` | The API behind that app is not running on its port (5080 internal, 5081 external) |
+| Migrator: `Connection string … is not configured` | Not started in `Development` (use `dotnet run`, or set `DOTNET_ENVIRONMENT=Development`) |
+| Migrator / API: `Failed to connect to 127.0.0.1:5432` | PostgreSQL is not running (step 1) |
+| Sign-in page does not load | Keycloak is not running on :8080 (step 1; first start takes ~30 s) |
+
+Without Docker: install PostgreSQL 16+ with role and database `dynamic_cube` / password `dynamic_cube`, and
+Keycloak 26 started with `kc.sh start-dev --http-port 8080 --import-realm` after copying
+`deploy/keycloak/realms/*.json` into its `data/import` folder.
 
 ### Tests
 

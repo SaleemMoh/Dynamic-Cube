@@ -20,6 +20,7 @@ public static class AppsControlChangeTypes
     public const string Lov = "apps.lov";
     public const string Setting = "apps.setting";
     public const string UiText = "apps.ui-text";
+    public const string ChangeArea = "apps.change-area";
 }
 
 public static class AppsControlAreas
@@ -32,6 +33,22 @@ public static class AppsControlAreas
     public const string Lovs = "apps.lovs";
     public const string Settings = "apps.settings";
     public const string UiTexts = "apps.ui-texts";
+
+    /// <summary>The approval policy itself; always needs approval so nobody can switch approval off alone.</summary>
+    public const string Governance = "apps.governance";
+
+    /// <summary>Areas whose approval policy the entity configures: display names and the initial policy of a new installation.</summary>
+    public static IReadOnlyList<(string Code, string NameAr, string NameEn, bool RequiresApproval)> Configurable { get; } =
+    [
+        (System, "النظام والجهة", "Installation & entity", true),
+        (Organization, "الهيكل التنظيمي", "Organization structure", true),
+        (Security, "المستخدمون والصلاحيات", "Users & privileges", true),
+        (Menus, "القوائم", "Menus", true),
+        (Lookups, "التصنيفات والقيم", "Classes & domains", true),
+        (Lovs, "قوائم القيم", "Lists of values", true),
+        (Settings, "الإعدادات", "Settings", true),
+        (UiTexts, "نصوص الواجهة", "UI texts", false),
+    ];
 }
 
 /// <summary>Codes of the SYSTEM resources that guard Apps Control screens and APIs.</summary>
@@ -50,4 +67,5 @@ public static class AppsControlResources
     public const string Settings = "apps-control.settings";
     public const string UiTexts = "apps-control.ui-texts";
     public const string ChangeSets = "apps-control.change-sets";
+    public const string ApprovalPolicy = "apps-control.approval-policy";
 }
