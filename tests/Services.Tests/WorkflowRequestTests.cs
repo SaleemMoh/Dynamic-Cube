@@ -84,6 +84,7 @@ public sealed class WorkflowRequestTests(DatabaseFixture fixture) : IAsyncLifeti
         returned.Request.Status.ShouldBe(StatusCategory.PendingCustomer);
         returned.Request.DisplayStatus.ShouldBe("RETURNED");
         returned.Timeline[^1].Comment.ShouldBe("Correct the number of employees.");
+        returned.Timeline[^1].UserId.ShouldBeEmpty("the applicant does not see which employee returned the request");
 
         // The applicant corrects an answer (the level stays) and sends the request back.
         var answers = returned.Data.DeepClone().AsObject();

@@ -35,10 +35,16 @@ internal static class WorkflowEndpoints
         }).WithName("CancelDelegation");
         center.MapGet("/staff", async (ActionCenter service, CancellationToken ct) => TypedResults.Ok(await service.StaffAsync(ct))).WithName("ListStaff");
 
-        group.MapGet("/supervision", async (string? search, string? role, SlaState? sla, bool? unassigned, int? skip, int? take, ActionCenter service, CancellationToken ct) =>
-            TypedResults.Ok(await service.SupervisionAsync(search, role, sla, unassigned, skip ?? 0, take ?? 50, ct)))
+        group.MapGet("/supervision", async (string? search, string? role, string? sla, bool? unassigned, int? skip, int? take, ActionCenter service, CancellationToken ct) =>
+            TypedResults.Ok(await service.SupervisionAsync(search, role, ParseSla(sla), unassigned, skip ?? 0, take ?? 50, ct)))
             .RequirePrivilege(WorkflowResources.Supervision, CatalogActions.View).WithName("GetSupervision");
     }
+
+    /// <summary>The SLA filter as the API writes it (ON_TRACK, WARNING, BREACHED).</summary>
+    private static SlaState? ParseSla(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null
+        : Enum.TryParse<SlaState>(value.Replace("_", string.Empty, StringComparison.Ordinal), ignoreCase: true, out var sla) ? sla
+        : throw new WorkflowValidationException("sla", $"Unknown SLA state '{value}'.");
 
     /// <summary>After a change, the task as it now is (a closed task may no longer be visible: then nothing).</summary>
     private static async Task<IResult> Then(Task change, ActionCenter service, Guid id, CancellationToken ct)

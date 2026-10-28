@@ -3,12 +3,14 @@ import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RouterLink } from '@angular/router';
-import { FeeTable, LocalizePipe, RequestAnswers, ServicesApi, TranslatePipe } from '@dynamic-cube/shared';
+import { FeeTable, LocalizePipe, RequestAnswers, ServicesApi, TranslatePipe, WorkflowApi } from '@dynamic-cube/shared';
+import { catchError, of } from 'rxjs';
+import { WorkflowCard } from '../action-center/workflow-card';
 
-/** One request as submitted: who, what, the answers, fees and the timeline. */
+/** One request as submitted: who, what, the answers, fees, its workflow (when it has one) and the timeline. */
 @Component({
   selector: 'dc-request-detail',
-  imports: [DatePipe, MatProgressBarModule, RouterLink, FeeTable, LocalizePipe, RequestAnswers, TranslatePipe],
+  imports: [DatePipe, MatProgressBarModule, RouterLink, FeeTable, LocalizePipe, RequestAnswers, TranslatePipe, WorkflowCard],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <a routerLink="/services/requests" class="dc-link">{{ 'requests.title' | dcTranslate }}</a>
@@ -34,6 +36,9 @@ import { FeeTable, LocalizePipe, RequestAnswers, ServicesApi, TranslatePipe } fr
           <dc-request-answers [version]="d.view.version" [data]="d.view.data" />
         </section>
         <div class="dc-request-side">
+          @if (instance.value(); as i) {
+            <dc-workflow-card [instance]="i" [linkTasks]="true" />
+          }
           <section class="dc-card">
             <h2>{{ 'fees.grandTotal' | dcTranslate }}</h2>
             <dc-fee-table [lines]="d.view.fees" />
@@ -95,7 +100,13 @@ import { FeeTable, LocalizePipe, RequestAnswers, ServicesApi, TranslatePipe } fr
 export class RequestDetail {
   readonly id = input.required<string>();
   private readonly api = inject(ServicesApi);
+  private readonly workflow = inject(WorkflowApi);
   protected readonly detail = rxResource({ params: () => this.id(), stream: ({ params }) => this.api.requestDetail(params) });
+  // Requests without a workflow (or viewers without the Action Center) simply show no workflow card.
+  protected readonly instance = rxResource({
+    params: () => this.id(),
+    stream: ({ params }) => this.workflow.instance('SERVICE_REQUEST', params).pipe(catchError(() => of(undefined))),
+  });
 
   protected levelName(view: { levelCode: string | null; version: { definition: { levels: { code: string; nameAr: string; nameEn: string }[] } } }): { ar: string; en: string } {
     const level = view.version.definition.levels.find((l) => l.code === view.levelCode);

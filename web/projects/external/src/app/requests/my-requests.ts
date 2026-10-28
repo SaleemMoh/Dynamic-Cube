@@ -29,7 +29,13 @@ import { ActingPartyService, LocalizePipe, ServicesApi, TranslatePipe } from '@d
       </ng-container>
       <ng-container matColumnDef="status">
         <th mat-header-cell *matHeaderCellDef>{{ 'requests.status' | dcTranslate }}</th>
-        <td mat-cell *matCellDef="let r"><span class="dc-badge" [class.dc-badge--success]="r.status !== 'DRAFT'">{{ 'displayStatus.' + r.displayStatus | dcTranslate }}</span></td>
+        <td mat-cell *matCellDef="let r"><span
+            class="dc-badge"
+            [class.dc-badge--success]="r.status === 'APPROVED'"
+            [class.dc-badge--danger]="r.status === 'REJECTED'"
+            [class.dc-badge--warning]="r.status === 'PENDING_CUSTOMER'"
+            [class.dc-badge--info]="r.status === 'SUBMITTED' || r.status === 'IN_PROGRESS'"
+            >{{ 'displayStatus.' + r.displayStatus | dcTranslate }}</span></td>
       </ng-container>
       <ng-container matColumnDef="date">
         <th mat-header-cell *matHeaderCellDef>{{ 'requests.date' | dcTranslate }}</th>

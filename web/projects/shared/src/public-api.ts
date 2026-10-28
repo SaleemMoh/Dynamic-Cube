@@ -40,3 +40,6 @@ export * from './lib/services/service-form';
 export * from './lib/services/fee-table';
 export * from './lib/services/request-answers';
 export * from './lib/services/service-wizard';
+export * from './lib/workflow/workflow.models';
+export * from './lib/workflow/workflow.api';
+export * from './lib/workflow/sla-chip';

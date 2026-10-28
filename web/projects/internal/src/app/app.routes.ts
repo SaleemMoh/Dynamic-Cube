@@ -14,6 +14,8 @@ export const routes: Routes = [
       { path: 'integration', loadChildren: () => import('./integration/integration.routes').then((m) => m.INTEGRATION_ROUTES) },
       { path: 'party', loadChildren: () => import('./party/party.routes').then((m) => m.PARTY_ROUTES) },
       { path: 'services', loadChildren: () => import('./services/services.routes').then((m) => m.SERVICES_ROUTES) },
+      { path: 'action-center', loadChildren: () => import('./action-center/action-center.routes').then((m) => m.ACTION_CENTER_ROUTES) },
+      { path: 'workflows', loadChildren: () => import('./workflows/workflows.routes').then((m) => m.WORKFLOWS_ROUTES) },
     ],
   },
   { path: '**', redirectTo: '' },

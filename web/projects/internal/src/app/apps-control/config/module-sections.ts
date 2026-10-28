@@ -362,4 +362,24 @@ export const SERVICE_SECTIONS: ConfigSection[] = [
 ];
 
 /** Every configuration screen, by path (paths are unique across modules). */
-export const ALL_CONFIG_SECTIONS: ConfigSection[] = [...CONFIG_SECTIONS, ...INTEGRATION_SECTIONS, ...PARTY_SECTIONS, ...SERVICE_SECTIONS];
+/** Workflow configuration screens (internal system → Action Center → Workflows); versions have their own screen. */
+export const WORKFLOW_SECTIONS: ConfigSection[] = [
+  {
+    path: 'workflows',
+    title: t('مسارات العمل', 'Workflows'),
+    resource: 'workflows.config',
+    types: [
+      {
+        entityType: 'wf.workflow',
+        title: t('مسارات العمل', 'Workflows'),
+        key: 'code',
+        fields: [
+          { code: 'descriptionAr', type: 'textarea', label: t('الوصف بالعربية', 'Arabic description') },
+          { code: 'descriptionEn', type: 'textarea', label: t('الوصف بالإنجليزية', 'English description') },
+        ],
+      },
+    ],
+  },
+];
+
+export const ALL_CONFIG_SECTIONS: ConfigSection[] = [...CONFIG_SECTIONS, ...INTEGRATION_SECTIONS, ...PARTY_SECTIONS, ...SERVICE_SECTIONS, ...WORKFLOW_SECTIONS];

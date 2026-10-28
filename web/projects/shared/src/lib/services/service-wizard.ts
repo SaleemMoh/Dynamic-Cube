@@ -88,6 +88,7 @@ export interface WizardMove {
                   class="dc-level"
                   [class.dc-level--chosen]="level.code === chosenLevel()"
                   [attr.aria-checked]="level.code === chosenLevel()"
+                  [disabled]="resubmission() && level.code !== chosenLevel()"
                   (click)="levelChoice.set(level.code)"
                   [attr.data-testid]="'level-' + level.code"
                 >
@@ -123,7 +124,7 @@ export interface WizardMove {
               }
               <button matButton="filled" type="button" [disabled]="!accepted() || busy() || preview()" (click)="submitted.emit(true)" data-testid="submit-request">
                 <mat-icon fontSet="material-symbols-outlined">send</mat-icon>
-                {{ 'wizard.submit' | dcTranslate }}
+                {{ (resubmission() ? 'wizard.resubmit' : 'wizard.submit') | dcTranslate }}
               </button>
             </div>
           }
@@ -139,7 +140,7 @@ export interface WizardMove {
         @if (isLast()) {
           <button matButton="filled" type="button" [disabled]="busy() || preview()" (click)="submitted.emit(false)" data-testid="submit-request">
             <mat-icon fontSet="material-symbols-outlined">send</mat-icon>
-            {{ 'wizard.submit' | dcTranslate }}
+            {{ (resubmission() ? 'wizard.resubmit' : 'wizard.submit') | dcTranslate }}
           </button>
         } @else {
           <button matButton="filled" type="button" [disabled]="busy()" (click)="nextFrom(step()!)" data-testid="wizard-next">
@@ -212,6 +213,10 @@ export interface WizardMove {
       text-align: start;
       cursor: pointer;
     }
+    .dc-level:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
     .dc-level--chosen {
       border-color: var(--dga-primary, #1b8354);
       box-shadow: inset 0 0 0 1px var(--dga-primary, #1b8354);
@@ -243,6 +248,8 @@ export class ServiceWizard {
   readonly feesByLevel = input<Record<string, FeeLine[]>>({});
   readonly errors = input<FieldError[]>([]);
   readonly busy = input(false);
+  /** Correcting a request returned by the employee: the level stays as chosen and the request is sent back. */
+  readonly resubmission = input(false);
   /** Authoring preview: nothing can be submitted. */
   readonly preview = input(false);
   readonly moved = output<WizardMove>();

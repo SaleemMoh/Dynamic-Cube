@@ -69,16 +69,6 @@ export const EXTRA_TEMPLATE_ENTITIES: TemplateEntity[] = [
     ],
   },
   {
-    entityType: 'wf.workflow',
-    section: t('مسارات العمل', 'Workflows'),
-    title: t('مسار العمل', 'Workflow'),
-    key: 'code',
-    fields: [
-      { code: 'descriptionAr', type: 'text', label: t('الوصف بالعربية', 'Arabic description') },
-      { code: 'descriptionEn', type: 'text', label: t('الوصف بالإنجليزية', 'English description') },
-    ],
-  },
-  {
     entityType: 'wf.workflow-version',
     section: t('مسارات العمل', 'Workflows'),
     title: t('إصدار مسار العمل', 'Workflow version'),

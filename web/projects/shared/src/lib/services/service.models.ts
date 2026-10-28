@@ -141,6 +141,8 @@ export interface RequestView {
   feesByLevel: Record<string, FeeLine[]>;
   version: ResolvedVersion;
   stepErrors: FieldError[];
+  /** What happened to the request, for the applicant (returns and decisions carry their reason). */
+  timeline: TimelineEntry[];
 }
 
 export interface TimelineEntry {

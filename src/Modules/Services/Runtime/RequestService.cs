@@ -303,8 +303,10 @@ internal sealed class RequestService(
         var byLevel = entity.StatusCategory == StatusCategory.Draft
             ? version.Definition.Levels.ToDictionary(l => l.Code, l => fees.Compute(version.Definition, l.Code, Context(facts, acting, data, l.Code)))
             : new Dictionary<string, IReadOnlyList<FeeLine>>();
+        // The applicant sees what happened and the reasons given to them, not which employee did it.
+        var me = user.UserId;
         var timeline = await context.RequestEvents.AsNoTracking().Where(e => e.RequestId == entity.Id).OrderBy(e => e.At)
-            .Select(e => new TimelineEntry(e.At, e.UserId, e.Type, e.FromStatus, e.ToStatus, e.Comment))
+            .Select(e => new TimelineEntry(e.At, e.UserId == me ? e.UserId : string.Empty, e.Type, e.FromStatus, e.ToStatus, e.Comment))
             .ToListAsync(cancellationToken);
         return new RequestView(Summary(entity, (service.NameAr, service.NameEn)), entity.VersionNumber, entity.LevelCode, entity.CurrentStep, data, lines, byLevel, version, stepErrors, timeline);
     }
