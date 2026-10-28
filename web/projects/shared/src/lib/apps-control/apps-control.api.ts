@@ -81,6 +81,11 @@ export class AppsControlApi {
     return this.http.post<ChangeSetDetail>(`${APPS_CONTROL_API}/change-sets/${id}/items`, { entityType, entityCode, operation, payload });
   }
 
+  /** Saves and publishes one change in an area that needs no approval. */
+  applyNow(entityType: string, entityCode: string, operation: ChangeOperation, payload: unknown): Observable<ChangeSetDetail> {
+    return this.http.post<ChangeSetDetail>(`${APPS_CONTROL_API}/change-sets/apply`, { entityType, entityCode, operation, payload });
+  }
+
   removeItem(id: string, itemId: string): Observable<ChangeSetDetail> {
     return this.http.delete<ChangeSetDetail>(`${APPS_CONTROL_API}/change-sets/${id}/items/${itemId}`);
   }

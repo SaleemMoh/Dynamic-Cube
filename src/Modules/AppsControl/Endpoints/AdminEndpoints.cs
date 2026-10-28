@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DynamicCube.Modules.AppsControl.Endpoints;
 
-public sealed record EntityTypeInfo(string EntityType, string Area, string ResourceCode, IReadOnlyCollection<string> Actions);
+public sealed record EntityTypeInfo(string EntityType, string Area, string ResourceCode, IReadOnlyCollection<string> Actions, bool RequiresApproval);
 
 public sealed record CreateChangeSetRequest(string Area, string Title);
 
@@ -49,11 +49,22 @@ internal static class AdminEndpoints
     {
         var admin = group.MapGroup("/admin").AddEndpointFilter(AppsControlFilters.Errors);
 
-        admin.MapGet("/types", async (IEnumerable<IAppsControlApplier> appliers, AccessResolver resolver, CancellationToken ct) =>
+        admin.MapGet("/types", async (IEnumerable<IAppsControlApplier> appliers, AccessResolver resolver, IChangeApprovalPolicy policy, CancellationToken ct) =>
         {
             var access = await resolver.GetAsync(ct);
+            var approval = new Dictionary<string, bool>(StringComparer.Ordinal);
+            foreach (var area in appliers.Select(a => a.Area).Distinct())
+            {
+                approval[area] = await policy.RequiresApprovalAsync(area, ct);
+            }
+
             return TypedResults.Ok(appliers
-                .Select(a => new EntityTypeInfo(a.EntityType, a.Area, a.ResourceCode, access.Privileges.TryGetValue(a.ResourceCode, out var actions) ? actions.Order().ToList() : []))
+                .Select(a => new EntityTypeInfo(
+                    a.EntityType,
+                    a.Area,
+                    a.ResourceCode,
+                    access.Privileges.TryGetValue(a.ResourceCode, out var actions) ? actions.Order().ToList() : [],
+                    approval[a.Area]))
                 .Where(t => t.Actions.Contains(PrivilegeActions.View))
                 .OrderBy(t => t.EntityType)
                 .ToList());
@@ -148,38 +159,35 @@ internal static class AdminEndpoints
         sets.MapPost("/{id:guid}/items", async (Guid id, AddChangeItemRequest request, ChangeSetService<AppsControlDbContext> service, IEnumerable<IAppsControlApplier> appliers, AccessResolver resolver, AppsControlDbContext db, ICurrentUser user, CancellationToken ct) =>
         {
             var changeSet = await RequireOwnAsync(service, id, user, ct);
-            var applier = Find(appliers, request.EntityType);
-            if (applier is null)
+            var (applier, payload, problem) = await AuthorizeChangeAsync(request, appliers, resolver, ct);
+            if (problem is not null)
             {
-                return Results.ValidationProblem(new Dictionary<string, string[]> { ["entityType"] = [$"Unknown entity type '{request.EntityType}'."] });
+                return problem;
             }
 
-            if (applier.Area != changeSet.Area)
+            if (applier!.Area != changeSet.Area)
             {
                 return Results.ValidationProblem(new Dictionary<string, string[]> { ["entityType"] = [$"{request.EntityType} belongs to area {applier.Area}, not {changeSet.Area}."] });
-            }
-
-            var access = await resolver.GetAsync(ct);
-            var action = request.Operation switch
-            {
-                ChangeOperation.Create => PrivilegeActions.Create,
-                ChangeOperation.Delete => PrivilegeActions.Delete,
-                _ => PrivilegeActions.Edit,
-            };
-            if (!access.Can(applier.ResourceCode, action))
-            {
-                return Forbidden(applier.ResourceCode, action);
-            }
-
-            var payload = request.Payload is { ValueKind: not JsonValueKind.Null and not JsonValueKind.Undefined } p ? p.GetRawText() : null;
-            if (applier.EntityType == AppsControlChangeTypes.Lov && payload is not null && UsesRestrictedSql(payload) && !access.Can(AppsControlResources.LovSql, PrivilegeActions.Edit))
-            {
-                return Forbidden(AppsControlResources.LovSql, PrivilegeActions.Edit);
             }
 
             await service.AddItemAsync(id, applier.EntityType, request.EntityCode?.Trim() ?? string.Empty, request.Operation, payload, ct);
             return Results.Ok(await DetailAsync(db, await service.GetAsync(id, ct), user.UserId, ct));
         }).RequirePrivilege(AppsControlResources.ChangeSets, PrivilegeActions.Create).WithName("AddChangeItem");
+
+        // Areas without approval: one change, saved and published at once (still recorded with before/after).
+        sets.MapPost("/apply", async (AddChangeItemRequest request, ChangeSetService<AppsControlDbContext> service, IEnumerable<IAppsControlApplier> appliers, AccessResolver resolver, AppsControlDbContext db, ICurrentUser user, CancellationToken ct) =>
+        {
+            var (applier, payload, problem) = await AuthorizeChangeAsync(request, appliers, resolver, ct);
+            if (problem is not null)
+            {
+                return problem;
+            }
+
+            var code = request.EntityCode?.Trim() ?? string.Empty;
+            var title = $"{request.Operation.ToString().ToUpperInvariant()} {applier!.EntityType} {code}";
+            var changeSet = await service.SaveAndPublishAsync(applier.Area, title, applier.EntityType, code, request.Operation, payload, ct);
+            return Results.Ok(await DetailAsync(db, await service.GetAsync(changeSet.Id, ct), user.UserId, ct));
+        }).RequirePrivilege(AppsControlResources.ChangeSets, PrivilegeActions.Create).WithName("ApplyChange");
 
         sets.MapDelete("/{id:guid}/items/{itemId:guid}", async (Guid id, Guid itemId, ChangeSetService<AppsControlDbContext> service, AppsControlDbContext db, ICurrentUser user, CancellationToken ct) =>
         {
@@ -247,6 +255,37 @@ internal static class AdminEndpoints
             await service.DiscardAsync(id, ct);
             return TypedResults.NoContent();
         }).RequirePrivilege(AppsControlResources.ChangeSets, PrivilegeActions.Create).WithName("DiscardChangeSet");
+    }
+
+    /// <summary>Checks the entity type and the user's privilege for the operation (and restricted SQL); returns the raw payload.</summary>
+    private static async Task<(IAppsControlApplier? Applier, string? Payload, IResult? Problem)> AuthorizeChangeAsync(
+        AddChangeItemRequest request, IEnumerable<IAppsControlApplier> appliers, AccessResolver resolver, CancellationToken ct)
+    {
+        var applier = Find(appliers, request.EntityType);
+        if (applier is null)
+        {
+            return (null, null, Results.ValidationProblem(new Dictionary<string, string[]> { ["entityType"] = [$"Unknown entity type '{request.EntityType}'."] }));
+        }
+
+        var access = await resolver.GetAsync(ct);
+        var action = request.Operation switch
+        {
+            ChangeOperation.Create => PrivilegeActions.Create,
+            ChangeOperation.Delete => PrivilegeActions.Delete,
+            _ => PrivilegeActions.Edit,
+        };
+        if (!access.Can(applier.ResourceCode, action))
+        {
+            return (applier, null, Forbidden(applier.ResourceCode, action));
+        }
+
+        var payload = request.Payload is { ValueKind: not JsonValueKind.Null and not JsonValueKind.Undefined } p ? p.GetRawText() : null;
+        if (applier.EntityType == AppsControlChangeTypes.Lov && payload is not null && UsesRestrictedSql(payload) && !access.Can(AppsControlResources.LovSql, PrivilegeActions.Edit))
+        {
+            return (applier, null, Forbidden(AppsControlResources.LovSql, PrivilegeActions.Edit));
+        }
+
+        return (applier, payload, null);
     }
 
     private static IAppsControlApplier? Find(IEnumerable<IAppsControlApplier> appliers, string type) =>

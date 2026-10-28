@@ -60,7 +60,7 @@ const FIELD_TYPES: Record<AttributeDataType, FormFieldType> = {
         <dc-dynamic-form
           [schema]="schema.value()"
           [initialValue]="initial"
-          [submitLabel]="'config.addToDraft' | dcTranslate"
+          [submitLabel]="drafts.saveLabel('apps.domain') | dcTranslate"
           [cancellable]="true"
           (submitted)="save($event)"
           (cancelled)="ref.close()"
@@ -75,7 +75,7 @@ export class DomainEditor {
   protected readonly data = inject<DomainEditorData>(MAT_DIALOG_DATA);
   protected readonly ref = inject(MatDialogRef<DomainEditor, boolean>);
   private readonly api = inject(AppsControlApi);
-  private readonly drafts = inject(DraftsService);
+  protected readonly drafts = inject(DraftsService);
   private readonly i18n = inject(I18nService);
 
   protected readonly errors = signal<string[]>([]);

@@ -1,12 +1,13 @@
 {
+  "$schema": "https://json.schemastore.org/launchsettings.json",
   "profiles": {
-    "DynamicCube.External.Api": {
+    "External.Api": {
       "commandName": "Project",
-      "launchBrowser": true,
+      "applicationUrl": "http://localhost:5081",
+      "launchBrowser": false,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
-      },
-      "applicationUrl": "https://localhost:64756;http://localhost:64758"
+      }
     }
   }
 }

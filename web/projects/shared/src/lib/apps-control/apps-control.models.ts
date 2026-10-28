@@ -90,6 +90,8 @@ export interface EntityTypeInfo {
   area: string;
   resourceCode: string;
   actions: string[];
+  /** Changes of this type wait for a checker; otherwise saving publishes at once. */
+  requiresApproval: boolean;
 }
 
 /** Snapshot of a configuration row as returned by the admin endpoints. */

@@ -59,12 +59,15 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
 
     public DbSet<UiText> UiTexts => Set<UiText>();
 
+    public DbSet<ChangeArea> ChangeAreas => Set<ChangeArea>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.HasPostgresExtension("ltree");
 
         Config<Installation>(modelBuilder, "installation");
+        Config<ChangeArea>(modelBuilder, "change_area");
         Config<GovernmentEntity>(modelBuilder, "entity");
         Config<App>(modelBuilder, "app");
 

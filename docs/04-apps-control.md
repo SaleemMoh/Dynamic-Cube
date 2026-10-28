@@ -292,11 +292,17 @@ transaction, so a failing item rolls the whole change set back.
 | `apps.lookups` | class (with attribute definitions), domain (with external codes) | `apps-control.classes` |
 | `apps.lovs` | data object (with data-scope bindings), LOV (with screen bindings) | `apps-control.lovs` (+ `apps-control.lov-sql` for SQL) |
 | `apps.settings` / `apps.ui-texts` | setting / UI text | `apps-control.settings` / `.ui-texts` |
+| `apps.governance` (always approval) | approval policy of the areas above | `apps-control.approval-policy` |
 
 Adding an item needs `CREATE`/`EDIT`/`DELETE` on the guarding resource and `CREATE` on
 `apps-control.change-sets`; approving needs `APPROVE` there and a different user than the maker.
-Approval publishes immediately; areas configured without approval (`ChangeSets:Areas`, UI texts by
-default) publish on submit.
+Approval publishes immediately.
+
+**Approval policy** is set per area on the *Approval policy* screen (`apps.change_area`; all areas
+need approval on a new installation except UI texts). In areas without approval, **Save** publishes
+the change at once (`POST change-sets/apply`); it is still recorded as a one-item change set with its
+before/after, and in the audit log. Changing the policy itself always needs approval
+(`apps.governance`), so nobody can switch approval off alone.
 
 **Ownership.** `SYSTEM` rows (apps, Apps Control resources and menus, the `SYSTEM_ADMIN`,
 `CONFIG_MAKER` and `CONFIG_CHECKER` roles, class `ENTITY_KIND`, position `MANAGER`) are inserted and

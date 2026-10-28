@@ -38,6 +38,7 @@ public static class PlatformServiceCollectionExtensions
         services.TryAddSingleton<OutboxProcessor>();
 
         services.Configure<ChangeSetOptions>(configuration.GetSection(ChangeSetOptions.SectionName));
+        services.TryAddScoped<IChangeApprovalPolicy, OptionsChangeApprovalPolicy>();
 
         services.TryAddScoped<AuditSaveChangesInterceptor>();
 

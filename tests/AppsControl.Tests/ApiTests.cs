@@ -144,6 +144,36 @@ public sealed class ApiTests(AppsControlFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Apply_endpoint_saves_no_approval_changes_at_once()
+    {
+        fixture.RequireConnectionString();
+        var ct = TestContext.Current.CancellationToken;
+        using var maker = Client("maker");
+
+        var types = await maker.GetFromJsonAsync<JsonElement>("/api/apps-control/v1/admin/types", ct);
+        types.EnumerateArray().Single(t => t.GetProperty("entityType").GetString() == "apps.ui-text").GetProperty("requiresApproval").GetBoolean().ShouldBeFalse();
+
+        var saved = await maker.PostAsJsonAsync("/api/apps-control/v1/change-sets/apply", new
+        {
+            entityType = "apps.ui-text",
+            entityCode = Harness.Unique("api.text").ToLowerInvariant(),
+            operation = "CREATE",
+            payload = new { nameAr = "نص", nameEn = "Text" },
+        }, ct);
+        saved.EnsureSuccessStatusCode();
+        (await saved.Content.ReadFromJsonAsync<JsonElement>(ct)).GetProperty("changeSet").GetProperty("status").GetString().ShouldBe("PUBLISHED");
+
+        var refused = await maker.PostAsJsonAsync("/api/apps-control/v1/change-sets/apply", new
+        {
+            entityType = "apps.class",
+            entityCode = Harness.Unique("CLS"),
+            operation = "CREATE",
+            payload = new { nameAr = "أ", nameEn = "A" },
+        }, ct);
+        refused.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
     public async Task Checker_cannot_draft_changes()
     {
         fixture.RequireConnectionString();

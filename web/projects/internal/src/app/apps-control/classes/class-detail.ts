@@ -58,7 +58,7 @@ export class ClassDetail {
   readonly code = input.required<string>();
 
   private readonly api = inject(AppsControlApi);
-  private readonly drafts = inject(DraftsService);
+  protected readonly drafts = inject(DraftsService);
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
   protected readonly i18n = inject(I18nService);

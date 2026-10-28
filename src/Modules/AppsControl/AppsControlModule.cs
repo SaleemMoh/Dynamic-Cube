@@ -53,6 +53,10 @@ public static class AppsControlModule
         AddApplier<LovApplier>(services);
         AddApplier<SettingApplier>(services);
         AddApplier<UiTextApplier>(services);
+        AddApplier<ChangeAreaApplier>(services);
+
+        // Replaces the configuration-only default registered by the platform.
+        services.AddScoped<IChangeApprovalPolicy, AppsControlApprovalPolicy>();
 
         services.AddScoped<IChangeSetPublishHook<AppsControlDbContext>, ClassViewGenerator>();
         services.AddScoped<IChangeSetPublishHook<AppsControlDbContext>, AccessCacheInvalidator>();

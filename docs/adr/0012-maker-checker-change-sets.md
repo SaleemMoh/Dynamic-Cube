@@ -15,3 +15,9 @@ audits it. Versioned configuration (ADR-0008) uses the same approval flow on pub
 ## Consequences
 - Uniform governance and audit across all configuration.
 - Admin UX must show pending changes and previews.
+
+## Refinement (Phase 1a)
+- Approval is configured per area by the entity (Apps Control *Approval policy* screen), not in
+  deployment files; changing the policy always needs approval.
+- Areas without approval publish on save, but still as a recorded one-item change set: every
+  change, approved or not, keeps its before/after values and an audit-log entry.
