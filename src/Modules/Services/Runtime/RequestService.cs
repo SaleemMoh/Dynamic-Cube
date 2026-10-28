@@ -1,0 +1,367 @@
+using System.Globalization;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using DynamicCube.Modules.Services.Definitions;
+using DynamicCube.Modules.Services.Domain;
+using DynamicCube.Modules.Services.Persistence;
+using DynamicCube.Platform.Integration;
+using DynamicCube.Platform.Parties;
+using DynamicCube.Platform.Security;
+using Microsoft.EntityFrameworkCore;
+
+namespace DynamicCube.Modules.Services.Runtime;
+
+/// <summary>
+/// The applicant's side of services: catalog, drafts pinned to a version, saving answers, submission. Requests belong to
+/// their beneficiary: whoever acts for that party (and whose relationship covers the service) sees them.
+/// </summary>
+internal sealed class RequestService(
+    ServicesDbContext context,
+    ServiceCatalogCache cache,
+    IActingPartyAccessor actingParty,
+    IPartyFacts partyFacts,
+    Eligibility eligibility,
+    FeeCalculator fees,
+    FormValidator validator,
+    ICurrentUser user,
+    TimeProvider clock)
+{
+    public async Task<IReadOnlyList<CatalogEntry>> CatalogAsync(CancellationToken cancellationToken)
+    {
+        var acting = await actingParty.GetAsync(cancellationToken);
+        var facts = await FactsAsync(acting, refresh: false, cancellationToken);
+        var entries = new List<CatalogEntry>();
+        foreach (var (service, versionId) in await ListedAsync(cancellationToken))
+        {
+            var version = await cache.GetAsync(context, versionId, cancellationToken);
+            entries.Add(Entry(service, version, eligibility.Check(service, version, facts, acting, Context(facts, acting, [], null))));
+        }
+
+        return entries;
+    }
+
+    public async Task<ServiceView> GetServiceAsync(string code, CancellationToken cancellationToken)
+    {
+        var acting = await actingParty.GetAsync(cancellationToken);
+        var (service, versionId) = await CurrentAsync(code, cancellationToken);
+        var version = await cache.GetAsync(context, versionId, cancellationToken);
+        var facts = await FactsAsync(acting, refresh: false, cancellationToken);
+        var ruleContext = Context(facts, acting, Prefill(version, facts, acting), null);
+        var byLevel = version.Definition.Levels.Count == 0
+            ? new Dictionary<string, IReadOnlyList<FeeLine>> { [string.Empty] = fees.Compute(version.Definition, null, ruleContext) }
+            : version.Definition.Levels.ToDictionary(l => l.Code, l => fees.Compute(version.Definition, l.Code, WithLevel(ruleContext, l.Code)));
+        return new ServiceView(Entry(service, version, eligibility.Check(service, version, facts, acting, ruleContext)), version, byLevel);
+    }
+
+    public async Task<RequestView> CreateAsync(CreateRequest request, CancellationToken cancellationToken)
+    {
+        var acting = await actingParty.GetAsync(cancellationToken);
+        var (service, versionId) = await CurrentAsync(request.ServiceCode, cancellationToken);
+        var version = await cache.GetAsync(context, versionId, cancellationToken);
+        var facts = await FactsAsync(acting, refresh: true, cancellationToken);
+        var data = Prefill(version, facts, acting);
+        var failures = eligibility.Check(service, version, facts, acting, Context(facts, acting, data, null));
+        if (failures.Count > 0)
+        {
+            throw new NotEligibleException(failures);
+        }
+
+        var individual = acting.IsSelf ? facts : await FactsAsync(acting.IndividualId, cancellationToken);
+        var now = clock.GetUtcNow();
+        var entity = new ServiceRequest
+        {
+            ServiceId = service.Id,
+            ServiceCode = service.Code,
+            ServiceVersionId = versionId,
+            VersionNumber = version.Number,
+            SubmitterPartyId = acting.IndividualId,
+            SubmitterName = individual.NameAr,
+            BeneficiaryPartyId = acting.PartyId,
+            BeneficiaryNameAr = facts.NameAr,
+            BeneficiaryNameEn = facts.NameEn,
+            StatusCategory = StatusCategory.Draft,
+            DisplayStatus = "DRAFT",
+            Data = data.ToJsonString(),
+            LevelCode = version.Definition.Levels.Count == 1 ? version.Definition.Levels[0].Code : null,
+            CurrentStep = version.Definition.Steps.FirstOrDefault()?.Code,
+            DraftExpiresAt = now.AddDays(service.DraftsAllowed ? service.DraftExpiryDays : 1),
+        };
+        context.Requests.Add(entity);
+        AddEvent(entity, RequestEventTypes.Created, null, StatusCategory.Draft, null);
+        await context.SaveChangesAsync(cancellationToken);
+        return await ViewAsync(entity, service, version, facts, acting, null, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<RequestSummary>> ListMineAsync(StatusCategory? status, CancellationToken cancellationToken)
+    {
+        var acting = await actingParty.GetAsync(cancellationToken);
+        var query = context.Requests.AsNoTracking().Where(r => r.BeneficiaryPartyId == acting.PartyId && r.StatusCategory != StatusCategory.Cancelled);
+        if (status is not null)
+        {
+            query = query.Where(r => r.StatusCategory == status);
+        }
+
+        var requests = await query.OrderByDescending(r => r.CreatedAt).Take(200).ToListAsync(cancellationToken);
+        var names = await ServiceNamesAsync(requests.Select(r => r.ServiceId), cancellationToken);
+        return [.. requests.Where(r => acting.Covers(r.ServiceCode)).Select(r => Summary(r, names[r.ServiceId]))];
+    }
+
+    public async Task<RequestView> GetAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var (entity, acting) = await LoadMineAsync(id, cancellationToken);
+        var service = await context.Services.AsNoTracking().SingleAsync(s => s.Id == entity.ServiceId, cancellationToken);
+        if (entity.StatusCategory == StatusCategory.Draft)
+        {
+            await ExpireOrMoveAsync(entity, service, cancellationToken);
+        }
+
+        var version = await cache.GetAsync(context, entity.ServiceVersionId, cancellationToken);
+        var facts = await FactsAsync(acting, refresh: false, cancellationToken);
+        return await ViewAsync(entity, service, version, facts, acting, null, cancellationToken);
+    }
+
+    /// <summary>Saves the answers of a draft as they are (autosave) and reports the problems of the given step.</summary>
+    public async Task<RequestView> SaveAsync(Guid id, SaveRequest request, CancellationToken cancellationToken)
+    {
+        var (entity, acting) = await LoadMineAsync(id, cancellationToken);
+        RequireDraft(entity);
+        var service = await context.Services.AsNoTracking().SingleAsync(s => s.Id == entity.ServiceId, cancellationToken);
+        var version = await cache.GetAsync(context, entity.ServiceVersionId, cancellationToken);
+        if (request.LevelCode is not null && version.Definition.Levels.All(l => l.Code != request.LevelCode))
+        {
+            throw new RequestValidationException([new FieldError("level", "OPTION", "مستوى الخدمة غير موجود.", "The service level does not exist.", null)]);
+        }
+
+        if (request.CurrentStep is not null && version.Definition.Steps.All(s => s.Code != request.CurrentStep))
+        {
+            throw new RequestConflictException($"Step '{request.CurrentStep}' does not exist.");
+        }
+
+        if (request.Data is not null)
+        {
+            // Only answers to questions of this version are kept.
+            var known = version.Questions.Keys.ToHashSet(StringComparer.Ordinal);
+            entity.Data = new JsonObject(request.Data.Where(p => known.Contains(p.Key)).Select(p => KeyValuePair.Create(p.Key, p.Value?.DeepClone()))).ToJsonString();
+        }
+
+        entity.LevelCode = request.LevelCode ?? entity.LevelCode;
+        entity.CurrentStep = request.CurrentStep ?? entity.CurrentStep;
+        await context.SaveChangesAsync(cancellationToken);
+
+        var facts = await FactsAsync(acting, refresh: false, cancellationToken);
+        return await ViewAsync(entity, service, version, facts, acting, request.CurrentStep, cancellationToken);
+    }
+
+    public async Task<RequestView> SubmitAsync(Guid id, SubmitRequest request, CancellationToken cancellationToken)
+    {
+        var (entity, acting) = await LoadMineAsync(id, cancellationToken);
+        RequireDraft(entity);
+        var service = await context.Services.AsNoTracking().SingleAsync(s => s.Id == entity.ServiceId, cancellationToken);
+        if (await ExpireOrMoveAsync(entity, service, cancellationToken))
+        {
+            throw new RequestConflictException("The draft has expired; start a new request.");
+        }
+
+        var version = await cache.GetAsync(context, entity.ServiceVersionId, cancellationToken);
+        var facts = await FactsAsync(acting, refresh: true, cancellationToken);
+        var data = JsonNode.Parse(entity.Data)!.AsObject();
+        var ruleContext = Context(facts, acting, data, entity.LevelCode);
+        var failures = eligibility.Check(service, version, facts, acting, ruleContext);
+        if (failures.Count > 0)
+        {
+            throw new NotEligibleException(failures);
+        }
+
+        var check = await validator.CheckAsync(version, data, ruleContext, null, cancellationToken);
+        var errors = check.Errors.ToList();
+        if (version.Definition.Levels.Count > 0 && entity.LevelCode is null)
+        {
+            errors.Add(new FieldError("level", "REQUIRED", "اختر مستوى الخدمة.", "Choose a service level.", version.Definition.Steps.FirstOrDefault(s => s.Type == StepType.Level)?.Code));
+        }
+
+        var declaration = version.Definition.Steps.FirstOrDefault(s => s.Type == StepType.Declaration);
+        if (declaration is not null && !request.DeclarationAccepted)
+        {
+            errors.Add(new FieldError("declaration", "REQUIRED", "يجب الموافقة على الإقرار.", "You must accept the declaration.", declaration.Code));
+        }
+
+        if (errors.Count > 0)
+        {
+            throw new RequestValidationException(errors);
+        }
+
+        var lines = fees.Compute(version.Definition, entity.LevelCode, Context(facts, acting, check.Data, entity.LevelCode));
+        var now = clock.GetUtcNow();
+        entity.Data = check.Data.ToJsonString();
+        entity.Fees = [.. lines];
+        entity.FeeTotal = lines.Sum(l => l.Total);
+        entity.Number = await NextNumberAsync(service.NumberPrefix, now, cancellationToken);
+        entity.StatusCategory = StatusCategory.Submitted;
+        entity.DisplayStatus = "SUBMITTED";
+        entity.SubmittedAt = now;
+        entity.DraftExpiresAt = null;
+        entity.CurrentStep = null;
+        AddEvent(entity, RequestEventTypes.Submitted, StatusCategory.Draft, StatusCategory.Submitted, null);
+        await context.SaveChangesAsync(cancellationToken);
+        return await ViewAsync(entity, service, version, facts, acting, null, cancellationToken);
+    }
+
+    public async Task CancelAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var (entity, _) = await LoadMineAsync(id, cancellationToken);
+        RequireDraft(entity);
+        entity.StatusCategory = StatusCategory.Cancelled;
+        entity.DisplayStatus = "CANCELLED";
+        entity.ClosedAt = clock.GetUtcNow();
+        AddEvent(entity, RequestEventTypes.Cancelled, StatusCategory.Draft, StatusCategory.Cancelled, null);
+        await context.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task<RequestView> ViewAsync(ServiceRequest entity, Service service, ResolvedVersion version, PartyFacts facts, ActingParty acting, string? step, CancellationToken cancellationToken)
+    {
+        var data = JsonNode.Parse(entity.Data)!.AsObject();
+        IReadOnlyList<FeeLine> lines = entity.StatusCategory == StatusCategory.Draft
+            ? fees.Compute(version.Definition, entity.LevelCode, Context(facts, acting, data, entity.LevelCode))
+            : entity.Fees;
+        var stepErrors = step is null ? [] : (await validator.CheckAsync(version, data, Context(facts, acting, data, entity.LevelCode), step, cancellationToken)).Errors;
+        return new RequestView(Summary(entity, (service.NameAr, service.NameEn)), entity.VersionNumber, entity.LevelCode, entity.CurrentStep, data, lines, version, stepErrors);
+    }
+
+    /// <summary>Expires a draft past its date, or moves it to the current version when the service says so. True when expired.</summary>
+    private async Task<bool> ExpireOrMoveAsync(ServiceRequest entity, Service service, CancellationToken cancellationToken)
+    {
+        if (entity.DraftExpiresAt <= clock.GetUtcNow())
+        {
+            entity.StatusCategory = StatusCategory.Cancelled;
+            entity.DisplayStatus = "EXPIRED";
+            entity.ClosedAt = clock.GetUtcNow();
+            AddEvent(entity, RequestEventTypes.Expired, StatusCategory.Draft, StatusCategory.Cancelled, null);
+            await context.SaveChangesAsync(cancellationToken);
+            return true;
+        }
+
+        if (service.OnNewVersion != NewVersionPolicy.Restart)
+        {
+            return false;
+        }
+
+        var current = await CurrentVersionIdAsync(service.Id, cancellationToken);
+        if (current is null || current == entity.ServiceVersionId)
+        {
+            return false;
+        }
+
+        var version = await cache.GetAsync(context, current.Value, cancellationToken);
+        var old = JsonNode.Parse(entity.Data)!.AsObject();
+        entity.Data = new JsonObject(old.Where(p => version.Questions.ContainsKey(p.Key)).Select(p => KeyValuePair.Create(p.Key, p.Value?.DeepClone()))).ToJsonString();
+        AddEvent(entity, RequestEventTypes.VersionChanged, StatusCategory.Draft, StatusCategory.Draft, $"{entity.VersionNumber} → {version.Number}");
+        entity.ServiceVersionId = current.Value;
+        entity.VersionNumber = version.Number;
+        entity.LevelCode = version.Definition.Levels.Any(l => l.Code == entity.LevelCode) ? entity.LevelCode : null;
+        entity.CurrentStep = version.Definition.Steps.FirstOrDefault()?.Code;
+        await context.SaveChangesAsync(cancellationToken);
+        return false;
+    }
+
+    private async Task<(ServiceRequest Entity, ActingParty Acting)> LoadMineAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var acting = await actingParty.GetAsync(cancellationToken);
+        var entity = await context.Requests.SingleOrDefaultAsync(r => r.Id == id && r.BeneficiaryPartyId == acting.PartyId, cancellationToken);
+        return entity is null || !acting.Covers(entity.ServiceCode)
+            ? throw new RequestNotFoundException($"Request {id} does not exist.")
+            : (entity, acting);
+    }
+
+    private static void RequireDraft(ServiceRequest entity)
+    {
+        if (entity.StatusCategory != StatusCategory.Draft)
+        {
+            throw new RequestConflictException("Only drafts can be changed.");
+        }
+    }
+
+    private async Task<List<(Service Service, Guid VersionId)>> ListedAsync(CancellationToken cancellationToken)
+    {
+        var rows = await context.Services.AsNoTracking()
+            .Where(s => s.IsActive && s.IsListed)
+            .Select(s => new
+            {
+                Service = s,
+                VersionId = context.Versions.Where(v => v.ServiceId == s.Id && v.IsActive && !v.IsRetired && v.Resolved != null).OrderByDescending(v => v.Number).Select(v => (Guid?)v.Id).FirstOrDefault(),
+            })
+            .ToListAsync(cancellationToken);
+        return [.. rows.Where(r => r.VersionId is not null).OrderBy(r => r.Service.DisplayOrder).ThenBy(r => r.Service.Code).Select(r => (r.Service, r.VersionId!.Value))];
+    }
+
+    private async Task<(Service Service, Guid VersionId)> CurrentAsync(string code, CancellationToken cancellationToken)
+    {
+        var service = await context.Services.AsNoTracking().SingleOrDefaultAsync(s => s.Code == code && s.IsActive, cancellationToken)
+            ?? throw new RequestNotFoundException($"Service '{code}' does not exist.");
+        var version = await CurrentVersionIdAsync(service.Id, cancellationToken) ?? throw new RequestNotFoundException($"Service '{code}' has no published version.");
+        return (service, version);
+    }
+
+    private Task<Guid?> CurrentVersionIdAsync(Guid serviceId, CancellationToken cancellationToken) =>
+        context.Versions.AsNoTracking()
+            .Where(v => v.ServiceId == serviceId && v.IsActive && !v.IsRetired && v.Resolved != null)
+            .OrderByDescending(v => v.Number)
+            .Select(v => (Guid?)v.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+    private async Task<PartyFacts> FactsAsync(ActingParty acting, bool refresh, CancellationToken cancellationToken) =>
+        await partyFacts.GetAsync(acting.PartyId, refresh, cancellationToken) ?? throw new RequestNotFoundException("The acting party does not exist.");
+
+    private async Task<PartyFacts> FactsAsync(Guid partyId, CancellationToken cancellationToken) =>
+        await partyFacts.GetAsync(partyId, false, cancellationToken) ?? throw new RequestNotFoundException("The applicant does not exist.");
+
+    private JsonObject Context(PartyFacts facts, ActingParty acting, JsonObject data, string? level) => RuleContext.Build(facts, acting, data, level, clock.GetUtcNow());
+
+    private static JsonObject WithLevel(JsonObject context, string level)
+    {
+        var copy = context.DeepClone().AsObject();
+        copy["level"] = level;
+        return copy;
+    }
+
+    /// <summary>Initial answers from the party's data for questions with a prefill path.</summary>
+    private JsonObject Prefill(ResolvedVersion version, PartyFacts facts, ActingParty acting)
+    {
+        var context = Context(facts, acting, [], null);
+        var data = new JsonObject();
+        foreach (var question in version.Questions.Values.Where(q => q.Prefill is not null))
+        {
+            var value = JsonPaths.Read(context, question.Prefill);
+            if (value is not null)
+            {
+                data[question.Code] = value;
+            }
+        }
+
+        return data;
+    }
+
+    private async Task<string> NextNumberAsync(string prefix, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        var year = now.UtcDateTime.Year.ToString(CultureInfo.InvariantCulture);
+        var key = $"{prefix}-{year}";
+        var value = await context.Database
+            .SqlQuery<long>($"INSERT INTO svc.number_sequence (key, value) VALUES ({key}, 1) ON CONFLICT (key) DO UPDATE SET value = svc.number_sequence.value + 1 RETURNING value AS \"Value\"")
+            .ToListAsync(cancellationToken);
+        return $"{key}-{value[0].ToString("D6", CultureInfo.InvariantCulture)}";
+    }
+
+    private void AddEvent(ServiceRequest entity, string type, StatusCategory? from, StatusCategory? to, string? comment) =>
+        context.RequestEvents.Add(new RequestEvent { RequestId = entity.Id, At = clock.GetUtcNow(), UserId = user.UserId, Type = type, FromStatus = from, ToStatus = to, Comment = comment });
+
+    private async Task<Dictionary<Guid, (string NameAr, string NameEn)>> ServiceNamesAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken)
+    {
+        var list = ids.Distinct().ToList();
+        return await context.Services.AsNoTracking().Where(s => list.Contains(s.Id)).ToDictionaryAsync(s => s.Id, s => (s.NameAr, s.NameEn), cancellationToken);
+    }
+
+    internal static RequestSummary Summary(ServiceRequest r, (string NameAr, string NameEn) service) =>
+        new(r.Id, r.Number, r.ServiceCode, service.NameAr, service.NameEn, r.StatusCategory, r.DisplayStatus, r.BeneficiaryNameAr, r.BeneficiaryNameEn, r.FeeTotal, r.CreatedAt, r.SubmittedAt, r.DraftExpiresAt);
+
+    private static CatalogEntry Entry(Service service, ResolvedVersion version, IReadOnlyList<EligibilityFailure> failures) =>
+        new(service.Code, service.NameAr, service.NameEn, service.DescriptionAr, service.DescriptionEn, service.Archetype, service.CategoryCode, service.Icon, service.PartyKinds, version.Number, failures.Count == 0, failures);
+}

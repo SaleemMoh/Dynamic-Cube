@@ -22,6 +22,23 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("DynamicCube.Modules.Services.Domain.NumberSequence", b =>
+                {
+                    b.Property<string>("Key")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("key");
+
+                    b.Property<long>("Value")
+                        .HasColumnType("bigint")
+                        .HasColumnName("value");
+
+                    b.HasKey("Key")
+                        .HasName("pk_number_sequence");
+
+                    b.ToTable("number_sequence", "svc");
+                });
+
             modelBuilder.Entity("DynamicCube.Modules.Services.Domain.Question", b =>
                 {
                     b.Property<Guid>("Id")
@@ -134,6 +151,56 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
                         .HasDatabaseName("ix_question_code");
 
                     b.ToTable("question", "svc");
+                });
+
+            modelBuilder.Entity("DynamicCube.Modules.Services.Domain.RequestEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("At")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("at");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)")
+                        .HasColumnName("comment");
+
+                    b.Property<string>("FromStatus")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("from_status");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("request_id");
+
+                    b.Property<string>("ToStatus")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("to_status");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("type");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_request_event");
+
+                    b.HasIndex("RequestId", "At")
+                        .HasDatabaseName("ix_request_event_request_id_at");
+
+                    b.ToTable("request_event", "svc");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.Services.Domain.Service", b =>
@@ -262,6 +329,154 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
                         .HasDatabaseName("ix_service_code");
 
                     b.ToTable("service", "svc");
+                });
+
+            modelBuilder.Entity("DynamicCube.Modules.Services.Domain.ServiceRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("BeneficiaryNameAr")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("beneficiary_name_ar");
+
+                    b.Property<string>("BeneficiaryNameEn")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("beneficiary_name_en");
+
+                    b.Property<Guid>("BeneficiaryPartyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("beneficiary_party_id");
+
+                    b.Property<DateTimeOffset?>("ClosedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("closed_at");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("CurrentStep")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("current_step");
+
+                    b.Property<string>("Data")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("data");
+
+                    b.Property<string>("DisplayStatus")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("display_status");
+
+                    b.Property<DateTimeOffset?>("DraftExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("draft_expires_at");
+
+                    b.Property<decimal>("FeeTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("fee_total");
+
+                    b.Property<string>("Fees")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("fees");
+
+                    b.Property<string>("LevelCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("level_code");
+
+                    b.Property<string>("Number")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("number");
+
+                    b.Property<uint>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<string>("ServiceCode")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("service_code");
+
+                    b.Property<Guid>("ServiceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("service_id");
+
+                    b.Property<Guid>("ServiceVersionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("service_version_id");
+
+                    b.Property<string>("StatusCategory")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("status_category");
+
+                    b.Property<DateTimeOffset?>("SubmittedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("submitted_at");
+
+                    b.Property<string>("SubmitterName")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("submitter_name");
+
+                    b.Property<Guid>("SubmitterPartyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("submitter_party_id");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("updated_by");
+
+                    b.Property<int>("VersionNumber")
+                        .HasColumnType("integer")
+                        .HasColumnName("version_number");
+
+                    b.HasKey("Id")
+                        .HasName("pk_request");
+
+                    b.HasIndex("Number")
+                        .IsUnique()
+                        .HasDatabaseName("ix_request_number");
+
+                    b.HasIndex("ServiceVersionId")
+                        .HasDatabaseName("ix_request_service_version_id");
+
+                    b.HasIndex("BeneficiaryPartyId", "StatusCategory")
+                        .HasDatabaseName("ix_request_beneficiary_party_id_status_category");
+
+                    b.HasIndex("ServiceCode", "StatusCategory")
+                        .HasDatabaseName("ix_request_service_code_status_category");
+
+                    b.ToTable("request", "svc");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.Services.Domain.ServiceVersion", b =>
@@ -627,6 +842,26 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
                         {
                             t.ExcludeFromMigrations();
                         });
+                });
+
+            modelBuilder.Entity("DynamicCube.Modules.Services.Domain.RequestEvent", b =>
+                {
+                    b.HasOne("DynamicCube.Modules.Services.Domain.ServiceRequest", null)
+                        .WithMany()
+                        .HasForeignKey("RequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_request_event_request_request_id");
+                });
+
+            modelBuilder.Entity("DynamicCube.Modules.Services.Domain.ServiceRequest", b =>
+                {
+                    b.HasOne("DynamicCube.Modules.Services.Domain.ServiceVersion", null)
+                        .WithMany()
+                        .HasForeignKey("ServiceVersionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_request_service_version_service_version_id");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.Services.Domain.ServiceVersion", b =>

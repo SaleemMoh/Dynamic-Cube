@@ -22,6 +22,7 @@ app.MapDynamicCubeDefaults();
 app.MapAppsControlInternal();
 app.MapIntegrationInternal();
 app.MapPartiesInternal();
+app.MapServicesInternal();
 
 app.Run();
 

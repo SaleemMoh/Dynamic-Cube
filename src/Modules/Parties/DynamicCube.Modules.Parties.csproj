@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="DynamicCube.Modules.Parties.Tests" />
+    <InternalsVisibleTo Include="DynamicCube.Modules.Services.Tests" />
   </ItemGroup>
 
 </Project>

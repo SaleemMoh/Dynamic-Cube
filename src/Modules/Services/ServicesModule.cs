@@ -1,9 +1,13 @@
 using DynamicCube.Modules.Services.Changes;
+using DynamicCube.Modules.Services.Endpoints;
 using DynamicCube.Modules.Services.Persistence;
 using DynamicCube.Modules.Services.Runtime;
 using DynamicCube.Platform;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Security;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -31,7 +35,28 @@ public static class ServicesModule
         AddApplier<ServiceVersionApplier>(services);
         services.AddScoped<IChangeSetPublishHook<ServicesDbContext>, VersionCompiler>();
         services.AddSingleton<ServiceCatalogCache>();
+        services.AddScoped<Eligibility>();
+        services.AddScoped<FeeCalculator>();
+        services.AddScoped<FormValidator>();
+        services.AddScoped<RequestService>();
+        services.AddScoped<RequestAdminService>();
         return services;
+    }
+
+    /// <summary>Internal host: requests (read) and version previews; configuration is edited through change sets.</summary>
+    public static IEndpointRouteBuilder MapServicesInternal(this IEndpointRouteBuilder endpoints)
+    {
+        var group = endpoints.MapGroup(ApiPrefix).RequireAuthorization().AddEndpointFilter(ServiceEndpoints.Errors).WithTags("Services");
+        ServiceEndpoints.MapInternal(group);
+        return endpoints;
+    }
+
+    /// <summary>External host: catalog, drafts and submission for the signed-in applicant and their acting party.</summary>
+    public static IEndpointRouteBuilder MapServicesExternal(this IEndpointRouteBuilder endpoints)
+    {
+        var group = endpoints.MapGroup(ApiPrefix).RequireAuthorization().AddEndpointFilter(ServiceEndpoints.Errors).WithTags("Services");
+        ServiceEndpoints.MapExternal(group);
+        return endpoints;
     }
 
     private static void AddApplier<T>(IServiceCollection services)

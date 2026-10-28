@@ -21,6 +21,7 @@ var app = builder.Build();
 app.MapDynamicCubeDefaults();
 app.MapAppsControlExternal();
 app.MapPartiesExternal();
+app.MapServicesExternal();
 
 app.Run();
 
