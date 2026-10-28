@@ -1,6 +1,6 @@
 # ADR-0019: How the workflow engine runs
 
-**Status:** Accepted (refines [ADR-0003](0003-custom-workflow-engine.md) for the first node types)
+**Status:** Accepted (refines [ADR-0003](0003-custom-workflow-engine.md) for the first node types; revised in 1f: workflows belong to services)
 
 ## Context
 Phase 1d delivers the engine for human work: distribution, parallel reviews with maker-checker, returns to
@@ -10,8 +10,16 @@ lives in the Services module while its workflow lives in the Workflow module.
 
 ## Decision
 - **Definitions are JSON graphs in change sets** (`wf.workflow`, `wf.workflow-version` `CODE/N`), checked on
-  save (reachable nodes, an end, known targets, splits closed by joins) and immutable once published. A service
-  version names its workflow; a request starts on the workflow's latest published version and stays on it.
+  save (reachable nodes, an end, known targets, splits closed by joins) and immutable once published. A request
+  starts on its service's workflow at the latest published version and stays on it.
+- **Every service owns one workflow** (revised in 1f). `wf.workflow.serviceCode` ties a workflow to exactly one
+  service; it cannot move to another service, nor be deleted while the service exists, and workflows are not
+  shared. Publishing a new service creates its workflow in the same transaction with version 1 *Start → Completed
+  (approved)*, which needs no review, so every service can take requests from the start. A service version is
+  refused at validation unless its service's workflow has a published version; versions no longer name a workflow.
+  The modules stay apart through kernel contracts (`IServiceCatalog` in Services, `IServiceWorkflows` in
+  Workflow), and change-set publishing runs in a unit of work so a module's publish hook can write another's
+  tables atomically.
 - **Tokens move through the graph.** A parallel split forks tokens that carry a stack of fork frames; a join
   (all, any or a count) waits for the branches of the nearest open frame. When the instance ends, open tokens
   and tasks are cancelled.
@@ -36,6 +44,8 @@ lives in the Services module while its workflow lives in the Workflow module.
   step records several) reads in the order things happened.
 
 ## Consequences
+- A service is never published without processing, and adding review is a new workflow version: requests in
+  progress keep the version they started on. Reusing a workflow means copying its definition.
 - Parallel work is safe without distributed locks; contention is limited to one request's operations.
 - Integration, decision, payment, visit, document, notification and timer nodes are added to the same model
   in later phases.

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using DynamicCube.Modules.AppsControl.Changes;
+using DynamicCube.Modules.Services.Changes;
 using DynamicCube.Modules.Workflow.Changes;
 using DynamicCube.Modules.Workflow.Domain;
 using DynamicCube.Modules.Workflow.Runtime;
@@ -17,10 +18,12 @@ public sealed class ClassificationPackageTests(DatabaseFixture fixture)
     public async Task A_request_goes_through_distribution_three_checked_branches_and_the_general_manager()
     {
         await using var host = new WorkflowHost(fixture);
-        var items = Items();
+        // The service first: publishing it gives it its workflow, whose version 2 the workflow package adds.
+        await host.Host.PublishAsync(ServiceChangeTypes.Area, [.. Items("classification-new.json")]);
+        var items = Items("classification-workflow.json");
         await host.Host.PublishAsync(AppsControlAreas.Security, [.. items.Where(i => i.EntityType.StartsWith("apps.", StringComparison.Ordinal))]);
         await host.Host.PublishAsync(WorkflowChangeTypes.Area, [.. items.Where(i => i.EntityType.StartsWith("wf.", StringComparison.Ordinal))]);
-        var subject = await host.StartAsync("CLASSIFICATION", level: "PREMIUM", sla: 35);
+        var subject = await host.StartAsync("CLASSIFICATION_NEW", level: "PREMIUM", sla: 35);
 
         // The request manager takes the request from the queue and sends it for analysis.
         var distribute = await Single(host, subject, "DISTRIBUTE");
@@ -86,7 +89,7 @@ public sealed class ClassificationPackageTests(DatabaseFixture fixture)
         await host.AsAsync(user, c => c.ActAsync(task.Id, new ActRequest(action, null), CancellationToken.None));
     }
 
-    private static List<Change> Items()
+    private static List<Change> Items(string file)
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
         while (!File.Exists(Path.Combine(directory!.FullName, "DynamicCube.slnx")))
@@ -94,7 +97,7 @@ public sealed class ClassificationPackageTests(DatabaseFixture fixture)
             directory = directory.Parent;
         }
 
-        using var package = JsonDocument.Parse(File.ReadAllText(Path.Combine(directory.FullName, "deploy/config-packages/classification-workflow.json")));
+        using var package = JsonDocument.Parse(File.ReadAllText(Path.Combine(directory.FullName, "deploy/config-packages/" + file)));
         return [.. package.RootElement.GetProperty("items").EnumerateArray().Select(i => new Change(
             i.GetProperty("entityType").GetString()!,
             i.GetProperty("entityCode").GetString()!,

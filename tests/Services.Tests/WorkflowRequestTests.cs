@@ -18,7 +18,6 @@ namespace DynamicCube.Modules.Services.Tests;
 public sealed class WorkflowRequestTests(DatabaseFixture fixture) : IAsyncLifetime
 {
     private readonly ServiceSamples _sample = new();
-    private readonly string _workflow = TestHost.Unique("REVIEW_WF");
     private readonly string _role = TestHost.Unique("REVIEWER");
     private readonly string _employee = TestHost.Unique("reviewer").ToLowerInvariant();
     private Applicant _applicant = null!;
@@ -27,17 +26,19 @@ public sealed class WorkflowRequestTests(DatabaseFixture fixture) : IAsyncLifeti
     {
         _applicant = await Applicant.CreateAsync(fixture);
         var host = _applicant.Host;
+
+        // The service comes with its workflow (no review); version 2 of it sends requests to a reviewer.
+        await host.PublishAsync(ServiceChangeTypes.Area, [.. _sample.Questions(), _sample.ServiceChange(), _sample.Version(1)]);
         await host.PublishAsync(
             AppsControlAreas.Security,
             new Change(AppsControlChangeTypes.Role, _role, ChangeOperation.Create, new { nameAr = "مراجع", nameEn = "Reviewer" }),
             new Change(AppsControlChangeTypes.User, _employee, ChangeOperation.Create, new { nameAr = "مراجع", nameEn = "Reviewer", roles = new[] { new { roleCode = _role } } }));
         await host.PublishAsync(
             WorkflowChangeTypes.Area,
-            new Change(WorkflowChangeTypes.Workflow, _workflow, ChangeOperation.Create, new { nameAr = "مراجعة", nameEn = "Review" }),
-            new Change(WorkflowChangeTypes.Version, _workflow + "/1", ChangeOperation.Create, new
+            new Change(WorkflowChangeTypes.Version, _sample.Service + "/2", ChangeOperation.Create, new
             {
-                nameAr = "1",
-                nameEn = "1",
+                nameAr = "2",
+                nameEn = "2",
                 definition = new
                 {
                     nodes = new object[]
@@ -61,9 +62,6 @@ public sealed class WorkflowRequestTests(DatabaseFixture fixture) : IAsyncLifeti
                     },
                 },
             }));
-        var definition = _sample.Definition();
-        definition.Workflow = _workflow;
-        await host.PublishAsync(ServiceChangeTypes.Area, [.. _sample.Questions(), _sample.ServiceChange(), _sample.Version(1, definition)]);
     }
 
     public async ValueTask DisposeAsync() => await _applicant.DisposeAsync();
@@ -119,14 +117,39 @@ public sealed class WorkflowRequestTests(DatabaseFixture fixture) : IAsyncLifeti
     }
 
     [Fact]
-    public async Task A_service_whose_workflow_is_not_published_takes_no_requests()
+    public async Task Without_a_published_workflow_version_a_service_takes_no_requests_and_no_new_versions()
     {
-        var definition = _sample.Definition();
-        definition.Workflow = TestHost.Unique("MISSING");
-        await _applicant.Host.PublishAsync(ServiceChangeTypes.Area, _sample.Version(2, definition));
+        var host = _applicant.Host;
+        await host.PublishAsync(
+            WorkflowChangeTypes.Area,
+            new Change(WorkflowChangeTypes.Version, _sample.Service + "/1", ChangeOperation.Update, new { nameAr = "بدون مراجعة", nameEn = "No review", isRetired = true, definition = DefaultDefinition() }),
+            new Change(WorkflowChangeTypes.Version, _sample.Service + "/2", ChangeOperation.Update, new { nameAr = "2", nameEn = "2", isRetired = true, definition = await DefinitionAsync(2) }));
 
         await Should.ThrowAsync<RequestConflictException>(SubmitAsync);
+        var refused = await Should.ThrowAsync<ChangeValidationException>(() => host.PublishAsync(ServiceChangeTypes.Area, _sample.Version(2)));
+        refused.Errors["workflow"].ShouldContain(m => m.Contains("no published version"));
     }
+
+    [Fact]
+    public async Task A_version_no_longer_names_a_workflow()
+    {
+        var definition = _sample.Definition();
+        definition.Workflow = "ANY";
+        var refused = await Should.ThrowAsync<ChangeValidationException>(() => _applicant.Host.PublishAsync(ServiceChangeTypes.Area, _sample.Version(2, definition)));
+        refused.Errors.Keys.ShouldContain("definition.workflow");
+    }
+
+    private static object DefaultDefinition() => new
+    {
+        nodes = new object[]
+        {
+            new { code = "START", type = "START", nameAr = "البداية", nameEn = "Start", next = "COMPLETED" },
+            new { code = "COMPLETED", type = "END", nameAr = "اكتمال الطلب", nameEn = "Request completed", outcome = "APPROVED" },
+        },
+    };
+
+    private Task<JsonNode> DefinitionAsync(int number) =>
+        _applicant.Host.AsAsync("admin", async sp => JsonNode.Parse((await sp.GetRequiredService<WorkflowDbContext>().Versions.SingleAsync(v => v.Code == $"{_sample.Service}/{number}")).Definition)!);
 
     private async Task<Guid> SubmitAsync()
     {

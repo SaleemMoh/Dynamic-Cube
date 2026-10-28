@@ -122,14 +122,16 @@ These are development values only; change them in `deploy/docker/.env` (see `.en
 5. **Party registry → Parties** shows the establishments registered from MCI; *Refresh data* fills their profile
    from `MCI_CR_INFO`.
 
-6. Import `deploy/config-packages/classification-new.json` the same way and approve it. In the portal, acting for
+6. Import `deploy/config-packages/classification-new.json` the same way and approve it. Publishing the service
+   also creates its workflow with a first version that needs no review, so a request submitted now is approved at
+   once (**Services → Services** links each service to its workflow versions). In the portal, acting for
    the establishment, open **Services → City service providers classification**: choose a level, sectors (the
    sections follow the choice; shared questions are asked once), staff, projects, governance and financial data,
    see the fee, review, accept the pledge and submit. The request appears under **My requests** with its number and
    in the internal system under **Services → Requests**.
 7. Import `deploy/config-packages/classification-workflow.json` (the import shows every item and any problem
-   before anything is created) and approve its three change sets. It adds the classification roles and staff, the
-   workflow (see **Action Center → Workflow versions** for its graph) and version 2 of the service. Submit a new
+   before anything is created) and approve its two change sets. It adds the classification roles and staff and version 2 of the service's
+   workflow (see **Action Center → Workflow versions** for its graph). Submit a new
    classification request in the portal, then in the internal system:
    - `manager`: **Action Center → My tasks → Available**, claim *Review and distribute*, choose *Send for analysis*;
      under *To distribute* assign governance to `analyst2`, projects and financial to `analyst1`.
@@ -139,7 +141,7 @@ These are development values only; change them in `deploy/docker/.env` (see `.en
    - `analyst1` sends both analyses for audit; `auditor1` claims and confirms the three audits; `director` approves.
      The portal shows *Approved* with the request's history; the internal request page shows its workflow.
 8. Import `deploy/config-packages/classification-certificate.json` and approve its five change sets (party fields,
-   certificate, grading rules, workflow version 2, messages). In **Party registry → Parties**, give the establishment
+   certificate, grading rules, workflow version 3, messages). In **Party registry → Parties**, give the establishment
    an `EMAIL` (and `MOBILE`) so it receives email. Submit another classification request and process it as in 7:
    after the three audits the grade is calculated (the task page shows the grade per sector under *Results of
    automated steps*); when `director` approves, the certificate `CC-YYYY-000001` is issued (a second approval for the

@@ -15,7 +15,7 @@ namespace DynamicCube.Modules.Services.Runtime;
 
 /// <summary>
 /// The applicant's side of services: catalog, drafts pinned to a version, saving answers, submission (which starts the
-/// version's workflow) and resubmission after a return for correction. Requests belong to their beneficiary: whoever
+/// service's workflow) and resubmission after a return for correction. Requests belong to their beneficiary: whoever
 /// acts for that party (and whose relationship covers the service) sees them.
 /// </summary>
 internal sealed class RequestService(
@@ -27,6 +27,7 @@ internal sealed class RequestService(
     FeeCalculator fees,
     FormValidator validator,
     IWorkflowRuntime workflows,
+    IServiceWorkflows serviceWorkflows,
     IUnitOfWork unitOfWork,
     ICurrentUser user,
     TimeProvider clock)
@@ -216,10 +217,11 @@ internal sealed class RequestService(
             throw new RequestValidationException(errors);
         }
 
-        var workflow = version.Definition.Workflow;
-        if (workflow is not null && !await workflows.CanStartAsync(workflow, cancellationToken))
+        // Every request is processed by the service's own workflow (a new service's completes requests without review).
+        var workflow = await serviceWorkflows.WorkflowOfAsync(service.Code, cancellationToken);
+        if (workflow is null || !await workflows.CanStartAsync(workflow, cancellationToken))
         {
-            throw new RequestConflictException("The service cannot take requests yet: its workflow is not published.");
+            throw new RequestConflictException("The service cannot take requests yet: its workflow has no published version.");
         }
 
         var lines = fees.Compute(version.Definition, entity.LevelCode, Context(facts, acting, check.Data, entity.LevelCode));
@@ -240,14 +242,11 @@ internal sealed class RequestService(
         await using (var work = await unitOfWork.BeginAsync(cancellationToken))
         {
             await context.SaveChangesAsync(cancellationToken);
-            if (workflow is not null)
-            {
-                var level = version.Definition.Levels.FirstOrDefault(l => l.Code == entity.LevelCode);
-                await workflows.StartAsync(
-                    new WorkflowStart(workflow, RequestSubject.Type, entity.Id, entity.Number!, service.NameAr, service.NameEn, entity.BeneficiaryNameAr, entity.BeneficiaryNameEn,
-                        service.Code, entity.LevelCode, level?.SlaWorkingDays),
-                    cancellationToken);
-            }
+            var level = version.Definition.Levels.FirstOrDefault(l => l.Code == entity.LevelCode);
+            await workflows.StartAsync(
+                new WorkflowStart(workflow, RequestSubject.Type, entity.Id, entity.Number!, service.NameAr, service.NameEn, entity.BeneficiaryNameAr, entity.BeneficiaryNameEn,
+                    service.Code, entity.LevelCode, level?.SlaWorkingDays),
+                cancellationToken);
 
             await work.CommitAsync(cancellationToken);
         }

@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { RouterLink } from '@angular/router';
 import { AppsControlApi, ConfigRow, I18nService, LocalizePipe, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
 import { firstValueFrom } from 'rxjs';
 import { ConfirmData, ConfirmDialog } from '../confirm-dialog';
@@ -18,7 +19,7 @@ import { ConfigType } from './config-types';
 /** Published rows of one configuration type with new / edit / delete actions that go into a draft change set. */
 @Component({
   selector: 'dc-config-table',
-  imports: [MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, MatTableModule, MatTooltipModule, LocalizePipe, TranslatePipe],
+  imports: [MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, MatTableModule, MatTooltipModule, RouterLink, LocalizePipe, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="dc-toolbar">
@@ -69,6 +70,18 @@ import { ConfigType } from './config-types';
       <ng-container matColumnDef="actions">
         <th mat-header-cell *matHeaderCellDef></th>
         <td mat-cell *matCellDef="let row" class="dc-table__actions">
+          @for (link of type().rowLinks ?? []; track link.testId) {
+            <a
+              matIconButton
+              [routerLink]="link.route(row).commands"
+              [queryParams]="link.route(row).queryParams"
+              [matTooltip]="link.label | dcLocalize"
+              [attr.aria-label]="link.label | dcLocalize"
+              [attr.data-testid]="link.testId + '-' + row.code"
+            >
+              <mat-icon fontSet="material-symbols-outlined">{{ link.icon }}</mat-icon>
+            </a>
+          }
           @if (row.owner !== 'SYSTEM' && canEdit()) {
             <button matIconButton (click)="edit(row)" [attr.aria-label]="'config.edit' | dcTranslate" [attr.data-testid]="'edit-' + row.code">
               <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
@@ -119,7 +132,7 @@ export class ConfigTable {
   private readonly list = rxResource({ params: () => this.type().entityType, stream: ({ params }) => this.api.list(params) });
 
   protected readonly singleton = computed(() => typeof this.type().key === 'object');
-  protected readonly canCreate = computed(() => !this.singleton() && this.privileges.can(this.resource(), 'CREATE'));
+  protected readonly canCreate = computed(() => !this.singleton() && !this.type().noCreate && this.privileges.can(this.resource(), 'CREATE'));
   protected readonly canEdit = computed(() => this.privileges.can(this.resource(), 'EDIT'));
   protected readonly canDelete = computed(() => !this.singleton() && this.privileges.can(this.resource(), 'DELETE'));
   protected readonly columns = computed(() => ['code', 'name', ...(this.type().columns ?? []), 'state', 'actions']);

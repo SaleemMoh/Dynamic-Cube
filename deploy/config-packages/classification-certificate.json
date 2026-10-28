@@ -1690,11 +1690,11 @@
     },
     {
       "entityType": "wf.workflow-version",
-      "entityCode": "CLASSIFICATION/2",
+      "entityCode": "CLASSIFICATION_NEW/3",
       "operation": "CREATE",
       "payload": {
-        "nameAr": "الإصدار 2 — احتساب الدرجة وإصدار الشهادة",
-        "nameEn": "Version 2 — grading and certificate",
+        "nameAr": "الإصدار 3 — احتساب الدرجة وإصدار الشهادة",
+        "nameEn": "Version 3 — grading and certificate",
         "definition": {
           "nodes": [
             {

@@ -21,7 +21,10 @@ public sealed class VersionDefinition
 
     public List<FeeDefinition> Fees { get; set; } = [];
 
-    /// <summary>Workflow that processes submitted requests (its latest published version at submission).</summary>
+    /// <summary>
+    /// Read only, from versions published before 1f: the workflow they named. Requests are now processed by the service's
+    /// own workflow, so new versions leave it out.
+    /// </summary>
     public string? Workflow { get; set; }
 }
 

@@ -98,7 +98,7 @@ internal static partial class DefinitionValidator
 
         if (definition.Workflow is not null)
         {
-            CheckCode(definition.Workflow, "definition.workflow", errors);
+            errors.Add("definition.workflow", "A version no longer names a workflow: requests are processed by the service's own workflow (add a version to it instead).");
         }
 
         Rules(definition.Eligibility, "definition.eligibility", evaluator, errors, null);

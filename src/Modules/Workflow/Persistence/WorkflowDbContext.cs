@@ -30,6 +30,8 @@ public sealed class WorkflowDbContext(DbContextOptions<WorkflowDbContext> option
         {
             b.Property(e => e.DescriptionAr).HasMaxLength(4000);
             b.Property(e => e.DescriptionEn).HasMaxLength(4000);
+            b.Property(e => e.ServiceCode).HasMaxLength(100);
+            b.HasIndex(e => e.ServiceCode).IsUnique().HasFilter("service_code IS NOT NULL");
         });
         modelBuilder.ConfigTable<WorkflowVersion>(Schema, "workflow_version", b =>
         {

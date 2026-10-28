@@ -350,6 +350,11 @@ namespace DynamicCube.Modules.Workflow.Persistence.Migrations
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
 
+                    b.Property<string>("ServiceCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("service_code");
+
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
@@ -365,6 +370,11 @@ namespace DynamicCube.Modules.Workflow.Persistence.Migrations
                     b.HasIndex("Code")
                         .IsUnique()
                         .HasDatabaseName("ix_workflow_code");
+
+                    b.HasIndex("ServiceCode")
+                        .IsUnique()
+                        .HasDatabaseName("ix_workflow_service_code")
+                        .HasFilter("service_code IS NOT NULL");
 
                     b.ToTable("workflow", "wf");
                 });

@@ -54,3 +54,16 @@ public interface IWorkflowSubject
 
     Task UpdateAsync(Guid subjectId, SubjectUpdate update, CancellationToken cancellationToken);
 }
+
+/// <summary>
+/// Every service has its own workflow (implemented by the Workflow module). A new service starts with a default one
+/// that needs no approval or review; its versions are what requests of the service run on.
+/// </summary>
+public interface IServiceWorkflows
+{
+    /// <summary>The code of the service's workflow, or null when it has none.</summary>
+    Task<string?> WorkflowOfAsync(string serviceCode, CancellationToken cancellationToken);
+
+    /// <summary>Gives the service its default workflow (start → completed) unless it already has one; runs in the caller's unit of work.</summary>
+    Task EnsureAsync(string serviceCode, string nameAr, string nameEn, CancellationToken cancellationToken);
+}

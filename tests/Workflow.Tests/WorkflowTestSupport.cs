@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using DynamicCube.Modules.AppsControl.Changes;
+using DynamicCube.Modules.Services.Changes;
 using DynamicCube.Modules.Workflow.Changes;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Parties;
@@ -108,14 +109,27 @@ internal sealed class WorkflowHost : IAsyncDisposable
             roles = u.Roles.Select(r => new { roleCode = r }).ToArray(),
         }))]);
 
-    /// <summary>Publishes a workflow with one version; returns its code.</summary>
+    /// <summary>Publishes a service; it comes with its workflow (same code), whose version 1 completes requests without review.</summary>
+    public async Task<string> ServiceAsync()
+    {
+        var code = Unique("SVC");
+        await Host.PublishAsync(ServiceChangeTypes.Area, new Change(ServiceChangeTypes.Service, code, ChangeOperation.Create, new
+        {
+            nameAr = "خدمة " + code,
+            nameEn = "Service " + code,
+            archetype = "ISSUANCE",
+            partyKinds = new[] { "ESTABLISHMENT" },
+        }));
+        return code;
+    }
+
+    /// <summary>Publishes a service and version 2 of its workflow with these nodes; returns the workflow code.</summary>
     public async Task<string> WorkflowAsync(object[] nodes, int? slaWorkingDays = null)
     {
-        var code = Unique("WF");
+        var code = await ServiceAsync();
         await Host.PublishAsync(
             WorkflowChangeTypes.Area,
-            new Change(WorkflowChangeTypes.Workflow, code, ChangeOperation.Create, new { nameAr = "مسار", nameEn = "Workflow" }),
-            new Change(WorkflowChangeTypes.Version, code + "/1", ChangeOperation.Create, new { nameAr = "الإصدار 1", nameEn = "Version 1", definition = new { slaWorkingDays, nodes } }));
+            new Change(WorkflowChangeTypes.Version, code + "/2", ChangeOperation.Create, new { nameAr = "الإصدار 2", nameEn = "Version 2", definition = new { slaWorkingDays, nodes } }));
         return code;
     }
 

@@ -83,7 +83,7 @@ public sealed class ExternalApiTests(DatabaseFixture fixture) : IAsyncLifetime
         var submitted = await client.PostAsJsonAsync($"/api/services/v1/requests/{id}/submit", new { declarationAccepted = true }, ct);
         submitted.EnsureSuccessStatusCode();
         var view = await submitted.Content.ReadFromJsonAsync<JsonElement>(ct);
-        view.GetProperty("request").GetProperty("status").GetString().ShouldBe("SUBMITTED");
+        view.GetProperty("request").GetProperty("status").GetString().ShouldBe("APPROVED", "the service's default workflow needs no review");
         view.GetProperty("request").GetProperty("feeTotal").GetDecimal().ShouldBe(15000m);
 
         var mine = await client.GetFromJsonAsync<JsonElement>("/api/services/v1/requests", ct);

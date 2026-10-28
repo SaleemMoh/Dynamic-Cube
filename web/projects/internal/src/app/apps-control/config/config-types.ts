@@ -23,6 +23,16 @@ export interface ConfigField {
   defaultValue?: unknown;
   /** Options come from an API returning `{ code, nameAr, nameEn }[]` (e.g. the events modules raise). */
   optionsUrl?: string;
+  /** Set when the row is created; read-only afterwards (e.g. the service a workflow belongs to). */
+  lockedOnEdit?: boolean;
+}
+
+/** A link from each row to a related screen (e.g. from a service to its workflow). */
+export interface ConfigRowLink {
+  icon: string;
+  label: LocalizedText;
+  route: (row: Record<string, unknown>) => { commands: string[]; queryParams?: Record<string, string> };
+  testId: string;
 }
 
 export interface ConfigType {
@@ -37,6 +47,9 @@ export interface ConfigType {
   nameLabels?: { ar: LocalizedText; en: LocalizedText };
   /** A dialog that edits rows instead of the generic form (it receives `ConfigEditorData`); loaded when first opened. */
   editor?: () => Promise<Type<unknown>>;
+  /** Rows are created elsewhere (e.g. a service's workflow is created with the service); no *New* button. */
+  noCreate?: boolean;
+  rowLinks?: ConfigRowLink[];
 }
 
 export interface ConfigSection {

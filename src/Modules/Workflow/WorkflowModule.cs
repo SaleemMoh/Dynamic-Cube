@@ -6,6 +6,7 @@ using DynamicCube.Platform;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Communication;
 using DynamicCube.Platform.Security;
+using DynamicCube.Platform.Services;
 using DynamicCube.Platform.Workflow;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -40,6 +41,8 @@ public static class WorkflowModule
         services.AddScoped<IWorkflowRuntime>(sp => sp.GetRequiredService<WorkflowEngine>());
         services.AddScoped<ActionCenter>();
         services.AddScoped<SlaMonitor>();
+        services.AddScoped<ServiceWorkflows>();
+        services.AddScoped<IServiceWorkflows>(sp => sp.GetRequiredService<ServiceWorkflows>());
         services.AddCommunicationEvents(TaskNotifications.Types);
         return services;
     }
@@ -53,6 +56,10 @@ public static class WorkflowModule
     }
 
     /// <summary>Marks overdue workflow tasks and instances (called periodically by the worker); returns how many changed.</summary>
+    /// <summary>Gives every service configured before 1f its workflow (run by the migrator); returns how many were given one.</summary>
+    public static Task<int> BackfillServiceWorkflowsAsync(IServiceProvider services, CancellationToken cancellationToken) =>
+        services.GetRequiredService<ServiceWorkflows>().BackfillAsync(services.GetRequiredService<IServiceCatalog>(), cancellationToken);
+
     public static Task<int> CheckSlaAsync(IServiceProvider services, CancellationToken cancellationToken) =>
         services.GetRequiredService<SlaMonitor>().RunAsync(cancellationToken);
 

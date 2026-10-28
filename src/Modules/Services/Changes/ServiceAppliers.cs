@@ -7,7 +7,9 @@ using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Expressions;
 using DynamicCube.Platform.Integration;
 using DynamicCube.Platform.Parties;
+using DynamicCube.Platform.Workflow;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DynamicCube.Modules.Services.Changes;
 
@@ -269,7 +271,7 @@ public sealed class ServiceVersionPayload : ConfigPayload
 /// Service versions, keyed <c>SERVICE/N</c>. A new version takes the next number; afterwards only its names and the
 /// retired flag may change, so requests always run on the definition they started with.
 /// </summary>
-internal sealed partial class ServiceVersionApplier(ServicesDbContext db, JsonLogicEvaluator evaluator) : ServiceApplier<ServiceVersion, ServiceVersionPayload>(db)
+internal sealed partial class ServiceVersionApplier(ServicesDbContext db, JsonLogicEvaluator evaluator, IServiceProvider services) : ServiceApplier<ServiceVersion, ServiceVersionPayload>(db)
 {
     public override string EntityType => ServiceChangeTypes.Version;
 
@@ -312,6 +314,21 @@ internal sealed partial class ServiceVersionApplier(ServicesDbContext db, JsonLo
         var known = await refs.Context.Questions.Select(q => q.Code).ToListAsync(cancellationToken);
         var available = new HashSet<string>(known, StringComparer.Ordinal);
         DefinitionValidator.Validate(definition, code => available.Contains(code) || refs.IsPendingCreate(ServiceChangeTypes.Question, code), evaluator, errors);
+
+        // No version without a workflow to process its requests. A service created in the same change set gets its default
+        // workflow when the change set is published.
+        if (refs.IsValidating && !refs.IsPendingCreate(ServiceChangeTypes.Service, serviceCode) && services.GetService<IServiceWorkflows>() is { } serviceWorkflows)
+        {
+            var workflow = await serviceWorkflows.WorkflowOfAsync(serviceCode, cancellationToken);
+            if (workflow is null)
+            {
+                errors.Add("workflow", $"Service '{serviceCode}' has no workflow yet; it gets one when the service is published.");
+            }
+            else if (!await services.GetRequiredService<IWorkflowRuntime>().CanStartAsync(workflow, cancellationToken))
+            {
+                errors.Add("workflow", $"The workflow '{workflow}' of service '{serviceCode}' has no published version; publish one first.");
+            }
+        }
     }
 
     protected override Task<ServiceVersionPayload> ToPayloadAsync(ServicesDbContext context, ServiceVersion entity, CancellationToken cancellationToken) =>

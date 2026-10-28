@@ -263,6 +263,11 @@ resulting display status; `RETURN` may resume at another step), an optional disp
 from the installation's weekend days and the holidays (`apps.holiday`). The worker's SLA job runs every minute.
 How the engine runs is recorded in [ADR-0019](adr/0019-workflow-runtime.md).
 
+**Service-owned workflows (1f)** — every workflow belongs to one service (`serviceCode`, unique, fixed once set).
+Publishing a new service creates its workflow with version 1 *Start → Completed (approved)*, which needs no review;
+review steps come as later versions. A service version cannot be published unless its service's workflow has a
+published version.
+
 ---
 
 ## 3.6 Visits

@@ -75,7 +75,8 @@ public sealed class RequestTests(DatabaseFixture fixture) : IAsyncLifetime
 
         var submitted = await Requests(s => s.SubmitAsync(draft.Request.Id, new SubmitRequest(true), CancellationToken.None));
 
-        submitted.Request.Status.ShouldBe(StatusCategory.Submitted);
+        // The service's default workflow needs no review: the request completes on submission.
+        submitted.Request.Status.ShouldBe(StatusCategory.Approved);
         submitted.Request.Number!.ShouldMatch(@"^CLS-\d{4}-\d{6}$");
         submitted.Data.ContainsKey(_sample.BuildingProjects).ShouldBeFalse();
         submitted.Data[_sample.CrNumber]!.GetValue<string>().ShouldBe(_applicant.CrNumber);
@@ -85,7 +86,7 @@ public sealed class RequestTests(DatabaseFixture fixture) : IAsyncLifetime
         await Should.ThrowAsync<RequestConflictException>(() => Requests(s => s.SaveAsync(draft.Request.Id, new SaveRequest(answers, null, null), CancellationToken.None)));
 
         var detail = await _applicant.Host.AsAsync("admin", sp => sp.GetRequiredService<RequestAdminService>().GetAsync(draft.Request.Id, CancellationToken.None));
-        detail.Timeline.Select(t => t.Type).ShouldBe(["CREATED", "SUBMITTED"]);
+        detail.Timeline.Select(t => t.Type).ShouldBe(["CREATED", "SUBMITTED", "APPROVED"]);
         detail.SubmitterPartyId.ShouldBe(_applicant.IndividualId);
         detail.BeneficiaryPartyId.ShouldBe(_applicant.EstablishmentId);
     }

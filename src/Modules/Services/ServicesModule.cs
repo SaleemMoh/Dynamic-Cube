@@ -6,6 +6,7 @@ using DynamicCube.Platform;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Communication;
 using DynamicCube.Platform.Security;
+using DynamicCube.Platform.Services;
 using DynamicCube.Platform.Workflow;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -37,6 +38,8 @@ public static class ServicesModule
         AddApplier<QuestionApplier>(services);
         AddApplier<ServiceVersionApplier>(services);
         services.AddScoped<IChangeSetPublishHook<ServicesDbContext>, VersionCompiler>();
+        services.AddScoped<IChangeSetPublishHook<ServicesDbContext>, ServiceWorkflowProvisioner>();
+        services.AddScoped<IServiceCatalog, ServiceCatalog>();
         services.AddSingleton<ServiceCatalogCache>();
         services.AddScoped<Eligibility>();
         services.AddScoped<FeeCalculator>();

@@ -1,11 +1,21 @@
 import { FormOption, LocalizedText } from '@dynamic-cube/shared';
-import { CONFIG_SECTIONS, ConfigField, ConfigSection } from './config-types';
+import { CONFIG_SECTIONS, ConfigField, ConfigRowLink, ConfigSection } from './config-types';
 
 const t = (ar: string, en: string): LocalizedText => ({ ar, en });
 const opt = (value: string, ar: string, en: string): FormOption => ({ value, label: t(ar, en) });
 const number = (code: string, label: LocalizedText, defaultValue: number, hint?: LocalizedText): ConfigField => ({ code, type: 'number', label, defaultValue, hint });
 const path = (code: string, label: LocalizedText, hint?: LocalizedText): ConfigField => ({ code, type: 'text', label, hint });
 const json = (code: string, label: LocalizedText, hint: LocalizedText, defaultValue: unknown = []): ConfigField => ({ code, type: 'json', label, hint, defaultValue });
+
+/** From a service or a workflow row to the workflow's versions. */
+function workflowVersionsLink(param: 'service' | 'workflowCode'): ConfigRowLink {
+  return {
+    icon: 'account_tree',
+    label: t('مسار العمل وإصداراته', 'Workflow and its versions'),
+    route: (row) => ({ commands: ['/workflows/versions'], queryParams: { [param]: String(row['code']) } }),
+    testId: 'workflow-of',
+  };
+}
 
 const partyKinds = [opt('INDIVIDUAL', 'فرد', 'Individual'), opt('ESTABLISHMENT', 'منشأة', 'Establishment')];
 const outcomes = 'SUCCESS | NOT_FOUND | BUSINESS_ERROR | TECHNICAL_ERROR';
@@ -287,6 +297,8 @@ export const SERVICE_SECTIONS: ConfigSection[] = [
         title: t('الخدمات', 'Services'),
         key: 'code',
         columns: ['archetype', 'numberPrefix', 'isListed'],
+        // A service's workflow is created with it (completing requests without review until a version adds steps).
+        rowLinks: [workflowVersionsLink('service')],
         fields: [
           { code: 'descriptionAr', type: 'textarea', label: t('الوصف بالعربية', 'Arabic description') },
           { code: 'descriptionEn', type: 'textarea', label: t('الوصف بالإنجليزية', 'English description') },
@@ -361,8 +373,10 @@ export const SERVICE_SECTIONS: ConfigSection[] = [
   },
 ];
 
-/** Every configuration screen, by path (paths are unique across modules). */
-/** Workflow configuration screens (internal system → Action Center → Workflows); versions have their own screen. */
+/**
+ * Workflow configuration screens (internal system → Action Center → Workflows); versions have their own screen. Every
+ * service gets its workflow when it is created, so workflows are not added here.
+ */
 export const WORKFLOW_SECTIONS: ConfigSection[] = [
   {
     path: 'workflows',
@@ -373,7 +387,11 @@ export const WORKFLOW_SECTIONS: ConfigSection[] = [
         entityType: 'wf.workflow',
         title: t('مسارات العمل', 'Workflows'),
         key: 'code',
+        columns: ['serviceCode'],
+        noCreate: true,
+        rowLinks: [workflowVersionsLink('workflowCode')],
         fields: [
+          { code: 'serviceCode', type: 'select', label: t('الخدمة', 'Service'), ref: 'svc.service', required: true, lockedOnEdit: true },
           { code: 'descriptionAr', type: 'textarea', label: t('الوصف بالعربية', 'Arabic description') },
           { code: 'descriptionEn', type: 'textarea', label: t('الوصف بالإنجليزية', 'English description') },
         ],

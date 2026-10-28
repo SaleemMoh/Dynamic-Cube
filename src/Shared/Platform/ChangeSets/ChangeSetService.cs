@@ -10,6 +10,7 @@ public sealed class ChangeSetService<TContext>(
     IEnumerable<IChangeApplier<TContext>> appliers,
     IEnumerable<IChangeSetPublishHook<TContext>> publishHooks,
     IChangeApprovalPolicy approvalPolicy,
+    IUnitOfWork unitOfWork,
     ICurrentUser currentUser,
     TimeProvider timeProvider) : IChangeSetWorkflow
     where TContext : ModuleDbContext
@@ -120,7 +121,8 @@ public sealed class ChangeSetService<TContext>(
     /// <summary>Applies all items in order and marks the change set published, atomically.</summary>
     public async Task PublishAsync(Guid id, CancellationToken cancellationToken)
     {
-        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        // The unit of work (not a context transaction): publish hooks may change other modules' data in the same transaction.
+        await using var work = await unitOfWork.BeginAsync(cancellationToken);
 
         var changeSet = await GetAsync(id, cancellationToken);
         foreach (var item in changeSet.Items.OrderBy(i => i.Sequence))
@@ -151,7 +153,7 @@ public sealed class ChangeSetService<TContext>(
             await hook.OnPublishedAsync(context, changeSet, cancellationToken);
         }
 
-        await transaction.CommitAsync(cancellationToken);
+        await work.CommitAsync(cancellationToken);
     }
 
     private async Task MutateAsync(Guid id, Action<ChangeSet> mutate, CancellationToken cancellationToken)

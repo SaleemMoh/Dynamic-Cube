@@ -213,7 +213,7 @@ export class ConfigEditor {
       multiple: f.multiple,
       visibleWhen: f.visibleWhen,
       // App-scoped keys cannot move to another app on edit.
-      readonly: editing && type.key === 'appScoped' && f.code === 'appCode',
+      readonly: editing && ((type.key === 'appScoped' && f.code === 'appCode') || !!f.lockedOnEdit),
       options: withCurrentValues(options.get(f.code) ?? f.options, this.data.row?.[f.code]),
     }));
     return {

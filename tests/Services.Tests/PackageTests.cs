@@ -8,6 +8,7 @@ using DynamicCube.Modules.Parties.Changes;
 using DynamicCube.Modules.Services.Changes;
 using DynamicCube.Modules.Services.Persistence;
 using DynamicCube.Modules.Workflow.Changes;
+using DynamicCube.Modules.Workflow.Persistence;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Decisions;
 using DynamicCube.Tests.Infrastructure;
@@ -29,14 +30,11 @@ public sealed class PackageTests(DatabaseFixture fixture)
         version.Resolved.ShouldNotBeNull();
         version.Resolved.ShouldContain("CLS_ANNUAL_REVENUE");
 
-        // The workflow package: staff roles and users, the workflow, and version 2 of the service processed by it.
+        // Publishing the service gave it its workflow; the workflow package adds the staff and version 2 of it.
         var workflow = Items("classification-workflow.json");
+        workflow.ShouldNotContain(i => i.EntityType.StartsWith("svc.", StringComparison.Ordinal));
         await host.PublishAsync(AppsControlAreas.Security, [.. workflow.Where(i => i.EntityType.StartsWith("apps.", StringComparison.Ordinal))]);
         await host.PublishAsync(WorkflowChangeTypes.Area, [.. workflow.Where(i => i.EntityType.StartsWith("wf.", StringComparison.Ordinal))]);
-        await host.PublishAsync(ServiceChangeTypes.Area, [.. workflow.Where(i => i.EntityType.StartsWith("svc.", StringComparison.Ordinal))]);
-
-        var second = await host.AsAsync("admin", sp => sp.GetRequiredService<ServicesDbContext>().Versions.AsNoTracking().SingleAsync(v => v.Code == "CLASSIFICATION_NEW/2"));
-        JsonNode.Parse(second.Definition)!["workflow"]!.GetValue<string>().ShouldBe("CLASSIFICATION");
 
         // The certificate package: contact fields, the certificate, the grading rules, workflow version 2 and the messages.
         var certificate = Items("classification-certificate.json");
@@ -45,6 +43,9 @@ public sealed class PackageTests(DatabaseFixture fixture)
         await host.PublishAsync(DecisionChangeTypes.Area, [.. certificate.Where(i => i.EntityType.StartsWith("dec.", StringComparison.Ordinal))]);
         await host.PublishAsync(WorkflowChangeTypes.Area, [.. certificate.Where(i => i.EntityType.StartsWith("wf.", StringComparison.Ordinal))]);
         await host.PublishAsync(CommunicationChangeTypes.Area, [.. certificate.Where(i => i.EntityType.StartsWith("com.", StringComparison.Ordinal))]);
+        var versions = await host.AsAsync("admin", sp => sp.GetRequiredService<WorkflowDbContext>().Versions.AsNoTracking()
+            .Where(v => v.Workflow!.ServiceCode == "CLASSIFICATION_NEW").OrderBy(v => v.Number).Select(v => v.Code).ToListAsync());
+        versions.ShouldBe(["CLASSIFICATION_NEW/1", "CLASSIFICATION_NEW/2", "CLASSIFICATION_NEW/3"]);
 
         // A small establishment with good staffing, a gold DGA category and a 95M track record: grade 2 in both sectors.
         var graded = await GradeAsync(host, new JsonObject

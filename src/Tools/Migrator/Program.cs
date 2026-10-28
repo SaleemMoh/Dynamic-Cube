@@ -61,6 +61,19 @@ try
         logger.LogInformation("System data seeded");
     }
 
+    // Every service has its own workflow (1f): services configured before get theirs.
+    using (var scope = host.Services.CreateScope())
+    {
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+        await using var work = await unitOfWork.BeginAsync(CancellationToken.None);
+        var given = await WorkflowModule.BackfillServiceWorkflowsAsync(scope.ServiceProvider, CancellationToken.None);
+        await work.CommitAsync(CancellationToken.None);
+        if (given > 0 && logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("{Count} service(s) given their workflow", given);
+        }
+    }
+
     logger.LogInformation("All migrations applied");
     return 0;
 }

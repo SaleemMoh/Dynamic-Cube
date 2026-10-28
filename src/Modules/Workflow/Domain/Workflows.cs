@@ -1,8 +1,11 @@
 namespace DynamicCube.Modules.Workflow.Domain;
 
-/// <summary>A workflow services can run on submission; the graph lives in its published versions.</summary>
+/// <summary>The workflow of one service: requests of the service run on its latest published version.</summary>
 public sealed class WorkflowConfig : ConfigEntity
 {
+    /// <summary>The service it belongs to (one workflow per service).</summary>
+    public string? ServiceCode { get; set; }
+
     public string? DescriptionAr { get; set; }
 
     public string? DescriptionEn { get; set; }

@@ -36,8 +36,8 @@ Delivered in slices:
 | **1c** | Services: definitions, forms, wizard, drafts, fees, eligibility | ✅ |
 | **1d** | Workflow engine + Action Center | ✅ |
 | **1e** | Documents, communication, decision contract, external applicant journey | ✅ |
-| 1f | Service-owned workflows: every service has its own workflow; none is published without one | Next |
-| 1g | E-services portal look: service catalog home and service card page | Planned |
+| **1f** | Service-owned workflows: every service has its own workflow; none is published without one | ✅ |
+| 1g | E-services portal look: service catalog home and service card page | Next |
 
 **1a delivered:** the `AppsControl` module (all entities of [§4](04-apps-control.md) except
 delegations, which come with the Action Center), change appliers with code-keyed payloads,
@@ -119,23 +119,29 @@ Still open from 1e: the financial axis and adjusters of the grading, the public 
 follow-up services by document dates (Phase 2), push notifications, schedule-based rules (draft expiry), email
 attachments.
 
-**1f planned — service-owned workflows.** Today a workflow is a shared configuration item that a service version
-may name, and a version without one is published with no processing at all. From 1f the workflow is part of the
-service:
+**1f delivered — service-owned workflows** ([ADR-0019](adr/0019-workflow-runtime.md), revised). The workflow is
+part of the service:
 
-- **One service, its own workflow.** A workflow belongs to exactly one service and is created, versioned and
-  shown with it (a *Workflow* tab on the service; the workflow screens list workflows by service). Workflows are
-  not shared between services; to reuse one, copy it into the other service.
-- **No publishing without a workflow.** A service version is checked on publish: it must use a published
-  version of its service's workflow. The check runs when the change set is validated, so the maker sees it before
-  approval, and configuration packages are held to the same rule.
-- **A default workflow for every service.** Creating a service creates its workflow with a first version that
-  needs no approval or review: *Start → Completed (approved)*. A submitted request completes at once, and the
-  documents and notifications the version defines still happen. Adding review steps is a new workflow version,
-  so requests in progress keep the version they started on.
-- **Existing configuration.** Services without a workflow get the default one; `CLASSIFICATION` becomes the
-  workflow of `CLASSIFICATION_NEW`, and the configuration packages are updated to match.
-  [ADR-0019](adr/0019-workflow-runtime.md) is revised accordingly.
+- **One service, its own workflow.** `wf.workflow` carries a `serviceCode`; a service has exactly one workflow and
+  a workflow cannot move to another service or be deleted while its service exists. Workflows are not shared; to
+  reuse one, copy its definition into a new version of the other service's workflow. The services list opens a
+  service's workflow versions directly, and the workflows list shows the service of each (workflows are not created
+  there).
+- **A default workflow for every service.** Publishing a new service creates its workflow in the same transaction
+  (`IChangeSetPublishHook`; change-set publishing now runs in a cross-module unit of work) with version 1,
+  *بدون مراجعة / No review*: *Start → Completed (approved)*. A submitted request completes at once; documents and
+  notifications still follow. Review steps come as a new workflow version, and requests in progress keep theirs.
+- **No publishing without a workflow.** A service version is refused when the change set is validated if its
+  service has no published workflow version (unless the service itself is created in the same change set, which
+  provisions the default). Versions no longer name a workflow (`definition.workflow` is rejected; the field stays
+  readable on old versions), and a request always starts its service's workflow.
+- **Existing configuration.** The migrator gives every service without a workflow the default one, linking the
+  workflow a published version named where there was one (on an existing installation `CLASSIFICATION` becomes the
+  workflow of `CLASSIFICATION_NEW`). On a new installation the service's workflow is `CLASSIFICATION_NEW`;
+  `classification-workflow.json` adds its version 2 (no service version any more) and
+  `classification-certificate.json` its version 3.
+Still open from 1f: a *Workflow* tab inside the service screen and copying a workflow between services (both come
+with the Service Builder and Workflow Designer of Phase 3).
 
 **1g planned — the e-services portal look.** The external portal follows the reference design (registry portal
 home and service card page, DGA components):

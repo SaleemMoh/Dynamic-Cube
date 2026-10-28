@@ -17,12 +17,11 @@ public sealed class EngineTests(DatabaseFixture fixture)
     public async Task Broken_graphs_are_refused()
     {
         await using var host = new WorkflowHost(fixture);
-        var code = Unique("WF");
+        var code = await host.ServiceAsync();
 
         var ex = await Should.ThrowAsync<ChangeValidationException>(() => host.Host.PublishAsync(
             WorkflowChangeTypes.Area,
-            new Change(WorkflowChangeTypes.Workflow, code, ChangeOperation.Create, new { nameAr = "مسار", nameEn = "Workflow" }),
-            new Change(WorkflowChangeTypes.Version, code + "/1", ChangeOperation.Create, new
+            new Change(WorkflowChangeTypes.Version, code + "/2", ChangeOperation.Create, new
             {
                 nameAr = "1",
                 nameEn = "1",

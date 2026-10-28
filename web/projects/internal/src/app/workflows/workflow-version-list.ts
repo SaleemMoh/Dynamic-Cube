@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -95,7 +95,9 @@ export class WorkflowGraphDialog {
         <mat-form-field subscriptSizing="dynamic">
           <mat-select id="dc-wf-version-workflow" [ngModel]="workflow()" (ngModelChange)="chooseWorkflow($event)" data-testid="wf-version-workflow">
             @for (w of workflows.value() ?? []; track w.code) {
-              <mat-option [value]="w.code">{{ { ar: w.nameAr, en: w.nameEn } | dcLocalize }} ({{ w.code }})</mat-option>
+              <mat-option [value]="w.code"
+                >{{ { ar: w.nameAr, en: w.nameEn } | dcLocalize }} — {{ 'wfVersions.service' | dcTranslate }} {{ w['serviceCode'] ?? '—' }}</mat-option
+              >
             }
           </mat-select>
         </mat-form-field>
@@ -226,7 +228,12 @@ export class WorkflowVersionList {
   protected readonly columns = ['code', 'name', 'published', 'state', 'actions'];
   protected readonly workflows = rxResource({ stream: () => this.api.list('wf.workflow') });
   private readonly versions = rxResource({ stream: () => this.api.list('wf.workflow-version') });
-  protected readonly rows = computed(() => this.versions.value() ?? []);
+  private readonly allRows = computed(() => this.versions.value() ?? []);
+  /** The chosen workflow's versions, or every version until one is chosen. */
+  protected readonly rows = computed(() => {
+    const chosen = this.workflow();
+    return chosen ? this.allRows().filter((r) => r.code.startsWith(chosen + '/')) : this.allRows();
+  });
   protected readonly workflow = signal<string | null>(null);
   protected readonly text = signal('');
   protected readonly errors = signal<string[]>([]);
@@ -249,16 +256,32 @@ export class WorkflowVersionList {
       1 +
       Math.max(
         0,
-        ...this.rows()
+        ...this.allRows()
           .filter((r) => r.code.startsWith(prefix))
           .map((r) => Number(r.code.slice(prefix.length))),
       )
     );
   });
 
+  /** From the services list: the service whose workflow to open (query parameter). */
+  readonly service = input<string | undefined>();
+  /** From the workflows list: the workflow to open (query parameter). */
+  readonly workflowCode = input<string | undefined>();
+
+  constructor() {
+    effect(() => {
+      const list = this.workflows.value();
+      if (!list || !this.versions.hasValue() || this.workflow()) return;
+      const wanted = this.workflowCode() ?? list.find((w) => w['serviceCode'] === this.service())?.code;
+      if (wanted && list.some((w) => w.code === wanted)) {
+        untracked(() => this.chooseWorkflow(wanted));
+      }
+    });
+  }
+
   protected chooseWorkflow(code: string): void {
     this.workflow.set(code);
-    const latest = this.rows().find((r) => r.code === `${code}/${this.nextNumber() - 1}`);
+    const latest = this.allRows().find((r) => r.code === `${code}/${this.nextNumber() - 1}`);
     this.text.set(JSON.stringify(latest?.['definition'] ?? STARTER, null, 2));
     this.errors.set([]);
   }
