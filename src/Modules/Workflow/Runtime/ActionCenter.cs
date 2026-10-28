@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using DynamicCube.Modules.Workflow.Changes;
 using DynamicCube.Modules.Workflow.Definitions;
 using DynamicCube.Modules.Workflow.Domain;
@@ -87,7 +88,8 @@ public sealed record InstanceView(
     DateTimeOffset? DueAt,
     SlaState Sla,
     IReadOnlyList<TaskSummary> Tasks,
-    IReadOnlyList<TimelineItem> Timeline);
+    IReadOnlyList<TimelineItem> Timeline,
+    JsonObject Facts);
 
 public sealed record TaskDetail(
     TaskSummary Task,
@@ -509,7 +511,7 @@ internal sealed class ActionCenter(
         }
 
         return new InstanceView(instance.Id, instance.WorkflowCode, instance.VersionNumber, instance.Status, instance.Outcome, instance.StartedAt, instance.CompletedAt,
-            instance.DueAt, instance.Sla, await SummariesAsync(tasks, cancellationToken), timeline);
+            instance.DueAt, instance.Sla, await SummariesAsync(tasks, cancellationToken), timeline, JsonNode.Parse(instance.Facts)?.AsObject() ?? []);
     }
 
     private async Task<IReadOnlyList<TaskSummary>> SummariesAsync(List<WorkTask> tasks, CancellationToken cancellationToken)

@@ -1,6 +1,6 @@
 # Local / small-site deployment of Dynamic Cube.
 #   docker compose -f deploy/docker/docker-compose.yml up --build
-# Optional services (PDF rendering, virus scanning): add --profile full
+# Optional services (virus scanning): add --profile full
 name: dynamic-cube
 
 x-dotnet-env: &dotnet-env
@@ -68,6 +68,7 @@ services:
       <<: [*dotnet-env, *gateway-secrets]
       Authentication__Internal__Authority: http://keycloak:8080/realms/dynamic-cube-internal
       Authentication__Internal__RequireHttpsMetadata: "false"
+      Documents__GotenbergUrl: http://gotenberg:3000
       # Development users get their Apps Control roles on first sign-in.
       AppsControl__BootstrapUsers__admin__0: SYSTEM_ADMIN
       AppsControl__BootstrapUsers__maker__0: CONFIG_MAKER
@@ -93,6 +94,7 @@ services:
       <<: [*dotnet-env, *gateway-secrets]
       Authentication__External__Authority: http://keycloak:8080/realms/dynamic-cube-external
       Authentication__External__RequireHttpsMetadata: "false"
+      Documents__GotenbergUrl: http://gotenberg:3000
     volumes:
       - files:/data/files
     depends_on:
@@ -187,9 +189,9 @@ services:
     ports:
       - "4202:8080"
 
+  # Prints issued documents to PDF (the APIs on first download, the worker after issuing).
   gotenberg:
     image: gotenberg/gotenberg:8
-    profiles: ["full"]
 
   clamav:
     image: clamav/clamav:1.4

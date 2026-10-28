@@ -35,7 +35,7 @@ Delivered in slices:
 | **1b** | Party Registry + Integration Manager | ✅ |
 | **1c** | Services: definitions, forms, wizard, drafts, fees, eligibility | ✅ |
 | **1d** | Workflow engine + Action Center | ✅ |
-| 1e | Documents, communication, decision contract, external applicant journey | Next |
+| **1e** | Documents, communication, decision contract, external applicant journey | ✅ |
 
 **1a delivered:** the `AppsControl` module (all entities of [§4](04-apps-control.md) except
 delegations, which come with the Action Center), change appliers with code-keyed payloads,
@@ -98,6 +98,25 @@ Still open from 1d: integration, decision, payment, visit, document, notificatio
 hold and third-party inquiry actions; attachments on actions; editable fields per step; relative routing targets
 (applicant's region, parent unit's manager); data scopes on inboxes; the visual Workflow Builder.
 
+**1e delivered** ([ADR-0020](adr/0020-documents-decisions-communication.md)): the `Documents` module
+([§3.8](03-domain-model.md#38-issued-document-registry)): document types and HTML/Liquid print templates; issuing
+with numbers, verification codes, immutable versions and amendments; PDF through Gotenberg; suspend, reinstate and
+cancel with a reason; expiry and reminder days by a worker job; anonymous verification. The `Decisions` module
+([§3.7](03-domain-model.md#37-decisions-calculation--classification)): the kernel decision contract, versioned rule
+sets, the built-in `RULES` engine (JSONLogic variables, per-item results, trace), the evaluation log, a try console
+and public calculators. Workflow DECISION and DOCUMENT steps with instance facts. The `Communication` module
+([§3.9](03-domain-model.md#39-communication)): events raised by requests, documents and tasks; Liquid message
+templates per channel; notification rules with conditions and recipients; in-app, email (SMTP) and SMS (an
+integration operation) through the outbox; the message log; notification bells in both apps. Screens: the document
+registry, print template editor with live preview, rule-set versions with try console, message template editor
+previewed on an event's sample, message log; in the portal *My documents*, documents on the request page and the
+public verification page. Package `classification-certificate.json`: the certificate, the `CLS_GRADING` rules
+(§6.5, simplified), `CLASSIFICATION/2` (grade after the analyses, certificate after approval) and the §6.10
+messages. Development compose runs Gotenberg and Mailpit.
+Still open from 1e: the financial axis and adjusters of the grading, the public calculator page, availability of
+follow-up services by document dates (Phase 2), push notifications, schedule-based rules (draft expiry), email
+attachments.
+
 - **Apps Control**: installation, apps, entity, org unit types & org structure, positions,
   users, roles, privileges, menus, Class/Domain with typed attributes and generated views,
   LOVs with grants and data-scope bindings, settings, UI texts, maker-checker.
@@ -124,7 +143,7 @@ hold and third-party inquiry actions; attachments on actions; editable fields pe
 - **Availability rules** (status + date windows) and certificate page with available / locked
   services.
 - Payments: SADAD / Tahseel bills and callbacks; service-level fees end to end.
-- Scheduled document-date alerts; draft expiry.
+- ~~Scheduled document-date alerts~~ (done in 1e); draft expiry.
 - Sanctions and document status actions.
 - Classification calculator (public, stateless).
 - Dashboards v1: requests, SLA, certificates by region/sector/grade, draft abandonment.

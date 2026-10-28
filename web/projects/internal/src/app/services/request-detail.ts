@@ -5,12 +5,13 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RouterLink } from '@angular/router';
 import { FeeTable, LocalizePipe, RequestAnswers, ServicesApi, TranslatePipe, WorkflowApi } from '@dynamic-cube/shared';
 import { catchError, of } from 'rxjs';
+import { InstanceFactsCard } from '../action-center/instance-facts';
 import { WorkflowCard } from '../action-center/workflow-card';
 
 /** One request as submitted: who, what, the answers, fees, its workflow (when it has one) and the timeline. */
 @Component({
   selector: 'dc-request-detail',
-  imports: [DatePipe, MatProgressBarModule, RouterLink, FeeTable, LocalizePipe, RequestAnswers, TranslatePipe, WorkflowCard],
+  imports: [DatePipe, InstanceFactsCard, MatProgressBarModule, RouterLink, FeeTable, LocalizePipe, RequestAnswers, TranslatePipe, WorkflowCard],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <a routerLink="/services/requests" class="dc-link">{{ 'requests.title' | dcTranslate }}</a>
@@ -31,6 +32,7 @@ import { WorkflowCard } from '../action-center/workflow-card';
         </div>
         <span class="dc-badge dc-badge--info">{{ 'displayStatus.' + d.view.request.displayStatus | dcTranslate }}</span>
       </header>
+      <dc-instance-facts [facts]="instance.value()?.facts" />
       <div class="dc-request-grid">
         <section class="dc-card">
           <dc-request-answers [version]="d.view.version" [data]="d.view.data" />

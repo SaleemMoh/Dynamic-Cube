@@ -11,14 +11,16 @@ Kubernetes or on classic N-tier servers.
 ## Status
 
 **Phase 0 (foundations)**, **Phase 1a (Apps Control + sign-in)**, **Phase 1b (Integration Manager + Party
-Registry)**, **Phase 1c (Services)** and **Phase 1d (Workflow + Action Center)** are in place: platform kernel, API hosts, worker, migrator, Angular workspace, Keycloak realms,
+Registry)**, **Phase 1c (Services)**, **Phase 1d (Workflow + Action Center)** and **Phase 1e (documents, decisions,
+notifications)** are in place: platform kernel, API hosts, worker, migrator, Angular workspace, Keycloak realms,
 containers and CI; the Apps Control module (org structure, users, roles and privileges, menus, Class/Domain with
 typed attributes, LOVs with grants and data scopes, settings, UI texts); the Integration Manager (government APIs
 connected by configuration, test console, masked call log) and the Party Registry (individuals, establishments,
 acting contexts from MCI, profile data, credentials, projects, sanctions); Services (versioned service definitions
 with a question bank, levels, fees and eligibility; the applicant's wizard with drafts and submission); workflows
 (parallel reviews with maker-checker, distribution, returns to the applicant, deadlines on the working calendar) and
-the employees' Action Center. Every module's
+the employees' Action Center; issued documents with PDF printing and public QR verification, versioned decision rules
+with a test console, and notifications (in-app, email, SMS) driven by rules over events. Every module's
 configuration is edited through the same maker-checker change sets. See the [roadmap](docs/07-roadmap.md) for what comes next.
 
 ## Repository layout
@@ -32,6 +34,10 @@ src/
   Modules/Integration  Integration Manager (schema integ): connections, operations, gateway, call log
   Modules/Parties      Party Registry (schema party): parties, relationships, acting contexts, profile, sanctions
   Modules/Services     Services (schema svc): services, question bank, versions, requests, eligibility, fees
+  Modules/Workflow     Workflows (schema wf): definitions, engine, tasks, Action Center, deadlines
+  Modules/Documents    Issued documents (schema doc): types, print templates, numbers, versions, PDF, verification
+  Modules/Decisions    Decision rules (schema dec): rule sets, versions, built-in RULES engine, evaluation log
+  Modules/Communication Notifications (schema com): message templates, rules, email/SMS/in-app, message log
   Shared/Platform      Kernel: persistence base, audit, outbox, change sets, files, JSONLogic, i18n
   Shared/Hosting       Shared host setup: logging, telemetry, health, Keycloak JWT
   Tools/Migrator       Applies database migrations (run before upgrades)
@@ -43,6 +49,10 @@ tests/
   Integration.Tests    Gateway behaviour against a fake provider, configuration and API tests
   Parties.Tests        Acting contexts, registry operations, portal API tests
   Services.Tests       Versions, drafts, validation, fees, eligibility, portal API and package tests
+  Workflow.Tests       Engine, Action Center, SLA, decision and document steps, the classification workflow
+  Documents.Tests      Issuing, amendments, printing, status actions, reminders, verification
+  Decisions.Tests      Rules engine, versions, evaluation log, calculators
+  Communication.Tests  Rules, dispatch, delivery and retries, notifications, a real SMTP check (optional)
   shared/ModuleTests   Test database, fake provider and MoMRAH samples shared by the module test projects
   Hosts.Tests          API host smoke tests
   shared/              Cases shared by the .NET and Angular JSONLogic evaluators
@@ -72,8 +82,10 @@ docker compose -f deploy/docker/docker-compose.yml up --build
 | http://localhost:8080 | Keycloak (admin / admin) |
 | http://localhost:5080/health/ready | Internal API readiness |
 | http://localhost:5090 | Mock MoMRAH gateway (development only) |
+| http://localhost:8025 | Mailpit — every email the platform sends in development |
+| http://localhost:4201/verify | Public document verification (the QR code on each document opens it) |
 
-Add `--profile full` to also start Gotenberg (PDF) and ClamAV (upload scanning).
+Gotenberg (PDF printing) runs with the rest; add `--profile full` to also start ClamAV (upload scanning).
 
 ### Accounts and connections (development)
 
@@ -88,7 +100,8 @@ Add `--profile full` to also start Gotenberg (PDF) and ClamAV (upload scanning).
 To open the database in DataGrip (or DBeaver, pgAdmin): *New → Data Source → PostgreSQL*, host `localhost`, port
 `5432`, database `dynamic_cube`, user `dynamic_cube`, password `dynamic_cube`. Tables are grouped by schema:
 `apps` (Apps Control), `integ` (Integration Manager), `party` (Party Registry), `svc` (Services), `wf` (workflows and
-tasks), `cfg` (change sets),
+tasks), `doc` (issued documents), `dec` (decision rules and evaluations), `com` (notifications and the message log),
+`cfg` (change sets),
 `audit` (audit log), `platform` (outbox, keys).
 
 The **field app** is the inspectors' app for site visits (offline-capable, phone/tablet). It is a shell for now;
@@ -125,6 +138,20 @@ These are development values only; change them in `deploy/docker/.env` (see `.en
      `analyst2` also audits governance, but not their own analysis: it goes to `auditor1`.
    - `analyst1` sends both analyses for audit; `auditor1` claims and confirms the three audits; `director` approves.
      The portal shows *Approved* with the request's history; the internal request page shows its workflow.
+8. Import `deploy/config-packages/classification-certificate.json` and approve its five change sets (party fields,
+   certificate, grading rules, workflow version 2, messages). In **Party registry → Parties**, give the establishment
+   an `EMAIL` (and `MOBILE`) so it receives email. Submit another classification request and process it as in 7:
+   after the three audits the grade is calculated (the task page shows the grade per sector under *Results of
+   automated steps*); when `director` approves, the certificate `CC-YYYY-000001` is issued (a second approval for the
+   same establishment amends it: same number, new version). Then:
+   - the portal's bell, **My documents** and the request page show the certificate; *Download PDF* prints it;
+   - its QR code opens `http://localhost:4201/verify/<code>` for anyone, signed in or not;
+   - the emails are in Mailpit (http://localhost:8025); SMS are recorded as skipped until an SMS operation is
+     configured (`Communication:Sms:Operation`);
+   - in the internal system: **Documents → Issued documents** (preview, PDF, suspend / reinstate / cancel),
+     **Documents → Print templates** (edit with live preview), **Decisions → Rule-set versions** (try a version on
+     an input, see the evaluations), **Notifications → Message log** and the bell (staff are told about tasks
+     assigned to them).
 
 The gateway credentials come from the secret store (`Secrets__MOMRAH_GATEWAY__clientId` / `__clientSecret`), never
 from the database; development values are in `appsettings.Development.json` and the compose file.
@@ -135,8 +162,9 @@ Requires .NET 10 SDK, Node.js 24 LTS and Docker (for PostgreSQL and Keycloak onl
 order**, each in its own terminal, from the repository root:
 
 ```bash
-# 1. Database and identity provider (PostgreSQL on :5432, Keycloak on :8080 with the dev realms)
-docker compose -f deploy/docker/docker-compose.yml up -d postgres keycloak
+# 1. Database, identity provider, PDF printer and mail catcher
+#    (PostgreSQL :5432, Keycloak :8080 with the dev realms, Gotenberg :3000, Mailpit :1025 / UI :8025)
+docker compose -f deploy/docker/docker-compose.yml up -d postgres keycloak gotenberg mailpit
 
 # 2. Create / upgrade the database (run again after pulling changes)
 dotnet run --project src/Tools/Migrator
@@ -144,7 +172,7 @@ dotnet run --project src/Tools/Migrator
 # 3. APIs — the web dev servers forward /api to these ports
 dotnet run --project src/Hosts/Internal.Api        # http://localhost:5080
 dotnet run --project src/Hosts/External.Api        # http://localhost:5081
-dotnet run --project src/Hosts/Worker              # background jobs (optional for now)
+dotnet run --project src/Hosts/Worker              # notifications, PDF printing, deadlines, document dates
 dotnet run --project src/Tools/MockGateway         # http://localhost:5090 — fake MoMRAH gateway (optional)
 
 # 4. Front ends
@@ -154,7 +182,8 @@ npm run start:external                              # http://localhost:4201  →
 ```
 
 Ports and the `Development` environment come from each project's `Properties/launchSettings.json`, so plain
-`dotnet run` (or F5 in Visual Studio / Rider) needs no extra arguments.
+`dotnet run` (or F5 in Visual Studio / Rider) needs no extra arguments. In development the three hosts keep stored
+files (printed PDFs, uploads) in `.data/storage` at the repository root, as the containers share one volume.
 
 | Symptom | Cause |
 |---|---|
@@ -172,6 +201,8 @@ Keycloak 26 started with `kc.sh start-dev --http-port 8080 --import-realm` after
 ```bash
 # .NET — PostgreSQL integration tests run when this variable is set, otherwise they are skipped
 export DYNAMICCUBE_TEST_POSTGRES="Host=localhost;Username=dynamic_cube;Password=dynamic_cube;Database=postgres"
+# Optional: print through a real Gotenberg and send through a real SMTP server (Mailpit)
+export DYNAMICCUBE_TEST_GOTENBERG=http://localhost:3000 DYNAMICCUBE_TEST_MAILPIT=http://localhost:8025
 dotnet test
 
 # Angular

@@ -5,6 +5,7 @@ using DynamicCube.Modules.Documents.Persistence;
 using DynamicCube.Modules.Documents.Runtime;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Documents;
+using DynamicCube.Platform.Files;
 using DynamicCube.Platform.Outbox;
 using DynamicCube.Tests.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -103,6 +104,15 @@ public sealed class DocumentTests(DatabaseFixture fixture)
             return version;
         });
         host.Pdf.Printed.Count.ShouldBe(1);
+
+        // A stored file that went missing (another host's disk, an older backup) is printed again.
+        await host.Host.AsAsync("admin", async sp =>
+        {
+            var key = await sp.GetRequiredService<DocumentsDbContext>().Versions.Where(v => v.DocumentId == issued.Id).Select(v => v.FileKey!).SingleAsync();
+            await sp.GetRequiredService<IFileStorage>().DeleteAsync(key, CancellationToken.None);
+        });
+        (await host.RegistryAsync("admin", r => r.PdfAsync(issued.Id, 1, null, CancellationToken.None))).FileName.ShouldBe($"{issued.Number}-v1.pdf");
+        host.Pdf.Printed.Count.ShouldBe(2);
     }
 
     [Fact]

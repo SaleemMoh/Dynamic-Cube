@@ -25,6 +25,7 @@ import {
 import { Observable, catchError, firstValueFrom, of } from 'rxjs';
 import { ConfirmData, ConfirmDialog } from '../apps-control/confirm-dialog';
 import { AssignDialog } from './assign-dialog';
+import { InstanceFactsCard } from './instance-facts';
 import { WorkflowCard } from './workflow-card';
 
 /** One task: the request's answers, what the employee may do now (claim, assign, act) and the workflow so far. */
@@ -32,6 +33,7 @@ import { WorkflowCard } from './workflow-card';
   selector: 'dc-task-page',
   imports: [
     FormsModule,
+    InstanceFactsCard,
     MatButtonModule,
     MatFormFieldModule,
     MatIconModule,
@@ -120,6 +122,7 @@ import { WorkflowCard } from './workflow-card';
         </ul>
       }
 
+      <dc-instance-facts [facts]="d.instance.facts" />
       <div class="dc-request-grid">
         <section class="dc-card">
           <h2>{{ 'tasks.request' | dcTranslate }}</h2>

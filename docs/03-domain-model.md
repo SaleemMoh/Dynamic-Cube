@@ -290,7 +290,10 @@ The platform defines only the contract:
   records the version used.
 - **Stateless invocation** — so the same engine powers a public calculator.
 
-⚑ Open: the engine implementation will be supplied separately and plugged into this contract.
+**Implemented (1e):** the contract in the kernel (`IDecisionService`, `IDecisionEngine`), rule sets with immutable
+versions, the built-in `RULES` engine (JSONLogic steps, per-item results, trace), an evaluation log and the workflow
+DECISION step (results kept as `decisions.<name>` in the instance). A specialised classification engine can be
+registered beside it.
 
 ---
 
@@ -322,6 +325,11 @@ available, expired — feeding notifications and availability cards.
 - **Rules**: on event (status change, action, document event) or schedule (document dates,
   draft expiry, SLA warning); conditions in JSONLogic.
 - **Outbound log** with delivery status; retries via outbox.
+
+**Implemented (1e):** event types registered by modules (requests, documents, tasks) with sample facts; templates
+with Arabic and English wording per channel; rules with a JSONLogic condition and recipients (party, users, roles);
+in-app, email (SMTP) and SMS (an Integration Manager operation); the message log with resend. Party addresses come
+from the `EMAIL` / `MOBILE` profile fields.
 
 ---
 

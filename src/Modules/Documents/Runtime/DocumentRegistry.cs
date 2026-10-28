@@ -151,7 +151,18 @@ internal sealed class DocumentRegistry(
         var row = await context.Versions.SingleOrDefaultAsync(v => v.DocumentId == id && v.Version == number, cancellationToken)
             ?? throw new DocumentNotFoundException($"Version {number} of document {document.Number} does not exist.");
         var key = row.FileKey ?? await RenderAsync(row, cancellationToken);
-        return new DocumentFile(await files.OpenReadAsync(key, cancellationToken), $"{document.Number}-v{row.Version}.pdf");
+        Stream content;
+        try
+        {
+            content = await files.OpenReadAsync(key, cancellationToken);
+        }
+        catch (FileNotFoundException)
+        {
+            // The stored PDF is gone (storage restored from an older backup, or not shared between hosts): print it again.
+            content = await files.OpenReadAsync(await RenderAsync(row, cancellationToken), cancellationToken);
+        }
+
+        return new DocumentFile(content, $"{document.Number}-v{row.Version}.pdf");
     }
 
     /// <summary>A version as HTML (the preview shown in the internal system).</summary>

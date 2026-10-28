@@ -1,0 +1,2693 @@
+{
+  "title": "Classification grading, certificate and notifications",
+  "items": [
+    {
+      "entityType": "party.profile-field",
+      "entityCode": "EMAIL",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "البريد الإلكتروني",
+        "nameEn": "Email",
+        "partyKind": "ESTABLISHMENT",
+        "dataType": "TEXT",
+        "displayOrder": 90,
+        "refreshHours": 24
+      }
+    },
+    {
+      "entityType": "party.profile-field",
+      "entityCode": "MOBILE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "رقم الجوال",
+        "nameEn": "Mobile",
+        "partyKind": "ESTABLISHMENT",
+        "dataType": "TEXT",
+        "displayOrder": 90,
+        "refreshHours": 24
+      }
+    },
+    {
+      "entityType": "doc.template",
+      "entityCode": "CLS_CERTIFICATE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "شهادة التصنيف",
+        "nameEn": "Classification certificate",
+        "html": "<html dir=\"rtl\" lang=\"ar\">\n<head>\n<style>\n  @page { margin: 0; }\n  body { font-family: 'IBM Plex Sans Arabic'; margin: 0; color: #161616; }\n  .frame { margin: 1.2cm; padding: 1cm 1.2cm; border: 2px solid #1b8354; border-radius: 12px; min-height: 25cm; position: relative; }\n  .top { display: flex; justify-content: space-between; align-items: flex-start; }\n  .title { text-align: start; }\n  .title h1 { margin: 0; font-size: 28px; color: #074d31; }\n  .title p { margin: 4px 0 0; color: #384250; font-size: 15px; }\n  .number { margin-top: 10px; font-size: 14px; color: #6c737f; }\n  .number b { color: #161616; font-size: 16px; direction: ltr; unicode-bidi: embed; }\n  .qr { text-align: center; font-size: 10px; color: #6c737f; }\n  .holder { margin: 28px 0 18px; padding: 14px 18px; background: #f3fcf6; border-radius: 8px; }\n  .holder h2 { margin: 0 0 6px; font-size: 22px; }\n  .holder p { margin: 2px 0; color: #384250; }\n  table { width: 100%; border-collapse: collapse; margin-top: 8px; }\n  th { background: #1b8354; color: #ffffff; font-weight: 600; }\n  th, td { padding: 9px 12px; border: 1px solid #d2d6db; text-align: start; }\n  td.grade { text-align: center; font-weight: 700; font-size: 18px; color: #074d31; width: 22%; }\n  .dates { display: flex; gap: 24px; margin-top: 22px; }\n  .dates div { flex: 1; padding: 10px 14px; border: 1px solid #d2d6db; border-radius: 8px; }\n  .dates span { display: block; color: #6c737f; font-size: 13px; }\n  .dates b { font-size: 16px; }\n  .foot { position: absolute; bottom: 1cm; inset-inline: 1.2cm; font-size: 11px; color: #6c737f; border-top: 1px solid #e5e7eb; padding-top: 8px; }\n</style>\n</head>\n<body>\n<div class=\"frame\">\n  <div class=\"top\">\n    <div class=\"title\">\n      <h1>{{ document.typeNameAr }}</h1>\n      <p>{{ document.typeNameEn }}</p>\n      <div class=\"number\">رقم الشهادة <b>{{ document.number }}</b>{% if document.version > 1 %} — الإصدار {{ document.version }}{% endif %}</div>\n    </div>\n    <div class=\"qr\"><img src=\"{{ qr }}\" width=\"120\" alt=\"QR\"><br>امسح للتحقق</div>\n  </div>\n  <div class=\"holder\">\n    <h2>{{ holder.nameAr }}</h2>\n    <p>{{ holder.nameEn }}</p>\n    <p>السجل التجاري: {{ holder.identifiers.CR_NUMBER }} — المدينة: {{ data.city }} — فئة الحجم: {{ data.sizeClass }}</p>\n  </div>\n  <table>\n    <tr><th>القطاع</th><th>Sector</th><th>الدرجة</th></tr>\n    {% for line in lines %}\n    <tr><td>{{ line.sectorNameAr }}</td><td dir=\"ltr\">{{ line.sectorNameEn }}</td><td class=\"grade\">{{ line.grade }}</td></tr>\n    {% endfor %}\n  </table>\n  <div class=\"dates\">\n    <div><span>تاريخ الإصدار</span><b>{{ document.issuedOn }}</b></div>\n    <div><span>تاريخ الانتهاء</span><b>{{ document.expiresOn }}</b></div>\n  </div>\n  <div class=\"foot\">هذه الشهادة صادرة إلكترونياً ولا تحتاج إلى ختم. للتحقق من صحتها وسريانها: <span dir=\"ltr\">{{ verifyUrl }}</span></div>\n</div>\n</body>\n</html>\n",
+        "pageSize": "A4",
+        "landscape": false
+      }
+    },
+    {
+      "entityType": "doc.document-type",
+      "entityCode": "CLS_CERTIFICATE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "شهادة تصنيف مقدمي الخدمات",
+        "nameEn": "Service provider classification certificate",
+        "descriptionAr": "شهادة واحدة لكل منشأة تضم القطاعات المصنفة ودرجة كل قطاع؛ التعديل يحتفظ بالرقم ويضيف إصداراً.",
+        "descriptionEn": "One certificate per establishment listing its classified sectors and their grades; amendments keep the number and add a version.",
+        "numberPrefix": "CC",
+        "validityMonths": 24,
+        "onePerHolder": true,
+        "amendResetsValidity": false,
+        "templateCode": "CLS_CERTIFICATE",
+        "alertDaysBefore": [
+          90,
+          15
+        ],
+        "fields": [
+          {
+            "code": "sizeClass",
+            "nameAr": "فئة الحجم",
+            "nameEn": "Size class",
+            "isPublic": true
+          },
+          {
+            "code": "city",
+            "nameAr": "المدينة",
+            "nameEn": "City",
+            "isPublic": true
+          },
+          {
+            "code": "requestNumber",
+            "nameAr": "رقم الطلب",
+            "nameEn": "Request number",
+            "isPublic": false
+          }
+        ],
+        "lineFields": [
+          {
+            "code": "sectorNameAr",
+            "nameAr": "القطاع",
+            "nameEn": "Sector (Arabic)",
+            "isPublic": true
+          },
+          {
+            "code": "sectorNameEn",
+            "nameAr": "القطاع بالإنجليزية",
+            "nameEn": "Sector",
+            "isPublic": true
+          },
+          {
+            "code": "grade",
+            "nameAr": "الدرجة",
+            "nameEn": "Grade",
+            "isPublic": true
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "dec.rule-set",
+      "entityCode": "CLS_GRADING",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "احتساب درجة التصنيف",
+        "nameEn": "Classification grading",
+        "engine": "RULES",
+        "isPublic": false,
+        "descriptionAr": "نسخة مبسطة من دليل التصنيف (§6.5): المحور الفني والأداء والحوكمة لكل قطاع؛ الدرجة أدنى المحاور. المحور المالي لاحقاً.",
+        "descriptionEn": "Simplified from the classification guide (§6.5): technical, performance and governance axes per sector; the grade is the lowest axis. The financial axis comes later."
+      }
+    },
+    {
+      "entityType": "dec.rule-set-version",
+      "entityCode": "CLS_GRADING/1",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 1",
+        "nameEn": "Version 1",
+        "configuration": {
+          "variables": [
+            {
+              "code": "employees",
+              "rule": {
+                "+": [
+                  {
+                    "var": "input.employees"
+                  },
+                  0
+                ]
+              }
+            },
+            {
+              "code": "sizeClass",
+              "rule": {
+                "if": [
+                  {
+                    "<=": [
+                      {
+                        "var": "vars.employees"
+                      },
+                      5
+                    ]
+                  },
+                  "MICRO",
+                  {
+                    "<=": [
+                      {
+                        "var": "vars.employees"
+                      },
+                      49
+                    ]
+                  },
+                  "SMALL",
+                  {
+                    "<=": [
+                      {
+                        "var": "vars.employees"
+                      },
+                      499
+                    ]
+                  },
+                  "MEDIUM",
+                  "LARGE"
+                ]
+              }
+            },
+            {
+              "code": "engineersPct",
+              "rule": {
+                "if": [
+                  {
+                    ">": [
+                      {
+                        "var": "vars.employees"
+                      },
+                      0
+                    ]
+                  },
+                  {
+                    "*": [
+                      100,
+                      {
+                        "/": [
+                          {
+                            "var": "input.engineers"
+                          },
+                          {
+                            "var": "vars.employees"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  0
+                ]
+              }
+            },
+            {
+              "code": "techniciansPct",
+              "rule": {
+                "if": [
+                  {
+                    ">": [
+                      {
+                        "var": "vars.employees"
+                      },
+                      0
+                    ]
+                  },
+                  {
+                    "*": [
+                      100,
+                      {
+                        "/": [
+                          {
+                            "var": "input.technicians"
+                          },
+                          {
+                            "var": "vars.employees"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  0
+                ]
+              }
+            },
+            {
+              "code": "saudisPct",
+              "rule": {
+                "if": [
+                  {
+                    ">": [
+                      {
+                        "var": "vars.employees"
+                      },
+                      0
+                    ]
+                  },
+                  {
+                    "*": [
+                      100,
+                      {
+                        "/": [
+                          {
+                            "var": "input.saudis"
+                          },
+                          {
+                            "var": "vars.employees"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  0
+                ]
+              }
+            },
+            {
+              "code": "technicalPoints",
+              "rule": {
+                "+": [
+                  {
+                    "if": [
+                      {
+                        ">=": [
+                          {
+                            "var": "vars.engineersPct"
+                          },
+                          20
+                        ]
+                      },
+                      30,
+                      {
+                        ">=": [
+                          {
+                            "var": "vars.engineersPct"
+                          },
+                          10
+                        ]
+                      },
+                      20,
+                      {
+                        ">=": [
+                          {
+                            "var": "vars.engineersPct"
+                          },
+                          5
+                        ]
+                      },
+                      10,
+                      0
+                    ]
+                  },
+                  {
+                    "if": [
+                      {
+                        ">=": [
+                          {
+                            "var": "vars.techniciansPct"
+                          },
+                          30
+                        ]
+                      },
+                      30,
+                      {
+                        ">=": [
+                          {
+                            "var": "vars.techniciansPct"
+                          },
+                          15
+                        ]
+                      },
+                      20,
+                      {
+                        ">=": [
+                          {
+                            "var": "vars.techniciansPct"
+                          },
+                          5
+                        ]
+                      },
+                      10,
+                      0
+                    ]
+                  },
+                  {
+                    "if": [
+                      {
+                        ">=": [
+                          {
+                            "var": "vars.saudisPct"
+                          },
+                          50
+                        ]
+                      },
+                      20,
+                      {
+                        ">=": [
+                          {
+                            "var": "vars.saudisPct"
+                          },
+                          30
+                        ]
+                      },
+                      10,
+                      {
+                        ">=": [
+                          {
+                            "var": "vars.saudisPct"
+                          },
+                          10
+                        ]
+                      },
+                      5,
+                      0
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "code": "technicalGrade",
+              "rule": {
+                "if": [
+                  {
+                    ">=": [
+                      {
+                        "var": "vars.technicalPoints"
+                      },
+                      70
+                    ]
+                  },
+                  1,
+                  {
+                    ">=": [
+                      {
+                        "var": "vars.technicalPoints"
+                      },
+                      50
+                    ]
+                  },
+                  2,
+                  {
+                    ">=": [
+                      {
+                        "var": "vars.technicalPoints"
+                      },
+                      40
+                    ]
+                  },
+                  3,
+                  {
+                    ">=": [
+                      {
+                        "var": "vars.technicalPoints"
+                      },
+                      30
+                    ]
+                  },
+                  4,
+                  {
+                    ">=": [
+                      {
+                        "var": "vars.technicalPoints"
+                      },
+                      20
+                    ]
+                  },
+                  5,
+                  6
+                ]
+              }
+            },
+            {
+              "code": "governancePoints",
+              "rule": {
+                "*": [
+                  {
+                    "/": [
+                      {
+                        "+": [
+                          {
+                            "if": [
+                              {
+                                "var": "input.board"
+                              },
+                              10,
+                              0
+                            ]
+                          },
+                          {
+                            "if": [
+                              {
+                                "var": "input.erp"
+                              },
+                              10,
+                              0
+                            ]
+                          },
+                          {
+                            "if": [
+                              {
+                                "var": "input.pms"
+                              },
+                              15,
+                              0
+                            ]
+                          },
+                          {
+                            "if": [
+                              {
+                                "var": "input.org"
+                              },
+                              10,
+                              0
+                            ]
+                          },
+                          {
+                            "if": [
+                              {
+                                "var": "input.iso"
+                              },
+                              10,
+                              0
+                            ]
+                          }
+                        ]
+                      },
+                      55
+                    ]
+                  },
+                  100
+                ]
+              }
+            }
+          ],
+          "items": {
+            "source": {
+              "var": "input.sectors"
+            },
+            "as": "sector",
+            "variables": [
+              {
+                "code": "technical",
+                "rule": {
+                  "if": [
+                    {
+                      "==": [
+                        {
+                          "var": "sector"
+                        },
+                        "ICT"
+                      ]
+                    },
+                    {
+                      "if": [
+                        {
+                          "==": [
+                            {
+                              "var": "input.dgaCategory"
+                            },
+                            "PLATINUM"
+                          ]
+                        },
+                        1,
+                        {
+                          "==": [
+                            {
+                              "var": "input.dgaCategory"
+                            },
+                            "GOLD"
+                          ]
+                        },
+                        2,
+                        {
+                          "==": [
+                            {
+                              "var": "input.dgaCategory"
+                            },
+                            "SILVER"
+                          ]
+                        },
+                        3,
+                        {
+                          "==": [
+                            {
+                              "var": "input.dgaCategory"
+                            },
+                            "BEGINNER"
+                          ]
+                        },
+                        4,
+                        6
+                      ]
+                    },
+                    {
+                      "var": "vars.technicalGrade"
+                    }
+                  ]
+                }
+              },
+              {
+                "code": "cumulative",
+                "rule": {
+                  "if": [
+                    {
+                      ">=": [
+                        {
+                          "var": "input.projectsValue"
+                        },
+                        {
+                          "if": [
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CONSTRUCTION",
+                                  "OM",
+                                  "REAL_ESTATE"
+                                ]
+                              ]
+                            },
+                            160,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "ICT"
+                                ]
+                              ]
+                            },
+                            100,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CATERING",
+                                  "EXHIBITIONS"
+                                ]
+                              ]
+                            },
+                            60,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "SURVEYING"
+                                ]
+                              ]
+                            },
+                            15,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CYBER"
+                                ]
+                              ]
+                            },
+                            30,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CONSULTANCY"
+                                ]
+                              ]
+                            },
+                            40,
+                            1000000000000.0
+                          ]
+                        }
+                      ]
+                    },
+                    1,
+                    {
+                      ">=": [
+                        {
+                          "var": "input.projectsValue"
+                        },
+                        {
+                          "if": [
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CONSTRUCTION",
+                                  "OM",
+                                  "REAL_ESTATE"
+                                ]
+                              ]
+                            },
+                            90,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "ICT"
+                                ]
+                              ]
+                            },
+                            70,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CATERING",
+                                  "EXHIBITIONS"
+                                ]
+                              ]
+                            },
+                            40,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "SURVEYING"
+                                ]
+                              ]
+                            },
+                            10,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CYBER"
+                                ]
+                              ]
+                            },
+                            20,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CONSULTANCY"
+                                ]
+                              ]
+                            },
+                            30,
+                            1000000000000.0
+                          ]
+                        }
+                      ]
+                    },
+                    2,
+                    {
+                      ">=": [
+                        {
+                          "var": "input.projectsValue"
+                        },
+                        {
+                          "if": [
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CONSTRUCTION",
+                                  "OM",
+                                  "REAL_ESTATE"
+                                ]
+                              ]
+                            },
+                            50,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "ICT"
+                                ]
+                              ]
+                            },
+                            50,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CATERING",
+                                  "EXHIBITIONS"
+                                ]
+                              ]
+                            },
+                            30,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "SURVEYING"
+                                ]
+                              ]
+                            },
+                            5,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CYBER"
+                                ]
+                              ]
+                            },
+                            15,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CONSULTANCY"
+                                ]
+                              ]
+                            },
+                            20,
+                            1000000000000.0
+                          ]
+                        }
+                      ]
+                    },
+                    3,
+                    {
+                      ">=": [
+                        {
+                          "var": "input.projectsValue"
+                        },
+                        {
+                          "if": [
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CONSTRUCTION",
+                                  "OM",
+                                  "REAL_ESTATE"
+                                ]
+                              ]
+                            },
+                            30,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "ICT"
+                                ]
+                              ]
+                            },
+                            30,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CATERING",
+                                  "EXHIBITIONS"
+                                ]
+                              ]
+                            },
+                            20,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "SURVEYING"
+                                ]
+                              ]
+                            },
+                            2.5,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CYBER"
+                                ]
+                              ]
+                            },
+                            10,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CONSULTANCY"
+                                ]
+                              ]
+                            },
+                            10,
+                            1000000000000.0
+                          ]
+                        }
+                      ]
+                    },
+                    4,
+                    5
+                  ]
+                }
+              },
+              {
+                "code": "largest",
+                "rule": {
+                  "if": [
+                    {
+                      ">=": [
+                        {
+                          "var": "input.largestProject"
+                        },
+                        {
+                          "if": [
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CONSTRUCTION",
+                                  "OM",
+                                  "REAL_ESTATE"
+                                ]
+                              ]
+                            },
+                            70,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "ICT",
+                                  "CATERING",
+                                  "EXHIBITIONS"
+                                ]
+                              ]
+                            },
+                            35,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "SURVEYING"
+                                ]
+                              ]
+                            },
+                            6,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CYBER"
+                                ]
+                              ]
+                            },
+                            15,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CONSULTANCY"
+                                ]
+                              ]
+                            },
+                            10,
+                            1000000000000.0
+                          ]
+                        }
+                      ]
+                    },
+                    1,
+                    {
+                      ">=": [
+                        {
+                          "var": "input.largestProject"
+                        },
+                        {
+                          "if": [
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CONSTRUCTION",
+                                  "OM",
+                                  "REAL_ESTATE"
+                                ]
+                              ]
+                            },
+                            22,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "ICT",
+                                  "CATERING",
+                                  "EXHIBITIONS"
+                                ]
+                              ]
+                            },
+                            22,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "SURVEYING"
+                                ]
+                              ]
+                            },
+                            4,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CYBER"
+                                ]
+                              ]
+                            },
+                            10,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CONSULTANCY"
+                                ]
+                              ]
+                            },
+                            8,
+                            1000000000000.0
+                          ]
+                        }
+                      ]
+                    },
+                    2,
+                    {
+                      ">=": [
+                        {
+                          "var": "input.largestProject"
+                        },
+                        {
+                          "if": [
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CONSTRUCTION",
+                                  "OM",
+                                  "REAL_ESTATE"
+                                ]
+                              ]
+                            },
+                            14,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "ICT",
+                                  "CATERING",
+                                  "EXHIBITIONS"
+                                ]
+                              ]
+                            },
+                            14,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "SURVEYING"
+                                ]
+                              ]
+                            },
+                            2,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CYBER"
+                                ]
+                              ]
+                            },
+                            5,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CONSULTANCY"
+                                ]
+                              ]
+                            },
+                            5,
+                            1000000000000.0
+                          ]
+                        }
+                      ]
+                    },
+                    3,
+                    {
+                      ">=": [
+                        {
+                          "var": "input.largestProject"
+                        },
+                        {
+                          "if": [
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CONSTRUCTION",
+                                  "OM",
+                                  "REAL_ESTATE"
+                                ]
+                              ]
+                            },
+                            8,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "ICT",
+                                  "CATERING",
+                                  "EXHIBITIONS"
+                                ]
+                              ]
+                            },
+                            8,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "SURVEYING"
+                                ]
+                              ]
+                            },
+                            1,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CYBER"
+                                ]
+                              ]
+                            },
+                            2.5,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CONSULTANCY"
+                                ]
+                              ]
+                            },
+                            2.5,
+                            1000000000000.0
+                          ]
+                        }
+                      ]
+                    },
+                    4,
+                    5
+                  ]
+                }
+              },
+              {
+                "code": "performance",
+                "rule": {
+                  "min": [
+                    {
+                      "var": "vars.cumulative"
+                    },
+                    {
+                      "var": "vars.largest"
+                    }
+                  ]
+                }
+              },
+              {
+                "code": "governance",
+                "rule": {
+                  "if": [
+                    {
+                      "==": [
+                        {
+                          "var": "sector"
+                        },
+                        "CONSULTANCY"
+                      ]
+                    },
+                    {
+                      "if": [
+                        {
+                          ">=": [
+                            {
+                              "var": "vars.governancePoints"
+                            },
+                            50
+                          ]
+                        },
+                        1,
+                        {
+                          ">=": [
+                            {
+                              "var": "vars.governancePoints"
+                            },
+                            40
+                          ]
+                        },
+                        2,
+                        {
+                          ">=": [
+                            {
+                              "var": "vars.governancePoints"
+                            },
+                            30
+                          ]
+                        },
+                        3,
+                        {
+                          ">=": [
+                            {
+                              "var": "vars.governancePoints"
+                            },
+                            20
+                          ]
+                        },
+                        4,
+                        5
+                      ]
+                    },
+                    {
+                      "if": [
+                        {
+                          ">=": [
+                            {
+                              "var": "vars.governancePoints"
+                            },
+                            85
+                          ]
+                        },
+                        1,
+                        {
+                          ">=": [
+                            {
+                              "var": "vars.governancePoints"
+                            },
+                            75
+                          ]
+                        },
+                        2,
+                        {
+                          ">=": [
+                            {
+                              "var": "vars.governancePoints"
+                            },
+                            60
+                          ]
+                        },
+                        3,
+                        {
+                          ">=": [
+                            {
+                              "var": "vars.governancePoints"
+                            },
+                            50
+                          ]
+                        },
+                        4,
+                        5
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "code": "grade",
+                "rule": {
+                  "max": [
+                    {
+                      "var": "vars.technical"
+                    },
+                    {
+                      "var": "vars.performance"
+                    },
+                    {
+                      "var": "vars.governance"
+                    }
+                  ]
+                }
+              }
+            ],
+            "output": {
+              "sector": {
+                "var": "sector"
+              },
+              "sectorNameAr": {
+                "if": [
+                  {
+                    "in": [
+                      {
+                        "var": "sector"
+                      },
+                      [
+                        "CONSTRUCTION"
+                      ]
+                    ]
+                  },
+                  "التشييد والبناء",
+                  {
+                    "in": [
+                      {
+                        "var": "sector"
+                      },
+                      [
+                        "ICT"
+                      ]
+                    ]
+                  },
+                  "الاتصالات وتقنية المعلومات",
+                  {
+                    "in": [
+                      {
+                        "var": "sector"
+                      },
+                      [
+                        "OM"
+                      ]
+                    ]
+                  },
+                  "التشغيل والصيانة والخدمات",
+                  {
+                    "in": [
+                      {
+                        "var": "sector"
+                      },
+                      [
+                        "REAL_ESTATE"
+                      ]
+                    ]
+                  },
+                  "التطوير العقاري",
+                  {
+                    "in": [
+                      {
+                        "var": "sector"
+                      },
+                      [
+                        "CATERING"
+                      ]
+                    ]
+                  },
+                  "الإعاشة والتغذية",
+                  {
+                    "in": [
+                      {
+                        "var": "sector"
+                      },
+                      [
+                        "EXHIBITIONS"
+                      ]
+                    ]
+                  },
+                  "المعارض والمؤتمرات",
+                  {
+                    "in": [
+                      {
+                        "var": "sector"
+                      },
+                      [
+                        "SURVEYING"
+                      ]
+                    ]
+                  },
+                  "المساحة والمعلومات الجيومكانية",
+                  {
+                    "in": [
+                      {
+                        "var": "sector"
+                      },
+                      [
+                        "CYBER"
+                      ]
+                    ]
+                  },
+                  "الأمن السيبراني",
+                  {
+                    "in": [
+                      {
+                        "var": "sector"
+                      },
+                      [
+                        "CONSULTANCY"
+                      ]
+                    ]
+                  },
+                  "المكاتب والشركات الهندسية الاستشارية",
+                  {
+                    "var": "sector"
+                  }
+                ]
+              },
+              "sectorNameEn": {
+                "if": [
+                  {
+                    "in": [
+                      {
+                        "var": "sector"
+                      },
+                      [
+                        "CONSTRUCTION"
+                      ]
+                    ]
+                  },
+                  "Construction & building",
+                  {
+                    "in": [
+                      {
+                        "var": "sector"
+                      },
+                      [
+                        "ICT"
+                      ]
+                    ]
+                  },
+                  "ICT",
+                  {
+                    "in": [
+                      {
+                        "var": "sector"
+                      },
+                      [
+                        "OM"
+                      ]
+                    ]
+                  },
+                  "Operation, maintenance & services",
+                  {
+                    "in": [
+                      {
+                        "var": "sector"
+                      },
+                      [
+                        "REAL_ESTATE"
+                      ]
+                    ]
+                  },
+                  "Real estate development",
+                  {
+                    "in": [
+                      {
+                        "var": "sector"
+                      },
+                      [
+                        "CATERING"
+                      ]
+                    ]
+                  },
+                  "Catering & subsistence",
+                  {
+                    "in": [
+                      {
+                        "var": "sector"
+                      },
+                      [
+                        "EXHIBITIONS"
+                      ]
+                    ]
+                  },
+                  "Exhibitions & conferences",
+                  {
+                    "in": [
+                      {
+                        "var": "sector"
+                      },
+                      [
+                        "SURVEYING"
+                      ]
+                    ]
+                  },
+                  "Surveying & geospatial",
+                  {
+                    "in": [
+                      {
+                        "var": "sector"
+                      },
+                      [
+                        "CYBER"
+                      ]
+                    ]
+                  },
+                  "Cybersecurity",
+                  {
+                    "in": [
+                      {
+                        "var": "sector"
+                      },
+                      [
+                        "CONSULTANCY"
+                      ]
+                    ]
+                  },
+                  "Engineering consultancy",
+                  {
+                    "var": "sector"
+                  }
+                ]
+              },
+              "technical": {
+                "var": "vars.technical"
+              },
+              "performance": {
+                "var": "vars.performance"
+              },
+              "governance": {
+                "var": "vars.governance"
+              },
+              "grade": {
+                "var": "vars.grade"
+              },
+              "classified": {
+                "<=": [
+                  {
+                    "var": "vars.grade"
+                  },
+                  5
+                ]
+              }
+            }
+          },
+          "output": {
+            "sizeClass": {
+              "var": "vars.sizeClass"
+            },
+            "sizeClassNameAr": {
+              "if": [
+                {
+                  "==": [
+                    {
+                      "var": "vars.sizeClass"
+                    },
+                    "MICRO"
+                  ]
+                },
+                "متناهية الصغر",
+                {
+                  "==": [
+                    {
+                      "var": "vars.sizeClass"
+                    },
+                    "SMALL"
+                  ]
+                },
+                "صغيرة",
+                {
+                  "==": [
+                    {
+                      "var": "vars.sizeClass"
+                    },
+                    "MEDIUM"
+                  ]
+                },
+                "متوسطة",
+                "كبيرة"
+              ]
+            },
+            "sizeClassNameEn": {
+              "if": [
+                {
+                  "==": [
+                    {
+                      "var": "vars.sizeClass"
+                    },
+                    "MICRO"
+                  ]
+                },
+                "Micro",
+                {
+                  "==": [
+                    {
+                      "var": "vars.sizeClass"
+                    },
+                    "SMALL"
+                  ]
+                },
+                "Small",
+                {
+                  "==": [
+                    {
+                      "var": "vars.sizeClass"
+                    },
+                    "MEDIUM"
+                  ]
+                },
+                "Medium",
+                "Large"
+              ]
+            },
+            "technicalPoints": {
+              "var": "vars.technicalPoints"
+            },
+            "governancePoints": {
+              "var": "vars.governancePoints"
+            },
+            "classifiedCount": {
+              "reduce": [
+                {
+                  "var": "items"
+                },
+                {
+                  "+": [
+                    {
+                      "var": "accumulator"
+                    },
+                    {
+                      "if": [
+                        {
+                          "var": "current.classified"
+                        },
+                        1,
+                        0
+                      ]
+                    }
+                  ]
+                },
+                0
+              ]
+            },
+            "eligible": {
+              "some": [
+                {
+                  "var": "items"
+                },
+                {
+                  "var": "classified"
+                }
+              ]
+            },
+            "bestGrade": {
+              "reduce": [
+                {
+                  "var": "items"
+                },
+                {
+                  "if": [
+                    {
+                      "and": [
+                        {
+                          "var": "current.classified"
+                        },
+                        {
+                          "<": [
+                            {
+                              "var": "current.grade"
+                            },
+                            {
+                              "var": "accumulator"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "var": "current.grade"
+                    },
+                    {
+                      "var": "accumulator"
+                    }
+                  ]
+                },
+                6
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "entityType": "wf.workflow-version",
+      "entityCode": "CLASSIFICATION/2",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 2 — احتساب الدرجة وإصدار الشهادة",
+        "nameEn": "Version 2 — grading and certificate",
+        "definition": {
+          "nodes": [
+            {
+              "code": "START",
+              "type": "START",
+              "nameAr": "تقديم الطلب",
+              "nameEn": "Submitted",
+              "next": "DISTRIBUTE"
+            },
+            {
+              "code": "DISTRIBUTE",
+              "type": "HUMAN_TASK",
+              "nameAr": "مراجعة الطلب وتوزيعه",
+              "nameEn": "Review and distribute",
+              "assignment": {
+                "target": "ROLE",
+                "role": "CLS_REQUEST_MANAGER",
+                "mode": "QUEUE"
+              },
+              "sla": {
+                "byLevel": {
+                  "REGULAR": 2,
+                  "PREMIUM": 1,
+                  "DIAMOND": 1
+                }
+              },
+              "actions": [
+                {
+                  "code": "DISTRIBUTE",
+                  "kind": "COMPLETE",
+                  "nameAr": "إحالة للتحليل",
+                  "nameEn": "Send for analysis",
+                  "to": "SPLIT"
+                },
+                {
+                  "code": "RETURN",
+                  "kind": "RETURN",
+                  "nameAr": "طلب استكمال من مقدم الطلب",
+                  "nameEn": "Ask the applicant for corrections"
+                },
+                {
+                  "code": "REJECT",
+                  "kind": "REJECT",
+                  "nameAr": "رفض الطلب",
+                  "nameEn": "Reject the request",
+                  "to": "REJECTED"
+                }
+              ]
+            },
+            {
+              "code": "SPLIT",
+              "type": "PARALLEL_SPLIT",
+              "nameAr": "التحليل المتوازي",
+              "nameEn": "Parallel analysis",
+              "branches": [
+                "GOV_ANALYSIS",
+                "PROJECTS_ANALYSIS",
+                "FIN_ANALYSIS"
+              ]
+            },
+            {
+              "code": "GOV_ANALYSIS",
+              "type": "HUMAN_TASK",
+              "nameAr": "تحليل الحوكمة",
+              "nameEn": "Governance analysis",
+              "assignment": {
+                "target": "PREVIOUS_ACTOR",
+                "step": "GOV_ANALYSIS",
+                "role": "CLS_GOV_ANALYST",
+                "mode": "DISTRIBUTE",
+                "distributorRole": "CLS_REQUEST_MANAGER"
+              },
+              "sla": {
+                "byLevel": {
+                  "REGULAR": 15,
+                  "PREMIUM": 8,
+                  "DIAMOND": 2
+                },
+                "escalateToRole": "CLS_REQUEST_MANAGER"
+              },
+              "actions": [
+                {
+                  "code": "SEND_TO_AUDIT",
+                  "kind": "COMPLETE",
+                  "nameAr": "رفع للتدقيق",
+                  "nameEn": "Send for audit",
+                  "to": "GOV_AUDIT"
+                },
+                {
+                  "code": "RETURN",
+                  "kind": "RETURN",
+                  "nameAr": "طلب استكمال من مقدم الطلب",
+                  "nameEn": "Ask the applicant for corrections"
+                }
+              ]
+            },
+            {
+              "code": "GOV_AUDIT",
+              "type": "HUMAN_TASK",
+              "nameAr": "تدقيق الحوكمة",
+              "nameEn": "Governance audit",
+              "excludeActorsOf": [
+                "GOV_ANALYSIS"
+              ],
+              "assignment": {
+                "target": "ROLE",
+                "role": "CLS_GOV_AUDITOR",
+                "mode": "QUEUE"
+              },
+              "sla": {
+                "byLevel": {
+                  "REGULAR": 5,
+                  "PREMIUM": 3,
+                  "DIAMOND": 1
+                },
+                "escalateToRole": "CLS_REQUEST_MANAGER"
+              },
+              "actions": [
+                {
+                  "code": "CONFIRM",
+                  "kind": "COMPLETE",
+                  "nameAr": "اعتماد التحليل",
+                  "nameEn": "Confirm the analysis",
+                  "to": "JOIN"
+                },
+                {
+                  "code": "BACK_TO_ANALYST",
+                  "kind": "COMPLETE",
+                  "nameAr": "إعادة للمحلل",
+                  "nameEn": "Back to the analyst",
+                  "to": "GOV_ANALYSIS",
+                  "commentRequired": true
+                }
+              ]
+            },
+            {
+              "code": "PROJECTS_ANALYSIS",
+              "type": "HUMAN_TASK",
+              "nameAr": "تحليل المشاريع والخبرات",
+              "nameEn": "Projects & experience analysis",
+              "assignment": {
+                "target": "PREVIOUS_ACTOR",
+                "step": "PROJECTS_ANALYSIS",
+                "role": "CLS_PROJECTS_ANALYST",
+                "mode": "DISTRIBUTE",
+                "distributorRole": "CLS_REQUEST_MANAGER"
+              },
+              "sla": {
+                "byLevel": {
+                  "REGULAR": 15,
+                  "PREMIUM": 8,
+                  "DIAMOND": 2
+                },
+                "escalateToRole": "CLS_REQUEST_MANAGER"
+              },
+              "actions": [
+                {
+                  "code": "SEND_TO_AUDIT",
+                  "kind": "COMPLETE",
+                  "nameAr": "رفع للتدقيق",
+                  "nameEn": "Send for audit",
+                  "to": "PROJECTS_AUDIT"
+                },
+                {
+                  "code": "RETURN",
+                  "kind": "RETURN",
+                  "nameAr": "طلب استكمال من مقدم الطلب",
+                  "nameEn": "Ask the applicant for corrections"
+                }
+              ]
+            },
+            {
+              "code": "PROJECTS_AUDIT",
+              "type": "HUMAN_TASK",
+              "nameAr": "تدقيق المشاريع",
+              "nameEn": "Projects audit",
+              "excludeActorsOf": [
+                "PROJECTS_ANALYSIS"
+              ],
+              "assignment": {
+                "target": "ROLE",
+                "role": "CLS_PROJECTS_AUDITOR",
+                "mode": "QUEUE"
+              },
+              "sla": {
+                "byLevel": {
+                  "REGULAR": 5,
+                  "PREMIUM": 3,
+                  "DIAMOND": 1
+                },
+                "escalateToRole": "CLS_REQUEST_MANAGER"
+              },
+              "actions": [
+                {
+                  "code": "CONFIRM",
+                  "kind": "COMPLETE",
+                  "nameAr": "اعتماد التحليل",
+                  "nameEn": "Confirm the analysis",
+                  "to": "JOIN"
+                },
+                {
+                  "code": "BACK_TO_ANALYST",
+                  "kind": "COMPLETE",
+                  "nameAr": "إعادة للمحلل",
+                  "nameEn": "Back to the analyst",
+                  "to": "PROJECTS_ANALYSIS",
+                  "commentRequired": true
+                }
+              ]
+            },
+            {
+              "code": "FIN_ANALYSIS",
+              "type": "HUMAN_TASK",
+              "nameAr": "تحليل المالي",
+              "nameEn": "Financial analysis",
+              "assignment": {
+                "target": "PREVIOUS_ACTOR",
+                "step": "FIN_ANALYSIS",
+                "role": "CLS_FIN_ANALYST",
+                "mode": "DISTRIBUTE",
+                "distributorRole": "CLS_REQUEST_MANAGER"
+              },
+              "sla": {
+                "byLevel": {
+                  "REGULAR": 15,
+                  "PREMIUM": 8,
+                  "DIAMOND": 2
+                },
+                "escalateToRole": "CLS_REQUEST_MANAGER"
+              },
+              "actions": [
+                {
+                  "code": "SEND_TO_AUDIT",
+                  "kind": "COMPLETE",
+                  "nameAr": "رفع للتدقيق",
+                  "nameEn": "Send for audit",
+                  "to": "FIN_AUDIT"
+                },
+                {
+                  "code": "RETURN",
+                  "kind": "RETURN",
+                  "nameAr": "طلب استكمال من مقدم الطلب",
+                  "nameEn": "Ask the applicant for corrections"
+                }
+              ]
+            },
+            {
+              "code": "FIN_AUDIT",
+              "type": "HUMAN_TASK",
+              "nameAr": "مراجعة مدير التدقيق",
+              "nameEn": "Audit manager review",
+              "excludeActorsOf": [
+                "FIN_ANALYSIS"
+              ],
+              "assignment": {
+                "target": "ROLE",
+                "role": "CLS_AUDIT_MANAGER",
+                "mode": "QUEUE"
+              },
+              "sla": {
+                "byLevel": {
+                  "REGULAR": 5,
+                  "PREMIUM": 3,
+                  "DIAMOND": 1
+                },
+                "escalateToRole": "CLS_REQUEST_MANAGER"
+              },
+              "actions": [
+                {
+                  "code": "CONFIRM",
+                  "kind": "COMPLETE",
+                  "nameAr": "اعتماد التحليل",
+                  "nameEn": "Confirm the analysis",
+                  "to": "JOIN"
+                },
+                {
+                  "code": "BACK_TO_ANALYST",
+                  "kind": "COMPLETE",
+                  "nameAr": "إعادة للمحلل",
+                  "nameEn": "Back to the analyst",
+                  "to": "FIN_ANALYSIS",
+                  "commentRequired": true
+                }
+              ]
+            },
+            {
+              "code": "JOIN",
+              "type": "JOIN",
+              "nameAr": "اكتمال التحليل",
+              "nameEn": "Analysis complete",
+              "mode": "ALL",
+              "next": "GRADE"
+            },
+            {
+              "code": "GRADE",
+              "type": "DECISION",
+              "nameAr": "احتساب الدرجات",
+              "nameEn": "Grade calculation",
+              "ruleSet": "CLS_GRADING",
+              "result": "grading",
+              "input": {
+                "sectors": {
+                  "var": "data.CLS_SECTORS"
+                },
+                "employees": {
+                  "var": "data.CLS_EMPLOYEES"
+                },
+                "saudis": {
+                  "var": "data.CLS_SAUDI_EMPLOYEES"
+                },
+                "engineers": {
+                  "var": "data.CLS_ENGINEERS"
+                },
+                "technicians": {
+                  "var": "data.CLS_TECHNICIANS"
+                },
+                "dgaCategory": {
+                  "var": "data.CLS_DGA_CATEGORY"
+                },
+                "projectsValue": {
+                  "var": "data.CLS_PROJECTS_VALUE"
+                },
+                "largestProject": {
+                  "var": "data.CLS_LARGEST_PROJECT"
+                },
+                "board": {
+                  "var": "data.CLS_GOV_BOARD"
+                },
+                "erp": {
+                  "var": "data.CLS_GOV_ERP"
+                },
+                "pms": {
+                  "var": "data.CLS_GOV_PMS"
+                },
+                "org": {
+                  "var": "data.CLS_GOV_ORG"
+                },
+                "iso": {
+                  "var": "data.CLS_GOV_ISO"
+                }
+              },
+              "next": "GM_APPROVAL"
+            },
+            {
+              "code": "GM_APPROVAL",
+              "type": "HUMAN_TASK",
+              "nameAr": "اعتماد المدير العام",
+              "nameEn": "General manager approval",
+              "displayStatus": "PENDING_APPROVAL",
+              "assignment": {
+                "target": "ROLE",
+                "role": "CLS_GENERAL_MANAGER",
+                "mode": "QUEUE"
+              },
+              "sla": {
+                "byLevel": {
+                  "REGULAR": 5,
+                  "PREMIUM": 3,
+                  "DIAMOND": 1
+                }
+              },
+              "actions": [
+                {
+                  "code": "APPROVE",
+                  "kind": "APPROVE",
+                  "nameAr": "اعتماد التصنيف",
+                  "nameEn": "Approve the classification",
+                  "to": "CLASSIFIED",
+                  "commentToApplicant": true
+                },
+                {
+                  "code": "REJECT",
+                  "kind": "REJECT",
+                  "nameAr": "رفض الطلب",
+                  "nameEn": "Reject the request",
+                  "to": "REJECTED"
+                },
+                {
+                  "code": "RETURN",
+                  "kind": "RETURN",
+                  "nameAr": "طلب استكمال من مقدم الطلب",
+                  "nameEn": "Ask the applicant for corrections"
+                }
+              ]
+            },
+            {
+              "code": "CLASSIFIED",
+              "type": "GATEWAY",
+              "nameAr": "هل صُنّف قطاع؟",
+              "nameEn": "Any sector classified?",
+              "routes": [
+                {
+                  "when": {
+                    "var": "decisions.grading.eligible"
+                  },
+                  "to": "CERTIFICATE"
+                }
+              ],
+              "default": "NOT_CLASSIFIED"
+            },
+            {
+              "code": "CERTIFICATE",
+              "type": "DOCUMENT",
+              "nameAr": "إصدار شهادة التصنيف",
+              "nameEn": "Issue the classification certificate",
+              "documentType": "CLS_CERTIFICATE",
+              "data": {
+                "sizeClass": {
+                  "var": "decisions.grading.sizeClassNameAr"
+                },
+                "city": {
+                  "var": "data.CLS_CR_CITY"
+                },
+                "requestNumber": {
+                  "var": "number"
+                }
+              },
+              "lines": {
+                "source": {
+                  "filter": [
+                    {
+                      "var": "decisions.grading.items"
+                    },
+                    {
+                      "var": "classified"
+                    }
+                  ]
+                },
+                "as": "line",
+                "fields": {
+                  "sectorNameAr": {
+                    "var": "line.sectorNameAr"
+                  },
+                  "sectorNameEn": {
+                    "var": "line.sectorNameEn"
+                  },
+                  "grade": {
+                    "var": "line.grade"
+                  }
+                }
+              },
+              "reason": "اعتماد طلب التصنيف",
+              "next": "APPROVED"
+            },
+            {
+              "code": "APPROVED",
+              "type": "END",
+              "nameAr": "معتمد",
+              "nameEn": "Approved",
+              "outcome": "APPROVED"
+            },
+            {
+              "code": "REJECTED",
+              "type": "END",
+              "nameAr": "مرفوض",
+              "nameEn": "Rejected",
+              "outcome": "REJECTED"
+            },
+            {
+              "code": "NOT_CLASSIFIED",
+              "type": "END",
+              "nameAr": "لم يُصنّف أي قطاع",
+              "nameEn": "No sector classified",
+              "outcome": "REJECTED"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "entityType": "com.template",
+      "entityCode": "CLS_REQUEST_RETURNED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "طلب التصنيف: نواقص",
+        "nameEn": "Classification request: information needed",
+        "inAppTitleAr": "طلبكم {{ request.number }} بحاجة إلى استكمال",
+        "inAppTitleEn": "Your request {{ request.number }} needs more information",
+        "inAppBodyAr": "أُعيد طلب {{ request.serviceNameAr }} رقم {{ request.number }} لاستكمال المستندات والبيانات المطلوبة: {{ request.comment }}",
+        "inAppBodyEn": "Request {{ request.number }} ({{ request.serviceNameEn }}) was returned for the documents and information needed: {{ request.comment }}",
+        "link": "/requests/{{ request.id }}",
+        "emailSubjectAr": "طلبكم {{ request.number }} بحاجة إلى استكمال",
+        "emailSubjectEn": "Your request {{ request.number }} needs more information",
+        "emailBodyAr": "<p>{{ recipient.name }}،</p><p>أُعيد طلب {{ request.serviceNameAr }} رقم {{ request.number }} لاستكمال المستندات والبيانات المطلوبة: {{ request.comment }}</p><p>منصة الخدمات الإلكترونية</p>",
+        "emailBodyEn": "<p>Dear {{ recipient.name }},</p><p>Request {{ request.number }} ({{ request.serviceNameEn }}) was returned for the documents and information needed: {{ request.comment }}</p><p>e-Services platform</p>",
+        "smsAr": "طلبكم {{ request.number }} بحاجة لاستكمال نواقص. يرجى الدخول إلى البوابة.",
+        "smsEn": "Request {{ request.number }} needs more information. Please sign in to the portal."
+      }
+    },
+    {
+      "entityType": "com.template",
+      "entityCode": "CLS_REQUEST_REJECTED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "طلب التصنيف: رفض",
+        "nameEn": "Classification request: rejected",
+        "inAppTitleAr": "تعذر قبول طلبكم {{ request.number }}",
+        "inAppTitleEn": "Request {{ request.number }} was not accepted",
+        "inAppBodyAr": "نعتذر عن قبول طلب {{ request.serviceNameAr }} رقم {{ request.number }}. {{ request.comment }} يمكنكم الاستفادة من خدمة الاستشارات لتحسين جاهزية المنشأة قبل التقديم مجدداً.",
+        "inAppBodyEn": "Request {{ request.number }} ({{ request.serviceNameEn }}) was not accepted. {{ request.comment }} Our advisory service can help the establishment prepare before applying again.",
+        "link": "/requests/{{ request.id }}",
+        "emailSubjectAr": "تعذر قبول طلبكم {{ request.number }}",
+        "emailSubjectEn": "Request {{ request.number }} was not accepted",
+        "emailBodyAr": "<p>{{ recipient.name }}،</p><p>نعتذر عن قبول طلب {{ request.serviceNameAr }} رقم {{ request.number }}. {{ request.comment }} يمكنكم الاستفادة من خدمة الاستشارات لتحسين جاهزية المنشأة قبل التقديم مجدداً.</p><p>منصة الخدمات الإلكترونية</p>",
+        "emailBodyEn": "<p>Dear {{ recipient.name }},</p><p>Request {{ request.number }} ({{ request.serviceNameEn }}) was not accepted. {{ request.comment }} Our advisory service can help the establishment prepare before applying again.</p><p>e-Services platform</p>",
+        "smsAr": "تعذر قبول طلبكم {{ request.number }}. التفاصيل في البوابة.",
+        "smsEn": "Request {{ request.number }} was not accepted. Details are on the portal."
+      }
+    },
+    {
+      "entityType": "com.template",
+      "entityCode": "CLS_REQUEST_APPROVED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "طلب التصنيف: اكتمال",
+        "nameEn": "Classification request: completed",
+        "inAppTitleAr": "اكتمل طلبكم {{ request.number }}",
+        "inAppTitleEn": "Request {{ request.number }} is complete",
+        "inAppBodyAr": "اكتمل طلب {{ request.serviceNameAr }} رقم {{ request.number }} بالموافقة.",
+        "inAppBodyEn": "Request {{ request.number }} ({{ request.serviceNameEn }}) was approved.",
+        "link": "/requests/{{ request.id }}",
+        "emailSubjectAr": "اكتمل طلبكم {{ request.number }}",
+        "emailSubjectEn": "Request {{ request.number }} is complete",
+        "emailBodyAr": "<p>{{ recipient.name }}،</p><p>اكتمل طلب {{ request.serviceNameAr }} رقم {{ request.number }} بالموافقة.</p><p>منصة الخدمات الإلكترونية</p>",
+        "emailBodyEn": "<p>Dear {{ recipient.name }},</p><p>Request {{ request.number }} ({{ request.serviceNameEn }}) was approved.</p><p>e-Services platform</p>"
+      }
+    },
+    {
+      "entityType": "com.template",
+      "entityCode": "CLS_CERTIFICATE_ISSUED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "شهادة التصنيف: إصدار",
+        "nameEn": "Classification certificate: issued",
+        "inAppTitleAr": "صدرت شهادة التصنيف {{ document.number }}",
+        "inAppTitleEn": "Classification certificate {{ document.number }} issued",
+        "inAppBodyAr": "صدرت {{ document.typeNameAr }} رقم {{ document.number }}، سارية حتى {{ document.expiresOn }}. يمكنكم تنزيلها من البوابة والتحقق منها عبر {{ document.verifyUrl }}",
+        "inAppBodyEn": "{{ document.typeNameEn }} {{ document.number }} was issued, valid until {{ document.expiresOn }}. Download it from the portal; anyone can verify it at {{ document.verifyUrl }}",
+        "link": "/documents/{{ document.id }}",
+        "emailSubjectAr": "صدرت شهادة التصنيف {{ document.number }}",
+        "emailSubjectEn": "Classification certificate {{ document.number }} issued",
+        "emailBodyAr": "<p>{{ recipient.name }}،</p><p>صدرت {{ document.typeNameAr }} رقم {{ document.number }}، سارية حتى {{ document.expiresOn }}. يمكنكم تنزيلها من البوابة والتحقق منها عبر {{ document.verifyUrl }}</p><p>منصة الخدمات الإلكترونية</p>",
+        "emailBodyEn": "<p>Dear {{ recipient.name }},</p><p>{{ document.typeNameEn }} {{ document.number }} was issued, valid until {{ document.expiresOn }}. Download it from the portal; anyone can verify it at {{ document.verifyUrl }}</p><p>e-Services platform</p>",
+        "smsAr": "صدرت شهادة التصنيف {{ document.number }} سارية حتى {{ document.expiresOn }}.",
+        "smsEn": "Classification certificate {{ document.number }} issued, valid until {{ document.expiresOn }}."
+      }
+    },
+    {
+      "entityType": "com.template",
+      "entityCode": "CLS_RENEWAL_AVAILABLE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "شهادة التصنيف: إتاحة التجديد",
+        "nameEn": "Classification certificate: renewal open",
+        "inAppTitleAr": "يمكنكم تجديد شهادة التصنيف {{ document.number }}",
+        "inAppTitleEn": "You can renew certificate {{ document.number }}",
+        "inAppBodyAr": "تنتهي شهادة التصنيف {{ document.number }} في {{ document.expiresOn }} (بعد {{ document.daysLeft }} يوماً). خدمة التجديد متاحة الآن.",
+        "inAppBodyEn": "Certificate {{ document.number }} expires on {{ document.expiresOn }} (in {{ document.daysLeft }} days). Renewal is now open.",
+        "link": "/documents/{{ document.id }}",
+        "emailSubjectAr": "يمكنكم تجديد شهادة التصنيف {{ document.number }}",
+        "emailSubjectEn": "You can renew certificate {{ document.number }}",
+        "emailBodyAr": "<p>{{ recipient.name }}،</p><p>تنتهي شهادة التصنيف {{ document.number }} في {{ document.expiresOn }} (بعد {{ document.daysLeft }} يوماً). خدمة التجديد متاحة الآن.</p><p>منصة الخدمات الإلكترونية</p>",
+        "emailBodyEn": "<p>Dear {{ recipient.name }},</p><p>Certificate {{ document.number }} expires on {{ document.expiresOn }} (in {{ document.daysLeft }} days). Renewal is now open.</p><p>e-Services platform</p>",
+        "smsAr": "شهادة التصنيف {{ document.number }} تنتهي في {{ document.expiresOn }}. التجديد متاح الآن.",
+        "smsEn": "Certificate {{ document.number }} expires on {{ document.expiresOn }}. Renewal is open."
+      }
+    },
+    {
+      "entityType": "com.template",
+      "entityCode": "CLS_EXTENSION_AVAILABLE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "شهادة التصنيف: إتاحة التمديد",
+        "nameEn": "Classification certificate: extension open",
+        "inAppTitleAr": "تنتهي شهادة التصنيف {{ document.number }} خلال {{ document.daysLeft }} يوماً",
+        "inAppTitleEn": "Certificate {{ document.number }} expires in {{ document.daysLeft }} days",
+        "inAppBodyAr": "تنتهي شهادة التصنيف {{ document.number }} في {{ document.expiresOn }}. خدمة التمديد متاحة حتى 90 يوماً بعد الانتهاء.",
+        "inAppBodyEn": "Certificate {{ document.number }} expires on {{ document.expiresOn }}. Extension is available until 90 days after expiry.",
+        "link": "/documents/{{ document.id }}",
+        "emailSubjectAr": "تنتهي شهادة التصنيف {{ document.number }} خلال {{ document.daysLeft }} يوماً",
+        "emailSubjectEn": "Certificate {{ document.number }} expires in {{ document.daysLeft }} days",
+        "emailBodyAr": "<p>{{ recipient.name }}،</p><p>تنتهي شهادة التصنيف {{ document.number }} في {{ document.expiresOn }}. خدمة التمديد متاحة حتى 90 يوماً بعد الانتهاء.</p><p>منصة الخدمات الإلكترونية</p>",
+        "emailBodyEn": "<p>Dear {{ recipient.name }},</p><p>Certificate {{ document.number }} expires on {{ document.expiresOn }}. Extension is available until 90 days after expiry.</p><p>e-Services platform</p>",
+        "smsAr": "شهادة التصنيف {{ document.number }} تنتهي خلال {{ document.daysLeft }} يوماً. التمديد متاح.",
+        "smsEn": "Certificate {{ document.number }} expires in {{ document.daysLeft }} days. Extension is available."
+      }
+    },
+    {
+      "entityType": "com.template",
+      "entityCode": "CLS_CERTIFICATE_EXPIRED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "شهادة التصنيف: انتهاء",
+        "nameEn": "Classification certificate: expired",
+        "inAppTitleAr": "انتهت شهادة التصنيف {{ document.number }}",
+        "inAppTitleEn": "Certificate {{ document.number }} has expired",
+        "inAppBodyAr": "انتهت صلاحية شهادة التصنيف {{ document.number }}. يمكنكم طلب التمديد خلال 90 يوماً من الانتهاء، وبعدها يلزم طلب تصنيف جديد.",
+        "inAppBodyEn": "Certificate {{ document.number }} has expired. An extension can be requested within 90 days of expiry; after that a new classification request is needed.",
+        "link": "/documents/{{ document.id }}",
+        "emailSubjectAr": "انتهت شهادة التصنيف {{ document.number }}",
+        "emailSubjectEn": "Certificate {{ document.number }} has expired",
+        "emailBodyAr": "<p>{{ recipient.name }}،</p><p>انتهت صلاحية شهادة التصنيف {{ document.number }}. يمكنكم طلب التمديد خلال 90 يوماً من الانتهاء، وبعدها يلزم طلب تصنيف جديد.</p><p>منصة الخدمات الإلكترونية</p>",
+        "emailBodyEn": "<p>Dear {{ recipient.name }},</p><p>Certificate {{ document.number }} has expired. An extension can be requested within 90 days of expiry; after that a new classification request is needed.</p><p>e-Services platform</p>",
+        "smsAr": "انتهت شهادة التصنيف {{ document.number }}.",
+        "smsEn": "Certificate {{ document.number }} has expired."
+      }
+    },
+    {
+      "entityType": "com.template",
+      "entityCode": "CLS_TASK_ASSIGNED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مهمة مسندة",
+        "nameEn": "Task assigned",
+        "inAppTitleAr": "أُسندت إليك مهمة: {{ task.nameAr }}",
+        "inAppTitleEn": "Task assigned to you: {{ task.nameEn }}",
+        "inAppBodyAr": "{{ task.titleAr }} — {{ subject.number }} — {{ task.partyNameAr }}",
+        "inAppBodyEn": "{{ task.titleEn }} — {{ subject.number }} — {{ task.partyNameEn }}",
+        "link": "/action-center/tasks/{{ task.id }}"
+      }
+    },
+    {
+      "entityType": "com.template",
+      "entityCode": "CLS_TASK_OVERDUE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مهمة متأخرة",
+        "nameEn": "Task overdue",
+        "inAppTitleAr": "تجاوزت المهمة موعدها: {{ task.nameAr }}",
+        "inAppTitleEn": "Task overdue: {{ task.nameEn }}",
+        "inAppBodyAr": "{{ task.titleAr }} — {{ subject.number }} — المسند إليه: {{ task.assignee }}",
+        "inAppBodyEn": "{{ task.titleEn }} — {{ subject.number }} — assigned to: {{ task.assignee }}",
+        "link": "/action-center/tasks/{{ task.id }}"
+      }
+    },
+    {
+      "entityType": "com.rule",
+      "entityCode": "CLS_REQUEST_RETURNED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إبلاغ المنشأة بالنواقص",
+        "nameEn": "Tell the establishment what is missing",
+        "eventCode": "REQUEST_RETURNED",
+        "templateCode": "CLS_REQUEST_RETURNED",
+        "condition": {
+          "==": [
+            {
+              "substr": [
+                {
+                  "var": "request.service"
+                },
+                0,
+                14
+              ]
+            },
+            "CLASSIFICATION"
+          ]
+        },
+        "channels": [
+          "IN_APP",
+          "EMAIL",
+          "SMS"
+        ],
+        "recipients": [
+          {
+            "kind": "PARTY"
+          }
+        ],
+        "language": "AR"
+      }
+    },
+    {
+      "entityType": "com.rule",
+      "entityCode": "CLS_REQUEST_REJECTED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إبلاغ المنشأة بالرفض وعرض الاستشارات",
+        "nameEn": "Tell the establishment of the rejection, offer advice",
+        "eventCode": "REQUEST_REJECTED",
+        "templateCode": "CLS_REQUEST_REJECTED",
+        "condition": {
+          "==": [
+            {
+              "substr": [
+                {
+                  "var": "request.service"
+                },
+                0,
+                14
+              ]
+            },
+            "CLASSIFICATION"
+          ]
+        },
+        "channels": [
+          "IN_APP",
+          "EMAIL",
+          "SMS"
+        ],
+        "recipients": [
+          {
+            "kind": "PARTY"
+          }
+        ],
+        "language": "AR"
+      }
+    },
+    {
+      "entityType": "com.rule",
+      "entityCode": "CLS_REQUEST_APPROVED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إبلاغ المنشأة باكتمال الطلب",
+        "nameEn": "Tell the establishment the request is complete",
+        "eventCode": "REQUEST_APPROVED",
+        "templateCode": "CLS_REQUEST_APPROVED",
+        "condition": {
+          "==": [
+            {
+              "substr": [
+                {
+                  "var": "request.service"
+                },
+                0,
+                14
+              ]
+            },
+            "CLASSIFICATION"
+          ]
+        },
+        "channels": [
+          "IN_APP"
+        ],
+        "recipients": [
+          {
+            "kind": "PARTY"
+          }
+        ],
+        "language": "AR"
+      }
+    },
+    {
+      "entityType": "com.rule",
+      "entityCode": "CLS_CERTIFICATE_ISSUED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إبلاغ المنشأة بإصدار الشهادة",
+        "nameEn": "Tell the holder the certificate was issued",
+        "eventCode": "DOCUMENT_ISSUED",
+        "templateCode": "CLS_CERTIFICATE_ISSUED",
+        "condition": {
+          "==": [
+            {
+              "var": "document.type"
+            },
+            "CLS_CERTIFICATE"
+          ]
+        },
+        "channels": [
+          "IN_APP",
+          "EMAIL",
+          "SMS"
+        ],
+        "recipients": [
+          {
+            "kind": "PARTY"
+          }
+        ],
+        "language": "AR"
+      }
+    },
+    {
+      "entityType": "com.rule",
+      "entityCode": "CLS_CERTIFICATE_AMENDED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إبلاغ المنشأة بتعديل الشهادة",
+        "nameEn": "Tell the holder the certificate was amended",
+        "eventCode": "DOCUMENT_AMENDED",
+        "templateCode": "CLS_CERTIFICATE_ISSUED",
+        "condition": {
+          "==": [
+            {
+              "var": "document.type"
+            },
+            "CLS_CERTIFICATE"
+          ]
+        },
+        "channels": [
+          "IN_APP",
+          "EMAIL"
+        ],
+        "recipients": [
+          {
+            "kind": "PARTY"
+          }
+        ],
+        "language": "AR"
+      }
+    },
+    {
+      "entityType": "com.rule",
+      "entityCode": "CLS_RENEWAL_AVAILABLE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إتاحة التجديد قبل 90 يوماً",
+        "nameEn": "Renewal open, 90 days before expiry",
+        "eventCode": "DOCUMENT_EXPIRING",
+        "templateCode": "CLS_RENEWAL_AVAILABLE",
+        "condition": {
+          "and": [
+            {
+              "==": [
+                {
+                  "var": "document.type"
+                },
+                "CLS_CERTIFICATE"
+              ]
+            },
+            {
+              "==": [
+                {
+                  "var": "document.alertDays"
+                },
+                90
+              ]
+            }
+          ]
+        },
+        "channels": [
+          "IN_APP",
+          "EMAIL",
+          "SMS"
+        ],
+        "recipients": [
+          {
+            "kind": "PARTY"
+          }
+        ],
+        "language": "AR"
+      }
+    },
+    {
+      "entityType": "com.rule",
+      "entityCode": "CLS_EXTENSION_AVAILABLE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إتاحة التمديد قبل 15 يوماً",
+        "nameEn": "Extension open, 15 days before expiry",
+        "eventCode": "DOCUMENT_EXPIRING",
+        "templateCode": "CLS_EXTENSION_AVAILABLE",
+        "condition": {
+          "and": [
+            {
+              "==": [
+                {
+                  "var": "document.type"
+                },
+                "CLS_CERTIFICATE"
+              ]
+            },
+            {
+              "==": [
+                {
+                  "var": "document.alertDays"
+                },
+                15
+              ]
+            }
+          ]
+        },
+        "channels": [
+          "IN_APP",
+          "EMAIL",
+          "SMS"
+        ],
+        "recipients": [
+          {
+            "kind": "PARTY"
+          }
+        ],
+        "language": "AR"
+      }
+    },
+    {
+      "entityType": "com.rule",
+      "entityCode": "CLS_CERTIFICATE_EXPIRED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إبلاغ المنشأة بانتهاء الشهادة",
+        "nameEn": "Tell the holder the certificate expired",
+        "eventCode": "DOCUMENT_EXPIRED",
+        "templateCode": "CLS_CERTIFICATE_EXPIRED",
+        "condition": {
+          "==": [
+            {
+              "var": "document.type"
+            },
+            "CLS_CERTIFICATE"
+          ]
+        },
+        "channels": [
+          "IN_APP",
+          "EMAIL",
+          "SMS"
+        ],
+        "recipients": [
+          {
+            "kind": "PARTY"
+          }
+        ],
+        "language": "AR"
+      }
+    },
+    {
+      "entityType": "com.rule",
+      "entityCode": "CLS_TASK_ASSIGNED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إبلاغ الموظف بالمهمة المسندة",
+        "nameEn": "Tell the employee about an assigned task",
+        "eventCode": "TASK_ASSIGNED",
+        "templateCode": "CLS_TASK_ASSIGNED",
+        "condition": {
+          "==": [
+            {
+              "substr": [
+                {
+                  "var": "task.service"
+                },
+                0,
+                14
+              ]
+            },
+            "CLASSIFICATION"
+          ]
+        },
+        "channels": [
+          "IN_APP"
+        ],
+        "recipients": [
+          {
+            "kind": "USER",
+            "value": {
+              "var": "task.assignee"
+            }
+          }
+        ],
+        "language": "AR"
+      }
+    },
+    {
+      "entityType": "com.rule",
+      "entityCode": "CLS_TASK_OVERDUE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إبلاغ التصعيد بالمهام المتأخرة",
+        "nameEn": "Tell the escalation role about overdue tasks",
+        "eventCode": "TASK_SLA_BREACHED",
+        "templateCode": "CLS_TASK_OVERDUE",
+        "condition": {
+          "==": [
+            {
+              "substr": [
+                {
+                  "var": "task.service"
+                },
+                0,
+                14
+              ]
+            },
+            "CLASSIFICATION"
+          ]
+        },
+        "channels": [
+          "IN_APP"
+        ],
+        "recipients": [
+          {
+            "kind": "ROLE",
+            "value": {
+              "var": "task.escalatedToRole"
+            }
+          },
+          {
+            "kind": "USER",
+            "value": {
+              "var": "task.assignee"
+            }
+          }
+        ],
+        "language": "AR"
+      }
+    }
+  ]
+}

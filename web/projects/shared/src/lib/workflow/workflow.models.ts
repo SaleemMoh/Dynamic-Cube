@@ -95,6 +95,13 @@ export interface InstanceView {
   sla: SlaState;
   tasks: TaskSummary[];
   timeline: TimelineItem[];
+  /** What automated steps recorded: `decisions.<result>` (rule-set outputs) and `documents.<step>` (issued documents). */
+  facts: InstanceFacts;
+}
+
+export interface InstanceFacts {
+  decisions?: Record<string, Record<string, unknown>>;
+  documents?: Record<string, { id: string; number: string; version: number; amended: boolean }>;
 }
 
 export interface TaskDetail {
