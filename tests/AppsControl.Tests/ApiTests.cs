@@ -195,6 +195,59 @@ public sealed class ApiTests(AppsControlFixture fixture) : IAsyncLifetime
         privileges!["apps-control.change-sets"].ShouldBe(["APPROVE", "CREATE", "VIEW"]);
     }
 
+    [Fact]
+    public async Task The_radiation_registry_sample_packages_import_and_publish()
+    {
+        fixture.RequireConnectionString();
+        var ct = TestContext.Current.CancellationToken;
+        using var maker = Client("maker");
+        using var checker = Client("checker");
+
+        foreach (var file in Directory.GetFiles(RepositoryFile("deploy/sample-data/radiation-registry"), "*.json").Order(StringComparer.Ordinal))
+        {
+            using var content = new StringContent(await File.ReadAllTextAsync(file, ct), System.Text.Encoding.UTF8, "application/json");
+            var imported = await maker.PostAsync(new Uri("/api/apps-control/v1/change-sets/import", UriKind.Relative), content, ct);
+            if (!imported.IsSuccessStatusCode)
+            {
+                Assert.Fail($"{Path.GetFileName(file)}: {await imported.Content.ReadAsStringAsync(ct)}");
+            }
+
+            foreach (var draft in (await imported.Content.ReadFromJsonAsync<JsonElement>(ct)).EnumerateArray())
+            {
+                var id = draft.GetProperty("changeSet").GetProperty("id").GetString();
+                (await maker.PostAsync(new Uri($"/api/apps-control/v1/change-sets/{id}/submit", UriKind.Relative), null, ct)).EnsureSuccessStatusCode();
+                var approved = await checker.PostAsJsonAsync($"/api/apps-control/v1/change-sets/{id}/approve", new { comment = "sample data" }, ct);
+                approved.EnsureSuccessStatusCode();
+                (await approved.Content.ReadFromJsonAsync<JsonElement>(ct)).GetProperty("changeSet").GetProperty("status").GetString().ShouldBe("PUBLISHED", Path.GetFileName(file));
+            }
+        }
+
+        (await checker.GetFromJsonAsync<JsonElement>("/api/apps-control/v1/classes/MANUFACTURER/domains", ct)).GetArrayLength().ShouldBe(1542);
+        var unit = await checker.GetFromJsonAsync<JsonElement>("/api/apps-control/v1/admin/apps.domain/ACTIVITY_UNIT/10010", ct);
+        unit.GetProperty("attributes").GetProperty("BQ_FACTOR").GetDecimal().ShouldBe(37_000_000_000m);
+        var facility = await checker.GetFromJsonAsync<JsonElement>("/api/apps-control/v1/admin/apps.domain/FACILITY/00013ER", ct);
+        facility.GetProperty("attributes").GetProperty("CITY").GetString().ShouldBe("YANBU");
+        facility.GetProperty("attributes").GetProperty("OPERATIONAL").GetBoolean().ShouldBeFalse();
+        var city = await checker.GetFromJsonAsync<JsonElement>("/api/apps-control/v1/admin/apps.domain/CITY/YANBU", ct);
+        city.GetProperty("parentCode").GetString().ShouldBe("3");
+
+        var role = await checker.GetFromJsonAsync<JsonElement>("/api/apps-control/v1/admin/apps.role/SourcesTeamLead", ct);
+        role.GetProperty("privileges").EnumerateArray().Select(p => p.GetProperty("resourceCode").GetString()).ShouldBe(["action-center", "AdminSource", "facility-profile"], ignoreOrder: true);
+        var user = await checker.GetFromJsonAsync<JsonElement>("/api/apps-control/v1/admin/apps.user/saleem.a", ct);
+        user.GetProperty("roles").GetArrayLength().ShouldBe(11);
+    }
+
+    private static string RepositoryFile(string relative)
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "DynamicCube.slnx")))
+        {
+            directory = directory.Parent;
+        }
+
+        return Path.Combine(directory?.FullName ?? throw new InvalidOperationException("Repository root not found."), relative);
+    }
+
     private HttpClient Client(string userName)
     {
         var client = _factory.CreateClient();

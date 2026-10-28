@@ -1,0 +1,1512 @@
+{
+  "title": "Radiation registry: screens, roles and users",
+  "items": [
+    {
+      "entityType": "apps.resource",
+      "entityCode": "action-center",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مركز العمليات",
+        "nameEn": "Action Center",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "ALL_FACILITIES",
+          "EQUIPMENT_DETAILS",
+          "EQUIPMENT_LEAD",
+          "EQUIPMENT_MESSAGE",
+          "EQUIPMENT_REVIEW",
+          "EQUIPMENT_STATUS",
+          "EXPORT",
+          "GENERATORS_DETAILS",
+          "GENERATORS_LEAD",
+          "GENERATORS_MESSAGE",
+          "GENERATORS_REVIEW",
+          "GENERATORS_STATUS",
+          "SETTINGS",
+          "SOURCES_DETAILS",
+          "SOURCES_LEAD",
+          "SOURCES_MESSAGE",
+          "SOURCES_REVIEW",
+          "SOURCES_STATUS",
+          "VIEW"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "admin-dashboard",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "لوحة الأداء",
+        "nameEn": "Performance Dashboard",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "VIEW"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "AdminSource",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مسؤول مركز العمل",
+        "nameEn": "Action Center Admin",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "ACCEPT_SOURCES",
+          "VIEW_SOURCES_BUTTON"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "aman-settings",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "بيانات وإعدادات الربط مع نظام أمان",
+        "nameEn": "AMAN Integration Settings",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "EDIT",
+          "VIEW"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "assignments-coordinator",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إسناد الطلبات",
+        "nameEn": "Requests Assignment",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "ASSIGN",
+          "VIEW"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "cities",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المدن",
+        "nameEn": "Cities",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "CREATE",
+          "COPY",
+          "DELETE",
+          "DETAILS",
+          "EDIT",
+          "EXPORT",
+          "PRINT",
+          "VIEW"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "countries",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الدول",
+        "nameEn": "Countries",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "CREATE",
+          "COPY",
+          "DELETE",
+          "DETAILS",
+          "EDIT",
+          "EXPORT",
+          "PRINT",
+          "VIEW"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "entities",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الجهات",
+        "nameEn": "Entities",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "COPY",
+          "DETAILS",
+          "EXPORT",
+          "PRINT",
+          "VIEW"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "entities-management",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إدارة وإعداد المنشآت",
+        "nameEn": "Entities Management & Setup",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "ADD_ENTITY",
+          "ADD_FACILITY",
+          "ADD_LEGAL_REP",
+          "ADD_LICENSE",
+          "ADD_PERMIT",
+          "DELETE_ENTITY",
+          "DELETE_FACILITY",
+          "DELETE_LEGAL_REP",
+          "DELETE_LICENSE",
+          "DELETE_PERMIT",
+          "EDIT_ENTITY",
+          "EDIT_FACILITY",
+          "EDIT_LEGAL_REP",
+          "EDIT_LICENSE",
+          "EDIT_PERMIT",
+          "MANAGE_LEGAL_REPS",
+          "REPORTS",
+          "VIEW"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "equipment-cleansing",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تنقية بيانات المعدات المرتبطة",
+        "nameEn": "Associated Equipment Cleansing",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "DELETE",
+          "UNDELETE",
+          "VIEW"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "equipment-inventory",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المعدات المرتبطة",
+        "nameEn": "Associated Equipment",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "DETAILS",
+          "EXPORT",
+          "VIEW"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "equipment-types",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "أنواع المعدات المرتبطة",
+        "nameEn": "Associated Equipment Types",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "CREATE",
+          "DELETE",
+          "EDIT",
+          "VIEW"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "exceptions-log",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "سجل الأخطاء",
+        "nameEn": "Exceptions Log",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "DELETE",
+          "DELETE_SYSTEM_LOG",
+          "VIEW"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "facilities",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المنشآت",
+        "nameEn": "Facilities",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "COPY",
+          "DETAILS",
+          "EXPORT",
+          "PRINT",
+          "VIEW"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "facility-profile",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "معلومات المنشأة",
+        "nameEn": "Facility Profile",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "EQUIPMENT",
+          "EXPORT",
+          "GENERATORS",
+          "LEGAL_REPRESENTATIVES",
+          "LICENSES",
+          "NUCLEAR_MATERIALS",
+          "PERMITS",
+          "SOURCES",
+          "VIEW",
+          "WORKERS"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "generators-inventory",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المولدات الإشعاعية",
+        "nameEn": "Radiation Generators",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "DETAILS",
+          "EXPORT",
+          "VIEW"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "legal-representatives",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الممثلون النظاميون",
+        "nameEn": "Legal Representatives",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "COPY",
+          "DETAILS",
+          "EXPORT",
+          "PRINT",
+          "VIEW",
+          "VIEW_REPRESENTATIVES_BUTTON"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "license-kmp",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إعداد رمز KMP",
+        "nameEn": "KMP Code Setup",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "EDIT",
+          "VIEW"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "licenses",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "التراخيص",
+        "nameEn": "Licenses",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "COPY",
+          "DETAILS",
+          "EXPORT",
+          "PRINT",
+          "VIEW",
+          "VIEW_LICENSE_BUTTON"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "lookup-sets",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "قوائم النظام",
+        "nameEn": "System Lookups",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "CREATE",
+          "COPY",
+          "DELETE",
+          "DETAILS",
+          "EDIT",
+          "EXPORT",
+          "PRINT",
+          "VIEW"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "lookup-terms",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "عناصر قوائم النظام",
+        "nameEn": "System Lookup Terms",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "CREATE",
+          "DELETE",
+          "DETAILS",
+          "EDIT",
+          "VIEW"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "manufacturers",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المصانع",
+        "nameEn": "Manufacturers",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "CREATE",
+          "COPY",
+          "DELETE",
+          "DETAILS",
+          "EDIT",
+          "EXPORT",
+          "PRINT",
+          "VIEW"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "nuclear-material-form",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "نموذج المواد النووية",
+        "nameEn": "Nuclear Material Form",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "CREATE",
+          "EDIT",
+          "VIEW"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "nuclear-materials",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المواد النووية",
+        "nameEn": "Nuclear Materials",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "DELETE",
+          "DETAILS",
+          "EDIT",
+          "EXPORT",
+          "VIEW",
+          "VIEW_NM_BUTTON"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "permit",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الفسح",
+        "nameEn": "Permit",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "VIEW_PERMIT_BUTTON"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "practices",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الممارسات",
+        "nameEn": "Practices",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "CREATE",
+          "COPY",
+          "EDIT",
+          "EXPORT",
+          "PRINT",
+          "VIEW"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "radionuclide-reports",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تقارير النويدات المشعة",
+        "nameEn": "Radionuclide Reports",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "CREATE",
+          "VIEW"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "radionuclides",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "النويدات المشعة",
+        "nameEn": "Radionuclides",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "CREATE",
+          "COPY",
+          "DELETE",
+          "EDIT",
+          "EXPORT",
+          "PRINT",
+          "VIEW"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "related-items",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الأصناف المتعلقة",
+        "nameEn": "Related Items Inventory",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "DELETE",
+          "DETAILS",
+          "EDIT",
+          "VIEW"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "related-items-hierarchy",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "هيكل الأصناف المتعلقة",
+        "nameEn": "Related Items Hierarchy",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "CREATE",
+          "COPY",
+          "DETAILS",
+          "EDIT",
+          "EXPORT",
+          "PRINT",
+          "VIEW"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "related-items-setup",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إعداد الأصناف المتعلقة",
+        "nameEn": "Related Items Setup",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "EDIT",
+          "VIEW"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "related-items-tree",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "شجرة الأصناف المتعلقة",
+        "nameEn": "Related Items Tree",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "CREATE",
+          "COPY",
+          "DETAILS",
+          "EDIT",
+          "EXPORT",
+          "PRINT",
+          "VIEW"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "role-management",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إدارة الأدوار والصلاحيات",
+        "nameEn": "Roles and Permissions",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "CREATE",
+          "DELETE",
+          "EDIT",
+          "EXPORT",
+          "VIEW"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "safeguards-reports",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تقارير الضمانات",
+        "nameEn": "Safeguards Reports",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "GENERATE",
+          "VIEW"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "safety-officers",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مسؤولو السلامة الإشعاعية",
+        "nameEn": "Radiation Safety Officers",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "CREATE",
+          "COPY",
+          "DETAILS",
+          "EDIT",
+          "EXPORT",
+          "PRINT",
+          "VIEW"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "sources-inventory",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المصادر المشعة",
+        "nameEn": "Radioactive Sources",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "DETAILS",
+          "EXPORT",
+          "VIEW"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "system-settings",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إعدادات النظام",
+        "nameEn": "System Settings",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "VIEW"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "user-management",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مستخدمو النظام الداخلي",
+        "nameEn": "Internal System Users",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "ADD_USER",
+          "ASSIGN_ROLES",
+          "ASSIGN_WALLETS",
+          "TOGGLE_ACTIVITY",
+          "VIEW"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "wallets",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المحافظ والمنشآت",
+        "nameEn": "Wallets and Facilities",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "CREATE",
+          "ASSIGN_FACILITIES",
+          "DELETE",
+          "EDIT",
+          "EXPORT",
+          "VIEW"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "workers",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "العاملون في المجال الإشعاعي",
+        "nameEn": "Radiation Workers",
+        "appCode": "INTERNAL",
+        "resourceType": "SCREEN",
+        "availableActions": [
+          "DETAILS",
+          "EDIT",
+          "EXPORT",
+          "MESSAGE",
+          "VIEW",
+          "VIEW_WORKER_BUTTON"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.role",
+      "entityCode": "r001",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مسؤول النظام",
+        "nameEn": "Admin",
+        "appCode": "INTERNAL",
+        "referenceCode": "1042",
+        "privileges": [
+          {
+            "resourceCode": "action-center",
+            "actions": [
+              "ALL_FACILITIES",
+              "EQUIPMENT_DETAILS",
+              "EQUIPMENT_LEAD",
+              "EQUIPMENT_MESSAGE",
+              "EQUIPMENT_REVIEW",
+              "EQUIPMENT_STATUS",
+              "EXPORT",
+              "GENERATORS_DETAILS",
+              "GENERATORS_LEAD",
+              "GENERATORS_MESSAGE",
+              "GENERATORS_REVIEW",
+              "GENERATORS_STATUS",
+              "SETTINGS",
+              "SOURCES_DETAILS",
+              "SOURCES_LEAD",
+              "SOURCES_MESSAGE",
+              "SOURCES_REVIEW",
+              "SOURCES_STATUS",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "admin-dashboard",
+            "actions": [
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "AdminSource",
+            "actions": [
+              "ACCEPT_SOURCES",
+              "VIEW_SOURCES_BUTTON"
+            ]
+          },
+          {
+            "resourceCode": "aman-settings",
+            "actions": [
+              "EDIT",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "assignments-coordinator",
+            "actions": [
+              "ASSIGN",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "cities",
+            "actions": [
+              "CREATE",
+              "COPY",
+              "DELETE",
+              "DETAILS",
+              "EDIT",
+              "EXPORT",
+              "PRINT",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "countries",
+            "actions": [
+              "CREATE",
+              "COPY",
+              "DELETE",
+              "DETAILS",
+              "EDIT",
+              "EXPORT",
+              "PRINT",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "entities",
+            "actions": [
+              "COPY",
+              "DETAILS",
+              "EXPORT",
+              "PRINT",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "entities-management",
+            "actions": [
+              "ADD_ENTITY",
+              "ADD_FACILITY",
+              "ADD_LEGAL_REP",
+              "ADD_LICENSE",
+              "ADD_PERMIT",
+              "DELETE_ENTITY",
+              "DELETE_FACILITY",
+              "DELETE_LEGAL_REP",
+              "DELETE_LICENSE",
+              "DELETE_PERMIT",
+              "EDIT_ENTITY",
+              "EDIT_FACILITY",
+              "EDIT_LEGAL_REP",
+              "EDIT_LICENSE",
+              "EDIT_PERMIT",
+              "REPORTS",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "equipment-cleansing",
+            "actions": [
+              "DELETE",
+              "UNDELETE",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "equipment-inventory",
+            "actions": [
+              "DETAILS",
+              "EXPORT",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "equipment-types",
+            "actions": [
+              "CREATE",
+              "DELETE",
+              "EDIT",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "exceptions-log",
+            "actions": [
+              "DELETE",
+              "DELETE_SYSTEM_LOG",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "facilities",
+            "actions": [
+              "COPY",
+              "DETAILS",
+              "EXPORT",
+              "PRINT",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "facility-profile",
+            "actions": [
+              "EQUIPMENT",
+              "EXPORT",
+              "GENERATORS",
+              "LEGAL_REPRESENTATIVES",
+              "LICENSES",
+              "NUCLEAR_MATERIALS",
+              "PERMITS",
+              "SOURCES",
+              "VIEW",
+              "WORKERS"
+            ]
+          },
+          {
+            "resourceCode": "generators-inventory",
+            "actions": [
+              "DETAILS",
+              "EXPORT",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "legal-representatives",
+            "actions": [
+              "COPY",
+              "DETAILS",
+              "EXPORT",
+              "PRINT",
+              "VIEW",
+              "VIEW_REPRESENTATIVES_BUTTON"
+            ]
+          },
+          {
+            "resourceCode": "license-kmp",
+            "actions": [
+              "EDIT",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "licenses",
+            "actions": [
+              "COPY",
+              "DETAILS",
+              "EXPORT",
+              "PRINT",
+              "VIEW",
+              "VIEW_LICENSE_BUTTON"
+            ]
+          },
+          {
+            "resourceCode": "lookup-sets",
+            "actions": [
+              "CREATE",
+              "COPY",
+              "DELETE",
+              "DETAILS",
+              "EDIT",
+              "EXPORT",
+              "PRINT",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "lookup-terms",
+            "actions": [
+              "CREATE",
+              "DELETE",
+              "DETAILS",
+              "EDIT",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "manufacturers",
+            "actions": [
+              "CREATE",
+              "COPY",
+              "DELETE",
+              "DETAILS",
+              "EDIT",
+              "EXPORT",
+              "PRINT",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "nuclear-material-form",
+            "actions": [
+              "CREATE",
+              "EDIT",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "nuclear-materials",
+            "actions": [
+              "DELETE",
+              "DETAILS",
+              "EDIT",
+              "EXPORT",
+              "VIEW",
+              "VIEW_NM_BUTTON"
+            ]
+          },
+          {
+            "resourceCode": "permit",
+            "actions": [
+              "VIEW_PERMIT_BUTTON"
+            ]
+          },
+          {
+            "resourceCode": "practices",
+            "actions": [
+              "CREATE",
+              "COPY",
+              "EDIT",
+              "EXPORT",
+              "PRINT",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "radionuclide-reports",
+            "actions": [
+              "CREATE",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "radionuclides",
+            "actions": [
+              "CREATE",
+              "COPY",
+              "DELETE",
+              "EDIT",
+              "EXPORT",
+              "PRINT",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "related-items",
+            "actions": [
+              "DELETE",
+              "DETAILS",
+              "EDIT",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "related-items-hierarchy",
+            "actions": [
+              "CREATE",
+              "COPY",
+              "DETAILS",
+              "EDIT",
+              "EXPORT",
+              "PRINT",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "related-items-setup",
+            "actions": [
+              "EDIT",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "related-items-tree",
+            "actions": [
+              "CREATE",
+              "COPY",
+              "DETAILS",
+              "EDIT",
+              "EXPORT",
+              "PRINT",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "role-management",
+            "actions": [
+              "CREATE",
+              "DELETE",
+              "EDIT",
+              "EXPORT",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "safeguards-reports",
+            "actions": [
+              "GENERATE",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "safety-officers",
+            "actions": [
+              "CREATE",
+              "COPY",
+              "DETAILS",
+              "EDIT",
+              "EXPORT",
+              "PRINT",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "sources-inventory",
+            "actions": [
+              "DETAILS",
+              "EXPORT",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "system-settings",
+            "actions": [
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "user-management",
+            "actions": [
+              "ADD_USER",
+              "ASSIGN_ROLES",
+              "ASSIGN_WALLETS",
+              "TOGGLE_ACTIVITY",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "wallets",
+            "actions": [
+              "CREATE",
+              "ASSIGN_FACILITIES",
+              "DELETE",
+              "EDIT",
+              "EXPORT",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "workers",
+            "actions": [
+              "DETAILS",
+              "EDIT",
+              "EXPORT",
+              "MESSAGE",
+              "VIEW",
+              "VIEW_WORKER_BUTTON"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.role",
+      "entityCode": "ComplianceOfficer",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مسؤول الامتثال",
+        "nameEn": "Compliance Officer",
+        "appCode": "INTERNAL",
+        "referenceCode": "1043",
+        "privileges": []
+      }
+    },
+    {
+      "entityType": "apps.role",
+      "entityCode": "DevelopmentAndSupport",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "التطوير والدعم",
+        "nameEn": "Development and Support",
+        "appCode": "INTERNAL",
+        "referenceCode": "1053",
+        "privileges": [
+          {
+            "resourceCode": "entities-management",
+            "actions": [
+              "MANAGE_LEGAL_REPS",
+              "REPORTS",
+              "VIEW"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.role",
+      "entityCode": "EquipmentReviewer",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مراجع المعدات المرتبطة",
+        "nameEn": "Equipment Reviewer",
+        "appCode": "INTERNAL",
+        "referenceCode": "1048",
+        "privileges": [
+          {
+            "resourceCode": "action-center",
+            "actions": [
+              "EQUIPMENT_DETAILS",
+              "EQUIPMENT_MESSAGE",
+              "EQUIPMENT_REVIEW",
+              "EQUIPMENT_STATUS",
+              "EXPORT",
+              "VIEW"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.role",
+      "entityCode": "EquipmentTeamLead",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "رئيس فريق المعدات المرتبطة",
+        "nameEn": "Equipment Team Lead",
+        "appCode": "INTERNAL",
+        "referenceCode": "1047",
+        "privileges": [
+          {
+            "resourceCode": "action-center",
+            "actions": [
+              "EQUIPMENT_DETAILS",
+              "EQUIPMENT_LEAD",
+              "EQUIPMENT_MESSAGE",
+              "EQUIPMENT_STATUS",
+              "EXPORT",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "AdminSource",
+            "actions": [
+              "ACCEPT_SOURCES"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.role",
+      "entityCode": "EquipmentViewOnly",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "استعراض المعدات المرتبطة",
+        "nameEn": "Equipment View Only",
+        "appCode": "INTERNAL",
+        "referenceCode": "1049",
+        "privileges": [
+          {
+            "resourceCode": "action-center",
+            "actions": [
+              "EQUIPMENT_DETAILS",
+              "EQUIPMENT_STATUS",
+              "EXPORT",
+              "VIEW"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.role",
+      "entityCode": "GeneratorReviewer",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مراجع المولدات الإشعاعية",
+        "nameEn": "Generator Reviewer",
+        "appCode": "INTERNAL",
+        "referenceCode": "1051",
+        "privileges": [
+          {
+            "resourceCode": "action-center",
+            "actions": [
+              "EXPORT",
+              "GENERATORS_DETAILS",
+              "GENERATORS_MESSAGE",
+              "GENERATORS_REVIEW",
+              "GENERATORS_STATUS",
+              "VIEW"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.role",
+      "entityCode": "GeneratorTeamLead",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "رئيس فريق المولدات الإشعاعية",
+        "nameEn": "Generator Team Lead",
+        "appCode": "INTERNAL",
+        "referenceCode": "1050",
+        "privileges": [
+          {
+            "resourceCode": "action-center",
+            "actions": [
+              "EXPORT",
+              "GENERATORS_DETAILS",
+              "GENERATORS_LEAD",
+              "GENERATORS_MESSAGE",
+              "GENERATORS_STATUS",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "AdminSource",
+            "actions": [
+              "ACCEPT_SOURCES"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.role",
+      "entityCode": "GeneratorViewOnly",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "استعراض المولدات الإشعاعية",
+        "nameEn": "Generator View Only",
+        "appCode": "INTERNAL",
+        "referenceCode": "1052",
+        "privileges": [
+          {
+            "resourceCode": "action-center",
+            "actions": [
+              "EXPORT",
+              "GENERATORS_DETAILS",
+              "GENERATORS_STATUS",
+              "VIEW"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.role",
+      "entityCode": "SourcesReviewer",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مراجع المصادر",
+        "nameEn": "Sources Reviewer",
+        "appCode": "INTERNAL",
+        "referenceCode": "1045",
+        "privileges": [
+          {
+            "resourceCode": "action-center",
+            "actions": [
+              "EXPORT",
+              "SOURCES_DETAILS",
+              "SOURCES_MESSAGE",
+              "SOURCES_REVIEW",
+              "SOURCES_STATUS",
+              "VIEW"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.role",
+      "entityCode": "SourcesTeamLead",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "رئيس فريق المصادر",
+        "nameEn": "Sources Team Lead",
+        "appCode": "INTERNAL",
+        "referenceCode": "1044",
+        "privileges": [
+          {
+            "resourceCode": "action-center",
+            "actions": [
+              "EQUIPMENT_DETAILS",
+              "EQUIPMENT_MESSAGE",
+              "EQUIPMENT_STATUS",
+              "EXPORT",
+              "GENERATORS_DETAILS",
+              "GENERATORS_MESSAGE",
+              "GENERATORS_STATUS",
+              "SETTINGS",
+              "SOURCES_DETAILS",
+              "SOURCES_LEAD",
+              "SOURCES_MESSAGE",
+              "SOURCES_STATUS",
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "AdminSource",
+            "actions": [
+              "ACCEPT_SOURCES",
+              "VIEW_SOURCES_BUTTON"
+            ]
+          },
+          {
+            "resourceCode": "facility-profile",
+            "actions": [
+              "SOURCES"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.role",
+      "entityCode": "SourcesViewOnly",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "استعراض المصادر",
+        "nameEn": "Sources View Only",
+        "appCode": "INTERNAL",
+        "referenceCode": "1046",
+        "privileges": [
+          {
+            "resourceCode": "action-center",
+            "actions": [
+              "EXPORT",
+              "SOURCES_DETAILS",
+              "SOURCES_STATUS",
+              "VIEW"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.user",
+      "entityCode": "anas.a",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Anas Alqadi",
+        "nameEn": "Anas Alqadi",
+        "email": "anas.q@qimmat-alkhaleej.com",
+        "status": "ACTIVE",
+        "roles": [
+          {
+            "roleCode": "r001"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.user",
+      "entityCode": "hamza.i",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "hamza ibrahim",
+        "nameEn": "hamza ibrahim",
+        "email": "hamza.i@qimmat-alkhaleej.com",
+        "status": "ACTIVE",
+        "roles": [
+          {
+            "roleCode": "r001"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.user",
+      "entityCode": "saleem.a",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "saleem.a",
+        "nameEn": "saleem.a",
+        "email": "saleem.a@qimmat-alkhaleej.com",
+        "status": "ACTIVE",
+        "roles": [
+          {
+            "roleCode": "r001"
+          },
+          {
+            "roleCode": "ComplianceOfficer"
+          },
+          {
+            "roleCode": "EquipmentReviewer"
+          },
+          {
+            "roleCode": "EquipmentTeamLead"
+          },
+          {
+            "roleCode": "EquipmentViewOnly"
+          },
+          {
+            "roleCode": "GeneratorReviewer"
+          },
+          {
+            "roleCode": "GeneratorTeamLead"
+          },
+          {
+            "roleCode": "GeneratorViewOnly"
+          },
+          {
+            "roleCode": "SourcesReviewer"
+          },
+          {
+            "roleCode": "SourcesTeamLead"
+          },
+          {
+            "roleCode": "SourcesViewOnly"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,3939 @@
+{
+  "title": "Radiation registry: lookups",
+  "items": [
+    {
+      "entityType": "apps.class",
+      "entityCode": "ACTIVITY_UNIT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "وحدة النشاط",
+        "nameEn": "Activity Unit",
+        "isActive": true,
+        "descriptionEn": "Imported from the legacy lookup set ActivityUnit (id 9).",
+        "attributes": [
+          {
+            "code": "BQ_FACTOR",
+            "nameAr": "معامل التحويل إلى بيكريل",
+            "nameEn": "Factor to becquerel",
+            "dataType": "NUMBER",
+            "displayOrder": 10
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.class",
+      "entityCode": "BOOLEAN",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "نعم/لا",
+        "nameEn": "Yes/No",
+        "isActive": true,
+        "descriptionEn": "Imported from the legacy lookup set Boolean (id 49).",
+        "attributes": []
+      }
+    },
+    {
+      "entityType": "apps.class",
+      "entityCode": "CONTAINER_SIZE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "حجم الحاوية",
+        "nameEn": "Container Size",
+        "isActive": true,
+        "descriptionEn": "Imported from the legacy lookup set ContainerSize (id 50).",
+        "attributes": []
+      }
+    },
+    {
+      "entityType": "apps.class",
+      "entityCode": "GENDER",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الجنس",
+        "nameEn": "Gender",
+        "isActive": true,
+        "descriptionEn": "Imported from the legacy lookup set Gender (id 16).",
+        "attributes": []
+      }
+    },
+    {
+      "entityType": "apps.class",
+      "entityCode": "MANUFACTURER",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الصانع",
+        "nameEn": "Manufacturer",
+        "isActive": true,
+        "descriptionEn": "Imported from the legacy lookup set Manufacturer (id 8).",
+        "attributes": []
+      }
+    },
+    {
+      "entityType": "apps.class",
+      "entityCode": "MANUFACTURER_COUNTRY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "بلد المصنع",
+        "nameEn": "ManufacturerCountry",
+        "isActive": true,
+        "descriptionEn": "Imported from the legacy lookup set ManufacturerCountry (id 29).",
+        "attributes": []
+      }
+    },
+    {
+      "entityType": "apps.class",
+      "entityCode": "PHYSICAL_FORM",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الشكل المادي",
+        "nameEn": "Physical Form",
+        "isActive": true,
+        "descriptionEn": "Imported from the legacy lookup set PhysicalForm (id 11).",
+        "attributes": []
+      }
+    },
+    {
+      "entityType": "apps.class",
+      "entityCode": "PROVINCE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المنطقة",
+        "nameEn": "Province",
+        "isActive": true,
+        "descriptionEn": "Imported from the legacy lookup set Province (id 1082).",
+        "attributes": []
+      }
+    },
+    {
+      "entityType": "apps.class",
+      "entityCode": "REGION",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المنطقة الإدارية",
+        "nameEn": "Region",
+        "isActive": true,
+        "descriptionEn": "Imported from the legacy lookup set Region (id 1106).",
+        "attributes": []
+      }
+    },
+    {
+      "entityType": "apps.class",
+      "entityCode": "STATUS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الحالة",
+        "nameEn": "Status",
+        "isActive": true,
+        "descriptionEn": "Imported from the legacy lookup set Status (id 1).",
+        "attributes": [
+          {
+            "code": "EXTRA_DATA_1",
+            "nameAr": "بيانات إضافية 1",
+            "nameEn": "Extra data 1",
+            "dataType": "TEXT",
+            "displayOrder": 10
+          },
+          {
+            "code": "EXTRA_DATA_2",
+            "nameAr": "بيانات إضافية 2",
+            "nameEn": "Extra data 2",
+            "dataType": "TEXT",
+            "displayOrder": 20
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "ACTIVITY_UNIT/10000",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "ملي بيكريل (mBq)",
+        "nameEn": "Milibecquerel (mBq)",
+        "isActive": true,
+        "displayOrder": 10,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "110",
+            "direction": "BOTH"
+          }
+        ],
+        "attributes": {
+          "BQ_FACTOR": 0.001
+        }
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "ACTIVITY_UNIT/10001",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "بيكريل (Bq)",
+        "nameEn": "Becquerel (Bq)",
+        "isActive": true,
+        "displayOrder": 20,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "111",
+            "direction": "BOTH"
+          }
+        ],
+        "attributes": {
+          "BQ_FACTOR": 1
+        }
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "ACTIVITY_UNIT/10002",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "كيلوبيكريل (kBq)",
+        "nameEn": "Kilobecquerel (kBq)",
+        "isActive": true,
+        "displayOrder": 30,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "261",
+            "direction": "BOTH"
+          }
+        ],
+        "attributes": {
+          "BQ_FACTOR": 1000
+        }
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "ACTIVITY_UNIT/10003",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "ميغابيكريل (mBq)",
+        "nameEn": "Megabecquerel (mBq)",
+        "isActive": true,
+        "displayOrder": 40,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "262",
+            "direction": "BOTH"
+          }
+        ],
+        "attributes": {
+          "BQ_FACTOR": 1000000
+        }
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "ACTIVITY_UNIT/10004",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "جيجابيكريل (gBq)",
+        "nameEn": "Gigabecquerel (gBq)",
+        "isActive": true,
+        "displayOrder": 50,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "263",
+            "direction": "BOTH"
+          }
+        ],
+        "attributes": {
+          "BQ_FACTOR": 1000000000
+        }
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "ACTIVITY_UNIT/10005",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تيرابيكيريل (tBq)",
+        "nameEn": "Terabecquerel (tBq)",
+        "isActive": true,
+        "displayOrder": 60,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "264",
+            "direction": "BOTH"
+          }
+        ],
+        "attributes": {
+          "BQ_FACTOR": 1000000000000
+        }
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "ACTIVITY_UNIT/10006",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "بيكوكيوري (pBq)",
+        "nameEn": "Picocurie (pBq)",
+        "isActive": true,
+        "displayOrder": 70,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "265",
+            "direction": "BOTH"
+          }
+        ],
+        "attributes": {
+          "BQ_FACTOR": 0.037
+        }
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "ACTIVITY_UNIT/10007",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "نانو كيوري (nci)",
+        "nameEn": "Nanocuri(nCi)",
+        "isActive": true,
+        "displayOrder": 80,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "266",
+            "direction": "BOTH"
+          }
+        ],
+        "attributes": {
+          "BQ_FACTOR": 37
+        }
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "ACTIVITY_UNIT/10008",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مايكرو كيوري (µCi)",
+        "nameEn": "Microcurie (µCi)",
+        "isActive": true,
+        "displayOrder": 90,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "267",
+            "direction": "BOTH"
+          }
+        ],
+        "attributes": {
+          "BQ_FACTOR": 37000
+        }
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "ACTIVITY_UNIT/10009",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مللي كيوري (mCi)",
+        "nameEn": "Millicurie (mCi)",
+        "isActive": true,
+        "displayOrder": 100,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "268",
+            "direction": "BOTH"
+          }
+        ],
+        "attributes": {
+          "BQ_FACTOR": 37000000
+        }
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "ACTIVITY_UNIT/10010",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "كيوري (Ci)",
+        "nameEn": "Curie (Ci)",
+        "isActive": true,
+        "displayOrder": 110,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "269",
+            "direction": "BOTH"
+          }
+        ],
+        "attributes": {
+          "BQ_FACTOR": 37000000000
+        }
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "ACTIVITY_UNIT/10011",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "كيلو كيوري (kCi)",
+        "nameEn": "Kilocurie (kCi)",
+        "isActive": true,
+        "displayOrder": 120,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "270",
+            "direction": "BOTH"
+          }
+        ],
+        "attributes": {
+          "BQ_FACTOR": 37000000000000
+        }
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "ACTIVITY_UNIT/10012",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "ميغا كيوري (MCi)",
+        "nameEn": "MegaCurie (MCi)",
+        "isActive": true,
+        "displayOrder": 130,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "275",
+            "direction": "BOTH"
+          }
+        ],
+        "attributes": {
+          "BQ_FACTOR": 37000000000000000
+        }
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "BOOLEAN/0",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "لا",
+        "nameEn": "No",
+        "isActive": true,
+        "displayOrder": 10,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "143",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "BOOLEAN/1",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "نعم",
+        "nameEn": "Yes",
+        "isActive": true,
+        "displayOrder": 20,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "142",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "CONTAINER_SIZE/1000003284",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Sample bottles and other small container (<0.5) L",
+        "nameEn": "Sample bottles and other small container (<0.5) L",
+        "isActive": true,
+        "displayOrder": 10,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003284",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "CONTAINER_SIZE/1000003285",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "volume range Bottles, fibrepacks, cans (0.5 - 1) L",
+        "nameEn": "volume range Bottles, fibrepacks, cans (0.5 - 1) L",
+        "isActive": true,
+        "displayOrder": 20,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003285",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "CONTAINER_SIZE/1000003286",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Bottles, fibrepacks, cans (1 - 5) L",
+        "nameEn": "Bottles, fibrepacks, cans (1 - 5) L",
+        "isActive": true,
+        "displayOrder": 30,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003286",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "CONTAINER_SIZE/1000003287",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Bottles, fibrepacks, cans and UF6 cylinders (5 - 10) L",
+        "nameEn": "Bottles, fibrepacks, cans and UF6 cylinders (5 - 10) L",
+        "isActive": true,
+        "displayOrder": 40,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003287",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "CONTAINER_SIZE/1000003288",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Fibrepacks, cans (10 - 15) L",
+        "nameEn": "Fibrepacks, cans (10 - 15) L",
+        "isActive": true,
+        "displayOrder": 50,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003288",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "CONTAINER_SIZE/1000003289",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Fibrepacks, drums (15 - 20) L",
+        "nameEn": "Fibrepacks, drums (15 - 20) L",
+        "isActive": true,
+        "displayOrder": 60,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003289",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "CONTAINER_SIZE/1000003296",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Larger containers, e.g. tank trucks (>5000) L",
+        "nameEn": "Larger containers, e.g. tank trucks (>5000) L",
+        "isActive": true,
+        "displayOrder": 70,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003296",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "CONTAINER_SIZE/1000003290",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Drums (20 - 50) L",
+        "nameEn": "Drums (20 - 50) L",
+        "isActive": true,
+        "displayOrder": 80,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003290",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "CONTAINER_SIZE/1000003291",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Drums (50 - 100) L",
+        "nameEn": "Drums (50 - 100) L",
+        "isActive": true,
+        "displayOrder": 90,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003291",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "CONTAINER_SIZE/1000003292",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Drums, barrels (100 - 200) L",
+        "nameEn": "Drums, barrels (100 - 200) L",
+        "isActive": true,
+        "displayOrder": 100,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003292",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "CONTAINER_SIZE/1000003297",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Other Containers",
+        "nameEn": "Other Containers",
+        "isActive": true,
+        "displayOrder": 110,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003297",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "CONTAINER_SIZE/1000003293",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Drums, barrels (200 - 500) L",
+        "nameEn": "Drums, barrels (200 - 500) L",
+        "isActive": true,
+        "displayOrder": 120,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003293",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "CONTAINER_SIZE/1000003294",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "UF6 cylinders (2 t) (500 - 1000) L",
+        "nameEn": "UF6 cylinders (2 t) (500 - 1000) L",
+        "isActive": true,
+        "displayOrder": 130,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003294",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "CONTAINER_SIZE/1000003295",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "UF6 cylinders (10-14 t) (1000 - 5000) L",
+        "nameEn": "UF6 cylinders (10-14 t) (1000 - 5000) L",
+        "isActive": true,
+        "displayOrder": 140,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003295",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "GENDER/1",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "ذكر",
+        "nameEn": "Male",
+        "isActive": true,
+        "displayOrder": 10,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "64",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "GENDER/2",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "انثى",
+        "nameEn": "Female",
+        "isActive": true,
+        "displayOrder": 20,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "65",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/AE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإمارات العربية المتحدة",
+        "nameEn": "United Arab Emirates",
+        "isActive": true,
+        "displayOrder": 10,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "380",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/AG",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "أنتيغوا وبربودا",
+        "nameEn": "Antigua and Barbuda",
+        "isActive": true,
+        "displayOrder": 20,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "278",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/AR",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الأرجنتين",
+        "nameEn": "Argentina",
+        "isActive": true,
+        "displayOrder": 30,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "279",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/AT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "النمسا",
+        "nameEn": "Austria",
+        "isActive": true,
+        "displayOrder": 40,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "280",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/AU",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "أستراليا",
+        "nameEn": "Australia",
+        "isActive": true,
+        "displayOrder": 50,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "281",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/AW",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "أروبه",
+        "nameEn": "Aruba",
+        "isActive": true,
+        "displayOrder": 60,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "282",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/BB",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "بربادوس",
+        "nameEn": "Barbados",
+        "isActive": true,
+        "displayOrder": 70,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "283",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/BD",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "بنغلاديش",
+        "nameEn": "Bangladesh",
+        "isActive": true,
+        "displayOrder": 80,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "284",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/BE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "بلجيكا",
+        "nameEn": "Belgium",
+        "isActive": true,
+        "displayOrder": 90,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "285",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/BF",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "بوركينا فاسو",
+        "nameEn": "Burkina Faso",
+        "isActive": true,
+        "displayOrder": 100,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "286",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/BG",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "بلغاريا",
+        "nameEn": "Bulgaria",
+        "isActive": true,
+        "displayOrder": 110,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "287",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/BH",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "البحرين",
+        "nameEn": "Bahrain",
+        "isActive": true,
+        "displayOrder": 120,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "288",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/BJ",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "بنين",
+        "nameEn": "Benin",
+        "isActive": true,
+        "displayOrder": 130,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "289",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/BM",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "جزر برمودا",
+        "nameEn": "Bermuda",
+        "isActive": true,
+        "displayOrder": 140,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "290",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/BN",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "بروني",
+        "nameEn": "Brunei Darussalam",
+        "isActive": true,
+        "displayOrder": 150,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "291",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/BO",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "دولة بوليفيا المتعددة القوميات",
+        "nameEn": "Bolivia, Plurinational State of",
+        "isActive": true,
+        "displayOrder": 160,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "292",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/BR",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "البرازيل",
+        "nameEn": "Brazil",
+        "isActive": true,
+        "displayOrder": 170,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "293",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/BS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الباهاماس",
+        "nameEn": "Bahamas",
+        "isActive": true,
+        "displayOrder": 180,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "294",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/BZ",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "بيليز",
+        "nameEn": "Belize",
+        "isActive": true,
+        "displayOrder": 190,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "295",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/CA",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "كندا",
+        "nameEn": "Canada",
+        "isActive": true,
+        "displayOrder": 200,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003148",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/CH",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "سويسرا",
+        "nameEn": "Switzerland",
+        "isActive": true,
+        "displayOrder": 210,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "296",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/CI",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "كوت ديفوار",
+        "nameEn": "Côte d`Ivoire",
+        "isActive": true,
+        "displayOrder": 220,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "297",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/CL",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "شيلي",
+        "nameEn": "Chile",
+        "isActive": true,
+        "displayOrder": 230,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "298",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/CN",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الصين",
+        "nameEn": "China",
+        "isActive": true,
+        "displayOrder": 240,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "299",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/CO",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "كولومبيا",
+        "nameEn": "Colombia",
+        "isActive": true,
+        "displayOrder": 250,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "300",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/CR",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "كوستاريكا",
+        "nameEn": "Costa Rica",
+        "isActive": true,
+        "displayOrder": 260,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "301",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/CU",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "كوبا",
+        "nameEn": "Cuba",
+        "isActive": true,
+        "displayOrder": 270,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "302",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/CY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "قبرص",
+        "nameEn": "Cyprus",
+        "isActive": true,
+        "displayOrder": 280,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "303",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/CZ",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الجمهورية التشيكية",
+        "nameEn": "Czech Republic",
+        "isActive": true,
+        "displayOrder": 290,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "304",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/DE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "ألمانيا",
+        "nameEn": "Germany",
+        "isActive": true,
+        "displayOrder": 300,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "305",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/DK",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الدانمارك",
+        "nameEn": "Denmark",
+        "isActive": true,
+        "displayOrder": 310,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "306",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/DO",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الجمهورية الدومينيكية",
+        "nameEn": "Dominican Republic",
+        "isActive": true,
+        "displayOrder": 320,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "307",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/EC",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إكوادور",
+        "nameEn": "Ecuador",
+        "isActive": true,
+        "displayOrder": 330,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "308",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/EE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "استونيا",
+        "nameEn": "Estonia",
+        "isActive": true,
+        "displayOrder": 340,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "309",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/EG",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مصر",
+        "nameEn": "Egypt",
+        "isActive": true,
+        "displayOrder": 350,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "310",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/ES",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إسبانيا",
+        "nameEn": "Spain",
+        "isActive": true,
+        "displayOrder": 360,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "311",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/ET",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "أثيوبيا",
+        "nameEn": "Ethiopia",
+        "isActive": true,
+        "displayOrder": 370,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "312",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/FI",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "فنلندا",
+        "nameEn": "Finland",
+        "isActive": true,
+        "displayOrder": 380,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "313",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/FR",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "فرنسا",
+        "nameEn": "France",
+        "isActive": true,
+        "displayOrder": 390,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "314",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/GB",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المملكة المتحدة",
+        "nameEn": "United Kingdom",
+        "isActive": true,
+        "displayOrder": 400,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "315",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/GD",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "غرينادا",
+        "nameEn": "Grenada",
+        "isActive": true,
+        "displayOrder": 410,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "316",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/GH",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "غانا",
+        "nameEn": "Ghana",
+        "isActive": true,
+        "displayOrder": 420,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "317",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/GL",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "جرينلاند",
+        "nameEn": "Greenland",
+        "isActive": true,
+        "displayOrder": 430,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "318",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/GM",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "غامبيا",
+        "nameEn": "Gambia",
+        "isActive": true,
+        "displayOrder": 440,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "319",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/GN",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "غينيا",
+        "nameEn": "Guinea",
+        "isActive": true,
+        "displayOrder": 450,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "320",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/GR",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "اليونان",
+        "nameEn": "Greece",
+        "isActive": true,
+        "displayOrder": 460,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "321",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/GT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "غواتيمال",
+        "nameEn": "Guatemala",
+        "isActive": true,
+        "displayOrder": 470,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "322",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/GY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "غيانا",
+        "nameEn": "Guyana",
+        "isActive": true,
+        "displayOrder": 480,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "323",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/HK",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "هونغ كونغ",
+        "nameEn": "Hong Kong",
+        "isActive": true,
+        "displayOrder": 490,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "324",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/HN",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "هندوراس",
+        "nameEn": "Honduras",
+        "isActive": true,
+        "displayOrder": 500,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "325",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/HR",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "كرواتيا",
+        "nameEn": "Croatia",
+        "isActive": true,
+        "displayOrder": 510,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "326",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/HT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "هايتي",
+        "nameEn": "Haiti",
+        "isActive": true,
+        "displayOrder": 520,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "327",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/HU",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المجر",
+        "nameEn": "Hungary",
+        "isActive": true,
+        "displayOrder": 530,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "328",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/ID",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "أندونيسيا",
+        "nameEn": "Indonesia",
+        "isActive": true,
+        "displayOrder": 540,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "329",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/IE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إيرلندا",
+        "nameEn": "Ireland",
+        "isActive": true,
+        "displayOrder": 550,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "330",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/IL",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "اسرائيل",
+        "nameEn": "Israel",
+        "isActive": true,
+        "displayOrder": 560,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "331",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/IN",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الهند",
+        "nameEn": "India",
+        "isActive": true,
+        "displayOrder": 570,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "332",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/IQ",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "العراق",
+        "nameEn": "Iraq",
+        "isActive": true,
+        "displayOrder": 580,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "333",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/IR",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "ايران",
+        "nameEn": "Iran, Islamic Republic of",
+        "isActive": true,
+        "displayOrder": 590,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "334",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/IS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "آيسلندا",
+        "nameEn": "Iceland",
+        "isActive": true,
+        "displayOrder": 600,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "335",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/IT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إيطاليا",
+        "nameEn": "Italy",
+        "isActive": true,
+        "displayOrder": 610,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "336",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/JM",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "جمايكا",
+        "nameEn": "Jamaica",
+        "isActive": true,
+        "displayOrder": 620,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "337",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/JO",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الأردن",
+        "nameEn": "Jordan",
+        "isActive": true,
+        "displayOrder": 630,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "338",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/JP",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "اليابان",
+        "nameEn": "Japan",
+        "isActive": true,
+        "displayOrder": 640,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "339",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/KE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "كينيا",
+        "nameEn": "Kenya",
+        "isActive": true,
+        "displayOrder": 650,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "340",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/KOR",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "جمهورية كوريا",
+        "nameEn": "Republic of Korea",
+        "isActive": true,
+        "displayOrder": 660,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "341",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/KW",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الكويت",
+        "nameEn": "Kuwait",
+        "isActive": true,
+        "displayOrder": 670,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "342",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/KY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "جزر كايمان",
+        "nameEn": "Cayman Islands",
+        "isActive": true,
+        "displayOrder": 680,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "343",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/LB",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "لبنان",
+        "nameEn": "Lebanon",
+        "isActive": true,
+        "displayOrder": 690,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "344",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/LC",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "سان لوتشيا",
+        "nameEn": "Saint Lucia",
+        "isActive": true,
+        "displayOrder": 700,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "345",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/LI",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "ليختنشتين",
+        "nameEn": "Liechtenstein",
+        "isActive": true,
+        "displayOrder": 710,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "346",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/LK",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "سريلانكا",
+        "nameEn": "Sri Lanka",
+        "isActive": true,
+        "displayOrder": 720,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "347",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/LR",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "ليبيريا",
+        "nameEn": "Liberia",
+        "isActive": true,
+        "displayOrder": 730,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "348",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/LT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "لتوانيا",
+        "nameEn": "Lithuania",
+        "isActive": true,
+        "displayOrder": 740,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "349",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/LU",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "لوكسمبورغ",
+        "nameEn": "Luxembourg",
+        "isActive": true,
+        "displayOrder": 750,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "350",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/LV",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "لاتفيا",
+        "nameEn": "Latvia",
+        "isActive": true,
+        "displayOrder": 760,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "351",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/LY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "ليبيا",
+        "nameEn": "Libyan Arab Jamahiriya",
+        "isActive": true,
+        "displayOrder": 770,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "352",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/MA",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المغرب",
+        "nameEn": "Morocco",
+        "isActive": true,
+        "displayOrder": 780,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "353",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/MC",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "موناكو",
+        "nameEn": "Monaco",
+        "isActive": true,
+        "displayOrder": 790,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "354",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/ML",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مالي",
+        "nameEn": "Mali",
+        "isActive": true,
+        "displayOrder": 800,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "355",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/MR",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "موريتانيا",
+        "nameEn": "Mauritania",
+        "isActive": true,
+        "displayOrder": 810,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "356",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/MT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مالطا",
+        "nameEn": "Malta",
+        "isActive": true,
+        "displayOrder": 820,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "357",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/MU",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "موريشيوس",
+        "nameEn": "Mauritius",
+        "isActive": true,
+        "displayOrder": 830,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "358",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/MW",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مالاوي",
+        "nameEn": "Malawi",
+        "isActive": true,
+        "displayOrder": 840,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "359",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/MX",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المكسيك",
+        "nameEn": "Mexico",
+        "isActive": true,
+        "displayOrder": 850,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "360",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/MY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "ماليزيا",
+        "nameEn": "Malaysia",
+        "isActive": true,
+        "displayOrder": 860,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "361",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/NE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "النيجر",
+        "nameEn": "Niger",
+        "isActive": true,
+        "displayOrder": 870,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "362",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/NG",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "نيجيريا",
+        "nameEn": "Nigeria",
+        "isActive": true,
+        "displayOrder": 880,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "363",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/NI",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "نيكاراجوا",
+        "nameEn": "Nicaragua",
+        "isActive": true,
+        "displayOrder": 890,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "364",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/NL",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "هولندا",
+        "nameEn": "Netherlands",
+        "isActive": true,
+        "displayOrder": 900,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "365",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/NO",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "النرويج",
+        "nameEn": "Norway",
+        "isActive": true,
+        "displayOrder": 910,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "366",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/NZ",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "نيوزيلندا",
+        "nameEn": "New Zealand",
+        "isActive": true,
+        "displayOrder": 920,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "367",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/OM",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "عمان",
+        "nameEn": "Oman",
+        "isActive": true,
+        "displayOrder": 930,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "368",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/PA",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "بنما",
+        "nameEn": "Panama",
+        "isActive": true,
+        "displayOrder": 940,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "369",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/PE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "بيرو",
+        "nameEn": "Peru",
+        "isActive": true,
+        "displayOrder": 950,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "370",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/PH",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الفليبين",
+        "nameEn": "Philippines",
+        "isActive": true,
+        "displayOrder": 960,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "371",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/PK",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "باكستان",
+        "nameEn": "Pakistan",
+        "isActive": true,
+        "displayOrder": 970,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "372",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/PL",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "بولونيا",
+        "nameEn": "Poland",
+        "isActive": true,
+        "displayOrder": 980,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "373",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/PR",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "بورتو ريكو",
+        "nameEn": "Puerto Rico",
+        "isActive": true,
+        "displayOrder": 990,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "374",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/PT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "البرتغال",
+        "nameEn": "Portugal",
+        "isActive": true,
+        "displayOrder": 1000,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "375",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/PY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "باراغواي",
+        "nameEn": "Paraguay",
+        "isActive": true,
+        "displayOrder": 1010,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "376",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/QA",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "قطر",
+        "nameEn": "Qatar",
+        "isActive": true,
+        "displayOrder": 1020,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "377",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/RO",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "رومانيا",
+        "nameEn": "Romania",
+        "isActive": true,
+        "displayOrder": 1030,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "378",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/RU",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "روسيا الاتحادية",
+        "nameEn": "Russian Federation",
+        "isActive": true,
+        "displayOrder": 1040,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "379",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/SA",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المملكة العربية السعودية",
+        "nameEn": "Saudi Arabia",
+        "isActive": true,
+        "displayOrder": 1050,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "277",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/SC",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "سيشيل",
+        "nameEn": "Seychelles",
+        "isActive": true,
+        "displayOrder": 1060,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "381",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/SD",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "السودان",
+        "nameEn": "Sudan",
+        "isActive": true,
+        "displayOrder": 1070,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "382",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/SE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "السويد",
+        "nameEn": "Sweden",
+        "isActive": true,
+        "displayOrder": 1080,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "383",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/SG",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "سنغافورة",
+        "nameEn": "Singapore",
+        "isActive": true,
+        "displayOrder": 1090,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "384",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/SI",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "سلوفينيا",
+        "nameEn": "Slovenia",
+        "isActive": true,
+        "displayOrder": 1100,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "385",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/SK",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "سلوفاكيا",
+        "nameEn": "Slovakia",
+        "isActive": true,
+        "displayOrder": 1110,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "386",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/SL",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "سيراليون",
+        "nameEn": "Sierra Leone",
+        "isActive": true,
+        "displayOrder": 1120,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "387",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/SN",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "السنغال",
+        "nameEn": "Senegal",
+        "isActive": true,
+        "displayOrder": 1130,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "388",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/SO",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الصومال",
+        "nameEn": "Somalia",
+        "isActive": true,
+        "displayOrder": 1140,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "389",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/SR",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "سورينام",
+        "nameEn": "Suriname",
+        "isActive": true,
+        "displayOrder": 1150,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "390",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/SV",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إلسلفادور",
+        "nameEn": "El Salvador",
+        "isActive": true,
+        "displayOrder": 1160,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "391",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/SY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "سوريا",
+        "nameEn": "Syrian Arab Republic",
+        "isActive": true,
+        "displayOrder": 1170,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "392",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/TC",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "جزر توركس وكايكوس",
+        "nameEn": "Turks and Caicos Islands",
+        "isActive": true,
+        "displayOrder": 1180,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "393",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/TH",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تايلندا",
+        "nameEn": "Thailand",
+        "isActive": true,
+        "displayOrder": 1190,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "394",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/TN",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تونس",
+        "nameEn": "Tunisia",
+        "isActive": true,
+        "displayOrder": 1200,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "395",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/TR",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تركيا",
+        "nameEn": "Türkiye",
+        "isActive": true,
+        "displayOrder": 1210,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "396",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/TT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "ترينيداد وتوباغو",
+        "nameEn": "Trinidad and Tobago",
+        "isActive": true,
+        "displayOrder": 1220,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "397",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/TW",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "\"تايوان، مقاطعة الصين\"",
+        "nameEn": "Taiwan, Province of China",
+        "isActive": true,
+        "displayOrder": 1230,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "398",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/TZ",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تونس",
+        "nameEn": "Tanzania, United Republic of",
+        "isActive": true,
+        "displayOrder": 1240,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "399",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/UA",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "أوكرانيا",
+        "nameEn": "Ukraine",
+        "isActive": true,
+        "displayOrder": 1250,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "400",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/UG",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "أوغندا",
+        "nameEn": "Uganda",
+        "isActive": true,
+        "displayOrder": 1260,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "401",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/USA",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الولايات المتحدة الأمريكية",
+        "nameEn": "USA",
+        "isActive": true,
+        "displayOrder": 1270,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000000474",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/UY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "أورغواي",
+        "nameEn": "Uruguay",
+        "isActive": true,
+        "displayOrder": 1280,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "402",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/VC",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "سانت فنسنت وجزر غرينادين",
+        "nameEn": "Saint Vincent and the Grenadines",
+        "isActive": true,
+        "displayOrder": 1290,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "403",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/VE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "جمهورية فنزويلا البوليفارية",
+        "nameEn": "Venezuela, Bolivarian Republic of",
+        "isActive": true,
+        "displayOrder": 1300,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "404",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/VN",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "فيتنام",
+        "nameEn": "Viet Nam",
+        "isActive": true,
+        "displayOrder": 1310,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "405",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/WS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "ساموا",
+        "nameEn": "Samoa",
+        "isActive": true,
+        "displayOrder": 1320,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "406",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/YE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "اليمن",
+        "nameEn": "Yemen",
+        "isActive": true,
+        "displayOrder": 1330,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "407",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/ZA",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "جنوب أفريقيا",
+        "nameEn": "South Africa",
+        "isActive": true,
+        "displayOrder": 1340,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "408",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/ZM",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "زامبيا",
+        "nameEn": "Zambia",
+        "isActive": true,
+        "displayOrder": 1350,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "409",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER_COUNTRY/ZW",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "زمبابوي",
+        "nameEn": "Zimbabwe",
+        "isActive": true,
+        "displayOrder": 1360,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "410",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "PHYSICAL_FORM/1",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "غاز",
+        "nameEn": "Gas",
+        "isActive": true,
+        "displayOrder": 10,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "36",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "PHYSICAL_FORM/2",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "سائل",
+        "nameEn": "Liquid",
+        "isActive": true,
+        "displayOrder": 20,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "37",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "PHYSICAL_FORM/3",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "هلامي",
+        "nameEn": "Gel",
+        "isActive": true,
+        "displayOrder": 30,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "38",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "PHYSICAL_FORM/4",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "بودرة",
+        "nameEn": "Powder",
+        "isActive": true,
+        "displayOrder": 40,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "39",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "PHYSICAL_FORM/5",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "صلب",
+        "nameEn": "Solid",
+        "isActive": true,
+        "displayOrder": 50,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "40",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "PHYSICAL_FORM/6",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "كبسولات/سائل",
+        "nameEn": "Capsules/Liquid",
+        "isActive": true,
+        "displayOrder": 60,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003354",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "PROVINCE/1000001597",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الباحة",
+        "nameEn": "Al-Baha",
+        "isActive": true,
+        "displayOrder": 10,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000001597",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "PROVINCE/1000001590",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الجوف",
+        "nameEn": "Al-Jouf",
+        "isActive": true,
+        "displayOrder": 20,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000001590",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "PROVINCE/1000001593",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المدينة المنورة",
+        "nameEn": "Al-Madinah Al-Monawarah",
+        "isActive": true,
+        "displayOrder": 30,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000001593",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "PROVINCE/1000001575",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "القصيم",
+        "nameEn": "Al-Qassim",
+        "isActive": true,
+        "displayOrder": 40,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000001575",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "PROVINCE/1000001596",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "عسير",
+        "nameEn": "Aseer",
+        "isActive": true,
+        "displayOrder": 50,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000001596",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "PROVINCE/1000001594",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المنطقة الشرقية",
+        "nameEn": "Eastren Region",
+        "isActive": true,
+        "displayOrder": 60,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000001594",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "PROVINCE/1000001592",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "حائل",
+        "nameEn": "Hail",
+        "isActive": true,
+        "displayOrder": 70,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000001592",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "PROVINCE/1000001598",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "جازان",
+        "nameEn": "Jazan",
+        "isActive": true,
+        "displayOrder": 80,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000001598",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "PROVINCE/1000000410",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مكة المكرمة",
+        "nameEn": "Mecca",
+        "isActive": false,
+        "displayOrder": 90,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000000410",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "PROVINCE/1000001595",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "نجران",
+        "nameEn": "Najran",
+        "isActive": true,
+        "displayOrder": 100,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000001595",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "PROVINCE/1000001591",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الحدود الشمالية",
+        "nameEn": "Northen Borders",
+        "isActive": true,
+        "displayOrder": 110,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000001591",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "PROVINCE/1000000361",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الرياض",
+        "nameEn": "Riyadh",
+        "isActive": true,
+        "displayOrder": 120,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000000361",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "PROVINCE/1000001589",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تبوك",
+        "nameEn": "Tabouk",
+        "isActive": true,
+        "displayOrder": 130,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000001589",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "REGION/1",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الرياض (مقر الامارة)",
+        "nameEn": "Ar Riyad",
+        "isActive": true,
+        "displayOrder": 10,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003362",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "REGION/10",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "جازان (مقر الامارة)",
+        "nameEn": "Jazan",
+        "isActive": true,
+        "displayOrder": 20,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003371",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "REGION/11",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "نجران (مقر الامارة)",
+        "nameEn": "Najran",
+        "isActive": true,
+        "displayOrder": 30,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003372",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "REGION/12",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الباحة (مقرالامارة)",
+        "nameEn": "Al Bahah",
+        "isActive": true,
+        "displayOrder": 40,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003373",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "REGION/13",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الجوف",
+        "nameEn": "Al Jawf",
+        "isActive": true,
+        "displayOrder": 50,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003374",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "REGION/2",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مكة المكرمة (مقر الإمارة)",
+        "nameEn": "Makkah Al Mukarramah",
+        "isActive": true,
+        "displayOrder": 60,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003363",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "REGION/3",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المدينة المنورة (مقر الامارة)",
+        "nameEn": "Al Madinah Al Munawwarah",
+        "isActive": true,
+        "displayOrder": 70,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003364",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "REGION/4",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "القصيم",
+        "nameEn": "Al Qaseem",
+        "isActive": true,
+        "displayOrder": 80,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003365",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "REGION/5",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المنطقة الشرقية",
+        "nameEn": "Eastern Region",
+        "isActive": true,
+        "displayOrder": 90,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003366",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "REGION/6",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "عسير",
+        "nameEn": "Aseer",
+        "isActive": true,
+        "displayOrder": 100,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003367",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "REGION/7",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تبوك (مقرالامارة)",
+        "nameEn": "Tabuk",
+        "isActive": true,
+        "displayOrder": 110,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003368",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "REGION/8",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "حائل",
+        "nameEn": "Hail",
+        "isActive": true,
+        "displayOrder": 120,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003369",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "REGION/9",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الحدود الشماليه",
+        "nameEn": "Northern Borders",
+        "isActive": true,
+        "displayOrder": 130,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003370",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "STATUS/35",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تم استهلاكه",
+        "nameEn": "Consumed",
+        "isActive": true,
+        "displayOrder": 10,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "35",
+            "direction": "BOTH"
+          }
+        ],
+        "attributes": {
+          "EXTRA_DATA_1": "v",
+          "EXTRA_DATA_2": "u"
+        }
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "STATUS/33",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "غير مستخدم",
+        "nameEn": "Disused",
+        "isActive": true,
+        "displayOrder": 20,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "33",
+            "direction": "BOTH"
+          }
+        ],
+        "attributes": {
+          "EXTRA_DATA_1": "s",
+          "EXTRA_DATA_2": "u"
+        }
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "STATUS/29",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تم تصديره",
+        "nameEn": "Exported",
+        "isActive": true,
+        "displayOrder": 30,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "29",
+            "direction": "BOTH"
+          }
+        ],
+        "attributes": {
+          "EXTRA_DATA_1": "s",
+          "EXTRA_DATA_2": "u"
+        }
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "STATUS/26",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "قيد الاستخدام",
+        "nameEn": "In Use",
+        "isActive": true,
+        "displayOrder": 40,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "26",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "STATUS/31",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مفقود",
+        "nameEn": "Lost",
+        "isActive": true,
+        "displayOrder": 50,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "31",
+            "direction": "BOTH"
+          }
+        ],
+        "attributes": {
+          "EXTRA_DATA_1": "s",
+          "EXTRA_DATA_2": "u"
+        }
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "STATUS/1000003209",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "عالق في بئر",
+        "nameEn": "Stuck in Well",
+        "isActive": true,
+        "displayOrder": 60,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003209",
+            "direction": "BOTH"
+          }
+        ],
+        "attributes": {
+          "EXTRA_DATA_1": "s"
+        }
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "STATUS/27",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "منقول",
+        "nameEn": "Transferred",
+        "isActive": true,
+        "displayOrder": 70,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "27",
+            "direction": "BOTH"
+          }
+        ],
+        "attributes": {
+          "EXTRA_DATA_1": "s",
+          "EXTRA_DATA_2": "u"
+        }
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "STATUS/34",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "نفايات",
+        "nameEn": "Spent",
+        "isActive": true,
+        "displayOrder": 80,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "34",
+            "direction": "BOTH"
+          }
+        ],
+        "attributes": {
+          "EXTRA_DATA_1": "s"
+        }
+      }
+    }
+  ]
+}

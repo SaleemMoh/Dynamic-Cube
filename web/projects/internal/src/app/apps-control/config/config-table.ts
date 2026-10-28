@@ -143,7 +143,16 @@ export class ConfigTable {
     return Array.isArray(value) ? value.map((v) => (typeof v === 'object' ? JSON.stringify(v) : String(v))).join('، ') : typeof value === 'object' ? JSON.stringify(value) : String(value);
   }
 
-  protected async edit(row: ConfigRow | null): Promise<void> {
+  protected async edit(listed: ConfigRow | null): Promise<void> {
+    this.errors.set([]);
+    let row = listed;
+    try {
+      // List rows may leave out nested data (a role's privileges, a user's roles); edit the full row.
+      row = listed ? await firstValueFrom(this.api.get(this.type().entityType, listed.code)) : null;
+    } catch (error) {
+      this.errors.set(problemMessages(error));
+      return;
+    }
     await firstValueFrom(
       this.dialog.open<ConfigEditor, ConfigEditorData, boolean>(ConfigEditor, { data: { type: this.type(), row }, autoFocus: 'first-tabbable', width: '52rem', maxWidth: '95vw' }).afterClosed(),
     );

@@ -1,0 +1,295 @@
+{
+  "title": "Radiation registry: cities and facilities",
+  "items": [
+    {
+      "entityType": "apps.class",
+      "entityCode": "CITY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المدينة",
+        "nameEn": "City",
+        "parentClassCode": "REGION",
+        "descriptionEn": "Cities of the sample facilities, under the Region lookup."
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "CITY/AL_AHSA",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الأحساء",
+        "nameEn": "Al Ahsa",
+        "parentCode": "5",
+        "displayOrder": 10
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "CITY/YANBU",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "ينبع",
+        "nameEn": "Yanbu",
+        "parentCode": "3",
+        "displayOrder": 20
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "CITY/AL_JUBAYL",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الجبيل",
+        "nameEn": "Al Jubayl",
+        "parentCode": "5",
+        "displayOrder": 30
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "CITY/AR_RIYAD",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الرياض",
+        "nameEn": "Ar Riyad",
+        "parentCode": "1",
+        "displayOrder": 40
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "CITY/AD_DAMMAM",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الدمام",
+        "nameEn": "Ad Dammam",
+        "parentCode": "5",
+        "displayOrder": 50
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "CITY/JIDDAH",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "جدة",
+        "nameEn": "Jiddah",
+        "parentCode": "2",
+        "displayOrder": 60
+      }
+    },
+    {
+      "entityType": "apps.class",
+      "entityCode": "FACILITY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المنشأة",
+        "nameEn": "Facility",
+        "descriptionEn": "Licensee facilities exported from AMAN.",
+        "attributes": [
+          {
+            "code": "CITY",
+            "nameAr": "المدينة",
+            "nameEn": "City",
+            "dataType": "DOMAIN_REF",
+            "isRequired": true,
+            "displayOrder": 10,
+            "refClassCode": "CITY"
+          },
+          {
+            "code": "NATIONAL_ADDRESS",
+            "nameAr": "العنوان الوطني",
+            "nameEn": "National address",
+            "dataType": "TEXT",
+            "isRequired": false,
+            "displayOrder": 20
+          },
+          {
+            "code": "PHONE",
+            "nameAr": "هاتف المنشأة",
+            "nameEn": "Facility phone",
+            "dataType": "TEXT",
+            "isRequired": false,
+            "displayOrder": 30
+          },
+          {
+            "code": "EMAIL",
+            "nameAr": "بريد المنشأة",
+            "nameEn": "Facility email",
+            "dataType": "TEXT",
+            "isRequired": false,
+            "displayOrder": 40
+          },
+          {
+            "code": "OPERATIONAL",
+            "nameAr": "قيد التشغيل",
+            "nameEn": "Operational",
+            "dataType": "BOOL",
+            "isRequired": true,
+            "displayOrder": 50
+          },
+          {
+            "code": "AMAN_ID",
+            "nameAr": "رقم المنشأة في نظام أمان",
+            "nameEn": "Facility AMAN ID",
+            "dataType": "TEXT",
+            "isRequired": false,
+            "displayOrder": 60
+          },
+          {
+            "code": "LICENCES",
+            "nameAr": "عدد التراخيص",
+            "nameEn": "Licences",
+            "dataType": "NUMBER",
+            "isRequired": false,
+            "displayOrder": 70
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "FACILITY/00022ER",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Aramco - Al Ahsa",
+        "nameEn": "Aramco - Al Ahsa",
+        "displayOrder": 10,
+        "attributes": {
+          "CITY": "AL_AHSA",
+          "NATIONAL_ADDRESS": "Al-Ahsa 7845 Street 12' Aramoc Company",
+          "PHONE": "966508748376",
+          "EMAIL": "saleem.a@qimmat-alkhaleej.com",
+          "OPERATIONAL": true,
+          "LICENCES": 1
+        }
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "FACILITY/00013ER",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Aramco - Yanbu",
+        "nameEn": "Aramco - Yanbu",
+        "displayOrder": 20,
+        "attributes": {
+          "CITY": "YANBU",
+          "PHONE": "966508748376",
+          "EMAIL": "saleem.a@qimmat-alkhaleej.com",
+          "OPERATIONAL": false,
+          "AMAN_ID": "2",
+          "LICENCES": 1
+        }
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "FACILITY/00043ER",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Durat Al Jubail Co. Ltd. - Al Ahsa",
+        "nameEn": "Durat Al Jubail Co. Ltd. - Al Ahsa",
+        "displayOrder": 30,
+        "attributes": {
+          "CITY": "AL_AHSA",
+          "NATIONAL_ADDRESS": "الاحساء",
+          "PHONE": "966503558806",
+          "EMAIL": "saleem.a@qimmat-alkhaleej.com",
+          "OPERATIONAL": true,
+          "LICENCES": 4
+        }
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "FACILITY/00083ER",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Durat Al Jubail Co. Ltd. - Al Gubail",
+        "nameEn": "Durat Al Jubail Co. Ltd. - Al Gubail",
+        "displayOrder": 40,
+        "attributes": {
+          "CITY": "AL_JUBAYL",
+          "NATIONAL_ADDRESS": "Jubail",
+          "PHONE": "966503558806",
+          "EMAIL": "saleem.a@qimmat-alkhaleej.com",
+          "OPERATIONAL": true,
+          "LICENCES": 3
+        }
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "FACILITY/00021RY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Durat Al Jubail Co. Ltd. - Al Riyadh",
+        "nameEn": "Durat Al Jubail Co. Ltd. - Al Riyadh",
+        "displayOrder": 50,
+        "attributes": {
+          "CITY": "AR_RIYAD",
+          "NATIONAL_ADDRESS": "الرياض",
+          "PHONE": "966503558806",
+          "EMAIL": "saleem.a@qimmat-alkhaleej.com",
+          "OPERATIONAL": true,
+          "LICENCES": 3
+        }
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "FACILITY/00032RY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Gulf Engineering House - Al Riyadh",
+        "nameEn": "Gulf Engineering House - Al Riyadh",
+        "displayOrder": 60,
+        "attributes": {
+          "CITY": "AR_RIYAD",
+          "NATIONAL_ADDRESS": "الرياض",
+          "PHONE": "966508759306",
+          "EMAIL": "saleem.a@qimmat-alkhaleej.com",
+          "OPERATIONAL": true,
+          "LICENCES": 5
+        }
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "FACILITY/00061ER",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Gulf Engineering House - Dammam",
+        "nameEn": "Gulf Engineering House - Dammam",
+        "displayOrder": 70,
+        "attributes": {
+          "CITY": "AD_DAMMAM",
+          "NATIONAL_ADDRESS": "الدمام",
+          "PHONE": "966508759306",
+          "EMAIL": "saleem.a@qimmat-alkhaleej.com",
+          "OPERATIONAL": true,
+          "LICENCES": 5
+        }
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "FACILITY/00054MK",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Gulf Engineering House - Jeddah",
+        "nameEn": "Gulf Engineering House - Jeddah",
+        "displayOrder": 80,
+        "attributes": {
+          "CITY": "JIDDAH",
+          "NATIONAL_ADDRESS": "جدة",
+          "PHONE": "966508759306",
+          "EMAIL": "saleem.a@qimmat-alkhaleej.com",
+          "OPERATIONAL": true,
+          "LICENCES": 3
+        }
+      }
+    }
+  ]
+}

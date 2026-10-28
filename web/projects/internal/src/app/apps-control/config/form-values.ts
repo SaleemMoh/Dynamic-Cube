@@ -1,3 +1,5 @@
+import { FormOption } from '@dynamic-cube/shared';
+
 /** Conversions between API payloads (ISO dates, JSON) and form controls (Date objects, JSON text). */
 
 export function toDate(value: unknown): Date | null {
@@ -38,4 +40,22 @@ export function payloadOf(row: Record<string, unknown> | null | undefined): Reco
   delete payload['code'];
   delete payload['owner'];
   return payload;
+}
+
+/** Keeps stored values that are not among fixed options (e.g. custom actions of imported resources) selectable. */
+export function withCurrentValues(
+  options: FormOption[] | undefined,
+  current: unknown,
+): FormOption[] | undefined {
+  if (!options) {
+    return options;
+  }
+
+  const values = (Array.isArray(current) ? current : [current]).filter(
+    (v): v is string => typeof v === 'string' && v !== '',
+  );
+  const extra = values
+    .filter((v) => !options.some((o) => o.value === v))
+    .map((v) => ({ value: v, label: { ar: v, en: v } }));
+  return extra.length ? [...options, ...extra] : options;
 }

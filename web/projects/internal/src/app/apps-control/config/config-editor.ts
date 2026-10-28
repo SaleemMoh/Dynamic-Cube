@@ -18,7 +18,7 @@ import {
 import { forkJoin, map, of } from 'rxjs';
 import { DraftsService } from '../drafts.service';
 import { ConfigField, ConfigType } from './config-types';
-import { emptyToNull, fromDate, fromJsonText, payloadOf, toDate, toJsonText } from './form-values';
+import { emptyToNull, fromDate, fromJsonText, payloadOf, toDate, toJsonText, withCurrentValues } from './form-values';
 
 export interface ConfigEditorData {
   type: ConfigType;
@@ -205,7 +205,7 @@ export class ConfigEditor {
       visibleWhen: f.visibleWhen,
       // App-scoped keys cannot move to another app on edit.
       readonly: editing && type.key === 'appScoped' && f.code === 'appCode',
-      options: options.get(f.code) ?? f.options,
+      options: withCurrentValues(options.get(f.code) ?? f.options, this.data.row?.[f.code]),
     }));
     return {
       code: type.entityType,

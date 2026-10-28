@@ -1,0 +1,6917 @@
+{
+  "title": "Radiation registry: manufacturers (4 of 4)",
+  "items": [
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002776",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "RADIATION, SAFETY & NUCLEAR PRODUCTS (RSNP)",
+        "nameEn": "RADIATION, SAFETY & NUCLEAR PRODUCTS (RSNP)",
+        "isActive": true,
+        "displayOrder": 11690,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002776",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002777",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "RADICON, Co.",
+        "nameEn": "RADICON, Co.",
+        "isActive": true,
+        "displayOrder": 11700,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002777",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002778",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Radim",
+        "nameEn": "Radim",
+        "isActive": true,
+        "displayOrder": 11710,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002778",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002779",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Radiological research s.r.l",
+        "nameEn": "Radiological research s.r.l",
+        "isActive": true,
+        "displayOrder": 11720,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002779",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002780",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "RADIONICS",
+        "nameEn": "RADIONICS",
+        "isActive": true,
+        "displayOrder": 11730,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002780",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002781",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "RADIUM CHEMICAL Co, Inc.",
+        "nameEn": "RADIUM CHEMICAL Co, Inc.",
+        "isActive": true,
+        "displayOrder": 11740,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002781",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002782",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "RADIUM-CHEMIE",
+        "nameEn": "RADIUM-CHEMIE",
+        "isActive": true,
+        "displayOrder": 11750,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002782",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002783",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Rados",
+        "nameEn": "Rados",
+        "isActive": true,
+        "displayOrder": 11760,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002783",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002784",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "RADS S.L., Inc.",
+        "nameEn": "RADS S.L., Inc.",
+        "isActive": true,
+        "displayOrder": 11770,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002784",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002785",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "RADX Corp.",
+        "nameEn": "RADX Corp.",
+        "isActive": true,
+        "displayOrder": 11780,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002785",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002786",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Rai ESPI",
+        "nameEn": "Rai ESPI",
+        "isActive": true,
+        "displayOrder": 11790,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002786",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002787",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "RANDIX INDUSTRIES, Ltd.",
+        "nameEn": "RANDIX INDUSTRIES, Ltd.",
+        "isActive": true,
+        "displayOrder": 11800,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002787",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002788",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "RANGER ENGINEERING Corp.",
+        "nameEn": "RANGER ENGINEERING Corp.",
+        "isActive": true,
+        "displayOrder": 11810,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002788",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002789",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Rapiscan",
+        "nameEn": "Rapiscan",
+        "isActive": true,
+        "displayOrder": 11820,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002789",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002790",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Ravenstvo",
+        "nameEn": "Ravenstvo",
+        "isActive": true,
+        "displayOrder": 11830,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002790",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002791",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "RayMax",
+        "nameEn": "RayMax",
+        "isActive": true,
+        "displayOrder": 11840,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002791",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002792",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "RCA PRODUCTS",
+        "nameEn": "RCA PRODUCTS",
+        "isActive": true,
+        "displayOrder": 11850,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002792",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002793",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "REPUBLIC STEEL Corp.",
+        "nameEn": "REPUBLIC STEEL Corp.",
+        "isActive": true,
+        "displayOrder": 11860,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002793",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002794",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Res. Inst. for Elec. Phys. Appar.",
+        "nameEn": "Res. Inst. for Elec. Phys. Appar.",
+        "isActive": true,
+        "displayOrder": 11870,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002794",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002795",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "RESEARCH APPLIANCE Co. (RAC)",
+        "nameEn": "RESEARCH APPLIANCE Co. (RAC)",
+        "isActive": true,
+        "displayOrder": 11880,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002795",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002796",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "REVISS Isotopes",
+        "nameEn": "REVISS Isotopes",
+        "isActive": true,
+        "displayOrder": 11890,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002796",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002797",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "REVISS SERVICES (UK) Ltd.",
+        "nameEn": "REVISS SERVICES (UK) Ltd.",
+        "isActive": true,
+        "displayOrder": 11900,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002797",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002798",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "REVISS SERVICES, Inc.",
+        "nameEn": "REVISS SERVICES, Inc.",
+        "isActive": true,
+        "displayOrder": 11910,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002798",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002799",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "REXNORD, Inc.",
+        "nameEn": "REXNORD, Inc.",
+        "isActive": true,
+        "displayOrder": 11920,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002799",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002800",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "RGI INDUSTRIEMESSGERATE GmbH",
+        "nameEn": "RGI INDUSTRIEMESSGERATE GmbH",
+        "isActive": true,
+        "displayOrder": 11930,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002800",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002801",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "RIA INTERNATIONAL",
+        "nameEn": "RIA INTERNATIONAL",
+        "isActive": true,
+        "displayOrder": 11940,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002801",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002802",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Rich Seifer",
+        "nameEn": "Rich Seifer",
+        "isActive": true,
+        "displayOrder": 11950,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002802",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002803",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Richard Wolf",
+        "nameEn": "Richard Wolf",
+        "isActive": true,
+        "displayOrder": 11960,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002803",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002804",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Rigaku",
+        "nameEn": "Rigaku",
+        "isActive": true,
+        "displayOrder": 11970,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002804",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002805",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Rigaku Denki",
+        "nameEn": "Rigaku Denki",
+        "isActive": true,
+        "displayOrder": 11980,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002805",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002806",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "RITVERC GmbH",
+        "nameEn": "RITVERC GmbH",
+        "isActive": true,
+        "displayOrder": 11990,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002806",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002807",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "RIXSON-FIREMARK DIV. (YALE SECURITY, Inc.)",
+        "nameEn": "RIXSON-FIREMARK DIV. (YALE SECURITY, Inc.)",
+        "isActive": true,
+        "displayOrder": 12000,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002807",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002808",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "RM-WAS Trust",
+        "nameEn": "RM-WAS Trust",
+        "isActive": true,
+        "displayOrder": 12010,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002808",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002809",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "ROBERTSHAW CONTROLS Co.",
+        "nameEn": "ROBERTSHAW CONTROLS Co.",
+        "isActive": true,
+        "displayOrder": 12020,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002809",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002810",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Robertson Geologging Limited",
+        "nameEn": "Robertson Geologging Limited",
+        "isActive": true,
+        "displayOrder": 12030,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002810",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002811",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "ROCKWELL INTERNATIONAL",
+        "nameEn": "ROCKWELL INTERNATIONAL",
+        "isActive": true,
+        "displayOrder": 12040,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002811",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002812",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "RONAN ENGINEERING Co.",
+        "nameEn": "RONAN ENGINEERING Co.",
+        "isActive": true,
+        "displayOrder": 12050,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002812",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002813",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "RONAN ENGINEERING, Ltd.",
+        "nameEn": "RONAN ENGINEERING, Ltd.",
+        "isActive": true,
+        "displayOrder": 12060,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002813",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002814",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Rontgenwerk Bochum",
+        "nameEn": "Rontgenwerk Bochum",
+        "isActive": true,
+        "displayOrder": 12070,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002814",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002815",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "ROSEMOUNT (KAY-RAY/SENSALL, Inc.)",
+        "nameEn": "ROSEMOUNT (KAY-RAY/SENSALL, Inc.)",
+        "isActive": true,
+        "displayOrder": 12080,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002815",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002816",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Rotamode",
+        "nameEn": "Rotamode",
+        "isActive": true,
+        "displayOrder": 12090,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002816",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002817",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "RSO, Inc. / Radiation Services Organization",
+        "nameEn": "RSO, Inc. / Radiation Services Organization",
+        "isActive": true,
+        "displayOrder": 12100,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002817",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002818",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "RTS TECHNOLOGY, Inc.",
+        "nameEn": "RTS TECHNOLOGY, Inc.",
+        "isActive": true,
+        "displayOrder": 12110,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002818",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002819",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "RUBBER & PLASTIC APPLICATORS, Inc.",
+        "nameEn": "RUBBER & PLASTIC APPLICATORS, Inc.",
+        "isActive": true,
+        "displayOrder": 12120,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002819",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002820",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "RUOFF & SONS, Inc.",
+        "nameEn": "RUOFF & SONS, Inc.",
+        "isActive": true,
+        "displayOrder": 12130,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002820",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002821",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "RUSSIAN RESEARCH CENTER KURCHATOV INSTITUTE",
+        "nameEn": "RUSSIAN RESEARCH CENTER KURCHATOV INSTITUTE",
+        "isActive": true,
+        "displayOrder": 12140,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002821",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002822",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "RUSSIAN SCIENTIFIC CENTER APPLIED CHEMISTRY, EXPERIMENTAL PLANT",
+        "nameEn": "RUSSIAN SCIENTIFIC CENTER APPLIED CHEMISTRY, EXPERIMENTAL PLANT",
+        "isActive": true,
+        "displayOrder": 12150,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002822",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002823",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "RUTTER INSTRUMENTATION",
+        "nameEn": "RUTTER INSTRUMENTATION",
+        "isActive": true,
+        "displayOrder": 12160,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002823",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002824",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "S & G Technologies Inc.",
+        "nameEn": "S & G Technologies Inc.",
+        "isActive": true,
+        "displayOrder": 12170,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002824",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002825",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Saclay",
+        "nameEn": "Saclay",
+        "isActive": true,
+        "displayOrder": 12180,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002825",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002826",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SAFENIGHT TECHNOLOGY Inc.",
+        "nameEn": "SAFENIGHT TECHNOLOGY Inc.",
+        "isActive": true,
+        "displayOrder": 12190,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002826",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002827",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SAFETY LIGHT Corp.",
+        "nameEn": "SAFETY LIGHT Corp.",
+        "isActive": true,
+        "displayOrder": 12200,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002827",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002828",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SAINT-GOBAIN CRYSTALS & DETECTORS",
+        "nameEn": "SAINT-GOBAIN CRYSTALS & DETECTORS",
+        "isActive": true,
+        "displayOrder": 12210,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002828",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002829",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Samil",
+        "nameEn": "Samil",
+        "isActive": true,
+        "displayOrder": 12220,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002829",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002830",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SANDERS MEDICAL PRODUCTS, Inc.",
+        "nameEn": "SANDERS MEDICAL PRODUCTS, Inc.",
+        "isActive": true,
+        "displayOrder": 12230,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002830",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002831",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SANDIA NATIONAL LAB",
+        "nameEn": "SANDIA NATIONAL LAB",
+        "isActive": true,
+        "displayOrder": 12240,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002831",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002832",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SANKOSHA Corp.",
+        "nameEn": "SANKOSHA Corp.",
+        "isActive": true,
+        "displayOrder": 12250,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002832",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002833",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SANKOSHA Engineering Singapore Pte. Ltd.",
+        "nameEn": "SANKOSHA Engineering Singapore Pte. Ltd.",
+        "isActive": true,
+        "displayOrder": 12260,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002833",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002835",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SANKOSHA U.S.A., Inc.",
+        "nameEn": "SANKOSHA U.S.A., Inc.",
+        "isActive": true,
+        "displayOrder": 12280,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002835",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002836",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SAPHYMO- SRAT",
+        "nameEn": "SAPHYMO- SRAT",
+        "isActive": true,
+        "displayOrder": 12290,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002836",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003167",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Sapphire",
+        "nameEn": "Sapphire",
+        "isActive": true,
+        "displayOrder": 12300,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003167",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002837",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SARGENT-WELCH SCIENTIFIC Co.",
+        "nameEn": "SARGENT-WELCH SCIENTIFIC Co.",
+        "isActive": true,
+        "displayOrder": 12310,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002837",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002838",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SARNIA INSPECTION Co. (SINCO)",
+        "nameEn": "SARNIA INSPECTION Co. (SINCO)",
+        "isActive": true,
+        "displayOrder": 12320,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002838",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002839",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Satelec Pierre Rolland",
+        "nameEn": "Satelec Pierre Rolland",
+        "isActive": true,
+        "displayOrder": 12330,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002839",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002840",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SAUNDERS-ROE DEVELOPMENTS, Inc.",
+        "nameEn": "SAUNDERS-ROE DEVELOPMENTS, Inc.",
+        "isActive": true,
+        "displayOrder": 12340,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002840",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002841",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Saye IC",
+        "nameEn": "Saye IC",
+        "isActive": true,
+        "displayOrder": 12350,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002841",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002842",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SCAN DETECTRONIC A/S",
+        "nameEn": "SCAN DETECTRONIC A/S",
+        "isActive": true,
+        "displayOrder": 12360,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002842",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002843",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SCAN DETECTRONIC LABORATORIES, Inc.",
+        "nameEn": "SCAN DETECTRONIC LABORATORIES, Inc.",
+        "isActive": true,
+        "displayOrder": 12370,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002843",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002844",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SCAN TECHNOLOGIES, Inc.",
+        "nameEn": "SCAN TECHNOLOGIES, Inc.",
+        "isActive": true,
+        "displayOrder": 12380,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002844",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002845",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SCANDITRON",
+        "nameEn": "SCANDITRON",
+        "isActive": true,
+        "displayOrder": 12390,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002845",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002846",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SCHERING (CIS BIO INTERNATIONAL)",
+        "nameEn": "SCHERING (CIS BIO INTERNATIONAL)",
+        "isActive": true,
+        "displayOrder": 12400,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002846",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002847",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Schlumberger",
+        "nameEn": "Schlumberger",
+        "isActive": true,
+        "displayOrder": 12410,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002847",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002848",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SCHLUMBERGER TECHNOLOGY Corp.",
+        "nameEn": "SCHLUMBERGER TECHNOLOGY Corp.",
+        "isActive": true,
+        "displayOrder": 12420,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002848",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002849",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SCHLUMBERGER WELL SERVICES",
+        "nameEn": "SCHLUMBERGER WELL SERVICES",
+        "isActive": true,
+        "displayOrder": 12430,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002849",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002850",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SCHNEIDER ELECTRIC S.A.",
+        "nameEn": "SCHNEIDER ELECTRIC S.A.",
+        "isActive": true,
+        "displayOrder": 12440,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002850",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002851",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SCHWARTZ/MANN JR.",
+        "nameEn": "SCHWARTZ/MANN JR.",
+        "isActive": true,
+        "displayOrder": 12450,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002851",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003164",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SciAps Inc.",
+        "nameEn": "SciAps Inc.",
+        "isActive": true,
+        "displayOrder": 12460,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003164",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002852",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SCIENCE APPLICATIONS INTERNATIONAL Corp. (SAIC)",
+        "nameEn": "SCIENCE APPLICATIONS INTERNATIONAL Corp. (SAIC)",
+        "isActive": true,
+        "displayOrder": 12470,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002852",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002853",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SCIENCE APPLICATIONS INTERNATIONAL, Inc.",
+        "nameEn": "SCIENCE APPLICATIONS INTERNATIONAL, Inc.",
+        "isActive": true,
+        "displayOrder": 12480,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002853",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003239",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Scienta Omicron",
+        "nameEn": "Scienta Omicron",
+        "isActive": true,
+        "displayOrder": 12490,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003239",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002854",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SCIENTA Oy AB",
+        "nameEn": "SCIENTA Oy AB",
+        "isActive": true,
+        "displayOrder": 12500,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002854",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002855",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SCIENTECH, Inc.",
+        "nameEn": "SCIENTECH, Inc.",
+        "isActive": true,
+        "displayOrder": 12510,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002855",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002856",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SCIENTIFIC DRILLING INTERNATIONAL, Inc.",
+        "nameEn": "SCIENTIFIC DRILLING INTERNATIONAL, Inc.",
+        "isActive": true,
+        "displayOrder": 12520,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002856",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002857",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SCIENTIFIC MEASUREMENT SYSTEMS, Inc.",
+        "nameEn": "SCIENTIFIC MEASUREMENT SYSTEMS, Inc.",
+        "isActive": true,
+        "displayOrder": 12530,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002857",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002858",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SCIENTIFIC PRODUCTS",
+        "nameEn": "SCIENTIFIC PRODUCTS",
+        "isActive": true,
+        "displayOrder": 12540,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002858",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002859",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SCINTREX Ltd.",
+        "nameEn": "SCINTREX Ltd.",
+        "isActive": true,
+        "displayOrder": 12550,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002859",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002860",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SCITEC Corp.",
+        "nameEn": "SCITEC Corp.",
+        "isActive": true,
+        "displayOrder": 12560,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002860",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002861",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SCOPUS LIGHT (1990) Ltd.",
+        "nameEn": "SCOPUS LIGHT (1990) Ltd.",
+        "isActive": true,
+        "displayOrder": 12570,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002861",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002862",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SEA QUEST, Inc.",
+        "nameEn": "SEA QUEST, Inc.",
+        "isActive": true,
+        "displayOrder": 12580,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002862",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002863",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SEARLE ANALYTIC, Inc.",
+        "nameEn": "SEARLE ANALYTIC, Inc.",
+        "isActive": true,
+        "displayOrder": 12590,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002863",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002864",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Second Exposure,Inc",
+        "nameEn": "Second Exposure,Inc",
+        "isActive": true,
+        "displayOrder": 12600,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002864",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002865",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Sector 6",
+        "nameEn": "Sector 6",
+        "isActive": true,
+        "displayOrder": 12610,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002865",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002866",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SECURITY ENGINEERING, Inc.",
+        "nameEn": "SECURITY ENGINEERING, Inc.",
+        "isActive": true,
+        "displayOrder": 12620,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002866",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002867",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SEDCO, Inc.",
+        "nameEn": "SEDCO, Inc.",
+        "isActive": true,
+        "displayOrder": 12630,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002867",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002868",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Sedecal",
+        "nameEn": "Sedecal",
+        "isActive": true,
+        "displayOrder": 12640,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002868",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002869",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SEDIMENT INSTRUMENTATION R&D, Inc. (SIRAD Inc.)",
+        "nameEn": "SEDIMENT INSTRUMENTATION R&D, Inc. (SIRAD Inc.)",
+        "isActive": true,
+        "displayOrder": 12650,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002869",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002870",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Sehwa",
+        "nameEn": "Sehwa",
+        "isActive": true,
+        "displayOrder": 12660,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002870",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002871",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SELF-POWERED LIGHTING, Ltd.",
+        "nameEn": "SELF-POWERED LIGHTING, Ltd.",
+        "isActive": true,
+        "displayOrder": 12670,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002871",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002872",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SENTEX SENSING TECHNOLOGY, Inc.",
+        "nameEn": "SENTEX SENSING TECHNOLOGY, Inc.",
+        "isActive": true,
+        "displayOrder": 12680,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002872",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002873",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SENTINEL",
+        "nameEn": "SENTINEL",
+        "isActive": true,
+        "displayOrder": 12690,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002873",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002874",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SENTROL, Inc.",
+        "nameEn": "SENTROL, Inc.",
+        "isActive": true,
+        "displayOrder": 12700,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002874",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002875",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SEPCI",
+        "nameEn": "SEPCI",
+        "isActive": true,
+        "displayOrder": 12710,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002875",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002876",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Servi Tech Gmbh",
+        "nameEn": "Servi Tech Gmbh",
+        "isActive": true,
+        "displayOrder": 12720,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002876",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002877",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SESQUI DEVELOPMENT Ltd.",
+        "nameEn": "SESQUI DEVELOPMENT Ltd.",
+        "isActive": true,
+        "displayOrder": 12730,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002877",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002878",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Sevkavrentgen",
+        "nameEn": "Sevkavrentgen",
+        "isActive": true,
+        "displayOrder": 12740,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002878",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002879",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SGN - SOCIETE GENERALE POUR LES TECHNIQUES NOUVELLES",
+        "nameEn": "SGN - SOCIETE GENERALE POUR LES TECHNIQUES NOUVELLES",
+        "isActive": true,
+        "displayOrder": 12750,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002879",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002880",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SGN/GAME INGENIERIE",
+        "nameEn": "SGN/GAME INGENIERIE",
+        "isActive": true,
+        "displayOrder": 12760,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002880",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002881",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Shanghai",
+        "nameEn": "Shanghai",
+        "isActive": true,
+        "displayOrder": 12770,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002881",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002882",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SHANGHAI FENGHUA RADIO FACTORY",
+        "nameEn": "SHANGHAI FENGHUA RADIO FACTORY",
+        "isActive": true,
+        "displayOrder": 12780,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002882",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002883",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Shanghai Medical Nuclear Instrument Factory",
+        "nameEn": "Shanghai Medical Nuclear Instrument Factory",
+        "isActive": true,
+        "displayOrder": 12790,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002883",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002884",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SHIELD SOURCE, Inc.",
+        "nameEn": "SHIELD SOURCE, Inc.",
+        "isActive": true,
+        "displayOrder": 12800,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002884",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002886",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Shimadzu",
+        "nameEn": "Shimadzu",
+        "isActive": true,
+        "displayOrder": 12820,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002886",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002887",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SHIMADZU SCIENTIFIC INSTRUMENTS, Inc.",
+        "nameEn": "SHIMADZU SCIENTIFIC INSTRUMENTS, Inc.",
+        "isActive": true,
+        "displayOrder": 12830,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002887",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002888",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SHIMADZU SEISAKUSHO, Ltd.",
+        "nameEn": "SHIMADZU SEISAKUSHO, Ltd.",
+        "isActive": true,
+        "displayOrder": 12840,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002888",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002889",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SHM",
+        "nameEn": "SHM",
+        "isActive": true,
+        "displayOrder": 12850,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002889",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002890",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Showa X-Ray CO.LTD",
+        "nameEn": "Showa X-Ray CO.LTD",
+        "isActive": true,
+        "displayOrder": 12860,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002890",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002891",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Sias",
+        "nameEn": "Sias",
+        "isActive": true,
+        "displayOrder": 12870,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002891",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002892",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SIE Inc.",
+        "nameEn": "SIE Inc.",
+        "isActive": true,
+        "displayOrder": 12880,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002892",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002893",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SIEMENS AG",
+        "nameEn": "SIEMENS AG",
+        "isActive": true,
+        "displayOrder": 12890,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002893",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002894",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SIEMENS BUILDING TECHNOLOGIES Ltd. (Canada)",
+        "nameEn": "SIEMENS BUILDING TECHNOLOGIES Ltd. (Canada)",
+        "isActive": true,
+        "displayOrder": 12900,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002894",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002895",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SIEMENS BUILDING TECHNOLOGIES, Inc.",
+        "nameEn": "SIEMENS BUILDING TECHNOLOGIES, Inc.",
+        "isActive": true,
+        "displayOrder": 12910,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002895",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002896",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SIEMENS CERBERUS DIVISION",
+        "nameEn": "SIEMENS CERBERUS DIVISION",
+        "isActive": true,
+        "displayOrder": 12920,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002896",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002897",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SIEMENS DIVISION MEDICALE",
+        "nameEn": "SIEMENS DIVISION MEDICALE",
+        "isActive": true,
+        "displayOrder": 12930,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002897",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002898",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SIEMENS ENVIRONMENTAL SYSTEMS, Ltd.",
+        "nameEn": "SIEMENS ENVIRONMENTAL SYSTEMS, Ltd.",
+        "isActive": true,
+        "displayOrder": 12940,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002898",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002899",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SIEMENS GAMMASONICS, Inc.",
+        "nameEn": "SIEMENS GAMMASONICS, Inc.",
+        "isActive": true,
+        "displayOrder": 12950,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002899",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002900",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SIEMENS MEDICAL OF AMERICA, Inc.",
+        "nameEn": "SIEMENS MEDICAL OF AMERICA, Inc.",
+        "isActive": true,
+        "displayOrder": 12960,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002900",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002901",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SIEMENS MEDICAL SOLUTIONS",
+        "nameEn": "SIEMENS MEDICAL SOLUTIONS",
+        "isActive": true,
+        "displayOrder": 12970,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002901",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002902",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SIEMENS MEDICAL SYSTEMS, Inc.",
+        "nameEn": "SIEMENS MEDICAL SYSTEMS, Inc.",
+        "isActive": true,
+        "displayOrder": 12980,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002902",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002903",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SIEMENS POWER Corp. Inc.",
+        "nameEn": "SIEMENS POWER Corp. Inc.",
+        "isActive": true,
+        "displayOrder": 12990,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002903",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002904",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SIEMENS/TOSHIBA",
+        "nameEn": "SIEMENS/TOSHIBA",
+        "isActive": true,
+        "displayOrder": 13000,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002904",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002905",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SIEMPELKAMP Corp.",
+        "nameEn": "SIEMPELKAMP Corp.",
+        "isActive": true,
+        "displayOrder": 13010,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002905",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002906",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SILVA",
+        "nameEn": "SILVA",
+        "isActive": true,
+        "displayOrder": 13020,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002906",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002907",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Simad Mdical Technology",
+        "nameEn": "Simad Mdical Technology",
+        "isActive": true,
+        "displayOrder": 13030,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002907",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002908",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SIMPLIMATIC ENGINEERING Co. [SECO]",
+        "nameEn": "SIMPLIMATIC ENGINEERING Co. [SECO]",
+        "isActive": true,
+        "displayOrder": 13040,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002908",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002909",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SINTERMETALLWERK KREBSOGE",
+        "nameEn": "SINTERMETALLWERK KREBSOGE",
+        "isActive": true,
+        "displayOrder": 13050,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002909",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002910",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SIRCHIE FINGER PRINT LABORATORIES, Inc.",
+        "nameEn": "SIRCHIE FINGER PRINT LABORATORIES, Inc.",
+        "isActive": true,
+        "displayOrder": 13060,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002910",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002911",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Sirona",
+        "nameEn": "Sirona",
+        "isActive": true,
+        "displayOrder": 13070,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002911",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003222",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Sirtex Medical",
+        "nameEn": "Sirtex Medical",
+        "isActive": true,
+        "displayOrder": 13080,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003222",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002912",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SIS GMBH",
+        "nameEn": "SIS GMBH",
+        "isActive": true,
+        "displayOrder": 13090,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002912",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002913",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Skybio",
+        "nameEn": "Skybio",
+        "isActive": true,
+        "displayOrder": 13100,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002913",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002914",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Smam",
+        "nameEn": "Smam",
+        "isActive": true,
+        "displayOrder": 13110,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002914",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002915",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SMV AMERICA",
+        "nameEn": "SMV AMERICA",
+        "isActive": true,
+        "displayOrder": 13120,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002915",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002916",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SMV INTERNATIONAL",
+        "nameEn": "SMV INTERNATIONAL",
+        "isActive": true,
+        "displayOrder": 13130,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002916",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003220",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Sodern arianeGroup",
+        "nameEn": "Sodern arianeGroup",
+        "isActive": true,
+        "displayOrder": 13140,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003220",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002917",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Sondex",
+        "nameEn": "Sondex",
+        "isActive": true,
+        "displayOrder": 13150,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002917",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002918",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SONWIL DISTRIBUTION CENTER",
+        "nameEn": "SONWIL DISTRIBUTION CENTER",
+        "isActive": true,
+        "displayOrder": 13160,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002918",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002919",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Soredex",
+        "nameEn": "Soredex",
+        "isActive": true,
+        "displayOrder": 13170,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002919",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002920",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Soredex Orion Corporation",
+        "nameEn": "Soredex Orion Corporation",
+        "isActive": true,
+        "displayOrder": 13180,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002920",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002921",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SOURCE PRODUCTION & EQUIPMENT Co.",
+        "nameEn": "SOURCE PRODUCTION & EQUIPMENT Co.",
+        "isActive": true,
+        "displayOrder": 13190,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002921",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002922",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SOURCETECH MEDICAL, LLC",
+        "nameEn": "SOURCETECH MEDICAL, LLC",
+        "isActive": true,
+        "displayOrder": 13200,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002922",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002923",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SOUTHWEST BIO-MEDICAL SYSTEMS",
+        "nameEn": "SOUTHWEST BIO-MEDICAL SYSTEMS",
+        "isActive": true,
+        "displayOrder": 13210,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002923",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002924",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SPEC LITE, Inc.",
+        "nameEn": "SPEC LITE, Inc.",
+        "isActive": true,
+        "displayOrder": 13220,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002924",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002925",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SPECTRA-PHYSICS",
+        "nameEn": "SPECTRA-PHYSICS",
+        "isActive": true,
+        "displayOrder": 13230,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002925",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003212",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Spectro-Ametek",
+        "nameEn": "Spectro-Ametek",
+        "isActive": true,
+        "displayOrder": 13240,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003212",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002926",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SPECTRUM TECHNIQUES, Inc.",
+        "nameEn": "SPECTRUM TECHNIQUES, Inc.",
+        "isActive": true,
+        "displayOrder": 13250,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002926",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000001672",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SPI Supplies",
+        "nameEn": "SPI Supplies",
+        "isActive": true,
+        "displayOrder": 13260,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000001672",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002927",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SPIRE Corp.",
+        "nameEn": "SPIRE Corp.",
+        "isActive": true,
+        "displayOrder": 13270,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002927",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002928",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SRB Technologies (Canada) Inc.",
+        "nameEn": "SRB Technologies (Canada) Inc.",
+        "isActive": true,
+        "displayOrder": 13280,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002928",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002929",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SRB TECHNOLOGIES, Inc.",
+        "nameEn": "SRB TECHNOLOGIES, Inc.",
+        "isActive": true,
+        "displayOrder": 13290,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002929",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002930",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SRPC",
+        "nameEn": "SRPC",
+        "isActive": true,
+        "displayOrder": 13300,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002930",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002931",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "ST. LOUIS TESTING LAB., Inc.",
+        "nameEn": "ST. LOUIS TESTING LAB., Inc.",
+        "isActive": true,
+        "displayOrder": 13310,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002931",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002932",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "STAN A. HUBER CONSULTANTS, Inc.",
+        "nameEn": "STAN A. HUBER CONSULTANTS, Inc.",
+        "isActive": true,
+        "displayOrder": 13320,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002932",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002933",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "STATITROL Corp.",
+        "nameEn": "STATITROL Corp.",
+        "isActive": true,
+        "displayOrder": 13330,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002933",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002934",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "STATITROL-DIVISION EMERSON ELECTRIC Co.",
+        "nameEn": "STATITROL-DIVISION EMERSON ELECTRIC Co.",
+        "isActive": true,
+        "displayOrder": 13340,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002934",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002935",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "STEEL ELECTRONIQUE",
+        "nameEn": "STEEL ELECTRONIQUE",
+        "isActive": true,
+        "displayOrder": 13350,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002935",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002936",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Stephanix",
+        "nameEn": "Stephanix",
+        "isActive": true,
+        "displayOrder": 13360,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002936",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002937",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "STOCK EQUIPMENT Co.",
+        "nameEn": "STOCK EQUIPMENT Co.",
+        "isActive": true,
+        "displayOrder": 13370,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002937",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002938",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "STOCKER & YALE, Inc.",
+        "nameEn": "STOCKER & YALE, Inc.",
+        "isActive": true,
+        "displayOrder": 13380,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002938",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002939",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "STRANDBERG ENGINEERING LABORATORIES, Inc.",
+        "nameEn": "STRANDBERG ENGINEERING LABORATORIES, Inc.",
+        "isActive": true,
+        "displayOrder": 13390,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002939",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002940",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "STRATEC ELECKSTRONICK GmbH",
+        "nameEn": "STRATEC ELECKSTRONICK GmbH",
+        "isActive": true,
+        "displayOrder": 13400,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002940",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002941",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Stratec Medazintechnik Gmbh",
+        "nameEn": "Stratec Medazintechnik Gmbh",
+        "isActive": true,
+        "displayOrder": 13410,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002941",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002942",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "S-TRON",
+        "nameEn": "S-TRON",
+        "isActive": true,
+        "displayOrder": 13420,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002942",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002943",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "STS - STEUERUNGSTECHNIK & STRAHLENSCHUTZ GmbH",
+        "nameEn": "STS - STEUERUNGSTECHNIK & STRAHLENSCHUTZ GmbH",
+        "isActive": true,
+        "displayOrder": 13430,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002943",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002944",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "STUDSVIK NUCLEAR AB",
+        "nameEn": "STUDSVIK NUCLEAR AB",
+        "isActive": true,
+        "displayOrder": 13440,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002944",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002945",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SUMITOMO HEAVY INDUSTRIES CO",
+        "nameEn": "SUMITOMO HEAVY INDUSTRIES CO",
+        "isActive": true,
+        "displayOrder": 13450,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002945",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002946",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Summit",
+        "nameEn": "Summit",
+        "isActive": true,
+        "displayOrder": 13460,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002946",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002947",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Summit Industries",
+        "nameEn": "Summit Industries",
+        "isActive": true,
+        "displayOrder": 13470,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002947",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002948",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SUNBURST ENERGY SYSTEMS, Inc.",
+        "nameEn": "SUNBURST ENERGY SYSTEMS, Inc.",
+        "isActive": true,
+        "displayOrder": 13480,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002948",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003343",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Superb Electromachinery Co. Ltd",
+        "nameEn": "Superb Electromachinery Co. Ltd",
+        "isActive": true,
+        "displayOrder": 13490,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003343",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002949",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SUUNTO Oy",
+        "nameEn": "SUUNTO Oy",
+        "isActive": true,
+        "displayOrder": 13500,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002949",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002950",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SYNCOR INTERNATIONAL Corp.",
+        "nameEn": "SYNCOR INTERNATIONAL Corp.",
+        "isActive": true,
+        "displayOrder": 13510,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002950",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002951",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SYNCOR PHARMACEUTICALS, Inc.",
+        "nameEn": "SYNCOR PHARMACEUTICALS, Inc.",
+        "isActive": true,
+        "displayOrder": 13520,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002951",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002952",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SYSTEM SENSOR Corp. (Division of PITTWAY)",
+        "nameEn": "SYSTEM SENSOR Corp. (Division of PITTWAY)",
+        "isActive": true,
+        "displayOrder": 13530,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002952",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002954",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "SYSTEM SENSOR DE MEXICO SA de CV",
+        "nameEn": "SYSTEM SENSOR DE MEXICO SA de CV",
+        "isActive": true,
+        "displayOrder": 13540,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002954",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002955",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "T.E.M.",
+        "nameEn": "T.E.M.",
+        "isActive": true,
+        "displayOrder": 13550,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002955",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002956",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "T.E.M. INSTRUMENTS, Ltd.",
+        "nameEn": "T.E.M. INSTRUMENTS, Ltd.",
+        "isActive": true,
+        "displayOrder": 13560,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002956",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002957",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TANDSM CONSULTANTS",
+        "nameEn": "TANDSM CONSULTANTS",
+        "isActive": true,
+        "displayOrder": 13570,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002957",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002958",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Tanka",
+        "nameEn": "Tanka",
+        "isActive": true,
+        "displayOrder": 13580,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002958",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002959",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TAPIO TECHNOLOGIES, Inc.",
+        "nameEn": "TAPIO TECHNOLOGIES, Inc.",
+        "isActive": true,
+        "displayOrder": 13590,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002959",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002960",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TATABANYAI SZENBANYAK HALDEX INTERNATIONAL",
+        "nameEn": "TATABANYAI SZENBANYAK HALDEX INTERNATIONAL",
+        "isActive": true,
+        "displayOrder": 13600,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002960",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002961",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TAYLOR INSTRUMENT Co. (INDUSTRIONICS DIVISION)",
+        "nameEn": "TAYLOR INSTRUMENT Co. (INDUSTRIONICS DIVISION)",
+        "isActive": true,
+        "displayOrder": 13610,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002961",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002962",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Tech/Ops",
+        "nameEn": "Tech/Ops",
+        "isActive": true,
+        "displayOrder": 13620,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002962",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002963",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TECHNICAL INSTRUMENTS, Inc.",
+        "nameEn": "TECHNICAL INSTRUMENTS, Inc.",
+        "isActive": true,
+        "displayOrder": 13630,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002963",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002964",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TECHNICAL OPERATIONS",
+        "nameEn": "TECHNICAL OPERATIONS",
+        "isActive": true,
+        "displayOrder": 13640,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002964",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002965",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TECHNICARE Corp.",
+        "nameEn": "TECHNICARE Corp.",
+        "isActive": true,
+        "displayOrder": 13650,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002965",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002966",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Technix s.p.a",
+        "nameEn": "Technix s.p.a",
+        "isActive": true,
+        "displayOrder": 13660,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002966",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002967",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Techsnab Export",
+        "nameEn": "Techsnab Export",
+        "isActive": true,
+        "displayOrder": 13670,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002967",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002968",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TECHSNABEXPORT",
+        "nameEn": "TECHSNABEXPORT",
+        "isActive": true,
+        "displayOrder": 13680,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002968",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002969",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TELECTRONICS PACING SYSTEMS, Inc.",
+        "nameEn": "TELECTRONICS PACING SYSTEMS, Inc.",
+        "isActive": true,
+        "displayOrder": 13690,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002969",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002289",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Teledyne ICM",
+        "nameEn": "Teledyne ICM",
+        "isActive": true,
+        "displayOrder": 13700,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002289",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002970",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TELEDYNE-ISOTOPES",
+        "nameEn": "TELEDYNE-ISOTOPES",
+        "isActive": true,
+        "displayOrder": 13710,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002970",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002971",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Teltron Ltd",
+        "nameEn": "Teltron Ltd",
+        "isActive": true,
+        "displayOrder": 13720,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002971",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002972",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TEMCO",
+        "nameEn": "TEMCO",
+        "isActive": true,
+        "displayOrder": 13730,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002972",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002973",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TEMET USA, Inc.",
+        "nameEn": "TEMET USA, Inc.",
+        "isActive": true,
+        "displayOrder": 13740,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002973",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002974",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Tempo Technology",
+        "nameEn": "Tempo Technology",
+        "isActive": true,
+        "displayOrder": 13750,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002974",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002975",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TENEX",
+        "nameEn": "TENEX",
+        "isActive": true,
+        "displayOrder": 13760,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002975",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002976",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TENNELEC, Inc.",
+        "nameEn": "TENNELEC, Inc.",
+        "isActive": true,
+        "displayOrder": 13770,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002976",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002977",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Terry Ferraris",
+        "nameEn": "Terry Ferraris",
+        "isActive": true,
+        "displayOrder": 13780,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002977",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002978",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TESLA VUPJT",
+        "nameEn": "TESLA VUPJT",
+        "isActive": true,
+        "displayOrder": 13790,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002978",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002979",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TEST SA",
+        "nameEn": "TEST SA",
+        "isActive": true,
+        "displayOrder": 13800,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002979",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002980",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TEST-ER, Inc.",
+        "nameEn": "TEST-ER, Inc.",
+        "isActive": true,
+        "displayOrder": 13810,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002980",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002981",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TEXAS INSTRUMENTS, Inc.",
+        "nameEn": "TEXAS INSTRUMENTS, Inc.",
+        "isActive": true,
+        "displayOrder": 13820,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002981",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002982",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TEXAS NUCLEAR Corp.",
+        "nameEn": "TEXAS NUCLEAR Corp.",
+        "isActive": true,
+        "displayOrder": 13830,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002982",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002983",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Texas Nuclear Corporation",
+        "nameEn": "Texas Nuclear Corporation",
+        "isActive": true,
+        "displayOrder": 13840,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002983",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002984",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TEXAS TIME, Inc.",
+        "nameEn": "TEXAS TIME, Inc.",
+        "isActive": true,
+        "displayOrder": 13850,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002984",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002985",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "THE CENTER OF INSTRUMENT ENGINEERING FOR GEOPHYSICS AND ECOLOGY",
+        "nameEn": "THE CENTER OF INSTRUMENT ENGINEERING FOR GEOPHYSICS AND ECOLOGY",
+        "isActive": true,
+        "displayOrder": 13860,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002985",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002986",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "THE CYCLOTRON Corp.",
+        "nameEn": "THE CYCLOTRON Corp.",
+        "isActive": true,
+        "displayOrder": 13870,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002986",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002987",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "THE DOW CHEMICAL Co.",
+        "nameEn": "THE DOW CHEMICAL Co.",
+        "isActive": true,
+        "displayOrder": 13880,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002987",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002988",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "THE ISOTOPE FACTORY STATE INSTITUTE OF APPLIED CHEMISTRY",
+        "nameEn": "THE ISOTOPE FACTORY STATE INSTITUTE OF APPLIED CHEMISTRY",
+        "isActive": true,
+        "displayOrder": 13890,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002988",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002989",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "THE NUCLEUS, Inc.",
+        "nameEn": "THE NUCLEUS, Inc.",
+        "isActive": true,
+        "displayOrder": 13900,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002989",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002990",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "THE SOURCE, Inc.",
+        "nameEn": "THE SOURCE, Inc.",
+        "isActive": true,
+        "displayOrder": 13910,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002990",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002991",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "THE UNIVERSITY OF GEORGIA",
+        "nameEn": "THE UNIVERSITY OF GEORGIA",
+        "isActive": true,
+        "displayOrder": 13920,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002991",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002992",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "THERAGENICS Corp.",
+        "nameEn": "THERAGENICS Corp.",
+        "isActive": true,
+        "displayOrder": 13930,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002992",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002993",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Theratron International Limited",
+        "nameEn": "Theratron International Limited",
+        "isActive": true,
+        "displayOrder": 13940,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002993",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002994",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Theratronics",
+        "nameEn": "Theratronics",
+        "isActive": true,
+        "displayOrder": 13950,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002994",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002995",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Theratronics INC.LTD",
+        "nameEn": "Theratronics INC.LTD",
+        "isActive": true,
+        "displayOrder": 13960,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002995",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002996",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "THERATRONICS INTERNATIONAL, Ltd.",
+        "nameEn": "THERATRONICS INTERNATIONAL, Ltd.",
+        "isActive": true,
+        "displayOrder": 13970,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002996",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002997",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Thermedics Detection Inc.",
+        "nameEn": "Thermedics Detection Inc.",
+        "isActive": true,
+        "displayOrder": 13980,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002997",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002998",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "THERMO ELECTRON Corp.",
+        "nameEn": "THERMO ELECTRON Corp.",
+        "isActive": true,
+        "displayOrder": 13990,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002998",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000002999",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "THERMO ENVIRONMENTAL INSTRUMENTS, Inc.",
+        "nameEn": "THERMO ENVIRONMENTAL INSTRUMENTS, Inc.",
+        "isActive": true,
+        "displayOrder": 14000,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000002999",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003000",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "THERMO FINNIGAN FRANCE",
+        "nameEn": "THERMO FINNIGAN FRANCE",
+        "isActive": true,
+        "displayOrder": 14010,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003000",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003170",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Thermo Fisher Scientific",
+        "nameEn": "Thermo Fisher Scientific",
+        "isActive": true,
+        "displayOrder": 14020,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003170",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003001",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "THERMO GAMMA-METRICS (USA)",
+        "nameEn": "THERMO GAMMA-METRICS (USA)",
+        "isActive": true,
+        "displayOrder": 14030,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003001",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003002",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "THERMO GAMMA-METRICS Pty Ltd",
+        "nameEn": "THERMO GAMMA-METRICS Pty Ltd",
+        "isActive": true,
+        "displayOrder": 14040,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003002",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003003",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "THERMO GAMMA-METRICS S.A. (CHILE)",
+        "nameEn": "THERMO GAMMA-METRICS S.A. (CHILE)",
+        "isActive": true,
+        "displayOrder": 14050,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003003",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003004",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "THERMO INSTRUMENTS SYSTEM (Eberline Radiometrie)",
+        "nameEn": "THERMO INSTRUMENTS SYSTEM (Eberline Radiometrie)",
+        "isActive": true,
+        "displayOrder": 14060,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003004",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003005",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Thermo Measure Tech",
+        "nameEn": "Thermo Measure Tech",
+        "isActive": true,
+        "displayOrder": 14070,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003005",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003006",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "THERMO NUTECH",
+        "nameEn": "THERMO NUTECH",
+        "isActive": true,
+        "displayOrder": 14080,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003006",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003007",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "THERMO QUEST S.A.",
+        "nameEn": "THERMO QUEST S.A.",
+        "isActive": true,
+        "displayOrder": 14090,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003007",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003008",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "THERMOQUEST/CE INSTRUMENTS",
+        "nameEn": "THERMOQUEST/CE INSTRUMENTS",
+        "isActive": true,
+        "displayOrder": 14100,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003008",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003009",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "THERMORETEC Corp.",
+        "nameEn": "THERMORETEC Corp.",
+        "isActive": true,
+        "displayOrder": 14110,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003009",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003010",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "THOMAS GRAY AND ASSOCIATES",
+        "nameEn": "THOMAS GRAY AND ASSOCIATES",
+        "isActive": true,
+        "displayOrder": 14120,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003010",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003011",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "THOMPSON CONSULTANTS",
+        "nameEn": "THOMPSON CONSULTANTS",
+        "isActive": true,
+        "displayOrder": 14130,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003011",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003012",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "THORN AUTOMATED SYSTEMS, Inc.",
+        "nameEn": "THORN AUTOMATED SYSTEMS, Inc.",
+        "isActive": true,
+        "displayOrder": 14140,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003012",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003013",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "THORN SECURITY Ltd.",
+        "nameEn": "THORN SECURITY Ltd.",
+        "isActive": true,
+        "displayOrder": 14150,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003013",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003014",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TIECOR, Inc.",
+        "nameEn": "TIECOR, Inc.",
+        "isActive": true,
+        "displayOrder": 14160,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003014",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003015",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Tingle X-Ray Products",
+        "nameEn": "Tingle X-Ray Products",
+        "isActive": true,
+        "displayOrder": 14170,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003015",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003168",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TITAN",
+        "nameEn": "TITAN",
+        "isActive": true,
+        "displayOrder": 14180,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003168",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003016",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TLS SYSTEMS, Inc.",
+        "nameEn": "TLS SYSTEMS, Inc.",
+        "isActive": true,
+        "displayOrder": 14190,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003016",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003017",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TMA/EBERLINE",
+        "nameEn": "TMA/EBERLINE",
+        "isActive": true,
+        "displayOrder": 14200,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003017",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003018",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TN TECHNOLOGIES, Inc.",
+        "nameEn": "TN TECHNOLOGIES, Inc.",
+        "isActive": true,
+        "displayOrder": 14210,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003018",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003019",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Tokyo Engine",
+        "nameEn": "Tokyo Engine",
+        "isActive": true,
+        "displayOrder": 14220,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003019",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003020",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TOKYO HOCHIKI",
+        "nameEn": "TOKYO HOCHIKI",
+        "isActive": true,
+        "displayOrder": 14230,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003020",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003165",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TOMRA",
+        "nameEn": "TOMRA",
+        "isActive": true,
+        "displayOrder": 14240,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003165",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003021",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Toshiba",
+        "nameEn": "Toshiba",
+        "isActive": true,
+        "displayOrder": 14250,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003021",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003022",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Tour",
+        "nameEn": "Tour",
+        "isActive": true,
+        "displayOrder": 14260,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003022",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003023",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TOUZART ET MATIGNON",
+        "nameEn": "TOUZART ET MATIGNON",
+        "isActive": true,
+        "displayOrder": 14270,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003023",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003024",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TRACE ANALYTICAL, Inc.",
+        "nameEn": "TRACE ANALYTICAL, Inc.",
+        "isActive": true,
+        "displayOrder": 14280,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003024",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003025",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TRACERCO TM Nucleonic Instrumentation",
+        "nameEn": "TRACERCO TM Nucleonic Instrumentation",
+        "isActive": true,
+        "displayOrder": 14290,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003025",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003026",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TRACER-FLO INDUSTRIES (Div. OF TRIOTECH, Inc.)",
+        "nameEn": "TRACER-FLO INDUSTRIES (Div. OF TRIOTECH, Inc.)",
+        "isActive": true,
+        "displayOrder": 14300,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003026",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003027",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TRACERLAB GmbH",
+        "nameEn": "TRACERLAB GmbH",
+        "isActive": true,
+        "displayOrder": 14310,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003027",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003028",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TRANS WORLD AIRLINES (TWA), Inc.",
+        "nameEn": "TRANS WORLD AIRLINES (TWA), Inc.",
+        "isActive": true,
+        "displayOrder": 14320,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003028",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003029",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TRANSELEKTRO",
+        "nameEn": "TRANSELEKTRO",
+        "isActive": true,
+        "displayOrder": 14330,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003029",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003030",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Trex",
+        "nameEn": "Trex",
+        "isActive": true,
+        "displayOrder": 14340,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003030",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003031",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TRIJICON, Inc.",
+        "nameEn": "TRIJICON, Inc.",
+        "isActive": true,
+        "displayOrder": 14350,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003031",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003032",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TRILUX TECHNOLOGIES, Inc.",
+        "nameEn": "TRILUX TECHNOLOGIES, Inc.",
+        "isActive": true,
+        "displayOrder": 14360,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003032",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003033",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TRIO-TECH, INTERNATIONAL",
+        "nameEn": "TRIO-TECH, INTERNATIONAL",
+        "isActive": true,
+        "displayOrder": 14370,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003033",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003034",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Trophy",
+        "nameEn": "Trophy",
+        "isActive": true,
+        "displayOrder": 14380,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003034",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003035",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TROXLER ELECTRONIC LABORATORIES, Inc.",
+        "nameEn": "TROXLER ELECTRONIC LABORATORIES, Inc.",
+        "isActive": true,
+        "displayOrder": 14390,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003035",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003037",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TSI, Inc.",
+        "nameEn": "TSI, Inc.",
+        "isActive": true,
+        "displayOrder": 14420,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003037",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003038",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TSIKLOTRON ( 'TSIKLOTRON' Joint Stock Company Limited)",
+        "nameEn": "TSIKLOTRON ( 'TSIKLOTRON' Joint Stock Company Limited)",
+        "isActive": true,
+        "displayOrder": 14430,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003038",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003039",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TUBOSCOPE VETCO INTERNATIONAL Inc.",
+        "nameEn": "TUBOSCOPE VETCO INTERNATIONAL Inc.",
+        "isActive": true,
+        "displayOrder": 14440,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003039",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003040",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TUNDRA, DIVISION OF AECL, Inc.",
+        "nameEn": "TUNDRA, DIVISION OF AECL, Inc.",
+        "isActive": true,
+        "displayOrder": 14450,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003040",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003041",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TUR",
+        "nameEn": "TUR",
+        "isActive": true,
+        "displayOrder": 14460,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003041",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003042",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TWIN CITY TESTING Corp.",
+        "nameEn": "TWIN CITY TESTING Corp.",
+        "isActive": true,
+        "displayOrder": 14470,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003042",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003043",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TXR",
+        "nameEn": "TXR",
+        "isActive": true,
+        "displayOrder": 14480,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003043",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003044",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "TYCO ELECTRONIC PRODUCTS GROUP",
+        "nameEn": "TYCO ELECTRONIC PRODUCTS GROUP",
+        "isActive": true,
+        "displayOrder": 14490,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003044",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003045",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "U.K. HENSCHKE, M.D., Ph.D.",
+        "nameEn": "U.K. HENSCHKE, M.D., Ph.D.",
+        "isActive": true,
+        "displayOrder": 14500,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003045",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003046",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "U.S. DEPARTMENT OF ENERGY",
+        "nameEn": "U.S. DEPARTMENT OF ENERGY",
+        "isActive": true,
+        "displayOrder": 14510,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003046",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003047",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "U.S. DEPARTMENT OF NAVY",
+        "nameEn": "U.S. DEPARTMENT OF NAVY",
+        "isActive": true,
+        "displayOrder": 14520,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003047",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003048",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "U.S. DEPARTMENT OF TRANSPORTATION",
+        "nameEn": "U.S. DEPARTMENT OF TRANSPORTATION",
+        "isActive": true,
+        "displayOrder": 14530,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003048",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003049",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "U.S. NUCLEAR Corp.",
+        "nameEn": "U.S. NUCLEAR Corp.",
+        "isActive": true,
+        "displayOrder": 14540,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003049",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003050",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "U.S. RADIUM Corp.",
+        "nameEn": "U.S. RADIUM Corp.",
+        "isActive": true,
+        "displayOrder": 14550,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003050",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003051",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "UJV",
+        "nameEn": "UJV",
+        "isActive": true,
+        "displayOrder": 14560,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003051",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003052",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "ULTRA ELECTRONICS, Inc.",
+        "nameEn": "ULTRA ELECTRONICS, Inc.",
+        "isActive": true,
+        "displayOrder": 14570,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003052",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003053",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Ultrarays",
+        "nameEn": "Ultrarays",
+        "isActive": true,
+        "displayOrder": 14580,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003053",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003054",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Ultrasort",
+        "nameEn": "Ultrasort",
+        "isActive": true,
+        "displayOrder": 14590,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003054",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003055",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "UNICAM ANALYTICAL SYSTEMS",
+        "nameEn": "UNICAM ANALYTICAL SYSTEMS",
+        "isActive": true,
+        "displayOrder": 14600,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003055",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003056",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "UNICAM NORTH AMERICA",
+        "nameEn": "UNICAM NORTH AMERICA",
+        "isActive": true,
+        "displayOrder": 14610,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003056",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003057",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "UNION MINIERE",
+        "nameEn": "UNION MINIERE",
+        "isActive": true,
+        "displayOrder": 14620,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003057",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003058",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "UNIT PROCESS ASSEMBLIES, Inc.",
+        "nameEn": "UNIT PROCESS ASSEMBLIES, Inc.",
+        "isActive": true,
+        "displayOrder": 14630,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003058",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003059",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "UNITEC, Inc.",
+        "nameEn": "UNITEC, Inc.",
+        "isActive": true,
+        "displayOrder": 14640,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003059",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003060",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "UNITED ENGINEERS",
+        "nameEn": "UNITED ENGINEERS",
+        "isActive": true,
+        "displayOrder": 14650,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003060",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003061",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "UNITED SCIENTIFIC Corp.",
+        "nameEn": "UNITED SCIENTIFIC Corp.",
+        "isActive": true,
+        "displayOrder": 14660,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003061",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003062",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "UNITED TECHNOLOGIES Corp.",
+        "nameEn": "UNITED TECHNOLOGIES Corp.",
+        "isActive": true,
+        "displayOrder": 14670,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003062",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003063",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Universal",
+        "nameEn": "Universal",
+        "isActive": true,
+        "displayOrder": 14680,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003063",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003064",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Universal Imaging INC",
+        "nameEn": "Universal Imaging INC",
+        "isActive": true,
+        "displayOrder": 14690,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003064",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003065",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "UNIVERSAL RADIOISOTOPES, Inc.",
+        "nameEn": "UNIVERSAL RADIOISOTOPES, Inc.",
+        "isActive": true,
+        "displayOrder": 14700,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003065",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003066",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "UNIVERSAL SECURITY INSTRUMENTS, Inc.",
+        "nameEn": "UNIVERSAL SECURITY INSTRUMENTS, Inc.",
+        "isActive": true,
+        "displayOrder": 14710,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003066",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003067",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Universal/Xtek",
+        "nameEn": "Universal/Xtek",
+        "isActive": true,
+        "displayOrder": 14720,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003067",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003068",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "UNIVERSITE DE ROUEN (Lab. d'analyse spectros...)",
+        "nameEn": "UNIVERSITE DE ROUEN (Lab. d'analyse spectros...)",
+        "isActive": true,
+        "displayOrder": 14730,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003068",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000001668",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Unknown or No Data",
+        "nameEn": "Unknown or No Data",
+        "isActive": true,
+        "displayOrder": 14740,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000001668",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003069",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "USTAV PRO VYZKUM VYROBU A VYUZITI RADIOIZOTOPU (UVVVR)",
+        "nameEn": "USTAV PRO VYZKUM VYROBU A VYUZITI RADIOIZOTOPU (UVVVR)",
+        "isActive": true,
+        "displayOrder": 14750,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003069",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003070",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "V. MUELLER & Co.",
+        "nameEn": "V. MUELLER & Co.",
+        "isActive": true,
+        "displayOrder": 14760,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003070",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003071",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "V.G. KHLOPIN RADIUM INSTITUTE",
+        "nameEn": "V.G. KHLOPIN RADIUM INSTITUTE",
+        "isActive": true,
+        "displayOrder": 14770,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003071",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003072",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "VACUUM INSTRUMENT Corp.",
+        "nameEn": "VACUUM INSTRUMENT Corp.",
+        "isActive": true,
+        "displayOrder": 14780,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003072",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003073",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "VALCO INSTRUMENTS Co.",
+        "nameEn": "VALCO INSTRUMENTS Co.",
+        "isActive": true,
+        "displayOrder": 14790,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003073",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003074",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "VALMET AUTOMATION (USA), Inc.",
+        "nameEn": "VALMET AUTOMATION (USA), Inc.",
+        "isActive": true,
+        "displayOrder": 14800,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003074",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003075",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "VALMET AUTOMATION FRANCE",
+        "nameEn": "VALMET AUTOMATION FRANCE",
+        "isActive": true,
+        "displayOrder": 14810,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003075",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003076",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "VALMET AUTOMATION Oy",
+        "nameEn": "VALMET AUTOMATION Oy",
+        "isActive": true,
+        "displayOrder": 14820,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003076",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003077",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Valmt Automation",
+        "nameEn": "Valmt Automation",
+        "isActive": true,
+        "displayOrder": 14830,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003077",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003078",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "VAL-TRON, Inc.",
+        "nameEn": "VAL-TRON, Inc.",
+        "isActive": true,
+        "displayOrder": 14840,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003078",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003079",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Van Gong",
+        "nameEn": "Van Gong",
+        "isActive": true,
+        "displayOrder": 14850,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003079",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003080",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Varian",
+        "nameEn": "Varian",
+        "isActive": true,
+        "displayOrder": 14860,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003080",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003081",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "VARIAN ASSOCIATES, Inc.",
+        "nameEn": "VARIAN ASSOCIATES, Inc.",
+        "isActive": true,
+        "displayOrder": 14870,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003081",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003082",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "VARIAN CANADA Inc.",
+        "nameEn": "VARIAN CANADA Inc.",
+        "isActive": true,
+        "displayOrder": 14880,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003082",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003083",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "VARIAN CHROMATOGRAPHY SYSTEMS",
+        "nameEn": "VARIAN CHROMATOGRAPHY SYSTEMS",
+        "isActive": true,
+        "displayOrder": 14890,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003083",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003084",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "VARIAN MEDICAL SYSTEMS",
+        "nameEn": "VARIAN MEDICAL SYSTEMS",
+        "isActive": true,
+        "displayOrder": 14900,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003084",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003085",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "VARIAN S.A.",
+        "nameEn": "VARIAN S.A.",
+        "isActive": true,
+        "displayOrder": 14910,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003085",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003086",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "VARIAN-TEM Ltd.",
+        "nameEn": "VARIAN-TEM Ltd.",
+        "isActive": true,
+        "displayOrder": 14920,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003086",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003087",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "VEB",
+        "nameEn": "VEB",
+        "isActive": true,
+        "displayOrder": 14930,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003087",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003088",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "VECTRA",
+        "nameEn": "VECTRA",
+        "isActive": true,
+        "displayOrder": 14940,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003088",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003089",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "VEECO INSTRUMENTS S.A.",
+        "nameEn": "VEECO INSTRUMENTS S.A.",
+        "isActive": true,
+        "displayOrder": 14950,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003089",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003090",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "VEECO, Inc.",
+        "nameEn": "VEECO, Inc.",
+        "isActive": true,
+        "displayOrder": 14960,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003090",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003091",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Veenstra Instrumenten",
+        "nameEn": "Veenstra Instrumenten",
+        "isActive": true,
+        "displayOrder": 14970,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003091",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003092",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "VEENSTRA INSTRUMENTEN B V",
+        "nameEn": "VEENSTRA INSTRUMENTEN B V",
+        "isActive": true,
+        "displayOrder": 14980,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003092",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003093",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "VEGA GRIESHABER KG",
+        "nameEn": "VEGA GRIESHABER KG",
+        "isActive": true,
+        "displayOrder": 14990,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003093",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003095",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "VEGA TECHNIQUE, S.A.",
+        "nameEn": "VEGA TECHNIQUE, S.A.",
+        "isActive": true,
+        "displayOrder": 15010,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003095",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003096",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "VENTEK, Inc.",
+        "nameEn": "VENTEK, Inc.",
+        "isActive": true,
+        "displayOrder": 15020,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003096",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003097",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Vet Tek",
+        "nameEn": "Vet Tek",
+        "isActive": true,
+        "displayOrder": 15030,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003097",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003098",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "VIATEC Ltd. (Div. of PLESSY, Inc.)",
+        "nameEn": "VIATEC Ltd. (Div. of PLESSY, Inc.)",
+        "isActive": true,
+        "displayOrder": 15040,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003098",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003099",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "VICON INSTRUMENT Co.",
+        "nameEn": "VICON INSTRUMENT Co.",
+        "isActive": true,
+        "displayOrder": 15050,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003099",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003100",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "VICTOREEN, Inc.",
+        "nameEn": "VICTOREEN, Inc.",
+        "isActive": true,
+        "displayOrder": 15060,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003100",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003101",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "VIGOR, BERGEON BESTFIT, B. JADOW & SONS. Inc.",
+        "nameEn": "VIGOR, BERGEON BESTFIT, B. JADOW & SONS. Inc.",
+        "isActive": true,
+        "displayOrder": 15070,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003101",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003102",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Villa",
+        "nameEn": "Villa",
+        "isActive": true,
+        "displayOrder": 15080,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003102",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003103",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Vista Corp",
+        "nameEn": "Vista Corp",
+        "isActive": true,
+        "displayOrder": 15090,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003103",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003104",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "VITRAX",
+        "nameEn": "VITRAX",
+        "isActive": true,
+        "displayOrder": 15100,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003104",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003105",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Vivid Technologies",
+        "nameEn": "Vivid Technologies",
+        "isActive": true,
+        "displayOrder": 15110,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003105",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003180",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "VJ X-Ray",
+        "nameEn": "VJ X-Ray",
+        "isActive": true,
+        "displayOrder": 15120,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003180",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003106",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "VSW Instruments",
+        "nameEn": "VSW Instruments",
+        "isActive": true,
+        "displayOrder": 15130,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003106",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003107",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "WALLAC Oy",
+        "nameEn": "WALLAC Oy",
+        "isActive": true,
+        "displayOrder": 15140,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003107",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003108",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "WALLAC, Inc.",
+        "nameEn": "WALLAC, Inc.",
+        "isActive": true,
+        "displayOrder": 15150,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003108",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003109",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "WALTER KIDDE & Co., Inc.",
+        "nameEn": "WALTER KIDDE & Co., Inc.",
+        "isActive": true,
+        "displayOrder": 15160,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003109",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003110",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "WALTER KIDDE PORTABLE EQUIPMENT, Inc.",
+        "nameEn": "WALTER KIDDE PORTABLE EQUIPMENT, Inc.",
+        "isActive": true,
+        "displayOrder": 15170,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003110",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003111",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "WARNER-CHILCOTT LABORATORIES",
+        "nameEn": "WARNER-CHILCOTT LABORATORIES",
+        "isActive": true,
+        "displayOrder": 15180,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003111",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003112",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "WARRINGTON LABORATORIES, Inc.",
+        "nameEn": "WARRINGTON LABORATORIES, Inc.",
+        "isActive": true,
+        "displayOrder": 15190,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003112",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003113",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Watson Victor",
+        "nameEn": "Watson Victor",
+        "isActive": true,
+        "displayOrder": 15200,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003113",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003169",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Weatherford International",
+        "nameEn": "Weatherford International",
+        "isActive": true,
+        "displayOrder": 15210,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003169",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003114",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "WEB RESEARCH Co., Inc.",
+        "nameEn": "WEB RESEARCH Co., Inc.",
+        "isActive": true,
+        "displayOrder": 15220,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003114",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003115",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Weber",
+        "nameEn": "Weber",
+        "isActive": true,
+        "displayOrder": 15230,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003115",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003116",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "WEDDING AND ASSOCIATES, Inc.",
+        "nameEn": "WEDDING AND ASSOCIATES, Inc.",
+        "isActive": true,
+        "displayOrder": 15240,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003116",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003117",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "WELL RECONNAISANCE, Inc.",
+        "nameEn": "WELL RECONNAISANCE, Inc.",
+        "isActive": true,
+        "displayOrder": 15250,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003117",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003118",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Western Atlas",
+        "nameEn": "Western Atlas",
+        "isActive": true,
+        "displayOrder": 15260,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003118",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003119",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Westinghouse",
+        "nameEn": "Westinghouse",
+        "isActive": true,
+        "displayOrder": 15270,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003119",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003120",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "WESTINGHOUSE ELECTRIC Corp.",
+        "nameEn": "WESTINGHOUSE ELECTRIC Corp.",
+        "isActive": true,
+        "displayOrder": 15280,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003120",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003121",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "WESTINGHOUSE HANFORD",
+        "nameEn": "WESTINGHOUSE HANFORD",
+        "isActive": true,
+        "displayOrder": 15290,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003121",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003122",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "WESTON/SCHLUMBERGER",
+        "nameEn": "WESTON/SCHLUMBERGER",
+        "isActive": true,
+        "displayOrder": 15300,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003122",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003123",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "WIEGAND EVAPORATORS, Inc.",
+        "nameEn": "WIEGAND EVAPORATORS, Inc.",
+        "isActive": true,
+        "displayOrder": 15310,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003123",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003124",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "WILLISTON ELIN",
+        "nameEn": "WILLISTON ELIN",
+        "isActive": true,
+        "displayOrder": 15320,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003124",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003125",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "WIMPEY LABORATORIES",
+        "nameEn": "WIMPEY LABORATORIES",
+        "isActive": true,
+        "displayOrder": 15330,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003125",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003126",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "WING Corp.",
+        "nameEn": "WING Corp.",
+        "isActive": true,
+        "displayOrder": 15340,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003126",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003127",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "WM. B. WILSON MANUFACTURING. Co.",
+        "nameEn": "WM. B. WILSON MANUFACTURING. Co.",
+        "isActive": true,
+        "displayOrder": 15350,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003127",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003128",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "WULTEX MACHINE Co., Ltd.",
+        "nameEn": "WULTEX MACHINE Co., Ltd.",
+        "isActive": true,
+        "displayOrder": 15360,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003128",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003129",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "WULTEX U.S., Inc.",
+        "nameEn": "WULTEX U.S., Inc.",
+        "isActive": true,
+        "displayOrder": 15370,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003129",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003250",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Xenocs",
+        "nameEn": "Xenocs",
+        "isActive": true,
+        "displayOrder": 15380,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003250",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003130",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "XI'AN SYSTEM SENSOR ELECTRONICS, Ltd.",
+        "nameEn": "XI'AN SYSTEM SENSOR ELECTRONICS, Ltd.",
+        "isActive": true,
+        "displayOrder": 15390,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003130",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003131",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "XiScan",
+        "nameEn": "XiScan",
+        "isActive": true,
+        "displayOrder": 15400,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003131",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003132",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "X-IT",
+        "nameEn": "X-IT",
+        "isActive": true,
+        "displayOrder": 15410,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003132",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003133",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Xmas",
+        "nameEn": "Xmas",
+        "isActive": true,
+        "displayOrder": 15420,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003133",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003134",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "X-MAS. Inc.",
+        "nameEn": "X-MAS. Inc.",
+        "isActive": true,
+        "displayOrder": 15430,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003134",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003135",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "XONTECH, Inc.",
+        "nameEn": "XONTECH, Inc.",
+        "isActive": true,
+        "displayOrder": 15440,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003135",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003221",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "XOS",
+        "nameEn": "XOS",
+        "isActive": true,
+        "displayOrder": 15450,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003221",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003211",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Xradia, Inc.",
+        "nameEn": "Xradia, Inc.",
+        "isActive": true,
+        "displayOrder": 15460,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003211",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003248",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "XRE",
+        "nameEn": "XRE",
+        "isActive": true,
+        "displayOrder": 15470,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003248",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003136",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "XSIRIUS, Inc.",
+        "nameEn": "XSIRIUS, Inc.",
+        "isActive": true,
+        "displayOrder": 15480,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003136",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003247",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Xstrahl",
+        "nameEn": "Xstrahl",
+        "isActive": true,
+        "displayOrder": 15490,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003247",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003137",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "YALE SECURITY Inc.",
+        "nameEn": "YALE SECURITY Inc.",
+        "isActive": true,
+        "displayOrder": 15500,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003137",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003138",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "YOKOGAWA Corp. OF AMERICA",
+        "nameEn": "YOKOGAWA Corp. OF AMERICA",
+        "isActive": true,
+        "displayOrder": 15510,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003138",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003139",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "YOKOGAWA ELECTRIC Corp.",
+        "nameEn": "YOKOGAWA ELECTRIC Corp.",
+        "isActive": true,
+        "displayOrder": 15520,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003139",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003140",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "Yoshida",
+        "nameEn": "Yoshida",
+        "isActive": true,
+        "displayOrder": 15530,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003140",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003141",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "ZDAJ",
+        "nameEn": "ZDAJ",
+        "isActive": true,
+        "displayOrder": 15540,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003141",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003229",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "ZIEHM IMAGING",
+        "nameEn": "ZIEHM IMAGING",
+        "isActive": true,
+        "displayOrder": 15550,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003229",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003142",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "ZIKONIX Corp.",
+        "nameEn": "ZIKONIX Corp.",
+        "isActive": true,
+        "displayOrder": 15560,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003142",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "MANUFACTURER/1000003143",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "ZMA-ZRUP",
+        "nameEn": "ZMA-ZRUP",
+        "isActive": true,
+        "displayOrder": 15570,
+        "externalCodes": [
+          {
+            "providerCode": "LEGACY",
+            "externalCode": "1000003143",
+            "direction": "BOTH"
+          }
+        ]
+      }
+    }
+  ]
+}

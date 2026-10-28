@@ -1,4 +1,11 @@
-import { emptyToNull, fromDate, fromJsonText, toDate, toJsonText } from './form-values';
+import {
+  emptyToNull,
+  fromDate,
+  fromJsonText,
+  toDate,
+  toJsonText,
+  withCurrentValues,
+} from './form-values';
 
 describe('form values', () => {
   it('round-trips ISO dates through local Date objects without shifting the day', () => {
@@ -21,5 +28,16 @@ describe('form values', () => {
     expect(emptyToNull('  ')).toBeNull();
     expect(emptyToNull('x')).toBe('x');
     expect(emptyToNull(0)).toBe(0);
+  });
+
+  it('adds stored values missing from fixed options so they stay selected', () => {
+    const options = [{ value: 'VIEW', label: { ar: 'VIEW', en: 'VIEW' } }];
+    expect(withCurrentValues(options, ['VIEW', 'SOURCES_REVIEW'])?.map((o) => o.value)).toEqual([
+      'VIEW',
+      'SOURCES_REVIEW',
+    ]);
+    expect(withCurrentValues(options, 'VIEW')).toBe(options);
+    expect(withCurrentValues(options, null)).toBe(options);
+    expect(withCurrentValues(undefined, ['X'])).toBeUndefined();
   });
 });

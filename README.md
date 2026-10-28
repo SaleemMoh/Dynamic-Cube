@@ -48,6 +48,7 @@ web/                   Angular workspace: internal, external, field apps + share
 deploy/docker          Dockerfiles, Nginx template, docker-compose.yml
 deploy/keycloak        Realm definitions (internal + external) for development
 deploy/config-packages Ready-made configuration to import as change sets (e.g. the MCI connectors)
+deploy/sample-data     Sample configuration of reference projects (e.g. the radiation registry's lookups, roles, facilities)
 docs/                  Architecture, domain model, ADRs
 ```
 
