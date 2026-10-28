@@ -27,6 +27,11 @@
               {
                 "glob": "**/*",
                 "input": "projects/internal/public"
+              },
+              {
+                "glob": "**/*",
+                "input": "projects/shared/src/assets",
+                "output": "dc"
               }
             ],
             "styles": [
@@ -35,6 +40,7 @@
               "node_modules/@fontsource/ibm-plex-sans-arabic/600.css",
               "node_modules/material-symbols/outlined.css",
               "projects/shared/src/styles/dc-base.scss",
+              "projects/shared/src/styles/dc-dga.scss",
               "projects/internal/src/styles.scss"
             ]
           },
@@ -113,6 +119,11 @@
               {
                 "glob": "**/*",
                 "input": "projects/external/public"
+              },
+              {
+                "glob": "**/*",
+                "input": "projects/shared/src/assets",
+                "output": "dc"
               }
             ],
             "styles": [
@@ -121,6 +132,7 @@
               "node_modules/@fontsource/ibm-plex-sans-arabic/600.css",
               "node_modules/material-symbols/outlined.css",
               "projects/shared/src/styles/dc-base.scss",
+              "projects/shared/src/styles/dc-dga.scss",
               "projects/external/src/styles.scss"
             ]
           },
@@ -199,6 +211,11 @@
               {
                 "glob": "**/*",
                 "input": "projects/field/public"
+              },
+              {
+                "glob": "**/*",
+                "input": "projects/shared/src/assets",
+                "output": "dc"
               }
             ],
             "styles": [
@@ -207,6 +224,7 @@
               "node_modules/@fontsource/ibm-plex-sans-arabic/600.css",
               "node_modules/material-symbols/outlined.css",
               "projects/shared/src/styles/dc-base.scss",
+              "projects/shared/src/styles/dc-dga.scss",
               "projects/field/src/styles.scss"
             ]
           },

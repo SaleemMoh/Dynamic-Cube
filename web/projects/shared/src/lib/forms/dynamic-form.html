@@ -3,68 +3,122 @@
     @if (isVisible(section.code)) {
       <fieldset class="dc-form__section" [attr.data-section]="section.code">
         <legend class="dc-form__legend">{{ section.title | dcLocalize }}</legend>
-
-        @for (field of section.fields; track field.code) {
-          @if (isVisible(field.code)) {
-            <div class="dc-form__field" [class.dc-form__field--wide]="field.type === 'checkbox' || field.type === 'textarea'" [attr.data-field]="field.code">
-              @switch (field.type) {
-                @case ('checkbox') {
-                  <mat-checkbox [id]="field.code" [formControlName]="field.code" [required]="isRequired(field.code)">
-                    {{ field.label | dcLocalize }}
-                  </mat-checkbox>
-                  @if (field.hint) {
-                    <small class="dc-form__hint">{{ field.hint | dcLocalize }}</small>
-                  }
-                  @if (showError(field.code)) {
-                    <mat-error class="dc-form__error">{{ 'form.required' | dcTranslate }}</mat-error>
-                  }
-                }
-                @case ('date') {
-                  <mat-form-field>
-                    <mat-label>{{ field.label | dcLocalize }}</mat-label>
-                    <input matInput [matDatepicker]="picker" [id]="field.code" [formControlName]="field.code" [required]="isRequired(field.code)" />
-                    <mat-datepicker-toggle matIconSuffix [for]="picker" />
-                    <mat-datepicker #picker />
+        <div class="dc-form__grid">
+          @for (field of section.fields; track field.code) {
+            @if (isVisible(field.code)) {
+              <div
+                class="dc-form__field"
+                [class.dc-form__field--wide]="
+                  field.type === 'checkbox' || field.type === 'textarea'
+                "
+                [attr.data-field]="field.code"
+              >
+                @switch (field.type) {
+                  @case ('checkbox') {
+                    <mat-checkbox
+                      [id]="field.code"
+                      [formControlName]="field.code"
+                      [required]="isRequired(field.code)"
+                    >
+                      {{ field.label | dcLocalize }}
+                    </mat-checkbox>
                     @if (field.hint) {
-                      <mat-hint>{{ field.hint | dcLocalize }}</mat-hint>
+                      <small class="dc-form__hint">{{ field.hint | dcLocalize }}</small>
                     }
-                    <mat-error>{{ 'form.required' | dcTranslate }}</mat-error>
-                  </mat-form-field>
+                    @if (showError(field.code)) {
+                      <mat-error class="dc-form__error">{{
+                        'form.required' | dcTranslate
+                      }}</mat-error>
+                    }
+                  }
+                  @case ('date') {
+                    <label class="dc-field-label" [for]="field.code">
+                      {{ field.label | dcLocalize }}
+                      @if (isRequired(field.code)) {
+                        <span class="dc-required" aria-hidden="true">*</span>
+                      }
+                    </label>
+                    <mat-form-field>
+                      <input
+                        matInput
+                        [matDatepicker]="picker"
+                        [id]="field.code"
+                        [formControlName]="field.code"
+                        [required]="isRequired(field.code)"
+                      />
+                      <mat-datepicker-toggle matIconSuffix [for]="picker" />
+                      <mat-datepicker #picker />
+                      @if (field.hint) {
+                        <mat-hint>{{ field.hint | dcLocalize }}</mat-hint>
+                      }
+                      <mat-error>{{ 'form.required' | dcTranslate }}</mat-error>
+                    </mat-form-field>
+                  }
+                  @default {
+                    <label class="dc-field-label" [for]="field.code">
+                      {{ field.label | dcLocalize }}
+                      @if (isRequired(field.code)) {
+                        <span class="dc-required" aria-hidden="true">*</span>
+                      }
+                    </label>
+                    <mat-form-field>
+                      @switch (field.type) {
+                        @case ('textarea') {
+                          <textarea
+                            matInput
+                            [id]="field.code"
+                            [formControlName]="field.code"
+                            rows="3"
+                            [required]="isRequired(field.code)"
+                          ></textarea>
+                        }
+                        @case ('number') {
+                          <input
+                            matInput
+                            type="number"
+                            [id]="field.code"
+                            [formControlName]="field.code"
+                            [required]="isRequired(field.code)"
+                          />
+                        }
+                        @case ('select') {
+                          <mat-select
+                            [id]="field.code"
+                            [formControlName]="field.code"
+                            [required]="isRequired(field.code)"
+                            [multiple]="field.multiple ?? false"
+                          >
+                            @if (!field.multiple && !isRequired(field.code)) {
+                              <mat-option [value]="null">—</mat-option>
+                            }
+                            @for (option of options(field); track option.value) {
+                              <mat-option [value]="option.value">{{
+                                option.label | dcLocalize
+                              }}</mat-option>
+                            }
+                          </mat-select>
+                        }
+                        @default {
+                          <input
+                            matInput
+                            type="text"
+                            [id]="field.code"
+                            [formControlName]="field.code"
+                            [required]="isRequired(field.code)"
+                          />
+                        }
+                      }
+                      @if (field.hint) {
+                        <mat-hint>{{ field.hint | dcLocalize }}</mat-hint>
+                      }
+                      <mat-error>{{ 'form.required' | dcTranslate }}</mat-error>
+                    </mat-form-field>
+                  }
                 }
-                @default {
-                  <mat-form-field>
-                    <mat-label>{{ field.label | dcLocalize }}</mat-label>
-                    @switch (field.type) {
-                      @case ('textarea') {
-                        <textarea matInput [id]="field.code" [formControlName]="field.code" rows="3" [required]="isRequired(field.code)"></textarea>
-                      }
-                      @case ('number') {
-                        <input matInput type="number" [id]="field.code" [formControlName]="field.code" [required]="isRequired(field.code)" />
-                      }
-                      @case ('select') {
-                        <mat-select [id]="field.code" [formControlName]="field.code" [required]="isRequired(field.code)" [multiple]="field.multiple ?? false">
-                          @if (!field.multiple && !isRequired(field.code)) {
-                            <mat-option [value]="null">—</mat-option>
-                          }
-                          @for (option of options(field); track option.value) {
-                            <mat-option [value]="option.value">{{ option.label | dcLocalize }}</mat-option>
-                          }
-                        </mat-select>
-                      }
-                      @default {
-                        <input matInput type="text" [id]="field.code" [formControlName]="field.code" [required]="isRequired(field.code)" />
-                      }
-                    }
-                    @if (field.hint) {
-                      <mat-hint>{{ field.hint | dcLocalize }}</mat-hint>
-                    }
-                    <mat-error>{{ 'form.required' | dcTranslate }}</mat-error>
-                  </mat-form-field>
-                }
-              }
-            </div>
+              </div>
+            }
           }
-        }
+        </div>
       </fieldset>
     }
   }

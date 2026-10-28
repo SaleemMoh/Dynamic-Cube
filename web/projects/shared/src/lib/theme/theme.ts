@@ -1,7 +1,10 @@
 import { Directionality } from '@angular/cdk/bidi';
 import { EnvironmentProviders, makeEnvironmentProviders } from '@angular/core';
 import { provideNativeDateAdapter } from '@angular/material/core';
-import { MAT_FORM_FIELD_DEFAULT_OPTIONS, MatFormFieldDefaultOptions } from '@angular/material/form-field';
+import {
+  MAT_FORM_FIELD_DEFAULT_OPTIONS,
+  MatFormFieldDefaultOptions,
+} from '@angular/material/form-field';
 import { AppDirectionality } from '../i18n/app-directionality';
 
 /**
@@ -14,7 +17,10 @@ export function provideDynamicCubeUi(): EnvironmentProviders {
     { provide: Directionality, useClass: AppDirectionality },
     {
       provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
-      useValue: { appearance: 'outline', subscriptSizing: 'dynamic' } satisfies MatFormFieldDefaultOptions,
+      useValue: {
+        appearance: 'outline',
+        subscriptSizing: 'dynamic',
+      } satisfies MatFormFieldDefaultOptions,
     },
   ]);
 }

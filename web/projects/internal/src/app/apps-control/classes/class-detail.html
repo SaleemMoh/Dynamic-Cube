@@ -1,5 +1,7 @@
 <a matButton routerLink="/apps-control/classes">
-  <mat-icon fontSet="material-symbols-outlined">{{ i18n.direction() === 'rtl' ? 'arrow_forward' : 'arrow_back' }}</mat-icon>
+  <mat-icon fontSet="material-symbols-outlined">{{
+    i18n.direction() === 'rtl' ? 'arrow_forward' : 'arrow_back'
+  }}</mat-icon>
   {{ 'classes.title' | dcTranslate }}
 </a>
 
@@ -8,7 +10,8 @@
     @if (isNew()) {
       {{ 'classes.new' | dcTranslate }}
     } @else if (cls(); as c) {
-      {{ { ar: c.nameAr, en: c.nameEn } | dcLocalize }} <small dir="ltr" class="dc-muted">{{ c.code }}</small>
+      {{ { ar: c.nameAr, en: c.nameEn } | dcLocalize }}
+      <small dir="ltr" class="dc-muted">{{ c.code }}</small>
     }
   </h1>
 </header>
@@ -25,43 +28,87 @@
 }
 
 <mat-card appearance="outlined">
-  <mat-card-header><mat-card-title>{{ 'classes.definition' | dcTranslate }}</mat-card-title></mat-card-header>
+  <mat-card-header
+    ><mat-card-title>{{ 'classes.definition' | dcTranslate }}</mat-card-title></mat-card-header
+  >
   <mat-card-content>
     <form [formGroup]="form" (ngSubmit)="saveClass()" class="dc-class-form" novalidate>
       <div class="dc-grid">
-        <mat-form-field>
-          <mat-label>{{ 'config.code' | dcTranslate }}</mat-label>
-          <input matInput formControlName="code" dir="ltr" data-testid="class-code" />
-          <mat-hint>{{ 'classes.codeHint' | dcTranslate }}</mat-hint>
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>{{ 'config.nameAr' | dcTranslate }}</mat-label>
-          <input matInput formControlName="nameAr" data-testid="class-name-ar" />
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>{{ 'config.nameEn' | dcTranslate }}</mat-label>
-          <input matInput formControlName="nameEn" data-testid="class-name-en" />
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>{{ 'classes.parentClass' | dcTranslate }}</mat-label>
-          <mat-select formControlName="parentClassCode">
-            <mat-option [value]="null">—</mat-option>
-            @for (c of otherClasses(); track c.code) {
-              <mat-option [value]="c.code">{{ { ar: c.nameAr, en: c.nameEn } | dcLocalize }} ({{ c.code }})</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>{{ 'classes.descriptionAr' | dcTranslate }}</mat-label>
-          <input matInput formControlName="descriptionAr" />
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>{{ 'classes.descriptionEn' | dcTranslate }}</mat-label>
-          <input matInput formControlName="descriptionEn" />
-        </mat-form-field>
+        <div class="dc-field">
+          <label class="dc-field-label" for="class-code">{{ 'config.code' | dcTranslate }}</label>
+          <mat-form-field>
+            <input
+              matInput
+              id="class-code"
+              formControlName="code"
+              dir="ltr"
+              data-testid="class-code"
+            />
+            <mat-hint>{{ 'classes.codeHint' | dcTranslate }}</mat-hint>
+          </mat-form-field>
+        </div>
+        <div class="dc-field">
+          <label class="dc-field-label" for="class-nameAr">{{
+            'config.nameAr' | dcTranslate
+          }}</label>
+          <mat-form-field>
+            <input
+              matInput
+              id="class-nameAr"
+              formControlName="nameAr"
+              data-testid="class-name-ar"
+            />
+          </mat-form-field>
+        </div>
+        <div class="dc-field">
+          <label class="dc-field-label" for="class-nameEn">{{
+            'config.nameEn' | dcTranslate
+          }}</label>
+          <mat-form-field>
+            <input
+              matInput
+              id="class-nameEn"
+              formControlName="nameEn"
+              data-testid="class-name-en"
+            />
+          </mat-form-field>
+        </div>
+        <div class="dc-field">
+          <label class="dc-field-label" for="class-parentClassCode">{{
+            'classes.parentClass' | dcTranslate
+          }}</label>
+          <mat-form-field>
+            <mat-select id="class-parentClassCode" formControlName="parentClassCode">
+              <mat-option [value]="null">—</mat-option>
+              @for (c of otherClasses(); track c.code) {
+                <mat-option [value]="c.code"
+                  >{{ { ar: c.nameAr, en: c.nameEn } | dcLocalize }} ({{ c.code }})</mat-option
+                >
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="dc-field">
+          <label class="dc-field-label" for="class-descriptionAr">{{
+            'classes.descriptionAr' | dcTranslate
+          }}</label>
+          <mat-form-field>
+            <input matInput id="class-descriptionAr" formControlName="descriptionAr" />
+          </mat-form-field>
+        </div>
+        <div class="dc-field">
+          <label class="dc-field-label" for="class-descriptionEn">{{
+            'classes.descriptionEn' | dcTranslate
+          }}</label>
+          <mat-form-field>
+            <input matInput id="class-descriptionEn" formControlName="descriptionEn" />
+          </mat-form-field>
+        </div>
       </div>
       <div class="dc-flags">
-        <mat-checkbox formControlName="isHierarchical">{{ 'classes.hierarchical' | dcTranslate }}</mat-checkbox>
+        <mat-checkbox formControlName="isHierarchical">{{
+          'classes.hierarchical' | dcTranslate
+        }}</mat-checkbox>
         <mat-checkbox formControlName="isActive">{{ 'config.active' | dcTranslate }}</mat-checkbox>
       </div>
 
@@ -70,47 +117,104 @@
       <div formArrayName="attributes" class="dc-attributes">
         @for (attribute of attributes.controls; track attribute; let i = $index) {
           <div class="dc-attribute" [formGroupName]="i" [attr.data-attribute]="i">
-            <mat-form-field>
-              <mat-label>{{ 'config.code' | dcTranslate }}</mat-label>
-              <input matInput formControlName="code" dir="ltr" data-testid="attribute-code" />
-            </mat-form-field>
-            <mat-form-field>
-              <mat-label>{{ 'config.nameAr' | dcTranslate }}</mat-label>
-              <input matInput formControlName="nameAr" data-testid="attribute-name-ar" />
-            </mat-form-field>
-            <mat-form-field>
-              <mat-label>{{ 'config.nameEn' | dcTranslate }}</mat-label>
-              <input matInput formControlName="nameEn" data-testid="attribute-name-en" />
-            </mat-form-field>
-            <mat-form-field>
-              <mat-label>{{ 'classes.dataType' | dcTranslate }}</mat-label>
-              <mat-select formControlName="dataType" data-testid="attribute-type">
-                @for (type of dataTypes; track type) {
-                  <mat-option [value]="type">{{ 'dataType.' + type | dcTranslate }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-            @if (attribute.controls.dataType.value === 'DOMAIN_REF') {
+            <div class="dc-field">
+              <label class="dc-field-label" [for]="'attr-code-' + i">{{
+                'config.code' | dcTranslate
+              }}</label>
               <mat-form-field>
-                <mat-label>{{ 'classes.refClass' | dcTranslate }}</mat-label>
-                <mat-select formControlName="refClassCode">
-                  @for (c of otherClasses(); track c.code) {
-                    <mat-option [value]="c.code">{{ c.code }}</mat-option>
+                <input
+                  matInput
+                  [id]="'attr-code-' + i"
+                  formControlName="code"
+                  dir="ltr"
+                  data-testid="attribute-code"
+                />
+              </mat-form-field>
+            </div>
+            <div class="dc-field">
+              <label class="dc-field-label" [for]="'attr-nameAr-' + i">{{
+                'config.nameAr' | dcTranslate
+              }}</label>
+              <mat-form-field>
+                <input
+                  matInput
+                  [id]="'attr-nameAr-' + i"
+                  formControlName="nameAr"
+                  data-testid="attribute-name-ar"
+                />
+              </mat-form-field>
+            </div>
+            <div class="dc-field">
+              <label class="dc-field-label" [for]="'attr-nameEn-' + i">{{
+                'config.nameEn' | dcTranslate
+              }}</label>
+              <mat-form-field>
+                <input
+                  matInput
+                  [id]="'attr-nameEn-' + i"
+                  formControlName="nameEn"
+                  data-testid="attribute-name-en"
+                />
+              </mat-form-field>
+            </div>
+            <div class="dc-field">
+              <label class="dc-field-label" [for]="'attr-dataType-' + i">{{
+                'classes.dataType' | dcTranslate
+              }}</label>
+              <mat-form-field>
+                <mat-select
+                  [id]="'attr-dataType-' + i"
+                  formControlName="dataType"
+                  data-testid="attribute-type"
+                >
+                  @for (type of dataTypes; track type) {
+                    <mat-option [value]="type">{{ 'dataType.' + type | dcTranslate }}</mat-option>
                   }
                 </mat-select>
               </mat-form-field>
+            </div>
+            @if (attribute.controls.dataType.value === 'DOMAIN_REF') {
+              <div class="dc-field">
+                <label class="dc-field-label" [for]="'attr-refClassCode-' + i">{{
+                  'classes.refClass' | dcTranslate
+                }}</label>
+                <mat-form-field>
+                  <mat-select [id]="'attr-refClassCode-' + i" formControlName="refClassCode">
+                    @for (c of otherClasses(); track c.code) {
+                      <mat-option [value]="c.code">{{ c.code }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              </div>
             }
-            <mat-form-field>
-              <mat-label>{{ 'classes.group' | dcTranslate }}</mat-label>
-              <mat-select formControlName="attributeGroup">
-                <mat-option value="ATTRIBUTE">{{ 'classes.groupAttribute' | dcTranslate }}</mat-option>
-                <mat-option value="PARAMETER">{{ 'classes.groupParameter' | dcTranslate }}</mat-option>
-              </mat-select>
-            </mat-form-field>
-            <mat-checkbox formControlName="isRequired" data-testid="attribute-required">{{ 'classes.required' | dcTranslate }}</mat-checkbox>
-            <mat-checkbox formControlName="isReportable">{{ 'classes.reportable' | dcTranslate }}</mat-checkbox>
+            <div class="dc-field">
+              <label class="dc-field-label" [for]="'attr-attributeGroup-' + i">{{
+                'classes.group' | dcTranslate
+              }}</label>
+              <mat-form-field>
+                <mat-select [id]="'attr-attributeGroup-' + i" formControlName="attributeGroup">
+                  <mat-option value="ATTRIBUTE">{{
+                    'classes.groupAttribute' | dcTranslate
+                  }}</mat-option>
+                  <mat-option value="PARAMETER">{{
+                    'classes.groupParameter' | dcTranslate
+                  }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+            <mat-checkbox formControlName="isRequired" data-testid="attribute-required">{{
+              'classes.required' | dcTranslate
+            }}</mat-checkbox>
+            <mat-checkbox formControlName="isReportable">{{
+              'classes.reportable' | dcTranslate
+            }}</mat-checkbox>
             @if (canEdit()) {
-              <button matIconButton type="button" (click)="removeAttribute(i)" [attr.aria-label]="'config.delete' | dcTranslate">
+              <button
+                matIconButton
+                type="button"
+                (click)="removeAttribute(i)"
+                [attr.aria-label]="'config.delete' | dcTranslate"
+              >
                 <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
               </button>
             }
@@ -153,24 +257,39 @@
         </ng-container>
         <ng-container matColumnDef="name">
           <th mat-header-cell *matHeaderCellDef>{{ 'config.name' | dcTranslate }}</th>
-          <td mat-cell *matCellDef="let row">{{ { ar: row.nameAr, en: row.nameEn } | dcLocalize }}</td>
+          <td mat-cell *matCellDef="let row">
+            {{ { ar: row.nameAr, en: row.nameEn } | dcLocalize }}
+          </td>
         </ng-container>
         @for (attribute of cls()?.attributes ?? []; track attribute.code) {
           <ng-container [matColumnDef]="'attr:' + attribute.code">
-            <th mat-header-cell *matHeaderCellDef>{{ attributeLabel('attr:' + attribute.code) | dcLocalize }}</th>
-            <td mat-cell *matCellDef="let row">{{ attributeValue(row, 'attr:' + attribute.code) }}</td>
+            <th mat-header-cell *matHeaderCellDef>
+              {{ attributeLabel('attr:' + attribute.code) | dcLocalize }}
+            </th>
+            <td mat-cell *matCellDef="let row">
+              {{ attributeValue(row, 'attr:' + attribute.code) }}
+            </td>
           </ng-container>
         }
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef></th>
           <td mat-cell *matCellDef="let row" class="dc-table__actions">
             @if (row.owner !== 'SYSTEM' && privileges.can('apps-control.classes', 'EDIT')) {
-              <button matIconButton (click)="editValue(row)" [attr.aria-label]="'config.edit' | dcTranslate" [attr.data-testid]="'edit-value-' + valueCode(row)">
+              <button
+                matIconButton
+                (click)="editValue(row)"
+                [attr.aria-label]="'config.edit' | dcTranslate"
+                [attr.data-testid]="'edit-value-' + valueCode(row)"
+              >
                 <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
               </button>
             }
             @if (row.owner !== 'SYSTEM' && privileges.can('apps-control.classes', 'DELETE')) {
-              <button matIconButton (click)="deleteValue(row)" [attr.aria-label]="'config.delete' | dcTranslate">
+              <button
+                matIconButton
+                (click)="deleteValue(row)"
+                [attr.aria-label]="'config.delete' | dcTranslate"
+              >
                 <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
               </button>
             }

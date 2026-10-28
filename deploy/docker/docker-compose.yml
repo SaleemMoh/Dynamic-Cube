@@ -34,6 +34,7 @@ services:
       KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
     volumes:
       - ../keycloak/realms:/opt/keycloak/data/import:ro
+      - ../keycloak/themes/dynamic-cube:/opt/keycloak/themes/dynamic-cube:ro
     ports:
       - "8080:8080"
 

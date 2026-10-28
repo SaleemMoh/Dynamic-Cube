@@ -16,7 +16,7 @@ mat-card-header {
 .dc-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
-  gap: 0 1rem;
+  gap: 1rem 1.5rem;
 }
 
 .dc-flags {
@@ -34,13 +34,13 @@ mat-card-header {
 .dc-attribute {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 0 0.75rem;
-  padding: 0.75rem 0.75rem 0;
+  align-items: flex-end;
+  gap: 0.75rem;
+  padding: 1rem;
   border: 1px solid var(--mat-sys-outline-variant);
   border-radius: var(--dc-radius);
 
-  mat-form-field {
+  .dc-field {
     flex: 1 1 10rem;
   }
 }

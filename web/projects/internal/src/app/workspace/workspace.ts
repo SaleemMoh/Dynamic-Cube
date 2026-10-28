@@ -34,9 +34,15 @@ import { catchError, of } from 'rxjs';
     .dc-workspace {
       flex: 1;
     }
+    .dc-workspace {
+      background: var(--dga-page);
+    }
     .dc-workspace__nav {
       width: 17rem;
       padding-block: 0.5rem;
+      background: #ffffff;
+      border-inline-end: 1px solid var(--dga-border);
+      --mat-sidenav-container-shape: 0;
     }
     .dc-workspace__home {
       margin-inline: 0.5rem;

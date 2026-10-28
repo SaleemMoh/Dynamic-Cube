@@ -1,34 +1,27 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { ChangeSetStatus, TranslatePipe } from '@dynamic-cube/shared';
 
+const VARIANTS: Record<ChangeSetStatus, string> = {
+  DRAFT: '',
+  SUBMITTED: 'dc-badge--warning',
+  APPROVED: 'dc-badge--info',
+  REJECTED: 'dc-badge--danger',
+  PUBLISHED: 'dc-badge--success',
+};
+
+/** Change-set status as a DGA badge. */
 @Component({
   selector: 'dc-status-chip',
   imports: [TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `<span class="dc-status" [attr.data-status]="status()">{{ 'status.' + status() | dcTranslate }}</span>`,
-  styles: `
-    .dc-status {
-      display: inline-block;
-      padding: 0.125rem 0.625rem;
-      border-radius: 999px;
-      font: var(--mat-sys-label-medium);
-      background: var(--mat-sys-surface-container-high);
-    }
-    [data-status='SUBMITTED'] {
-      background: var(--mat-sys-tertiary-container);
-      color: var(--mat-sys-on-tertiary-container);
-    }
-    [data-status='PUBLISHED'],
-    [data-status='APPROVED'] {
-      background: var(--mat-sys-primary-container);
-      color: var(--mat-sys-on-primary-container);
-    }
-    [data-status='REJECTED'] {
-      background: var(--mat-sys-error-container);
-      color: var(--mat-sys-on-error-container);
-    }
-  `,
+  template: `<span
+    class="dc-badge"
+    [class]="'dc-badge ' + variant()"
+    [attr.data-status]="status()"
+    >{{ 'status.' + status() | dcTranslate }}</span
+  >`,
 })
 export class StatusChip {
   readonly status = input.required<ChangeSetStatus>();
+  protected readonly variant = computed(() => VARIANTS[this.status()]);
 }

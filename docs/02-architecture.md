@@ -173,7 +173,7 @@ kept light — no mediator library, no auto-mapper.
 | PDF | Gotenberg | MIT |
 | Identity | Keycloak | Apache-2.0 |
 | Logs / traces | Serilog, OpenTelemetry | Apache-2.0 |
-| Front-end | Angular 22, Angular Material + CDK | MIT |
+| Front-end | Angular 22, Angular Material + CDK, styled to the DGA design system ([ADR-0016](adr/0016-dga-design-system.md)) | MIT |
 | Icons / font | Material Symbols, IBM Plex Sans Arabic (bundled, no CDN) | Apache-2.0 / OFL |
 | Build tooling | Node.js 24 LTS, Vitest, ESLint | MIT |
 | Workflow canvas | Foblex Flow or ngx-vflow | MIT |

@@ -15,6 +15,13 @@ through the public clients `dynamic-cube-internal-web` (internal system on :4200
 The files in `realms/` are **development seeds**: they are imported by `docker compose` (or
 `kc.sh start-dev --import-realm`) and contain test users and a password-grant client.
 
+## Login theme
+
+`themes/dynamic-cube` gives the login pages the DGA design (IBM Plex Sans Arabic, DGA greens, government bar).
+It extends Keycloak's `keycloak.v2` theme with a stylesheet and a small script only. Docker Compose mounts it;
+on servers, copy the folder into Keycloak's `themes/` directory. The realms select it with
+`"loginTheme": "dynamic-cube"`; for an existing realm set it in *Realm settings → Themes*.
+
 ## Development users
 
 Password for all: `Dev@12345`

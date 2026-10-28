@@ -123,6 +123,6 @@ cd web && npm test && npm run lint
 
 ## Technology (summary)
 
-.NET 10 (ASP.NET Core) · Angular 22 + Angular Material · PostgreSQL · Keycloak · Quartz.NET ·
+.NET 10 (ASP.NET Core) · Angular 22 + Angular Material in the DGA design system · PostgreSQL · Keycloak · Quartz.NET ·
 Gotenberg (HTML→PDF) · Docker / Helm / N-tier. Permissive open-source licenses only
 (see [ADR-0006](docs/adr/0006-permissive-licenses-only.md)).

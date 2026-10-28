@@ -1,0 +1,207 @@
+/* DGA design for Keycloak login pages: IBM Plex Sans Arabic, DGA greens, 4px controls, 16px card,
+   green panel beside the form on wide screens, government bar on top. */
+
+@font-face { font-family: 'IBM Plex Sans Arabic'; font-weight: 400; font-display: swap; src: url('../fonts/ibm-plex-sans-arabic-arabic-400-normal.woff2') format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC; }
+@font-face { font-family: 'IBM Plex Sans Arabic'; font-weight: 500; font-display: swap; src: url('../fonts/ibm-plex-sans-arabic-arabic-500-normal.woff2') format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC; }
+@font-face { font-family: 'IBM Plex Sans Arabic'; font-weight: 600; font-display: swap; src: url('../fonts/ibm-plex-sans-arabic-arabic-600-normal.woff2') format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC; }
+@font-face { font-family: 'IBM Plex Sans Arabic'; font-weight: 700; font-display: swap; src: url('../fonts/ibm-plex-sans-arabic-arabic-700-normal.woff2') format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC; }
+@font-face { font-family: 'IBM Plex Sans Arabic'; font-weight: 400; font-display: swap; src: url('../fonts/ibm-plex-sans-arabic-latin-400-normal.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'IBM Plex Sans Arabic'; font-weight: 500; font-display: swap; src: url('../fonts/ibm-plex-sans-arabic-latin-500-normal.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'IBM Plex Sans Arabic'; font-weight: 600; font-display: swap; src: url('../fonts/ibm-plex-sans-arabic-latin-600-normal.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'IBM Plex Sans Arabic'; font-weight: 700; font-display: swap; src: url('../fonts/ibm-plex-sans-arabic-latin-700-normal.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+
+:root {
+  --dga-green-950: #074d31;
+  --dga-green-800: #166a45;
+  --dga-green-700: #1b8354;
+  --dga-text: #161616;
+  --dga-text-3: #384250;
+  --dga-border: #d2d6db;
+  --dga-input-border: #9da4ae;
+
+  --pf-v5-global--FontFamily--text: 'IBM Plex Sans Arabic', system-ui, -apple-system, 'Segoe UI', Tahoma, Arial, sans-serif;
+  --pf-v5-global--FontFamily--heading: var(--pf-v5-global--FontFamily--text);
+  --pf-v5-global--FontFamily--redhatfont--text: var(--pf-v5-global--FontFamily--text);
+  --pf-v5-global--FontFamily--redhatfont--heading: var(--pf-v5-global--FontFamily--text);
+  --pf-v5-global--primary-color--100: var(--dga-green-700);
+  --pf-v5-global--primary-color--200: var(--dga-green-800);
+  --pf-v5-global--link--Color: var(--dga-green-700);
+  --pf-v5-global--link--Color--hover: var(--dga-green-950);
+  --pf-v5-global--BorderRadius--sm: 4px;
+  --keycloak-card-top-color: transparent;
+}
+
+html,
+body,
+input,
+select,
+button {
+  font-family: var(--pf-v5-global--FontFamily--text);
+}
+
+.login-pf body {
+  background: #f8f9fa;
+  color: var(--dga-text);
+}
+
+/* Government bar (inserted by js/gov-bar.js). */
+.dc-gov-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding-inline: 24px;
+  background: #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 13px;
+  color: #1f2a37;
+}
+
+.dc-gov-bar img {
+  border-radius: 2px;
+}
+
+/* Layout: on wide screens a DGA green panel at the reading start, the form on the other side. */
+.pf-v5-c-login {
+  min-height: calc(100vh - 35px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  padding: 0;
+}
+
+.pf-v5-c-login::before {
+  content: '';
+  align-self: stretch;
+  background: linear-gradient(160deg, var(--dga-green-700) 0%, var(--dga-green-950) 100%);
+}
+
+.pf-v5-c-login__container {
+  grid-template-columns: minmax(0, 30rem);
+  justify-content: center;
+  padding: 40px 24px;
+}
+
+#kc-header {
+  margin-bottom: 24px;
+}
+
+#kc-header,
+#kc-header-wrapper {
+  --pf-v5-c-login__header--Color: var(--dga-text);
+  --pf-v5-c-brand--Color: var(--dga-text);
+  color: var(--dga-text) !important;
+  text-shadow: none;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 32px;
+  text-align: center;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* Card: 16px corners, light border, no shadow. */
+.pf-v5-c-login__main {
+  padding: 40px;
+  background: #ffffff;
+  border: 1px solid var(--dga-border);
+  border-radius: 16px;
+  box-shadow: none;
+}
+
+.pf-v5-c-login__main-header {
+  border-top: 0;
+  padding: 0 0 24px;
+}
+
+.pf-v5-c-login__main-body,
+.pf-v5-c-login__main-footer {
+  padding-inline: 0;
+}
+
+.pf-v5-c-title,
+#kc-page-title {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 32px;
+  color: var(--dga-text);
+}
+
+.pf-v5-c-form__label-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--dga-text);
+}
+
+/* Inputs: 40px, 1px grey border, 4px corners, green focus ring. */
+.pf-v5-c-form-control {
+  --pf-v5-c-form-control--BorderRadius: 4px;
+  --pf-v5-c-form-control--after--BorderBottomWidth: 0;
+  min-height: 40px;
+  border: 1px solid var(--dga-input-border);
+  border-radius: 4px;
+  background: #ffffff;
+}
+
+.pf-v5-c-form-control::before,
+.pf-v5-c-form-control::after {
+  border: 0 !important;
+}
+
+.pf-v5-c-form-control:focus-within {
+  border-color: var(--dga-green-700);
+  box-shadow: 0 0 0 2px rgba(27, 131, 84, 0.2);
+}
+
+.pf-v5-c-form-control > input,
+.pf-v5-c-form-control > select {
+  font-size: 16px;
+  color: var(--dga-text);
+}
+
+/* Buttons: 40px, 4px corners, DGA green. */
+.pf-v5-c-button {
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.pf-v5-c-button.pf-m-primary {
+  --pf-v5-c-button--m-primary--BackgroundColor: var(--dga-green-700);
+  --pf-v5-c-button--m-primary--hover--BackgroundColor: var(--dga-green-800);
+  --pf-v5-c-button--m-primary--focus--BackgroundColor: var(--dga-green-800);
+  --pf-v5-c-button--m-primary--active--BackgroundColor: var(--dga-green-950);
+  min-height: 40px;
+  font-size: 16px;
+}
+
+.pf-v5-c-input-group__item .pf-v5-c-button.pf-m-control {
+  border: 1px solid var(--dga-input-border);
+  border-radius: 4px;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--dga-green-700);
+  outline-offset: 2px;
+}
+
+.pf-v5-c-alert.pf-m-danger {
+  border-radius: 4px;
+  background: #fef3f2;
+}
+
+@media (max-width: 900px) {
+  .pf-v5-c-login {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pf-v5-c-login::before {
+    display: none;
+  }
+
+  .pf-v5-c-login__main {
+    padding: 32px 24px;
+  }
+}

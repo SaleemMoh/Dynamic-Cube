@@ -123,5 +123,6 @@
         }
       ]
     }
-  ]
+  ],
+  "loginTheme": "dynamic-cube"
 }
