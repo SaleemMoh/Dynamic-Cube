@@ -24,3 +24,61 @@ body {
 .material-symbols-outlined {
   font-size: 1.25rem;
 }
+
+/* Page building blocks shared by admin screens. */
+.dc-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+
+  h1 {
+    margin: 0.5rem 0;
+    font: var(--mat-sys-headline-small);
+  }
+}
+
+.dc-muted {
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
+}
+
+.dc-empty {
+  padding: 2rem;
+  text-align: center;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.dc-errors {
+  margin: 0.5rem 0;
+  padding: 0.75rem 1rem 0.75rem 2rem;
+  border-radius: var(--dc-radius);
+  background: var(--mat-sys-error-container);
+  color: var(--mat-sys-on-error-container);
+}
+
+.dc-note {
+  padding: 0.75rem 1rem;
+  border-radius: var(--dc-radius);
+  background: var(--mat-sys-surface-container);
+}
+
+.dc-table {
+  width: 100%;
+}
+
+.dc-table__actions {
+  text-align: end;
+  white-space: nowrap;
+}
+
+.dc-link {
+  color: var(--mat-sys-primary);
+  font-weight: 500;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}

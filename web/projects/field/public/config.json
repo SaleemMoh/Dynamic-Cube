@@ -1,0 +1,9 @@
+{
+  "app": "FIELD",
+  "auth": {
+    "authority": "http://localhost:8080/realms/dynamic-cube-internal",
+    "clientId": "dynamic-cube-internal-web",
+    "scope": "openid profile email",
+    "required": true
+  }
+}

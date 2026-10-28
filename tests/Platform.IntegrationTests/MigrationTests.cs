@@ -34,6 +34,7 @@ public sealed class MigrationTests(PostgresFixture database)
             "cfg.change_items",
             "cfg.change_sets",
             "platform.__ef_migrations_history",
+            "platform.data_protection_keys",
             "platform.outbox_messages",
         ]);
     }

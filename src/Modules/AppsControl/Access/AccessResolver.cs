@@ -26,6 +26,10 @@ public sealed partial class AccessResolver(
     TimeProvider timeProvider,
     ILogger<AccessResolver> logger)
 {
+    // A page fires several API calls at once; resolving one user at a time per process avoids duplicate work and
+    // racing account creation on the first sign-in.
+    private static readonly SemaphoreSlim BuildLock = new(1, 1);
+
     private AccessSnapshot? _current;
 
     public async Task<AccessSnapshot> GetAsync(CancellationToken cancellationToken)
@@ -46,9 +50,22 @@ public sealed partial class AccessResolver(
             return _current = cached;
         }
 
-        var snapshot = await BuildAsync(cancellationToken);
-        cache.Set(key, snapshot, TimeSpan.FromSeconds(Math.Max(1, options.Value.AccessCacheSeconds)));
-        return _current = snapshot;
+        await BuildLock.WaitAsync(cancellationToken);
+        try
+        {
+            if (cache.TryGetValue(key, out cached) && cached is not null)
+            {
+                return _current = cached;
+            }
+
+            var snapshot = await BuildAsync(cancellationToken);
+            cache.Set(key, snapshot, TimeSpan.FromSeconds(Math.Max(1, options.Value.AccessCacheSeconds)));
+            return _current = snapshot;
+        }
+        finally
+        {
+            BuildLock.Release();
+        }
     }
 
     private async Task<AccessSnapshot> BuildAsync(CancellationToken cancellationToken)

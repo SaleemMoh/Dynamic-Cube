@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -9,7 +9,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { JsonValue, jsonLogic } from '../expressions/jsonlogic';
 import { LocalizePipe, TranslatePipe } from '../i18n/translate.pipe';
-import { FormField, FormSchema } from './form-schema';
+import { FormField, FormOption, FormSchema } from './form-schema';
+import { LOV_SOURCE } from './lov-source';
 
 export type FormValue = Record<string, unknown>;
 
@@ -39,21 +40,37 @@ export class DynamicForm {
   readonly schema = input.required<FormSchema>();
   readonly initialValue = input<FormValue>({});
   readonly submitLabel = input<string | undefined>(undefined);
+  /** Shows a secondary cancel button that emits {@link cancelled}. */
+  readonly cancellable = input(false);
   readonly submitted = output<FormValue>();
+  readonly cancelled = output<void>();
 
   /** The reactive form built from the schema; rebuilt when the schema changes. */
   readonly formGroup = computed(() => this.buildGroup(this.schema(), this.initialValue()));
 
   private readonly visibleCodes = signal<ReadonlySet<string>>(new Set());
   private readonly requiredCodes = signal<ReadonlySet<string>>(new Set());
+  private readonly lovOptions = signal<Readonly<Record<string, FormOption[]>>>({});
+  private readonly lovSource = inject(LOV_SOURCE, { optional: true });
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly lovParents = new Map<string, string | null>();
 
   constructor() {
     effect((onCleanup) => {
       const group = this.formGroup();
+      this.lovParents.clear();
       this.applyRules(group);
-      const subscription = group.valueChanges.subscribe(() => this.applyRules(group));
+      this.loadLovOptions(group);
+      const subscription = group.valueChanges.subscribe(() => {
+        this.applyRules(group);
+        this.loadLovOptions(group);
+      });
       onCleanup(() => subscription.unsubscribe());
     });
+  }
+
+  protected options(field: FormField): FormOption[] {
+    return field.lov ? (this.lovOptions()[field.code] ?? []) : (field.options ?? []);
   }
 
   protected isVisible(code: string): boolean {
@@ -74,12 +91,57 @@ export class DynamicForm {
     return control.invalid && (control.touched || control.dirty);
   }
 
+  protected cancel(): void {
+    this.cancelled.emit();
+  }
+
   protected submit(): void {
     const group = this.formGroup();
     group.markAllAsTouched();
     if (group.valid) {
-      // Disabled (hidden) controls are excluded from `value`.
-      this.submitted.emit(group.value as FormValue);
+      // Disabled (hidden) controls are excluded; read-only fields are disabled too but still submitted.
+      const value = group.value as FormValue;
+      for (const field of this.allFields()) {
+        if (field.readonly && this.isVisible(field.code)) {
+          value[field.code] = group.controls[field.code].getRawValue();
+        }
+      }
+      this.submitted.emit(value);
+    }
+  }
+
+  private allFields(): FormField[] {
+    return this.schema().sections.flatMap((section) => section.fields);
+  }
+
+  /** Loads LOV options for visible LOV fields whose parent value changed (or that were never loaded). */
+  private loadLovOptions(group: FormGroup): void {
+    if (!this.lovSource) {
+      return;
+    }
+    for (const field of this.allFields()) {
+      if (!field.lov || !this.isVisible(field.code)) {
+        continue;
+      }
+      const parentValue = field.lovParentField ? ((group.controls[field.lovParentField]?.value as string | null) ?? null) : null;
+      if (this.lovParents.has(field.code) && this.lovParents.get(field.code) === parentValue) {
+        continue;
+      }
+      const firstLoad = !this.lovParents.has(field.code);
+      this.lovParents.set(field.code, parentValue);
+      if (field.lovParentField && !firstLoad) {
+        // The parent changed: the previous choice may not belong to the new parent.
+        group.controls[field.code].setValue(field.multiple ? [] : null, { emitEvent: false });
+      }
+      if (field.lovParentField && parentValue === null) {
+        this.lovOptions.update((all) => ({ ...all, [field.code]: [] }));
+        continue;
+      }
+      const subscription = this.lovSource.options(field.lov, parentValue).subscribe({
+        next: (options) => this.lovOptions.update((all) => ({ ...all, [field.code]: options })),
+        error: () => this.lovOptions.update((all) => ({ ...all, [field.code]: [] })),
+      });
+      this.destroyRef.onDestroy(() => subscription.unsubscribe());
     }
   }
 
@@ -116,9 +178,10 @@ export class DynamicForm {
         }
 
         const control = group.controls[field.code];
-        if (fieldVisible && control.disabled) {
+        const enabled = fieldVisible && !field.readonly;
+        if (enabled && control.disabled) {
           control.enable({ emitEvent: false });
-        } else if (!fieldVisible && control.enabled) {
+        } else if (!enabled && control.enabled) {
           control.disable({ emitEvent: false });
         }
         const validators: ValidatorFn[] = fieldRequired ? [field.type === 'checkbox' ? Validators.requiredTrue : Validators.required] : [];
@@ -134,5 +197,8 @@ export class DynamicForm {
 }
 
 function defaultValue(field: FormField): unknown {
-  return field.type === 'checkbox' ? false : null;
+  if (field.type === 'checkbox') {
+    return false;
+  }
+  return field.multiple ? [] : null;
 }

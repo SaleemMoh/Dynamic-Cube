@@ -6,13 +6,14 @@ import { SHARED_TRANSLATIONS, TranslationDictionary } from './translations';
 const STORAGE_KEY = 'dc.language';
 
 /**
- * Current language and direction. Keeps <html lang/dir> in sync so PrimeNG and CSS logical properties
+ * Current language and direction. Keeps <html lang/dir> in sync so Angular Material and CSS logical properties
  * flip between RTL (Arabic, default) and LTR (English).
  */
 @Injectable({ providedIn: 'root' })
 export class I18nService {
   private readonly document = inject(DOCUMENT);
   private readonly dictionaries = signal<TranslationDictionary[]>([SHARED_TRANSLATIONS]);
+  private readonly overrides = signal<TranslationDictionary>({ ar: {}, en: {} });
 
   readonly language = signal<Language>(this.readStoredLanguage());
   readonly direction = computed(() => directionOf(this.language()));
@@ -44,9 +45,18 @@ export class I18nService {
     this.dictionaries.update((list) => [...list, dictionary]);
   }
 
+  /** UI texts configured in Apps Control; they win over every built-in dictionary. */
+  setOverrides(dictionary: TranslationDictionary): void {
+    this.overrides.set(dictionary);
+  }
+
   /** Translates a key; returns the key itself when missing so gaps are visible. */
   translate(key: string): string {
     const language = this.language();
+    const override = this.overrides()[language][key];
+    if (override !== undefined) {
+      return override;
+    }
     const list = this.dictionaries();
     for (let i = list.length - 1; i >= 0; i--) {
       const value = list[i][language][key];

@@ -1,4 +1,4 @@
-# Rendered by the Nginx image's envsubst step: only ${API_UPSTREAM} is replaced.
+# Rendered by the Nginx image's envsubst step: ${API_UPSTREAM}, ${APP_CODE} and ${AUTH_*} are replaced.
 server {
     listen 8080;
     server_name _;
@@ -25,6 +25,13 @@ server {
 
     location /health/ {
         proxy_pass ${API_UPSTREAM};
+    }
+
+    # Runtime configuration of the SPA (one image for every environment).
+    location = /config.json {
+        default_type application/json;
+        expires -1;
+        return 200 '{"app":"${APP_CODE}","auth":{"authority":"${AUTH_AUTHORITY}","clientId":"${AUTH_CLIENT_ID}","scope":"openid profile email","required":${AUTH_REQUIRED}}}';
     }
 
     # Hashed bundles can be cached for a long time; index.html never.

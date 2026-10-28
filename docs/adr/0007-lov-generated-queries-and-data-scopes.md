@@ -22,3 +22,16 @@ external host), and grants only filtered dropdowns.
 - Same concept as today, enforced consistently on the server.
 - Rule-based grants remove per-user maintenance (e.g. "own region").
 - Complex legacy SQL LOVs must be rewritten as views in the `lov` schema.
+
+## Refinement (Phase 1a implementation)
+- Every grant **resolves to a value set** for the signed-in user — "all values" or an explicit
+  list. A `RULE` is JSONLogic over the user context that *returns* the granted value(s) (a value,
+  an array, `true` for all, `false`/null for none), e.g. `{"var": "user.orgUnitAttributes.REGION"}`.
+  The resulting predicate is always `value IN (…)`, so one mechanism works for class, data-object
+  and SQL sources, in memory and in SQL.
+- Per role, a screen-specific grant replaces the global one; results are unioned across roles.
+  Users with no grant on an LOV see all values unless the LOV is marked **requires grant**.
+- LOVs are served on the external host only when marked **public**.
+- Restricted SQL runs on a separate read-only connection (`AppsControl:LovSqlConnectionString`)
+  in a read-only transaction with a statement timeout; it is disabled when that setting is empty,
+  and editing SQL LOVs needs `EDIT` on `apps-control.lov-sql`.

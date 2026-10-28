@@ -1,0 +1,56 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+mat-card-content {
+  padding-top: 1rem;
+}
+
+mat-card-header {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 0 1rem;
+}
+
+.dc-flags {
+  display: flex;
+  gap: 1.5rem;
+  margin-block: 0.5rem 1rem;
+}
+
+.dc-attributes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dc-attribute {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 0.75rem;
+  padding: 0.75rem 0.75rem 0;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--dc-radius);
+
+  mat-form-field {
+    flex: 1 1 10rem;
+  }
+}
+
+.dc-actions {
+  display: flex;
+  align-items: center;
+  margin-block-start: 1rem;
+}
+
+.dc-spacer {
+  flex: 1;
+}

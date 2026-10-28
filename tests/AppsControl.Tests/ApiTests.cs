@@ -118,6 +118,32 @@ public sealed class ApiTests(AppsControlFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Change_sets_can_be_filtered_by_upper_case_status()
+    {
+        fixture.RequireConnectionString();
+        using var maker = Client("maker");
+
+        var ok = await maker.GetAsync(new Uri("/api/apps-control/v1/change-sets?status=DRAFT&mine=true", UriKind.Relative), TestContext.Current.CancellationToken);
+        var bad = await maker.GetAsync(new Uri("/api/apps-control/v1/change-sets?status=NOPE", UriKind.Relative), TestContext.Current.CancellationToken);
+
+        ok.StatusCode.ShouldBe(HttpStatusCode.OK);
+        bad.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Concurrent_first_requests_create_one_account()
+    {
+        fixture.RequireConnectionString();
+        var userName = Harness.Unique("burst").ToLowerInvariant();
+        using var client = Client(userName);
+
+        var responses = await Task.WhenAll(Enumerable.Range(0, 6).Select(_ =>
+            client.GetAsync(new Uri("/api/apps-control/v1/me", UriKind.Relative), TestContext.Current.CancellationToken)));
+
+        responses.ShouldAllBe(r => r.StatusCode == HttpStatusCode.OK);
+    }
+
+    [Fact]
     public async Task Checker_cannot_draft_changes()
     {
         fixture.RequireConnectionString();

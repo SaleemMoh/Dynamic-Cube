@@ -218,7 +218,7 @@ definitions.
 | `resource_id` | Null = global; set = per-screen override |
 | `grant_type` | `ALL` · `VALUES` · `RULE` · `NONE` |
 | `granted_values` | text[] when `VALUES` |
-| `rule` | JSONLogic over user context when `RULE`, e.g. `value = user.region` or `org_unit_path <@ user.org_unit_paths` |
+| `rule` | JSONLogic over the user context when `RULE`, **returning the granted value(s)**, e.g. `{"var": "user.orgUnitAttributes.REGION"}` |
 | `default_value` | |
 
 A user's effective grant on an LOV = union of their roles' grants (screen override first, then
@@ -271,3 +271,55 @@ Used in-process by Dynamic Cube apps today; designed as a **versioned REST contr
 
 Authentication via Keycloak tokens; authorization decisions are made server-side so tokens stay
 small.
+
+## 4.13 Implementation notes (Phase 1a)
+
+What the first slice actually built, and the rules it follows.
+
+**Editing.** Every change goes through a change set. A change item is `entity type + entity code +
+operation + payload`; payloads refer to other rows **by code**, so change sets can be exported and
+replayed in another environment. Composite keys: domain values `CLASS/CODE`, app-scoped settings and
+UI texts `APP/KEY`. Items are validated when added (references may point to rows created by earlier
+items of the same draft) and again when published; each item is saved in order inside one
+transaction, so a failing item rolls the whole change set back.
+
+| Area (maker-checker policy) | Entity types | Guarding resource |
+|---|---|---|
+| `apps.system` | installation, entity, app | `apps-control.installation` |
+| `apps.organization` | org unit type, org unit, position | `apps-control.organization` |
+| `apps.security` | user (with assignments and roles), role (with privileges and grants), resource | `apps-control.users` / `.roles` / `.resources` |
+| `apps.menus` | menu group, menu | `apps-control.menus` |
+| `apps.lookups` | class (with attribute definitions), domain (with external codes) | `apps-control.classes` |
+| `apps.lovs` | data object (with data-scope bindings), LOV (with screen bindings) | `apps-control.lovs` (+ `apps-control.lov-sql` for SQL) |
+| `apps.settings` / `apps.ui-texts` | setting / UI text | `apps-control.settings` / `.ui-texts` |
+
+Adding an item needs `CREATE`/`EDIT`/`DELETE` on the guarding resource and `CREATE` on
+`apps-control.change-sets`; approving needs `APPROVE` there and a different user than the maker.
+Approval publishes immediately; areas configured without approval (`ChangeSets:Areas`, UI texts by
+default) publish on submit.
+
+**Ownership.** `SYSTEM` rows (apps, Apps Control resources and menus, the `SYSTEM_ADMIN`,
+`CONFIG_MAKER` and `CONFIG_CHECKER` roles, class `ENTITY_KIND`, position `MANAGER`) are inserted and
+refreshed by the migrator on every upgrade and are read-only in change sets. Entities may add their
+own values to a SYSTEM class.
+
+**Typed attributes.** Domain attribute values (JSONB) are validated against the class's definitions
+(type, required, `min`/`max`/`maxLength`/`pattern`, referenced class). Changing a definition is
+refused while existing values would not fit; removing one removes its values. `apps.v_class_<code>`
+is regenerated on publish with one typed column per reportable attribute.
+
+**Users and access.** Accounts are created on first sign-in (or linked by username when an
+administrator created them beforehand). `AppsControl:BootstrapUsers` maps usernames to roles that
+are added at sign-in — used for the first administrator. Privileges, menu and user context are
+cached per user for `AppsControl:AccessCacheSeconds` (60 s) and invalidated on publish.
+
+**User context** available to grant rules and SQL LOVs: `user.id`, `user.username`, `user.roles`,
+`user.positions`, `user.orgUnits`, `user.orgUnit` (primary), `user.orgUnitAttributes` (attributes
+of the primary unit), `user.subtreeOrgUnits` (assigned units and everything below), `app`.
+
+**Front end.** The internal system builds its side menu from `me/menu`; Apps Control screens are
+generated from field definitions (`web/projects/internal/src/app/apps-control/config`) and render
+with the shared `DynamicForm`. The domain value form is generated from the class's attribute
+definitions. Nested lists (privileges, grants, assignments, LOV bindings) are edited as JSON until
+the visual builders of Phase 3. Form fields can reference an LOV (`lov`, `lovParentField` for
+cascading lists); options come from `lovs/{code}/values`, already filtered by the user's grants.

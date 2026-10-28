@@ -10,9 +10,11 @@ Kubernetes or on classic N-tier servers.
 
 ## Status
 
-**Phase 0 (foundations) is in place**: solution layout, platform kernel, API hosts, worker, migrator,
-Angular workspace, Keycloak realms, container images, Docker Compose and CI. See the
-[roadmap](docs/07-roadmap.md) for what comes next.
+**Phase 0 (foundations)** and **Phase 1a (Apps Control + sign-in)** are in place: platform kernel, API hosts,
+worker, migrator, Angular workspace, Keycloak realms, containers and CI, plus the Apps Control module (org
+structure, users, roles and privileges, menus, Class/Domain with typed attributes, LOVs with grants and data
+scopes, settings, UI texts — all edited through maker-checker change sets) and its screens in the internal
+system. See the [roadmap](docs/07-roadmap.md) for what comes next.
 
 ## Repository layout
 
@@ -21,12 +23,14 @@ src/
   Hosts/Internal.Api   Internal API (employees, builders, Apps Control) — internal network only
   Hosts/External.Api   External API (applicants) — internet-facing
   Hosts/Worker         Outbox delivery, notifications, integrations, timers
+  Modules/AppsControl  Configuration & user management (schema apps): API, change appliers, LOV engine, access
   Shared/Platform      Kernel: persistence base, audit, outbox, change sets, files, JSONLogic, i18n
   Shared/Hosting       Shared host setup: logging, telemetry, health, Keycloak JWT
   Tools/Migrator       Applies database migrations (run before upgrades)
 tests/
   Platform.Tests       Unit tests
   Platform.IntegrationTests  PostgreSQL integration tests
+  AppsControl.Tests    Apps Control integration and API tests (PostgreSQL)
   Hosts.Tests          API host smoke tests
   shared/              Cases shared by the .NET and Angular JSONLogic evaluators
 web/                   Angular workspace: internal, external, field apps + shared library
@@ -74,7 +78,12 @@ npm run start:external                              # http://localhost:4201 (pro
 ```
 
 Keycloak for development: import `deploy/keycloak/realms/*.json` (see
-[deploy/keycloak/README.md](deploy/keycloak/README.md) for users and production notes).
+[deploy/keycloak/README.md](deploy/keycloak/README.md) for users and production notes). Sign in to the internal
+system as `maker` to draft configuration changes and as `checker` to approve them (password `Dev@12345`);
+`admin` holds every Apps Control privilege.
+
+The SPAs read their identity-provider settings from `/config.json` (`web/projects/*/public/config.json` in
+development; generated from `APP_CODE`, `AUTH_AUTHORITY`, `AUTH_CLIENT_ID`, `AUTH_REQUIRED` in the web image).
 
 ### Tests
 

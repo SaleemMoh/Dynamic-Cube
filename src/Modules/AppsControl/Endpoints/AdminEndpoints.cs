@@ -96,12 +96,18 @@ internal static class AdminEndpoints
 
     private static void MapChangeSets(RouteGroupBuilder sets)
     {
-        sets.MapGet("/", async (ChangeSetStatus? status, string? area, bool? mine, AppsControlDbContext db, ICurrentUser user, CancellationToken ct) =>
+        sets.MapGet("/", async (string? status, string? area, bool? mine, AppsControlDbContext db, ICurrentUser user, CancellationToken ct) =>
         {
             var query = db.ChangeSets.AsNoTracking().Where(c => c.Area.StartsWith("apps."));
             if (status is not null)
             {
-                query = query.Where(c => c.Status == status);
+                // Statuses are written UPPER_SNAKE in the API (e.g. SUBMITTED).
+                if (!Enum.TryParse<ChangeSetStatus>(status, ignoreCase: true, out var parsed))
+                {
+                    return Results.ValidationProblem(new Dictionary<string, string[]> { ["status"] = [$"Unknown status '{status}'."] });
+                }
+
+                query = query.Where(c => c.Status == parsed);
             }
 
             if (area is not null)
@@ -116,7 +122,7 @@ internal static class AdminEndpoints
 
             var rows = await query.OrderByDescending(c => c.CreatedAt).Take(200).Include(c => c.Items).ToListAsync(ct);
             var names = await UserNamesAsync(db, rows, ct);
-            return TypedResults.Ok(rows.Select(c => Summary(c, names, user.UserId)).ToList());
+            return Results.Ok(rows.Select(c => Summary(c, names, user.UserId)).ToList());
         }).RequirePrivilege(AppsControlResources.ChangeSets, PrivilegeActions.View).WithName("ListChangeSets");
 
         sets.MapPost("/", async (CreateChangeSetRequest request, ChangeSetService<AppsControlDbContext> service, IEnumerable<IAppsControlApplier> appliers, AppsControlDbContext db, ICurrentUser user, CancellationToken ct) =>

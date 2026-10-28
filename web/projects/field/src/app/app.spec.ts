@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { provideDynamicCubeUi } from '@dynamic-cube/shared';
+import { RUNTIME_CONFIG, provideDynamicCubeUi } from '@dynamic-cube/shared';
 import { App } from './app';
 
 describe('App', () => {
@@ -10,7 +10,13 @@ describe('App', () => {
     localStorage.clear();
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), provideDynamicCubeUi()],
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideDynamicCubeUi(),
+        { provide: RUNTIME_CONFIG, useValue: { app: 'FIELD', auth: { authority: 'http://localhost/realms/test', clientId: 'test' } } },
+      ],
     }).compileComponents();
   });
 

@@ -22,7 +22,7 @@ import { LanguageSwitcher } from '../i18n/language-switcher';
         <ng-content select="[dcShellActions]" />
         <dc-language-switcher />
       </mat-toolbar>
-      <main class="dc-shell__main">
+      <main class="dc-shell__main" [class.dc-shell__main--fluid]="fluid()">
         <ng-content />
       </main>
     </div>
@@ -52,9 +52,16 @@ import { LanguageSwitcher } from '../i18n/language-switcher';
       width: 100%;
       margin-inline: auto;
     }
+    .dc-shell__main--fluid {
+      display: flex;
+      padding: 0;
+      max-width: none;
+    }
   `,
 })
 export class AppShell {
   readonly title = input.required<string>();
+  /** Full-width content without padding (for layouts with their own side navigation). */
+  readonly fluid = input(false);
   protected readonly i18n = inject(I18nService);
 }

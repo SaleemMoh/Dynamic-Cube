@@ -30,8 +30,16 @@ export interface FormField {
   requiredWhen?: JsonLogicRule;
   /** JSONLogic rule; hidden fields are disabled and excluded from the submitted value. */
   visibleWhen?: JsonLogicRule;
-  /** Options for `select` fields (later supplied by an LOV). */
+  /** Fixed options for `select` fields. */
   options?: FormOption[];
+  /** Apps Control LOV supplying the options of a `select` field (grant-filtered on the server). */
+  lov?: string;
+  /** Code of the field whose value is the LOV's parent (cascading lists, e.g. city by region). */
+  lovParentField?: string;
+  /** `select` allows several values. */
+  multiple?: boolean;
+  /** Shown but not editable (still submitted). */
+  readonly?: boolean;
 }
 
 export interface FormOption {

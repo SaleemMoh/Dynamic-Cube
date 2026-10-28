@@ -1,0 +1,9 @@
+{
+  "app": "EXTERNAL",
+  "auth": {
+    "authority": "http://localhost:8080/realms/dynamic-cube-external",
+    "clientId": "dynamic-cube-external-web",
+    "scope": "openid profile email",
+    "required": false
+  }
+}

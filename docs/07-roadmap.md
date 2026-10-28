@@ -22,10 +22,30 @@ Delivered:
 
 Carried into Phase 1:
 
-- Front-end login (OIDC + PKCE) against the realms; data-protection key persistence.
+- ~~Front-end login (OIDC + PKCE) against the realms; data-protection key persistence.~~ Done in 1a.
 - Helm chart and N-tier install scripts (`deploy/helm`, `deploy/ntier`).
 
 ## Phase 1 — Core runtime + Apps Control (first slice: new classification request)
+
+Delivered in slices:
+
+| Slice | Content | Status |
+|---|---|---|
+| **1a** | Apps Control + sign-in | ✅ |
+| 1b | Party Registry + Integration Manager | Next |
+| 1c | Services: definitions, forms, wizard, drafts, fees, eligibility | |
+| 1d | Workflow engine + Action Center | |
+| 1e | Documents, communication, decision contract, external applicant journey | |
+
+**1a delivered:** the `AppsControl` module (all entities of [§4](04-apps-control.md) except
+delegations, which come with the Action Center), change appliers with code-keyed payloads,
+maker-checker publishing, typed class attributes with generated views, the LOV engine (class, data
+object and restricted-SQL sources) with grants and data scopes, account provisioning and bootstrap
+roles, the `/api/apps-control/v1` API (public subset on the external host), SYSTEM seed data in the
+migrator; OIDC + PKCE sign-in in all three SPAs with runtime `config.json`; the internal system's
+Apps Control screens (menu from Apps Control, change-set inbox with before/after review, classes and
+values with generated forms, generic editors for the other types); LOV-backed fields in
+`DynamicForm`; data-protection keys in PostgreSQL. Integration LOV sources wait for 1b.
 
 - **Apps Control**: installation, apps, entity, org unit types & org structure, positions,
   users, roles, privileges, menus, Class/Domain with typed attributes and generated views,

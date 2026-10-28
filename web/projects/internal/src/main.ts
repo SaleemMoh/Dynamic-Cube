@@ -1,5 +1,9 @@
 import { bootstrapApplication } from '@angular/platform-browser';
-import { appConfig } from './app/app.config';
+import { loadRuntimeConfig } from '@dynamic-cube/shared';
+import { createAppConfig } from './app/app.config';
 import { App } from './app/app';
 
-bootstrapApplication(App, appConfig).catch((err) => console.error(err));
+// Deployment settings (identity provider, app code) come from /config.json so one build fits every environment.
+loadRuntimeConfig()
+  .then((config) => bootstrapApplication(App, createAppConfig(config)))
+  .catch((err) => console.error(err));

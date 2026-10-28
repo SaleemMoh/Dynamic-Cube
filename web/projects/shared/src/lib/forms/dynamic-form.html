@@ -42,8 +42,11 @@
                         <input matInput type="number" [id]="field.code" [formControlName]="field.code" [required]="isRequired(field.code)" />
                       }
                       @case ('select') {
-                        <mat-select [id]="field.code" [formControlName]="field.code" [required]="isRequired(field.code)">
-                          @for (option of field.options ?? []; track option.value) {
+                        <mat-select [id]="field.code" [formControlName]="field.code" [required]="isRequired(field.code)" [multiple]="field.multiple ?? false">
+                          @if (!field.multiple && !isRequired(field.code)) {
+                            <mat-option [value]="null">—</mat-option>
+                          }
+                          @for (option of options(field); track option.value) {
                             <mat-option [value]="option.value">{{ option.label | dcLocalize }}</mat-option>
                           }
                         </mat-select>
@@ -67,6 +70,9 @@
   }
 
   <div class="dc-form__actions">
+    @if (cancellable()) {
+      <button matButton type="button" (click)="cancel()">{{ 'form.cancel' | dcTranslate }}</button>
+    }
     <button matButton="filled" type="submit">
       <mat-icon fontSet="material-symbols-outlined">send</mat-icon>
       {{ submitLabel() ?? ('form.submit' | dcTranslate) }}

@@ -1,7 +1,9 @@
 using System.Reflection;
+using DynamicCube.Platform.Persistence;
 using DynamicCube.Platform.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -27,6 +29,11 @@ public static class ApiHostExtensions
         builder.Services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
         builder.Services.AddProblemDetails();
         builder.Services.AddOpenApi();
+
+        // Keys live in PostgreSQL so every instance (and restart) can unprotect what another one protected.
+        builder.Services.AddDataProtection()
+            .SetApplicationName("dynamic-cube")
+            .PersistKeysToDbContext<PlatformDbContext>();
 
         var auth = builder.Configuration.GetSection(options.AuthenticationSection);
         builder.Services

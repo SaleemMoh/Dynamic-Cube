@@ -8,7 +8,9 @@ Two realms, one per network zone (see [ADR-0004](../../docs/adr/0004-separate-ap
 | `dynamic-cube-internal` | Internal system, field app, `Internal.Api` | `dynamic-cube-internal-api` |
 | `dynamic-cube-external` | E-services portal, `External.Api` | `dynamic-cube-external-api` |
 
-Each API accepts only tokens from its own realm and audience.
+Each API accepts only tokens from its own realm and audience. The SPAs sign in with authorization code + PKCE
+through the public clients `dynamic-cube-internal-web` (internal system on :4200 and field app on :4202) and
+`dynamic-cube-external-web` (portal on :4201).
 
 The files in `realms/` are **development seeds**: they are imported by `docker compose` (or
 `kc.sh start-dev --import-realm`) and contain test users and a password-grant client.
@@ -19,7 +21,7 @@ Password for all: `Dev@12345`
 
 | Realm | Username | Notes |
 |---|---|---|
-| internal | `admin`, `maker`, `checker` | Maker / checker for change-set approval tests |
+| internal | `admin`, `maker`, `checker` | Receive `SYSTEM_ADMIN`, `CONFIG_MAKER`, `CONFIG_CHECKER` on first sign-in (`AppsControl:BootstrapUsers` in development) |
 | external | `1000000001`, `2000000002` | Applicants; `national_id` attribute mapped into tokens |
 
 Get a token for API testing (development only):

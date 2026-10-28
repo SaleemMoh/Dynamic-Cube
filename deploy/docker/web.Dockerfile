@@ -14,5 +14,9 @@ ARG APP
 COPY --from=build /web/dist/${APP}/browser /usr/share/nginx/html
 COPY deploy/docker/nginx/spa.conf.template /etc/nginx/templates/default.conf.template
 # Overridden per app in docker-compose / Helm values.
-ENV API_UPSTREAM=http://internal-api:8080
+ENV API_UPSTREAM=http://internal-api:8080 \
+    APP_CODE=INTERNAL \
+    AUTH_AUTHORITY=http://localhost:8080/realms/dynamic-cube-internal \
+    AUTH_CLIENT_ID=dynamic-cube-internal-web \
+    AUTH_REQUIRED=true
 EXPOSE 8080
