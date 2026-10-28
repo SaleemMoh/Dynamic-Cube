@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>DynamicCube.Modules.Documents</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Using Include="DynamicCube.Platform.Configuration" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+    <PackageReference Include="QRCoder" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Shared\Platform\DynamicCube.Platform.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- IBM Plex Sans Arabic (SIL OFL), sent to the PDF renderer with every document. -->
+    <EmbeddedResource Include="Resources\Fonts\*.woff2" LogicalName="fonts/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DynamicCube.Modules.Documents.Tests" />
+    <InternalsVisibleTo Include="DynamicCube.Modules.Workflow.Tests" />
+  </ItemGroup>
+
+</Project>
