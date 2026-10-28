@@ -13,7 +13,8 @@ standard header, footer, forms, tables and dialogs. Dynamic Cube is built on Ang
   component sizes are set as Material tokens (`web/projects/shared/src/styles/dc-theme.scss`); DGA patterns
   that are not Material components (government bar, header, footer, badges, labels above fields, tables,
   focus ring) live in `dc-dga.scss` and the shared layout components.
-- Every app uses the shared shell: government bar (Saudi flag, official-website statement, "how to verify"),
+- The portal and the field app use the shared shell (the internal system has its own working frame and gold
+  accent: [ADR-0018](0018-internal-system-look.md)): government bar (Saudi flag, official-website statement, "how to verify"),
   white 72px header, green footer. Footer wording is UI texts (`footer.copyright`, `footer.owner`) so each
   entity sets it in Apps Control.
 - Keycloak login pages use the `dynamic-cube` theme (`deploy/keycloak/themes`), which extends Keycloak's own

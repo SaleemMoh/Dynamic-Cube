@@ -1,18 +1,18 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { AppShell, I18nService, TranslatePipe, UserMenu } from '@dynamic-cube/shared';
+import { I18nService, TranslatePipe } from '@dynamic-cube/shared';
+import { InternalShell } from './layout/internal-shell';
 import { MODULE_TRANSLATIONS } from './module-translations';
 import { APP_TRANSLATIONS } from './translations';
 
 @Component({
   selector: 'dc-root',
-  imports: [RouterOutlet, AppShell, TranslatePipe, UserMenu],
+  imports: [RouterOutlet, InternalShell, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <dc-app-shell [title]="'app.title' | dcTranslate" [fluid]="true">
-      <dc-user-menu dcShellActions />
+    <dc-internal-shell [title]="'app.title' | dcTranslate">
       <router-outlet />
-    </dc-app-shell>
+    </dc-internal-shell>
   `,
 })
 export class App {

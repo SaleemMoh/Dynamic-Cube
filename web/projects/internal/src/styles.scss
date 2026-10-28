@@ -1,1 +1,398 @@
-// App-specific global styles. Shared base styles come from projects/shared/src/styles/dc-base.scss.
+// Internal system look, layered over the shared DGA base (dc-base, dc-dga): Dynamic Cube gold marks the primary
+// action, the selection and focus; neutrals, type scale, spacing and card patterns follow DGA. Components use these
+// tokens, never hex values. The portal keeps the DGA green theme.
+@use '@angular/material' as mat;
+
+:root {
+  --dynamic-cube-gold: #ca9f45; // primary buttons, ticked boxes, switches, selected-row edge, focus ring base
+  --dynamic-cube-gold-600: #b48a35; // primary hover
+  --dynamic-cube-gold-700: #8a6a26; // gold text and links on white (4.6:1)
+  --dynamic-cube-gold-100: #f4ecd9; // current page in paginators, tinted borders
+  --dynamic-cube-gold-50: #faf7f0; // selected row, selected list item, icon tiles
+  --dynamic-cube-green: #136f40; // primary action and ticked boxes inside dialogs
+  --dynamic-cube-green-700: #0c552f; // dialog primary hover
+  --dynamic-cube-green-50: #ecf5ef; // green tint
+
+  --dga-gray-900: #111927; // headings, selected text
+  --dga-gray-800: #1f2a37; // body text in tables
+  --dga-gray-700: #384250; // form labels
+  --dga-gray-600: #4d5761; // table header text, row icons
+  --dga-gray-500: #6c737f; // muted text, hints, empty states
+  --dga-gray-400: #9da4ae; // sort icons, hover borders
+  --dga-gray-300: #d2d6db; // secondary button borders
+  --dga-gray-200: #e5e7eb; // card borders, hairlines
+  --dga-gray-100: #f3f4f6; // row separators, count pills
+  --dga-gray-50: #f9fafb; // page background, table header, row hover
+
+  --shell-radius-sm: 4px; // small chips
+  --shell-radius: 8px; // buttons, inputs, row buttons, icon tiles
+  --shell-radius-lg: 12px; // cards, dialogs, list panels
+  --shell-shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --shell-shadow-md: 0 4px 8px -2px rgba(16, 24, 40, 0.1), 0 2px 4px -2px rgba(16, 24, 40, 0.06);
+  --shell-shadow-lg: 0 12px 16px -4px rgba(16, 24, 40, 0.08), 0 4px 6px -2px rgba(16, 24, 40, 0.03);
+  --shell-focus: 0 0 0 3px rgba(202, 159, 69, 0.35);
+  --shell-header-h: 64px;
+
+  // Shared DGA variables re-pointed for this app.
+  --dga-page: var(--dga-gray-50);
+  --dga-border: var(--dga-gray-200);
+  --dga-text: var(--dga-gray-900);
+  --dga-primary: var(--dynamic-cube-gold);
+
+  // Side navigation: the current page on a gold tint with a gold edge at its start.
+  --dc-nav-active-bg: var(--dynamic-cube-gold-50);
+  --dc-nav-active-color: var(--dga-gray-900);
+  --dc-nav-active-icon: var(--dynamic-cube-gold-700);
+  --dc-nav-edge: var(--dynamic-cube-gold);
+  --dc-nav-edge-width: 3px;
+  --dc-nav-edge-inset: 0;
+  --dc-nav-item-radius: var(--shell-radius);
+  --dc-nav-hover-bg: var(--dga-gray-50);
+  --dc-nav-group-color: var(--dga-gray-500);
+}
+
+html {
+  @include mat.theme-overrides(
+    (
+      primary: #ca9f45,
+      on-primary: #ffffff,
+      primary-container: #faf7f0,
+      on-primary-container: #8a6a26,
+      secondary-container: #faf7f0,
+      on-secondary-container: #8a6a26,
+      on-surface: #111927,
+      on-surface-variant: #4d5761,
+      outline: #9da4ae,
+      outline-variant: #e5e7eb,
+      corner-extra-small: 4px,
+      corner-small: 8px,
+      corner-medium: 12px,
+      corner-large: 12px,
+    )
+  );
+
+  @include mat.button-overrides(
+    (
+      filled-container-shape: 8px,
+      filled-label-text-size: 14px,
+      filled-label-text-weight: 600,
+      outlined-container-shape: 8px,
+      outlined-label-text-size: 14px,
+      outlined-label-text-weight: 600,
+      outlined-outline-color: #d2d6db,
+      outlined-label-text-color: #1f2a37,
+      text-container-shape: 8px,
+      text-label-text-size: 14px,
+      text-label-text-weight: 600,
+      text-label-text-color: #8a6a26,
+      tonal-container-shape: 8px,
+      tonal-label-text-size: 14px,
+      protected-container-shape: 8px,
+    )
+  );
+
+  @include mat.icon-button-overrides(
+    (
+      state-layer-size: 36px,
+    )
+  );
+
+  @include mat.form-field-overrides(
+    (
+      outlined-container-shape: 8px,
+      outlined-outline-color: #d2d6db,
+      outlined-hover-outline-color: #9da4ae,
+      outlined-focus-outline-color: #ca9f45,
+      outlined-focus-outline-width: 1px,
+    )
+  );
+
+  @include mat.checkbox-overrides(
+    (
+      selected-icon-color: #ca9f45,
+      selected-hover-icon-color: #b48a35,
+      selected-focus-icon-color: #ca9f45,
+      selected-pressed-icon-color: #b48a35,
+      unselected-icon-color: #9da4ae,
+    )
+  );
+
+  @include mat.slide-toggle-overrides(
+    (
+      selected-track-color: #ca9f45,
+      selected-hover-track-color: #b48a35,
+      selected-focus-track-color: #ca9f45,
+      selected-pressed-track-color: #b48a35,
+    )
+  );
+
+  @include mat.tabs-overrides(
+    (
+      active-indicator-color: #ca9f45,
+      active-hover-indicator-color: #ca9f45,
+      active-focus-indicator-color: #ca9f45,
+      active-label-text-color: #111927,
+      active-hover-label-text-color: #111927,
+      active-focus-label-text-color: #111927,
+      inactive-label-text-color: #4d5761,
+      label-text-weight: 600,
+    )
+  );
+
+  @include mat.table-overrides(
+    (
+      header-container-height: 44px,
+      header-headline-color: #4d5761,
+      header-headline-size: 13px,
+      header-headline-weight: 600,
+      row-item-container-height: 48px,
+      row-item-label-text-color: #1f2a37,
+      row-item-label-text-size: 14px,
+      row-item-outline-color: #f3f4f6,
+    )
+  );
+
+  @include mat.dialog-overrides(
+    (
+      container-shape: 12px,
+      subhead-size: 18px,
+      subhead-weight: 700,
+      subhead-color: #111927,
+      supporting-text-color: #1f2a37,
+      supporting-text-size: 14px,
+    )
+  );
+
+  @include mat.card-overrides(
+    (
+      outlined-container-shape: 12px,
+      outlined-outline-color: #e5e7eb,
+    )
+  );
+
+  @include mat.list-overrides(
+    (
+      active-indicator-color: #faf7f0,
+      active-indicator-shape: 8px,
+      list-item-container-shape: 8px,
+    )
+  );
+
+  @include mat.menu-overrides(
+    (
+      container-shape: 8px,
+      container-elevation-shadow: (0 4px 8px -2px rgba(16, 24, 40, 0.1), 0 2px 4px -2px rgba(16, 24, 40, 0.06)),
+    )
+  );
+
+  @include mat.progress-bar-overrides(
+    (
+      active-indicator-color: #ca9f45,
+      track-color: #f4ecd9,
+    )
+  );
+}
+
+body {
+  font-size: 14px;
+  color: var(--dga-gray-800);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  color: var(--dga-gray-900);
+}
+
+a {
+  color: var(--dynamic-cube-gold-700);
+}
+
+/* Focus: the gold ring on every focusable control (no outline); form fields show it with their own outline. */
+a:focus-visible,
+button:focus-visible,
+input:not(.mat-mdc-input-element):focus-visible,
+select:not(.mat-mdc-input-element):focus-visible,
+textarea:not(.mat-mdc-input-element):focus-visible,
+[tabindex]:not(.mat-mdc-select):focus-visible {
+  outline: none;
+  box-shadow: var(--shell-focus);
+  border-radius: var(--shell-radius);
+}
+
+.mat-mdc-input-element:focus-visible,
+.mat-mdc-select:focus-visible {
+  outline: none;
+}
+
+/* Buttons: primary gold (darker on hover); inside dialogs the primary is green. Disabled at half opacity. */
+.mat-mdc-unelevated-button:not(:disabled):hover {
+  --mat-button-filled-container-color: var(--dynamic-cube-gold-600);
+}
+
+.mat-mdc-button-base:disabled {
+  opacity: 0.5;
+}
+
+.mat-mdc-dialog-container {
+  --mat-button-filled-container-color: var(--dynamic-cube-green);
+  --mat-checkbox-selected-icon-color: var(--dynamic-cube-green);
+  --mat-checkbox-selected-hover-icon-color: var(--dynamic-cube-green-700);
+  --mat-checkbox-selected-focus-icon-color: var(--dynamic-cube-green);
+  --mat-checkbox-selected-pressed-icon-color: var(--dynamic-cube-green-700);
+  --mat-slide-toggle-selected-track-color: var(--dynamic-cube-green);
+  --mat-form-field-outlined-focus-outline-color: var(--dynamic-cube-green);
+
+  .mat-mdc-unelevated-button:not(:disabled):hover {
+    --mat-button-filled-container-color: var(--dynamic-cube-green-700);
+  }
+
+  .mat-mdc-dialog-surface {
+    box-shadow: var(--shell-shadow-lg);
+  }
+
+  .mat-mdc-dialog-title {
+    padding-block-end: 12px;
+    border-bottom: 1px solid var(--dga-gray-200);
+  }
+}
+
+/* Dialog actions: a hairline above, at the end, primary last. */
+.mat-mdc-dialog-actions {
+  justify-content: flex-end;
+  padding: 12px 24px;
+  border-top: 1px solid var(--dga-gray-200);
+}
+
+.dc-form__actions {
+  justify-content: flex-end;
+}
+
+/* Page header: 28px title and a one-line subtitle, actions at the end. */
+.dc-page__header {
+  margin-block-end: 16px;
+
+  h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--dga-gray-900);
+  }
+
+  p,
+  .dc-muted {
+    margin: 4px 0 0;
+    font-size: 15px;
+    color: var(--dga-gray-500);
+  }
+}
+
+.dc-muted {
+  color: var(--dga-gray-500);
+}
+
+/* Cards: white, gray-200 border, 12px radius, small shadow, 16 × 20 padding. */
+.dc-card {
+  padding: 16px 20px;
+  border: 1px solid var(--dga-gray-200);
+  border-radius: var(--shell-radius-lg);
+  background: #ffffff;
+  box-shadow: var(--shell-shadow-sm);
+
+  h2,
+  h3 {
+    margin-block-start: 0;
+    font-size: 18px;
+    font-weight: 700;
+  }
+}
+
+.mat-mdc-card-outlined {
+  box-shadow: var(--shell-shadow-sm);
+}
+
+/* Tables: inside a card frame, gray-50 header, hairline rows, gray-50 hover, no stripes. */
+.dc-table.mat-mdc-table {
+  border: 1px solid var(--dga-gray-200);
+  border-radius: var(--shell-radius-lg);
+  box-shadow: var(--shell-shadow-sm);
+
+  .mat-mdc-header-row {
+    background: var(--dga-gray-50);
+  }
+
+  .mat-mdc-header-cell + .mat-mdc-header-cell {
+    border-inline-start: 0;
+  }
+
+  .mat-mdc-row:nth-child(even) .mat-mdc-cell {
+    background: transparent;
+  }
+
+  .mat-mdc-row:hover .mat-mdc-cell {
+    background: var(--dga-gray-50);
+  }
+
+  /* Selected row: gold tint with a 3px gold edge at the start. */
+  .mat-mdc-row.dc-row--selected .mat-mdc-cell {
+    background: var(--dynamic-cube-gold-50);
+  }
+
+  .mat-mdc-row.dc-row--selected .mat-mdc-cell:first-child {
+    box-shadow: inset 3px 0 0 var(--dynamic-cube-gold);
+  }
+
+  [dir='rtl'] & .mat-mdc-row.dc-row--selected .mat-mdc-cell:first-child {
+    box-shadow: inset -3px 0 0 var(--dynamic-cube-gold);
+  }
+
+  .mat-mdc-icon-button {
+    color: var(--dga-gray-600);
+  }
+}
+
+.dc-link {
+  color: var(--dynamic-cube-gold-700);
+  font-weight: 600;
+}
+
+.dc-empty {
+  color: var(--dga-gray-500);
+}
+
+/* Count pill beside a card title. */
+.dc-count {
+  display: inline-flex;
+  align-items: center;
+  min-width: 24px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 9999px;
+  background: var(--dga-gray-100);
+  color: var(--dga-gray-600);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Identifiers and codes. */
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+/* Toasts: top-centre on the dark neutral. */
+.mat-mdc-snack-bar-container {
+  --mat-snack-bar-container-color: var(--dga-gray-900);
+  --mat-snack-bar-button-color: var(--dynamic-cube-gold-100);
+}
+
+
+@media (max-width: 575.98px) {
+  .dc-page__header h1 {
+    font-size: 22px;
+  }
+}
