@@ -11,12 +11,14 @@ Kubernetes or on classic N-tier servers.
 ## Status
 
 **Phase 0 (foundations)**, **Phase 1a (Apps Control + sign-in)**, **Phase 1b (Integration Manager + Party
-Registry)** and **Phase 1c (Services)** are in place: platform kernel, API hosts, worker, migrator, Angular workspace, Keycloak realms,
+Registry)**, **Phase 1c (Services)** and **Phase 1d (Workflow + Action Center)** are in place: platform kernel, API hosts, worker, migrator, Angular workspace, Keycloak realms,
 containers and CI; the Apps Control module (org structure, users, roles and privileges, menus, Class/Domain with
 typed attributes, LOVs with grants and data scopes, settings, UI texts); the Integration Manager (government APIs
 connected by configuration, test console, masked call log) and the Party Registry (individuals, establishments,
 acting contexts from MCI, profile data, credentials, projects, sanctions); Services (versioned service definitions
-with a question bank, levels, fees and eligibility; the applicant's wizard with drafts and submission). Every module's
+with a question bank, levels, fees and eligibility; the applicant's wizard with drafts and submission); workflows
+(parallel reviews with maker-checker, distribution, returns to the applicant, deadlines on the working calendar) and
+the employees' Action Center. Every module's
 configuration is edited through the same maker-checker change sets. See the [roadmap](docs/07-roadmap.md) for what comes next.
 
 ## Repository layout
@@ -77,7 +79,7 @@ Add `--profile full` to also start Gotenberg (PDF) and ClamAV (upload scanning).
 
 | What | Where | Sign-in |
 |---|---|---|
-| Internal system | http://localhost:4200 | `admin` (all Apps Control rights), `maker` (drafts changes), `checker` (approves) — password `Dev@12345` |
+| Internal system | http://localhost:4200 | `admin` (all Apps Control rights), `maker` (drafts changes), `checker` (approves); classification staff `manager`, `analyst1`, `analyst2`, `auditor1`, `director` (roles from the workflow package) — password `Dev@12345` |
 | E-services portal | http://localhost:4201 | `1000000001`, `2000000002` (applicants) — password `Dev@12345`; browsing needs no sign-in |
 | Field app | http://localhost:4202 | Same accounts as the internal system |
 | Keycloak admin console | http://localhost:8080/admin | `admin` / `admin` (`KEYCLOAK_ADMIN_PASSWORD`) |
@@ -85,7 +87,8 @@ Add `--profile full` to also start Gotenberg (PDF) and ClamAV (upload scanning).
 
 To open the database in DataGrip (or DBeaver, pgAdmin): *New → Data Source → PostgreSQL*, host `localhost`, port
 `5432`, database `dynamic_cube`, user `dynamic_cube`, password `dynamic_cube`. Tables are grouped by schema:
-`apps` (Apps Control), `integ` (Integration Manager), `party` (Party Registry), `svc` (Services), `cfg` (change sets),
+`apps` (Apps Control), `integ` (Integration Manager), `party` (Party Registry), `svc` (Services), `wf` (workflows and
+tasks), `cfg` (change sets),
 `audit` (audit log), `platform` (outbox, keys).
 
 The **field app** is the inspectors' app for site visits (offline-capable, phone/tablet). It is a shell for now;
@@ -111,6 +114,17 @@ These are development values only; change them in `deploy/docker/.env` (see `.en
    sections follow the choice; shared questions are asked once), staff, projects, governance and financial data,
    see the fee, review, accept the pledge and submit. The request appears under **My requests** with its number and
    in the internal system under **Services → Requests**.
+7. Import `deploy/config-packages/classification-workflow.json` (the import shows every item and any problem
+   before anything is created) and approve its three change sets. It adds the classification roles and staff, the
+   workflow (see **Action Center → Workflow versions** for its graph) and version 2 of the service. Submit a new
+   classification request in the portal, then in the internal system:
+   - `manager`: **Action Center → My tasks → Available**, claim *Review and distribute*, choose *Send for analysis*;
+     under *To distribute* assign governance to `analyst2`, projects and financial to `analyst1`.
+   - `analyst2`: open the governance analysis and *Ask the applicant for corrections* with a reason. The portal shows
+     the reason; the applicant edits and resubmits, and the task comes back to `analyst2`, who sends it for audit.
+     `analyst2` also audits governance, but not their own analysis: it goes to `auditor1`.
+   - `analyst1` sends both analyses for audit; `auditor1` claims and confirms the three audits; `director` approves.
+     The portal shows *Approved* with the request's history; the internal request page shows its workflow.
 
 The gateway credentials come from the secret store (`Secrets__MOMRAH_GATEWAY__clientId` / `__clientSecret`), never
 from the database; development values are in `appsettings.Development.json` and the compose file.

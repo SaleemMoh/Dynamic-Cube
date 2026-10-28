@@ -23,7 +23,8 @@ import { firstValueFrom } from 'rxjs';
         @for (d of delegations.value() ?? []; track d.id) {
           <li>
             <span>
-              <strong>{{ d.delegatorName }}</strong> → <strong>{{ d.delegateName }}</strong>
+              <strong>{{ { ar: d.delegatorNameAr, en: d.delegatorNameEn } | dcLocalize }}</strong> →
+              <strong>{{ { ar: d.delegateNameAr, en: d.delegateNameEn } | dcLocalize }}</strong>
               <span class="dc-muted" dir="ltr">{{ d.fromDate }} – {{ d.toDate }}</span>
               @if (d.isCurrent) {
                 <span class="dc-badge dc-badge--success">{{ 'delegations.current' | dcTranslate }}</span>

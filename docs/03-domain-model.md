@@ -194,6 +194,16 @@ The employee workspace over workflow tasks:
 - **Actions** from the configured action catalog (§3.5).
 - Delegation / acting (out-of-office) from Apps Control.
 
+**Implementation (1d)** — module `Workflow`, internal API `/api/workflow/v1`, menu group *Action Center*.
+Inboxes: **mine** (assigned to me or to someone I stand in for), **queue** (unassigned tasks I may claim),
+**to distribute** (tasks waiting for me to assign them) and **escalated** (overdue tasks escalated to my role),
+with counts and search. The task page shows the request's answers, the deadline, who has the task, the actions
+the employee may take now (claim, release, assign or reassign among the candidates with their open-task count,
+the node's actions with a comment, required for rejections and returns), internal notes, the steps and the
+timeline. *Supervision* (`action-center.supervision`) lists every open task with deadline and unassigned filters;
+supervisors with *edit* reassign. Delegations (delegate, dates, reason) are kept in the Workflow module rather
+than Apps Control: the delegate sees the delegator's assigned tasks and acts *on behalf of* them.
+
 ---
 
 ## 3.5 Workflow
@@ -239,6 +249,19 @@ Data scopes apply to every target.
 
 Per workflow, per step and per service level; computed on the Saudi working calendar;
 early-warning thresholds; escalation chains; breach reporting.
+
+**Implementation (1d)** — schema `wf`; configured through change sets (area `wf.workflows`: `wf.workflow`,
+`wf.workflow-version` `CODE/N`, immutable once published). Node types so far: `START`, `HUMAN_TASK`,
+`PARALLEL_SPLIT`, `JOIN` (`ALL` / `ANY` / `COUNT`), `GATEWAY` (JSONLogic routes over the answers, the level and
+the last action of each step, then a default) and `END` (`APPROVED`, `REJECTED`, `CLOSED`). A human task has an
+assignment (`ROLE` with optional org unit and position, `USER`, or `PREVIOUS_ACTOR` of a step falling back to a
+role; mode `QUEUE`, `DISTRIBUTE` with a distributor role, or `AUTO` least-loaded), `excludeActorsOf` for
+maker-checker, actions (`COMPLETE`, `APPROVE`, `REJECT`, `RETURN`; comment required or shown to the applicant;
+resulting display status; `RETURN` may resume at another step), an optional display status and an SLA
+(`workingDays`, `byLevel`, `warnPercent`, `escalateToRole`). The overall deadline is the service level's target
+(else the workflow's `slaWorkingDays`); it stops while the request waits for the applicant. Working days come
+from the installation's weekend days and the holidays (`apps.holiday`). The worker's SLA job runs every minute.
+How the engine runs is recorded in [ADR-0019](adr/0019-workflow-runtime.md).
 
 ---
 

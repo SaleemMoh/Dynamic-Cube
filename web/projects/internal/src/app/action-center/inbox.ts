@@ -26,7 +26,18 @@ const BOXES: { box: InboxBox; count: keyof InboxCounts }[] = [
 /** The employee's Action Center: my tasks, the queue to claim from, tasks to distribute and escalations. */
 @Component({
   selector: 'dc-inbox',
-  imports: [FormsModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, MatPaginatorModule, MatProgressBarModule, MatTabsModule, TaskTable, TranslatePipe],
+  imports: [
+    FormsModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatInputModule,
+    MatPaginatorModule,
+    MatProgressBarModule,
+    MatTabsModule,
+    TaskTable,
+    TranslatePipe,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header class="dc-page__header">

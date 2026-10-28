@@ -57,7 +57,11 @@ import { WorkflowCard } from './workflow-card';
           <p class="dc-muted">
             {{ { ar: d.task.titleAr, en: d.task.titleEn } | dcLocalize }} · {{ { ar: d.task.partyNameAr, en: d.task.partyNameEn } | dcLocalize }} ·
             {{ 'tasks.assignee' | dcTranslate }}:
-            <strong data-testid="task-assignee">{{ d.task.assignee ? (d.task.assigneeName ?? d.task.assignee) : ('tasks.unassigned' | dcTranslate) }}</strong>
+            <strong data-testid="task-assignee">{{
+              d.task.assignee
+                ? ({ ar: d.task.assigneeNameAr ?? d.task.assignee, en: d.task.assigneeNameEn ?? d.task.assignee } | dcLocalize)
+                : ('tasks.unassigned' | dcTranslate)
+            }}</strong>
             @if (d.onBehalfOf) {
               ({{ 'workflow.onBehalfOf' | dcTranslate }} {{ d.onBehalfOf }})
             }

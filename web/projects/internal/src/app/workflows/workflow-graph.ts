@@ -39,10 +39,12 @@ export interface PlacedNode {
   layer: number;
 }
 
-export const NODE_W = 180;
+export const NODE_W = 200;
 export const NODE_H = 56;
 const GAP_X = 36;
 const GAP_Y = 64;
+/** x of the lane on the left that jumps over several rows run along. */
+const MARGIN = 12;
 
 /** Edges in reading order: start/join next, split branches, gateway routes and default, task actions. */
 export function graphEdges(definition: GraphDefinition, language: 'ar' | 'en'): GraphEdge[] {
@@ -64,7 +66,10 @@ export function graphEdges(definition: GraphDefinition, language: 'ar' | 'en'): 
   return edges;
 }
 
-/** Layers by distance from START (breadth first, so loops back do not push nodes down); unreachable nodes go last. */
+/**
+ * Layers by distance from START (breadth first, so loops back do not push nodes down). Ends share the bottom row,
+ * however early they are reached; unreachable nodes go below them.
+ */
 export function layout(definition: GraphDefinition, edges: GraphEdge[]): { nodes: PlacedNode[]; width: number; height: number } {
   const byCode = new Map(definition.nodes.map((n) => [n.code, n]));
   const layerOf = new Map<string, number>();
@@ -83,9 +88,11 @@ export function layout(definition: GraphDefinition, edges: GraphEdge[]): { nodes
       }
     }
   }
-  const last = Math.max(-1, ...layerOf.values());
+  const reached = definition.nodes.filter((n) => layerOf.has(n.code));
+  const ends = Math.max(-1, ...reached.filter((n) => n.type !== 'END').map((n) => layerOf.get(n.code)!)) + 1;
+  for (const n of reached.filter((x) => x.type === 'END')) layerOf.set(n.code, ends);
   for (const n of definition.nodes) {
-    if (!layerOf.has(n.code)) layerOf.set(n.code, last + 1);
+    if (!layerOf.has(n.code)) layerOf.set(n.code, Math.max(ends, ...layerOf.values()) + 1);
   }
   const layers: GraphNode[][] = [];
   for (const n of definition.nodes) {
@@ -134,7 +141,7 @@ export function layout(definition: GraphDefinition, edges: GraphEdge[]): { nodes
         @for (e of g.lines; track $index) {
           <path [attr.d]="e.d" class="dc-graph__edge" [class.dc-graph__edge--back]="e.back" marker-end="url(#dc-arrow)" />
           @if (e.label) {
-            <text [attr.x]="e.lx" [attr.y]="e.ly" class="dc-graph__label" text-anchor="middle">
+            <text [attr.x]="e.lx" [attr.y]="e.ly" class="dc-graph__label" [attr.text-anchor]="e.anchor">
               {{ e.label }}
             </text>
           }
@@ -236,20 +243,35 @@ export class WorkflowGraph {
         const a = at.get(e.from)!;
         const b = at.get(e.to)!;
         const back = b.layer <= a.layer;
+        const long = b.layer - a.layer > 1;
         const x1 = a.x + NODE_W / 2;
         const y1 = a.y + NODE_H;
         const x2 = b.x + NODE_W / 2;
-        const y2 = back ? b.y + NODE_H : b.y;
-        // Forward: a gentle S-curve down; backwards (a loop): out to the side and up.
-        const d = back
-          ? `M${a.x + NODE_W},${a.y + NODE_H / 2} C${a.x + NODE_W + 60},${a.y + NODE_H / 2} ${b.x + NODE_W + 60},${b.y + NODE_H / 2} ${b.x + NODE_W},${b.y + NODE_H / 2}`
-          : `M${x1},${y1} C${x1},${(y1 + y2) / 2} ${x2},${(y1 + y2) / 2} ${x2},${y2}`;
+        const y2 = b.y;
+        const midA = a.y + NODE_H / 2;
+        const midB = b.y + NODE_H / 2;
+        // Forward to the next row: a gentle S-curve. Loops back go round the right, longer jumps round the left margin,
+        // so neither crosses the steps in between.
+        if (back) {
+          return {
+            d: `M${a.x + NODE_W},${midA} C${a.x + NODE_W + 60},${midA} ${b.x + NODE_W + 60},${midB} ${b.x + NODE_W},${midB}`,
+            back,
+            label: e.label,
+            lx: Math.max(a.x, b.x) + NODE_W + 40,
+            ly: (midA + midB) / 2,
+            anchor: 'middle',
+          };
+        }
+        if (long) {
+          return { d: `M${a.x},${midA} H${MARGIN} V${midB} H${b.x}`, back, label: e.label, lx: a.x - 6, ly: midA - 6, anchor: 'end' };
+        }
         return {
-          d,
+          d: `M${x1},${y1} C${x1},${(y1 + y2) / 2} ${x2},${(y1 + y2) / 2} ${x2},${y2}`,
           back,
           label: e.label,
-          lx: back ? Math.max(a.x, b.x) + NODE_W + 40 : (x1 + x2) / 2,
-          ly: back ? (a.y + b.y + NODE_H) / 2 : (y1 + y2) / 2 + 4,
+          lx: (x1 + x2) / 2,
+          ly: (y1 + y2) / 2 + 4,
+          anchor: 'middle',
         };
       });
     return { nodes: placed.nodes, lines, width: placed.width + 80, height: placed.height };
@@ -262,7 +284,7 @@ export class WorkflowGraph {
   );
 
   protected name(node: GraphNode): string {
-    return localize({ ar: node.nameAr || node.code, en: node.nameEn || node.code }, this.i18n.language());
+    return clip(localize({ ar: node.nameAr || node.code, en: node.nameEn || node.code }, this.i18n.language()), 28);
   }
 
   protected meta(node: GraphNode): string {
@@ -270,7 +292,7 @@ export class WorkflowGraph {
       case 'HUMAN_TASK': {
         const who = node.assignment?.role ?? node.assignment?.user ?? node.assignment?.step ?? '';
         const returns = node.actions?.some((a) => a.kind === 'RETURN') ? ' ↩' : '';
-        return `${who} · ${node.assignment?.mode ?? 'QUEUE'}${returns}`;
+        return clip(`${who} · ${node.assignment?.mode ?? 'QUEUE'}`, 32) + returns;
       }
       case 'END':
         return node.outcome ?? '';
@@ -278,4 +300,9 @@ export class WorkflowGraph {
         return node.type.replace('_', ' ');
     }
   }
+}
+
+/** Shortens text to fit a node box. */
+function clip(text: string, max: number): string {
+  return text.length > max ? text.slice(0, max - 1) + '…' : text;
 }

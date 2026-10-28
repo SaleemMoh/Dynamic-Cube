@@ -34,8 +34,8 @@ Delivered in slices:
 | **1a** | Apps Control + sign-in | ✅ |
 | **1b** | Party Registry + Integration Manager | ✅ |
 | **1c** | Services: definitions, forms, wizard, drafts, fees, eligibility | ✅ |
-| 1d | Workflow engine + Action Center | Next |
-| 1e | Documents, communication, decision contract, external applicant journey | |
+| **1d** | Workflow engine + Action Center | ✅ |
+| 1e | Documents, communication, decision contract, external applicant journey | Next |
 
 **1a delivered:** the `AppsControl` module (all entities of [§4](04-apps-control.md) except
 delegations, which come with the Action Center), change appliers with code-keyed payloads,
@@ -77,6 +77,26 @@ viewer. Reference package `classification-new.json` (the classification certific
 sectors and pledge). The dynamic form gained rule context across steps, limits and shared questions.
 Still open from 1c: attachments, payment (SADAD), availability rules and document-based services,
 sub-requests, service links and the visual service builder (JSON authoring with preview for now).
+
+**1d delivered:** the `Workflow` module ([§3.5](03-domain-model.md#35-workflow),
+[ADR-0019](adr/0019-workflow-runtime.md)): workflows and immutable versions as JSON graphs with start, human
+task, parallel split, join (all / any / count), gateway (JSONLogic) and end nodes; assignment to a role (within an
+org unit or position), a user or the previous actor, by queue, distribution or least-loaded; maker-checker between
+steps; complete, approve, reject and return actions with comments the applicant sees; deadlines per service level
+and step on the working calendar (installation weekend and holidays), warnings, breaches and escalation by a
+worker job; delegations. The kernel gained a cross-module unit of work, the staff directory and the working
+calendar. Services: a version names its workflow, submission starts it, the request's status follows it, and a
+request returned for correction is edited and resubmitted. The Action Center ([§3.4](03-domain-model.md#34-action-center)):
+inboxes (mine, queue, to distribute, escalated) with counts and search, the task page (request answers, claim,
+release, assign, actions, internal notes, steps and timeline), supervision and out-of-office delegation; workflow
+configuration with a live graph; the portal's returned-request banner and history. Package
+`classification-workflow.json`: the classification roles and staff, the workflow of
+[§6.7](06-reference-service-classification.md#67-processing-workflow) and version 2 of the service using it.
+Configuration packages are reviewed before import (every problem listed, nothing kept) and a documented template
+can be downloaded.
+Still open from 1d: integration, decision, payment, visit, document, notification and timer nodes; forward,
+hold and third-party inquiry actions; attachments on actions; editable fields per step; relative routing targets
+(applicant's region, parent unit's manager); data scopes on inboxes; the visual Workflow Builder.
 
 - **Apps Control**: installation, apps, entity, org unit types & org structure, positions,
   users, roles, privileges, menus, Class/Domain with typed attributes and generated views,

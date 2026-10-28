@@ -14,8 +14,8 @@ internal static class WorkflowEndpoints
     public static void Map(RouteGroupBuilder group)
     {
         var center = group.MapGroup(string.Empty).RequirePrivilege(WorkflowResources.ActionCenter, CatalogActions.View);
-        center.MapGet("/inbox", async (InboxBox? box, string? search, int? skip, int? take, ActionCenter service, CancellationToken ct) =>
-            TypedResults.Ok(await service.InboxAsync(box ?? InboxBox.Mine, search, skip ?? 0, take ?? 50, ct))).WithName("GetInbox");
+        center.MapGet("/inbox", async (string? box, string? search, int? skip, int? take, ActionCenter service, CancellationToken ct) =>
+            TypedResults.Ok(await service.InboxAsync(Parse<InboxBox>(box, "box") ?? InboxBox.Mine, search, skip ?? 0, take ?? 50, ct))).WithName("GetInbox");
         center.MapGet("/inbox/counts", async (ActionCenter service, CancellationToken ct) => TypedResults.Ok(await service.CountsAsync(ct))).WithName("GetInboxCounts");
         center.MapGet("/tasks/{id:guid}", async (Guid id, ActionCenter service, CancellationToken ct) => TypedResults.Ok(await service.GetAsync(id, ct))).WithName("GetTask");
         center.MapGet("/tasks/{id:guid}/candidates", async (Guid id, ActionCenter service, CancellationToken ct) => TypedResults.Ok(await service.CandidatesAsync(id, ct))).WithName("GetTaskCandidates");
@@ -36,15 +36,16 @@ internal static class WorkflowEndpoints
         center.MapGet("/staff", async (ActionCenter service, CancellationToken ct) => TypedResults.Ok(await service.StaffAsync(ct))).WithName("ListStaff");
 
         group.MapGet("/supervision", async (string? search, string? role, string? sla, bool? unassigned, int? skip, int? take, ActionCenter service, CancellationToken ct) =>
-            TypedResults.Ok(await service.SupervisionAsync(search, role, ParseSla(sla), unassigned, skip ?? 0, take ?? 50, ct)))
+            TypedResults.Ok(await service.SupervisionAsync(search, role, Parse<SlaState>(sla, "sla"), unassigned, skip ?? 0, take ?? 50, ct)))
             .RequirePrivilege(WorkflowResources.Supervision, CatalogActions.View).WithName("GetSupervision");
     }
 
-    /// <summary>The SLA filter as the API writes it (ON_TRACK, WARNING, BREACHED).</summary>
-    private static SlaState? ParseSla(string? value) =>
+    /// <summary>A query value as the API writes enums (MINE, ON_TRACK, …).</summary>
+    private static T? Parse<T>(string? value, string field)
+        where T : struct, Enum =>
         string.IsNullOrWhiteSpace(value) ? null
-        : Enum.TryParse<SlaState>(value.Replace("_", string.Empty, StringComparison.Ordinal), ignoreCase: true, out var sla) ? sla
-        : throw new WorkflowValidationException("sla", $"Unknown SLA state '{value}'.");
+        : Enum.TryParse<T>(value.Replace("_", string.Empty, StringComparison.Ordinal), ignoreCase: true, out var parsed) ? parsed
+        : throw new WorkflowValidationException(field, $"Unknown value '{value}'.");
 
     /// <summary>After a change, the task as it now is (a closed task may no longer be visible: then nothing).</summary>
     private static async Task<IResult> Then(Task change, ActionCenter service, Guid id, CancellationToken ct)

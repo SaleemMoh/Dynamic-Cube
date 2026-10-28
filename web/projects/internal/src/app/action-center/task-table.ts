@@ -39,7 +39,7 @@ import { LocalizePipe, SlaChip, TaskSummary, TranslatePipe } from '@dynamic-cube
         <th mat-header-cell *matHeaderCellDef>{{ 'tasks.assignee' | dcTranslate }}</th>
         <td mat-cell *matCellDef="let t">
           @if (t.assignee) {
-            {{ t.assigneeName ?? t.assignee }}
+            {{ { ar: t.assigneeNameAr ?? t.assignee, en: t.assigneeNameEn ?? t.assignee } | dcLocalize }}
           } @else {
             <span class="dc-badge">{{ 'tasks.unassigned' | dcTranslate }}</span>
           }

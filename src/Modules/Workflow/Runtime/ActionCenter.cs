@@ -2,6 +2,7 @@ using DynamicCube.Modules.Workflow.Changes;
 using DynamicCube.Modules.Workflow.Definitions;
 using DynamicCube.Modules.Workflow.Domain;
 using DynamicCube.Modules.Workflow.Persistence;
+using DynamicCube.Platform.Persistence;
 using DynamicCube.Platform.Security;
 using Microsoft.EntityFrameworkCore;
 
@@ -39,7 +40,8 @@ public sealed record TaskSummary(
     string? ServiceCode,
     string? LevelCode,
     string? Assignee,
-    string? AssigneeName,
+    string? AssigneeNameAr,
+    string? AssigneeNameEn,
     AssignmentMode Mode,
     DateTimeOffset CreatedAt,
     DateTimeOffset? DueAt,
@@ -59,7 +61,8 @@ public sealed record TimelineItem(
     DateTimeOffset At,
     string Type,
     string Actor,
-    string ActorName,
+    string ActorNameAr,
+    string ActorNameEn,
     string? OnBehalfOf,
     string? NodeCode,
     string? NodeNameAr,
@@ -68,7 +71,8 @@ public sealed record TimelineItem(
     string? ActionNameAr,
     string? ActionNameEn,
     string? Target,
-    string? TargetName,
+    string? TargetNameAr,
+    string? TargetNameEn,
     string? Comment,
     bool VisibleToApplicant);
 
@@ -107,7 +111,15 @@ public sealed record NoteRequest(string Text);
 
 public sealed record DelegationRequest(string Delegate, DateOnly FromDate, DateOnly ToDate, string? Reason);
 
-public sealed record DelegationView(Guid Id, string Delegator, string DelegatorName, string Delegate, string DelegateName, DateOnly FromDate, DateOnly ToDate, string? Reason, bool IsCurrent);
+public sealed record DelegationView(
+    Guid Id,
+    string Delegator,
+    string DelegatorNameAr,
+    string DelegatorNameEn,
+    string Delegate,
+    string DelegateNameAr,
+    string DelegateNameEn,
+    DateOnly FromDate, DateOnly ToDate, string? Reason, bool IsCurrent);
 
 public sealed record StaffOption(string UserName, string NameAr, string NameEn, int OpenTasks);
 
@@ -122,6 +134,7 @@ internal sealed class ActionCenter(
     Assignments assignments,
     IStaffDirectory staff,
     IAccessChecker access,
+    IUnitOfWork unitOfWork,
     TimeProvider clock)
 {
     private readonly Dictionary<string, StaffMember?> _names = new(StringComparer.Ordinal);
@@ -323,8 +336,9 @@ internal sealed class ActionCenter(
         var views = new List<DelegationView>();
         foreach (var d in rows)
         {
-            views.Add(new DelegationView(d.Id, d.Delegator, await NameAsync(d.Delegator, cancellationToken), d.Delegate, await NameAsync(d.Delegate, cancellationToken),
-                d.FromDate, d.ToDate, d.Reason, d.FromDate <= Today()));
+            var (delegatorAr, delegatorEn) = await NameAsync(d.Delegator, cancellationToken);
+            var (delegateAr, delegateEn) = await NameAsync(d.Delegate, cancellationToken);
+            views.Add(new DelegationView(d.Id, d.Delegator, delegatorAr, delegatorEn, d.Delegate, delegateAr, delegateEn, d.FromDate, d.ToDate, d.Reason, d.FromDate <= Today()));
         }
 
         return views;
@@ -439,11 +453,15 @@ internal sealed class ActionCenter(
     private async Task ChangeAsync(Guid id, Func<StaffMember, WorkTask, Rights, WorkflowEvent> change, CancellationToken cancellationToken)
     {
         var me = await MeAsync(cancellationToken);
-        var task = await context.Tasks.SingleOrDefaultAsync(t => t.Id == id, cancellationToken) ?? throw NotFound();
+        var instanceId = await context.Tasks.Where(t => t.Id == id).Select(t => (Guid?)t.InstanceId).SingleOrDefaultAsync(cancellationToken) ?? throw NotFound();
+        await using var work = await unitOfWork.BeginAsync(cancellationToken);
+        await context.LockAsync(instanceId, cancellationToken);
+        var task = await context.Tasks.SingleAsync(t => t.Id == id, cancellationToken);
         context.Events.Add(change(me, task, await RightsAsync(me, task, cancellationToken)));
         try
         {
             await context.SaveChangesAsync(cancellationToken);
+            await work.CommitAsync(cancellationToken);
         }
         catch (DbUpdateConcurrencyException)
         {
@@ -479,9 +497,11 @@ internal sealed class ActionCenter(
         {
             version.Nodes.TryGetValue(e.NodeCode ?? string.Empty, out var node);
             var action = node?.Actions.FirstOrDefault(a => a.Code == e.ActionCode);
+            var (actorAr, actorEn) = await NameAsync(e.Actor, cancellationToken);
+            var (targetAr, targetEn) = e.Target is null ? (null, null) : await NameAsync(e.Target, cancellationToken);
             timeline.Add(new TimelineItem(
-                e.At, e.Type, e.Actor, await NameAsync(e.Actor, cancellationToken), e.OnBehalfOf, e.NodeCode, node?.NameAr, node?.NameEn,
-                e.ActionCode, action?.NameAr, action?.NameEn, e.Target, e.Target is null ? null : await NameAsync(e.Target, cancellationToken), e.Comment, e.VisibleToApplicant));
+                e.At, e.Type, e.Actor, actorAr, actorEn, e.OnBehalfOf, e.NodeCode, node?.NameAr, node?.NameEn,
+                e.ActionCode, action?.NameAr, action?.NameEn, e.Target, targetAr, targetEn, e.Comment, e.VisibleToApplicant));
         }
 
         return new InstanceView(instance.Id, instance.WorkflowCode, instance.VersionNumber, instance.Status, instance.Outcome, instance.StartedAt, instance.CompletedAt,
@@ -493,20 +513,21 @@ internal sealed class ActionCenter(
         var list = new List<TaskSummary>(tasks.Count);
         foreach (var t in tasks)
         {
+            var (assigneeAr, assigneeEn) = t.Assignee is null ? (null, null) : await NameAsync(t.Assignee, cancellationToken);
             list.Add(new TaskSummary(t.Id, t.InstanceId, t.NodeCode, t.NameAr, t.NameEn, t.Status, t.SubjectId, t.SubjectType, t.SubjectNumber, t.TitleAr, t.TitleEn,
-                t.PartyNameAr, t.PartyNameEn, t.ServiceCode, t.LevelCode, t.Assignee, t.Assignee is null ? null : await NameAsync(t.Assignee, cancellationToken),
+                t.PartyNameAr, t.PartyNameEn, t.ServiceCode, t.LevelCode, t.Assignee, assigneeAr, assigneeEn,
                 t.Mode, t.CreatedAt, t.DueAt, t.Sla, t.CompletedBy, t.ActionCode));
         }
 
         return list;
     }
 
-    /// <summary>Display name of a user name (Arabic and English joined), cached for the request.</summary>
-    private async Task<string> NameAsync(string userName, CancellationToken cancellationToken)
+    /// <summary>Arabic and English display names of a user name (the user name itself for <c>system</c>, the applicant or a former employee), cached for the request.</summary>
+    private async Task<(string Ar, string En)> NameAsync(string userName, CancellationToken cancellationToken)
     {
         if (userName is WorkflowEngine.System or WorkflowEngine.Applicant)
         {
-            return userName;
+            return (userName, userName);
         }
 
         if (!_names.TryGetValue(userName, out var member))
@@ -515,7 +536,7 @@ internal sealed class ActionCenter(
             _names[userName] = member;
         }
 
-        return member is null ? userName : $"{member.NameAr} | {member.NameEn}";
+        return member is null ? (userName, userName) : (member.NameAr, member.NameEn);
     }
 
     private static WorkflowNotFoundException NotFound() => new("The task does not exist.");

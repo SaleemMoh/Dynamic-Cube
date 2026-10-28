@@ -401,7 +401,7 @@ internal sealed class WorkflowEngine(
     private async Task<Run> LoadAsync(Guid instanceId, string actor, string? onBehalfOf, CancellationToken cancellationToken)
     {
         // One operation at a time per instance, so parallel branches arriving at a join see each other.
-        await context.Database.ExecuteSqlAsync($"SELECT 1 FROM wf.instance WHERE id = {instanceId} FOR UPDATE", cancellationToken);
+        await context.LockAsync(instanceId, cancellationToken);
         var instance = await context.Instances.SingleAsync(i => i.Id == instanceId, cancellationToken);
         if (instance.Status is InstanceStatus.Completed or InstanceStatus.Cancelled)
         {

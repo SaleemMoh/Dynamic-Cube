@@ -23,7 +23,8 @@ export interface TaskSummary {
   serviceCode: string | null;
   levelCode: string | null;
   assignee: string | null;
-  assigneeName: string | null;
+  assigneeNameAr: string | null;
+  assigneeNameEn: string | null;
   mode: AssignmentMode;
   createdAt: string;
   dueAt: string | null;
@@ -65,7 +66,9 @@ export interface TimelineItem {
   at: string;
   type: string;
   actor: string;
-  actorName: string;
+  /** A user name, or `system` / `applicant`. */
+  actorNameAr: string;
+  actorNameEn: string;
   onBehalfOf: string | null;
   nodeCode: string | null;
   nodeNameAr: string | null;
@@ -74,7 +77,8 @@ export interface TimelineItem {
   actionNameAr: string | null;
   actionNameEn: string | null;
   target: string | null;
-  targetName: string | null;
+  targetNameAr: string | null;
+  targetNameEn: string | null;
   comment: string | null;
   visibleToApplicant: boolean;
 }
@@ -118,9 +122,11 @@ export interface StaffOption {
 export interface DelegationView {
   id: string;
   delegator: string;
-  delegatorName: string;
+  delegatorNameAr: string;
+  delegatorNameEn: string;
   delegate: string;
-  delegateName: string;
+  delegateNameAr: string;
+  delegateNameEn: string;
   fromDate: string;
   toDate: string;
   reason: string | null;

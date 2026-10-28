@@ -178,6 +178,9 @@ import { firstValueFrom } from 'rxjs';
       display: grid;
       gap: 0.125rem;
     }
+    .dc-history li > * {
+      justify-self: start;
+    }
     .dc-history__comment {
       white-space: pre-line;
     }

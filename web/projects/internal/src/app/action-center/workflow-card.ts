@@ -44,7 +44,11 @@ import { InstanceView, LocalizePipe, SlaChip, TimelineItem, TranslatePipe } from
               <span>{{ { ar: t.nameAr, en: t.nameEn } | dcLocalize }}</span>
             }
             <span class="dc-muted">{{
-              t.status === 'COMPLETED' ? (t.completedBy ?? '') : (t.assigneeName ?? t.assignee ?? ('tasks.unassigned' | dcTranslate))
+              t.status === 'COMPLETED'
+                ? (t.completedBy ?? '')
+                : t.assignee
+                  ? ({ ar: t.assigneeNameAr ?? t.assignee, en: t.assigneeNameEn ?? t.assignee } | dcLocalize)
+                  : ('tasks.unassigned' | dcTranslate)
             }}</span>
           </li>
         }
@@ -62,12 +66,23 @@ import { InstanceView, LocalizePipe, SlaChip, TimelineItem, TranslatePipe } from
               }}</span>
             }
             <span class="dc-muted"
-              ><span dir="ltr">{{ e.at | date: 'yyyy-MM-dd HH:mm' }}</span> · {{ e.actorName }}
+              ><span dir="ltr">{{ e.at | date: 'yyyy-MM-dd HH:mm' }}</span> ·
+              @switch (e.actor) {
+                @case ('system') {
+                  {{ 'workflow.system' | dcTranslate }}
+                }
+                @case ('applicant') {
+                  {{ 'workflow.applicant' | dcTranslate }}
+                }
+                @default {
+                  {{ { ar: e.actorNameAr, en: e.actorNameEn } | dcLocalize }}
+                }
+              }
               @if (e.onBehalfOf) {
                 ({{ 'workflow.onBehalfOf' | dcTranslate }} {{ e.onBehalfOf }})
               }
-              @if (e.targetName) {
-                → {{ e.targetName }}
+              @if (e.target) {
+                → {{ { ar: e.targetNameAr ?? e.target, en: e.targetNameEn ?? e.target } | dcLocalize }}
               }
             </span>
             @if (e.comment) {

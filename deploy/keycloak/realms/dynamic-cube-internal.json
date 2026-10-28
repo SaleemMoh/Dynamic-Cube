@@ -122,6 +122,81 @@
           "temporary": false
         }
       ]
+    },
+    {
+      "username": "manager",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Request",
+      "lastName": "Manager",
+      "email": "manager@dynamic-cube.local",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Dev@12345",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "analyst1",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "First",
+      "lastName": "Analyst",
+      "email": "analyst1@dynamic-cube.local",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Dev@12345",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "analyst2",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Second",
+      "lastName": "Analyst",
+      "email": "analyst2@dynamic-cube.local",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Dev@12345",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "auditor1",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Classification",
+      "lastName": "Auditor",
+      "email": "auditor1@dynamic-cube.local",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Dev@12345",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "director",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "General",
+      "lastName": "Manager",
+      "email": "director@dynamic-cube.local",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Dev@12345",
+          "temporary": false
+        }
+      ]
     }
   ],
   "loginTheme": "dynamic-cube"

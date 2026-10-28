@@ -190,7 +190,8 @@ public sealed class WorkTask : IAuditable
 /// <summary>The instance's internal timeline: tasks, assignments, actions, notes, SLA alerts.</summary>
 public sealed class WorkflowEvent
 {
-    public Guid Id { get; set; } = Guid.CreateVersion7();
+    /// <summary>Increases in the order events are recorded (events of one step share their time).</summary>
+    public Guid Id { get; set; } = OrderedIds.Next();
 
     public Guid InstanceId { get; set; }
 
@@ -259,4 +260,20 @@ public sealed class Delegation : IAuditable, IHasAuditColumns
     public DateTimeOffset? UpdatedAt { get; set; }
 
     public string? UpdatedBy { get; set; }
+}
+
+/// <summary>Version 7 GUIDs that increase within the process, even when created in the same millisecond.</summary>
+internal static class OrderedIds
+{
+    private static readonly Lock Gate = new();
+    private static long _last;
+
+    public static Guid Next()
+    {
+        lock (Gate)
+        {
+            _last = Math.Max(_last + 1, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+            return Guid.CreateVersion7(DateTimeOffset.FromUnixTimeMilliseconds(_last));
+        }
+    }
 }

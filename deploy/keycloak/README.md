@@ -29,6 +29,7 @@ Password for all: `Dev@12345`
 | Realm | Username | Notes |
 |---|---|---|
 | internal | `admin`, `maker`, `checker` | Receive `SYSTEM_ADMIN`, `CONFIG_MAKER`, `CONFIG_CHECKER` on first sign-in (`AppsControl:BootstrapUsers` in development) |
+| internal | `manager`, `analyst1`, `analyst2`, `auditor1`, `director` | Classification staff; their roles come from the `classification-workflow.json` package (see `deploy/config-packages`) |
 | external | `1000000001`, `2000000002` | Applicants; `national_id` attribute mapped into tokens |
 
 Get a token for API testing (development only):
