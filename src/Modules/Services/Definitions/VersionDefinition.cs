@@ -20,6 +20,9 @@ public sealed class VersionDefinition
     public List<RuleDefinition> Validations { get; set; } = [];
 
     public List<FeeDefinition> Fees { get; set; } = [];
+
+    /// <summary>Workflow that processes submitted requests (its latest published version at submission).</summary>
+    public string? Workflow { get; set; }
 }
 
 /// <summary>A tier such as Regular / Premium / Diamond with its own duration and fees.</summary>

@@ -107,6 +107,7 @@ public static class RequestEventTypes
     public const string Submitted = "SUBMITTED";
     public const string Cancelled = "CANCELLED";
     public const string Expired = "EXPIRED";
+    public const string Resubmitted = "RESUBMITTED";
 }
 
 /// <summary>Counters for request numbers (one row per prefix and year).</summary>

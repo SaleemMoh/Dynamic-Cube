@@ -96,6 +96,11 @@ internal static partial class DefinitionValidator
             }
         }
 
+        if (definition.Workflow is not null)
+        {
+            CheckCode(definition.Workflow, "definition.workflow", errors);
+        }
+
         Rules(definition.Eligibility, "definition.eligibility", evaluator, errors, null);
         Rules(definition.Validations, "definition.validations", evaluator, errors, definition.Steps.Select(s => s.Code).ToHashSet());
         Fees(definition, evaluator, errors);
@@ -213,7 +218,7 @@ internal static partial class DefinitionValidator
     {
         if (string.IsNullOrEmpty(code) || !Code().IsMatch(code))
         {
-            errors.Add(field, "Use upper-case letters, digits and underscores, starting with a letter.");
+            errors.Add(field, "Use upper-case letters, digits, _ and -, starting with a letter.");
         }
     }
 

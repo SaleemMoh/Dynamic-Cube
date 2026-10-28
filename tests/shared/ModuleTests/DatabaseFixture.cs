@@ -4,6 +4,7 @@ using DynamicCube.Modules.Integration.Persistence;
 using DynamicCube.Modules.Parties.Persistence;
 using DynamicCube.Modules.Parties.Seeding;
 using DynamicCube.Modules.Services.Persistence;
+using DynamicCube.Modules.Workflow.Persistence;
 using DynamicCube.Platform.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -45,6 +46,7 @@ public sealed class DatabaseFixture : IAsyncLifetime
             await sp.GetRequiredService<IntegrationDbContext>().Database.MigrateAsync();
             await sp.GetRequiredService<PartiesDbContext>().Database.MigrateAsync();
             await sp.GetRequiredService<ServicesDbContext>().Database.MigrateAsync();
+            await sp.GetRequiredService<WorkflowDbContext>().Database.MigrateAsync();
             await sp.GetRequiredService<AppsControlSeeder>().SeedAsync(CancellationToken.None);
             await sp.GetRequiredService<PartiesSeeder>().SeedAsync(CancellationToken.None);
         });

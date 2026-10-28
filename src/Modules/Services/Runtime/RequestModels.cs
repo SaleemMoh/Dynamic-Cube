@@ -46,7 +46,8 @@ public sealed record RequestView(
     IReadOnlyList<FeeLine> Fees,
     IReadOnlyDictionary<string, IReadOnlyList<FeeLine>> FeesByLevel,
     ResolvedVersion Version,
-    IReadOnlyList<FieldError> StepErrors);
+    IReadOnlyList<FieldError> StepErrors,
+    IReadOnlyList<TimelineEntry> Timeline);
 
 public sealed record TimelineEntry(DateTimeOffset At, string UserId, string Type, StatusCategory? FromStatus, StatusCategory? ToStatus, string? Comment);
 

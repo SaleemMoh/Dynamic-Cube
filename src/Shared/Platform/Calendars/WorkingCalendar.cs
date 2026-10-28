@@ -28,7 +28,7 @@ public sealed class WorkingCalendar
 
     public bool IsWorkingDay(DateOnly date) => !_weekend.Contains(date.DayOfWeek) && !_holidays.Any(h => date >= h.From && date <= h.To);
 
-    /// <summary>The moment <paramref name="days"/> working days after <paramref name="start"/> (same local time of day).</summary>
+    /// <summary>The moment (UTC) <paramref name="days"/> working days after <paramref name="start"/>, at the same local time of day.</summary>
     public DateTimeOffset AddWorkingDays(DateTimeOffset start, int days)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(days);
@@ -45,7 +45,7 @@ public sealed class WorkingCalendar
         }
 
         var target = date.ToDateTime(TimeOnly.FromDateTime(local.DateTime));
-        return new DateTimeOffset(target, TimeZone.GetUtcOffset(target));
+        return new DateTimeOffset(target, TimeZone.GetUtcOffset(target)).ToUniversalTime();
     }
 
     /// <summary>Whole working days from <paramref name="from"/> to <paramref name="to"/> (0 when <paramref name="to"/> is earlier).</summary>

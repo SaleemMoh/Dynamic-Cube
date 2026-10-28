@@ -6,6 +6,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Shared\Hosting\DynamicCube.Hosting.csproj" />
+    <ProjectReference Include="..\..\Modules\AppsControl\DynamicCube.Modules.AppsControl.csproj" />
+    <ProjectReference Include="..\..\Modules\Workflow\DynamicCube.Modules.Workflow.csproj" />
   </ItemGroup>
 
 </Project>

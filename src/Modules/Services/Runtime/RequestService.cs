@@ -6,14 +6,17 @@ using DynamicCube.Modules.Services.Domain;
 using DynamicCube.Modules.Services.Persistence;
 using DynamicCube.Platform.Integration;
 using DynamicCube.Platform.Parties;
+using DynamicCube.Platform.Persistence;
 using DynamicCube.Platform.Security;
+using DynamicCube.Platform.Workflow;
 using Microsoft.EntityFrameworkCore;
 
 namespace DynamicCube.Modules.Services.Runtime;
 
 /// <summary>
-/// The applicant's side of services: catalog, drafts pinned to a version, saving answers, submission. Requests belong to
-/// their beneficiary: whoever acts for that party (and whose relationship covers the service) sees them.
+/// The applicant's side of services: catalog, drafts pinned to a version, saving answers, submission (which starts the
+/// version's workflow) and resubmission after a return for correction. Requests belong to their beneficiary: whoever
+/// acts for that party (and whose relationship covers the service) sees them.
 /// </summary>
 internal sealed class RequestService(
     ServicesDbContext context,
@@ -23,6 +26,8 @@ internal sealed class RequestService(
     Eligibility eligibility,
     FeeCalculator fees,
     FormValidator validator,
+    IWorkflowRuntime workflows,
+    IUnitOfWork unitOfWork,
     ICurrentUser user,
     TimeProvider clock)
 {
@@ -124,9 +129,14 @@ internal sealed class RequestService(
     public async Task<RequestView> SaveAsync(Guid id, SaveRequest request, CancellationToken cancellationToken)
     {
         var (entity, acting) = await LoadMineAsync(id, cancellationToken);
-        RequireDraft(entity);
+        RequireEditable(entity);
         var service = await context.Services.AsNoTracking().SingleAsync(s => s.Id == entity.ServiceId, cancellationToken);
         var version = await cache.GetAsync(context, entity.ServiceVersionId, cancellationToken);
+        if (entity.StatusCategory == StatusCategory.PendingCustomer && request.LevelCode is not null && request.LevelCode != entity.LevelCode)
+        {
+            throw new RequestConflictException("The service level cannot change after submission.");
+        }
+
         if (request.LevelCode is not null && version.Definition.Levels.All(l => l.Code != request.LevelCode))
         {
             throw new RequestValidationException([new FieldError("level", "OPTION", "مستوى الخدمة غير موجود.", "The service level does not exist.", null)]);
@@ -166,6 +176,11 @@ internal sealed class RequestService(
     public async Task<RequestView> SubmitAsync(Guid id, SubmitRequest request, CancellationToken cancellationToken)
     {
         var (entity, acting) = await LoadMineAsync(id, cancellationToken);
+        if (entity.StatusCategory == StatusCategory.PendingCustomer)
+        {
+            return await ResubmitAsync(entity, acting, cancellationToken);
+        }
+
         RequireDraft(entity);
         var service = await context.Services.AsNoTracking().SingleAsync(s => s.Id == entity.ServiceId, cancellationToken);
         if (await ExpireOrMoveAsync(entity, service, cancellationToken))
@@ -201,6 +216,12 @@ internal sealed class RequestService(
             throw new RequestValidationException(errors);
         }
 
+        var workflow = version.Definition.Workflow;
+        if (workflow is not null && !await workflows.CanStartAsync(workflow, cancellationToken))
+        {
+            throw new RequestConflictException("The service cannot take requests yet: its workflow is not published.");
+        }
+
         var lines = fees.Compute(version.Definition, entity.LevelCode, Context(facts, acting, check.Data, entity.LevelCode));
         var now = clock.GetUtcNow();
         entity.Data = check.Data.ToJsonString();
@@ -213,7 +234,51 @@ internal sealed class RequestService(
         entity.DraftExpiresAt = null;
         entity.CurrentStep = null;
         AddEvent(entity, RequestEventTypes.Submitted, StatusCategory.Draft, StatusCategory.Submitted, null);
-        await context.SaveChangesAsync(cancellationToken);
+
+        // The request and its workflow start together, or not at all.
+        await using (var work = await unitOfWork.BeginAsync(cancellationToken))
+        {
+            await context.SaveChangesAsync(cancellationToken);
+            if (workflow is not null)
+            {
+                var level = version.Definition.Levels.FirstOrDefault(l => l.Code == entity.LevelCode);
+                await workflows.StartAsync(
+                    new WorkflowStart(workflow, RequestSubject.Type, entity.Id, entity.Number!, service.NameAr, service.NameEn, entity.BeneficiaryNameAr, entity.BeneficiaryNameEn,
+                        service.Code, entity.LevelCode, level?.SlaWorkingDays),
+                    cancellationToken);
+            }
+
+            await work.CommitAsync(cancellationToken);
+        }
+
+        return await ViewAsync(entity, service, version, facts, acting, null, cancellationToken);
+    }
+
+    /// <summary>Sends a request returned for correction back: the answers are checked again and the workflow resumes.</summary>
+    private async Task<RequestView> ResubmitAsync(ServiceRequest entity, ActingParty acting, CancellationToken cancellationToken)
+    {
+        var service = await context.Services.AsNoTracking().SingleAsync(s => s.Id == entity.ServiceId, cancellationToken);
+        var version = await cache.GetAsync(context, entity.ServiceVersionId, cancellationToken);
+        var facts = await FactsAsync(acting, refresh: true, cancellationToken);
+        var data = JsonNode.Parse(entity.Data)!.AsObject();
+        var check = await validator.CheckAsync(version, data, Context(facts, acting, data, entity.LevelCode), null, cancellationToken);
+        if (check.Errors.Count > 0)
+        {
+            throw new RequestValidationException(check.Errors);
+        }
+
+        entity.Data = check.Data.ToJsonString();
+        entity.CurrentStep = null;
+        AddEvent(entity, RequestEventTypes.Resubmitted, StatusCategory.PendingCustomer, StatusCategory.InProgress, null);
+        entity.StatusCategory = StatusCategory.InProgress;
+        entity.DisplayStatus = "RESUBMITTED";
+        await using (var work = await unitOfWork.BeginAsync(cancellationToken))
+        {
+            await context.SaveChangesAsync(cancellationToken);
+            await workflows.ResumeAsync(RequestSubject.Type, entity.Id, cancellationToken);
+            await work.CommitAsync(cancellationToken);
+        }
+
         return await ViewAsync(entity, service, version, facts, acting, null, cancellationToken);
     }
 
@@ -238,7 +303,10 @@ internal sealed class RequestService(
         var byLevel = entity.StatusCategory == StatusCategory.Draft
             ? version.Definition.Levels.ToDictionary(l => l.Code, l => fees.Compute(version.Definition, l.Code, Context(facts, acting, data, l.Code)))
             : new Dictionary<string, IReadOnlyList<FeeLine>>();
-        return new RequestView(Summary(entity, (service.NameAr, service.NameEn)), entity.VersionNumber, entity.LevelCode, entity.CurrentStep, data, lines, byLevel, version, stepErrors);
+        var timeline = await context.RequestEvents.AsNoTracking().Where(e => e.RequestId == entity.Id).OrderBy(e => e.At)
+            .Select(e => new TimelineEntry(e.At, e.UserId, e.Type, e.FromStatus, e.ToStatus, e.Comment))
+            .ToListAsync(cancellationToken);
+        return new RequestView(Summary(entity, (service.NameAr, service.NameEn)), entity.VersionNumber, entity.LevelCode, entity.CurrentStep, data, lines, byLevel, version, stepErrors, timeline);
     }
 
     /// <summary>Expires a draft past its date, or moves it to the current version when the service says so. True when expired.</summary>
@@ -284,6 +352,15 @@ internal sealed class RequestService(
         return entity is null || !acting.Covers(entity.ServiceCode)
             ? throw new RequestNotFoundException($"Request {id} does not exist.")
             : (entity, acting);
+    }
+
+    /// <summary>Drafts, and requests returned to the applicant for correction, can be edited.</summary>
+    private static void RequireEditable(ServiceRequest entity)
+    {
+        if (entity.StatusCategory is not (StatusCategory.Draft or StatusCategory.PendingCustomer))
+        {
+            throw new RequestConflictException("Only drafts and requests returned for correction can be changed.");
+        }
     }
 
     private static void RequireDraft(ServiceRequest entity)

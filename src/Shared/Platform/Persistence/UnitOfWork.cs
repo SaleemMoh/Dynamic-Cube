@@ -75,7 +75,7 @@ public sealed class ModuleConnection : IAsyncDisposable, IDisposable
             }
             else
             {
-                await transaction.RollbackAsync(CancellationToken.None);
+                await RollBackAsync(transaction);
             }
         }
         finally
@@ -87,6 +87,19 @@ public sealed class ModuleConnection : IAsyncDisposable, IDisposable
 
             _enlisted.Clear();
             await transaction.DisposeAsync();
+        }
+    }
+
+    /// <summary>Best effort: after a failed command the transaction may already be gone, and the original error matters.</summary>
+    private static async Task RollBackAsync(NpgsqlTransaction transaction)
+    {
+        try
+        {
+            await transaction.RollbackAsync(CancellationToken.None);
+        }
+        catch (Exception ex) when (ex is ObjectDisposedException or InvalidOperationException or NpgsqlException)
+        {
+            // Nothing left to roll back; PostgreSQL discards the transaction with the connection.
         }
     }
 

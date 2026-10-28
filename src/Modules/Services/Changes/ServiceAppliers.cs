@@ -80,7 +80,7 @@ internal sealed partial class ServiceDefinitionApplier(ServicesDbContext db) : S
         var prefix = Blank(payload.NumberPrefix) ?? entity.Code;
         if (!Prefix().IsMatch(prefix))
         {
-            errors.Add("numberPrefix", "Up to 20 upper-case letters, digits or underscores.");
+            errors.Add("numberPrefix", "Up to 20 upper-case letters, digits, _ or -.");
         }
 
         entity.DescriptionAr = Blank(payload.DescriptionAr);

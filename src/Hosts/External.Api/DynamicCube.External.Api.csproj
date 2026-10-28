@@ -10,6 +10,7 @@
     <ProjectReference Include="..\..\Modules\Integration\DynamicCube.Modules.Integration.csproj" />
     <ProjectReference Include="..\..\Modules\Parties\DynamicCube.Modules.Parties.csproj" />
     <ProjectReference Include="..\..\Modules\Services\DynamicCube.Modules.Services.csproj" />
+    <ProjectReference Include="..\..\Modules\Workflow\DynamicCube.Modules.Workflow.csproj" />
   </ItemGroup>
 
 </Project>

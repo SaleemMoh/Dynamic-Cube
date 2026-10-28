@@ -5,6 +5,7 @@ using DynamicCube.Modules.Services.Runtime;
 using DynamicCube.Platform;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Security;
+using DynamicCube.Platform.Workflow;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -19,7 +20,8 @@ public static class ServicesModule
 
     /// <summary>
     /// Registers Services: service definitions, the question bank, versions and requests. Needs the Party Registry
-    /// (<see cref="Platform.Parties.IPartyFacts"/>) and Apps Control (<see cref="Platform.Lovs.ILovValidator"/>).
+    /// (<see cref="Platform.Parties.IPartyFacts"/>), Apps Control (<see cref="Platform.Lovs.ILovValidator"/>) and the
+    /// workflow engine (<see cref="IWorkflowRuntime"/>), which processes submitted requests.
     /// </summary>
     public static IServiceCollection AddServices(this IServiceCollection services, IConfiguration configuration)
     {
@@ -39,6 +41,7 @@ public static class ServicesModule
         services.AddScoped<FeeCalculator>();
         services.AddScoped<FormValidator>();
         services.AddScoped<RequestService>();
+        services.AddScoped<IWorkflowSubject, RequestSubject>();
         services.AddScoped<RequestAdminService>();
         return services;
     }

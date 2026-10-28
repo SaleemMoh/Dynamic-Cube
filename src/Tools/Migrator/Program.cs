@@ -9,6 +9,8 @@ using DynamicCube.Modules.Parties.Persistence;
 using DynamicCube.Modules.Parties.Seeding;
 using DynamicCube.Modules.Services;
 using DynamicCube.Modules.Services.Persistence;
+using DynamicCube.Modules.Workflow;
+using DynamicCube.Modules.Workflow.Persistence;
 using DynamicCube.Platform.Persistence;
 using DynamicCube.Platform.Security;
 using Microsoft.EntityFrameworkCore;
@@ -25,6 +27,7 @@ builder.Services.AddAppsControl(builder.Configuration, managesUsers: false);
 builder.Services.AddIntegration(builder.Configuration);
 builder.Services.AddParties(builder.Configuration);
 builder.Services.AddServices(builder.Configuration);
+builder.Services.AddWorkflow(builder.Configuration);
 
 using var host = builder.Build();
 var logger = host.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Migrator");
@@ -36,6 +39,7 @@ try
     await MigrateAsync<IntegrationDbContext>(host.Services, logger);
     await MigrateAsync<PartiesDbContext>(host.Services, logger);
     await MigrateAsync<ServicesDbContext>(host.Services, logger);
+    await MigrateAsync<WorkflowDbContext>(host.Services, logger);
 
     // Product-owned configuration (SYSTEM rows) is inserted or refreshed on every run.
     using (var scope = host.Services.CreateScope())
