@@ -54,6 +54,45 @@ public sealed class LookupTests(AppsControlFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Codes_with_hyphens_publish_and_read_as_underscores_in_the_typed_view()
+    {
+        var region = Harness.Unique("SAUDI-REGION");
+        await _harness.PublishAsync(
+            AppsControlAreas.Lookups,
+            ClassChange(region, [new { code = "GOV-CODE", nameAr = "رمز الإمارة", nameEn = "Emirate code", dataType = "TEXT" }]),
+            DomainChange(region, "EASTERN-1", "الشرقية", "Eastern", new Dictionary<string, object> { ["GOV-CODE"] = "5" }));
+
+        var row = await _harness.AsAsync("admin", async sp =>
+        {
+            var rows = await Sql.QueryAsync(
+                sp.GetRequiredService<AppsControlDbContext>(),
+                $"SELECT code, gov_code FROM apps.v_class_{region.ToLowerInvariant().Replace('-', '_')}");
+            return rows.ShouldHaveSingleItem();
+        });
+        row["code"].ShouldBe("EASTERN-1");
+        row["gov_code"].ShouldBe("5");
+
+        var reserved = await Should.ThrowAsync<ChangeValidationException>(() => _harness.DraftAsync(
+            AppsControlAreas.Lookups,
+            ClassChange(Harness.Unique("CLS"), [new { code = "NAME-AR", nameAr = "س", nameEn = "S", dataType = "TEXT" }])));
+        reserved.Errors.Keys.ShouldContain("attributes[0].code");
+
+        var sameColumn = await Should.ThrowAsync<ChangeValidationException>(() => _harness.DraftAsync(
+            AppsControlAreas.Lookups,
+            ClassChange(Harness.Unique("CLS"),
+            [
+                new { code = "A-B", nameAr = "س", nameEn = "S", dataType = "TEXT" },
+                new { code = "A_B", nameAr = "ص", nameEn = "T", dataType = "TEXT" },
+            ])));
+        sameColumn.Errors.Keys.ShouldContain("attributes[1].code");
+
+        var sameView = await Should.ThrowAsync<ChangeValidationException>(() => _harness.DraftAsync(
+            AppsControlAreas.Lookups,
+            ClassChange(region.Replace('-', '_'), [])));
+        sameView.Errors.Keys.ShouldContain("code");
+    }
+
+    [Fact]
     public async Task Values_are_validated_against_attribute_definitions()
     {
         var sector = Harness.Unique("SECTOR");

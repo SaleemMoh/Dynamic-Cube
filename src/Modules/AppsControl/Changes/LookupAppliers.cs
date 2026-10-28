@@ -59,6 +59,16 @@ internal sealed class ClassApplier(AppsControlDbContext db) : ConfigApplier<Look
 
     protected override async Task ApplyAsync(LookupClass entity, ClassPayload payload, RefResolver refs, ValidationErrors errors, LookupClass? existing, CancellationToken cancellationToken)
     {
+        var viewName = ClassViewGenerator.ViewName(entity.Code);
+        var sameView = await refs.Context.Classes.AsNoTracking()
+            .Where(c => c.Code != entity.Code && c.Code.Replace("-", "_") == entity.Code.Replace("-", "_"))
+            .Select(c => c.Code)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (sameView is not null)
+        {
+            errors.Add("code", $"Class '{sameView}' already uses the report view {viewName} ('-' is read as '_').");
+        }
+
         entity.DescriptionAr = payload.DescriptionAr;
         entity.DescriptionEn = payload.DescriptionEn;
         entity.IsHierarchical = payload.IsHierarchical;
@@ -78,9 +88,14 @@ internal sealed class ClassApplier(AppsControlDbContext db) : ConfigApplier<Look
         {
             var field = $"attributes[{i}]";
             errors.Code(field + ".code", a.Code, ValidationErrors.IdentifierCode());
-            if (AttributeValues.ReservedCodes.Contains(a.Code ?? string.Empty))
+            var column = ClassViewGenerator.SqlName(a.Code ?? string.Empty);
+            if (AttributeValues.ReservedCodes.Contains(column.ToUpperInvariant()))
             {
                 errors.Add(field + ".code", $"'{a.Code}' is reserved.");
+            }
+            else if (payload.Attributes.Take(i).Any(o => o.Code != a.Code && ClassViewGenerator.SqlName(o.Code ?? string.Empty) == column))
+            {
+                errors.Add(field + ".code", $"'{a.Code}' gives the same report column as another attribute ('-' is read as '_').");
             }
 
             errors.Required(field + ".nameAr", a.NameAr);

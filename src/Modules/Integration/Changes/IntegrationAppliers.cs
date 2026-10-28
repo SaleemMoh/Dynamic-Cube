@@ -380,7 +380,7 @@ internal sealed partial class OperationApplier(IntegrationDbContext db) : Integr
             IsIdempotent = entity.IsIdempotent,
         });
 
-    [System.Text.RegularExpressions.GeneratedRegex("^[A-Za-z][A-Za-z0-9_]{0,63}$")]
+    [System.Text.RegularExpressions.GeneratedRegex("^[A-Za-z][A-Za-z0-9_\\-]{0,63}$")]
     private static partial System.Text.RegularExpressions.Regex ParameterName();
 
     [System.Text.RegularExpressions.GeneratedRegex(@"\{([^}]*)\}")]

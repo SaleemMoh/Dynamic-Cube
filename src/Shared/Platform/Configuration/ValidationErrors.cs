@@ -60,8 +60,8 @@ public sealed partial class ValidationErrors
     [GeneratedRegex("^[A-Za-z0-9][A-Za-z0-9_.\\-]{0,99}$")]
     public static partial Regex GeneralCode();
 
-    /// <summary>Codes used in generated SQL identifiers (classes, attributes).</summary>
-    [GeneratedRegex("^[A-Z][A-Z0-9_]{0,50}$")]
+    /// <summary>Upper-case codes: letters, digits, <c>_ -</c>; class and attribute codes name generated views and columns (<c>-</c> becomes <c>_</c>).</summary>
+    [GeneratedRegex("^[A-Z][A-Z0-9_\\-]{0,50}$")]
     public static partial Regex IdentifierCode();
 
     /// <summary>Usernames as issued by the identity provider.</summary>

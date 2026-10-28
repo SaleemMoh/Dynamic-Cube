@@ -123,7 +123,7 @@ internal sealed partial class ServiceDefinitionApplier(ServicesDbContext db) : S
         }
     }
 
-    [GeneratedRegex("^[A-Z0-9_]{1,20}$")]
+    [GeneratedRegex("^[A-Z0-9_\\-]{1,20}$")]
     private static partial Regex Prefix();
 }
 
@@ -330,6 +330,6 @@ internal sealed partial class ServiceVersionApplier(ServicesDbContext db, JsonLo
             : (key, 0);
     }
 
-    [GeneratedRegex("^[A-Z][A-Z0-9_]{0,50}/[1-9][0-9]{0,3}$")]
+    [GeneratedRegex("^[A-Z][A-Z0-9_\\-]{0,50}/[1-9][0-9]{0,3}$")]
     private static partial Regex Key();
 }

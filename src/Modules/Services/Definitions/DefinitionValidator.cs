@@ -7,7 +7,7 @@ namespace DynamicCube.Modules.Services.Definitions;
 /// <summary>Checks a version definition before it can be published: structure, codes, references and rules.</summary>
 internal static partial class DefinitionValidator
 {
-    [GeneratedRegex("^[A-Z][A-Z0-9_]{0,50}$")]
+    [GeneratedRegex("^[A-Z][A-Z0-9_\\-]{0,50}$")]
     private static partial Regex Code();
 
     /// <param name="questionExists">Whether a question code exists (published or created earlier in the same change set).</param>

@@ -13,7 +13,10 @@ namespace DynamicCube.Modules.AppsControl.Lookups;
 /// </summary>
 internal sealed class ClassViewGenerator : IChangeSetPublishHook<AppsControlDbContext>
 {
-    public static string ViewName(string classCode) => "v_class_" + classCode.ToLowerInvariant();
+    public static string ViewName(string classCode) => "v_class_" + SqlName(classCode);
+
+    /// <summary>Column or view-name part for a code: lower case, <c>-</c> as <c>_</c>, so reports need no quoting.</summary>
+    public static string SqlName(string code) => code.ToLowerInvariant().Replace('-', '_');
 
     public async Task OnPublishedAsync(AppsControlDbContext context, ChangeSet changeSet, CancellationToken cancellationToken)
     {
@@ -60,7 +63,7 @@ internal sealed class ClassViewGenerator : IChangeSetPublishHook<AppsControlDbCo
                 AttributeDataType.Json => $"d.attributes->{key}",
                 _ => $"d.attributes->>{key}",
             };
-            sql.Append(", ").Append(expression).Append(" AS ").Append(Quote(attribute.Code.ToLowerInvariant()));
+            sql.Append(", ").Append(expression).Append(" AS ").Append(Quote(SqlName(attribute.Code)));
         }
 
         sql.Append(" FROM apps.domain d JOIN apps.class c ON c.id = d.class_id LEFT JOIN apps.domain p ON p.id = d.parent_domain_id WHERE c.code = ")

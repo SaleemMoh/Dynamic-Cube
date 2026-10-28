@@ -86,7 +86,7 @@ export class ClassDetail {
   protected readonly domainColumns = computed(() => ['code', 'name', ...(this.cls()?.attributes ?? []).slice(0, 4).map((a) => 'attr:' + a.code), 'actions']);
 
   protected readonly form = new FormGroup({
-    code: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.pattern(/^[A-Z][A-Z0-9_]{0,50}$/)] }),
+    code: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.pattern(/^[A-Z][A-Z0-9_-]{0,50}$/)] }),
     nameAr: new FormControl('', { nonNullable: true, validators: Validators.required }),
     nameEn: new FormControl('', { nonNullable: true, validators: Validators.required }),
     descriptionAr: new FormControl<string | null>(null),
@@ -131,7 +131,7 @@ export class ClassDetail {
   protected addAttribute(a?: AttributeDefinition): void {
     this.attributes.push(
       new FormGroup({
-        code: new FormControl(a?.code ?? '', { nonNullable: true, validators: [Validators.required, Validators.pattern(/^[A-Z][A-Z0-9_]{0,50}$/)] }),
+        code: new FormControl(a?.code ?? '', { nonNullable: true, validators: [Validators.required, Validators.pattern(/^[A-Z][A-Z0-9_-]{0,50}$/)] }),
         nameAr: new FormControl(a?.nameAr ?? '', { nonNullable: true, validators: Validators.required }),
         nameEn: new FormControl(a?.nameEn ?? '', { nonNullable: true, validators: Validators.required }),
         dataType: new FormControl<string>(a?.dataType ?? 'TEXT', { nonNullable: true }),
