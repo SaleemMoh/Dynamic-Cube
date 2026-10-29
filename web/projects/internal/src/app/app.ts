@@ -5,6 +5,7 @@ import { InternalShell } from './layout/internal-shell';
 import { MODULE_TRANSLATIONS } from './module-translations';
 import { PAYMENT_TRANSLATIONS } from './payments/payment-translations';
 import { PHASE_1E_TRANSLATIONS } from './phase-1e-translations';
+import { BUILDER_TRANSLATIONS } from './services/builder/builder-translations';
 import { APP_TRANSLATIONS } from './translations';
 import { DESIGNER_TRANSLATIONS } from './workflows/designer/designer-translations';
 
@@ -25,5 +26,6 @@ export class App {
     inject(I18nService).register(PHASE_1E_TRANSLATIONS);
     inject(I18nService).register(PAYMENT_TRANSLATIONS);
     inject(I18nService).register(DESIGNER_TRANSLATIONS);
+    inject(I18nService).register(BUILDER_TRANSLATIONS);
   }
 }

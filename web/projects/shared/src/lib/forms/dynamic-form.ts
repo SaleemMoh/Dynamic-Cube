@@ -3,13 +3,16 @@ import { FormControl, FormGroup, ReactiveFormsModule, ValidatorFn, Validators } 
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatExpansionModule } from '@angular/material/expansion';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatTabsModule } from '@angular/material/tabs';
+import { NgTemplateOutlet } from '@angular/common';
 import { JsonValue, jsonLogic } from '../expressions/jsonlogic';
 import { LocalizePipe, TranslatePipe } from '../i18n/translate.pipe';
-import { FormField, FormOption, FormSchema } from './form-schema';
+import { FormField, FormOption, FormSchema, FormSection } from './form-schema';
 import { LOV_SOURCE } from './lov-source';
 
 export type FormValue = Record<string, unknown>;
@@ -21,14 +24,17 @@ export type FormValue = Record<string, unknown>;
 @Component({
   selector: 'dc-dynamic-form',
   imports: [
+    NgTemplateOutlet,
     ReactiveFormsModule,
     MatButtonModule,
     MatCheckboxModule,
     MatDatepickerModule,
+    MatExpansionModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
     MatSelectModule,
+    MatTabsModule,
     LocalizePipe,
     TranslatePipe,
   ],
@@ -79,6 +85,25 @@ export class DynamicForm {
 
   protected options(field: FormField): FormOption[] {
     return field.lov ? (this.lovOptions()[field.code] ?? []) : (field.options ?? []);
+  }
+
+  /** Sections shown for the current answers (tabs and panels are made of these). */
+  protected readonly visibleSections = computed(() => this.schema().sections.filter((s) => this.visibleCodes().has(s.code)));
+  /** The open tab, or the panel opened to show a problem. */
+  protected readonly activeTab = signal(0);
+  protected readonly expanded = signal<string | null>(null);
+
+  /** Where a field sits in its section's grid: a share of six tracks when the section has columns. */
+  protected span(section: FormSection, field: FormField): string | null {
+    if (!section.columns) return null;
+    const width = field.width ?? (field.type === 'checkbox' || field.type === 'textarea' ? 'full' : null);
+    const tracks = width === 'full' ? 6 : width === 'half' ? 3 : width === 'third' ? 2 : 6 / Math.min(3, Math.max(1, section.columns));
+    return `span ${tracks}`;
+  }
+
+  /** Spans the whole row in a section laid out automatically. */
+  protected wide(section: FormSection, field: FormField): boolean {
+    return !section.columns && (field.width === 'full' || field.type === 'checkbox' || field.type === 'textarea');
   }
 
   protected isVisible(code: string): boolean {
@@ -132,7 +157,19 @@ export class DynamicForm {
         }
       }
       this.submitted.emit(value);
+    } else {
+      this.revealProblem();
     }
+  }
+
+  /** Opens the tab or panel of the first field with a problem, so it can be seen. */
+  private revealProblem(): void {
+    const group = this.formGroup();
+    const sections = this.visibleSections();
+    const index = sections.findIndex((section) => section.fields.some((f) => this.isShown(section.code, f.code) && group.controls[f.code]?.invalid));
+    if (index < 0) return;
+    this.activeTab.set(index);
+    this.expanded.set(sections[index].code);
   }
 
   private allFields(): FormField[] {

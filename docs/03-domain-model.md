@@ -86,6 +86,7 @@ A Service Version contains:
 | **Service levels** | Optional tiers (e.g. Regular / Premium / Diamond): SLA, priority, fee table, optional dedicated workflow branch |
 | **Wizard** | Ordered steps; each step is a form section, attachments, fee, integration (go and get), review, declaration, or sub-request creation |
 | **Composable forms** | Sections included according to applicant selections (e.g. chosen sectors). Fields reference a **question bank** by code so a shared question appears **once** even when referenced by several sections |
+| **Form layout** | Per form step, sections shown one below the other, as tabs or as an accordion; per section 1–3 columns; per question a width (full, half or a third of the row). Phones and narrow panels show one column (implemented 3b) |
 | **Validations** | Field- and cross-field rules (JSONLogic), evaluated client- and server-side |
 | **Fees** | Fee items attached to steps; amount by fixed value, formula, or **bracketed lookup** (e.g. by annual revenue); VAT handling; payment via SADAD / Tahseel |
 | **Workflow** | Reference to a published Workflow Version (§3.5) |

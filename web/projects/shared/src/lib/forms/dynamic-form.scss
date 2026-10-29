@@ -3,6 +3,8 @@
 }
 
 .dc-form {
+  /* Columns follow the room the form has (a phone, a side panel), not the window. */
+  container-type: inline-size;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -21,6 +23,21 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
   gap: 1rem 1.5rem;
+}
+
+/* A section with columns: six tracks, so one, two or three columns and half / third widths line up. */
+.dc-form__grid--cols {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+@container (max-width: 600px) {
+  .dc-form__grid--cols > .dc-form__field {
+    grid-column: 1 / -1 !important;
+  }
+}
+
+.dc-form__tab {
+  padding-top: 1.5rem;
 }
 
 .dc-form__section:first-of-type {

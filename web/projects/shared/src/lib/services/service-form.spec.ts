@@ -84,3 +84,18 @@ describe('answers', () => {
     expect(toAnswers(form)).toEqual({ WHEN: '2026-03-05' });
   });
 });
+
+describe('stepSchema layout', () => {
+  it('carries the step display, section columns and question widths', () => {
+    const laidOut: ResolvedVersion = structuredClone(version);
+    const details = laidOut.definition.steps[1];
+    details.display = 'ACCORDION';
+    details.sections[1].columns = 3;
+    details.sections[1].questions[1].width = 'HALF';
+    const schema = stepSchema(laidOut, details);
+    expect(schema.display).toBe('accordion');
+    expect(schema.sections[1].columns).toBe(3);
+    expect(schema.sections[1].fields.find((f) => f.code === 'PROJECTS')!.width).toBe('half');
+    expect(stepSchema(version, version.definition.steps[1]).display).toBeUndefined();
+  });
+});

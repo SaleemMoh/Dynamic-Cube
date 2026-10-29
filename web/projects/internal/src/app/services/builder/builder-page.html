@@ -1,0 +1,152 @@
+<header class="dc-page__header dc-builder__header">
+  <h1>{{ 'builder.title' | dcTranslate }}</h1>
+  <div class="dc-builder__pick">
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>{{ 'versions.service' | dcTranslate }}</mat-label>
+      <mat-select [ngModel]="current()" (ngModelChange)="open($event, null)" data-testid="builder-service">
+        @for (s of services.value() ?? []; track s.code) {
+          <mat-option [value]="s.code">{{ serviceName(s) }} ({{ s.code }})</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    @if (current()) {
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'designer.startFrom' | dcTranslate }}</mat-label>
+        <mat-select [ngModel]="base()" (ngModelChange)="open(current()!, $event)" data-testid="builder-base">
+          @for (v of versionsOf(); track v.code) {
+            <mat-option [value]="+v.code.split('/')[1]">{{ v.code }} — {{ { ar: v.nameAr, en: v.nameEn } | dcLocalize }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <span class="dc-builder__target" dir="ltr" data-testid="builder-target">→ {{ current() }}/{{ nextNumber() }}</span>
+    }
+  </div>
+</header>
+
+@if (current()) {
+  <div class="dc-builder__toolbar" role="toolbar" [attr.aria-label]="'builder.title' | dcTranslate">
+    <button
+      matIconButton
+      type="button"
+      (click)="store.undo()"
+      [disabled]="!store.canUndo()"
+      [matTooltip]="'designer.undo' | dcTranslate"
+      data-testid="builder-undo"
+    >
+      <mat-icon fontSet="material-symbols-outlined">undo</mat-icon>
+    </button>
+    <button
+      matIconButton
+      type="button"
+      (click)="store.redo()"
+      [disabled]="!store.canRedo()"
+      [matTooltip]="'designer.redo' | dcTranslate"
+      data-testid="builder-redo"
+    >
+      <mat-icon fontSet="material-symbols-outlined">redo</mat-icon>
+    </button>
+    <span class="dc-builder__sep"></span>
+    <div class="dc-builder__views" role="tablist">
+      @for (v of views; track v) {
+        <button
+          matButton
+          type="button"
+          role="tab"
+          [attr.aria-selected]="view() === v"
+          [class.dc-builder__view--on]="view() === v"
+          (click)="showView(v)"
+          [attr.data-testid]="'builder-view-' + v"
+        >
+          {{ 'builder.view.' + v | dcTranslate }}
+          @if (problemCount()[v]) {
+            <span class="dc-builder__count">{{ problemCount()[v] }}</span>
+          }
+        </button>
+      }
+    </div>
+    <span class="dc-builder__grow"></span>
+    <span class="dc-builder__status" [class.dc-builder__status--bad]="problems().length > 0" data-testid="builder-status">
+      <mat-icon fontSet="material-symbols-outlined">{{ problems().length ? 'error' : 'check_circle' }}</mat-icon>
+      {{ problems().length ? problems().length + ' ' + ('designer.problems' | dcTranslate) : ('designer.noProblems' | dcTranslate) }}
+    </span>
+    <button matButton="outlined" type="button" (click)="check()" [disabled]="busy()" data-testid="builder-check">
+      <mat-icon fontSet="material-symbols-outlined">fact_check</mat-icon>
+      {{ 'designer.check' | dcTranslate }}
+    </button>
+    @if (canCreate()) {
+      <button matButton="filled" type="button" (click)="save()" [disabled]="busy() || problems().length > 0" data-testid="builder-save">
+        <mat-icon fontSet="material-symbols-outlined">save</mat-icon>
+        {{ drafts.saveLabel('svc.service-version') | dcTranslate }}
+      </button>
+    }
+  </div>
+
+  @if (errors().length) {
+    <ul class="dc-errors" role="alert">
+      @for (e of errors(); track $index) {
+        <li dir="ltr">{{ e }}</li>
+      }
+    </ul>
+  }
+  @if (savedAs(); as code) {
+    <p class="dc-builder__saved" role="status" data-testid="builder-saved">
+      <mat-icon fontSet="material-symbols-outlined">task_alt</mat-icon>
+      {{ 'designer.saved' | dcTranslate }} <bdi dir="ltr">{{ code }}</bdi>
+    </p>
+  }
+
+  <div class="dc-builder__body">
+    @switch (view()) {
+      @case ('form') {
+        <dc-builder-form-tab />
+      }
+      @case ('rules') {
+        <dc-builder-rules-tab [documentType]="documentType()" />
+      }
+      @case ('card') {
+        <dc-builder-card-tab />
+      }
+      @case ('workflow') {
+        <dc-builder-workflow-tab [service]="current()" />
+      }
+      @case ('preview') {
+        <dc-builder-preview-tab [service]="current()!" />
+      }
+      @case ('json') {
+        <div class="dc-builder__json">
+          @if (jsonError()) {
+            <p class="dc-errors" role="alert">{{ 'wfVersions.invalidJson' | dcTranslate }}</p>
+          }
+          <textarea dir="ltr" spellcheck="false" [ngModel]="jsonText()" (ngModelChange)="jsonText.set($event)" data-testid="builder-json"></textarea>
+        </div>
+      }
+    }
+  </div>
+
+  @if (serverProblems() || problems().length) {
+    <section class="dc-builder__problems" data-testid="builder-problems">
+      @if (serverProblems(); as server) {
+        <div class="dc-builder__server" [class.dc-builder__server--ok]="server.length === 0" data-testid="builder-server">
+          <strong>{{ (server.length ? 'designer.serverProblems' : 'designer.serverOk') | dcTranslate }}</strong>
+          <ul>
+            @for (m of server; track $index) {
+              <li dir="ltr">{{ m }}</li>
+            }
+          </ul>
+        </div>
+      }
+      <ul class="dc-builder__list">
+        @for (p of problems(); track $index) {
+          <li>
+            <button type="button" (click)="selectProblem(p)">
+              <mat-icon fontSet="material-symbols-outlined">error</mat-icon>
+              {{ 'builder.view.' + p.tab | dcTranslate }}: {{ problemText(p) }}
+            </button>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+} @else {
+  <p class="dc-empty">{{ 'builder.choose' | dcTranslate }}</p>
+}

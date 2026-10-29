@@ -62,6 +62,11 @@ internal static partial class DefinitionValidator
                     break;
             }
 
+            if (step.Type != StepType.Form && step.Display is not null)
+            {
+                errors.Add(field + ".display", "Only form steps lay out sections.");
+            }
+
             if (step.Type != StepType.Form && step.Sections.Count > 0)
             {
                 errors.Add(field + ".sections", "Only form steps have sections.");
@@ -75,6 +80,11 @@ internal static partial class DefinitionValidator
                 errors.Required(sectionField + ".titleAr", section.TitleAr);
                 errors.Required(sectionField + ".titleEn", section.TitleEn);
                 CheckRule(section.VisibleWhen, sectionField + ".visibleWhen", evaluator, errors);
+                if (section.Columns is < 1 or > 3)
+                {
+                    errors.Add(sectionField + ".columns", "Use 1, 2 or 3 columns.");
+                }
+
                 if (section.Questions.Count == 0)
                 {
                     errors.Add(sectionField + ".questions", "A section needs at least one question.");

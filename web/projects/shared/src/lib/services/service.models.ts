@@ -26,6 +26,8 @@ export interface QuestionUse {
   requiredWhen?: JsonLogicRule | null;
   visibleWhen?: JsonLogicRule | null;
   readonly: boolean;
+  /** In a section with columns: FULL row, HALF or THIRD (default one column). */
+  width?: 'FULL' | 'HALF' | 'THIRD' | null;
 }
 
 export interface SectionDefinition {
@@ -33,6 +35,8 @@ export interface SectionDefinition {
   titleAr: string;
   titleEn: string;
   visibleWhen?: JsonLogicRule | null;
+  /** 1 to 3 columns (default: as many as fit). */
+  columns?: number | null;
   questions: QuestionUse[];
 }
 
@@ -42,6 +46,8 @@ export interface StepDefinition {
   titleAr: string;
   titleEn: string;
   sections: SectionDefinition[];
+  /** Form steps: STACKED (default), TABS or ACCORDION. */
+  display?: 'STACKED' | 'TABS' | 'ACCORDION' | null;
   textAr?: string | null;
   textEn?: string | null;
 }

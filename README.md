@@ -23,8 +23,9 @@ the employees' Action Center; issued documents with PDF printing and public QR v
 with a test console, and notifications (in-app, email, SMS) driven by rules over events. Every module's
 configuration is edited through the same maker-checker change sets. Phase 2 has started: follow-up services on issued
 documents (renewal, extension) and payments (SADAD bills, signed payment notifications, a workflow step that waits
-for payment). Phase 3 (builders) has started with the Workflow Designer: workflows drawn on a canvas, conditions
-without JSON, checks as you draw and a test run. See the [roadmap](docs/07-roadmap.md) for what comes next.
+for payment). Phase 3 (builders) has started with the Workflow Designer (workflows drawn on a canvas, conditions
+without JSON, checks as you draw, a test run) and the Service Builder (forms by drag and drop with layouts, rules and
+fees, the portal card and a live preview). See the [roadmap](docs/07-roadmap.md) for what comes next.
 
 ## Repository layout
 
@@ -185,6 +186,13 @@ These are development values only; change them in `deploy/docker/.env` (see `.en
    questions and levels), and watch the problems list as you go. **Test run** tries it with sample answers (you
    choose each task's action and whether the bill is paid); **Check on the server** runs the publish checks;
    **Add to draft** saves it as the next version, which `checker` approves like any other change.
+13. Open **Services → Service builder** (or *Open in the service builder* on a service or a version) and choose a
+   service: its latest version is loaded and the builder prepares the next. On **Form**, drag questions from the
+   bank into sections, drag to reorder, select an item to edit it (layout: tabs or accordion for a step, columns for a
+   section, a width for a question; conditions without JSON). **Rules & fees** holds levels, eligibility, checks, fees
+   and the availability window; **Service card** the portal card with its preview; **Workflow** what the workflow does,
+   with a link to the designer; **Preview** the applicant's wizard on a desktop or a phone. **Check on the server**,
+   then **Add to draft**; once `checker` approves, new requests use the new version.
 
 The gateway credentials come from the secret store (`Secrets__MOMRAH_GATEWAY__clientId` / `__clientSecret`), never
 from the database; development values are in `appsettings.Development.json` and the compose file.

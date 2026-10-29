@@ -72,6 +72,27 @@ public enum StepType
     Declaration,
 }
 
+/// <summary>How a form step shows its sections.</summary>
+public enum SectionDisplay
+{
+    /// <summary>One below the other.</summary>
+    Stacked,
+
+    /// <summary>One tab per section.</summary>
+    Tabs,
+
+    /// <summary>Collapsible panels, the first one open.</summary>
+    Accordion,
+}
+
+/// <summary>How much of a section's row a question takes.</summary>
+public enum FieldWidth
+{
+    Full,
+    Half,
+    Third,
+}
+
 public sealed class StepDefinition
 {
     public string Code { get; set; } = string.Empty;
@@ -83,6 +104,9 @@ public sealed class StepDefinition
     public string TitleEn { get; set; } = string.Empty;
 
     public List<SectionDefinition> Sections { get; set; } = [];
+
+    /// <summary>Form steps: how their sections are laid out (default: one below the other).</summary>
+    public SectionDisplay? Display { get; set; }
 
     /// <summary>Declaration text.</summary>
     public string? TextAr { get; set; }
@@ -104,6 +128,9 @@ public sealed class SectionDefinition
 
     public JsonNode? VisibleWhen { get; set; }
 
+    /// <summary>Columns of questions, 1 to 3 (default: as many as fit; phones always show one).</summary>
+    public int? Columns { get; set; }
+
     public List<QuestionUse> Questions { get; set; } = [];
 }
 
@@ -120,6 +147,9 @@ public sealed class QuestionUse
 
     /// <summary>Shown but not editable (typically prefilled from the party's data).</summary>
     public bool Readonly { get; set; }
+
+    /// <summary>Width in a section with columns (default one column; FULL also spans a section without columns).</summary>
+    public FieldWidth? Width { get; set; }
 }
 
 /// <summary>A JSONLogic rule that must be truthy, with the bilingual message shown when it is not.</summary>

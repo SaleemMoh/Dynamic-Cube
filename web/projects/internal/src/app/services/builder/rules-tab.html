@@ -1,0 +1,335 @@
+<div class="dc-rt">
+  <section class="dc-card">
+    <header class="dc-rt__head">
+      <h2>{{ 'builder.levels' | dcTranslate }}</h2>
+      <button matButton type="button" (click)="addLevel()" data-testid="add-level">
+        <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+        {{ 'builder.addLevel' | dcTranslate }}
+      </button>
+    </header>
+    <p class="dc-rt__muted">{{ 'builder.levelsHint' | dcTranslate }}</p>
+    @for (l of def().levels; track $index; let i = $index; let first = $first; let last = $last) {
+      <div class="dc-rt__row" [attr.data-testid]="'level-' + l.code">
+        <mat-form-field subscriptSizing="dynamic" class="dc-rt__code">
+          <mat-label>{{ 'builder.code' | dcTranslate }}</mat-label>
+          <input matInput dir="ltr" [ngModel]="l.code" (ngModelChange)="level(i, { code: $event })" [ngModelOptions]="{ updateOn: 'blur' }" />
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'builder.nameAr' | dcTranslate }}</mat-label>
+          <input matInput dir="rtl" [ngModel]="l.nameAr" (ngModelChange)="level(i, { nameAr: $event })" [ngModelOptions]="{ updateOn: 'blur' }" />
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'builder.nameEn' | dcTranslate }}</mat-label>
+          <input matInput dir="ltr" [ngModel]="l.nameEn" (ngModelChange)="level(i, { nameEn: $event })" [ngModelOptions]="{ updateOn: 'blur' }" />
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic" class="dc-rt__num">
+          <mat-label>{{ 'builder.slaDays' | dcTranslate }}</mat-label>
+          <input
+            matInput
+            type="number"
+            min="1"
+            [ngModel]="l.slaWorkingDays ?? null"
+            (ngModelChange)="level(i, { slaWorkingDays: num($event) })"
+            [ngModelOptions]="{ updateOn: 'blur' }"
+          />
+        </mat-form-field>
+        <button matIconButton type="button" [disabled]="first" (click)="moveLevel(i, -1)" [matTooltip]="'designer.up' | dcTranslate">
+          <mat-icon fontSet="material-symbols-outlined">arrow_upward</mat-icon>
+        </button>
+        <button matIconButton type="button" [disabled]="last" (click)="moveLevel(i, 1)" [matTooltip]="'designer.down' | dcTranslate">
+          <mat-icon fontSet="material-symbols-outlined">arrow_downward</mat-icon>
+        </button>
+        <button matIconButton type="button" (click)="removeLevel(i)" [matTooltip]="'rule.remove' | dcTranslate">
+          <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
+        </button>
+        <mat-form-field subscriptSizing="dynamic" class="dc-rt__wide">
+          <mat-label>{{ 'builder.descriptionAr' | dcTranslate }}</mat-label>
+          <input
+            matInput
+            dir="rtl"
+            [ngModel]="l.descriptionAr ?? ''"
+            (ngModelChange)="level(i, { descriptionAr: $event || null })"
+            [ngModelOptions]="{ updateOn: 'blur' }"
+          />
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic" class="dc-rt__wide">
+          <mat-label>{{ 'builder.descriptionEn' | dcTranslate }}</mat-label>
+          <input
+            matInput
+            dir="ltr"
+            [ngModel]="l.descriptionEn ?? ''"
+            (ngModelChange)="level(i, { descriptionEn: $event || null })"
+            [ngModelOptions]="{ updateOn: 'blur' }"
+          />
+        </mat-form-field>
+      </div>
+    } @empty {
+      <p class="dc-rt__muted">{{ 'builder.noLevels' | dcTranslate }}</p>
+    }
+  </section>
+
+  @for (list of ['eligibility', 'validations']; track list) {
+    @let rules = list === 'eligibility' ? def().eligibility : def().validations;
+    <section class="dc-card">
+      <header class="dc-rt__head">
+        <h2>{{ 'builder.' + list | dcTranslate }}</h2>
+        <button matButton type="button" (click)="addRule($any(list))" [attr.data-testid]="'add-' + list">
+          <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+          {{ 'builder.addRule' | dcTranslate }}
+        </button>
+      </header>
+      <p class="dc-rt__muted">{{ 'builder.' + list + 'Hint' | dcTranslate }}</p>
+      @for (r of rules; track $index; let i = $index) {
+        <div class="dc-rt__rule" [attr.data-testid]="list + '-' + r.code">
+          <div class="dc-rt__row">
+            <mat-form-field subscriptSizing="dynamic" class="dc-rt__code">
+              <mat-label>{{ 'builder.code' | dcTranslate }}</mat-label>
+              <input matInput dir="ltr" [ngModel]="r.code" (ngModelChange)="rule($any(list), i, { code: $event })" [ngModelOptions]="{ updateOn: 'blur' }" />
+            </mat-form-field>
+            @if (list === 'validations') {
+              <mat-form-field subscriptSizing="dynamic">
+                <mat-label>{{ 'builder.checkedAt' | dcTranslate }}</mat-label>
+                <mat-select [ngModel]="r.step ?? null" (ngModelChange)="rule($any(list), i, { step: $event })">
+                  @for (s of formSteps(); track s.code) {
+                    <mat-option [value]="s.code">{{ s.titleAr }} / {{ s.titleEn }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            }
+            <span class="dc-rt__grow"></span>
+            <button matIconButton type="button" (click)="removeRule($any(list), i)" [matTooltip]="'rule.remove' | dcTranslate">
+              <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
+            </button>
+          </div>
+          <dc-rule-editor
+            [label]="'builder.mustHold' | dcTranslate"
+            [rule]="r.rule"
+            [variables]="variables()"
+            (ruleChange)="rule($any(list), i, { rule: $event })"
+          />
+          <div class="dc-rt__row">
+            <mat-form-field subscriptSizing="dynamic">
+              <mat-label>{{ 'builder.messageAr' | dcTranslate }}</mat-label>
+              <input
+                matInput
+                dir="rtl"
+                [ngModel]="r.messageAr"
+                (ngModelChange)="rule($any(list), i, { messageAr: $event })"
+                [ngModelOptions]="{ updateOn: 'blur' }"
+              />
+            </mat-form-field>
+            <mat-form-field subscriptSizing="dynamic">
+              <mat-label>{{ 'builder.messageEn' | dcTranslate }}</mat-label>
+              <input
+                matInput
+                dir="ltr"
+                [ngModel]="r.messageEn"
+                (ngModelChange)="rule($any(list), i, { messageEn: $event })"
+                [ngModelOptions]="{ updateOn: 'blur' }"
+              />
+            </mat-form-field>
+          </div>
+        </div>
+      }
+    </section>
+  }
+
+  <section class="dc-card">
+    <header class="dc-rt__head">
+      <h2>{{ 'builder.fees' | dcTranslate }}</h2>
+      <button matButton type="button" (click)="addFee()" data-testid="add-fee">
+        <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+        {{ 'builder.addFee' | dcTranslate }}
+      </button>
+    </header>
+    <p class="dc-rt__muted">{{ 'builder.feesHint' | dcTranslate }}</p>
+    @for (f of def().fees; track $index; let i = $index) {
+      @let kind = feeKind(f);
+      <div class="dc-rt__rule" [attr.data-testid]="'fee-' + f.code">
+        <div class="dc-rt__row">
+          <mat-form-field subscriptSizing="dynamic" class="dc-rt__code">
+            <mat-label>{{ 'builder.code' | dcTranslate }}</mat-label>
+            <input matInput dir="ltr" [ngModel]="f.code" (ngModelChange)="fee(i, { code: $event })" [ngModelOptions]="{ updateOn: 'blur' }" />
+          </mat-form-field>
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>{{ 'builder.nameAr' | dcTranslate }}</mat-label>
+            <input matInput dir="rtl" [ngModel]="f.nameAr" (ngModelChange)="fee(i, { nameAr: $event })" [ngModelOptions]="{ updateOn: 'blur' }" />
+          </mat-form-field>
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>{{ 'builder.nameEn' | dcTranslate }}</mat-label>
+            <input matInput dir="ltr" [ngModel]="f.nameEn" (ngModelChange)="fee(i, { nameEn: $event })" [ngModelOptions]="{ updateOn: 'blur' }" />
+          </mat-form-field>
+          <button matIconButton type="button" (click)="removeFee(i)" [matTooltip]="'rule.remove' | dcTranslate">
+            <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
+          </button>
+        </div>
+        <div class="dc-rt__row">
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>{{ 'builder.feeLevels' | dcTranslate }}</mat-label>
+            <mat-select multiple [ngModel]="f.levels" (ngModelChange)="fee(i, { levels: $event })">
+              @for (l of def().levels; track l.code) {
+                <mat-option [value]="l.code">{{ l.nameAr }} / {{ l.nameEn }}</mat-option>
+              }
+            </mat-select>
+            <mat-hint>{{ 'builder.feeLevelsHint' | dcTranslate }}</mat-hint>
+          </mat-form-field>
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>{{ 'builder.feeKind' | dcTranslate }}</mat-label>
+            <mat-select [ngModel]="kind" (ngModelChange)="setFeeKind(i, $event)" data-testid="fee-kind">
+              @for (k of ['fixed', 'formula', 'bracket']; track k) {
+                <mat-option [value]="k">{{ 'builder.feeKind.' + k | dcTranslate }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field subscriptSizing="dynamic" class="dc-rt__num">
+            <mat-label>{{ 'builder.vatRate' | dcTranslate }}</mat-label>
+            <input
+              matInput
+              type="number"
+              step="0.01"
+              min="0"
+              max="1"
+              [ngModel]="f.vatRate"
+              (ngModelChange)="fee(i, { vatRate: num($event) ?? 0 })"
+              [ngModelOptions]="{ updateOn: 'blur' }"
+            />
+          </mat-form-field>
+          <mat-checkbox [ngModel]="f.vatIncluded" (ngModelChange)="fee(i, { vatIncluded: $event })">{{ 'builder.vatIncluded' | dcTranslate }}</mat-checkbox>
+        </div>
+        @switch (kind) {
+          @case ('fixed') {
+            <mat-form-field subscriptSizing="dynamic" class="dc-rt__num">
+              <mat-label>{{ 'builder.amount' | dcTranslate }}</mat-label>
+              <input
+                matInput
+                type="number"
+                min="0"
+                [ngModel]="f.fixed ?? 0"
+                (ngModelChange)="fee(i, { fixed: num($event) ?? 0 })"
+                [ngModelOptions]="{ updateOn: 'blur' }"
+                data-testid="fee-fixed"
+              />
+            </mat-form-field>
+          }
+          @case ('formula') {
+            <dc-rule-editor
+              mode="value"
+              [label]="'builder.formula' | dcTranslate"
+              [rule]="f.formula ?? null"
+              [variables]="variables()"
+              (ruleChange)="fee(i, { formula: $event })"
+            />
+          }
+          @case ('bracket') {
+            <dc-rule-editor
+              mode="value"
+              [label]="'builder.bracketOf' | dcTranslate"
+              [rule]="f.bracket?.of ?? null"
+              [variables]="variables()"
+              (ruleChange)="bracketOf(i, $event)"
+            />
+            <table class="dc-rt__table">
+              <thead>
+                <tr>
+                  <th>{{ 'builder.from' | dcTranslate }}</th>
+                  <th>{{ 'builder.to' | dcTranslate }}</th>
+                  <th>{{ 'builder.amount' | dcTranslate }}</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of f.bracket?.rows ?? []; track $index; let r = $index) {
+                  <tr>
+                    <td>
+                      <input
+                        type="number"
+                        dir="ltr"
+                        [ngModel]="row.from"
+                        (ngModelChange)="bracketRow(i, r, { from: num($event) ?? 0 })"
+                        [ngModelOptions]="{ updateOn: 'blur' }"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        dir="ltr"
+                        [placeholder]="'builder.openEnded' | dcTranslate"
+                        [ngModel]="row.to"
+                        (ngModelChange)="bracketRow(i, r, { to: num($event) })"
+                        [ngModelOptions]="{ updateOn: 'blur' }"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        dir="ltr"
+                        [ngModel]="row.amount"
+                        (ngModelChange)="bracketRow(i, r, { amount: num($event) ?? 0 })"
+                        [ngModelOptions]="{ updateOn: 'blur' }"
+                      />
+                    </td>
+                    <td>
+                      <button matIconButton type="button" (click)="removeBracketRow(i, r)" [matTooltip]="'rule.remove' | dcTranslate">
+                        <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+            <button matButton type="button" (click)="addBracketRow(i)">
+              <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+              {{ 'builder.addBracketRow' | dcTranslate }}
+            </button>
+          }
+        }
+        <dc-rule-editor [label]="'builder.feeWhen' | dcTranslate" [rule]="f.when ?? null" [variables]="variables()" (ruleChange)="fee(i, { when: $event })" />
+      </div>
+    }
+  </section>
+
+  @if (documentType()) {
+    <section class="dc-card">
+      <header class="dc-rt__head">
+        <h2>{{ 'builder.availability' | dcTranslate }}</h2>
+      </header>
+      <p class="dc-rt__muted">
+        {{ 'builder.availabilityHint' | dcTranslate }} <bdi dir="ltr">{{ documentType() }}</bdi>
+      </p>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'builder.statuses' | dcTranslate }}</mat-label>
+        <mat-select multiple [ngModel]="def().availability?.statuses ?? ['ACTIVE']" (ngModelChange)="availability({ statuses: $event })">
+          @for (s of ['ACTIVE', 'EXPIRED', 'SUSPENDED']; track s) {
+            <mat-option [value]="s">{{ 'builder.docStatus.' + s | dcTranslate }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      @for (which of ['from', 'to']; track which) {
+        @let b = boundOf($any(which));
+        <div class="dc-rt__row">
+          <mat-checkbox [ngModel]="!!b" (ngModelChange)="bound($any(which), $event ? {} : null)">{{ 'builder.window.' + which | dcTranslate }}</mat-checkbox>
+          @if (b) {
+            <mat-form-field subscriptSizing="dynamic" class="dc-rt__num">
+              <mat-label>{{ 'builder.days' | dcTranslate }}</mat-label>
+              <input
+                matInput
+                type="number"
+                [ngModel]="b.days"
+                (ngModelChange)="bound($any(which), { days: num($event) ?? 0 })"
+                [ngModelOptions]="{ updateOn: 'blur' }"
+              />
+              <mat-hint>{{ 'builder.daysHint' | dcTranslate }}</mat-hint>
+            </mat-form-field>
+            <mat-form-field subscriptSizing="dynamic">
+              <mat-label>{{ 'builder.ofDate' | dcTranslate }}</mat-label>
+              <mat-select [ngModel]="b.of" (ngModelChange)="bound($any(which), { of: $event })">
+                <mat-option value="ISSUED">{{ 'builder.date.ISSUED' | dcTranslate }}</mat-option>
+                <mat-option value="EXPIRES">{{ 'builder.date.EXPIRES' | dcTranslate }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          }
+        </div>
+      }
+    </section>
+  }
+</div>

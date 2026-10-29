@@ -1,7 +1,7 @@
 import { JsonLogicRule, jsonLogic } from '../expressions/jsonlogic';
-import { FormField, FormFieldType, FormSchema, FormSection } from '../forms/form-schema';
+import { FieldWidth, FormDisplay, FormField, FormFieldType, FormSchema, FormSection } from '../forms/form-schema';
 import { problemMessages } from '../apps-control/apps-control.models';
-import { EligibilityFailure, FieldError, QuestionSnapshot, ResolvedVersion, StepDefinition } from './service.models';
+import { EligibilityFailure, FieldError, QuestionSnapshot, QuestionUse, ResolvedVersion, StepDefinition } from './service.models';
 
 const TYPES: Record<QuestionSnapshot['type'], FormFieldType> = {
   TEXT: 'text',
@@ -32,16 +32,27 @@ export function stepSchema(version: ResolvedVersion, step: StepDefinition): Form
         const shownBefore: JsonLogicRule | undefined = before.length ? { or: before } : undefined;
         const visibleWhen = both(use.visibleWhen, shownBefore ? { '!': shownBefore } : undefined);
         if (current.code === step.code && question) {
-          fields.push(toField(question, use.required, use.requiredWhen ?? undefined, visibleWhen, use.readonly));
+          fields.push({ ...toField(question, use.required, use.requiredWhen ?? undefined, visibleWhen, use.readonly), width: widthOf(use.width) });
         }
         earlier.set(use.code, [...before, both(section.visibleWhen, use.visibleWhen) ?? true]);
       }
       if (current.code === step.code) {
-        sections.push({ code: section.code, title: { ar: section.titleAr, en: section.titleEn }, visibleWhen: section.visibleWhen ?? undefined, fields });
+        sections.push({
+          code: section.code,
+          title: { ar: section.titleAr, en: section.titleEn },
+          visibleWhen: section.visibleWhen ?? undefined,
+          columns: section.columns ?? undefined,
+          fields,
+        });
       }
     }
   }
-  return { code: `${version.serviceCode}-${version.number}-${step.code}`, sections };
+  const display: FormDisplay | undefined = step.display ? (step.display.toLowerCase() as FormDisplay) : undefined;
+  return { code: `${version.serviceCode}-${version.number}-${step.code}`, display, sections };
+}
+
+function widthOf(width: QuestionUse['width']): FieldWidth | undefined {
+  return width ? (width.toLowerCase() as FieldWidth) : undefined;
 }
 
 function toField(q: QuestionSnapshot, required: boolean, requiredWhen: JsonLogicRule | undefined, visibleWhen: JsonLogicRule | undefined, readonly: boolean): FormField {

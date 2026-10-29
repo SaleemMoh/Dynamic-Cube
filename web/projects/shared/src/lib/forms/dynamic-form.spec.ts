@@ -162,3 +162,54 @@ describe('DynamicForm with a question in two sections', () => {
     expect(values).toEqual([{ number: 'CC-2026-000001' }]);
   });
 });
+
+describe('DynamicForm layouts', () => {
+  async function render(display: FormSchema['display']): Promise<ComponentFixture<DynamicForm>> {
+    await TestBed.configureTestingModule({ imports: [DynamicForm] }).compileComponents();
+    const fixture = TestBed.createComponent(DynamicForm);
+    const laidOut: FormSchema = { ...schema, display, sections: [{ ...schema.sections[0], columns: 2 }, schema.sections[1]] };
+    laidOut.sections[0].fields = laidOut.sections[0].fields.map((f) => (f.code === 'kind' ? { ...f, width: 'full' } : f));
+    fixture.componentRef.setInput('schema', laidOut);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    return fixture;
+  }
+
+  it('places fields on the columns of their section', async () => {
+    const fixture = await render(undefined);
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('[data-section="establishment"] .dc-form__grid--cols')).not.toBeNull();
+    expect((element.querySelector('[data-field="name"]') as HTMLElement).style.gridColumn).toContain('span 3');
+    expect((element.querySelector('[data-field="kind"]') as HTMLElement).style.gridColumn).toContain('span 6');
+  });
+
+  it('shows sections as tabs and opens the tab of the first problem on submit', async () => {
+    const fixture = await render('tabs');
+    const element = fixture.nativeElement as HTMLElement;
+    const tabs = element.querySelectorAll('[role="tab"]');
+    expect(tabs.length).toBe(2);
+    expect(tabs[1].textContent).toContain('الإقرار');
+    // Fill the first tab, go to the second and submit: the first tab is fine, the pledge is not.
+    (fixture.componentInstance.formGroup().controls['name'] as { setValue(v: unknown): void }).setValue('x');
+    (fixture.componentInstance.formGroup().controls['kind'] as { setValue(v: unknown): void }).setValue('contractor');
+    (tabs[1] as HTMLElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    (tabs[0] as HTMLElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    (element.querySelector('[data-testid="form-submit"]') as HTMLElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(element.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toContain('الإقرار');
+  });
+
+  it('shows sections as an accordion with the first one open', async () => {
+    const fixture = await render('accordion');
+    const element = fixture.nativeElement as HTMLElement;
+    const panels = element.querySelectorAll('mat-expansion-panel');
+    expect(panels.length).toBe(2);
+    expect(panels[0].classList).toContain('mat-expanded');
+    expect(panels[1].classList).not.toContain('mat-expanded');
+  });
+});

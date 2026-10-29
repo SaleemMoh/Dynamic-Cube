@@ -10,6 +10,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { RouterLink } from '@angular/router';
 import { AppsControlApi, ConfigRow, LocalizePipe, ServicesApi, TranslatePipe, VersionDefinition, problemMessages } from '@dynamic-cube/shared';
 import { firstValueFrom } from 'rxjs';
 import { DraftsService } from '../apps-control/drafts.service';
@@ -33,11 +34,15 @@ const STARTER: VersionDefinition = {
  */
 @Component({
   selector: 'dc-version-list',
-  imports: [DatePipe, FormsModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule, MatTableModule, MatTooltipModule, LocalizePipe, TranslatePipe],
+  imports: [DatePipe, FormsModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule, MatTableModule, MatTooltipModule, RouterLink, LocalizePipe, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <header class="dc-page__header">
+    <header class="dc-page__header dc-versions__header">
       <h1>{{ 'versions.title' | dcTranslate }}</h1>
+      <a matButton="filled" routerLink="/services/builder" [queryParams]="{ service: service() ?? undefined }" data-testid="open-builder">
+        <mat-icon fontSet="material-symbols-outlined">construction</mat-icon>
+        {{ 'builder.open' | dcTranslate }}
+      </a>
     </header>
     <p class="dc-muted">{{ 'versions.hint' | dcTranslate }}</p>
 
@@ -106,6 +111,15 @@ const STARTER: VersionDefinition = {
           <button matIconButton (click)="previewPublished(row)" [matTooltip]="'versions.preview' | dcTranslate" [attr.data-testid]="'preview-' + row.code">
             <mat-icon fontSet="material-symbols-outlined">visibility</mat-icon>
           </button>
+          <a
+            matIconButton
+            routerLink="/services/builder"
+            [queryParams]="{ service: row.code.split('/')[0], version: row.code.split('/')[1] }"
+            [matTooltip]="'builder.openFrom' | dcTranslate"
+            [attr.data-testid]="'build-' + row.code"
+          >
+            <mat-icon fontSet="material-symbols-outlined">construction</mat-icon>
+          </a>
           @if (canEdit() && !row['isRetired']) {
             <button matIconButton (click)="retire(row)" [matTooltip]="'versions.retire' | dcTranslate">
               <mat-icon fontSet="material-symbols-outlined">archive</mat-icon>
@@ -118,6 +132,12 @@ const STARTER: VersionDefinition = {
     </table>
   `,
   styles: `
+    .dc-versions__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
     .dc-authoring {
       display: grid;
       gap: 0.25rem;

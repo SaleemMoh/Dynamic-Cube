@@ -1,0 +1,343 @@
+<div class="dc-ft">
+  <aside class="dc-ft__bank" [attr.aria-label]="'builder.bank' | dcTranslate">
+    <div class="dc-ft__bankhead">
+      <h2>{{ 'builder.bank' | dcTranslate }}</h2>
+      <button matIconButton type="button" (click)="newQuestion()" [matTooltip]="'builder.newQuestion' | dcTranslate" data-testid="bank-new">
+        <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+      </button>
+    </div>
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-icon matPrefix fontSet="material-symbols-outlined">search</mat-icon>
+      <input matInput [placeholder]="'builder.searchBank' | dcTranslate" [ngModel]="search()" (ngModelChange)="search.set($event)" data-testid="bank-search" />
+    </mat-form-field>
+    <div class="dc-ft__banklist" cdkDropList id="bank" [cdkDropListData]="null" [cdkDropListConnectedTo]="listIds()" cdkDropListSortingDisabled>
+      @for (q of bank(); track q.code) {
+        <button
+          type="button"
+          class="dc-ft__bankitem"
+          [class.dc-ft__bankitem--used]="used().has(q.code)"
+          cdkDrag
+          [cdkDragData]="q.code"
+          (click)="addToSelected(q.code)"
+          [attr.data-testid]="'bank-' + q.code"
+        >
+          <span class="dc-ft__qlabel">{{ q.label | dcLocalize }}</span>
+          <small dir="ltr">{{ q.code }} · {{ 'builder.qtype.' + q.type | dcTranslate }}</small>
+        </button>
+      }
+    </div>
+    <p class="dc-ft__tip">{{ 'builder.bankTip' | dcTranslate }}</p>
+  </aside>
+
+  <section class="dc-ft__structure" [attr.aria-label]="'builder.structure' | dcTranslate">
+    <div cdkDropList (cdkDropListDropped)="dropStep($event)" class="dc-ft__steps">
+      @for (step of steps(); track $index; let i = $index) {
+        <article
+          class="dc-ft__step"
+          cdkDrag
+          [class.dc-ft__on]="isSelected({ step: i })"
+          (click)="select({ step: i }, $event)"
+          (keydown.enter)="select({ step: i }, $event)"
+          tabindex="0"
+          [attr.data-testid]="'step-' + step.code"
+        >
+          <header class="dc-ft__head">
+            <mat-icon class="dc-ft__handle" cdkDragHandle fontSet="material-symbols-outlined" [matTooltip]="'builder.drag' | dcTranslate"
+              >drag_indicator</mat-icon
+            >
+            <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">{{ icons[step.type] }}</mat-icon>
+            <strong>{{ i + 1 }}. {{ name(step) }}</strong>
+            <span class="dc-ft__badge">{{ 'builder.stepType.' + step.type | dcTranslate }}</span>
+            @if (step.display && step.display !== 'STACKED') {
+              <span class="dc-ft__badge">{{ 'builder.display.' + step.display | dcTranslate }}</span>
+            }
+            <span class="dc-ft__grow"></span>
+            <button matIconButton type="button" (click)="remove({ step: i }, $event)" [matTooltip]="'builder.removeStep' | dcTranslate">
+              <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
+            </button>
+          </header>
+          @if (step.type === 'FORM') {
+            <div cdkDropList (cdkDropListDropped)="dropSection(i, $event)" class="dc-ft__sections">
+              @for (section of step.sections; track $index; let j = $index) {
+                <div
+                  class="dc-ft__section"
+                  cdkDrag
+                  [class.dc-ft__on]="isSelected({ step: i, section: j })"
+                  (click)="select({ step: i, section: j }, $event)"
+                  (keydown.enter)="select({ step: i, section: j }, $event)"
+                  tabindex="0"
+                  [attr.data-testid]="'section-' + section.code"
+                >
+                  <header class="dc-ft__head">
+                    <mat-icon class="dc-ft__handle" cdkDragHandle fontSet="material-symbols-outlined">drag_indicator</mat-icon>
+                    <span class="dc-ft__stitle">{{ name(section) }}</span>
+                    @if (section.columns) {
+                      <span class="dc-ft__badge">{{ section.columns }} {{ 'builder.columnsShort' | dcTranslate }}</span>
+                    }
+                    @if (section.visibleWhen) {
+                      <mat-icon class="dc-ft__flag" fontSet="material-symbols-outlined" [matTooltip]="'builder.conditional' | dcTranslate">visibility</mat-icon>
+                    }
+                    <span class="dc-ft__grow"></span>
+                    <button matIconButton type="button" (click)="remove({ step: i, section: j }, $event)" [matTooltip]="'builder.removeSection' | dcTranslate">
+                      <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+                    </button>
+                  </header>
+                  <div
+                    class="dc-ft__questions"
+                    cdkDropList
+                    [id]="'q-' + i + '-' + j"
+                    [cdkDropListData]="{ step: i, section: j }"
+                    [cdkDropListConnectedTo]="listIds()"
+                    (cdkDropListDropped)="dropQuestion(i, j, $any($event))"
+                    [attr.data-testid]="'questions-' + section.code"
+                  >
+                    @for (q of section.questions; track q.code; let k = $index) {
+                      <div
+                        class="dc-ft__question"
+                        cdkDrag
+                        [cdkDragData]="q"
+                        [class.dc-ft__on]="isSelected({ step: i, section: j, question: k })"
+                        [class.dc-ft__question--missing]="!question(q.code)"
+                        (click)="select({ step: i, section: j, question: k }, $event)"
+                        (keydown.enter)="select({ step: i, section: j, question: k }, $event)"
+                        tabindex="0"
+                        [attr.data-testid]="'use-' + q.code"
+                      >
+                        <mat-icon class="dc-ft__handle" cdkDragHandle fontSet="material-symbols-outlined">drag_indicator</mat-icon>
+                        <span class="dc-ft__qlabel">{{ questionName(q.code) }}</span>
+                        @if (q.required) {
+                          <span class="dc-ft__req" [matTooltip]="'builder.required' | dcTranslate">*</span>
+                        }
+                        @if (q.requiredWhen || q.visibleWhen) {
+                          <mat-icon class="dc-ft__flag" fontSet="material-symbols-outlined" [matTooltip]="'builder.conditional' | dcTranslate">rule</mat-icon>
+                        }
+                        @if (q.readonly) {
+                          <mat-icon class="dc-ft__flag" fontSet="material-symbols-outlined" [matTooltip]="'builder.readonly' | dcTranslate">lock</mat-icon>
+                        }
+                        @if (q.width) {
+                          <span class="dc-ft__badge">{{ 'builder.width.' + q.width | dcTranslate }}</span>
+                        }
+                        <small dir="ltr" class="dc-ft__code">{{ q.code }}</small>
+                        <button
+                          matIconButton
+                          type="button"
+                          class="dc-ft__x"
+                          (click)="remove({ step: i, section: j, question: k }, $event)"
+                          [matTooltip]="'builder.removeQuestion' | dcTranslate"
+                        >
+                          <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+                        </button>
+                      </div>
+                    } @empty {
+                      <p class="dc-ft__empty">{{ 'builder.dropHere' | dcTranslate }}</p>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+            <button matButton type="button" (click)="addSection(i); $event.stopPropagation()" [attr.data-testid]="'add-section-' + step.code">
+              <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+              {{ 'builder.addSection' | dcTranslate }}
+            </button>
+          }
+        </article>
+      }
+    </div>
+    <button matButton="outlined" type="button" [matMenuTriggerFor]="stepMenu" data-testid="add-step">
+      <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+      {{ 'builder.addStep' | dcTranslate }}
+    </button>
+    <mat-menu #stepMenu="matMenu">
+      @for (t of stepTypes; track t) {
+        <button mat-menu-item type="button" (click)="addStep(t)" [attr.data-testid]="'add-step-' + t">
+          <mat-icon fontSet="material-symbols-outlined">{{ icons[t] }}</mat-icon>
+          {{ 'builder.stepType.' + t | dcTranslate }}
+        </button>
+      }
+    </mat-menu>
+  </section>
+
+  <aside class="dc-ft__inspector">
+    @if (selected(); as s) {
+      @if (s.question && s.section) {
+        @let q = question(s.question.code);
+        <h2>{{ questionName(s.question.code) }}</h2>
+        <p class="dc-ft__muted" dir="ltr">{{ s.question.code }} · {{ q ? ('builder.qtype.' + q.type | dcTranslate) : ('builder.notInBank' | dcTranslate) }}</p>
+        <mat-checkbox [ngModel]="s.question.required" (ngModelChange)="use(s.path, { required: $event })" data-testid="use-required">{{
+          'builder.required' | dcTranslate
+        }}</mat-checkbox>
+        <mat-checkbox [ngModel]="s.question.readonly" (ngModelChange)="use(s.path, { readonly: $event })">{{
+          'builder.readonlyLong' | dcTranslate
+        }}</mat-checkbox>
+        @if (q?.prefill) {
+          <p class="dc-ft__muted">
+            {{ 'builder.prefilledFrom' | dcTranslate }} <bdi dir="ltr">{{ q!.prefill }}</bdi>
+          </p>
+        }
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'builder.width' | dcTranslate }}</mat-label>
+          <mat-select [ngModel]="s.question.width ?? null" (ngModelChange)="use(s.path, { width: $event })" data-testid="use-width">
+            <mat-option [value]="null">{{ 'builder.width.default' | dcTranslate }}</mat-option>
+            @for (w of ['FULL', 'HALF', 'THIRD']; track w) {
+              <mat-option [value]="w">{{ 'builder.width.' + w | dcTranslate }}</mat-option>
+            }
+          </mat-select>
+          @if (!s.section.columns && s.question.width && s.question.width !== 'FULL') {
+            <mat-hint>{{ 'builder.widthNeedsColumns' | dcTranslate }}</mat-hint>
+          }
+        </mat-form-field>
+        <dc-rule-editor
+          [label]="'builder.requiredWhen' | dcTranslate"
+          [rule]="s.question.requiredWhen ?? null"
+          [variables]="answerVariables()"
+          testId="use-required-when"
+          (ruleChange)="use(s.path, { requiredWhen: $event })"
+        />
+        <dc-rule-editor
+          [label]="'builder.visibleWhen' | dcTranslate"
+          [rule]="s.question.visibleWhen ?? null"
+          [variables]="answerVariables()"
+          testId="use-visible-when"
+          (ruleChange)="use(s.path, { visibleWhen: $event })"
+        />
+        <button matButton type="button" (click)="editQuestion(s.question.code)" [disabled]="!q">
+          <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
+          {{ 'builder.editInBank' | dcTranslate }}
+        </button>
+        <p class="dc-ft__muted">{{ 'builder.bankShared' | dcTranslate }}</p>
+      } @else if (s.section) {
+        <h2>{{ name(s.section) }}</h2>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'builder.code' | dcTranslate }}</mat-label>
+          <input
+            matInput
+            dir="ltr"
+            [ngModel]="s.section.code"
+            (ngModelChange)="section(s.path.step, s.path.section!, { code: $event })"
+            [ngModelOptions]="{ updateOn: 'blur' }"
+          />
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'builder.titleAr' | dcTranslate }}</mat-label>
+          <input
+            matInput
+            dir="rtl"
+            [ngModel]="s.section.titleAr"
+            (ngModelChange)="section(s.path.step, s.path.section!, { titleAr: $event })"
+            [ngModelOptions]="{ updateOn: 'blur' }"
+            data-testid="section-title-ar"
+          />
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'builder.titleEn' | dcTranslate }}</mat-label>
+          <input
+            matInput
+            dir="ltr"
+            [ngModel]="s.section.titleEn"
+            (ngModelChange)="section(s.path.step, s.path.section!, { titleEn: $event })"
+            [ngModelOptions]="{ updateOn: 'blur' }"
+            data-testid="section-title-en"
+          />
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'builder.columns' | dcTranslate }}</mat-label>
+          <mat-select
+            [ngModel]="s.section.columns ? '' + s.section.columns : 'auto'"
+            (ngModelChange)="section(s.path.step, s.path.section!, { columns: sectionColumns($event) })"
+            data-testid="section-columns"
+          >
+            <mat-option value="auto">{{ 'builder.columns.auto' | dcTranslate }}</mat-option>
+            @for (c of ['1', '2', '3']; track c) {
+              <mat-option [value]="c">{{ c }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <dc-rule-editor
+          [label]="'builder.sectionVisibleWhen' | dcTranslate"
+          [rule]="s.section.visibleWhen ?? null"
+          [variables]="answerVariables()"
+          testId="section-visible-when"
+          (ruleChange)="section(s.path.step, s.path.section!, { visibleWhen: $event })"
+        />
+        <p class="dc-ft__muted">{{ 'builder.sectionTip' | dcTranslate }}</p>
+      } @else if (s.step) {
+        <h2>{{ name(s.step) }}</h2>
+        <p class="dc-ft__muted">{{ 'builder.stepHint.' + s.step.type | dcTranslate }}</p>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'builder.code' | dcTranslate }}</mat-label>
+          <input
+            matInput
+            dir="ltr"
+            [ngModel]="s.step.code"
+            (ngModelChange)="step(s.path.step, { code: $event })"
+            [ngModelOptions]="{ updateOn: 'blur' }"
+            data-testid="step-code"
+          />
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'builder.titleAr' | dcTranslate }}</mat-label>
+          <input
+            matInput
+            dir="rtl"
+            [ngModel]="s.step.titleAr"
+            (ngModelChange)="step(s.path.step, { titleAr: $event })"
+            [ngModelOptions]="{ updateOn: 'blur' }"
+            data-testid="step-title-ar"
+          />
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'builder.titleEn' | dcTranslate }}</mat-label>
+          <input
+            matInput
+            dir="ltr"
+            [ngModel]="s.step.titleEn"
+            (ngModelChange)="step(s.path.step, { titleEn: $event })"
+            [ngModelOptions]="{ updateOn: 'blur' }"
+            data-testid="step-title-en"
+          />
+        </mat-form-field>
+        @if (s.step.type === 'FORM') {
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>{{ 'builder.display' | dcTranslate }}</mat-label>
+            <mat-select
+              [ngModel]="s.step.display ?? 'STACKED'"
+              (ngModelChange)="step(s.path.step, { display: $event === 'STACKED' ? null : $event })"
+              data-testid="step-display"
+            >
+              @for (d of ['STACKED', 'TABS', 'ACCORDION']; track d) {
+                <mat-option [value]="d">{{ 'builder.display.' + d | dcTranslate }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+        @if (s.step.type === 'DECLARATION') {
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>{{ 'builder.declarationAr' | dcTranslate }}</mat-label>
+            <textarea
+              matInput
+              dir="rtl"
+              rows="4"
+              [ngModel]="s.step.textAr ?? ''"
+              (ngModelChange)="step(s.path.step, { textAr: $event })"
+              [ngModelOptions]="{ updateOn: 'blur' }"
+            ></textarea>
+          </mat-form-field>
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>{{ 'builder.declarationEn' | dcTranslate }}</mat-label>
+            <textarea
+              matInput
+              dir="ltr"
+              rows="4"
+              [ngModel]="s.step.textEn ?? ''"
+              (ngModelChange)="step(s.path.step, { textEn: $event })"
+              [ngModelOptions]="{ updateOn: 'blur' }"
+            ></textarea>
+          </mat-form-field>
+        }
+      }
+    } @else {
+      <h2>{{ 'builder.formTitle' | dcTranslate }}</h2>
+      <p class="dc-ft__muted">{{ 'builder.formHowTo' | dcTranslate }}</p>
+    }
+  </aside>
+</div>

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using DynamicCube.Modules.Services.Changes;
 using DynamicCube.Modules.Services.Definitions;
 using DynamicCube.Modules.Services.Domain;
@@ -65,6 +66,76 @@ public sealed class ConfigurationTests(DatabaseFixture fixture) : IAsyncLifetime
         errors.Errors.Keys.ShouldBe(["definition"]);
         skipped.Errors["code"].Single().ShouldContain("is 2");
         (await VersionAsync($"{sample.Service}/1")).IsRetired.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task Forms_carry_their_layout_and_it_is_checked()
+    {
+        var sample = new ServiceSamples();
+        await _host.PublishAsync(ServiceChangeTypes.Area, sample.All());
+        var laidOut = sample.Definition();
+        var details = laidOut.Steps.Single(s => s.Code == "DETAILS");
+        details.Display = SectionDisplay.Tabs;
+        details.Sections[0].Columns = 2;
+        details.Sections[0].Questions[0].Width = FieldWidth.Full;
+        await _host.PublishAsync(ServiceChangeTypes.Area, sample.Version(2, laidOut));
+        var stored = JsonDocument.Parse((await VersionAsync($"{sample.Service}/2")).Definition).RootElement;
+        var step = stored.GetProperty("steps").EnumerateArray().Single(s => s.GetProperty("code").GetString() == "DETAILS");
+        step.GetProperty("display").GetString().ShouldBe("TABS");
+        step.GetProperty("sections")[0].GetProperty("columns").GetInt32().ShouldBe(2);
+        step.GetProperty("sections")[0].GetProperty("questions")[0].GetProperty("width").GetString().ShouldBe("FULL");
+
+        var wrong = sample.Definition();
+        wrong.Steps.Single(s => s.Code == "DETAILS").Sections[0].Columns = 4;
+        wrong.Steps.Single(s => s.Code == "FEES").Display = SectionDisplay.Accordion;
+        var errors = await Should.ThrowAsync<ChangeValidationException>(() => _host.PublishAsync(ServiceChangeTypes.Area, sample.Version(3, wrong)));
+        errors.Errors.Keys.ShouldContain(k => k.EndsWith(".columns", StringComparison.Ordinal));
+        errors.Errors.Keys.ShouldContain(k => k.EndsWith(".display", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task A_version_published_before_newer_fields_existed_can_still_be_retired()
+    {
+        var sample = new ServiceSamples();
+        await _host.PublishAsync(ServiceChangeTypes.Area, sample.All());
+
+        // As stored by an earlier release: no key for the fields added since (left out here when empty).
+        await _host.AsAsync("admin", async sp =>
+        {
+            var db = sp.GetRequiredService<ServicesDbContext>();
+            var version = await db.Versions.SingleAsync(v => v.Code == $"{sample.Service}/1");
+            version.Definition = Strip(JsonNode.Parse(version.Definition))!.ToJsonString();
+            await db.SaveChangesAsync();
+            return 0;
+        });
+
+        await _host.PublishAsync(ServiceChangeTypes.Area,
+            new Change(ServiceChangeTypes.Version, $"{sample.Service}/1", ChangeOperation.Update, new ServiceVersionPayload { NameAr = "الإصدار 1", NameEn = "Version 1", IsRetired = true, Definition = sample.Definition() }));
+        (await VersionAsync($"{sample.Service}/1")).IsRetired.ShouldBeTrue();
+    }
+
+    /// <summary>Drops null and empty values, as a definition serialized before those fields existed would lack them.</summary>
+    private static JsonNode? Strip(JsonNode? node)
+    {
+        switch (node)
+        {
+            case JsonObject obj:
+                foreach (var (key, value) in obj.ToList())
+                {
+                    var kept = Strip(value);
+                    obj.Remove(key);
+                    if (kept is not null && kept is not JsonArray { Count: 0 } && kept is not JsonObject { Count: 0 })
+                    {
+                        obj[key] = kept;
+                    }
+                }
+
+                return obj;
+            case JsonArray array:
+                return new JsonArray([.. array.Select(i => Strip(i)?.DeepClone())]);
+            default:
+                return node?.DeepClone();
+        }
     }
 
     [Fact]

@@ -1,0 +1,72 @@
+:host {
+  display: block;
+  min-height: 0;
+  height: 100%;
+  overflow: auto;
+}
+.dc-rt {
+  display: grid;
+  gap: 1rem;
+  max-width: 64rem;
+  padding: 0.75rem;
+}
+.dc-rt h2 {
+  margin: 0;
+  font-size: 16px;
+}
+.dc-rt__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.dc-rt__muted {
+  margin: 0.25rem 0 0.5rem;
+  color: var(--dga-text-3, #6c737f);
+  font-size: 12px;
+}
+.dc-rt__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.dc-rt__row mat-form-field {
+  flex: 1 1 12rem;
+}
+.dc-rt__code {
+  flex: 0 1 10rem !important;
+}
+.dc-rt__num {
+  flex: 0 1 9rem !important;
+}
+.dc-rt__wide {
+  flex: 1 1 100% !important;
+}
+.dc-rt__grow {
+  flex: 1;
+}
+.dc-rt__rule {
+  display: grid;
+  gap: 0.375rem;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--dga-gray-200, #e5e7eb);
+  border-radius: 8px;
+}
+.dc-rt__table {
+  border-collapse: collapse;
+}
+.dc-rt__table th {
+  padding: 0.25rem 0.5rem;
+  font-size: 12px;
+  text-align: start;
+  color: var(--dga-text-3, #6c737f);
+}
+.dc-rt__table input {
+  width: 9rem;
+  padding: 0.375rem;
+  border: 1px solid var(--dga-gray-300, #d2d6db);
+  border-radius: 6px;
+  font: inherit;
+}

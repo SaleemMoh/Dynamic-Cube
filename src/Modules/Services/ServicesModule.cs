@@ -99,6 +99,7 @@ internal static class ServicesCatalog
             new("services.requests", "الطلبات", "Requests", "/services/requests", ServiceResources.Requests, "inbox", 10),
             new("services.catalog", "الخدمات", "Services", "/services/catalog", ServiceResources.Config, "design_services", 20),
             new("services.versions", "إصدارات الخدمات", "Service versions", "/services/versions", ServiceResources.Config, "history_edu", 30),
+            new("services.builder", "منشئ الخدمات", "Service builder", "/services/builder", ServiceResources.Config, "construction", 35),
             new("services.questions", "بنك الأسئلة", "Question bank", "/services/questions", ServiceResources.Config, "quiz", 40),
             new("services.categories", "تصنيفات الخدمات", "Service categories", "/services/categories", ServiceResources.Config, "category", 50),
         ],

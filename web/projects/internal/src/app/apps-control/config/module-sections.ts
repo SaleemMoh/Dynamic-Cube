@@ -569,7 +569,15 @@ export const SERVICE_SECTIONS: ConfigSection[] = [
         key: 'code',
         columns: ['archetype', 'numberPrefix', 'isListed'],
         // A service's workflow is created with it (completing requests without review until a version adds steps).
-        rowLinks: [workflowVersionsLink('service')],
+        rowLinks: [
+          {
+            icon: 'construction',
+            label: t('فتح في منشئ الخدمات', 'Open in the service builder'),
+            route: (row) => ({ commands: ['/services/builder'], queryParams: { service: String(row['code']) } }),
+            testId: 'builder-of',
+          },
+          workflowVersionsLink('service'),
+        ],
         fields: [
           {
             code: 'descriptionAr',

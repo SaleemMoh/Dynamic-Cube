@@ -28,3 +28,4 @@ Status values: Proposed · Accepted · Superseded.
 | [0021](0021-follow-up-services.md) | Follow-up services act on issued documents: availability windows, requests bound to a document, amendments by the workflow | Accepted |
 | [0022](0022-payments.md) | Payments as a module: bills through the Integration Manager, signed provider callbacks, a workflow step that waits for payment | Accepted |
 | [0023](0023-workflow-designer.md) | The Workflow Designer edits the same definition the engine runs: canvas, checks as you draw, visual rules, test run, next version through change sets | Accepted |
+| [0024](0024-service-builder.md) | The Service Builder edits the version definition; form layouts (tabs, accordion, columns, widths) join the runtime first | Accepted |

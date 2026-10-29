@@ -6,6 +6,7 @@ export const SERVICES_ROUTES: Routes = [
   { path: 'requests', loadComponent: () => import('./request-list').then((m) => m.RequestList) },
   { path: 'requests/:id', loadComponent: () => import('./request-detail').then((m) => m.RequestDetail) },
   { path: 'versions', loadComponent: () => import('./version-list').then((m) => m.VersionList) },
+  { path: 'builder', loadComponent: () => import('./builder/builder-page').then((m) => m.BuilderPage) },
   ...SERVICE_SECTIONS.map((section) => ({
     path: section.path,
     data: { section: section.path },

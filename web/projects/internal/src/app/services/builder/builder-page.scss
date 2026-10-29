@@ -1,0 +1,145 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  height: calc(100vh - 7.5rem);
+  min-height: 36rem;
+}
+.dc-builder__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.dc-builder__pick {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+.dc-builder__pick mat-form-field {
+  min-width: 16rem;
+}
+.dc-builder__target {
+  font-family: ui-monospace, monospace;
+  font-weight: 600;
+}
+.dc-builder__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--dga-gray-200, #e5e7eb);
+  border-radius: 8px;
+  background: #fff;
+}
+.dc-builder__sep {
+  width: 1px;
+  height: 1.5rem;
+  margin-inline: 0.25rem;
+  background: var(--dga-gray-200, #e5e7eb);
+}
+.dc-builder__grow {
+  flex: 1;
+}
+.dc-builder__views {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.125rem;
+}
+.dc-builder__view--on {
+  background: var(--dynamic-cube-gold-50, #faf7f0);
+  font-weight: 700;
+}
+.dc-builder__count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  margin-inline-start: 0.25rem;
+  border-radius: 999px;
+  background: #d92d20;
+  color: #fff;
+  font-size: 11px;
+}
+.dc-builder__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-inline-end: 0.5rem;
+  color: var(--dynamic-cube-green, #136f40);
+  font-size: 14px;
+}
+.dc-builder__status--bad {
+  color: #b42318;
+}
+.dc-builder__saved {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0;
+  color: var(--dynamic-cube-green, #136f40);
+}
+.dc-builder__body {
+  flex: 1;
+  min-height: 0;
+  border: 1px solid var(--dga-gray-200, #e5e7eb);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+.dc-builder__json {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0.5rem;
+  box-sizing: border-box;
+}
+.dc-builder__json textarea {
+  flex: 1;
+  width: 100%;
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+  resize: none;
+}
+.dc-builder__problems {
+  max-height: 8rem;
+  overflow: auto;
+}
+.dc-builder__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dc-builder__list button {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.125rem 0;
+  border: 0;
+  background: none;
+  color: #b42318;
+  font: inherit;
+  font-size: 13px;
+  text-align: start;
+  cursor: pointer;
+}
+.dc-builder__list mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+.dc-builder__server {
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  background: #fef3f2;
+  font-size: 13px;
+}
+.dc-builder__server--ok {
+  background: var(--dynamic-cube-green-50, #e8f3ed);
+}
+.dc-builder__server ul {
+  margin: 0.25rem 0 0;
+}

@@ -275,8 +275,8 @@ Delivered in slices. Each designer covers what the runtime can run today; node t
 | Slice | Content | Status |
 |---|---|---|
 | **3a** | Workflow Designer: canvas, palette, connections, side panel per step, visual JSONLogic rule editor, checks as you draw, test run, publish as a new version | ✅ |
-| 3b | Service & Form Builder: form (steps, sections, question bank, layouts, live preview), service card, rules, required documents, output, related services | Next |
-| 3c | Notification rule builder; Portal Content Manager (banner, categories, tiles, FAQs, help links, pages) | Planned |
+| **3b** | Service & Form Builder: form (steps, sections, question bank, layouts, live preview), service card, rules, required documents, output, related services | ✅ |
+| 3c | Notification rule builder; Portal Content Manager (banner, categories, tiles, FAQs, help links, pages) | Next |
 | 3d | Configuration packages: export from any screen, import with a diff preview | Planned |
 | 3e | Visits: field app (offline PWA), external inspection integration, manual entry | Planned |
 | 3f | Sub-requests: prerequisite, bundled, spawned | Planned |
@@ -306,6 +306,31 @@ Delivered in slices. Each designer covers what the runtime can run today; node t
 
 Still open from 3a: comments on steps, copy and paste, a minimap for large workflows, and rule-set results in the
 test run.
+
+**3b delivered** ([ADR-0024](adr/0024-service-builder.md)):
+
+- **Form layouts in the runtime.** A form step shows its sections one below the other, as tabs or as an accordion;
+  a section has 1–3 columns and a question a width (full, half or a third of the row). Forms narrower than 600px show
+  one column; on submit the tab or panel with the first problem opens. The portal wizard, previews and staff screens
+  all use it.
+- **Service Builder** (*Services → Service builder*, or *Open in the service builder* on a service or a version): opens
+  a service's latest version, or an earlier one, and prepares the next.
+  - *Form* — steps (form, level, fees, review, declaration), sections and bank questions placed by drag and drop
+    (or a click into the selected section), reordered and moved by dragging; the inspector edits codes, titles,
+    layout, required / read-only, and show / require conditions with the visual rule editor. New bank questions and
+    edits go through the bank's editor.
+  - *Rules & fees* — levels with durations, eligibility, cross-field checks, fees (fixed, formula, bracket table, VAT,
+    levels, condition) and, for document services, the availability window.
+  - *Service card* — audience, channels, contacts, steps, required documents and terms, with a preview of the portal
+    page.
+  - *Workflow* — what the service's workflow does (review tasks, documents issued, rules, payments, outcomes) with the
+    way to the Workflow Designer.
+  - *Preview* — the applicant's wizard as the version is now, on a desktop or a phone; *JSON*; checks as you edit,
+    the server's check, undo / redo, saving as the next version.
+- Fix: published service versions stored before the card, availability or layout fields existed can be retired.
+
+Still open from 3b: uploading required documents (attachments), related and prerequisite services, a single-page
+mode of the wizard, and choosing the preview's language independently of the app.
 
 Scope of the slices:
 

@@ -352,7 +352,9 @@ internal sealed partial class ServiceVersionApplier(ServicesDbContext db, JsonLo
         entity.IsRetired = payload.IsRetired;
         if (existing is not null)
         {
-            if (!JsonElement.DeepEquals(JsonDocument.Parse(serialized).RootElement, JsonDocument.Parse(existing.Definition).RootElement))
+            // Compared as definitions: a version stored before a field existed has no such key, the payload has it empty.
+            var stored = ChangeJson.Serialize(JsonSerializer.Deserialize<VersionDefinition>(existing.Definition, ChangeJson.Options));
+            if (!JsonElement.DeepEquals(JsonDocument.Parse(serialized).RootElement, JsonDocument.Parse(stored).RootElement))
             {
                 errors.Add("definition", $"Published versions cannot change; add version {serviceCode}/{number + 1} instead.");
             }

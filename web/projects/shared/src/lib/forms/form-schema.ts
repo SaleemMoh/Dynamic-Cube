@@ -7,14 +7,23 @@ import { LocalizedText } from '../i18n/language';
  */
 export interface FormSchema {
   code: string;
+  /** How the sections are shown: one below the other (default), as tabs, or as an accordion. */
+  display?: FormDisplay;
   sections: FormSection[];
 }
+
+export type FormDisplay = 'stacked' | 'tabs' | 'accordion';
+
+/** Share of a section's row a field takes when the section has columns. */
+export type FieldWidth = 'full' | 'half' | 'third';
 
 export interface FormSection {
   code: string;
   title: LocalizedText;
   /** JSONLogic rule evaluated against the form value; the section is shown when truthy. */
   visibleWhen?: JsonLogicRule;
+  /** 1 to 3 columns; without, as many as fit. Phones always show one. */
+  columns?: number;
   fields: FormField[];
 }
 
@@ -40,6 +49,8 @@ export interface FormField {
   multiple?: boolean;
   /** Shown but not editable (still submitted). */
   readonly?: boolean;
+  /** In a section with columns: full row, half or a third (default one column); `full` also spans a section without columns. */
+  width?: FieldWidth;
   /** Limits checked in the browser and again on the server. */
   min?: number;
   max?: number;
