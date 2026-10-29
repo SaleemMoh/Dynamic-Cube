@@ -188,6 +188,8 @@ export interface ApiProblem {
   detail?: string;
   status?: number;
   errors?: Record<string, string[]>;
+  /** W3C trace context of the request (`00-<trace id>-<span id>-01`); the server's log lines carry the trace id. */
+  traceId?: string;
 }
 
 /** Field errors and messages of an API problem, ready to show. */
@@ -202,7 +204,9 @@ export function problemMessages(error: unknown): string[] {
     return [problem.detail];
   }
   if (problem?.title) {
-    return [problem.title];
+    // An unexpected server error: give the reference that finds it in the server log.
+    const reference = (problem.status ?? 0) >= 500 ? problem.traceId?.split('-')[1] : undefined;
+    return [reference ? `${problem.title} (Ref: ${reference})` : problem.title];
   }
   return [(error as { message?: string } | null)?.message ?? 'Request failed'];
 }

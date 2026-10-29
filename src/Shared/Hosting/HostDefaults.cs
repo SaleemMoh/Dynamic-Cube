@@ -27,7 +27,10 @@ public static class HostDefaults
             .ReadFrom.Services(services)
             .Enrich.FromLogContext()
             .Enrich.WithProperty("App", appCode)
-            .WriteTo.Console(formatProvider: CultureInfo.InvariantCulture));
+            .WriteTo.Console(
+                // The trace id is the reference an error message shows to users (the middle part of the problem's traceId).
+                outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {TraceId}{NewLine}{Exception}",
+                formatProvider: CultureInfo.InvariantCulture));
 
         builder.Services.AddOpenTelemetry()
             .ConfigureResource(resource => resource.AddService($"dynamic-cube-{appCode.ToLowerInvariant()}"))
