@@ -92,6 +92,7 @@
   ],
   "users": [
     {
+      "id": "50f4d901-24e5-56da-89b1-5ded9d6fb7df",
       "username": "admin",
       "enabled": true,
       "emailVerified": true,
@@ -107,6 +108,7 @@
       ]
     },
     {
+      "id": "d9b52898-3351-5b82-8258-ea96acc842ce",
       "username": "maker",
       "enabled": true,
       "emailVerified": true,
@@ -122,6 +124,7 @@
       ]
     },
     {
+      "id": "4c79ff85-6804-501d-813d-ecc06da3a825",
       "username": "checker",
       "enabled": true,
       "emailVerified": true,
@@ -137,6 +140,7 @@
       ]
     },
     {
+      "id": "b776419f-fcb9-5230-a479-b9a6adf762a3",
       "username": "manager",
       "enabled": true,
       "emailVerified": true,
@@ -152,6 +156,7 @@
       ]
     },
     {
+      "id": "75adf51c-e9d7-5263-af18-8ef11b315f54",
       "username": "analyst1",
       "enabled": true,
       "emailVerified": true,
@@ -167,6 +172,7 @@
       ]
     },
     {
+      "id": "9977c4e7-ff80-5134-8ae7-b4c24aa49b47",
       "username": "analyst2",
       "enabled": true,
       "emailVerified": true,
@@ -182,6 +188,7 @@
       ]
     },
     {
+      "id": "09cc9fb1-8ab1-5758-ac12-919cdeeed345",
       "username": "auditor1",
       "enabled": true,
       "emailVerified": true,
@@ -197,6 +204,7 @@
       ]
     },
     {
+      "id": "6245f333-6518-5495-b419-3fc70e1456c0",
       "username": "director",
       "enabled": true,
       "emailVerified": true,
@@ -212,6 +220,7 @@
       ]
     },
     {
+      "id": "bddaeb5d-2ca6-570f-b8a0-592d4efe9daa",
       "username": "service-account-dynamic-cube-accounts",
       "enabled": true,
       "serviceAccountClientId": "dynamic-cube-accounts",

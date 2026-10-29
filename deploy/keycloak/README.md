@@ -54,6 +54,13 @@ Password for all: `Dev@12345`
 | internal | `manager`, `analyst1`, `analyst2`, `auditor1`, `director` | Classification staff; their roles come from the `classification-workflow.json` package (see `deploy/config-packages`) |
 | external | `1000000001`, `2000000002` | Applicants; `national_id` attribute mapped into tokens |
 
+The development Keycloak keeps no data: every fresh start re-imports both realms. Apps Control links each account to
+the user's Keycloak ID (the token's `sub`), so the realm files give every user a fixed `id`, and a re-import keeps them.
+Development also sets `AppsControl:RelinkAccountsByUserName`. An account whose Keycloak ID did change, for example one
+created before the IDs were fixed or added later from Apps Control, moves to the new ID on its next sign-in. In
+production this stays off. A username that comes back with a different ID is refused with 403, so a reused username
+cannot inherit someone else's roles. An administrator relinks the account instead.
+
 Get a token for API testing (development only):
 
 ```bash

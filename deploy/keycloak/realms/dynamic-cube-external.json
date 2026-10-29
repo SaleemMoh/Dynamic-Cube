@@ -116,6 +116,7 @@
   ],
   "users": [
     {
+      "id": "17ad694c-3bad-50c1-aa47-712ac550ab1f",
       "username": "1000000001",
       "enabled": true,
       "emailVerified": true,
@@ -136,6 +137,7 @@
       }
     },
     {
+      "id": "5da9f14c-36d7-58a1-8cee-41110a257abf",
       "username": "2000000002",
       "enabled": true,
       "emailVerified": true,

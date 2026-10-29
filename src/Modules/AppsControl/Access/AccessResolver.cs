@@ -128,10 +128,23 @@ public sealed partial class AccessResolver(
         var now = timeProvider.GetUtcNow();
 
         var user = await context.Users.Include(u => u.Roles).SingleOrDefaultAsync(u => u.IdpSubject == subject, cancellationToken)
-            ?? await context.Users.Include(u => u.Roles).SingleOrDefaultAsync(u => u.Code == username && u.IdpSubject == null, cancellationToken);
+            ?? await context.Users.Include(u => u.Roles).SingleOrDefaultAsync(u => u.Code == username, cancellationToken);
 
         var changed = false;
-        if (user is null)
+        if (user is not null && user.IdpSubject is not null && user.IdpSubject != subject)
+        {
+            if (!options.Value.RelinkAccountsByUserName)
+            {
+                LogSubjectMismatch(logger, username);
+                throw new IdentityMismatchException(username);
+            }
+
+            LogRelinked(logger, username);
+            user.IdpSubject = subject;
+            user.LastLoginAt = now;
+            changed = true;
+        }
+        else if (user is null)
         {
             var name = principal?.FindFirstValue("name") ?? username;
             user = new UserAccount
@@ -191,6 +204,12 @@ public sealed partial class AccessResolver(
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Created Apps Control account for {UserName} on first sign-in")]
     private static partial void LogProvisioned(ILogger logger, string userName);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Sign-in refused: account {UserName} is linked to another identity-provider subject")]
+    private static partial void LogSubjectMismatch(ILogger logger, string userName);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Account {UserName} relinked to a new identity-provider subject")]
+    private static partial void LogRelinked(ILogger logger, string userName);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Bootstrap: assigned role {RoleId} to {UserName}")]
     private static partial void LogBootstrapRole(ILogger logger, string userName, Guid roleId);

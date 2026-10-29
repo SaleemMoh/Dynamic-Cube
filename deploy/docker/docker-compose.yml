@@ -76,6 +76,8 @@ services:
       AppsControl__BootstrapUsers__admin__0: SYSTEM_ADMIN
       AppsControl__BootstrapUsers__maker__0: CONFIG_MAKER
       AppsControl__BootstrapUsers__checker__0: CONFIG_CHECKER
+      # Keycloak here keeps no data and re-imports its realm on a fresh start; accounts follow their username.
+      AppsControl__RelinkAccountsByUserName: "true"
       # Employee accounts are created and maintained from Apps Control through Keycloak's admin API.
       AppsControl__Identity__Provider: Keycloak
       AppsControl__Identity__BaseUrl: http://keycloak:8080

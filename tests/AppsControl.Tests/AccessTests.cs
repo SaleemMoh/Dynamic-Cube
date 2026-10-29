@@ -4,6 +4,7 @@ using DynamicCube.Modules.AppsControl.Domain;
 using DynamicCube.Modules.AppsControl.Persistence;
 using DynamicCube.Modules.AppsControl.Tests.Infrastructure;
 using DynamicCube.Platform.ChangeSets;
+using DynamicCube.Platform.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
@@ -33,6 +34,24 @@ public sealed class AccessTests(AppsControlFixture fixture) : IAsyncLifetime
 
         var account = await _harness.AsAsync("admin", sp => sp.GetRequiredService<AppsControlDbContext>().Users.SingleAsync(u => u.Code == "admin"));
         account.IdpSubject.ShouldBe("sub-admin");
+    }
+
+    [Fact]
+    public async Task A_known_username_with_a_new_subject_is_refused_unless_relinking_is_on()
+    {
+        var userName = Harness.Unique("moved").ToLowerInvariant();
+        await _harness.AccessAsync(userName);
+        await _harness.AsAsync(userName, sp => sp.GetRequiredService<AppsControlDbContext>().Users
+            .Where(u => u.Code == userName).ExecuteUpdateAsync(u => u.SetProperty(x => x.IdpSubject, "subject-before-reimport")));
+
+        // Fresh service providers: the first sign-in's access snapshot is cached per subject.
+        await using var refusing = new Harness(fixture);
+        await Should.ThrowAsync<IdentityMismatchException>(() => refusing.AccessAsync(userName));
+
+        await using var relinking = new Harness(fixture, new Dictionary<string, string?> { ["AppsControl:RelinkAccountsByUserName"] = "true" });
+        await relinking.AccessAsync(userName);
+        var account = await relinking.AsAsync(userName, sp => sp.GetRequiredService<AppsControlDbContext>().Users.SingleAsync(u => u.Code == userName));
+        account.IdpSubject.ShouldBe($"sub-{userName}");
     }
 
     [Fact]

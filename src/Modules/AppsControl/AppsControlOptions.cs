@@ -10,6 +10,13 @@ public sealed class AppsControlOptions
     /// </summary>
     public Dictionary<string, string[]> BootstrapUsers { get; init; } = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// Development only: when a known username signs in with a new identity-provider subject (a development Keycloak
+    /// re-imports its realm on every fresh start), move the account to the new subject. Off in production, where a reused
+    /// username must not inherit someone else's roles; the sign-in is refused with 403 instead.
+    /// </summary>
+    public bool RelinkAccountsByUserName { get; init; }
+
     /// <summary>Database schemas whose tables and views may be registered as data objects.</summary>
     public string[] DataObjectSchemas { get; init; } = ["apps", "lov", "party", "svc", "req", "wf", "doc", "rpt"];
 

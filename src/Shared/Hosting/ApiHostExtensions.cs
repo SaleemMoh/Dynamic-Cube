@@ -28,6 +28,7 @@ public static class ApiHostExtensions
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
         builder.Services.AddProblemDetails();
+        builder.Services.AddExceptionHandler<IdentityMismatchHandler>();
         builder.Services.AddOpenApi();
 
         // Keys live in PostgreSQL so every instance (and restart) can unprotect what another one protected.
