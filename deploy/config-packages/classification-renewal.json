@@ -1,0 +1,306 @@
+{
+  "title": "Classification renewal and extension",
+  "items": [
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_CERT_NUMBER",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "رقم شهادة التصنيف",
+        "nameEn": "Classification certificate number",
+        "type": "TEXT",
+        "prefill": "document.number"
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_CERT_EXPIRY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تاريخ انتهاء الشهادة",
+        "nameEn": "Certificate expiry date",
+        "type": "DATE",
+        "prefill": "document.expiresOn"
+      }
+    },
+    {
+      "entityType": "svc.service",
+      "entityCode": "CLASSIFICATION_RENEW",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تجديد شهادة تصنيف مقدمي خدمات المدن",
+        "nameEn": "City service providers classification — renewal",
+        "descriptionAr": "تجديد الشهادة بنفس القطاعات والدرجات لمدة صلاحية جديدة، خلال التسعين يومًا السابقة لانتهائها.",
+        "descriptionEn": "Renew the certificate with the same sectors and grades for a new validity period, within the 90 days before it expires.",
+        "archetype": "AMENDMENT",
+        "categoryCode": "CLASSIFICATION",
+        "icon": "autorenew",
+        "displayOrder": 20,
+        "partyKinds": [
+          "ESTABLISHMENT"
+        ],
+        "isListed": true,
+        "draftsAllowed": true,
+        "draftExpiryDays": 15,
+        "onNewVersion": "CONTINUE",
+        "numberPrefix": "CLR",
+        "documentType": "CLS_CERTIFICATE"
+      }
+    },
+    {
+      "entityType": "svc.service",
+      "entityCode": "CLASSIFICATION_EXTEND",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تمديد شهادة تصنيف مقدمي خدمات المدن",
+        "nameEn": "City service providers classification — extension",
+        "descriptionAr": "تمديد صلاحية الشهادة ثلاثة أشهر، من خمسة عشر يومًا قبل انتهائها حتى تسعين يومًا بعده.",
+        "descriptionEn": "Extend the certificate's validity by three months, from 15 days before it expires until 90 days after.",
+        "archetype": "AMENDMENT",
+        "categoryCode": "CLASSIFICATION",
+        "icon": "more_time",
+        "displayOrder": 30,
+        "partyKinds": [
+          "ESTABLISHMENT"
+        ],
+        "isListed": true,
+        "draftsAllowed": true,
+        "draftExpiryDays": 15,
+        "onNewVersion": "CONTINUE",
+        "numberPrefix": "CLE",
+        "documentType": "CLS_CERTIFICATE"
+      }
+    },
+    {
+      "entityType": "svc.service-version",
+      "entityCode": "CLASSIFICATION_RENEW/1",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 1",
+        "nameEn": "Version 1",
+        "definition": {
+          "levels": [
+            {
+              "code": "STANDARD",
+              "nameAr": "عادي",
+              "nameEn": "Standard",
+              "slaWorkingDays": 5
+            }
+          ],
+          "steps": [
+            {
+              "code": "CERTIFICATE",
+              "type": "FORM",
+              "titleAr": "الشهادة",
+              "titleEn": "Certificate",
+              "sections": [
+                {
+                  "code": "CERT",
+                  "titleAr": "شهادة التصنيف",
+                  "titleEn": "Classification certificate",
+                  "questions": [
+                    {
+                      "code": "CLS_CERT_NUMBER",
+                      "required": true,
+                      "readonly": true
+                    },
+                    {
+                      "code": "CLS_CERT_EXPIRY",
+                      "required": false,
+                      "readonly": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "REVIEW",
+              "type": "REVIEW",
+              "titleAr": "مراجعة الطلب",
+              "titleEn": "Review",
+              "sections": []
+            },
+            {
+              "code": "DECLARATION",
+              "type": "DECLARATION",
+              "titleAr": "الإقرار",
+              "titleEn": "Declaration",
+              "sections": [],
+              "textAr": "أقر بأن بيانات المنشأة وقطاعاتها لم تتغير منذ آخر إصدار للشهادة، وأتحمل المسؤولية النظامية عن صحة ذلك.",
+              "textEn": "I confirm that the establishment's data and sectors have not changed since the certificate was last issued, and bear legal responsibility for this."
+            }
+          ],
+          "eligibility": [],
+          "validations": [],
+          "fees": [],
+          "availability": {
+            "statuses": [
+              "ACTIVE"
+            ],
+            "from": {
+              "of": "EXPIRES",
+              "days": -90
+            },
+            "to": {
+              "of": "EXPIRES",
+              "days": 0
+            }
+          },
+          "card": {
+            "audienceAr": "المنشآت الحاصلة على شهادة تصنيف",
+            "audienceEn": "Establishments holding a classification certificate",
+            "steps": [
+              {
+                "textAr": "اختيار الشهادة من صفحة «مستنداتي» أو صفحة الخدمة",
+                "textEn": "Choose the certificate from My documents or the service page"
+              },
+              {
+                "textAr": "مراجعة بيانات الشهادة والإقرار بعدم تغيرها",
+                "textEn": "Review the certificate and confirm nothing has changed"
+              },
+              {
+                "textAr": "تقديم الطلب",
+                "textEn": "Submit"
+              },
+              {
+                "textAr": "تمديد صلاحية الشهادة نفسها برقمها",
+                "textEn": "The same certificate, with its number, gets a new validity"
+              }
+            ],
+            "termsAr": "أن تكون بيانات المنشأة وقطاعاتها ودرجاتها دون تغيير منذ آخر إصدار للشهادة؛ وإلا فتقدّم بطلب تعديل.\nألا يكون على المنشأة جزاء ساري يمنع التجديد أو التمديد.",
+            "termsEn": "The establishment's data, sectors and grades are unchanged since the certificate was last issued; otherwise apply for a modification.\nThe establishment has no sanction in force that bans renewal or extension.",
+            "requiredDocuments": [
+              {
+                "nameAr": "شهادة التصنيف السارية",
+                "nameEn": "The classification certificate",
+                "noteAr": "تُختار من وثائق المنشأة",
+                "noteEn": "Chosen from the establishment's documents"
+              }
+            ],
+            "channels": [
+              "PORTAL"
+            ],
+            "phone": "199040",
+            "email": "classification@example.gov.sa"
+          }
+        }
+      }
+    },
+    {
+      "entityType": "svc.service-version",
+      "entityCode": "CLASSIFICATION_EXTEND/1",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 1",
+        "nameEn": "Version 1",
+        "definition": {
+          "levels": [
+            {
+              "code": "STANDARD",
+              "nameAr": "عادي",
+              "nameEn": "Standard",
+              "slaWorkingDays": 5
+            }
+          ],
+          "steps": [
+            {
+              "code": "CERTIFICATE",
+              "type": "FORM",
+              "titleAr": "الشهادة",
+              "titleEn": "Certificate",
+              "sections": [
+                {
+                  "code": "CERT",
+                  "titleAr": "شهادة التصنيف",
+                  "titleEn": "Classification certificate",
+                  "questions": [
+                    {
+                      "code": "CLS_CERT_NUMBER",
+                      "required": true,
+                      "readonly": true
+                    },
+                    {
+                      "code": "CLS_CERT_EXPIRY",
+                      "required": false,
+                      "readonly": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "REVIEW",
+              "type": "REVIEW",
+              "titleAr": "مراجعة الطلب",
+              "titleEn": "Review",
+              "sections": []
+            },
+            {
+              "code": "DECLARATION",
+              "type": "DECLARATION",
+              "titleAr": "الإقرار",
+              "titleEn": "Declaration",
+              "sections": [],
+              "textAr": "أقر بأن بيانات المنشأة وقطاعاتها لم تتغير منذ آخر إصدار للشهادة، وأتحمل المسؤولية النظامية عن صحة ذلك.",
+              "textEn": "I confirm that the establishment's data and sectors have not changed since the certificate was last issued, and bear legal responsibility for this."
+            }
+          ],
+          "eligibility": [],
+          "validations": [],
+          "fees": [],
+          "availability": {
+            "statuses": [
+              "ACTIVE",
+              "EXPIRED"
+            ],
+            "from": {
+              "of": "EXPIRES",
+              "days": -15
+            },
+            "to": {
+              "of": "EXPIRES",
+              "days": 90
+            }
+          },
+          "card": {
+            "audienceAr": "المنشآت الحاصلة على شهادة تصنيف",
+            "audienceEn": "Establishments holding a classification certificate",
+            "steps": [
+              {
+                "textAr": "اختيار الشهادة",
+                "textEn": "Choose the certificate"
+              },
+              {
+                "textAr": "مراجعة بياناتها والإقرار",
+                "textEn": "Review it and confirm"
+              },
+              {
+                "textAr": "تقديم الطلب",
+                "textEn": "Submit"
+              },
+              {
+                "textAr": "تمديد صلاحية الشهادة ثلاثة أشهر من تاريخ انتهائها",
+                "textEn": "The certificate is extended by three months from its expiry date"
+              }
+            ],
+            "termsAr": "أن تكون بيانات المنشأة وقطاعاتها ودرجاتها دون تغيير منذ آخر إصدار للشهادة؛ وإلا فتقدّم بطلب تعديل.\nألا يكون على المنشأة جزاء ساري يمنع التجديد أو التمديد.",
+            "termsEn": "The establishment's data, sectors and grades are unchanged since the certificate was last issued; otherwise apply for a modification.\nThe establishment has no sanction in force that bans renewal or extension.",
+            "requiredDocuments": [
+              {
+                "nameAr": "شهادة التصنيف السارية",
+                "nameEn": "The classification certificate",
+                "noteAr": "تُختار من وثائق المنشأة",
+                "noteEn": "Chosen from the establishment's documents"
+              }
+            ],
+            "channels": [
+              "PORTAL"
+            ],
+            "phone": "199040",
+            "email": "classification@example.gov.sa"
+          }
+        }
+      }
+    }
+  ]
+}

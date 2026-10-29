@@ -1,8 +1,10 @@
 using DynamicCube.Modules.Services.Definitions;
 using DynamicCube.Modules.Services.Domain;
 using DynamicCube.Modules.Services.Persistence;
+using DynamicCube.Platform.Documents;
 using DynamicCube.Platform.Parties;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DynamicCube.Modules.Services.Runtime;
 
@@ -33,7 +35,11 @@ public sealed record PortalServiceSummary(
     string? AudienceAr,
     string? AudienceEn,
     WorkingDaysRange? Duration,
-    CostRange Cost);
+    CostRange Cost,
+    PortalDocumentType? RequiredDocument = null);
+
+/// <summary>The document a follow-up service is requested for (shown on its card).</summary>
+public sealed record PortalDocumentType(string Code, string NameAr, string NameEn);
 
 public sealed record PortalCatalog(IReadOnlyList<PortalCategory> Categories, IReadOnlyList<PortalServiceSummary> Services, DateTimeOffset? LastUpdated);
 
@@ -52,7 +58,7 @@ public sealed record ServiceCard(
 public sealed record PortalStatistics(int Services, int Requests, int InProgress, int Completed);
 
 /// <summary>The public side of the catalog: categories, listed services and their cards, and statistics. Needs no sign-in.</summary>
-public sealed class PortalCatalogService(ServicesDbContext context, ServiceCatalogCache cache)
+public sealed class PortalCatalogService(ServicesDbContext context, ServiceCatalogCache cache, IServiceProvider providers)
 {
     public async Task<PortalCatalog> CatalogAsync(CancellationToken cancellationToken)
     {
@@ -62,7 +68,7 @@ public sealed class PortalCatalogService(ServicesDbContext context, ServiceCatal
         foreach (var row in await ListedAsync(null, cancellationToken))
         {
             var version = await cache.GetAsync(context, row.VersionId, cancellationToken);
-            services.Add(Summary(row.Service, version));
+            services.Add(Summary(row.Service, version) with { RequiredDocument = await DocumentTypeAsync(row.Service.DocumentType, cancellationToken) });
             lastUpdated = Later(lastUpdated, Later(row.Service.UpdatedAt ?? row.Service.CreatedAt, row.PublishedAt));
         }
 
@@ -87,7 +93,8 @@ public sealed class PortalCatalogService(ServicesDbContext context, ServiceCatal
         var levels = definition.Levels
             .Select(l => new PortalLevel(l.Code, l.NameAr, l.NameEn, l.DescriptionAr, l.DescriptionEn, l.SlaWorkingDays, Cost(definition, l.Code)))
             .ToList();
-        return new ServiceCard(Summary(row.Service, version), category, levels, definition.Card, version.Number, row.PublishedAt);
+        var summary = Summary(row.Service, version) with { RequiredDocument = await DocumentTypeAsync(row.Service.DocumentType, cancellationToken) };
+        return new ServiceCard(summary, category, levels, definition.Card, version.Number, row.PublishedAt);
     }
 
     public async Task<PortalStatistics> StatisticsAsync(CancellationToken cancellationToken)
@@ -198,6 +205,11 @@ public sealed class PortalCatalogService(ServicesDbContext context, ServiceCatal
             .OrderBy(r => r.Service.DisplayOrder).ThenBy(r => r.Service.Code)
             .Select(r => (r.Service, r.Version!.Id, r.Version.PublishedAt))];
     }
+
+    private async Task<PortalDocumentType?> DocumentTypeAsync(string? code, CancellationToken cancellationToken) =>
+        code is not null && providers.GetService<IDocumentDirectory>() is { } documents && await documents.TypeAsync(code, cancellationToken) is var (ar, en)
+            ? new PortalDocumentType(code, ar, en)
+            : null;
 
     private static DateTimeOffset? Later(DateTimeOffset? a, DateTimeOffset? b) => a is null ? b : b is null ? a : a > b ? a : b;
 }

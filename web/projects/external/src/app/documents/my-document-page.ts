@@ -6,11 +6,12 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RouterLink } from '@angular/router';
 import { DocumentView, DocumentsApi, I18nService, TranslatePipe, problemMessages, saveBlob } from '@dynamic-cube/shared';
 import { firstValueFrom } from 'rxjs';
+import { FollowUpServices } from './follow-up-services';
 
-/** One of the acting party's documents: its data and line items, the PDF and the verification link. */
+/** One of the acting party's documents: its data and line items, the PDF, the verification link and its follow-up services. */
 @Component({
   selector: 'dc-my-document-page',
-  imports: [MatButtonModule, MatIconModule, MatProgressBarModule, RouterLink, DocumentView, TranslatePipe],
+  imports: [MatButtonModule, MatIconModule, MatProgressBarModule, RouterLink, DocumentView, TranslatePipe, FollowUpServices],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header class="dc-page__header">
@@ -39,6 +40,7 @@ import { firstValueFrom } from 'rxjs';
           </a>
         </div>
       </dc-document-view>
+      <dc-follow-up-services [documentId]="d.document.id" />
     } @else if (detail.isLoading()) {
       <mat-progress-bar mode="indeterminate" />
     } @else if (detail.error()) {
@@ -46,6 +48,11 @@ import { firstValueFrom } from 'rxjs';
     }
   `,
   styles: `
+:host {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
     .dc-mydoc__actions {
       display: flex;
       flex-wrap: wrap;

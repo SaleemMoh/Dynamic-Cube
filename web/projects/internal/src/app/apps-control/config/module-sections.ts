@@ -316,6 +316,13 @@ export const SERVICE_SECTIONS: ConfigSection[] = [
           number('displayOrder', t('الترتيب', 'Display order'), 0),
           { code: 'isListed', type: 'checkbox', label: t('تظهر في دليل الخدمات', 'Shown in the service catalog'), defaultValue: true },
           { code: 'numberPrefix', type: 'text', label: t('بادئة رقم الطلب', 'Request number prefix'), hint: t('مثال: CLS ← CLS-2026-000001', 'e.g. CLS → CLS-2026-000001') },
+          {
+            code: 'documentType',
+            type: 'select',
+            label: t('الوثيقة التي تُقدَّم عليها الخدمة', 'Document the service acts on'),
+            ref: 'doc.document-type',
+            hint: t('للخدمات اللاحقة كالتجديد والتمديد: يُقدَّم الطلب على إحدى وثائق المستفيد من هذا النوع', 'For follow-up services such as renewal or extension: each request is made for one of the beneficiary\'s documents of this type'),
+          },
           { code: 'draftsAllowed', type: 'checkbox', label: t('السماح بحفظ المسودات', 'Drafts allowed'), defaultValue: true },
           number('draftExpiryDays', t('صلاحية المسودة (يوم)', 'Draft expiry (days)'), 30),
           {

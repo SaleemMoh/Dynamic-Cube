@@ -43,11 +43,15 @@ internal sealed class DocumentIssuer(DocumentsDbContext context, DocumentRendere
             ?? throw new DocumentIssueException($"Party {issue.HolderPartyId} does not exist.");
         var now = clock.GetUtcNow();
 
-        var document = type.OnePerHolder
-            ? await context.Documents.Where(d => d.DocumentTypeId == type.Id && d.HolderPartyId == holder.Id && (d.Status == DocumentStatus.Active || d.Status == DocumentStatus.Suspended))
-                .OrderByDescending(d => d.IssuedAt).FirstOrDefaultAsync(cancellationToken)
-            : null;
+        var document = issue.Document is { } target
+            ? await TargetAsync(target, type, holder.Id, cancellationToken)
+            : type.OnePerHolder
+                ? await context.Documents.Where(d => d.DocumentTypeId == type.Id && d.HolderPartyId == holder.Id && (d.Status == DocumentStatus.Active || d.Status == DocumentStatus.Suspended))
+                    .OrderByDescending(d => d.IssuedAt).FirstOrDefaultAsync(cancellationToken)
+                : null;
         var amended = document is not null;
+        var data = issue.Data;
+        var lines = issue.Lines ?? [];
         if (document is null)
         {
             document = new IssuedDocument
@@ -58,7 +62,7 @@ internal sealed class DocumentIssuer(DocumentsDbContext context, DocumentRendere
                 HolderPartyId = holder.Id,
                 Status = DocumentStatus.Active,
                 IssuedAt = now,
-                ExpiresAt = Expiry(type, now),
+                ExpiresAt = Expiry(type, now, issue.Validity?.Mode is ValidityMode.Keep ? null : issue.Validity?.Months),
                 VerificationCode = NewCode(),
             };
             context.Documents.Add(document);
@@ -70,13 +74,17 @@ internal sealed class DocumentIssuer(DocumentsDbContext context, DocumentRendere
                 throw new DocumentIssueException($"Document {document.Number} is suspended; reinstate it before amending.");
             }
 
-            if (type.AmendResetsValidity)
+            // Data fields not given and lines not given stay as they are in the current version.
+            var current = await context.Versions.AsNoTracking().SingleAsync(v => v.DocumentId == document.Id && v.Version == document.CurrentVersion, cancellationToken);
+            data = JsonNode.Parse(current.Data)!.AsObject();
+            foreach (var (field, value) in issue.Data)
             {
-                document.ExpiresAt = Expiry(type, now);
-                document.AlertsSent = [];
+                data[field] = value?.DeepClone();
             }
-        }
 
+            lines = issue.Lines ?? JsonNode.Parse(current.Lines)!.AsArray();
+            ChangeValidity(document, type, issue.Validity ?? new ValidityChange(type.AmendResetsValidity ? ValidityMode.Reset : ValidityMode.Keep), now);
+        }
         document.HolderNameAr = holder.NameAr;
         document.HolderNameEn = holder.NameEn;
         document.CurrentVersion++;
@@ -84,8 +92,8 @@ internal sealed class DocumentIssuer(DocumentsDbContext context, DocumentRendere
         {
             DocumentId = document.Id,
             Version = document.CurrentVersion,
-            Data = issue.Data.ToJsonString(),
-            Lines = issue.Lines.ToJsonString(),
+            Data = data.ToJsonString(),
+            Lines = lines.ToJsonString(),
             Holder = HolderSnapshot(holder).ToJsonString(),
             IssuedAt = now,
             ExpiresAt = document.ExpiresAt,
@@ -112,7 +120,52 @@ internal sealed class DocumentIssuer(DocumentsDbContext context, DocumentRendere
         return new IssuedDocumentInfo(document.Id, document.Number, version.Version, amended, document.ExpiresAt);
     }
 
-    private static DateTimeOffset? Expiry(DocumentType type, DateTimeOffset from) => type.ValidityMonths is { } months ? from.AddMonths(months) : null;
+    private static DateTimeOffset? Expiry(DocumentType type, DateTimeOffset from, int? months = null) =>
+        (months ?? type.ValidityMonths) is { } length ? from.AddMonths(length) : null;
+
+    /// <summary>The document a follow-up request names: of this type and holder, and not cancelled.</summary>
+    private async Task<IssuedDocument> TargetAsync(Guid id, DocumentType type, Guid holder, CancellationToken cancellationToken)
+    {
+        var document = await context.Documents.SingleOrDefaultAsync(d => d.Id == id, cancellationToken)
+            ?? throw new DocumentIssueException($"Document {id} does not exist.");
+        if (document.DocumentTypeId != type.Id || document.HolderPartyId != holder)
+        {
+            throw new DocumentIssueException($"Document {document.Number} is not a '{type.Code}' of this holder.");
+        }
+
+        return document.Status == DocumentStatus.Cancelled
+            ? throw new DocumentIssueException($"Document {document.Number} is cancelled.")
+            : document;
+    }
+
+    /// <summary>Moves the expiry date as asked; an expired document that gets a date in the future is active again.</summary>
+    private static void ChangeValidity(IssuedDocument document, DocumentType type, ValidityChange change, DateTimeOffset now)
+    {
+        var expires = change.Mode switch
+        {
+            ValidityMode.Keep => document.ExpiresAt,
+            ValidityMode.Reset => Expiry(type, now, change.Months),
+            ValidityMode.Renew => Expiry(type, document.ExpiresAt is { } current && current > now ? current : now, change.Months),
+            ValidityMode.Extend => (document.ExpiresAt ?? now).AddMonths(change.Months is > 0 and var months ? months : throw new DocumentIssueException("Give the months to extend by.")),
+            _ => document.ExpiresAt,
+        };
+        if (document.Status == DocumentStatus.Expired && (expires is null || expires <= now))
+        {
+            throw new DocumentIssueException($"Document {document.Number} has expired; renew or extend it to amend it.");
+        }
+
+        if (expires != document.ExpiresAt)
+        {
+            document.ExpiresAt = expires;
+            document.AlertsSent = [];
+        }
+
+        if (document.Status == DocumentStatus.Expired)
+        {
+            document.Status = DocumentStatus.Active;
+            document.StatusChangedAt = now;
+        }
+    }
 
     private static JsonObject HolderSnapshot(PartyFacts holder) => new()
     {

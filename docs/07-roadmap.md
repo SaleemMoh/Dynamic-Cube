@@ -196,14 +196,48 @@ JSON), uploading the banner image, statistics from other modules (e.g. certifica
 
 ## Phase 2 — Document-driven services and payments
 
-- Amendment services: renewal, extension, add/remove sector, upgrade, update data, appeal.
-- **Availability rules** (status + date windows) and certificate page with available / locked
-  services.
-- Payments: SADAD / Tahseel bills and callbacks; service-level fees end to end.
-- ~~Scheduled document-date alerts~~ (done in 1e); draft expiry.
-- Sanctions and document status actions.
-- Classification calculator (public, stateless).
-- Dashboards v1: requests, SLA, certificates by region/sector/grade, draft abandonment.
+Delivered in slices:
+
+| Slice | Content | Status |
+|---|---|---|
+| **2a** | Follow-up services on issued documents: availability windows, requests bound to a document, renewal and extension | ✅ |
+| 2b | Payments: bills (SADAD / Tahseel through the Integration Manager), payment callbacks, waiting for payment, receipts | Next |
+| 2c | Sanctions: progressive penalties by offence, bans by kind of service, document status actions from sanctions, committee review | Planned |
+| 2d | Remaining classification follow-ups: add / remove sector, modify / upgrade grade, update certificate data, appeal; draft expiry job | Planned |
+| 2e | Classification calculator (public, stateless) and dashboards v1 | Planned |
+
+**2a delivered** ([ADR-0021](adr/0021-follow-up-services.md)):
+
+- **Services that act on a document.** A service may name a document type (`documentType`); each of its requests is
+  made for one of the beneficiary's documents of that type (`sourceDocument`). The version's **availability** says
+  which document statuses it accepts (ACTIVE by default; EXPIRED, SUSPENDED) and a window of days around the issue
+  or expiry date (e.g. renewal from 90 days before expiry until expiry). One request per document and service can be
+  open at a time; the window and status are checked again on submission.
+- **The document in rules.** Eligibility, validations, fees and prefill see `document` (number, status, issue and
+  expiry dates, data, lines); so does the workflow.
+- **Amending the document.** A workflow document step with `target: SOURCE` amends the request's document (same
+  number, a new version); data fields given replace theirs, the rest and the lines stay unless given. Its
+  `validity` moves the expiry: KEEP, RESET (a new period from today), RENEW (a new period from the current expiry, so
+  renewing early loses no days) or EXTEND (N months); an expired document renewed or extended is active again.
+- **Screens.** The portal's document page lists the follow-up services of the document: available with *Start*,
+  locked with the dates of their window and the reason, or the open request to continue. A follow-up service's page
+  lists the applicant's documents to choose from; its card says which document it needs. Requests show the
+  document they are for, in both apps. The service form has *Document the service acts on*.
+- **Packages.** `classification-renewal.json` (renewal: ACTIVE certificates, the 90 days before expiry; extension:
+  ACTIVE or EXPIRED, from 15 days before until 90 days after expiry; both prefill the certificate number and expiry and
+  ask for a declaration) and `classification-renewal-workflow.json` (version 2 of their workflows: renew the
+  certificate for 24 months from its expiry; extend it by 3 months).
+Still open from 2a: fees on follow-ups (2b), sanctions banning renewals (2c), choosing the document when an applicant
+holds several from the service's wizard (today from the service page or the document page), and a review step before
+renewals (a new workflow version).
+
+- Amendment services: renewal, extension (2a); add/remove sector, upgrade, update data, appeal (2d).
+- ~~**Availability rules** (status + date windows) and certificate page with available / locked services~~ (2a).
+- Payments: SADAD / Tahseel bills and callbacks; service-level fees end to end (2b).
+- ~~Scheduled document-date alerts~~ (done in 1e); draft expiry (2d).
+- Sanctions and document status actions (2c).
+- Classification calculator (public, stateless) (2e).
+- Dashboards v1: requests, SLA, certificates by region/sector/grade, draft abandonment (2e).
 
 ## Phase 3 — Builders and content
 

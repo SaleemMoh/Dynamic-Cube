@@ -105,6 +105,35 @@ internal static partial class DefinitionValidator
         Rules(definition.Validations, "definition.validations", evaluator, errors, definition.Steps.Select(s => s.Code).ToHashSet());
         Fees(definition, evaluator, errors);
         Card(definition.Card, errors);
+        Availability(definition.Availability, errors);
+    }
+
+    private static readonly string[] DocumentStatuses = ["ACTIVE", "EXPIRED", "SUSPENDED"];
+
+    private static void Availability(AvailabilityDefinition? availability, ValidationErrors errors)
+    {
+        if (availability is null)
+        {
+            return;
+        }
+
+        foreach (var status in availability.Statuses.Where(s => !DocumentStatuses.Contains(s)))
+        {
+            errors.Add("definition.availability.statuses", $"'{status}' is not one of {string.Join(", ", DocumentStatuses)}.");
+        }
+
+        foreach (var (bound, name) in new[] { (availability.From, "from"), (availability.To, "to") })
+        {
+            if (bound is { Days: < -3650 or > 3650 })
+            {
+                errors.Add($"definition.availability.{name}.days", "Must be within ten years of the date.");
+            }
+        }
+
+        if (availability is { From: { } from, To: { } to } && from.Of == to.Of && from.Days > to.Days)
+        {
+            errors.Add("definition.availability.to", "The window ends before it starts.");
+        }
     }
 
     private static void Card(ServiceCardDefinition card, ValidationErrors errors)

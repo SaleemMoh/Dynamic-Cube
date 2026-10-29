@@ -6,6 +6,7 @@ using DynamicCube.Platform.Calendars;
 using DynamicCube.Platform.Decisions;
 using DynamicCube.Platform.Documents;
 using DynamicCube.Platform.Expressions;
+using DynamicCube.Platform.Integration;
 using DynamicCube.Platform.Persistence;
 using DynamicCube.Platform.Security;
 using DynamicCube.Platform.Workflow;
@@ -278,11 +279,20 @@ internal sealed class WorkflowEngine(
             }
         }
 
+        Guid? target = null;
+        if (node.Target == DocumentTarget.Source)
+        {
+            target = JsonPaths.Read(facts, "document.id") is JsonValue id && Guid.TryParse(id.ToString(), out var source)
+                ? source
+                : throw new WorkflowConflictException($"Step '{node.Code}': the request was not made for a document.");
+        }
+
+        var validity = node.Validity is { } mode ? new ValidityChange(mode, node.ValidityMonths) : null;
         IssuedDocumentInfo issued;
         try
         {
             issued = await issuer.IssueAsync(
-                new DocumentIssue(node.DocumentType!, holder, Map(node.Data, facts), lines, run.Instance.SubjectType, run.Instance.SubjectId, run.Instance.SubjectNumber, node.Reason),
+                new DocumentIssue(node.DocumentType!, holder, Map(node.Data, facts), node.Lines is null ? null : lines, run.Instance.SubjectType, run.Instance.SubjectId, run.Instance.SubjectNumber, node.Reason, target, validity),
                 cancellationToken);
         }
         catch (DocumentIssueException ex)

@@ -46,6 +46,9 @@ import { RequestDocuments } from '../documents/request-documents';
         @if (v.request.number) {
           · <span dir="ltr" data-testid="request-number">{{ v.request.number }}</span>
         }
+        @if (v.request.sourceDocumentNumber) {
+          · {{ 'followUps.document' | dcTranslate }} <span dir="ltr" data-testid="request-document">{{ v.request.sourceDocumentNumber }}</span>
+        }
         @if (v.request.status === 'DRAFT' && v.request.draftExpiresAt) {
           · {{ 'requests.expires' | dcTranslate }} <span dir="ltr">{{ v.request.draftExpiresAt | date: 'yyyy-MM-dd' }}</span>
         }

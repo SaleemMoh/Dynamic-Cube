@@ -250,6 +250,11 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("display_order");
 
+                    b.Property<string>("DocumentType")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("document_type");
+
                     b.Property<int>("DraftExpiryDays")
                         .HasColumnType("integer")
                         .HasColumnName("draft_expiry_days");
@@ -515,6 +520,15 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("service_version_id");
 
+                    b.Property<Guid?>("SourceDocumentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_document_id");
+
+                    b.Property<string>("SourceDocumentNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("source_document_number");
+
                     b.Property<string>("StatusCategory")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -563,6 +577,9 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
 
                     b.HasIndex("ServiceCode", "StatusCategory")
                         .HasDatabaseName("ix_request_service_code_status_category");
+
+                    b.HasIndex("SourceDocumentId", "ServiceId")
+                        .HasDatabaseName("ix_request_source_document_id_service_id");
 
                     b.ToTable("request", "svc");
                 });

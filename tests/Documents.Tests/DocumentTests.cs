@@ -173,6 +173,51 @@ public sealed class DocumentTests(DatabaseFixture fixture)
     }
 
     [Fact]
+    public async Task Follow_up_requests_amend_their_document_renewing_or_extending_it()
+    {
+        await using var host = new DocumentHost(fixture);
+        // A short validity: the expiry job below runs for the whole database, so the clock must not pass other tests' dates.
+        var type = await host.TypeAsync(validityMonths: 3);
+        var holder = Guid.CreateVersion7();
+        var issued = await host.IssueAsync(type, holder, "Riyadh", ("ICT", 2), ("BUILDING", 3));
+        var expires = issued.ExpiresAt!.Value;
+
+        Task<IssuedDocumentInfo> AmendAsync(Guid document, ValidityChange? validity, JsonObject? data = null, Guid? holderId = null) =>
+            host.Host.AsAsync("issuer", sp => sp.GetRequiredService<IDocumentIssuer>().IssueAsync(
+                new DocumentIssue(type, holderId ?? holder, data ?? [], null, "SERVICE_REQUEST", Guid.CreateVersion7(), "REN-2026-000001", "Renewed", document, validity),
+                CancellationToken.None));
+        Task<DocumentFacts?> FactsAsync() => host.Host.AsAsync("reader", sp => sp.GetRequiredService<IDocumentDirectory>().GetAsync(issued.Id, CancellationToken.None));
+
+        // Renewing a month before expiry adds a full period to the current expiry; data and lines not given are kept.
+        host.Clock.Now = expires.AddMonths(-1);
+        var renewed = await AmendAsync(issued.Id, new ValidityChange(ValidityMode.Renew), new JsonObject { ["city"] = "Jeddah" });
+        renewed.Amended.ShouldBeTrue();
+        renewed.Number.ShouldBe(issued.Number);
+        renewed.ExpiresAt.ShouldBe(expires.AddMonths(3));
+        var facts = (await FactsAsync())!;
+        facts.Version.ShouldBe(2);
+        facts.Data["city"]!.GetValue<string>().ShouldBe("Jeddah");
+        facts.Data["internalNote"]!.GetValue<string>().ShouldBe("secret");
+        facts.Lines.Count.ShouldBe(2);
+        facts.ToJson()["expiresOn"]!.GetValue<string>().ShouldBe(DateOnly.FromDateTime(expires.AddMonths(3).UtcDateTime).ToString("O", System.Globalization.CultureInfo.InvariantCulture));
+
+        // Once expired it cannot simply be amended, but an extension makes it active again.
+        host.Clock.Now = renewed.ExpiresAt!.Value.AddDays(10);
+        await host.Host.AsAsync("worker", sp => sp.GetRequiredService<DocumentDates>().RunAsync(CancellationToken.None));
+        (await FactsAsync())!.Status.ShouldBe("EXPIRED");
+        await Should.ThrowAsync<DocumentIssueException>(() => AmendAsync(issued.Id, new ValidityChange(ValidityMode.Keep)));
+        await Should.ThrowAsync<DocumentIssueException>(() => AmendAsync(issued.Id, new ValidityChange(ValidityMode.Extend)));
+        var extended = await AmendAsync(issued.Id, new ValidityChange(ValidityMode.Extend, 3));
+        extended.ExpiresAt.ShouldBe(renewed.ExpiresAt.Value.AddMonths(3));
+        (await FactsAsync())!.Status.ShouldBe("ACTIVE");
+
+        // Only the holder's document of that type.
+        await Should.ThrowAsync<DocumentIssueException>(() => AmendAsync(issued.Id, null, holderId: Guid.CreateVersion7()));
+        var listed = await host.Host.AsAsync("reader", sp => sp.GetRequiredService<IDocumentDirectory>().OfHolderAsync(holder, type, CancellationToken.None));
+        listed.Single().Number.ShouldBe(issued.Number);
+    }
+
+    [Fact]
     public async Task Holders_are_reminded_once_on_each_reminder_day_and_told_of_changes()
     {
         await using var host = new DocumentHost(fixture);

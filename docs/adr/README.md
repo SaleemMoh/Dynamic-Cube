@@ -25,3 +25,4 @@ Status values: Proposed · Accepted · Superseded.
 | [0018](0018-internal-system-look.md) | A gold working look for the internal system | Accepted |
 | [0019](0019-workflow-runtime.md) | How the workflow engine runs: service-owned workflows, tokens, instance locks, returns, deadlines | Accepted (revised 1f) |
 | [0020](0020-documents-decisions-communication.md) | Issued documents, decision rules and notifications | Accepted |
+| [0021](0021-follow-up-services.md) | Follow-up services act on issued documents: availability windows, requests bound to a document, amendments by the workflow | Accepted |

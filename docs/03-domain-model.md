@@ -121,6 +121,11 @@ result.
 - **Server-side validation** repeats the wizard's rules and adds types, choices, LOV grants, limits,
   patterns and cross-field rules; hidden and unknown answers are dropped, read-only prefilled answers are
   taken from the party's data.
+- **Follow-up services** (2a) — a service with a `documentType` is requested for one of the beneficiary's documents
+  of that type (`sourceDocument` on the request); the version's `availability` gives the accepted document statuses
+  and a window of days around the issue or expiry date. One open request per document and service; rules see the
+  document as `document`; the workflow's document step with `target: SOURCE` amends it (validity KEEP, RESET, RENEW
+  or EXTEND). See [ADR-0021](adr/0021-follow-up-services.md).
 - **Category** (1g) `svc.category` — names, description, icon and order; a service names an existing category,
   which groups it in the portal (home tabs, search filter, header menu).
 - **Service card** (1g) — `definition.card` of a version: target audience, numbered steps, terms of use,

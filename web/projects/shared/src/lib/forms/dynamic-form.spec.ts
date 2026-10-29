@@ -137,4 +137,28 @@ describe('DynamicForm with a question in two sections', () => {
     expect(element.querySelectorAll('input#employees').length).toBe(1);
     expect(fixture.componentInstance.formGroup().controls['employees'].hasError('required')).toBe(true);
   });
+
+  it('submits a step whose fields are all read-only (prefilled from a document)', async () => {
+    const readOnly: FormSchema = {
+      code: 'renewal',
+      sections: [
+        {
+          code: 'certificate',
+          title: { ar: 'الشهادة', en: 'Certificate' },
+          fields: [{ code: 'number', type: 'text', label: { ar: 'رقم الشهادة', en: 'Certificate number' }, required: true, readonly: true }],
+        },
+      ],
+    };
+    const only = TestBed.createComponent(DynamicForm);
+    only.componentRef.setInput('schema', readOnly);
+    only.componentRef.setInput('initialValue', { number: 'CC-2026-000001' });
+    const values: FormValue[] = [];
+    only.componentInstance.submitted.subscribe((value) => values.push(value));
+    only.detectChanges();
+    await only.whenStable();
+
+    ((only.nativeElement as HTMLElement).querySelector('form') as HTMLFormElement).dispatchEvent(new Event('submit'));
+
+    expect(values).toEqual([{ number: 'CC-2026-000001' }]);
+  });
 });

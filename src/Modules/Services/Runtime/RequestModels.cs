@@ -17,10 +17,34 @@ public sealed record CatalogEntry(
     IReadOnlyList<PartyKind> PartyKinds,
     int VersionNumber,
     bool IsEligible,
-    IReadOnlyList<EligibilityFailure> Reasons);
+    IReadOnlyList<EligibilityFailure> Reasons,
+    string? DocumentType = null);
 
-/// <summary>A service as the applicant starts it: the current version, eligibility and the fee of each level.</summary>
-public sealed record ServiceView(CatalogEntry Service, ResolvedVersion Version, IReadOnlyDictionary<string, IReadOnlyList<FeeLine>> FeesByLevel);
+/// <summary>
+/// One of the applicant's documents for a follow-up service: whether a request can be made for it now (its status and the
+/// service's window), the window's dates, and the request already open for it, if any.
+/// </summary>
+public sealed record DocumentOption(
+    Guid Id,
+    string Number,
+    string Status,
+    DateOnly IssuedOn,
+    DateOnly? ExpiresOn,
+    bool IsAvailable,
+    DateOnly? OpensOn,
+    DateOnly? ClosesOn,
+    IReadOnlyList<EligibilityFailure> Reasons,
+    Guid? OpenRequestId,
+    string? OpenRequestNumber);
+
+/// <summary>
+/// A service as the applicant starts it: the current version, eligibility and the fee of each level; for a follow-up
+/// service, the applicant's documents it can be requested for.
+/// </summary>
+public sealed record ServiceView(CatalogEntry Service, ResolvedVersion Version, IReadOnlyDictionary<string, IReadOnlyList<FeeLine>> FeesByLevel, IReadOnlyList<DocumentOption> Documents);
+
+/// <summary>A follow-up service on one of the applicant's documents (the document page lists them).</summary>
+public sealed record FollowUpService(CatalogEntry Service, DocumentOption Document);
 
 public sealed record RequestSummary(
     Guid Id,
@@ -35,7 +59,8 @@ public sealed record RequestSummary(
     decimal FeeTotal,
     DateTimeOffset CreatedAt,
     DateTimeOffset? SubmittedAt,
-    DateTimeOffset? DraftExpiresAt);
+    DateTimeOffset? DraftExpiresAt,
+    string? SourceDocumentNumber = null);
 
 public sealed record RequestView(
     RequestSummary Request,
@@ -53,7 +78,8 @@ public sealed record TimelineEntry(DateTimeOffset At, string UserId, string Type
 
 public sealed record RequestDetail(RequestView View, Guid SubmitterPartyId, string SubmitterName, Guid BeneficiaryPartyId, IReadOnlyList<TimelineEntry> Timeline);
 
-public sealed record CreateRequest(string ServiceCode);
+/// <param name="DocumentId">For a follow-up service: the applicant's document the request is for.</param>
+public sealed record CreateRequest(string ServiceCode, Guid? DocumentId = null);
 
 /// <param name="ValidateStep">The step being left: its problems are returned and the request stays on it while there are any.</param>
 public sealed record SaveRequest(JsonObject? Data, string? LevelCode, string? CurrentStep, string? ValidateStep = null);

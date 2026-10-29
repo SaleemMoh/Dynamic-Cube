@@ -122,7 +122,8 @@ export class DynamicForm {
   protected submit(): void {
     const group = this.formGroup();
     group.markAllAsTouched();
-    if (group.valid) {
+    // Not "valid": a form of read-only fields only is DISABLED, and it can still be submitted.
+    if (!group.invalid) {
       // Disabled (hidden) controls are excluded; read-only fields are disabled too but still submitted.
       const value = group.value as FormValue;
       for (const field of this.allFields()) {

@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
+using DynamicCube.Platform.Documents;
 using DynamicCube.Platform.Expressions;
 
 namespace DynamicCube.Modules.Workflow.Definitions;
@@ -113,6 +114,16 @@ internal static partial class DefinitionValidator
                 break;
             case NodeType.Document:
                 errors.Required(field + ".documentType", node.DocumentType);
+                if (node.Validity == ValidityMode.Extend && node.ValidityMonths is null)
+                {
+                    errors.Add(field + ".validityMonths", "Give the months to extend by.");
+                }
+
+                if (node.ValidityMonths is < 1 or > 240)
+                {
+                    errors.Add(field + ".validityMonths", "Must be between 1 and 240.");
+                }
+
                 CheckRule(node.Holder, field + ".holder", evaluator, errors);
                 foreach (var (name, rule) in node.Data)
                 {

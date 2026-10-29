@@ -48,7 +48,9 @@ import { CHANNEL_ICONS, CostPipe, DurationPipe, PARTY_KIND_KEYS } from '../porta
             </button>
             <span class="dc-muted">{{ 'portal.signInFirst' | dcTranslate }}</span>
           } @else if (view.value(); as v) {
-            @if (v.service.isEligible) {
+            @if (v.service.documentType) {
+              <span class="dc-muted">{{ 'followUps.choose' | dcTranslate }}</span>
+            } @else if (v.service.isEligible) {
               <button matButton="filled" (click)="start(c.service.code)" [disabled]="starting()" data-testid="start-request">
                 <mat-icon fontSet="material-symbols-outlined">edit_document</mat-icon>
                 {{ 'portal.startService' | dcTranslate }}
@@ -63,6 +65,44 @@ import { CHANNEL_ICONS, CostPipe, DurationPipe, PARTY_KIND_KEYS } from '../porta
           }
         </div>
       </header>
+      @if (view.value(); as v) {
+        @if (v.service.documentType) {
+          <section class="dc-docs" data-testid="document-choice">
+            <h2>{{ 'followUps.yourDocuments' | dcTranslate }}</h2>
+            @for (d of v.documents; track d.id) {
+              <div class="dc-docs__item" [attr.data-testid]="'document-' + d.number">
+                <div class="dc-docs__text">
+                  <strong dir="ltr">{{ d.number }}</strong>
+                  <span class="dc-muted">
+                    {{ 'followUps.status.' + d.status | dcTranslate }}
+                    @if (d.expiresOn) {
+                      · {{ 'followUps.expires' | dcTranslate }} <span dir="ltr">{{ d.expiresOn }}</span>
+                    }
+                  </span>
+                  @if (!d.isAvailable && !d.openRequestId) {
+                    @for (r of d.reasons; track r.code) {
+                      <span class="dc-docs__reason">{{ { ar: r.messageAr, en: r.messageEn } | dcLocalize }}</span>
+                    }
+                  }
+                </div>
+                @if (d.openRequestId; as requestId) {
+                  <a matButton="outlined" [routerLink]="['/requests', requestId]">{{ 'followUps.continue' | dcTranslate }} {{ d.openRequestNumber ?? '' }}</a>
+                } @else if (d.isAvailable && v.service.isEligible) {
+                  <button matButton="filled" (click)="start(c.service.code, d.id)" [disabled]="starting()" [attr.data-testid]="'start-on-' + d.number">
+                    {{ 'portal.startService' | dcTranslate }}
+                  </button>
+                }
+              </div>
+            } @empty {
+              <ul class="dc-errors" role="alert" data-testid="not-eligible">
+                @for (r of v.service.reasons; track r.code) {
+                  <li>{{ { ar: r.messageAr, en: r.messageEn } | dcLocalize }}</li>
+                }
+              </ul>
+            }
+          </section>
+        }
+      }
       @if (errors().length) {
         <ul class="dc-errors" role="alert">
           @for (e of errors(); track $index) {
@@ -153,6 +193,12 @@ import { CHANNEL_ICONS, CostPipe, DurationPipe, PARTY_KIND_KEYS } from '../porta
                 }
               </dd>
             </div>
+            @if (c.service.requiredDocument; as required) {
+              <div class="dc-side__row">
+                <dt><mat-icon fontSet="material-symbols-outlined" aria-hidden="true">badge</mat-icon>{{ 'followUps.requires' | dcTranslate }}</dt>
+                <dd data-testid="side-requires">{{ { ar: required.nameAr, en: required.nameEn } | dcLocalize }}</dd>
+              </div>
+            }
             <div class="dc-side__row">
               <dt><mat-icon fontSet="material-symbols-outlined" aria-hidden="true">schedule</mat-icon>{{ 'portal.duration' | dcTranslate }}</dt>
               <dd data-testid="side-duration">{{ c.service.duration | dcDuration }}</dd>
@@ -234,11 +280,11 @@ export class ServicePage {
     return this.auth.login(`/services/${encodeURIComponent(this.code())}`);
   }
 
-  protected async start(code: string): Promise<void> {
+  protected async start(code: string, documentId?: string): Promise<void> {
     this.starting.set(true);
     this.errors.set([]);
     try {
-      const draft = await firstValueFrom(this.api.create(code));
+      const draft = await firstValueFrom(this.api.create(code, documentId));
       await this.router.navigate(['/requests', draft.request.id]);
     } catch (error) {
       this.errors.set(requestErrors(error));

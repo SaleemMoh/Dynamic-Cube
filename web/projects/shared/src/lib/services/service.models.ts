@@ -109,6 +109,8 @@ export interface PortalServiceSummary {
   audienceEn: string | null;
   duration: { min: number; max: number } | null;
   cost: CostRange;
+  /** For a follow-up service: the document it is requested for. */
+  requiredDocument: { code: string; nameAr: string; nameEn: string } | null;
 }
 
 export interface PortalCatalog {
@@ -179,12 +181,36 @@ export interface CatalogEntry {
   versionNumber: number;
   isEligible: boolean;
   reasons: EligibilityFailure[];
+  /** Set for follow-up services: the document type they act on. */
+  documentType: string | null;
 }
 
 export interface ServiceView {
   service: CatalogEntry;
   version: ResolvedVersion;
   feesByLevel: Record<string, FeeLine[]>;
+  /** For a follow-up service: the acting party's documents it can be requested for. */
+  documents: DocumentOption[];
+}
+
+/** One of the applicant's documents for a follow-up service: available now or not, the window and any open request. */
+export interface DocumentOption {
+  id: string;
+  number: string;
+  status: string;
+  issuedOn: string;
+  expiresOn: string | null;
+  isAvailable: boolean;
+  opensOn: string | null;
+  closesOn: string | null;
+  reasons: EligibilityFailure[];
+  openRequestId: string | null;
+  openRequestNumber: string | null;
+}
+
+export interface FollowUpService {
+  service: CatalogEntry;
+  document: DocumentOption;
 }
 
 export interface RequestSummary {
@@ -201,6 +227,8 @@ export interface RequestSummary {
   createdAt: string;
   submittedAt: string | null;
   draftExpiresAt: string | null;
+  /** The document a follow-up request is for. */
+  sourceDocumentNumber: string | null;
 }
 
 export interface FieldError {

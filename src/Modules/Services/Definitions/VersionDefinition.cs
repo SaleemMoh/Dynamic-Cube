@@ -21,6 +21,12 @@ public sealed class VersionDefinition
 
     public List<FeeDefinition> Fees { get; set; } = [];
 
+    /// <summary>
+    /// For services with a document type: which of the applicant's documents the service accepts (status) and when (a window
+    /// of days around the issue or expiry date). Without it any active document is accepted at any time.
+    /// </summary>
+    public AvailabilityDefinition? Availability { get; set; }
+
     /// <summary>The service card of the portal: steps, terms of use, required documents, audience, channels and contacts.</summary>
     public ServiceCardDefinition Card { get; set; } = new();
 
@@ -233,4 +239,35 @@ public sealed class RequiredDocument
     public string? NoteAr { get; set; }
 
     public string? NoteEn { get; set; }
+}
+
+/// <summary>A date of the document the availability window is counted from.</summary>
+public enum DocumentDate
+{
+    Issued,
+    Expires,
+}
+
+/// <summary>A number of days before (negative) or after a date of the document.</summary>
+public sealed class DateBound
+{
+    public DocumentDate Of { get; set; }
+
+    public int Days { get; set; }
+}
+
+/// <summary>
+/// When a follow-up service can be used on a document, e.g. a renewal in the 90 days before expiry (<c>from</c> EXPIRES −90,
+/// <c>to</c> EXPIRES 0) or an extension from 15 days before until 90 days after expiry, also for expired documents.
+/// </summary>
+public sealed class AvailabilityDefinition
+{
+    /// <summary>Document statuses accepted: ACTIVE, EXPIRED, SUSPENDED (default ACTIVE only).</summary>
+    public List<string> Statuses { get; set; } = [];
+
+    /// <summary>First day the service is open (open from the start when empty).</summary>
+    public DateBound? From { get; set; }
+
+    /// <summary>Last day the service is open (open for good when empty).</summary>
+    public DateBound? To { get; set; }
 }

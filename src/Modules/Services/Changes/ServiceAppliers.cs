@@ -4,6 +4,7 @@ using DynamicCube.Modules.Services.Definitions;
 using DynamicCube.Modules.Services.Domain;
 using DynamicCube.Modules.Services.Persistence;
 using DynamicCube.Platform.ChangeSets;
+using DynamicCube.Platform.Documents;
 using DynamicCube.Platform.Expressions;
 using DynamicCube.Platform.Integration;
 using DynamicCube.Platform.Parties;
@@ -104,9 +105,12 @@ public sealed class ServicePayload : ConfigPayload
     public NewVersionPolicy OnNewVersion { get; set; }
 
     public string? NumberPrefix { get; set; }
+
+    /// <summary>The document type a follow-up service acts on.</summary>
+    public string? DocumentType { get; set; }
 }
 
-internal sealed partial class ServiceDefinitionApplier(ServicesDbContext db) : ServiceApplier<Service, ServicePayload>(db)
+internal sealed partial class ServiceDefinitionApplier(ServicesDbContext db, IServiceProvider services) : ServiceApplier<Service, ServicePayload>(db)
 {
     public override string EntityType => ServiceChangeTypes.Service;
 
@@ -130,6 +134,12 @@ internal sealed partial class ServiceDefinitionApplier(ServicesDbContext db) : S
             errors.Add("draftExpiryDays", "Must be between 1 and 365.");
         }
 
+        var documentType = Blank(payload.DocumentType);
+        if (documentType is not null && services.GetService<IDocumentDirectory>() is { } documents && await documents.TypeAsync(documentType, cancellationToken) is null)
+        {
+            errors.Add("documentType", $"Document type '{documentType}' does not exist.");
+        }
+
         var prefix = Blank(payload.NumberPrefix) ?? entity.Code;
         if (!Prefix().IsMatch(prefix))
         {
@@ -148,6 +158,7 @@ internal sealed partial class ServiceDefinitionApplier(ServicesDbContext db) : S
         entity.DraftExpiryDays = payload.DraftExpiryDays;
         entity.OnNewVersion = payload.OnNewVersion;
         entity.NumberPrefix = prefix;
+        entity.DocumentType = documentType;
     }
 
     protected override Task<ServicePayload> ToPayloadAsync(ServicesDbContext context, Service entity, CancellationToken cancellationToken) =>
@@ -165,6 +176,7 @@ internal sealed partial class ServiceDefinitionApplier(ServicesDbContext db) : S
             DraftExpiryDays = entity.DraftExpiryDays,
             OnNewVersion = entity.OnNewVersion,
             NumberPrefix = entity.NumberPrefix,
+            DocumentType = entity.DocumentType,
         });
 
     protected override async Task BeforeDeleteAsync(ServicesDbContext context, Service entity, CancellationToken cancellationToken)
@@ -365,6 +377,11 @@ internal sealed partial class ServiceVersionApplier(ServicesDbContext db, JsonLo
         var available = new HashSet<string>(known, StringComparer.Ordinal);
         DefinitionValidator.Validate(definition, code => available.Contains(code) || refs.IsPendingCreate(ServiceChangeTypes.Question, code), evaluator, errors);
 
+        if (definition.Availability is not null && !await ActsOnDocumentAsync(refs, serviceCode, cancellationToken))
+        {
+            errors.Add("definition.availability", $"Service '{serviceCode}' does not act on a document; give it a document type first.");
+        }
+
         // No version without a workflow to process its requests. A service created in the same change set gets its default
         // workflow when the change set is published.
         if (refs.IsValidating && !refs.IsPendingCreate(ServiceChangeTypes.Service, serviceCode) && services.GetService<IServiceWorkflows>() is { } serviceWorkflows)
@@ -388,6 +405,18 @@ internal sealed partial class ServiceVersionApplier(ServicesDbContext db, JsonLo
             Definition = JsonSerializer.Deserialize<VersionDefinition>(entity.Definition, ChangeJson.Options),
             PublishedAt = entity.PublishedAt,
         });
+
+    /// <summary>Whether the service has a document type, as published or as created or changed in the same change set.</summary>
+    private static async Task<bool> ActsOnDocumentAsync(ConfigRefs<ServicesDbContext> refs, string serviceCode, CancellationToken cancellationToken)
+    {
+        var pending = refs.Draft?.Items.LastOrDefault(i => i.EntityType == ServiceChangeTypes.Service && i.EntityCode == serviceCode && i.After is not null);
+        if (pending is not null)
+        {
+            return !string.IsNullOrWhiteSpace(JsonSerializer.Deserialize<ServicePayload>(pending.After!, ChangeJson.Options)?.DocumentType);
+        }
+
+        return await refs.Context.Services.AnyAsync(s => s.Code == serviceCode && s.DocumentType != null, cancellationToken);
+    }
 
     internal static (string Service, int Number) Parse(string key)
     {

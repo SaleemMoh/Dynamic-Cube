@@ -33,6 +33,7 @@ public sealed class ServicesDbContext(DbContextOptions<ServicesDbContext> option
             b.Property(e => e.CategoryCode).HasMaxLength(100);
             b.Property(e => e.Icon).HasMaxLength(100);
             b.Property(e => e.NumberPrefix).HasMaxLength(20).IsRequired();
+            b.Property(e => e.DocumentType).HasMaxLength(100);
             b.Property(e => e.PartyKinds).HasJsonColumn();
         });
         modelBuilder.ConfigTable<ServiceCategory>(Schema, "category", b =>
@@ -74,6 +75,7 @@ public sealed class ServicesDbContext(DbContextOptions<ServicesDbContext> option
             b.Property(e => e.DisplayStatus).HasMaxLength(100).IsRequired();
             b.Property(e => e.Data).HasColumnType("jsonb").IsRequired();
             b.Property(e => e.CurrentStep).HasMaxLength(100);
+            b.Property(e => e.SourceDocumentNumber).HasMaxLength(50);
             b.Property(e => e.Fees).HasJsonColumn();
             b.Property(e => e.FeeTotal).HasPrecision(18, 2);
             b.Property(e => e.CreatedBy).HasMaxLength(128);
@@ -82,6 +84,7 @@ public sealed class ServicesDbContext(DbContextOptions<ServicesDbContext> option
             b.HasOne<ServiceVersion>().WithMany().HasForeignKey(e => e.ServiceVersionId).OnDelete(DeleteBehavior.Restrict);
             b.HasIndex(e => new { e.BeneficiaryPartyId, e.StatusCategory });
             b.HasIndex(e => new { e.ServiceCode, e.StatusCategory });
+            b.HasIndex(e => new { e.SourceDocumentId, e.ServiceId });
         });
         modelBuilder.Entity<RequestEvent>(b =>
         {

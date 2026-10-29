@@ -25,6 +25,9 @@ import { WorkflowCard } from '../action-center/workflow-card';
             · {{ 'requests.submitter' | dcTranslate }}:
             <a class="dc-link" [routerLink]="['/party/parties', d.submitterPartyId]">{{ d.submitterName }}</a>
             · {{ 'requests.version' | dcTranslate }} {{ d.view.versionNumber }}
+            @if (d.view.request.sourceDocumentNumber) {
+              · {{ 'requests.document' | dcTranslate }} <span dir="ltr" data-testid="request-document">{{ d.view.request.sourceDocumentNumber }}</span>
+            }
             @if (d.view.levelCode) {
               · {{ levelName(d.view) | dcLocalize }}
             }

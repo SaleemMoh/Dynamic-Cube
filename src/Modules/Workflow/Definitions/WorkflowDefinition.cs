@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using DynamicCube.Platform.Documents;
 
 namespace DynamicCube.Modules.Workflow.Definitions;
 
@@ -102,6 +103,24 @@ public sealed class NodeDefinition
 
     /// <summary>Document: why it is issued (kept in the document's history).</summary>
     public string? Reason { get; set; }
+
+    /// <summary>Document: <c>SOURCE</c> amends the document the subject was requested for (a renewal, an extension).</summary>
+    public DocumentTarget Target { get; set; }
+
+    /// <summary>Document: how the expiry date changes (default: the document type's rule).</summary>
+    public ValidityMode? Validity { get; set; }
+
+    /// <summary>Document: months of the new period (RESET, RENEW; default the type's validity) or of the extension (EXTEND).</summary>
+    public int? ValidityMonths { get; set; }
+}
+
+public enum DocumentTarget
+{
+    /// <summary>A new document, or the holder's document amended when its type allows one per holder.</summary>
+    Issue,
+
+    /// <summary>The document the subject was requested for (rule context <c>document.id</c>).</summary>
+    Source,
 }
 
 /// <summary>Line items built from a list: one line per element, each field a JSONLogic rule.</summary>

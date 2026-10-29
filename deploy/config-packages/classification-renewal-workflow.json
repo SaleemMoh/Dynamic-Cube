@@ -1,0 +1,92 @@
+{
+  "title": "Classification renewal and extension — processing",
+  "items": [
+    {
+      "entityType": "wf.workflow-version",
+      "entityCode": "CLASSIFICATION_RENEW/2",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 2 — تجديد الشهادة",
+        "nameEn": "Version 2 — Renew the certificate",
+        "definition": {
+          "nodes": [
+            {
+              "code": "START",
+              "type": "START",
+              "nameAr": "البداية",
+              "nameEn": "Start",
+              "next": "AMEND"
+            },
+            {
+              "code": "AMEND",
+              "type": "DOCUMENT",
+              "nameAr": "تجديد الشهادة",
+              "nameEn": "Renew the certificate",
+              "documentType": "CLS_CERTIFICATE",
+              "target": "SOURCE",
+              "validity": "RENEW",
+              "data": {
+                "requestNumber": {
+                  "var": "number"
+                }
+              },
+              "reason": "تجديد شهادة التصنيف",
+              "next": "APPROVED"
+            },
+            {
+              "code": "APPROVED",
+              "type": "END",
+              "nameAr": "اكتمال الطلب",
+              "nameEn": "Completed",
+              "outcome": "APPROVED"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "entityType": "wf.workflow-version",
+      "entityCode": "CLASSIFICATION_EXTEND/2",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 2 — تمديد الشهادة",
+        "nameEn": "Version 2 — Extend the certificate",
+        "definition": {
+          "nodes": [
+            {
+              "code": "START",
+              "type": "START",
+              "nameAr": "البداية",
+              "nameEn": "Start",
+              "next": "AMEND"
+            },
+            {
+              "code": "AMEND",
+              "type": "DOCUMENT",
+              "nameAr": "تمديد الشهادة",
+              "nameEn": "Extend the certificate",
+              "documentType": "CLS_CERTIFICATE",
+              "target": "SOURCE",
+              "validity": "EXTEND",
+              "data": {
+                "requestNumber": {
+                  "var": "number"
+                }
+              },
+              "reason": "تمديد شهادة التصنيف",
+              "next": "APPROVED",
+              "validityMonths": 3
+            },
+            {
+              "code": "APPROVED",
+              "type": "END",
+              "nameAr": "اكتمال الطلب",
+              "nameEn": "Completed",
+              "outcome": "APPROVED"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -62,6 +62,12 @@ public sealed class Service : ConfigEntity
 
     /// <summary>Request numbers: <c>{prefix}-{year}-{sequence}</c>.</summary>
     public string NumberPrefix { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The document type a follow-up service acts on (renewal, extension…): each request is made for one of the applicant's
+    /// documents of this type, within the availability of the version.
+    /// </summary>
+    public string? DocumentType { get; set; }
 }
 
 public enum QuestionType

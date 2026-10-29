@@ -62,6 +62,37 @@
   padding-inline: 24px;
 }
 
+.dc-docs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.dc-docs h2 {
+  margin: 0;
+  font-size: 18px;
+}
+.dc-docs__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border: 1px solid var(--dga-border);
+  border-radius: 12px;
+  background: #ffffff;
+}
+.dc-docs__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.dc-docs__reason {
+  color: #b54708;
+  font-size: 14px;
+}
+
 .dc-body {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 22rem;

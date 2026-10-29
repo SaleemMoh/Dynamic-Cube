@@ -160,6 +160,11 @@ These are development values only; change them in `deploy/docker/.env` (see `.en
    required documents, duration, channels and cost; **Start service** asks you to sign in and then starts a draft.
    Categories are edited under **Services → Service categories**, the home page under **Apps Control → Settings**
    (`PORTAL_HOME`) and a service's card in its version (`definition.card`).
+10. Import `deploy/config-packages/classification-renewal.json` and then `classification-renewal-workflow.json`, and
+   approve them. In the portal, acting for the establishment, open **My documents** and the certificate: under
+   *Services on this document* renewal and extension are locked, with the dates their windows open (renewal from 90
+   days before expiry). When a window is open, *Start service* makes a request for that certificate (its number and
+   expiry are filled in); on approval the certificate keeps its number and gets a new version and expiry date.
 
 The gateway credentials come from the secret store (`Secrets__MOMRAH_GATEWAY__clientId` / `__clientSecret`), never
 from the database; development values are in `appsettings.Development.json` and the compose file.

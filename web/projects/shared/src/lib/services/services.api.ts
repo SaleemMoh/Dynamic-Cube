@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { CatalogEntry, PortalCatalog, PortalStatistics, RequestDetail, ServiceCard, RequestSummary, RequestView, ResolvedVersion, ServiceView, StatusCategory, VersionDefinition } from './service.models';
+import { CatalogEntry, FollowUpService, PortalCatalog, PortalStatistics, RequestDetail, ServiceCard, RequestSummary, RequestView, ResolvedVersion, ServiceView, StatusCategory, VersionDefinition } from './service.models';
 
 export const SERVICES_API = '/api/services/v1';
 
@@ -35,8 +35,14 @@ export class ServicesApi {
     return this.http.get<RequestSummary[]>(`${SERVICES_API}/requests`, { params: status ? { status } : {} });
   }
 
-  create(serviceCode: string): Observable<RequestView> {
-    return this.http.post<RequestView>(`${SERVICES_API}/requests`, { serviceCode });
+  /** Starts a draft; a follow-up service needs the document it is for. */
+  create(serviceCode: string, documentId?: string): Observable<RequestView> {
+    return this.http.post<RequestView>(`${SERVICES_API}/requests`, { serviceCode, documentId: documentId ?? null });
+  }
+
+  /** The follow-up services of one of the acting party's documents, available or not. */
+  followUps(documentId: string): Observable<FollowUpService[]> {
+    return this.http.get<FollowUpService[]>(`${SERVICES_API}/documents/${documentId}/services`);
   }
 
   request(id: string): Observable<RequestView> {

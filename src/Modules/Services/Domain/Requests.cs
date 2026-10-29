@@ -67,6 +67,11 @@ public sealed class ServiceRequest : IAuditable, IHasAuditColumns
 
     public DateTimeOffset? DraftExpiresAt { get; set; }
 
+    /// <summary>The document a follow-up request is made for (services with a document type).</summary>
+    public Guid? SourceDocumentId { get; set; }
+
+    public string? SourceDocumentNumber { get; set; }
+
     public DateTimeOffset? SubmittedAt { get; set; }
 
     public DateTimeOffset? ClosedAt { get; set; }

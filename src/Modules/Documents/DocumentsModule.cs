@@ -43,6 +43,7 @@ public static class DocumentsModule
         services.AddSingleton<DocumentRenderer>();
         services.AddScoped<DocumentIssuer>();
         services.AddScoped<IDocumentIssuer>(sp => sp.GetRequiredService<DocumentIssuer>());
+        services.AddScoped<IDocumentDirectory, DocumentDirectory>();
         services.AddScoped<DocumentRegistry>();
         services.AddScoped<DocumentDates>();
         services.AddScoped<RenderDocumentHandler>();

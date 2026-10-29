@@ -17,6 +17,7 @@ internal static class ServiceEndpoints
     {
         group.MapGet("/catalog", async (RequestService service, CancellationToken ct) => TypedResults.Ok(await service.CatalogAsync(ct))).WithName("GetServiceCatalog");
         group.MapGet("/services/{code}", async (string code, RequestService service, CancellationToken ct) => TypedResults.Ok(await service.GetServiceAsync(code, ct))).WithName("GetService");
+        group.MapGet("/documents/{id:guid}/services", async (Guid id, RequestService service, CancellationToken ct) => TypedResults.Ok(await service.FollowUpsAsync(id, ct))).WithName("ListFollowUpServices");
         group.MapGet("/requests", async (StatusCategory? status, RequestService service, CancellationToken ct) => TypedResults.Ok(await service.ListMineAsync(status, ct))).WithName("ListMyRequests");
         group.MapPost("/requests", async (CreateRequest request, RequestService service, CancellationToken ct) =>
         {

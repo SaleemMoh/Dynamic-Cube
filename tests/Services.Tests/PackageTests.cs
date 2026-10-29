@@ -47,6 +47,15 @@ public sealed class PackageTests(DatabaseFixture fixture)
             .Where(v => v.Workflow!.ServiceCode == "CLASSIFICATION_NEW").OrderBy(v => v.Number).Select(v => v.Code).ToListAsync());
         versions.ShouldBe(["CLASSIFICATION_NEW/1", "CLASSIFICATION_NEW/2", "CLASSIFICATION_NEW/3"]);
 
+        // Renewal and extension act on the certificate; their workflows amend it.
+        await host.PublishAsync(ServiceChangeTypes.Area, [.. Items("classification-renewal.json")]);
+        await host.PublishAsync(WorkflowChangeTypes.Area, [.. Items("classification-renewal-workflow.json")]);
+        var followUps = await host.AsAsync("admin", sp => sp.GetRequiredService<ServicesDbContext>().Services.AsNoTracking()
+            .Where(s => s.DocumentType == "CLS_CERTIFICATE").OrderBy(s => s.DisplayOrder).Select(s => s.Code).ToListAsync());
+        followUps.ShouldBe(["CLASSIFICATION_RENEW", "CLASSIFICATION_EXTEND"]);
+        var renewal = await host.AsAsync("admin", sp => sp.GetRequiredService<WorkflowDbContext>().Versions.AsNoTracking().SingleAsync(v => v.Code == "CLASSIFICATION_EXTEND/2"));
+        renewal.PublishedAt.ShouldNotBeNull();
+
         // A small establishment with good staffing, a gold DGA category and a 95M track record: grade 2 in both sectors.
         var graded = await GradeAsync(host, new JsonObject
         {
