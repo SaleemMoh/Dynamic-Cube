@@ -10,7 +10,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { I18nService, InboxBox, InboxCounts, TaskSummary, TranslatePipe, WorkflowApi, problemMessages } from '@dynamic-cube/shared';
 import { debounceTime, firstValueFrom } from 'rxjs';
 import { DelegationsDialog } from './delegations-dialog';
@@ -125,6 +125,12 @@ export class Inbox {
     }),
     stream: ({ params }) => this.api.inbox(params.box, params.search, params.skip, params.take),
   });
+
+  constructor() {
+    // A link can open a box (from the home page: ?box=QUEUE).
+    const wanted = BOXES.findIndex((b) => b.box === inject(ActivatedRoute).snapshot.queryParamMap.get('box'));
+    if (wanted >= 0) this.choose(wanted);
+  }
 
   protected countOf(b: (typeof BOXES)[number]): number {
     return this.counts.value()?.[b.count] ?? 0;

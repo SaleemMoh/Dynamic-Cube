@@ -6,7 +6,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { AppsControlApi, ChangeSetStatus, I18nService, TranslatePipe } from '@dynamic-cube/shared';
 import { firstValueFrom } from 'rxjs';
@@ -101,6 +101,12 @@ export class ChangeSetList {
         ? this.api.changeSets({ status: 'SUBMITTED' as ChangeSetStatus })
         : this.api.changeSets(params === 'MINE' ? { mine: true } : {}),
   });
+
+  constructor() {
+    // A link can open a list (from the home page: ?filter=MINE).
+    const wanted = inject(ActivatedRoute).snapshot.queryParamMap.get('filter');
+    if (wanted === 'TO_REVIEW' || wanted === 'MINE' || wanted === 'ALL') this.filter.set(wanted);
+  }
 
   /** Downloads a documented package template for the chosen entity types. */
   protected template(): void {
