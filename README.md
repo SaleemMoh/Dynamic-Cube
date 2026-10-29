@@ -305,6 +305,7 @@ cd web && npm test && npm run lint
 | [Roadmap](docs/07-roadmap.md) | Phases and vertical slices |
 | [Architecture Decision Records](docs/adr/README.md) | One record per significant decision |
 | [Glossary](docs/glossary.md) | Arabic / English terms |
+| [User manual (Arabic)](docs/manual/ar/README.md) | Internal system guide for employees, with screenshots; also as [Word](docs/manual/ar/user-manual-ar.docx) |
 
 ## Technology (summary)
 
