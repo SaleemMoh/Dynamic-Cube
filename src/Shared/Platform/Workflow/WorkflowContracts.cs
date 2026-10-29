@@ -69,4 +69,15 @@ public interface IServiceWorkflows
 
     /// <summary>Gives the service its default workflow (start → completed) unless it already has one; runs in the caller's unit of work.</summary>
     Task EnsureAsync(string serviceCode, string nameAr, string nameEn, CancellationToken cancellationToken);
+
+    /// <summary>Whether a workflow of that code exists (owned by a service or not).</summary>
+    Task<bool> ExistsAsync(string workflowCode, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Makes a named workflow the one the service runs, for versions that still name one (packages from before services
+    /// owned their workflow): a service without a workflow takes over a workflow no other service owns; otherwise the named
+    /// workflow's latest published version is added to the service's own workflow, unless that already runs the same
+    /// definition. Runs in the caller's unit of work.
+    /// </summary>
+    Task AdoptAsync(string serviceCode, string nameAr, string nameEn, string workflowCode, CancellationToken cancellationToken);
 }

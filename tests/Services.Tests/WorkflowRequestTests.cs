@@ -131,12 +131,58 @@ public sealed class WorkflowRequestTests(DatabaseFixture fixture) : IAsyncLifeti
     }
 
     [Fact]
-    public async Task A_version_no_longer_names_a_workflow()
+    public async Task A_version_that_names_a_workflow_adds_it_to_the_service_workflow()
+    {
+        var host = _applicant.Host;
+        // Another service's workflow, with a definition of its own (a package from before services owned their workflow
+        // named such workflows in its versions).
+        var otherService = new ServiceSamples();
+        await host.PublishAsync(ServiceChangeTypes.Area, [.. otherService.Questions(), otherService.ServiceChange(), otherService.Version(1)]);
+        var other = otherService.Service;
+        await host.PublishAsync(
+            WorkflowChangeTypes.Area,
+            new Change(WorkflowChangeTypes.Version, other + "/2", ChangeOperation.Create, new
+            {
+                nameAr = "قديم",
+                nameEn = "Legacy",
+                definition = new
+                {
+                    nodes = new object[]
+                    {
+                        new { code = "START", type = "START", nameAr = "بداية", nameEn = "Start", next = "DONE" },
+                        new { code = "DONE", type = "END", nameAr = "انتهى", nameEn = "Done", outcome = "APPROVED" },
+                    },
+                },
+            }));
+
+        var definition = _sample.Definition();
+        definition.Workflow = other;
+        await host.PublishAsync(ServiceChangeTypes.Area, _sample.Version(2, definition));
+
+        var versions = await host.AsAsync("admin", sp => sp.GetRequiredService<WorkflowDbContext>().Versions
+            .Where(v => v.Workflow!.ServiceCode == _sample.Service).OrderBy(v => v.Number).ToListAsync());
+        var added = versions[^1];
+        added.Number.ShouldBe(3, "versions 1 and 2 were there; the named workflow's definition is the next one");
+        added.NameEn.ShouldBe("Legacy");
+        added.PublishedAt.ShouldNotBeNull();
+        JsonNode.Parse(added.Definition)!["nodes"]![1]!["code"]!.GetValue<string>().ShouldBe("DONE");
+        var stored = await host.AsAsync("admin", sp => sp.GetRequiredService<Persistence.ServicesDbContext>().Versions.SingleAsync(v => v.Code == _sample.Service + "/2"));
+        JsonNode.Parse(stored.Definition)!["workflow"].ShouldBeNull("the version keeps no workflow name");
+
+        // Naming it again changes nothing: the service already runs that definition.
+        var again = _sample.Definition();
+        again.Workflow = other;
+        await host.PublishAsync(ServiceChangeTypes.Area, _sample.Version(3, again));
+        (await host.AsAsync("admin", sp => sp.GetRequiredService<WorkflowDbContext>().Versions.CountAsync(v => v.Workflow!.ServiceCode == _sample.Service))).ShouldBe(3);
+    }
+
+    [Fact]
+    public async Task A_named_workflow_that_does_not_exist_stops_the_publish()
     {
         var definition = _sample.Definition();
-        definition.Workflow = "ANY";
-        var refused = await Should.ThrowAsync<ChangeValidationException>(() => _applicant.Host.PublishAsync(ServiceChangeTypes.Area, _sample.Version(2, definition)));
-        refused.Errors.Keys.ShouldContain("definition.workflow");
+        definition.Workflow = TestHost.Unique("MISSING_WF");
+        var refused = await Should.ThrowAsync<ChangeSetException>(() => _applicant.Host.PublishAsync(ServiceChangeTypes.Area, _sample.Version(2, definition)));
+        refused.Message.ShouldContain("does not exist");
     }
 
     private static object DefaultDefinition() => new

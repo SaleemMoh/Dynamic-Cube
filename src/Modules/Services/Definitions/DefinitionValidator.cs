@@ -106,11 +106,6 @@ internal static partial class DefinitionValidator
             }
         }
 
-        if (definition.Workflow is not null)
-        {
-            errors.Add("definition.workflow", "A version no longer names a workflow: requests are processed by the service's own workflow (add a version to it instead).");
-        }
-
         Rules(definition.Eligibility, "definition.eligibility", evaluator, errors, null);
         Rules(definition.Validations, "definition.validations", evaluator, errors, definition.Steps.Select(s => s.Code).ToHashSet());
         Fees(definition, evaluator, errors);

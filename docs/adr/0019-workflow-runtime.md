@@ -17,6 +17,10 @@ lives in the Services module while its workflow lives in the Workflow module.
   shared. Publishing a new service creates its workflow in the same transaction with version 1 *Start → Completed
   (approved)*, which needs no review, so every service can take requests from the start. A service version is
   refused at validation unless its service's workflow has a published version; versions no longer name a workflow.
+  A version that still names one (a package from before 1f) is accepted. Publishing copies the named workflow's
+  latest published version into the service's own workflow as its next version, unless that already runs the same
+  definition. A service without a workflow instead takes over a named workflow that no other service owns. The
+  version itself is stored without the name, and a named workflow that does not exist stops the publish.
   The modules stay apart through kernel contracts (`IServiceCatalog` in Services, `IServiceWorkflows` in
   Workflow), and change-set publishing runs in a unit of work so a module's publish hook can write another's
   tables atomically.

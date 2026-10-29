@@ -34,20 +34,58 @@ internal sealed class ServiceCatalog(ServicesDbContext context) : IServiceCatalo
         definition is not null && JsonNode.Parse(definition)?["workflow"] is JsonValue value && value.ToString() is { Length: > 0 } code ? code : null;
 }
 
-/// <summary>A service published for the first time gets its default workflow, in the same transaction.</summary>
+/// <summary>
+/// In the same transaction as the change set: a service published for the first time gets its default workflow, and a
+/// new version that names a workflow (packages from before services owned their workflow) has it copied into the
+/// service's own workflow, or handed to the service when it has none and no other service owns it.
+/// </summary>
 internal sealed class ServiceWorkflowProvisioner(IServiceProvider services) : IChangeSetPublishHook<ServicesDbContext>
 {
     public async Task OnPublishedAsync(ServicesDbContext context, ChangeSet changeSet, CancellationToken cancellationToken)
     {
-        var created = changeSet.Items.Where(i => i.EntityType == ServiceChangeTypes.Service && i.Operation == ChangeOperation.Create).Select(i => i.EntityCode).ToList();
-        if (created.Count == 0 || services.GetService<IServiceWorkflows>() is not { } workflows)
+        if (services.GetService<IServiceWorkflows>() is not { } workflows)
         {
             return;
         }
 
-        foreach (var service in await context.Services.AsNoTracking().Where(s => created.Contains(s.Code)).ToListAsync(cancellationToken))
+        var named = changeSet.Items
+            .Where(i => i.EntityType == ServiceChangeTypes.Version && i.Operation == ChangeOperation.Create)
+            .OrderBy(i => i.Sequence)
+            .Select(i => (Service: i.EntityCode[..Math.Max(0, i.EntityCode.LastIndexOf('/'))], Workflow: NamedWorkflow(i.After)))
+            .Where(n => n.Workflow is not null)
+            .ToList();
+        var created = changeSet.Items.Where(i => i.EntityType == ServiceChangeTypes.Service && i.Operation == ChangeOperation.Create).Select(i => i.EntityCode).ToList();
+        var codes = created.Concat(named.Select(n => n.Service)).Distinct().ToList();
+        if (codes.Count == 0)
         {
-            await workflows.EnsureAsync(service.Code, service.NameAr, service.NameEn, cancellationToken);
+            return;
         }
+
+        var found = await context.Services.AsNoTracking().Where(s => codes.Contains(s.Code)).ToDictionaryAsync(s => s.Code, cancellationToken);
+        foreach (var (service, workflow) in named)
+        {
+            if (found.TryGetValue(service, out var s))
+            {
+                await workflows.AdoptAsync(s.Code, s.NameAr, s.NameEn, workflow!, cancellationToken);
+            }
+        }
+
+        foreach (var code in created)
+        {
+            if (found.TryGetValue(code, out var s))
+            {
+                await workflows.EnsureAsync(s.Code, s.NameAr, s.NameEn, cancellationToken);
+            }
+        }
+    }
+
+    /// <summary>The workflow a version payload names; property names in any case, as the applier reads them.</summary>
+    private static string? NamedWorkflow(string? payload)
+    {
+        static JsonNode? Child(JsonNode? node, string name) =>
+            node is JsonObject obj ? obj.FirstOrDefault(p => string.Equals(p.Key, name, StringComparison.OrdinalIgnoreCase)).Value : null;
+        return payload is not null && Child(Child(JsonNode.Parse(payload), "definition"), "workflow") is JsonValue value && value.ToString().Trim() is { Length: > 0 } code
+            ? code
+            : null;
     }
 }

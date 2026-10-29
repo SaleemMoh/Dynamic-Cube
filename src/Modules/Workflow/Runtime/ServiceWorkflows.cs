@@ -1,6 +1,8 @@
+using System.Text.Json;
 using DynamicCube.Modules.Workflow.Definitions;
 using DynamicCube.Modules.Workflow.Domain;
 using DynamicCube.Modules.Workflow.Persistence;
+using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Services;
 using DynamicCube.Platform.Workflow;
 using Microsoft.EntityFrameworkCore;
@@ -46,6 +48,60 @@ internal sealed class ServiceWorkflows(WorkflowDbContext context, TimeProvider c
         });
         await context.SaveChangesAsync(cancellationToken);
     }
+
+    public Task<bool> ExistsAsync(string workflowCode, CancellationToken cancellationToken) =>
+        context.Workflows.AnyAsync(w => w.Code == workflowCode, cancellationToken);
+
+    public async Task AdoptAsync(string serviceCode, string nameAr, string nameEn, string workflowCode, CancellationToken cancellationToken)
+    {
+        var named = await context.Workflows.SingleOrDefaultAsync(w => w.Code == workflowCode, cancellationToken)
+            ?? throw new ChangeSetException($"Workflow '{workflowCode}' named by a version of service '{serviceCode}' does not exist; publish it first.");
+        var own = await WorkflowOfAsync(serviceCode, cancellationToken);
+        if (own == named.Code)
+        {
+            return;
+        }
+
+        var source = await context.Versions.AsNoTracking()
+            .Where(v => v.WorkflowId == named.Id && v.PublishedAt != null && !v.IsRetired)
+            .OrderByDescending(v => v.Number)
+            .FirstOrDefaultAsync(cancellationToken)
+            ?? throw new ChangeSetException($"Workflow '{workflowCode}' named by a version of service '{serviceCode}' has no published version; publish one first.");
+
+        if (own is null && named.ServiceCode is null)
+        {
+            named.ServiceCode = serviceCode;
+            await context.SaveChangesAsync(cancellationToken);
+            return;
+        }
+
+        await EnsureAsync(serviceCode, nameAr, nameEn, cancellationToken);
+        var target = await context.Workflows.SingleAsync(w => w.ServiceCode == serviceCode, cancellationToken);
+        var latest = await context.Versions.AsNoTracking()
+            .Where(v => v.WorkflowId == target.Id)
+            .OrderByDescending(v => v.Number)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (latest is { PublishedAt: not null, IsRetired: false } && SameDefinition(latest.Definition, source.Definition))
+        {
+            return;
+        }
+
+        var number = (latest?.Number ?? 0) + 1;
+        context.Versions.Add(new WorkflowVersion
+        {
+            Code = $"{target.Code}/{number}",
+            WorkflowId = target.Id,
+            Number = number,
+            NameAr = source.NameAr,
+            NameEn = source.NameEn,
+            Definition = source.Definition,
+            PublishedAt = clock.GetUtcNow(),
+        });
+        await context.SaveChangesAsync(cancellationToken);
+    }
+
+    private static bool SameDefinition(string a, string b) =>
+        JsonElement.DeepEquals(JsonDocument.Parse(a).RootElement, JsonDocument.Parse(b).RootElement);
 
     /// <summary>
     /// Services that have no workflow yet (configured before 1f): the workflow their latest version named becomes theirs

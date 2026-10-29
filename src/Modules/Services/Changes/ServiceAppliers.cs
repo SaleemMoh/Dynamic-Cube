@@ -352,12 +352,18 @@ internal sealed partial class ServiceVersionApplier(ServicesDbContext db, JsonLo
     {
         var (serviceCode, number) = Parse(entity.Code);
         var definition = payload.Definition ?? new VersionDefinition();
+        // A workflow named by the version (packages from before services owned their workflow) is copied into the service's
+        // own workflow when the change set is published (see ServiceWorkflowProvisioner); the version keeps no name.
+        var namedWorkflow = string.IsNullOrWhiteSpace(definition.Workflow) ? null : definition.Workflow.Trim();
+        definition.Workflow = null;
         var serialized = ChangeJson.Serialize(definition);
         entity.IsRetired = payload.IsRetired;
         if (existing is not null)
         {
             // Compared as definitions: a version stored before a field existed has no such key, the payload has it empty.
-            var stored = ChangeJson.Serialize(JsonSerializer.Deserialize<VersionDefinition>(existing.Definition, ChangeJson.Options));
+            var before = JsonSerializer.Deserialize<VersionDefinition>(existing.Definition, ChangeJson.Options) ?? new VersionDefinition();
+            before.Workflow = null;
+            var stored = ChangeJson.Serialize(before);
             if (!JsonElement.DeepEquals(JsonDocument.Parse(serialized).RootElement, JsonDocument.Parse(stored).RootElement))
             {
                 errors.Add("definition", $"Published versions cannot change; add version {serviceCode}/{number + 1} instead.");
@@ -389,8 +395,16 @@ internal sealed partial class ServiceVersionApplier(ServicesDbContext db, JsonLo
         }
 
         // No version without a workflow to process its requests. A service created in the same change set gets its default
-        // workflow when the change set is published.
-        if (refs.IsValidating && !refs.IsPendingCreate(ServiceChangeTypes.Service, serviceCode) && services.GetService<IServiceWorkflows>() is { } serviceWorkflows)
+        // workflow when the change set is published; a named workflow becomes the service's when it is published. A named
+        // workflow that does not exist yet may come in another change set of the same package: publishing checks it.
+        if (refs.IsValidating && namedWorkflow is not null && services.GetService<IServiceWorkflows>() is { } adopter)
+        {
+            if (await adopter.ExistsAsync(namedWorkflow, cancellationToken) && !await services.GetRequiredService<IWorkflowRuntime>().CanStartAsync(namedWorkflow, cancellationToken))
+            {
+                errors.Add("definition.workflow", $"The workflow '{namedWorkflow}' has no published version; publish one first.");
+            }
+        }
+        else if (refs.IsValidating && !refs.IsPendingCreate(ServiceChangeTypes.Service, serviceCode) && services.GetService<IServiceWorkflows>() is { } serviceWorkflows)
         {
             var workflow = await serviceWorkflows.WorkflowOfAsync(serviceCode, cancellationToken);
             if (workflow is null)

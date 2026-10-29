@@ -133,8 +133,9 @@ part of the service:
   notifications still follow. Review steps come as a new workflow version, and requests in progress keep theirs.
 - **No publishing without a workflow.** A service version is refused when the change set is validated if its
   service has no published workflow version (unless the service itself is created in the same change set, which
-  provisions the default). Versions no longer name a workflow (`definition.workflow` is rejected; the field stays
-  readable on old versions), and a request always starts its service's workflow.
+  provisions the default). Versions no longer name a workflow, and a request always starts its service's workflow.
+  The field stays readable on old versions. A version that still names a workflow is accepted, and publishing adds
+  that workflow's latest published version to the service's own workflow (see ADR-0019).
 - **Existing configuration.** The migrator gives every service without a workflow the default one, linking the
   workflow a published version named where there was one (on an existing installation `CLASSIFICATION` becomes the
   workflow of `CLASSIFICATION_NEW`). On a new installation the service's workflow is `CLASSIFICATION_NEW`;
