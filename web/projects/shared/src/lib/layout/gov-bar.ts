@@ -64,7 +64,7 @@ import { TranslatePipe } from '../i18n/translate.pipe';
       padding-inline: 1.5rem;
     }
     .dc-gov-bar__inner {
-      min-height: 34px;
+      min-height: 24px;
     }
     .dc-gov-bar__flag {
       flex: none;

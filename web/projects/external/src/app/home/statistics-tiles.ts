@@ -28,16 +28,16 @@ import { PortalStore } from '../portal/portal-store';
     }
     .dc-stats h2 {
       margin: 0;
-      font-size: 32px;
+      font-size: 26px;
       font-weight: 700;
-      line-height: 44px;
+      line-height: 36px;
     }
     .dc-stats__tiles {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(13rem, 15rem));
       justify-content: center;
-      gap: 32px;
-      margin: 32px 0 0;
+      gap: 24px;
+      margin: 24px 0 0;
       padding: 0;
       list-style: none;
     }
@@ -46,7 +46,7 @@ import { PortalStore } from '../portal/portal-store';
       flex-direction: column;
       align-items: center;
       gap: 12px;
-      padding: 24px;
+      padding: 16px;
       border-radius: 16px;
       background: #ffffff;
       box-shadow: 0 1px 2px rgb(16 24 40 / 4%);
@@ -57,22 +57,22 @@ import { PortalStore } from '../portal/portal-store';
       align-items: center;
       justify-content: center;
       width: 64px;
-      height: 64px;
+      height: 48px;
       margin-bottom: 8px;
       border-radius: 50%;
       background: #ecfdf3;
       color: var(--dga-green-700);
     }
     .dc-stats__icon mat-icon {
-      font-size: 32px;
+      font-size: 26px;
       width: 32px;
-      height: 32px;
+      height: 24px;
     }
     .dc-stats__value {
       color: var(--dga-green-800);
-      font-size: 48px;
+      font-size: 40px;
       font-weight: 500;
-      line-height: 60px;
+      line-height: 50px;
     }
     .dc-stats__label {
       color: var(--dga-text);

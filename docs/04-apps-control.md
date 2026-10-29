@@ -82,6 +82,12 @@ Request Manager…).
 `name_ar`, `name_en`, `email`, `mobile`, `national_id`, `status` (`ACTIVE` | `LOCKED` |
 `DISABLED`), `preferred_language`, `last_login_at`. Authentication stays in Keycloak.
 
+**How users are created and managed** — see [ADR-0035](adr/0035-users-and-establishment-links.md): per audience
+(employees, applicants) one setting says whether Apps Control creates accounts and sets passwords (`Managed`), only
+activates them and gives access while a directory or identity provider owns them (`Federated`: AD, LDAP, Entra ID,
+Nafath), or changes nothing (`Provider` = `None`). Applicants are linked to the establishments they act for by the
+registry integration at sign-in or by staff from the portal account, also before the first sign-in.
+
 **Sign-in accounts** ([ADR-0026](adr/0026-look-accounts-json-import.md)) live in the identity provider, never in
 Apps Control.
 
@@ -282,7 +288,9 @@ searches, reports, exports and APIs.
 ## 4.10 Settings and UI texts
 
 **`setting`** — `key`, `app_id` (null = global), `data_type`, `value` (jsonb), `description`,
-`is_secret` (secrets stored encrypted / referenced from the secret store).
+`is_secret` (secrets stored encrypted / referenced from the secret store). Settings have no menu of their own: each is
+edited on the screen it belongs to (the portal home page under Portal content); packages and JSON import still carry
+them.
 
 **`ui_text`** — `app_id`, `key`, `text_ar`, `text_en`. Overrides UI labels and messages
 without a release.

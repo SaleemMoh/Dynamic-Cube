@@ -44,8 +44,8 @@ export interface FilterOption {
       display: flex;
       flex-wrap: wrap;
       align-items: flex-end;
-      gap: 16px 32px;
-      padding: 24px;
+      gap: 16px 24px;
+      padding: 16px;
       border-radius: 16px;
       background: var(--dga-gray-50);
     }

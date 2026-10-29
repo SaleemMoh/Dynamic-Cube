@@ -23,6 +23,7 @@ public static class ApiHostExtensions
         ArgumentNullException.ThrowIfNull(options);
 
         builder.AddDynamicCubeDefaults(options.AppCode);
+        builder.Services.AddMigrationCheck();
 
         builder.Services.AddSingleton(options);
         builder.Services.AddHttpContextAccessor();

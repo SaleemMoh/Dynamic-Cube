@@ -71,7 +71,7 @@ import { GovBar } from './gov-bar';
       display: flex;
       align-items: stretch;
       gap: 16px;
-      min-height: 80px;
+      min-height: 60px;
       max-width: 80rem;
       margin-inline: auto;
       padding-inline: 1.5rem;
@@ -93,14 +93,14 @@ import { GovBar } from './gov-bar';
       align-items: center;
       justify-content: center;
       width: 40px;
-      height: 40px;
+      height: 32px;
       border-radius: 8px;
       background: var(--dga-green-700);
       color: #ffffff;
     }
     .dc-shell__logo-img {
       flex: none;
-      height: 48px;
+      height: 36px;
       width: auto;
       max-width: 12rem;
       object-fit: contain;
@@ -134,7 +134,7 @@ import { GovBar } from './gov-bar';
     }
     /* Header actions: full-height text buttons with a grey hover, as in the DGA nav header. */
     .dc-shell__actions ::ng-deep .mat-mdc-button {
-      height: 80px;
+      height: 60px;
       min-width: 64px;
       padding: 8px 16px;
       font-size: 16px;
@@ -168,12 +168,12 @@ import { GovBar } from './gov-bar';
       .dc-shell__nav {
         order: 3;
         width: 100%;
-        min-height: 48px;
+        min-height: 36px;
         margin-inline-start: 0;
         overflow-x: auto;
       }
       .dc-shell__actions ::ng-deep .mat-mdc-button {
-        height: 56px;
+        height: 40px;
         min-width: 48px;
         padding: 8px;
       }

@@ -50,7 +50,7 @@ import { PARTY_KIND_KEYS } from './portal-text';
       gap: 16px;
       height: 100%;
       min-height: 21rem;
-      padding: 24px;
+      padding: 16px;
       border: 1px solid var(--dga-border);
       border-radius: 16px;
       background: #ffffff;
@@ -74,16 +74,16 @@ import { PARTY_KIND_KEYS } from './portal-text';
       align-items: center;
       justify-content: center;
       width: 56px;
-      height: 56px;
+      height: 40px;
       margin-bottom: 8px;
       border-radius: 50%;
       background: var(--dga-green-700);
       color: #ffffff;
     }
     .dc-tile__icon mat-icon {
-      font-size: 28px;
+      font-size: 22px;
       width: 28px;
-      height: 28px;
+      height: 20px;
     }
     .dc-tile__name {
       margin: 0;

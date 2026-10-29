@@ -74,6 +74,41 @@ public sealed class RegistryTests(DatabaseFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Staff_link_a_person_to_an_establishment_before_the_first_sign_in()
+    {
+        var cr = PartyTestSupport.CrNumber();
+        var number = _applicant.NationalId!;
+        var before = await AdminAsync(s => s.PersonLinksAsync(number, CancellationToken.None));
+
+        // An establishment that is not registered needs its names.
+        var unnamed = await Should.ThrowAsync<ChangeValidationException>(() =>
+            AdminAsync(s => s.LinkEstablishmentAsync(number, new LinkEstablishmentRequest(cr, null, null, "MANAGER", null, null, null, "أحمد خان", "Ahmed Khan"), CancellationToken.None)));
+        var link = await AdminAsync(s => s.LinkEstablishmentAsync(number, new LinkEstablishmentRequest(cr, "مؤسسة الربط", "Linked est.", "MANAGER", null, null, null, "أحمد خان", "Ahmed Khan"), CancellationToken.None));
+        await Should.ThrowAsync<PartyConflictException>(() =>
+            AdminAsync(s => s.LinkEstablishmentAsync(number, new LinkEstablishmentRequest(cr, null, null, "MANAGER", null, null, null, null, null), CancellationToken.None)));
+        var after = await AdminAsync(s => s.PersonLinksAsync(number, CancellationToken.None));
+
+        before.PartyId.ShouldBeNull();
+        unnamed.Errors.Keys.ShouldBe(["establishmentNameAr", "establishmentNameEn"], ignoreOrder: true);
+        after.Links.Single().PrincipalIdentifier.ShouldBe(cr);
+        after.Links.Single().Source.ShouldBe(RecordSource.Manual);
+
+        // Signing in finds the registered person, who may now act for the establishment.
+        var individual = await _host.AsAsync("applicant", sp => sp.GetRequiredService<ContextService>().CurrentIndividualAsync(CancellationToken.None));
+        individual.Id.ShouldBe(after.PartyId!.Value);
+        var contexts = await _host.AsAsync("applicant", sp => sp.GetRequiredService<ContextService>().ListAsync(individual.Id, CancellationToken.None));
+        contexts.ShouldContain(c => c.PartyId == after.Links[0].PrincipalId);
+
+        await AdminAsync(async s =>
+        {
+            await s.EndPersonLinkAsync(number, link, CancellationToken.None);
+            return true;
+        });
+        var ended = await _host.AsAsync("applicant", sp => sp.GetRequiredService<ContextService>().ListAsync(individual.Id, CancellationToken.None));
+        ended.ShouldNotContain(c => c.PartyId == after.Links[0].PrincipalId);
+    }
+
+    [Fact]
     public async Task Sanctions_are_lifted_by_someone_else()
     {
         var party = await AdminAsync(s => s.RegisterAsync(new RegisterPartyRequest(PartyKind.Establishment, IdentifierTypes.CrNumber, PartyTestSupport.CrNumber(), "مؤسسة", "Est."), CancellationToken.None));

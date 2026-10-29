@@ -56,14 +56,14 @@ import { LocalizePipe } from '../i18n/translate.pipe';
     .dc-footer {
       background: var(--dga-green-950);
       color: #ffffff;
-      padding: 48px 0;
+      padding: 36px 0;
     }
     .dc-footer__inner {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      gap: 24px 48px;
+      gap: 16px 36px;
       max-width: 80rem;
       margin-inline: auto;
       padding-inline: 1.5rem;
@@ -76,7 +76,7 @@ import { LocalizePipe } from '../i18n/translate.pipe';
     .dc-footer__links {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px 24px;
+      gap: 8px 16px;
       margin-bottom: 8px;
     }
     .dc-footer__link {
@@ -104,17 +104,17 @@ import { LocalizePipe } from '../i18n/translate.pipe';
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: 24px;
+      gap: 16px;
     }
     /* The entity logo in white on the dark green. */
     .dc-footer__logo {
-      max-height: 56px;
+      max-height: 40px;
       max-width: 14rem;
       object-fit: contain;
       filter: brightness(0) invert(1);
     }
     .dc-footer__image {
-      max-height: 56px;
+      max-height: 40px;
       max-width: 14rem;
       object-fit: contain;
     }

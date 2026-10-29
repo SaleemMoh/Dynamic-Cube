@@ -175,7 +175,7 @@ import { ContactCard } from '../portal/contact-card';
     .dc-request {
       display: grid;
       grid-template-columns: minmax(0, 1fr) 24rem;
-      gap: 32px 48px;
+      gap: 24px 36px;
       align-items: start;
       padding-top: 16px;
     }
@@ -208,9 +208,9 @@ import { ContactCard } from '../portal/contact-card';
     }
     .dc-request__header h1 {
       margin: 0;
-      font-size: 36px;
+      font-size: 30px;
       font-weight: 700;
-      line-height: 48px;
+      line-height: 40px;
     }
     .dc-request__secondary {
       display: flex;
@@ -229,9 +229,9 @@ import { ContactCard } from '../portal/contact-card';
     }
     .dc-request__done mat-icon {
       color: var(--dga-primary, #1b8354);
-      font-size: 40px;
+      font-size: 32px;
       width: 40px;
-      height: 40px;
+      height: 32px;
     }
     .dc-card + .dc-card {
       margin-top: 1rem;
@@ -246,9 +246,9 @@ import { ContactCard } from '../portal/contact-card';
     }
     .dc-request__returned mat-icon {
       color: #b54708;
-      font-size: 36px;
+      font-size: 30px;
       width: 36px;
-      height: 36px;
+      height: 28px;
     }
     .dc-request__returned p {
       margin: 0.25rem 0 0;

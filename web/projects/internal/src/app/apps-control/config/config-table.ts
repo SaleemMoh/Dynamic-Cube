@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { NgComponentOutlet } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, inject, input, resource, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -21,9 +22,12 @@ import { ConfigRowAction, ConfigType, scopeOf } from './config-types';
 /** Published rows of one configuration type with new / edit / delete actions that go into a draft change set. */
 @Component({
   selector: 'dc-config-table',
-  imports: [MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatIconModule, MatInputModule, MatTableModule, MatTooltipModule, RouterLink, LocalizePipe, TranslatePipe],
+  imports: [NgComponentOutlet, MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatIconModule, MatInputModule, MatTableModule, MatTooltipModule, RouterLink, LocalizePipe, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
+    @if (intro.value(); as component) {
+      <ng-container *ngComponentOutlet="component" />
+    }
     <div class="dc-toolbar">
       <mat-form-field class="dc-toolbar__search" subscriptSizing="dynamic">
         <mat-icon matPrefix fontSet="material-symbols-outlined">search</mat-icon>
@@ -188,6 +192,7 @@ import { ConfigRowAction, ConfigType, scopeOf } from './config-types';
 })
 export class ConfigTable {
   readonly type = input.required<ConfigType>();
+  protected readonly intro = resource({ params: () => this.type().intro, loader: ({ params }) => params() });
   readonly resource = input.required<string>();
 
   private readonly api = inject(AppsControlApi);

@@ -118,6 +118,11 @@ public sealed class AppsControlSeeder(
             }))), cancellationToken);
         }
 
+        foreach (var retired in await context.Menus.Where(m => SystemCatalog.RetiredMenus.Contains(m.Code) && m.IsVisible).ToListAsync(cancellationToken))
+        {
+            retired.IsVisible = false;
+        }
+
         await UpsertAsync(context.Positions, SystemCatalog.Positions.Select(p => (p.Code, p.NameAr, p.NameEn, (Action<Position>)(_ => { }))), cancellationToken);
 
         var classes = await UpsertAsync(context.Classes, SystemCatalog.Classes.Select(c => (c.Code, c.NameAr, c.NameEn, (Action<LookupClass>)(_ => { }))), cancellationToken);

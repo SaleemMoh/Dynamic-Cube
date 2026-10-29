@@ -27,7 +27,7 @@ import { PortalStore } from './portal-store';
       flex-direction: column;
       align-items: flex-start;
       gap: 12px;
-      padding: 24px;
+      padding: 16px;
       border: 1px solid var(--dga-border);
       border-radius: 16px;
       background: #ffffff;
@@ -37,7 +37,7 @@ import { PortalStore } from './portal-store';
       align-items: center;
       justify-content: center;
       width: 48px;
-      height: 48px;
+      height: 36px;
       border-radius: 50%;
       background: #ecfdf3;
       color: var(--dga-green-700);
@@ -52,7 +52,7 @@ import { PortalStore } from './portal-store';
       color: var(--dga-text-2);
     }
     .dc-suggest a {
-      height: 44px;
+      height: 32px;
       margin-top: 8px;
     }
   `,

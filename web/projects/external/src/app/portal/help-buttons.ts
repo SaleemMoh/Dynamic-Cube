@@ -75,7 +75,7 @@ interface Accessibility {
       align-items: center;
       justify-content: center;
       width: 64px;
-      height: 64px;
+      height: 48px;
       border: none;
       border-radius: 50%;
       background: var(--dga-green-700);

@@ -56,6 +56,25 @@ public sealed record AddIdentifierRequest(string Type, string Value);
 
 public sealed record AddRelationshipRequest(string IndividualIdentifier, string RelationshipCode, List<string>? Services, DateOnly? ValidFrom, DateOnly? ValidTo);
 
+/// <summary>The establishments (and other parties) a person may act for, whether or not the person has signed in yet.</summary>
+/// <param name="PartyId">The person's party, or null while the person is not registered (registered on the first link or sign-in).</param>
+public sealed record PersonLinks(Guid? PartyId, string Identifier, DateTimeOffset? ContextsRefreshedAt, IReadOnlyList<RelationshipInfo> Links);
+
+/// <summary>
+/// Links a person to an establishment by its CR or unified (700) number. An establishment that is not registered yet is
+/// registered with the names given; a person who has not signed in yet is registered with their names.
+/// </summary>
+public sealed record LinkEstablishmentRequest(
+    string EstablishmentIdentifier,
+    string? EstablishmentNameAr,
+    string? EstablishmentNameEn,
+    string RelationshipCode,
+    List<string>? Services,
+    DateOnly? ValidFrom,
+    DateOnly? ValidTo,
+    string? PersonNameAr,
+    string? PersonNameEn);
+
 public sealed record AddCredentialRequest(string TypeCode, string Number, DateOnly? IssuedOn, DateOnly? ExpiresOn, CredentialStatus Status, JsonObject? Data);
 
 public sealed record AddProjectRequest(string? Number, string NameAr, string? NameEn, string? ClientName, decimal? ContractValue, DateOnly? StartOn, DateOnly? EndOn, ProjectStatus Status, JsonObject? Data);
@@ -221,6 +240,97 @@ internal sealed class PartyAdminService(PartiesDbContext context, PartyDirectory
 
         relationship.EndedAt ??= clock.GetUtcNow();
         await context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<PersonLinks> PersonLinksAsync(string personNumber, CancellationToken cancellationToken)
+    {
+        var (type, number) = PersonNumber(personNumber);
+        var person = await directory.FindAsync(type, number, cancellationToken);
+        if (person is null)
+        {
+            return new PersonLinks(null, number, null, []);
+        }
+
+        var relationships = await context.Relationships.AsNoTracking()
+            .Include(r => r.Individual!).ThenInclude(p => p.Identifiers)
+            .Include(r => r.Principal!).ThenInclude(p => p.Identifiers)
+            .Where(r => r.IndividualId == person.Id)
+            .ToListAsync(cancellationToken);
+        var types = await TypesAsync(PartyClasses.RelationshipType, cancellationToken);
+        return new PersonLinks(
+            person.Id,
+            number,
+            person.ContextsRefreshedAt,
+            [.. relationships.OrderBy(r => r.EndedAt != null).ThenBy(r => r.Principal!.NameAr).Select(r => Relationship(r, types))]);
+    }
+
+    public async Task<Guid> LinkEstablishmentAsync(string personNumber, LinkEstablishmentRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var (personType, number) = PersonNumber(personNumber);
+        var establishmentNumber = request.EstablishmentIdentifier?.Trim() ?? string.Empty;
+        var establishmentType = establishmentNumber.StartsWith('7') ? IdentifierTypes.UnifiedNumber : IdentifierTypes.CrNumber;
+        var errors = new ValidationErrors();
+        if (!IdentifierTypes.IsValid(establishmentType, establishmentNumber))
+        {
+            errors.Add("establishmentIdentifier", "A 10-digit commercial registration number, or a unified number starting with 7.");
+        }
+
+        errors.ThrowIfAny();
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        var establishment = await directory.FindAsync(establishmentType, establishmentNumber, cancellationToken);
+        if (establishment is null)
+        {
+            errors.Required("establishmentNameAr", request.EstablishmentNameAr);
+            errors.Required("establishmentNameEn", request.EstablishmentNameEn);
+            errors.ThrowIfAny();
+            await directory.LockAsync(establishmentType, establishmentNumber, cancellationToken);
+            establishment = await directory.EnsureAsync(PartyKind.Establishment, establishmentType, establishmentNumber, request.EstablishmentNameAr!.Trim(), request.EstablishmentNameEn!.Trim(), RecordSource.Manual, cancellationToken);
+        }
+        else if (establishment.Kind != PartyKind.Establishment)
+        {
+            throw new PartyConflictException($"{establishmentNumber} is not an establishment.");
+        }
+
+        if (await directory.FindAsync(personType, number, cancellationToken) is null)
+        {
+            await directory.LockAsync(personType, number, cancellationToken);
+            var nameAr = string.IsNullOrWhiteSpace(request.PersonNameAr) ? number : request.PersonNameAr.Trim();
+            var nameEn = string.IsNullOrWhiteSpace(request.PersonNameEn) ? nameAr : request.PersonNameEn.Trim();
+            await directory.EnsureAsync(PartyKind.Individual, personType, number, nameAr, nameEn, RecordSource.Manual, cancellationToken);
+        }
+
+        await context.SaveChangesAsync(cancellationToken);
+        var person = (await directory.FindAsync(personType, number, cancellationToken))!;
+        if (await context.Relationships.AnyAsync(r => r.IndividualId == person.Id && r.PrincipalId == establishment.Id && r.RelationshipCode == request.RelationshipCode && r.EndedAt == null, cancellationToken))
+        {
+            throw new PartyConflictException("This person already has this relationship with the establishment.");
+        }
+
+        var id = await AddRelationshipAsync(establishment.Id, new AddRelationshipRequest(number, request.RelationshipCode, request.Services, request.ValidFrom, request.ValidTo), cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return id;
+    }
+
+    public async Task EndPersonLinkAsync(string personNumber, Guid relationshipId, CancellationToken cancellationToken)
+    {
+        var (type, number) = PersonNumber(personNumber);
+        var person = await directory.FindAsync(type, number, cancellationToken) ?? throw new PartyNotFoundException($"No person with {type} {number} is registered.");
+        await EndRelationshipAsync(person.Id, relationshipId, cancellationToken);
+    }
+
+    private static (string Type, string Number) PersonNumber(string? value)
+    {
+        var number = value?.Trim() ?? string.Empty;
+        var type = IdentifierTypes.ForPersonNumber(number);
+        if (!IdentifierTypes.IsValid(type, number))
+        {
+            var errors = new ValidationErrors();
+            errors.Add("nationalId", "A 10-digit national ID or iqama number is required.");
+            errors.ThrowIfAny();
+        }
+
+        return (type, number);
     }
 
     public async Task<Guid> AddCredentialAsync(Guid partyId, AddCredentialRequest request, CancellationToken cancellationToken)

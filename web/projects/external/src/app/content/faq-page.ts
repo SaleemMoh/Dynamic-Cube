@@ -90,7 +90,7 @@ interface Topic {
       max-width: 36rem;
     }
     .dc-faq__topic h2 {
-      font-size: 24px !important;
+      font-size: 20px !important;
     }
     .dc-faq__topic {
       margin-bottom: 1.75rem;

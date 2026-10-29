@@ -65,6 +65,7 @@ public static class PlatformServiceCollectionExtensions
                 : new ModuleConnection(connectionString);
         });
         services.TryAddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddSingleton(new ModuleContextRegistration(typeof(TContext)));
         services.AddDbContext<TContext>((serviceProvider, options) =>
             options.UseDynamicCubePostgres(serviceProvider.GetRequiredService<ModuleConnection>().Connection, historySchema, typeof(TContext).Assembly.GetName().Name)
                 .AddInterceptors(serviceProvider.GetRequiredService<AuditSaveChangesInterceptor>()));

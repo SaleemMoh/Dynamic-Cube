@@ -33,7 +33,7 @@ export function saudiTime(at: string, language: string): { date: string; time: s
     }
     .dc-last-modified p {
       margin: 0 auto;
-      padding-block: 20px;
+      padding-block: 16px;
       color: var(--dga-text-2);
       font-size: 14px;
       line-height: 20px;

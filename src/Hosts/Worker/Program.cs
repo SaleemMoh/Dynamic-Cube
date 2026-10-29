@@ -16,6 +16,7 @@ using DynamicCube.Worker;
 var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings { Args = args, ContentRootPath = AppContext.BaseDirectory });
 
 builder.AddDynamicCubeDefaults("WORKER");
+builder.Services.AddMigrationCheck();
 builder.Services.AddSingleton<ICurrentUser>(new SystemUser("WORKER"));
 builder.Services.AddHostedService<OutboxBackgroundService>();
 builder.Services.AddAppsControl(builder.Configuration, managesUsers: false);

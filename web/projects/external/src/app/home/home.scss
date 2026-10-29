@@ -6,14 +6,14 @@
 .dc-home {
   display: flex;
   flex-direction: column;
-  gap: 56px;
-  padding: 48px 0 80px;
+  gap: 40px;
+  padding: 36px 0 60px;
 }
 
 .dc-services {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 24px;
 }
 
 .dc-services__tabs {
@@ -26,7 +26,7 @@
   display: grid;
   grid-auto-columns: minmax(16rem, calc((100% - 3 * 24px) / 4));
   grid-auto-flow: column;
-  gap: 24px;
+  gap: 16px;
   margin: 0;
   padding: 2px;
   overflow-x: auto;
@@ -41,7 +41,7 @@
   scroll-snap-align: start;
 }
 .dc-carousel__empty {
-  padding: 24px 0;
+  padding: 16px 0;
 }
 
 .dc-carousel__controls {
@@ -53,7 +53,7 @@
 .dc-carousel__arrows {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 16px;
 }
 .dc-carousel__prev,
 .dc-carousel__next {
@@ -66,7 +66,7 @@
 .dc-carousel__prev,
 .dc-carousel__next {
   width: 56px;
-  height: 56px;
+  height: 40px;
   border-radius: 50%;
   background: var(--dga-green-700);
   color: #ffffff;
@@ -79,9 +79,9 @@
 }
 .dc-carousel__prev mat-icon,
 .dc-carousel__next mat-icon {
-  font-size: 28px;
+  font-size: 22px;
   width: 28px;
-  height: 28px;
+  height: 20px;
 }
 .dc-carousel__prev:disabled,
 .dc-carousel__next:disabled {
@@ -106,8 +106,8 @@
 
 @media (max-width: 48rem) {
   .dc-home {
-    gap: 40px;
-    padding-top: 32px;
+    gap: 32px;
+    padding-top: 24px;
   }
   .dc-section-head {
     flex-direction: column;

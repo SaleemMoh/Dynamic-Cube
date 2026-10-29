@@ -65,8 +65,8 @@ import { catchError, firstValueFrom, of } from 'rxjs';
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      gap: 12px 24px;
-      padding-block: 24px;
+      gap: 12px 16px;
+      padding-block: 16px;
       border-top: 2px solid var(--dga-green-700);
     }
     .dc-rating__summary {
@@ -82,9 +82,9 @@ import { catchError, firstValueFrom, of } from 'rxjs';
     }
     .dc-rating__stars mat-icon,
     .dc-rating__pick mat-icon {
-      font-size: 32px;
+      font-size: 26px;
       width: 32px;
-      height: 32px;
+      height: 24px;
       color: var(--dga-gray-200);
       font-variation-settings: 'FILL' 1;
     }

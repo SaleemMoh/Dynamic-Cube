@@ -82,9 +82,9 @@ import { APP_TRANSLATIONS } from './translations';
       color: var(--dga-text);
     }
     .dc-header-search__icon {
-      font-size: 28px;
+      font-size: 22px;
       width: 28px;
-      height: 28px;
+      height: 20px;
     }
     .dc-header-search:hover {
       background: var(--dga-gray-100);

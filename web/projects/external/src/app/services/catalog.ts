@@ -93,7 +93,7 @@ import { ServiceTile } from '../portal/service-tile';
     .dc-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
-      gap: 24px;
+      gap: 16px;
       margin: 0;
       padding: 0;
       list-style: none;

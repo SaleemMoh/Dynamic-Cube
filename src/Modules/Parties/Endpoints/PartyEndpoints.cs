@@ -34,9 +34,21 @@ internal static class PartyEndpoints
     /// <summary>Internal system: the registry for employees.</summary>
     public static void MapInternal(RouteGroupBuilder group)
     {
-        group.MapGet("/parties", async (string? search, PartyKind? kind, string? app, int? skip, int? take, PartyAdminService service, CancellationToken ct) =>
+        // The kind as the API writes it (ESTABLISHMENT, INDIVIDUAL); query binding of the enum itself only takes its C# name.
+        group.MapGet("/parties", async Task<IResult> (string? search, string? kind, string? app, int? skip, int? take, PartyAdminService service, CancellationToken ct) =>
         {
-            var (items, total) = await service.SearchAsync(search, kind, skip ?? 0, take ?? 50, ct, app);
+            PartyKind? partyKind = null;
+            if (!string.IsNullOrWhiteSpace(kind))
+            {
+                if (!Enum.TryParse<PartyKind>(kind, ignoreCase: true, out var parsed) || !Enum.IsDefined(parsed))
+                {
+                    return TypedResults.ValidationProblem(new Dictionary<string, string[]> { ["kind"] = ["Use INDIVIDUAL or ESTABLISHMENT."] });
+                }
+
+                partyKind = parsed;
+            }
+
+            var (items, total) = await service.SearchAsync(search, partyKind, skip ?? 0, take ?? 50, ct, app);
             return TypedResults.Ok(new PartyPage(items, total));
         }).RequirePrivilege(PartyResources.Parties, CatalogActions.View).WithName("SearchParties");
 
@@ -71,6 +83,21 @@ internal static class PartyEndpoints
             var warnings = await contexts.RefreshIfDueAsync(individual, force: true, ct);
             return TypedResults.Ok(new ContextsResult(ContextService.Self(individual), await contexts.ListAsync(id, ct), individual.ContextsRefreshedAt, warnings));
         }).RequirePrivilege(PartyResources.Parties, CatalogActions.Edit).WithName("RefreshPartyContexts");
+
+        // A person's links by national ID or iqama number: used where staff manage a portal account before or after its first sign-in.
+        group.MapGet("/people/{number}/links", async (string number, PartyAdminService service, CancellationToken ct) =>
+            TypedResults.Ok(await service.PersonLinksAsync(number, ct)))
+            .RequirePrivilege(PartyResources.Parties, CatalogActions.View).WithName("GetPersonLinks");
+
+        group.MapPost("/people/{number}/links", async (string number, LinkEstablishmentRequest request, PartyAdminService service, CancellationToken ct) =>
+            TypedResults.Ok(new CreatedResponse(await service.LinkEstablishmentAsync(number, request, ct))))
+            .RequirePrivilege(PartyResources.Parties, CatalogActions.Edit).WithName("LinkPersonToEstablishment");
+
+        group.MapPost("/people/{number}/links/{relationshipId:guid}/end", async (string number, Guid relationshipId, PartyAdminService service, CancellationToken ct) =>
+        {
+            await service.EndPersonLinkAsync(number, relationshipId, ct);
+            return TypedResults.NoContent();
+        }).RequirePrivilege(PartyResources.Parties, CatalogActions.Edit).WithName("EndPersonLink");
 
         group.MapPost("/parties/{id:guid}/relationships", async (Guid id, AddRelationshipRequest request, PartyAdminService service, CancellationToken ct) =>
             TypedResults.Ok(new CreatedResponse(await service.AddRelationshipAsync(id, request, ct))))

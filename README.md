@@ -274,6 +274,7 @@ files (printed PDFs, uploads) in `.data/storage` at the repository root, as the 
 | Migrator: `Connection string … is not configured` | Not started in `Development` (use `dotnet run`, or set `DOTNET_ENVIRONMENT=Development`) |
 | Migrator / API: `Failed to connect to 127.0.0.1:5432` | PostgreSQL is not running (step 1) |
 | Sign-in page does not load | Keycloak is not running on :8080 (step 1; first start takes ~30 s) |
+| Screens show *An error occurred while processing your request* after pulling new code | The database is behind the code: run the migrator (step 2) and restart the APIs. The APIs log `The database is not up to date` with the missing migrations, and `/health/ready` reports them |
 
 Without Docker: install PostgreSQL 16+ with role and database `dynamic_cube` / password `dynamic_cube`, and
 Keycloak 26 started with `kc.sh start-dev --http-port 8080 --import-realm` after copying

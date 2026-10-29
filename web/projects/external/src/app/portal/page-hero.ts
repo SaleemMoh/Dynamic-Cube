@@ -48,17 +48,17 @@ import { PortalStore } from './portal-store';
     .dc-page-hero__inner {
       display: flex;
       flex-direction: column;
-      gap: 24px;
+      gap: 16px;
       max-width: var(--dc-portal-width, 80rem);
-      min-height: 340px;
+      min-height: 256px;
       justify-content: center;
       margin-inline: auto;
-      padding: 72px 1.5rem;
+      padding: 56px 1.5rem;
     }
     .dc-page-hero__title {
       margin: 0;
       color: #ffffff;
-      font-size: clamp(36px, 5vw, 64px);
+      font-size: clamp(30px, 5vw, 52px);
       font-weight: 700;
       line-height: 1.2;
     }
@@ -66,12 +66,12 @@ import { PortalStore } from './portal-store';
       max-width: 52rem;
       margin: 0;
       font-size: 20px;
-      line-height: 32px;
+      line-height: 26px;
     }
     @media (max-width: 40rem) {
       .dc-page-hero__inner {
-        min-height: 220px;
-        padding-block: 40px;
+        min-height: 164px;
+        padding-block: 32px;
       }
       .dc-page-hero__text {
         font-size: 16px;

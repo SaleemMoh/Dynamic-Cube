@@ -16,6 +16,7 @@ import { AppsControlApi, I18nService, TranslatePipe, problemMessages } from '@dy
 import { Observable, catchError, firstValueFrom, of } from 'rxjs';
 import { PrivilegesService } from '../privileges.service';
 import { temporaryPassword } from '../users/password';
+import { PersonLinks } from './person-links';
 
 /** Who the account is for: a national ID to open, and the names and email to start a new account with. */
 export interface PortalAccountData {
@@ -45,6 +46,7 @@ const NATIONAL_ID = /^[12][0-9]{9}$/;
     MatInputModule,
     MatProgressBarModule,
     MatTooltipModule,
+    PersonLinks,
     TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -157,6 +159,10 @@ const NATIONAL_ID = /^[12][0-9]{9}$/;
             </section>
           }
         }
+      }
+
+      @if (opened() && canSeeLinks()) {
+        <dc-person-links [nationalId]="opened()!" [personName]="linkName()" />
       }
 
       @if (!handOver() && (showCreate() || (view()?.exists && view()?.canSetPassword && canEdit()))) {
@@ -373,7 +379,13 @@ export class PortalAccountDialog {
   protected readonly lastName = signal(this.data.lastName ?? '');
   protected readonly email = signal(this.data.email ?? '');
   /** The account opened: the one given, or the one just created. */
-  private readonly opened = signal(this.data.nationalId ?? null);
+  protected readonly opened = signal(this.data.nationalId ?? null);
+  protected readonly canSeeLinks = computed(() => this.privileges.can('party.parties', 'VIEW'));
+  /** The name to register the person with when linking before the first sign-in. */
+  protected readonly linkName = computed(() => {
+    const a = this.view();
+    return [a?.firstName ?? this.firstName(), a?.lastName ?? this.lastName()].filter(Boolean).join(' ') || null;
+  });
 
   protected readonly capabilities = rxResource({ stream: () => this.api.portalAccountCapabilities().pipe(catchError(() => of(null))) });
   protected readonly account = rxResource({

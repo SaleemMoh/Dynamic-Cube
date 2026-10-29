@@ -40,9 +40,9 @@
 
   h2 {
     margin: 0;
-    font-size: 32px;
+    font-size: 26px;
     font-weight: 700;
-    line-height: 44px;
+    line-height: 36px;
   }
 
   p {
@@ -54,7 +54,7 @@
 }
 
 .dc-outline-button.mat-mdc-outlined-button {
-  height: 44px;
+  height: 32px;
   padding-inline: 16px;
   --mat-button-outlined-outline-color: var(--dga-border);
   --mat-button-outlined-label-text-color: var(--dga-text);
@@ -64,7 +64,7 @@
 
 .dc-utabs {
   display: flex;
-  gap: 32px;
+  gap: 24px;
   overflow-x: auto;
   border-bottom: 2px solid var(--dga-gray-200);
   scrollbar-width: none;
@@ -98,7 +98,7 @@
 .dc-tag {
   display: inline-flex;
   align-items: center;
-  height: 24px;
+  height: 16px;
   padding: 0 8px;
   border: 1px solid var(--dga-border);
   border-radius: 4px;
@@ -141,7 +141,7 @@
   min-width: 0;
   align-items: center;
   gap: 8px;
-  height: 48px;
+  height: 36px;
   padding-inline: 12px;
   border: 1px solid var(--dga-input-border);
   border-radius: 4px;
@@ -171,7 +171,7 @@
   align-items: center;
   justify-content: center;
   width: 36px;
-  height: 36px;
+  height: 28px;
   border: none;
   border-radius: 4px;
   background: none;
@@ -193,8 +193,8 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  height: 48px;
-  padding-inline: 20px;
+  height: 36px;
+  padding-inline: 16px;
   border: none;
   border-radius: 4px;
   background: #161616;
@@ -216,7 +216,7 @@
   align-items: center;
   justify-content: center;
   width: 44px;
-  height: 44px;
+  height: 32px;
   border: 1px solid var(--dga-border);
   border-radius: 4px;
   background: #ffffff;
@@ -257,14 +257,14 @@
 
 /* Dialogs: roomy, title at the start, close button at the end. */
 .mat-mdc-dialog-container .mat-mdc-dialog-title {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
 }
 
 /* Related services: a light green band across the page. */
 .dc-related {
-  margin: 56px calc(50% - 50vw) 0;
-  padding: 48px 0;
+  margin: 40px calc(50% - 50vw) 0;
+  padding: 36px 0;
   background: #f3fcf6;
 }
 .dc-related__inner {
@@ -280,7 +280,7 @@
 }
 .dc-related__head h2 {
   margin: 0;
-  font-size: 32px;
+  font-size: 26px;
   font-weight: 700;
 }
 .dc-related__head a {
@@ -290,8 +290,8 @@
 .dc-related__list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
-  gap: 24px;
-  margin: 32px 0 0;
+  gap: 16px;
+  margin: 24px 0 0;
   padding: 0;
   list-style: none;
 }
@@ -307,16 +307,16 @@
 /* A secondary action next to the main one: grey, rectangular. */
 .dc-secondary-button.mat-mdc-button,
 .dc-wizard__actions .mat-mdc-button:not(.mat-mdc-unelevated-button) {
-  height: 44px;
-  padding-inline: 20px;
+  height: 32px;
+  padding-inline: 16px;
   background: var(--dga-gray-100);
   --mat-button-text-label-text-color: var(--dga-text);
   font-size: 16px;
 }
 
 .dc-wizard__actions .mat-mdc-unelevated-button {
-  height: 44px;
-  padding-inline: 24px;
+  height: 32px;
+  padding-inline: 16px;
   font-size: 16px;
 }
 
@@ -324,24 +324,24 @@
 .dc-page-body {
   display: flex;
   flex-direction: column;
-  gap: 32px;
-  padding-block: 48px 72px;
+  gap: 24px;
+  padding-block: 36px 56px;
 }
 
 .dc-head-button.mat-mdc-unelevated-button {
-  height: 44px;
-  padding-inline: 20px;
+  height: 32px;
+  padding-inline: 16px;
   font-size: 16px;
 }
 
 /* Portal tables: 56px rows, grey header, the first column a green link. */
 .dc-table.dc-table--portal {
   .mat-mdc-header-row {
-    height: 52px;
+    height: 40px;
   }
 
   .mat-mdc-row {
-    height: 64px;
+    height: 48px;
   }
 
   .mat-mdc-header-cell {

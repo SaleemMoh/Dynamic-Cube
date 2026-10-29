@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ContextsResult, PartyDetail, PartyKind, PartySummary, ProfileRefreshResult } from './party.models';
+import { ContextsResult, LinkEstablishmentRequest, PartyDetail, PartyKind, PartySummary, PersonLinks, ProfileRefreshResult } from './party.models';
 
 export const PARTY_API = '/api/party/v1';
 
@@ -41,6 +41,19 @@ export class PartyApi {
 
   endRelationship(id: string, relationshipId: string): Observable<void> {
     return this.http.post<void>(`${PARTY_API}/parties/${id}/relationships/${relationshipId}/end`, {});
+  }
+
+  /** The establishments a person (national ID or iqama number) may act for, before or after the first sign-in. */
+  personLinks(number: string): Observable<PersonLinks> {
+    return this.http.get<PersonLinks>(`${PARTY_API}/people/${number}/links`);
+  }
+
+  linkEstablishment(number: string, request: LinkEstablishmentRequest): Observable<{ id: string }> {
+    return this.http.post<{ id: string }>(`${PARTY_API}/people/${number}/links`, request);
+  }
+
+  endPersonLink(number: string, relationshipId: string): Observable<void> {
+    return this.http.post<void>(`${PARTY_API}/people/${number}/links/${relationshipId}/end`, {});
   }
 
   addSanction(id: string, request: { typeCode: string; reason: string; startsOn: string | null; endsOn: string | null }): Observable<{ id: string }> {

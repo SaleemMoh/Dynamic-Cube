@@ -86,8 +86,8 @@ const SOCIAL_ICONS: Record<string, string> = {
     .dc-contact {
       display: flex;
       flex-direction: column;
-      gap: 20px;
-      padding: 32px;
+      gap: 16px;
+      padding: 24px;
       border: 1px solid var(--dga-border);
       border-radius: 16px;
       background: #ffffff;
@@ -137,7 +137,7 @@ const SOCIAL_ICONS: Record<string, string> = {
     .dc-contact__value mat-icon {
       font-size: 20px;
       width: 20px;
-      height: 20px;
+      height: 16px;
     }
     .dc-contact__social {
       display: flex;

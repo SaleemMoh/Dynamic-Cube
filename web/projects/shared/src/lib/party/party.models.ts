@@ -50,6 +50,27 @@ export interface RelationshipInfo {
   endedAt: string | null;
 }
 
+/** The parties a person may act for, by national ID or iqama number; `partyId` is null until the person is registered. */
+export interface PersonLinks {
+  partyId: string | null;
+  identifier: string;
+  contextsRefreshedAt: string | null;
+  links: RelationshipInfo[];
+}
+
+/** Links a person to an establishment (CR or 700 number); names register an establishment or person not registered yet. */
+export interface LinkEstablishmentRequest {
+  establishmentIdentifier: string;
+  establishmentNameAr: string | null;
+  establishmentNameEn: string | null;
+  relationshipCode: string;
+  services: string[];
+  validFrom: string | null;
+  validTo: string | null;
+  personNameAr: string | null;
+  personNameEn: string | null;
+}
+
 export interface CredentialInfo {
   id: string;
   typeCode: string;

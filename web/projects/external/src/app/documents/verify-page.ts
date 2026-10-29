@@ -143,9 +143,9 @@ import { firstValueFrom } from 'rxjs';
       margin: 0.25rem 0 0;
     }
     .dc-verify__result mat-icon {
-      font-size: 40px;
+      font-size: 32px;
       width: 40px;
-      height: 40px;
+      height: 32px;
     }
     .dc-verify__result--good {
       border-color: #079455;

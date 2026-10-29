@@ -52,8 +52,8 @@ const VISITOR_KEY = 'dc.visitor';
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      gap: 12px 24px;
-      padding-block: 24px;
+      gap: 12px 16px;
+      padding-block: 16px;
       border-top: 2px solid var(--dga-green-700);
     }
     .dc-helpful__ask {
@@ -65,7 +65,7 @@ const VISITOR_KEY = 'dc.visitor';
     }
     .dc-helpful__ask button {
       min-width: 56px;
-      height: 40px;
+      height: 32px;
     }
     .dc-helpful__chosen {
       box-shadow: 0 0 0 3px var(--dga-green-400, #54c08a);

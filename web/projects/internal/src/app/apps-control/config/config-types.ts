@@ -68,6 +68,8 @@ export interface ConfigType {
   rowActions?: ConfigRowAction[];
   /** A dialog that creates rows instead of the generic form (e.g. a user together with the sign-in account). */
   createDialog?: () => Promise<Type<unknown>>;
+  /** A component shown above the table that explains how the screen works on this installation (e.g. where accounts come from). */
+  intro?: () => Promise<Type<unknown>>;
   /**
    * The row's level: `full` (default) asks for the entity and business app, `entity` for the entity only (business apps),
    * `none` for rows of the whole installation (entities, channel apps, installation settings).
@@ -309,6 +311,7 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
         key: 'code',
         columns: ['status', 'email'],
         createDialog: () => import('../users/new-user-dialog').then((m) => m.NewUserDialog),
+        intro: () => import('../users/identity-notice').then((m) => m.IdentityNotice),
         rowActions: [
           {
             icon: 'manage_accounts',

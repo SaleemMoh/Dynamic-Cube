@@ -55,6 +55,12 @@ internal static class SystemCatalog
         new(AppsControlResources.ApprovalPolicy, "سياسة الاعتماد", "Approval policy", "INTERNAL", AppsControlResources.Root, [PrivilegeActions.View, PrivilegeActions.Edit]),
     ];
 
+    /// <summary>
+    /// Menus the product no longer offers; the seeder hides them where earlier versions created them. Settings only held
+    /// the portal home page, which is edited under Portal content.
+    /// </summary>
+    public static readonly IReadOnlyList<string> RetiredMenus = ["apps-control.settings"];
+
     private static readonly CatalogMenu[] Menus =
     [
         new("apps-control.change-sets", "طلبات التغيير", "Change sets", "/apps-control/change-sets", AppsControlResources.ChangeSets, "fact_check", 10),
@@ -66,7 +72,6 @@ internal static class SystemCatalog
         new("apps-control.roles", "الأدوار والصلاحيات", "Roles & privileges", "/apps-control/roles", AppsControlResources.Roles, "admin_panel_settings", 60),
         new("apps-control.menus", "القوائم", "Menus", "/apps-control/menus", AppsControlResources.Menus, "menu", 70),
         new("apps-control.resources", "الموارد", "Resources", "/apps-control/resources", AppsControlResources.Resources, "lock", 80),
-        new("apps-control.settings", "الإعدادات", "Settings", "/apps-control/settings", AppsControlResources.Settings, "settings", 90),
         new("apps-control.ui-texts", "نصوص الواجهة", "UI texts", "/apps-control/ui-texts", AppsControlResources.UiTexts, "translate", 100),
         new("apps-control.installation", "النظام والجهة", "Installation & entity", "/apps-control/installation", AppsControlResources.Installation, "domain", 110),
         new("apps-control.branding", "الهوية والشعار", "Branding", "/apps-control/branding", AppsControlResources.Installation, "palette", 115),

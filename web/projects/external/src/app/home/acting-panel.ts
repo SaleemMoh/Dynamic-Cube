@@ -45,7 +45,7 @@ import { ActingPartyService, LocalizePipe, TranslatePipe } from '@dynamic-cube/s
   styles: `
     :host {
       display: block;
-      padding: 20px 24px;
+      padding: 16px 16px;
       border: 1px solid var(--dga-border);
       border-radius: 16px;
       background: #ffffff;

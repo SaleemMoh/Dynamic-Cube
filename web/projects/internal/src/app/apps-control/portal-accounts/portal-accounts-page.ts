@@ -13,6 +13,7 @@ import { MatTableModule } from '@angular/material/table';
 import { AccountView, AppsControlApi, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
 import { catchError, debounceTime, of } from 'rxjs';
 import { PrivilegesService } from '../privileges.service';
+import { IdentityNotice } from '../users/identity-notice';
 import { PortalAccountData, PortalAccountDialog } from './portal-account-dialog';
 
 /**
@@ -24,6 +25,7 @@ import { PortalAccountData, PortalAccountDialog } from './portal-account-dialog'
   imports: [
     DatePipe,
     FormsModule,
+    IdentityNotice,
     MatButtonModule,
     MatFormFieldModule,
     MatIconModule,
@@ -48,6 +50,7 @@ import { PortalAccountData, PortalAccountDialog } from './portal-account-dialog'
         </div>
       }
     </header>
+    <dc-identity-notice audience="portal" />
     <div class="dc-toolbar">
       <mat-form-field class="dc-toolbar__search" subscriptSizing="dynamic">
         <mat-icon matPrefix fontSet="material-symbols-outlined">search</mat-icon>
@@ -113,6 +116,14 @@ import { PortalAccountData, PortalAccountDialog } from './portal-account-dialog'
     </table>
     @if ((page.value()?.items ?? []).length === 0 && !page.isLoading()) {
       <p class="dc-empty">{{ 'portalAccount.empty' | dcTranslate }}</p>
+      @if (searchedId(); as id) {
+        <p class="dc-empty">
+          <button matButton="outlined" type="button" (click)="open({ nationalId: id })" data-testid="portal-account-open-id">
+            <mat-icon fontSet="material-symbols-outlined">person_search</mat-icon>{{ 'portalAccount.openPerson' | dcTranslate }}
+            <span dir="ltr">{{ id }}</span>
+          </button>
+        </p>
+      }
     }
     <mat-paginator [length]="page.value()?.total ?? 0" [pageSize]="take()" [pageSizeOptions]="[20, 50, 100]" (page)="paginate($event)" />
   `,
@@ -141,6 +152,8 @@ export class PortalAccountsPage {
   protected readonly take = signal(20);
   protected readonly error = signal<string[] | null>(null);
   protected readonly canCreate = computed(() => this.privileges.can('apps-control.portal-accounts', 'CREATE'));
+  /** A national ID searched for: the person can be opened without an account (e.g. signing in with Nafath) to link establishments. */
+  protected readonly searchedId = computed(() => (/^[12][0-9]{9}$/.test(this.debounced().trim()) ? this.debounced().trim() : null));
 
   protected readonly page = rxResource({
     params: () => ({ search: this.debounced().trim(), skip: this.skip(), take: this.take() }),
