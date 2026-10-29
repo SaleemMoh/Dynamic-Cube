@@ -106,8 +106,13 @@ result.
 - **Service** — names, archetype, who may apply (individuals, establishments), catalog listing, draft
   policy (expiry days; on a new version drafts *continue* or *restart*), request number prefix.
 - **Question bank** — typed questions (text, long text, number, date, choice with options or an Apps
-  Control LOV with a parent question, yes/no), limits (min, max, length, pattern) and a *prefill* path
+  Control LOV with a parent question, yes/no, file upload), limits (min, max, length, pattern; for files the
+  accepted extensions, largest size up to 25 MB and, with *multiple*, how many files) and a *prefill* path
   into the applicant's facts (`party.identifiers.CR_NUMBER`, `party.profile.CR_CITY`).
+- **Request files** — files uploaded to a draft for a file question (stored through the file abstraction, with
+  name, size, SHA-256 and the content type of the extension); the answer is the list of their ids. A file
+  required only for some answers is a file question with *required-when* (and usually *visible-when*) on the
+  other answer. Staff open the files of submitted requests (ADR-0034).
 - **Service version** `SERVICE/N` — the definition: levels (SLA working days), steps (`FORM`, `LEVEL`,
   `FEES`, `REVIEW`, `DECLARATION`), sections shown by JSONLogic over the answers, question uses
   (required, required-when, visible-when, read-only), eligibility and validation rules with bilingual

@@ -1,7 +1,21 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { CatalogEntry, FollowUpService, PortalCatalog, PortalStatistics, RequestDetail, ServiceCard, RequestSummary, RequestView, ResolvedVersion, ServiceView, StatusCategory, VersionDefinition } from './service.models';
+import {
+  CatalogEntry,
+  FollowUpService,
+  PortalCatalog,
+  PortalStatistics,
+  RequestDetail,
+  RequestFileInfo,
+  ServiceCard,
+  RequestSummary,
+  RequestView,
+  ResolvedVersion,
+  ServiceView,
+  StatusCategory,
+  VersionDefinition,
+} from './service.models';
 
 export const SERVICES_API = '/api/services/v1';
 
@@ -55,6 +69,22 @@ export class ServicesApi {
 
   submit(id: string, declarationAccepted: boolean): Observable<RequestView> {
     return this.http.post<RequestView>(`${SERVICES_API}/requests/${id}/submit`, { declarationAccepted });
+  }
+
+  /** Uploads a file for a file question of a draft (or a request returned for correction); it is added to the answer. */
+  uploadFile(requestId: string, question: string, file: File): Observable<RequestFileInfo> {
+    const body = new FormData();
+    body.append('file', file, file.name);
+    return this.http.post<RequestFileInfo>(`${SERVICES_API}/requests/${requestId}/files`, body, { params: { question } });
+  }
+
+  deleteFile(requestId: string, fileId: string): Observable<void> {
+    return this.http.delete<void>(`${SERVICES_API}/requests/${requestId}/files/${fileId}`);
+  }
+
+  /** A file of a request: the applicant's own (portal) or, for employees, of a submitted request. */
+  downloadFile(requestId: string, fileId: string, staff = false): Observable<Blob> {
+    return this.http.get(`${SERVICES_API}${staff ? '/admin' : ''}/requests/${requestId}/files/${fileId}`, { responseType: 'blob' });
   }
 
   cancel(id: string): Observable<void> {

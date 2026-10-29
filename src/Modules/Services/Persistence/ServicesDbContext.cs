@@ -19,6 +19,8 @@ public sealed class ServicesDbContext(DbContextOptions<ServicesDbContext> option
 
     public DbSet<RequestEvent> RequestEvents => Set<RequestEvent>();
 
+    public DbSet<RequestFile> RequestFiles => Set<RequestFile>();
+
     public DbSet<NumberSequence> NumberSequences => Set<NumberSequence>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -87,6 +89,18 @@ public sealed class ServicesDbContext(DbContextOptions<ServicesDbContext> option
             b.Property(e => e.Comment).HasMaxLength(4000);
             b.HasOne<ServiceRequest>().WithMany().HasForeignKey(e => e.RequestId).OnDelete(DeleteBehavior.Cascade);
             b.HasIndex(e => new { e.RequestId, e.At });
+        });
+        modelBuilder.Entity<RequestFile>(b =>
+        {
+            b.ToTable("request_file", Schema);
+            b.Property(e => e.QuestionCode).HasMaxLength(100).IsRequired();
+            b.Property(e => e.FileName).HasMaxLength(255).IsRequired();
+            b.Property(e => e.ContentType).HasMaxLength(200).IsRequired();
+            b.Property(e => e.Sha256).HasMaxLength(64);
+            b.Property(e => e.StorageKey).HasMaxLength(500).IsRequired();
+            b.Property(e => e.UploadedBy).HasMaxLength(128);
+            b.HasOne<ServiceRequest>().WithMany().HasForeignKey(e => e.RequestId).OnDelete(DeleteBehavior.Cascade);
+            b.HasIndex(e => new { e.RequestId, e.QuestionCode });
         });
         modelBuilder.Entity<NumberSequence>(b =>
         {

@@ -2,7 +2,16 @@ import { ChangeDetectionStrategy, Component, DestroyRef, effect, inject, input, 
 import { FormsModule } from '@angular/forms';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
-import { ResolvedVersion, ServiceWizard, ServicesApi, TranslatePipe, VersionDefinition, WizardMove, problemMessages } from '@dynamic-cube/shared';
+import {
+  ResolvedVersion,
+  ServiceWizard,
+  ServicesApi,
+  TranslatePipe,
+  VersionDefinition,
+  WizardMove,
+  browserFileUploader,
+  problemMessages,
+} from '@dynamic-cube/shared';
 import { Subscription, timer } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { BuilderStore } from './builder-store';
@@ -39,7 +48,15 @@ import { BuilderStore } from './builder-store';
       }
       <div class="dc-pt__frame" [class.dc-pt__frame--mobile]="device() === 'mobile'" data-testid="builder-preview">
         @if (version(); as v) {
-          <dc-service-wizard [version]="v" [data]="data()" [levelCode]="level()" [currentStep]="step()" [preview]="true" (moved)="move($event)" />
+          <dc-service-wizard
+            [version]="v"
+            [data]="data()"
+            [levelCode]="level()"
+            [currentStep]="step()"
+            [preview]="true"
+            [uploader]="uploader"
+            (moved)="move($event)"
+          />
         }
       </div>
     </div>
@@ -83,6 +100,8 @@ import { BuilderStore } from './builder-store';
   `,
 })
 export class PreviewTab {
+  /** Files chosen in the preview stay in the browser. */
+  protected readonly uploader = browserFileUploader();
   private readonly store = inject(BuilderStore);
   private readonly api = inject(ServicesApi);
   readonly service = input.required<string>();

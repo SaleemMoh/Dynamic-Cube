@@ -5,6 +5,7 @@ using DynamicCube.Modules.Services.Definitions;
 using DynamicCube.Modules.Services.Domain;
 using DynamicCube.Modules.Services.Persistence;
 using DynamicCube.Platform.Documents;
+using DynamicCube.Platform.Files;
 using DynamicCube.Platform.Integration;
 using DynamicCube.Platform.Parties;
 using DynamicCube.Platform.Payments;
@@ -37,6 +38,7 @@ internal sealed class RequestService(
     IUnitOfWork unitOfWork,
     ICurrentUser user,
     IServiceProvider services,
+    IFileStorage storage,
     TimeProvider clock)
 {
     private static readonly StatusCategory[] OpenStatuses = [StatusCategory.Draft, StatusCategory.Submitted, StatusCategory.InProgress, StatusCategory.PendingCustomer, StatusCategory.PendingExternal, StatusCategory.PendingPayment];
@@ -198,7 +200,9 @@ internal sealed class RequestService(
         {
             // Only answers to questions of this version are kept.
             var known = version.Questions.Keys.ToHashSet(StringComparer.Ordinal);
-            entity.Data = new JsonObject(request.Data.Where(p => known.Contains(p.Key)).Select(p => KeyValuePair.Create(p.Key, p.Value?.DeepClone()))).ToJsonString();
+            var answers = new JsonObject(request.Data.Where(p => known.Contains(p.Key)).Select(p => KeyValuePair.Create(p.Key, p.Value?.DeepClone())));
+            RequestFiles.KeepOwnFiles(version, answers, await context.RequestFiles.AsNoTracking().Where(f => f.RequestId == entity.Id).ToListAsync(cancellationToken));
+            entity.Data = answers.ToJsonString();
         }
 
         entity.LevelCode = request.LevelCode ?? entity.LevelCode;
@@ -343,6 +347,113 @@ internal sealed class RequestService(
         return await ViewAsync(entity, service, version, facts, acting, null, cancellationToken, document);
     }
 
+    /// <summary>
+    /// Uploads a file for a file question of an editable request and adds it to the answer (replacing it when the question
+    /// takes one file). The question's extensions, size and number of files are checked.
+    /// </summary>
+    public async Task<RequestFileInfo> UploadFileAsync(Guid id, string questionCode, string fileName, long length, Stream content, CancellationToken cancellationToken)
+    {
+        var (entity, _) = await LoadMineAsync(id, cancellationToken);
+        RequireEditable(entity);
+        var version = await cache.GetAsync(context, entity.ServiceVersionId, cancellationToken);
+        if (!version.Questions.TryGetValue(questionCode, out var question) || question.Type != QuestionType.File)
+        {
+            throw new RequestValidationException([new FieldError(questionCode, "INVALID", "هذا السؤال لا يقبل ملفات.", "This question does not take files.", null)]);
+        }
+
+        var name = Path.GetFileName(fileName ?? string.Empty).Trim();
+        var extension = RequestFiles.ExtensionOf(name);
+        var allowed = RequestFiles.Extensions(question);
+        if (name.Length is 0 or > 255 || !allowed.Contains(extension))
+        {
+            throw new RequestValidationException([new FieldError(questionCode, "FILE_TYPE", $"الأنواع المقبولة: {string.Join("، ", allowed)}.", $"Accepted types: {string.Join(", ", allowed)}.", null)]);
+        }
+
+        var max = RequestFiles.MaxBytes(question);
+        if (length <= 0 || length > max)
+        {
+            var mb = max / 1024 / 1024;
+            throw new RequestValidationException([new FieldError(questionCode, "FILE_SIZE", $"الحد الأقصى لحجم الملف {mb} ميجابايت.", $"Files may be at most {mb} MB.", null)]);
+        }
+
+        var data = JsonNode.Parse(entity.Data)!.AsObject();
+        var current = RequestFiles.Ids(data[questionCode]);
+        var limit = RequestFiles.MaxFiles(question);
+        if (limit > 1 && current.Count >= limit)
+        {
+            throw new RequestValidationException([new FieldError(questionCode, "FILE_COUNT", $"الحد الأقصى {limit} ملفات.", $"At most {limit} files.", null)]);
+        }
+
+        var stored = await storage.SaveAsync(content, name, RequestFiles.ContentTypeOf(extension), cancellationToken);
+        var file = new RequestFile
+        {
+            RequestId = entity.Id,
+            QuestionCode = questionCode,
+            FileName = name,
+            ContentType = stored.ContentType,
+            Length = stored.Length,
+            Sha256 = stored.Sha256,
+            StorageKey = stored.Key,
+            UploadedAt = clock.GetUtcNow(),
+            UploadedBy = user.UserId ?? string.Empty,
+        };
+        context.RequestFiles.Add(file);
+
+        // One file: the new one replaces the answer (the old file goes); several: it is added.
+        if (limit == 1)
+        {
+            foreach (var old in await context.RequestFiles.Where(f => f.RequestId == entity.Id && f.QuestionCode == questionCode).ToListAsync(cancellationToken))
+            {
+                await RemoveAsync(old, cancellationToken);
+            }
+
+            current = [];
+        }
+
+        data[questionCode] = new JsonArray([.. current.Append(file.Id.ToString()).Select(v => (JsonNode)JsonValue.Create(v)!)]);
+        entity.Data = data.ToJsonString();
+        await context.SaveChangesAsync(cancellationToken);
+        return new RequestFileInfo(file.Id, file.QuestionCode, file.FileName, file.ContentType, file.Length, file.UploadedAt);
+    }
+
+    /// <summary>Removes a file of an editable request and takes it out of the answer.</summary>
+    public async Task DeleteFileAsync(Guid id, Guid fileId, CancellationToken cancellationToken)
+    {
+        var (entity, _) = await LoadMineAsync(id, cancellationToken);
+        RequireEditable(entity);
+        var file = await context.RequestFiles.SingleOrDefaultAsync(f => f.Id == fileId && f.RequestId == entity.Id, cancellationToken)
+            ?? throw new RequestNotFoundException($"File {fileId} does not exist.");
+        var data = JsonNode.Parse(entity.Data)!.AsObject();
+        var rest = RequestFiles.Ids(data[file.QuestionCode]).Where(v => !string.Equals(v, file.Id.ToString(), StringComparison.OrdinalIgnoreCase)).ToList();
+        if (rest.Count == 0)
+        {
+            data.Remove(file.QuestionCode);
+        }
+        else
+        {
+            data[file.QuestionCode] = new JsonArray([.. rest.Select(v => (JsonNode)JsonValue.Create(v)!)]);
+        }
+
+        entity.Data = data.ToJsonString();
+        await RemoveAsync(file, cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <summary>The content of a file of one of the applicant's requests.</summary>
+    public async Task<(Stream Content, string ContentType, string FileName)> OpenFileAsync(Guid id, Guid fileId, CancellationToken cancellationToken)
+    {
+        var (entity, _) = await LoadMineAsync(id, cancellationToken);
+        var file = await context.RequestFiles.AsNoTracking().SingleOrDefaultAsync(f => f.Id == fileId && f.RequestId == entity.Id, cancellationToken)
+            ?? throw new RequestNotFoundException($"File {fileId} does not exist.");
+        return (await storage.OpenReadAsync(file.StorageKey, cancellationToken), file.ContentType, file.FileName);
+    }
+
+    private async Task RemoveAsync(RequestFile file, CancellationToken cancellationToken)
+    {
+        context.RequestFiles.Remove(file);
+        await storage.DeleteAsync(file.StorageKey, cancellationToken);
+    }
+
     public async Task CancelAsync(Guid id, CancellationToken cancellationToken)
     {
         var (entity, _) = await LoadMineAsync(id, cancellationToken);
@@ -380,7 +491,8 @@ internal sealed class RequestService(
         var visits = services.GetService<IVisits>() is { } registry && entity.StatusCategory != StatusCategory.Draft
             ? await registry.OfSubjectAsync(RequestSubject.Type, entity.Id, cancellationToken)
             : [];
-        return new RequestView(Summary(entity, (service.NameAr, service.NameEn)), entity.VersionNumber, entity.LevelCode, entity.CurrentStep, data, lines, byLevel, version, stepErrors, timeline, bills, visits);
+        var files = await RequestFiles.ListAsync(context, entity.Id, cancellationToken);
+        return new RequestView(Summary(entity, (service.NameAr, service.NameEn)), entity.VersionNumber, entity.LevelCode, entity.CurrentStep, data, lines, byLevel, version, stepErrors, timeline, bills, visits, files);
     }
 
     /// <summary>Expires a draft past its date, or moves it to the current version when the service says so. True when expired.</summary>

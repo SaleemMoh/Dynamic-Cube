@@ -1,4 +1,5 @@
 import { jsonLogic } from '../expressions/jsonlogic';
+import { fileProblem } from '../forms/file-input';
 import { answeredSections, displayAnswer, fromAnswers, stepSchema, toAnswers } from './service-form';
 import { QuestionSnapshot, ResolvedVersion } from './service.models';
 
@@ -26,21 +27,45 @@ const version: ResolvedVersion = {
     validations: [],
     fees: [],
     steps: [
-      { code: 'SECTORS', type: 'FORM', titleAr: 'ق', titleEn: 'S', sections: [{ code: 'CHOICE', titleAr: 'ق', titleEn: 'C', questions: [{ code: 'SECTORS', required: true, readonly: false }] }] },
+      {
+        code: 'SECTORS',
+        type: 'FORM',
+        titleAr: 'ق',
+        titleEn: 'S',
+        sections: [{ code: 'CHOICE', titleAr: 'ق', titleEn: 'C', questions: [{ code: 'SECTORS', required: true, readonly: false }] }],
+      },
       {
         code: 'DETAILS',
         type: 'FORM',
         titleAr: 'ب',
         titleEn: 'D',
         sections: [
-          { code: 'ICT', titleAr: 'ت', titleEn: 'ICT', visibleWhen: { in: ['ICT', { var: 'SECTORS' }] }, questions: [{ code: 'EMPLOYEES', required: true, readonly: false }] },
-          { code: 'BUILDING', titleAr: 'ب', titleEn: 'B', visibleWhen: { in: ['BUILDING', { var: 'SECTORS' }] }, questions: [{ code: 'EMPLOYEES', required: true, readonly: false }, { code: 'PROJECTS', required: false, readonly: false }] },
+          {
+            code: 'ICT',
+            titleAr: 'ت',
+            titleEn: 'ICT',
+            visibleWhen: { in: ['ICT', { var: 'SECTORS' }] },
+            questions: [{ code: 'EMPLOYEES', required: true, readonly: false }],
+          },
+          {
+            code: 'BUILDING',
+            titleAr: 'ب',
+            titleEn: 'B',
+            visibleWhen: { in: ['BUILDING', { var: 'SECTORS' }] },
+            questions: [
+              { code: 'EMPLOYEES', required: true, readonly: false },
+              { code: 'PROJECTS', required: false, readonly: false },
+            ],
+          },
         ],
       },
     ],
   },
   questions: {
-    SECTORS: question('SECTORS', 'SELECT', [{ value: 'ICT', labelAr: 'تقنية', labelEn: 'ICT' }, { value: 'BUILDING', labelAr: 'بناء', labelEn: 'Building' }]),
+    SECTORS: question('SECTORS', 'SELECT', [
+      { value: 'ICT', labelAr: 'تقنية', labelEn: 'ICT' },
+      { value: 'BUILDING', labelAr: 'بناء', labelEn: 'Building' },
+    ]),
     EMPLOYEES: question('EMPLOYEES'),
     PROJECTS: question('PROJECTS'),
     WHEN: question('WHEN', 'DATE'),
@@ -97,5 +122,19 @@ describe('stepSchema layout', () => {
     expect(schema.sections[1].columns).toBe(3);
     expect(schema.sections[1].fields.find((f) => f.code === 'PROJECTS')!.width).toBe('half');
     expect(stepSchema(version, version.definition.steps[1]).display).toBeUndefined();
+  });
+});
+
+describe('file answers', () => {
+  it('shows the names of the uploaded files', () => {
+    const question = { code: 'DOC', type: 'FILE', options: [] } as unknown as Parameters<typeof displayAnswer>[0];
+    expect(displayAnswer(question, ['a', 'b'], 'en', [{ id: 'a', fileName: 'license.pdf' }])).toBe('license.pdf، b');
+    expect(displayAnswer(question, [], 'en')).toBe('—');
+  });
+
+  it('checks a chosen file against the accepted types and size', () => {
+    expect(fileProblem({ name: 'scan.PDF', size: 1000 }, ['pdf'], 1)).toBeNull();
+    expect(fileProblem({ name: 'tool.exe', size: 1000 }, ['pdf'], 1)).toBe('files.badType');
+    expect(fileProblem({ name: 'big.pdf', size: 2 * 1024 * 1024 }, ['pdf'], 1)).toBe('files.tooLarge');
   });
 });

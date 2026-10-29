@@ -37,6 +37,7 @@ public static class ServiceClasses
             new("DATE", "تاريخ", "Date"),
             new("SELECT", "اختيار", "Choice"),
             new("CHECKBOX", "نعم/لا", "Yes/no"),
+            new("FILE", "رفع ملفات", "File upload"),
         ]),
     ];
 }

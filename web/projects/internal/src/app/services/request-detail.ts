@@ -3,7 +3,18 @@ import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RouterLink } from '@angular/router';
-import { BillCard, VisitCard, FeeTable, LocalizePipe, RequestAnswers, ServicesApi, TranslatePipe, WorkflowApi } from '@dynamic-cube/shared';
+import {
+  BillCard,
+  VisitCard,
+  FeeTable,
+  LocalizePipe,
+  RequestAnswers,
+  UploadedFile,
+  ServicesApi,
+  TranslatePipe,
+  WorkflowApi,
+  openRequestFile,
+} from '@dynamic-cube/shared';
 import { catchError, of } from 'rxjs';
 import { InstanceFactsCard } from '../action-center/instance-facts';
 import { WorkflowCard } from '../action-center/workflow-card';
@@ -11,17 +22,34 @@ import { WorkflowCard } from '../action-center/workflow-card';
 /** One request as submitted: who, what, the answers, fees, its workflow (when it has one) and the timeline. */
 @Component({
   selector: 'dc-request-detail',
-  imports: [BillCard, VisitCard, DatePipe, InstanceFactsCard, MatProgressBarModule, RouterLink, FeeTable, LocalizePipe, RequestAnswers, TranslatePipe, WorkflowCard],
+  imports: [
+    BillCard,
+    VisitCard,
+    DatePipe,
+    InstanceFactsCard,
+    MatProgressBarModule,
+    RouterLink,
+    FeeTable,
+    LocalizePipe,
+    RequestAnswers,
+    TranslatePipe,
+    WorkflowCard,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <a routerLink="/services/requests" class="dc-link">{{ 'requests.title' | dcTranslate }}</a>
     @if (detail.value(); as d) {
       <header class="dc-page__header">
         <div>
-          <h1><span dir="ltr" data-testid="request-number">{{ d.view.request.number }}</span> — {{ { ar: d.view.request.serviceNameAr, en: d.view.request.serviceNameEn } | dcLocalize }}</h1>
+          <h1>
+            <span dir="ltr" data-testid="request-number">{{ d.view.request.number }}</span> —
+            {{ { ar: d.view.request.serviceNameAr, en: d.view.request.serviceNameEn } | dcLocalize }}
+          </h1>
           <p class="dc-muted">
             {{ 'requests.beneficiary' | dcTranslate }}:
-            <a class="dc-link" [routerLink]="['/party/parties', d.beneficiaryPartyId]">{{ { ar: d.view.request.beneficiaryNameAr, en: d.view.request.beneficiaryNameEn } | dcLocalize }}</a>
+            <a class="dc-link" [routerLink]="['/party/parties', d.beneficiaryPartyId]">{{
+              { ar: d.view.request.beneficiaryNameAr, en: d.view.request.beneficiaryNameEn } | dcLocalize
+            }}</a>
             · {{ 'requests.submitter' | dcTranslate }}:
             <a class="dc-link" [routerLink]="['/party/parties', d.submitterPartyId]">{{ d.submitterName }}</a>
             · {{ 'requests.version' | dcTranslate }} {{ d.view.versionNumber }}
@@ -38,7 +66,7 @@ import { WorkflowCard } from '../action-center/workflow-card';
       <dc-instance-facts [facts]="instance.value()?.facts" />
       <div class="dc-request-grid">
         <section class="dc-card">
-          <dc-request-answers [version]="d.view.version" [data]="d.view.data" />
+          <dc-request-answers [version]="d.view.version" [data]="d.view.data" [files]="d.view.files" (openFile)="openFile(d.view.request.id, $event)" />
         </section>
         <div class="dc-request-side">
           @if (instance.value(); as i) {
@@ -115,6 +143,10 @@ import { WorkflowCard } from '../action-center/workflow-card';
 export class RequestDetail {
   readonly id = input.required<string>();
   private readonly api = inject(ServicesApi);
+
+  protected openFile(requestId: string, file: UploadedFile): void {
+    void openRequestFile(this.api, requestId, file, true);
+  }
   private readonly workflow = inject(WorkflowApi);
   protected readonly detail = rxResource({ params: () => this.id(), stream: ({ params }) => this.api.requestDetail(params) });
   // Requests without a workflow (or viewers without the Action Center) simply show no workflow card.
@@ -123,7 +155,10 @@ export class RequestDetail {
     stream: ({ params }) => this.workflow.instance('SERVICE_REQUEST', params).pipe(catchError(() => of(undefined))),
   });
 
-  protected levelName(view: { levelCode: string | null; version: { definition: { levels: { code: string; nameAr: string; nameEn: string }[] } } }): { ar: string; en: string } {
+  protected levelName(view: { levelCode: string | null; version: { definition: { levels: { code: string; nameAr: string; nameEn: string }[] } } }): {
+    ar: string;
+    en: string;
+  } {
     const level = view.version.definition.levels.find((l) => l.code === view.levelCode);
     return { ar: level?.nameAr ?? view.levelCode ?? '', en: level?.nameEn ?? view.levelCode ?? '' };
   }

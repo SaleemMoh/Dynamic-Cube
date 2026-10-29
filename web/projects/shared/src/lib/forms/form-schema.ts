@@ -33,7 +33,7 @@ export interface FormSection {
  * them between an available and a chosen list. `structured` edits nested data (rows, lists, objects) through a form made
  * for its {@link FormField.structure}, with a JSON view.
  */
-export type FormFieldType = 'text' | 'textarea' | 'number' | 'date' | 'select' | 'checkbox' | 'icon' | 'dualList' | 'structured';
+export type FormFieldType = 'text' | 'textarea' | 'number' | 'date' | 'select' | 'checkbox' | 'icon' | 'dualList' | 'structured' | 'file';
 
 export interface FormField {
   code: string;
@@ -57,6 +57,10 @@ export interface FormField {
   readonly?: boolean;
   /** In a section with columns: full row, half or a third (default one column); `full` also spans a section without columns. */
   width?: FieldWidth;
+  /** For `file` fields: accepted extensions (e.g. pdf), the largest file in MB and how many files (with `multiple`). */
+  accept?: string[];
+  maxSizeMb?: number;
+  maxFiles?: number;
   /** For `structured` fields: what the value holds. */
   structure?: StructuredShape;
   /** Limits checked in the browser and again on the server. */

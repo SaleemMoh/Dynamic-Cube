@@ -14,7 +14,9 @@ import {
   I18nService,
   LocalizePipe,
   RequestAnswers,
+  UploadedFile,
   ServicesApi,
+  openRequestFile,
   SlaChip,
   TaskDetail,
   TranslatePipe,
@@ -143,7 +145,7 @@ import { WorkflowCard } from './workflow-card';
             <p>
               <a class="dc-link" [routerLink]="['/services/requests', d.task.subjectId]">{{ 'tasks.openRequest' | dcTranslate }}</a>
             </p>
-            <dc-request-answers [version]="r.view.version" [data]="r.view.data" />
+            <dc-request-answers [version]="r.view.version" [data]="r.view.data" [files]="r.view.files" (openFile)="openFile(r.view.request.id, $event)" />
           } @else if (request.isLoading()) {
             <mat-progress-bar mode="indeterminate" />
           } @else {
@@ -301,6 +303,10 @@ export class TaskPage {
   readonly id = input.required<string>();
   protected readonly api = inject(WorkflowApi);
   private readonly services = inject(ServicesApi);
+
+  protected openFile(requestId: string, file: UploadedFile): void {
+    void openRequestFile(this.services, requestId, file, true);
+  }
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);

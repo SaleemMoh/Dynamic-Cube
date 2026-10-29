@@ -219,6 +219,69 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
                     b.ToTable("request_event", "svc");
                 });
 
+            modelBuilder.Entity("DynamicCube.Modules.Services.Domain.RequestFile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("content_type");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("file_name");
+
+                    b.Property<long>("Length")
+                        .HasColumnType("bigint")
+                        .HasColumnName("length");
+
+                    b.Property<string>("QuestionCode")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("question_code");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("request_id");
+
+                    b.Property<string>("Sha256")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("sha256");
+
+                    b.Property<string>("StorageKey")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("storage_key");
+
+                    b.Property<DateTimeOffset>("UploadedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("uploaded_at");
+
+                    b.Property<string>("UploadedBy")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("uploaded_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_request_file");
+
+                    b.HasIndex("RequestId", "QuestionCode")
+                        .HasDatabaseName("ix_request_file_request_id_question_code");
+
+                    b.ToTable("request_file", "svc");
+                });
+
             modelBuilder.Entity("DynamicCube.Modules.Services.Domain.Service", b =>
                 {
                     b.Property<Guid>("Id")
@@ -915,6 +978,16 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_request_event_request_request_id");
+                });
+
+            modelBuilder.Entity("DynamicCube.Modules.Services.Domain.RequestFile", b =>
+                {
+                    b.HasOne("DynamicCube.Modules.Services.Domain.ServiceRequest", null)
+                        .WithMany()
+                        .HasForeignKey("RequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_request_file_request_request_id");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.Services.Domain.ServiceRequest", b =>

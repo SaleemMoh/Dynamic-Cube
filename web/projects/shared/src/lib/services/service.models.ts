@@ -1,9 +1,10 @@
 import { JsonLogicRule } from '../expressions/jsonlogic';
 import { PartyKind } from '../party/party.models';
 
-export type QuestionType = 'TEXT' | 'TEXTAREA' | 'NUMBER' | 'DATE' | 'SELECT' | 'CHECKBOX';
+export type QuestionType = 'TEXT' | 'TEXTAREA' | 'NUMBER' | 'DATE' | 'SELECT' | 'CHECKBOX' | 'FILE';
 export type StepType = 'FORM' | 'LEVEL' | 'FEES' | 'REVIEW' | 'DECLARATION';
-export type StatusCategory = 'DRAFT' | 'SUBMITTED' | 'IN_PROGRESS' | 'PENDING_CUSTOMER' | 'PENDING_EXTERNAL' | 'PENDING_PAYMENT' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'CLOSED';
+export type StatusCategory =
+  'DRAFT' | 'SUBMITTED' | 'IN_PROGRESS' | 'PENDING_CUSTOMER' | 'PENDING_EXTERNAL' | 'PENDING_PAYMENT' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'CLOSED';
 
 export interface QuestionSnapshot {
   code: string;
@@ -16,7 +17,16 @@ export interface QuestionSnapshot {
   lovParentQuestion: string | null;
   options: { value: string; labelAr: string; labelEn: string }[];
   multiple: boolean;
-  validation: { min: number | null; max: number | null; maxLength: number | null; pattern: string | null };
+  validation: {
+    min: number | null;
+    max: number | null;
+    maxLength: number | null;
+    pattern: string | null;
+    /** File questions: accepted extensions (empty: the usual documents and images), largest file and how many. */
+    extensions?: string[];
+    maxSizeMb?: number | null;
+    maxFiles?: number | null;
+  };
   prefill: string | null;
 }
 
@@ -245,6 +255,16 @@ export interface FieldError {
   step: string | null;
 }
 
+/** A file uploaded with a request as the answer of a file question (the answer holds the ids). */
+export interface RequestFileInfo {
+  id: string;
+  questionCode: string;
+  fileName: string;
+  contentType: string;
+  length: number;
+  uploadedAt: string;
+}
+
 export interface RequestView {
   request: RequestSummary;
   versionNumber: number;
@@ -257,6 +277,8 @@ export interface RequestView {
   stepErrors: FieldError[];
   /** What happened to the request, for the applicant (returns and decisions carry their reason). */
   timeline: TimelineEntry[];
+  /** Files uploaded with the request. */
+  files?: RequestFileInfo[] | null;
   /** Bills issued by the request's payment steps. */
   bills?: BillInfo[] | null;
   /** Visits requested by the request's visit steps. */

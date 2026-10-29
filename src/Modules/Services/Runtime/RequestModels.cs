@@ -76,7 +76,8 @@ public sealed record RequestView(
     IReadOnlyList<FieldError> StepErrors,
     IReadOnlyList<TimelineEntry> Timeline,
     IReadOnlyList<BillInfo>? Bills = null,
-    IReadOnlyList<VisitInfo>? Visits = null);
+    IReadOnlyList<VisitInfo>? Visits = null,
+    IReadOnlyList<RequestFileInfo>? Files = null);
 
 public sealed record TimelineEntry(DateTimeOffset At, string UserId, string Type, StatusCategory? FromStatus, StatusCategory? ToStatus, string? Comment);
 

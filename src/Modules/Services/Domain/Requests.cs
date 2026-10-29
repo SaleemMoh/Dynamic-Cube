@@ -89,6 +89,31 @@ public sealed class ServiceRequest : IAuditable, IHasAuditColumns
 }
 
 /// <summary>The request's timeline: every transition, action and comment.</summary>
+/// <summary>A file uploaded with a request as the answer (or part of the answer) of a file question.</summary>
+public sealed class RequestFile
+{
+    public Guid Id { get; set; } = Guid.CreateVersion7();
+
+    public Guid RequestId { get; set; }
+
+    public string QuestionCode { get; set; } = string.Empty;
+
+    public string FileName { get; set; } = string.Empty;
+
+    public string ContentType { get; set; } = string.Empty;
+
+    public long Length { get; set; }
+
+    public string Sha256 { get; set; } = string.Empty;
+
+    /// <summary>Where the content is kept (<see cref="Platform.Files.IFileStorage"/>).</summary>
+    public string StorageKey { get; set; } = string.Empty;
+
+    public DateTimeOffset UploadedAt { get; set; }
+
+    public string UploadedBy { get; set; } = string.Empty;
+}
+
 public sealed class RequestEvent
 {
     public Guid Id { get; set; } = Guid.CreateVersion7();

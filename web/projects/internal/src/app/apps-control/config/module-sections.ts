@@ -687,6 +687,7 @@ export const SERVICE_SECTIONS: ConfigSection[] = [
               opt('DATE', 'تاريخ', 'Date'),
               opt('SELECT', 'اختيار', 'Choice'),
               opt('CHECKBOX', 'نعم/لا', 'Yes/no'),
+              opt('FILE', 'رفع ملفات', 'File upload'),
             ],
           },
           { code: 'hintAr', type: 'text', label: t('تلميح بالعربية', 'Arabic hint') },
@@ -721,8 +722,8 @@ export const SERVICE_SECTIONS: ConfigSection[] = [
           {
             code: 'multiple',
             type: 'checkbox',
-            label: t('اختيار متعدد', 'Several choices'),
-            visibleWhen: { '==': [{ var: 'type' }, 'SELECT'] },
+            label: t('اختيار متعدد / عدة ملفات', 'Several choices / several files'),
+            visibleWhen: { in: [{ var: 'type' }, ['SELECT', 'FILE']] },
           },
           json(
             'validation',
@@ -732,8 +733,14 @@ export const SERVICE_SECTIONS: ConfigSection[] = [
               col('max', t('أعلى قيمة', 'Maximum'), 'number'),
               col('maxLength', t('أقصى طول', 'Longest text'), 'number'),
               col('pattern', t('النمط (تعبير نمطي)', 'Pattern (regular expression)'), 'text', LTR),
+              col('extensions', t('أنواع الملفات المقبولة', 'Accepted file types'), 'tags', LTR),
+              col('maxSizeMb', t('أكبر حجم للملف (ميجابايت)', 'Largest file (MB)'), 'number'),
+              col('maxFiles', t('أقصى عدد للملفات', 'Most files'), 'number'),
             ),
-            undefined,
+            t(
+              'لأسئلة رفع الملفات: الأنواع مثل pdf, jpg (فارغ: المستندات والصور المعتادة)، والحجم (افتراضيًا 10)، والعدد مع «عدة ملفات» (افتراضيًا 5). لطلب ملف عند إجابة معينة استخدم «مطلوب عندما» في منشئ الخدمات.',
+              'File questions: types such as pdf, jpg (empty: the usual documents and images), size (10 by default) and, with "several files", how many (5 by default). To ask for a file only for a given answer, use "Required when" in the service builder.',
+            ),
             {},
           ),
           {

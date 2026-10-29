@@ -10,6 +10,7 @@ const TYPES: Record<QuestionSnapshot['type'], FormFieldType> = {
   DATE: 'date',
   SELECT: 'select',
   CHECKBOX: 'checkbox',
+  FILE: 'file',
 };
 
 const both = (a: JsonLogicRule | null | undefined, b: JsonLogicRule | null | undefined): JsonLogicRule | undefined =>
@@ -55,7 +56,13 @@ function widthOf(width: QuestionUse['width']): FieldWidth | undefined {
   return width ? (width.toLowerCase() as FieldWidth) : undefined;
 }
 
-function toField(q: QuestionSnapshot, required: boolean, requiredWhen: JsonLogicRule | undefined, visibleWhen: JsonLogicRule | undefined, readonly: boolean): FormField {
+function toField(
+  q: QuestionSnapshot,
+  required: boolean,
+  requiredWhen: JsonLogicRule | undefined,
+  visibleWhen: JsonLogicRule | undefined,
+  readonly: boolean,
+): FormField {
   return {
     code: q.code,
     type: TYPES[q.type],
@@ -73,11 +80,17 @@ function toField(q: QuestionSnapshot, required: boolean, requiredWhen: JsonLogic
     max: q.validation.max ?? undefined,
     maxLength: q.validation.maxLength ?? undefined,
     pattern: q.validation.pattern ?? undefined,
+    accept: q.validation.extensions?.length ? q.validation.extensions : undefined,
+    maxSizeMb: q.validation.maxSizeMb ?? undefined,
+    maxFiles: q.validation.maxFiles ?? undefined,
   };
 }
 
 /** Sections and questions shown for these answers, each question once (for review screens). */
-export function answeredSections(version: ResolvedVersion, data: Record<string, unknown>): { titleAr: string; titleEn: string; questions: QuestionSnapshot[] }[] {
+export function answeredSections(
+  version: ResolvedVersion,
+  data: Record<string, unknown>,
+): { titleAr: string; titleEn: string; questions: QuestionSnapshot[] }[] {
   const shown = new Set<string>();
   const result: { titleAr: string; titleEn: string; questions: QuestionSnapshot[] }[] = [];
   for (const step of version.definition.steps.filter((s) => s.type === 'FORM')) {
@@ -94,9 +107,13 @@ export function answeredSections(version: ResolvedVersion, data: Record<string, 
   return result;
 }
 
-/** An answer as text: option labels for choices, yes/no for checkboxes. */
-export function displayAnswer(question: QuestionSnapshot, value: unknown, language: 'ar' | 'en'): string {
+/** An answer as text: option labels for choices, yes/no for checkboxes, file names for files. */
+export function displayAnswer(question: QuestionSnapshot, value: unknown, language: 'ar' | 'en', files: { id: string; fileName: string }[] = []): string {
   if (value === null || value === undefined || value === '' || (Array.isArray(value) && value.length === 0)) return '—';
+  if (question.type === 'FILE') {
+    const ids = Array.isArray(value) ? value : [value];
+    return ids.map((id) => files.find((f) => f.id === id)?.fileName ?? String(id)).join('، ');
+  }
   const label = (v: unknown) => {
     const option = question.options.find((o) => o.value === v);
     return option ? (language === 'ar' ? option.labelAr : option.labelEn) : String(v);

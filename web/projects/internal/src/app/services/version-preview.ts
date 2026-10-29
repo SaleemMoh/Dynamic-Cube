@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
-import { ResolvedVersion, ServiceWizard, TranslatePipe, WizardMove } from '@dynamic-cube/shared';
+import { ResolvedVersion, ServiceWizard, TranslatePipe, WizardMove, browserFileUploader } from '@dynamic-cube/shared';
 
 /** Walks through a version as an applicant would, without saving anything (fees are calculated only for real requests). */
 @Component({
@@ -12,6 +12,7 @@ import { ResolvedVersion, ServiceWizard, TranslatePipe, WizardMove } from '@dyna
     <h2 mat-dialog-title dir="ltr">{{ version.serviceCode }}{{ version.number ? '/' + version.number : '' }} — {{ 'versions.preview' | dcTranslate }}</h2>
     <mat-dialog-content>
       <dc-service-wizard
+        [uploader]="uploader"
         [version]="version"
         [data]="data()"
         [levelCode]="level()"
@@ -26,6 +27,8 @@ import { ResolvedVersion, ServiceWizard, TranslatePipe, WizardMove } from '@dyna
   `,
 })
 export class VersionPreview {
+  /** Files chosen in the preview stay in the browser. */
+  protected readonly uploader = browserFileUploader();
   protected readonly version = inject<ResolvedVersion>(MAT_DIALOG_DATA);
   protected readonly data = signal<Record<string, unknown>>({});
   protected readonly level = signal<string | null>(null);

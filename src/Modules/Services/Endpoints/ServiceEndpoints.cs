@@ -32,6 +32,23 @@ internal static class ServiceEndpoints
             await service.CancelAsync(id, ct);
             return TypedResults.NoContent();
         }).WithName("CancelDraft");
+
+        // Files answering file questions: uploaded one at a time (multipart, field "file"), added to the answer.
+        group.MapPost("/requests/{id:guid}/files", async (Guid id, string question, IFormFile file, RequestService service, CancellationToken ct) =>
+        {
+            await using var content = file.OpenReadStream();
+            return TypedResults.Ok(await service.UploadFileAsync(id, question, file.FileName, file.Length, content, ct));
+        }).DisableAntiforgery().WithName("UploadRequestFile");
+        group.MapDelete("/requests/{id:guid}/files/{fileId:guid}", async (Guid id, Guid fileId, RequestService service, CancellationToken ct) =>
+        {
+            await service.DeleteFileAsync(id, fileId, ct);
+            return TypedResults.NoContent();
+        }).WithName("DeleteRequestFile");
+        group.MapGet("/requests/{id:guid}/files/{fileId:guid}", async (Guid id, Guid fileId, RequestService service, CancellationToken ct) =>
+        {
+            var (content, contentType, name) = await service.OpenFileAsync(id, fileId, ct);
+            return Results.File(content, contentType, name);
+        }).WithName("GetRequestFile");
     }
 
     /// <summary>Portal, before or after sign-in: categories, listed services, service cards and statistics.</summary>
@@ -53,6 +70,11 @@ internal static class ServiceEndpoints
             .RequirePrivilege(ServiceResources.Requests, CatalogActions.View).WithName("SearchRequests");
         group.MapGet("/admin/requests/{id:guid}", async (Guid id, RequestAdminService admin, CancellationToken ct) => TypedResults.Ok(await admin.GetAsync(id, ct)))
             .RequirePrivilege(ServiceResources.Requests, CatalogActions.View).WithName("GetRequest");
+        group.MapGet("/admin/requests/{id:guid}/files/{fileId:guid}", async (Guid id, Guid fileId, RequestAdminService admin, CancellationToken ct) =>
+        {
+            var (content, contentType, name) = await admin.OpenFileAsync(id, fileId, ct);
+            return Results.File(content, contentType, name);
+        }).RequirePrivilege(ServiceResources.Requests, CatalogActions.View).WithName("GetSubmittedRequestFile");
         group.MapGet("/admin/versions/{service}/{number:int}", async (string service, int number, RequestAdminService admin, CancellationToken ct) => TypedResults.Ok(await admin.VersionAsync(service, number, ct)))
             .RequirePrivilege(ServiceResources.Config, CatalogActions.View).WithName("GetResolvedVersion");
         group.MapPost("/admin/versions/preview", async (PreviewRequest request, RequestAdminService admin, CancellationToken ct) => TypedResults.Ok(await admin.PreviewAsync(request, ct)))

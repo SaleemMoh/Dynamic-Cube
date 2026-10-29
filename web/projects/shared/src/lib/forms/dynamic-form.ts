@@ -15,6 +15,7 @@ import { JsonValue, jsonLogic } from '../expressions/jsonlogic';
 import { LocalizePipe, TranslatePipe } from '../i18n/translate.pipe';
 import { FormField, FormOption, FormSchema, FormSection } from './form-schema';
 import { DualList } from './dual-list';
+import { FileInput, FileUploader } from './file-input';
 import { StructuredInput } from './structured-input';
 import { pickIcon } from './icon-picker';
 import { LOV_SOURCE } from './lov-source';
@@ -41,6 +42,7 @@ export type FormValue = Record<string, unknown>;
     MatTabsModule,
     DualList,
     StructuredInput,
+    FileInput,
     LocalizePipe,
     TranslatePipe,
   ],
@@ -61,6 +63,8 @@ export class DynamicForm {
    * win over them.
    */
   readonly context = input<FormValue>({});
+  /** Where `file` fields upload (none: file fields cannot take files). */
+  readonly uploader = input<FileUploader | null>(null);
   readonly submitted = output<FormValue>();
   readonly cancelled = output<void>();
 
@@ -110,7 +114,15 @@ export class DynamicForm {
 
   /** Spans the whole row in a section laid out automatically. */
   protected wide(section: FormSection, field: FormField): boolean {
-    return !section.columns && (field.width === 'full' || field.type === 'checkbox' || field.type === 'textarea' || field.type === 'dualList' || field.type === 'structured');
+    return (
+      !section.columns &&
+      (field.width === 'full' ||
+        field.type === 'checkbox' ||
+        field.type === 'textarea' ||
+        field.type === 'dualList' ||
+        field.type === 'structured' ||
+        field.type === 'file')
+    );
   }
 
   protected isVisible(code: string): boolean {

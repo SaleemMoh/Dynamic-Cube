@@ -195,6 +195,16 @@ internal sealed class FormValidator(JsonLogicEvaluator evaluator, ILovValidator 
                 }
 
                 return null;
+            case QuestionType.File:
+                // Ids of files uploaded with the request (the request keeps only its own files in the answers).
+                var files = RequestFiles.Ids(value);
+                if (files.Count == 0 || files.Any(f => !Guid.TryParse(f, out _)))
+                {
+                    return Invalid(code);
+                }
+
+                var most = RequestFiles.MaxFiles(question);
+                return files.Count > most ? Error(code, "FILE_COUNT", $"الحد الأقصى {most} ملفات.", $"At most {most} files.") : null;
             default:
                 return Invalid(code);
         }

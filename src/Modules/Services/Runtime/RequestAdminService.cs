@@ -5,6 +5,7 @@ using DynamicCube.Modules.Services.Domain;
 using DynamicCube.Modules.Services.Persistence;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Expressions;
+using DynamicCube.Platform.Files;
 using DynamicCube.Platform.Payments;
 using DynamicCube.Platform.Visits;
 using Microsoft.EntityFrameworkCore;
@@ -17,7 +18,7 @@ public sealed record RequestPage(IReadOnlyList<RequestSummary> Items, int Total)
 public sealed record PreviewRequest(string ServiceCode, VersionDefinition Definition);
 
 /// <summary>Employee-side reads: requests with their timeline, and previews of definitions before they are published.</summary>
-internal sealed class RequestAdminService(ServicesDbContext context, ServiceCatalogCache cache, JsonLogicEvaluator evaluator, IServiceProvider services)
+internal sealed class RequestAdminService(ServicesDbContext context, ServiceCatalogCache cache, JsonLogicEvaluator evaluator, IServiceProvider services, IFileStorage storage)
 {
     /// <param name="app">Only requests for the services of this business app.</param>
     public async Task<RequestPage> SearchAsync(string? service, StatusCategory? status, string? search, int skip, int take, CancellationToken cancellationToken, string? app = null)
@@ -64,8 +65,19 @@ internal sealed class RequestAdminService(ServicesDbContext context, ServiceCata
         var view = new RequestView(RequestService.Summary(entity, (service.NameAr, service.NameEn)), entity.VersionNumber, entity.LevelCode, entity.CurrentStep,
             JsonNode.Parse(entity.Data)!.AsObject(), entity.Fees, new Dictionary<string, IReadOnlyList<FeeLine>>(), version, [], timeline,
             services.GetService<IPayments>() is { } payments ? await payments.OfSubjectAsync(RequestSubject.Type, entity.Id, cancellationToken) : [],
-            services.GetService<IVisits>() is { } visits ? await visits.OfSubjectAsync(RequestSubject.Type, entity.Id, cancellationToken) : []);
+            services.GetService<IVisits>() is { } visits ? await visits.OfSubjectAsync(RequestSubject.Type, entity.Id, cancellationToken) : [],
+            await RequestFiles.ListAsync(context, entity.Id, cancellationToken));
         return new RequestDetail(view, entity.SubmitterPartyId, entity.SubmitterName, entity.BeneficiaryPartyId, timeline);
+    }
+
+    /// <summary>The content of a file uploaded with a submitted request.</summary>
+    public async Task<(Stream Content, string ContentType, string FileName)> OpenFileAsync(Guid id, Guid fileId, CancellationToken cancellationToken)
+    {
+        var file = await context.RequestFiles.AsNoTracking()
+            .Where(f => f.Id == fileId && f.RequestId == id && context.Requests.Any(r => r.Id == id && r.StatusCategory != StatusCategory.Draft))
+            .SingleOrDefaultAsync(cancellationToken)
+            ?? throw new RequestNotFoundException($"File {fileId} does not exist.");
+        return (await storage.OpenReadAsync(file.StorageKey, cancellationToken), file.ContentType, file.FileName);
     }
 
     /// <summary>A published version as the wizard sees it.</summary>

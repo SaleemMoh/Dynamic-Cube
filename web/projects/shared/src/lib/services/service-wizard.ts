@@ -6,6 +6,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { DynamicForm, FormValue } from '../forms/dynamic-form';
+import { FileUploader } from '../forms/file-input';
 import { I18nService } from '../i18n/i18n.service';
 import { LocalizePipe, TranslatePipe } from '../i18n/translate.pipe';
 import { FeeTable } from './fee-table';
@@ -30,13 +31,32 @@ export interface WizardMove {
  */
 @Component({
   selector: 'dc-service-wizard',
-  imports: [DecimalPipe, NgTemplateOutlet, FormsModule, MatButtonModule, MatCheckboxModule, MatIconModule, MatProgressBarModule, DynamicForm, FeeTable, LocalizePipe, RequestAnswers, TranslatePipe],
+  imports: [
+    DecimalPipe,
+    NgTemplateOutlet,
+    FormsModule,
+    MatButtonModule,
+    MatCheckboxModule,
+    MatIconModule,
+    MatProgressBarModule,
+    DynamicForm,
+    FeeTable,
+    LocalizePipe,
+    RequestAnswers,
+    TranslatePipe,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <ol class="dc-steps" aria-label="steps">
       @for (s of steps(); track s.code; let i = $index) {
         <li class="dc-steps__item" [class.dc-steps__item--current]="i === index()" [class.dc-steps__item--done]="i < index()">
-          <button type="button" class="dc-steps__button" [disabled]="i >= index() || busy()" (click)="go(s.code)" [attr.aria-current]="i === index() ? 'step' : null">
+          <button
+            type="button"
+            class="dc-steps__button"
+            [disabled]="i >= index() || busy()"
+            (click)="go(s.code)"
+            [attr.aria-current]="i === index() ? 'step' : null"
+          >
             <span class="dc-steps__number">{{ i + 1 }}</span>
             <span>{{ { ar: s.titleAr, en: s.titleEn } | dcLocalize }}</span>
           </button>
@@ -75,6 +95,7 @@ export interface WizardMove {
               submitIcon="check"
               [cancellable]="index() > 0"
               [cancelLabel]="'form.back' | dcTranslate"
+              [uploader]="uploader()"
               (submitted)="next(s, $event)"
               (cancelled)="back()"
             />
@@ -100,7 +121,9 @@ export interface WizardMove {
                     <span>{{ 'wizard.duration' | dcTranslate }} {{ level.slaWorkingDays }} {{ 'wizard.workingDays' | dcTranslate }}</span>
                   }
                   @if (feesByLevel()[level.code]; as lines) {
-                    <span class="dc-level__fee">{{ levelTotal(lines) ? (levelTotal(lines) | number: '1.0-2') + ' ' + ('fees.currency' | dcTranslate) : ('fees.free' | dcTranslate) }}</span>
+                    <span class="dc-level__fee">{{
+                      levelTotal(lines) ? (levelTotal(lines) | number: '1.0-2') + ' ' + ('fees.currency' | dcTranslate) : ('fees.free' | dcTranslate)
+                    }}</span>
                   }
                 </button>
               }
@@ -112,7 +135,7 @@ export interface WizardMove {
             <ng-container *ngTemplateOutlet="nav" />
           }
           @case ('REVIEW') {
-            <dc-request-answers [version]="version()" [data]="data()" />
+            <dc-request-answers [version]="version()" [data]="data()" [files]="uploader()?.files() ?? []" (openFile)="uploader()?.open($event.id)" />
             <ng-container *ngTemplateOutlet="nav" />
           }
           @case ('DECLARATION') {
@@ -122,7 +145,13 @@ export interface WizardMove {
               @if (index() > 0) {
                 <button matButton type="button" (click)="back()">{{ 'form.back' | dcTranslate }}</button>
               }
-              <button matButton="filled" type="button" [disabled]="!accepted() || busy() || preview()" (click)="submitted.emit(true)" data-testid="submit-request">
+              <button
+                matButton="filled"
+                type="button"
+                [disabled]="!accepted() || busy() || preview()"
+                (click)="submitted.emit(true)"
+                data-testid="submit-request"
+              >
                 <mat-icon fontSet="material-symbols-outlined">send</mat-icon>
                 {{ (resubmission() ? 'wizard.resubmit' : 'wizard.submit') | dcTranslate }}
               </button>
@@ -252,6 +281,8 @@ export class ServiceWizard {
   readonly resubmission = input(false);
   /** Authoring preview: nothing can be submitted. */
   readonly preview = input(false);
+  /** Where file questions upload (the request's files on the portal, the browser in a preview). */
+  readonly uploader = input<FileUploader | null>(null);
   readonly moved = output<WizardMove>();
   /** Submission requested; true when the declaration was accepted. */
   readonly submitted = output<boolean>();
@@ -261,7 +292,12 @@ export class ServiceWizard {
   protected readonly levelChoice = signal<string | null>(null);
 
   protected readonly steps = computed(() => this.version().definition.steps);
-  protected readonly index = computed(() => Math.max(0, this.steps().findIndex((s) => s.code === this.currentStep())));
+  protected readonly index = computed(() =>
+    Math.max(
+      0,
+      this.steps().findIndex((s) => s.code === this.currentStep()),
+    ),
+  );
   protected readonly step = computed<StepDefinition | undefined>(() => this.steps()[this.index()]);
   protected readonly schema = computed(() => (this.step()?.type === 'FORM' ? stepSchema(this.version(), this.step()!) : null));
   protected readonly formValue = computed<FormValue>(() => fromAnswers(this.version(), this.data()));

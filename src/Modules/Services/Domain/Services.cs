@@ -66,6 +66,9 @@ public enum QuestionType
     Date,
     Select,
     Checkbox,
+
+    /// <summary>Files uploaded with the request (the answer is the list of file ids).</summary>
+    File,
 }
 
 public sealed class QuestionOption
@@ -86,6 +89,15 @@ public sealed class QuestionValidation
     public int? MaxLength { get; set; }
 
     public string? Pattern { get; set; }
+
+    /// <summary>File questions: accepted extensions without the dot (e.g. pdf, jpg); empty accepts the usual documents and images.</summary>
+    public List<string> Extensions { get; set; } = [];
+
+    /// <summary>File questions: the largest file in megabytes (default 10).</summary>
+    public int? MaxSizeMb { get; set; }
+
+    /// <summary>File questions with several files: how many at most (default 5).</summary>
+    public int? MaxFiles { get; set; }
 }
 
 /// <summary>

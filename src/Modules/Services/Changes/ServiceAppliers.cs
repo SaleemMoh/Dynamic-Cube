@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using DynamicCube.Modules.Services.Definitions;
 using DynamicCube.Modules.Services.Domain;
 using DynamicCube.Modules.Services.Persistence;
+using DynamicCube.Modules.Services.Runtime;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Documents;
 using DynamicCube.Platform.Expressions;
@@ -181,9 +182,9 @@ internal sealed class QuestionApplier(ServicesDbContext db) : ServiceApplier<Que
             errors.Add("options", "A select question needs options or an LOV.");
         }
 
-        if (payload.Type != QuestionType.Select && (lov is not null || payload.Options.Count > 0 || payload.Multiple))
+        if (payload.Type != QuestionType.Select && (lov is not null || payload.Options.Count > 0 || (payload.Multiple && payload.Type != QuestionType.File)))
         {
-            errors.Add("type", "Options, LOVs and multiple answers are for select questions.");
+            errors.Add("type", "Options and LOVs are for select questions; multiple answers for select and file questions.");
         }
 
         ChildSync.RequireUnique(payload.Options, o => o.Value, "options", errors);
@@ -206,6 +207,31 @@ internal sealed class QuestionApplier(ServicesDbContext db) : ServiceApplier<Que
         }
 
         var validation = payload.Validation ?? new QuestionValidation();
+        if (payload.Type == QuestionType.File)
+        {
+            validation.Extensions = [.. validation.Extensions.Select(e => e.Trim().TrimStart('.').ToLowerInvariant()).Where(e => e.Length > 0).Distinct()];
+            if (validation.Extensions.Any(e => !RequestFiles.ExtensionPattern().IsMatch(e)))
+            {
+                errors.Add("validation.extensions", "Use extensions such as pdf, jpg or docx.");
+            }
+
+            if (validation.MaxSizeMb is < 1 or > RequestFiles.LargestMb)
+            {
+                errors.Add("validation.maxSizeMb", $"Must be between 1 and {RequestFiles.LargestMb}.");
+            }
+
+            if (validation.MaxFiles is < 1 or > 20)
+            {
+                errors.Add("validation.maxFiles", "Must be between 1 and 20.");
+            }
+        }
+        else
+        {
+            validation.Extensions = [];
+            validation.MaxSizeMb = null;
+            validation.MaxFiles = null;
+        }
+
         if (validation.Min > validation.Max)
         {
             errors.Add("validation.max", "Must not be less than min.");
