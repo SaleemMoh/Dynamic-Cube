@@ -19,13 +19,15 @@ internal sealed class ConfigScopes(AppsControlDbContext context, AccessResolver 
     {
         var account = await context.Users.AsNoTracking()
             .Where(u => u.IdpSubject == user || u.Code == user)
-            .Select(u => new { u.EntityCode, Apps = u.Roles.Where(r => r.Role!.IsActive).Select(r => r.Role!.BusinessApp).ToList() })
+            .Select(u => new { u.EntityCode, Roles = u.Roles.Where(r => r.Role!.IsActive).Select(r => new { r.Role!.BusinessApp, r.Role.SharedApps }).ToList() })
             .FirstOrDefaultAsync(cancellationToken);
         return account is null
             ? ConfigScope.Everything
             : new ConfigScope(
                 account.EntityCode is { } entity ? new HashSet<string>(StringComparer.Ordinal) { entity } : null,
-                account.Apps.Count > 0 && account.Apps.All(a => a is not null) ? account.Apps.Select(a => a!).ToHashSet(StringComparer.Ordinal) : null);
+                account.Roles.Count > 0 && account.Roles.All(r => r.BusinessApp is not null)
+                    ? account.Roles.SelectMany(r => r.SharedApps.Prepend(r.BusinessApp!)).ToHashSet(StringComparer.Ordinal)
+                    : null);
     }
 
     public async Task<(string? EntityCode, string? BusinessApp)> ResolveAsync(

@@ -98,6 +98,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
 
+                    b.PrimitiveCollection<List<string>>("SharedApps")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("shared_apps");
+
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
@@ -321,6 +326,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
 
+                    b.PrimitiveCollection<List<string>>("SharedApps")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("shared_apps");
+
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
@@ -403,6 +413,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
+
+                    b.PrimitiveCollection<List<string>>("SharedApps")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("shared_apps");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -505,6 +520,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
+
+                    b.PrimitiveCollection<List<string>>("SharedApps")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("shared_apps");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -700,6 +720,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
 
+                    b.PrimitiveCollection<List<string>>("SharedApps")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("shared_apps");
+
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
@@ -834,6 +859,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
 
+                    b.PrimitiveCollection<List<string>>("SharedApps")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("shared_apps");
+
                     b.Property<string>("UnifiedNumber")
                         .HasColumnType("text")
                         .HasColumnName("unified_number");
@@ -920,6 +950,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
+
+                    b.PrimitiveCollection<List<string>>("SharedApps")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("shared_apps");
 
                     b.Property<DateOnly>("ToDate")
                         .HasColumnType("date")
@@ -1022,6 +1057,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
+
+                    b.PrimitiveCollection<List<string>>("SharedApps")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("shared_apps");
 
                     b.Property<string>("SystemType")
                         .IsRequired()
@@ -1136,6 +1176,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
+
+                    b.PrimitiveCollection<List<string>>("SharedApps")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("shared_apps");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -1270,6 +1315,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)")
                         .HasColumnName("search_mode");
+
+                    b.PrimitiveCollection<List<string>>("SharedApps")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("shared_apps");
 
                     b.Property<string>("SourceType")
                         .IsRequired()
@@ -1513,6 +1563,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
 
+                    b.PrimitiveCollection<List<string>>("SharedApps")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("shared_apps");
+
                     b.Property<string>("Target")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)")
@@ -1622,6 +1677,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
 
+                    b.PrimitiveCollection<List<string>>("SharedApps")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("shared_apps");
+
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
@@ -1730,6 +1790,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
 
+                    b.PrimitiveCollection<List<string>>("SharedApps")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("shared_apps");
+
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
@@ -1829,6 +1894,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
 
+                    b.PrimitiveCollection<List<string>>("SharedApps")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("shared_apps");
+
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
@@ -1907,6 +1977,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
+
+                    b.PrimitiveCollection<List<string>>("SharedApps")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("shared_apps");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -2042,6 +2117,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
 
+                    b.PrimitiveCollection<List<string>>("SharedApps")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("shared_apps");
+
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
@@ -2135,6 +2215,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
+
+                    b.PrimitiveCollection<List<string>>("SharedApps")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("shared_apps");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -2267,6 +2352,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
 
+                    b.PrimitiveCollection<List<string>>("SharedApps")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("shared_apps");
+
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
@@ -2359,6 +2449,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
+
+                    b.PrimitiveCollection<List<string>>("SharedApps")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("shared_apps");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -2478,6 +2573,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
+
+                    b.PrimitiveCollection<List<string>>("SharedApps")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("shared_apps");
 
                     b.Property<string>("Status")
                         .IsRequired()

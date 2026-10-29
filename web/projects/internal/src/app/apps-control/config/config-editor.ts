@@ -154,7 +154,8 @@ export class ConfigEditor {
     const scope = scopeOf(type);
     if (scope !== 'none') {
       payload['entityCode'] = (value['entityCode'] as string | null) || '';
-      if (scope === 'full') payload['businessApp'] = (value['businessApp'] as string | null) || '';
+      // Several apps: the first is the row's own, the others share it.
+      if (scope === 'full') payload['businessApps'] = (value['businessApps'] as string[] | null) ?? [];
     }
 
     const code = this.entityCode(value);
@@ -209,7 +210,12 @@ export class ConfigEditor {
     }
     // A new row starts in the business app chosen in the header.
     value['entityCode'] = row ? (row['entityCode'] ?? null) : null;
-    value['businessApp'] = row ? (row['businessApp'] ?? null) : this.appContext.current();
+    const current = this.appContext.current();
+    value['businessApps'] = row
+      ? ((row['businessApps'] as string[] | undefined) ?? (row['businessApp'] ? [row['businessApp'] as string] : []))
+      : current
+        ? [current]
+        : [];
     for (const field of this.data.type.fields) {
       const current = row ? row[field.code] : (this.data.defaults?.[field.code] ?? field.defaultValue);
       switch (field.type) {
@@ -255,6 +261,7 @@ export class ConfigEditor {
     const level: FormField[] = this.scopeFields().map((f) => ({
       code: f.code,
       type: 'select',
+      multiple: f.multiple,
       label: f.label,
       hint: f.hint,
       options: withCurrentValues(options.get(f.code) ?? [], this.data.row?.[f.code]),
@@ -281,10 +288,14 @@ export class ConfigEditor {
       ref: 'apps.entity',
     };
     const app: ConfigField = {
-      code: 'businessApp',
+      code: 'businessApps',
       type: 'select',
-      label: { ar: 'تطبيق الأعمال', en: 'Business app' },
-      hint: { ar: 'فارغ: لكل تطبيقات الجهة. يُحدد معه الجهة تلقائيًا.', en: 'Empty: every app of the entity. Choosing one sets the entity.' },
+      multiple: true,
+      label: { ar: 'تطبيقات الأعمال', en: 'Business apps' },
+      hint: {
+        ar: 'فارغ: لكل تطبيقات الجهة. يمكن اختيار أكثر من تطبيق لنفس الجهة؛ يُحدد معه الجهة تلقائيًا.',
+        en: 'Empty: every app of the entity. Several apps of one entity may share a row; choosing sets the entity.',
+      },
       ref: 'apps.business-app',
     };
     return scope === 'entity' ? [entity] : [entity, app];

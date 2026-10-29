@@ -18,13 +18,20 @@ public sealed record ConfigScope(IReadOnlySet<string>? Entities, IReadOnlySet<st
 
     public bool IsEverything => Entities is null && Apps is null;
 
-    public bool CanSee(string? entityCode, string? businessApp) =>
+    /// <summary>A row is seen by staff of its entity and of any of its business apps (its own or a shared one).</summary>
+    public bool CanSee(string? entityCode, string? businessApp, IEnumerable<string>? sharedApps = null) =>
         (entityCode is null || Entities is null || Entities.Contains(entityCode))
-        && (businessApp is null || Apps is null || Apps.Contains(businessApp));
+        && (businessApp is null || Apps is null || Apps.Contains(businessApp) || (sharedApps?.Any(Apps.Contains) ?? false));
 
-    /// <summary>Whether the user may create or change rows at this level: system rows need every entity, entity rows every app of theirs.</summary>
-    public bool CanChange(string? entityCode, string? businessApp) =>
-        CanSee(entityCode, businessApp) && (entityCode is not null || Entities is null) && (businessApp is not null || Apps is null);
+    /// <summary>
+    /// Whether the user may create or change rows at this level: system rows need every entity, entity rows every app of
+    /// theirs, and a row of several apps all of them.
+    /// </summary>
+    public bool CanChange(string? entityCode, string? businessApp, IEnumerable<string>? sharedApps = null) =>
+        CanSee(entityCode, businessApp)
+        && (entityCode is not null || Entities is null)
+        && (businessApp is not null || Apps is null)
+        && (Apps is null || (sharedApps ?? []).All(Apps.Contains));
 
     public static ConfigLevel LevelOf(string? entityCode, string? businessApp) =>
         businessApp is not null ? ConfigLevel.App : entityCode is not null ? ConfigLevel.Entity : ConfigLevel.System;

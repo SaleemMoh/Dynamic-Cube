@@ -25,7 +25,7 @@ internal sealed class RequestAdminService(ServicesDbContext context, ServiceCata
         var query = context.Requests.AsNoTracking().Where(r => r.StatusCategory != StatusCategory.Draft);
         if (!string.IsNullOrWhiteSpace(app))
         {
-            var services = context.Services.Where(s => s.BusinessApp == app).Select(s => s.Code);
+            var services = context.Services.Where(s => s.BusinessApp == app || s.SharedApps.Contains(app)).Select(s => s.Code);
             query = query.Where(r => services.Contains(r.ServiceCode));
         }
 

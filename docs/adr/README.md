@@ -37,3 +37,4 @@ Status values: Proposed · Accepted · Superseded.
 | [0030](0030-org-structure-routing.md) | Tasks routed through the organization structure: a unit fixed, chosen by a rule or taken from a previous actor; levels up, a position in the unit, sub-units, climbing when empty | Accepted |
 | [0031](0031-entities-business-apps-levels.md) | Several entities and business apps; every configuration row is system, entity or app level; staff work within their entity and apps; app filters on lists | Accepted |
 | [0032](0032-lookups-in-class-domain.md) | Lookup-like configuration in Class/Domain: modules contribute classes; categories and party types moved there; workflow, document, notification, visit and service option lists became classes; runtime-heavy configuration stays in tables | Accepted |
+| [0033](0033-forms-not-json.md) | Structured forms instead of JSON entry (with a JSON view), rich text email bodies, employees of an org unit | Accepted |

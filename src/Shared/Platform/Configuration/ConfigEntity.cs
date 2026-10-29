@@ -34,6 +34,15 @@ public abstract class ConfigEntity : IAuditable, IHasAuditColumns
     /// <summary>The business app the row belongs to (app level); null for entity and system rows.</summary>
     public string? BusinessApp { get; set; }
 
+    /// <summary>
+    /// Other business apps of the same entity the row also serves (e.g. a document type used by two apps); empty for most
+    /// rows. Staff of any of its apps see the row; changing it needs all of them.
+    /// </summary>
+    public List<string> SharedApps { get; set; } = [];
+
+    /// <summary>Every business app of the row: its own first, then the shared ones.</summary>
+    public IEnumerable<string> AllApps => BusinessApp is null ? [] : [BusinessApp, .. SharedApps];
+
     public DateTimeOffset CreatedAt { get; set; }
 
     public string CreatedBy { get; set; } = string.Empty;

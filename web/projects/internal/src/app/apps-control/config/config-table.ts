@@ -84,7 +84,9 @@ import { ConfigRowAction, ConfigType, scopeOf } from './config-types';
         <td mat-cell *matCellDef="let row">
           @switch (level(row)) {
             @case ('APP') {
-              <span class="dc-level dc-level--app" [attr.data-level]="'APP'">{{ appContext.name(row.businessApp) | dcLocalize }}</span>
+              @for (app of appsOf(row); track app) {
+                <span class="dc-level dc-level--app" [attr.data-level]="'APP'">{{ appContext.name(app) | dcLocalize }}</span>
+              }
             }
             @case ('ENTITY') {
               <span class="dc-level dc-level--entity" [attr.data-level]="'ENTITY'">{{ 'businessApp.level.ENTITY' | dcTranslate }} · {{ row.entityCode }}</span>
@@ -218,6 +220,12 @@ export class ConfigTable {
     'actions',
   ]);
   protected readonly level = configLevel;
+
+  /** The row's business apps: its own and the ones it is shared with. */
+  protected appsOf(row: ConfigRow): string[] {
+    const apps = row['businessApps'] as string[] | undefined;
+    return apps?.length ? apps : row['businessApp'] ? [row['businessApp'] as string] : [];
+  }
   /** Rows ticked for export (by code); kept while searching. */
   protected readonly selected = signal(new Set<string>());
   protected readonly allSelected = computed(() => this.rows().length > 0 && this.rows().every((r) => this.selected().has(r.code)));

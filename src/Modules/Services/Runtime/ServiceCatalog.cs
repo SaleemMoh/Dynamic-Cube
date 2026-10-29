@@ -19,11 +19,11 @@ internal sealed class ServiceCatalog(ServicesDbContext context) : IServiceCatalo
         await LoadAsync(context.Services.OrderBy(s => s.Code), cancellationToken);
 
     public async Task<IReadOnlyList<string>> ServicesOfAppAsync(string businessApp, CancellationToken cancellationToken) =>
-        await context.Services.AsNoTracking().Where(s => s.BusinessApp == businessApp).Select(s => s.Code).ToListAsync(cancellationToken);
+        await context.Services.AsNoTracking().Where(s => s.BusinessApp == businessApp || s.SharedApps.Contains(businessApp)).Select(s => s.Code).ToListAsync(cancellationToken);
 
     public async Task<IReadOnlyList<Guid>> PartiesOfAppAsync(string businessApp, CancellationToken cancellationToken)
     {
-        var services = context.Services.Where(s => s.BusinessApp == businessApp).Select(s => s.Code);
+        var services = context.Services.Where(s => s.BusinessApp == businessApp || s.SharedApps.Contains(businessApp)).Select(s => s.Code);
         var requests = context.Requests.AsNoTracking().Where(r => services.Contains(r.ServiceCode));
         return await requests.Select(r => r.SubmitterPartyId).Union(requests.Select(r => r.BeneficiaryPartyId)).ToListAsync(cancellationToken);
     }
@@ -94,7 +94,7 @@ internal sealed class ServiceWorkflowProvisioner(IServiceProvider services) : IC
         {
             if (found.TryGetValue(code, out var s))
             {
-                await workflows.ScopeAsync(s.Code, s.EntityCode, s.BusinessApp, cancellationToken);
+                await workflows.ScopeAsync(s.Code, s.EntityCode, s.BusinessApp, cancellationToken, s.SharedApps);
             }
         }
     }

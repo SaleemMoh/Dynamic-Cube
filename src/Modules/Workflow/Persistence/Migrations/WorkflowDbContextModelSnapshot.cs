@@ -372,6 +372,11 @@ namespace DynamicCube.Modules.Workflow.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("service_code");
 
+                    b.PrimitiveCollection<List<string>>("SharedApps")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("shared_apps");
+
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
@@ -719,6 +724,11 @@ namespace DynamicCube.Modules.Workflow.Persistence.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
+
+                    b.PrimitiveCollection<List<string>>("SharedApps")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("shared_apps");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")

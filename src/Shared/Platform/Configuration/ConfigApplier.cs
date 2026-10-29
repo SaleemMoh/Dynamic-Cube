@@ -71,6 +71,12 @@ public abstract class ConfigPayload
     /// own entity and app; an empty string is no app.
     /// </summary>
     public string? BusinessApp { get; set; }
+
+    /// <summary>
+    /// Every business app of the row when it serves several (the first is its own, the others shared); it replaces
+    /// <see cref="BusinessApp"/> when given, and an empty list is no app. Null keeps the shared apps.
+    /// </summary>
+    public List<string>? BusinessApps { get; set; }
 }
 
 /// <summary>
@@ -162,7 +168,7 @@ public abstract class ConfigApplier<TContext, TRefs, TEntity, TPayload>(TContext
 
         // Staff change only the rows of their entities and business apps.
         var scope = await ScopeAsync(context, cancellationToken);
-        if (existing is not null && !scope.CanChange(existing.EntityCode, existing.BusinessApp))
+        if (existing is not null && !scope.CanChange(existing.EntityCode, existing.BusinessApp, existing.SharedApps))
         {
             errors.Add("code", $"'{entityCode}' belongs to an entity or business app outside yours.");
         }
@@ -179,7 +185,7 @@ public abstract class ConfigApplier<TContext, TRefs, TEntity, TPayload>(TContext
         // Validate against a detached copy so nothing tracked is modified.
         var probe = new TEntity();
         await ApplyFieldsAsync(probe, entityCode, body!, CreateRefs(context, changeSet), errors, existing, scope, cancellationToken);
-        if (!errors.HasErrors && !scope.CanChange(probe.EntityCode, probe.BusinessApp))
+        if (!errors.HasErrors && !scope.CanChange(probe.EntityCode, probe.BusinessApp, probe.SharedApps))
         {
             errors.Add(
                 probe.BusinessApp is null ? "entityCode" : "businessApp",
@@ -244,7 +250,7 @@ public abstract class ConfigApplier<TContext, TRefs, TEntity, TPayload>(TContext
         var scope = await ScopeAsync(context, cancellationToken);
         var rows = await ListQuery(context, parent).AsNoTracking().ToListAsync(cancellationToken);
         var result = new List<JsonElement>(rows.Count);
-        foreach (var row in rows.Where(r => scope.CanSee(r.EntityCode, r.BusinessApp) && (businessApp is null || InApp(r, businessApp))))
+        foreach (var row in rows.Where(r => scope.CanSee(r.EntityCode, r.BusinessApp, r.SharedApps) && (businessApp is null || InApp(r, businessApp))))
         {
             result.Add(JsonSerializer.SerializeToElement(await SnapshotAsync(context, row, cancellationToken), ChangeJson.Options));
         }
@@ -255,7 +261,7 @@ public abstract class ConfigApplier<TContext, TRefs, TEntity, TPayload>(TContext
     public async Task<JsonElement?> GetAsync(string entityCode, CancellationToken cancellationToken)
     {
         var entity = await FindAsync(context, entityCode, cancellationToken);
-        if (entity is not null && !(await ScopeAsync(context, cancellationToken)).CanSee(entity.EntityCode, entity.BusinessApp))
+        if (entity is not null && !(await ScopeAsync(context, cancellationToken)).CanSee(entity.EntityCode, entity.BusinessApp, entity.SharedApps))
         {
             return null;
         }
@@ -266,7 +272,7 @@ public abstract class ConfigApplier<TContext, TRefs, TEntity, TPayload>(TContext
     public async Task<IReadOnlyList<JsonElement>> ExportAsync(CancellationToken cancellationToken)
     {
         var scope = await ScopeAsync(context, cancellationToken);
-        var rows = (await ExportQuery(context).AsNoTracking().ToListAsync(cancellationToken)).Where(r => scope.CanSee(r.EntityCode, r.BusinessApp)).ToList();
+        var rows = (await ExportQuery(context).AsNoTracking().ToListAsync(cancellationToken)).Where(r => scope.CanSee(r.EntityCode, r.BusinessApp, r.SharedApps)).ToList();
         var result = new List<JsonElement>(rows.Count);
         foreach (var row in ParentsFirst(rows))
         {
@@ -322,8 +328,11 @@ public abstract class ConfigApplier<TContext, TRefs, TEntity, TPayload>(TContext
 
     protected virtual Task BeforeDeleteAsync(TContext context, TEntity entity, CancellationToken cancellationToken) => Task.CompletedTask;
 
-    /// <summary>Whether a row is listed under a business app: its own app, or none. Types linked to apps otherwise (users through their roles) override this.</summary>
-    protected virtual bool InApp(TEntity entity, string businessApp) => entity.BusinessApp is null || entity.BusinessApp == businessApp;
+    /// <summary>
+    /// Whether a row is listed under a business app: its own app, one it is shared with, or none. Types linked to apps
+    /// otherwise (users through their roles) override this.
+    /// </summary>
+    protected virtual bool InApp(TEntity entity, string businessApp) => entity.BusinessApp is null || entity.BusinessApp == businessApp || entity.SharedApps.Contains(businessApp);
 
     /// <summary>The change-item key of a row; composite keys override this.</summary>
     protected virtual string EntityCodeOf(TEntity entity) => entity.Code;
@@ -348,20 +357,47 @@ public abstract class ConfigApplier<TContext, TRefs, TEntity, TPayload>(TContext
         // each); an empty string sets it to none.
         var scopes = ScopesOf(refs.Context);
         string? entityCodeIn, appIn;
-        if (payload.EntityCode is null && payload.BusinessApp is null)
+        List<string> sharedIn;
+        if (payload.EntityCode is null && payload.BusinessApp is null && payload.BusinessApps is null)
         {
             entityCodeIn = existing is not null ? existing.EntityCode : maker.Entities is { Count: 1 } entities ? entities.First() : null;
             appIn = existing is not null ? existing.BusinessApp : maker.Apps is { Count: 1 } apps ? apps.First() : null;
+            sharedIn = existing?.SharedApps ?? [];
         }
         else
         {
             entityCodeIn = string.IsNullOrWhiteSpace(payload.EntityCode) ? null : payload.EntityCode.Trim();
-            appIn = string.IsNullOrWhiteSpace(payload.BusinessApp) ? null : payload.BusinessApp.Trim();
+            if (payload.BusinessApps is not null)
+            {
+                // Several apps: the first is the row's own, the others shared.
+                var apps = payload.BusinessApps.Where(a => !string.IsNullOrWhiteSpace(a)).Select(a => a.Trim()).Distinct(StringComparer.Ordinal).ToList();
+                appIn = apps.FirstOrDefault();
+                sharedIn = [.. apps.Skip(1)];
+            }
+            else
+            {
+                appIn = string.IsNullOrWhiteSpace(payload.BusinessApp) ? null : payload.BusinessApp.Trim();
+                sharedIn = appIn is null ? [] : [.. (existing?.SharedApps ?? []).Where(a => a != appIn)];
+            }
         }
 
         (entity.EntityCode, entity.BusinessApp) = scopes is not null
             ? await scopes.ResolveAsync(entityCodeIn, appIn, errors, cancellationToken, refs.Draft)
             : (entityCodeIn, appIn);
+        // Shared apps must exist and belong to the row's entity.
+        foreach (var shared in sharedIn)
+        {
+            if (scopes is not null && entity.BusinessApp is not null)
+            {
+                var (sharedEntity, _) = await scopes.ResolveAsync(entity.EntityCode, shared, errors, cancellationToken, refs.Draft);
+                if (!errors.HasErrors && sharedEntity != entity.EntityCode)
+                {
+                    errors.Add("businessApps", $"Business app '{shared}' belongs to another entity.");
+                }
+            }
+        }
+
+        entity.SharedApps = entity.BusinessApp is null ? [] : sharedIn;
         await ApplyAsync(entity, payload, refs, errors, existing, cancellationToken);
     }
 
@@ -403,6 +439,7 @@ public abstract class ConfigApplier<TContext, TRefs, TEntity, TPayload>(TContext
         payload.Owner = entity.Owner;
         payload.EntityCode = entity.EntityCode;
         payload.BusinessApp = entity.BusinessApp;
+        payload.BusinessApps = [.. entity.AllApps];
         return payload;
     }
 

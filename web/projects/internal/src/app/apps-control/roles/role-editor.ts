@@ -107,8 +107,13 @@ const CODE = /^[A-Za-z][A-Za-z0-9_-]{0,99}$/;
           <div>
             <label class="dc-field-label" for="role-business-app">{{ 'roles.businessApp' | dcTranslate }}</label>
             <mat-form-field subscriptSizing="dynamic">
-              <mat-select id="role-business-app" formControlName="businessApp" data-testid="role-business-app">
-                <mat-option [value]="null">{{ 'roles.allBusinessApps' | dcTranslate }}</mat-option>
+              <mat-select
+                id="role-business-app"
+                formControlName="businessApps"
+                multiple
+                [placeholder]="'roles.allBusinessApps' | dcTranslate"
+                data-testid="role-business-app"
+              >
                 @for (app of data.businessApps; track app.code) {
                   <mat-option [value]="app.code">{{ { ar: app.nameAr, en: app.nameEn } | dcLocalize }}</mat-option>
                 }
@@ -452,8 +457,14 @@ export class RoleEditor {
     nameAr: new FormControl(this.data.role?.nameAr ?? '', { nonNullable: true, validators: Validators.required }),
     code: new FormControl(this.data.role?.code ?? '', { nonNullable: true, validators: [Validators.required, Validators.pattern(CODE)] }),
     appCode: new FormControl<string | null>(this.data.role?.appCode ?? null),
-    businessApp: new FormControl<string | null>(
-      this.data.role ? ((this.data.role['businessApp'] as string | null) ?? null) : (this.data.defaultBusinessApp ?? null),
+    // The role's business apps (none: every app); a role may serve several apps of one entity.
+    businessApps: new FormControl<string[]>(
+      this.data.role
+        ? ((this.data.role['businessApps'] as string[] | undefined) ?? (this.data.role['businessApp'] ? [this.data.role['businessApp'] as string] : []))
+        : this.data.defaultBusinessApp
+          ? [this.data.defaultBusinessApp]
+          : [],
+      { nonNullable: true },
     ),
     referenceCode: new FormControl<string | null>(this.data.role?.referenceCode ?? null),
     isActive: new FormControl(this.data.role?.isActive ?? true, { nonNullable: true }),
@@ -581,9 +592,9 @@ export class RoleEditor {
       nameEn: value.nameEn.trim(),
       isActive: value.isActive,
       appCode: value.appCode,
-      // The role's business app ('' for none, so the server does not keep the old one); its entity follows the app.
-      businessApp: value.businessApp ?? '',
-      entityCode: value.businessApp ? null : ((this.data.role?.['entityCode'] as string | null) ?? ''),
+      // The role's business apps (empty for none, so the server does not keep the old ones); its entity follows the apps.
+      businessApps: value.businessApps,
+      entityCode: value.businessApps.length ? null : ((this.data.role?.['entityCode'] as string | null) ?? ''),
       referenceCode: value.referenceCode?.trim() || null,
       privileges: privilegesOf(this.permissions(), this.data.role?.privileges ?? []),
       grants,

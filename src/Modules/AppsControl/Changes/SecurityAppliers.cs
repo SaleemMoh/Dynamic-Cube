@@ -338,7 +338,8 @@ internal sealed class UserApplier(AppsControlDbContext db) : ConfigApplier<UserA
 
     /// <summary>A user is listed under the business app they belong to, or the apps of their roles.</summary>
     protected override bool InApp(UserAccount entity, string businessApp) =>
-        entity.BusinessApp == businessApp || entity.Roles.Any(r => r.Role?.BusinessApp == businessApp)
+        entity.BusinessApp == businessApp || entity.SharedApps.Contains(businessApp)
+        || entity.Roles.Any(r => r.Role?.BusinessApp == businessApp || (r.Role?.SharedApps.Contains(businessApp) ?? false))
         || (entity.BusinessApp is null && entity.Roles.All(r => r.Role?.BusinessApp is null));
 
     /// <summary>With roles and placements: the org structure lists a unit's employees from it.</summary>

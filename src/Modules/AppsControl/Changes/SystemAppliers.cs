@@ -375,7 +375,8 @@ internal sealed class BusinessAppApplier(AppsControlDbContext db) : ConfigApplie
 
     protected override async Task BeforeDeleteAsync(AppsControlDbContext context, BusinessApplication entity, CancellationToken cancellationToken)
     {
-        if (await context.Roles.AnyAsync(r => r.BusinessApp == entity.Code, cancellationToken) || await context.Users.AnyAsync(u => u.BusinessApp == entity.Code, cancellationToken))
+        if (await context.Roles.AnyAsync(r => r.BusinessApp == entity.Code || r.SharedApps.Contains(entity.Code), cancellationToken)
+            || await context.Users.AnyAsync(u => u.BusinessApp == entity.Code || u.SharedApps.Contains(entity.Code), cancellationToken))
         {
             throw new DynamicCube.Platform.ChangeSets.ChangeSetException($"Roles or users still belong to business app {entity.Code}.");
         }

@@ -27,6 +27,8 @@ public static class ConfigModelBuilderExtensions
             b.Property(e => e.UpdatedBy).HasMaxLength(128);
             b.Property(e => e.EntityCode).HasMaxLength(100);
             b.Property(e => e.BusinessApp).HasMaxLength(100);
+            b.Property(e => e.SharedApps).HasColumnType("text[]");
+            b.Ignore(e => e.AllApps);
             b.Property<uint>("RowVersion").IsRowVersion();
             configure?.Invoke(b);
         });

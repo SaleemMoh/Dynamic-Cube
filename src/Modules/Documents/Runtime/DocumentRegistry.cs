@@ -96,7 +96,7 @@ internal sealed class DocumentRegistry(
         var query = context.Documents.AsNoTracking();
         if (!string.IsNullOrWhiteSpace(app))
         {
-            var types = context.DocumentTypes.Where(t => t.BusinessApp == app).Select(t => t.Code);
+            var types = context.DocumentTypes.Where(t => t.BusinessApp == app || t.SharedApps.Contains(app)).Select(t => t.Code);
             query = query.Where(d => types.Contains(d.TypeCode));
         }
 

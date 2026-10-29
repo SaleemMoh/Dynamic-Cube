@@ -78,14 +78,14 @@ public sealed partial class AccessResolver(
         var roles = await context.UserRoles.AsNoTracking()
             .Where(r => r.UserId == user.Id && r.Role!.IsActive && (r.Role.AppId == null || r.Role.AppId == app)
                 && (r.EffectiveFrom == null || r.EffectiveFrom <= today) && (r.EffectiveTo == null || r.EffectiveTo >= today))
-            .Select(r => new { r.RoleId, r.Role!.Code, r.Role.BusinessApp })
+            .Select(r => new { r.RoleId, r.Role!.Code, r.Role.BusinessApp, r.Role.SharedApps })
             .ToListAsync(cancellationToken);
         var roleIds = roles.Select(r => r.RoleId).Distinct().ToList();
 
-        // The user's entity, and the business apps of their roles (every app when a role is not tied to one).
+        // The user's entity, and the business apps of their roles, shared ones included (every app when a role is not tied to one).
         var scope = new ConfigScope(
             user.EntityCode is { } entity ? new HashSet<string>(StringComparer.Ordinal) { entity } : null,
-            roles.Count > 0 && roles.All(r => r.BusinessApp is not null) ? roles.Select(r => r.BusinessApp!).ToHashSet(StringComparer.Ordinal) : null);
+            roles.Count > 0 && roles.All(r => r.BusinessApp is not null) ? roles.SelectMany(r => r.SharedApps.Prepend(r.BusinessApp!)).ToHashSet(StringComparer.Ordinal) : null);
 
         var privilegeRows = await context.Privileges.AsNoTracking()
             .Where(p => roleIds.Contains(p.RoleId) && p.Resource!.IsActive)

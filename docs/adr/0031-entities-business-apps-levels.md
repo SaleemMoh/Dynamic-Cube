@@ -44,3 +44,13 @@ to a business line. The "apps" that existed are channels (internal system, porta
 - Builders that save rows without a level (designer versions, service builder versions) keep the parent's visibility
   in practice: a version is listed under its service or workflow, and an app-limited maker's rows go to their app.
 - Privileges stay global: the level narrows what is seen and changed, not which screens open.
+
+## Update: rows of several business apps
+Some configuration serves more than one business app of the same entity (a role for staff of two apps, a document type
+issued by two apps). A row keeps its own app (`business_app`) and may list other apps of its entity it is shared with
+(`shared_apps`, a `text[]` column on every configuration table). Payloads carry `businessApps` (the row's app first,
+then the shared ones); `businessApp` alone still sets the row's own app and keeps its shared apps. A shared row is
+listed under each of its apps and seen by staff of any of them; changing it needs all of them. A role of several apps
+gives its holders all of them, and runtime app filters (services, requests, tasks, documents, parties) include shared
+rows. The editor's *Level* section and the role editor choose several apps.
+

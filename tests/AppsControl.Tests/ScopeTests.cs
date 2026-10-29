@@ -137,4 +137,37 @@ public sealed class ScopeTests(AppsControlFixture fixture) : IAsyncLifetime
         row.GetProperty("businessApp").GetString().ShouldBe(app);
         row.GetProperty("entityCode").GetString().ShouldBe("ENTITY");
     }
+
+    [Fact]
+    public async Task A_row_may_serve_several_business_apps()
+    {
+        var (appA, appB, appC) = (Harness.Unique("APP_SA"), Harness.Unique("APP_SB"), Harness.Unique("APP_SC"));
+        var (onlyA, both) = (Harness.Unique("CLERK_A"), Harness.Unique("CLERK_AB"));
+        var (clerkA, clerkAb) = (Harness.Unique("clerka").ToLowerInvariant(), Harness.Unique("clerkab").ToLowerInvariant());
+        await _harness.PublishAsync(AppsControlAreas.System, App(appA), App(appB), App(appC));
+        var privileges = new[] { new { resourceCode = AppsControlResources.Classes, actions = new[] { "VIEW", "CREATE", "EDIT" } } };
+        await _harness.PublishAsync(
+            AppsControlAreas.Security,
+            new Change(AppsControlChangeTypes.Role, onlyA, ChangeOperation.Create, new { nameAr = "أ", nameEn = "A", businessApp = appA, privileges }),
+            new Change(AppsControlChangeTypes.Role, both, ChangeOperation.Create, new { nameAr = "أب", nameEn = "AB", businessApps = new[] { appA, appB }, privileges }),
+            new Change(AppsControlChangeTypes.User, clerkA, ChangeOperation.Create, new { nameAr = "أ", nameEn = "A", roles = new[] { new { roleCode = onlyA } } }),
+            new Change(AppsControlChangeTypes.User, clerkAb, ChangeOperation.Create, new { nameAr = "أب", nameEn = "AB", roles = new[] { new { roleCode = both } } }));
+
+        // A role of two apps gives both; a class shared by A and B is listed under each, not under C.
+        (await _harness.AccessAsync(clerkAb)).Scope.Apps!.ShouldBe([appA, appB], ignoreOrder: true);
+        var shared = Harness.Unique("CLS_SHARED_AB");
+        await _harness.PublishAsync(
+            AppsControlAreas.Lookups,
+            new Change(AppsControlChangeTypes.Class, shared, ChangeOperation.Create, new { nameAr = "مشترك", nameEn = "Shared", attributes = Array.Empty<object>(), businessApps = new[] { appA, appB } }));
+        var row = (await ListAsync("admin", AppsControlChangeTypes.Class, appB)).Single(c => c.GetProperty("code").GetString() == shared);
+        row.GetProperty("businessApp").GetString().ShouldBe(appA);
+        row.GetProperty("businessApps").EnumerateArray().Select(a => a.GetString()).ShouldBe([appA, appB]);
+        (await ListAsync("admin", AppsControlChangeTypes.Class, appC)).ShouldNotContain(c => c.GetProperty("code").GetString() == shared);
+
+        // Staff of A see it; changing it needs both apps.
+        (await ListAsync(clerkA, AppsControlChangeTypes.Class)).ShouldContain(c => c.GetProperty("code").GetString() == shared);
+        var update = new Change(AppsControlChangeTypes.Class, shared, ChangeOperation.Update, new { nameAr = "مشترك ٢", nameEn = "Shared 2", attributes = Array.Empty<object>() });
+        (await Should.ThrowAsync<ChangeValidationException>(() => AddAsync(clerkA, AppsControlAreas.Lookups, update))).Errors.Keys.ShouldContain("code");
+        await AddAsync(clerkAb, AppsControlAreas.Lookups, update);
+    }
 }
