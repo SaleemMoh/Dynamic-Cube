@@ -1,13 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  computed,
-  inject,
-  input,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
@@ -30,50 +22,40 @@ import { MenuGroupNode, MenuNode } from './apps-control.models';
   template: `
     <nav class="dc-nav">
       @for (group of groups(); track group.code) {
-        @if (group.code) {
-          <button
-            type="button"
-            class="dc-nav__group"
-            [attr.aria-expanded]="!collapsed().has(group.code)"
-            [attr.aria-controls]="'dc-nav-' + group.code"
-            [attr.data-nav-group]="group.code"
-            (click)="toggle(group.code)"
-          >
-            @if (group.icon) {
-              <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">{{
-                group.icon
-              }}</mat-icon>
-            }
-            <span class="dc-nav__group-name">{{
-              { ar: group.nameAr, en: group.nameEn } | dcLocalize
-            }}</span>
-            <mat-icon class="dc-nav__chevron" fontSet="material-symbols-outlined" aria-hidden="true"
-              >expand_more</mat-icon
+        <div class="dc-nav__section" [class.dc-nav__section--grouped]="!!group.code">
+          @if (group.code) {
+            <button
+              type="button"
+              class="dc-nav__group"
+              [attr.aria-expanded]="!collapsed().has(group.code)"
+              [attr.aria-controls]="'dc-nav-' + group.code"
+              [attr.data-nav-group]="group.code"
+              (click)="toggle(group.code)"
             >
-          </button>
-        }
-        @if (!group.code || !collapsed().has(group.code)) {
-          <mat-nav-list [id]="'dc-nav-' + group.code">
-            @for (item of group.items; track item.code) {
-              <ng-container *ngTemplateOutlet="node; context: { $implicit: item }" />
-            }
-          </mat-nav-list>
-        }
+              @if (group.icon) {
+                <span class="dc-nav__group-icon" aria-hidden="true"
+                  ><mat-icon fontSet="material-symbols-outlined">{{ group.icon }}</mat-icon></span
+                >
+              }
+              <span class="dc-nav__group-name">{{ { ar: group.nameAr, en: group.nameEn } | dcLocalize }}</span>
+              <mat-icon class="dc-nav__chevron" fontSet="material-symbols-outlined" aria-hidden="true">expand_more</mat-icon>
+            </button>
+          }
+          @if (!group.code || !collapsed().has(group.code)) {
+            <mat-nav-list [id]="'dc-nav-' + group.code" [class.dc-nav__items]="!!group.code">
+              @for (item of group.items; track item.code) {
+                <ng-container *ngTemplateOutlet="node; context: { $implicit: item }" />
+              }
+            </mat-nav-list>
+          }
+        </div>
       }
     </nav>
 
     <ng-template #node let-item>
       @if (item.itemType === 'URL') {
-        <a
-          mat-list-item
-          [href]="item.target"
-          target="_blank"
-          rel="noopener"
-          [attr.data-menu]="item.code"
-        >
-          <mat-icon matListItemIcon fontSet="material-symbols-outlined">{{
-            item.icon ?? 'open_in_new'
-          }}</mat-icon>
+        <a mat-list-item [href]="item.target" target="_blank" rel="noopener" [attr.data-menu]="item.code">
+          <mat-icon matListItemIcon fontSet="material-symbols-outlined">{{ item.icon ?? 'open_in_new' }}</mat-icon>
           <span matListItemTitle>{{ label(item) | dcLocalize }}</span>
         </a>
       } @else if (item.itemType === 'GROUP') {
@@ -89,15 +71,18 @@ import { MenuGroupNode, MenuNode } from './apps-control.models';
           [attr.aria-current]="item.code === activeCode() ? 'page' : null"
           [attr.data-menu]="item.code"
         >
-          <mat-icon matListItemIcon fontSet="material-symbols-outlined">{{
-            item.icon ?? 'chevron_left'
-          }}</mat-icon>
+          <mat-icon matListItemIcon fontSet="material-symbols-outlined">{{ item.icon ?? 'chevron_left' }}</mat-icon>
           <span matListItemTitle>{{ label(item) | dcLocalize }}</span>
         </a>
       }
     </ng-template>
   `,
   styles: `
+    /* A section: its title reads as a heading (bold, icon tile, divider above); its items sit indented under it
+       along a guide line, in a lighter weight, so the two levels are told apart at a glance. */
+    .dc-nav__section--grouped + .dc-nav__section--grouped {
+      border-top: 1px solid var(--dc-nav-divider, var(--dga-gray-100));
+    }
     .dc-nav__group {
       display: flex;
       align-items: center;
@@ -110,9 +95,36 @@ import { MenuGroupNode, MenuNode } from './apps-control.models';
       background: none;
       font: var(--mat-sys-title-small);
       font-size: var(--dc-nav-group-text-size, 14px);
-      color: var(--dc-nav-group-color, var(--mat-sys-on-surface-variant));
+      font-weight: 700;
+      color: var(--dc-nav-group-color, var(--mat-sys-on-surface));
       text-align: start;
       cursor: pointer;
+    }
+    .dc-nav__group-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: var(--dc-nav-group-icon-bg, var(--dga-gray-100));
+      color: var(--dc-nav-group-icon-color, var(--dga-gray-700));
+    }
+    .dc-nav__group-icon mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+    .dc-nav__items {
+      margin-inline-start: var(--dc-nav-items-indent, 22px);
+      padding-inline-start: 4px;
+      border-inline-start: 2px solid var(--dc-nav-guide, var(--dga-gray-200));
+      --mat-list-list-item-label-text-color: var(--dc-nav-item-color, var(--dga-gray-700));
+      --mat-list-list-item-leading-icon-color: var(--dc-nav-item-icon-color, var(--dga-gray-500));
+    }
+    .dc-nav__items .mat-mdc-list-item {
+      margin-inline: 4px 8px;
     }
     .dc-nav__group:hover {
       background: var(--dc-nav-hover-bg, var(--dga-gray-100));
@@ -193,10 +205,7 @@ export class NavMenu implements OnInit {
     const visit = (items: MenuNode[]) => {
       for (const item of items) {
         const target = item.itemType === 'SCREEN' ? (item.target ?? '').split(/[?#]/)[0] : '';
-        if (
-          target.startsWith('/') &&
-          (path === target || path.startsWith(target.endsWith('/') ? target : target + '/'))
-        ) {
+        if (target.startsWith('/') && (path === target || path.startsWith(target.endsWith('/') ? target : target + '/'))) {
           if (!best || target.length > (best.target ?? '').length) best = item;
         }
         visit(item.children ?? []);

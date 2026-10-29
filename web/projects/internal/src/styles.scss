@@ -48,11 +48,13 @@
   --dc-nav-edge-inset: 0;
   --dc-nav-item-radius: var(--shell-radius);
   --dc-nav-hover-bg: var(--dga-gray-50);
-  --dc-nav-group-color: var(--dga-gray-500);
+  --dc-nav-group-color: var(--dga-gray-900);
+  --dc-nav-group-icon-bg: var(--dynamic-cube-gold-50);
+  --dc-nav-group-icon-color: var(--dynamic-cube-gold-700);
   --dc-nav-item-height: 38px;
   --dc-nav-item-text-size: 14px;
   --dc-nav-item-icon-size: 20px;
-  --dc-nav-group-text-size: 13px;
+  --dc-nav-group-text-size: 14px;
   --dc-nav-group-margin: 10px 8px 2px;
 }
 
