@@ -63,8 +63,8 @@ interface Accessibility {
   styles: `
     .dc-help {
       position: fixed;
-      inset-inline-end: 20px;
-      bottom: 20px;
+      inset-inline-start: 24px;
+      bottom: 24px;
       z-index: 100;
       display: flex;
       flex-direction: column;
@@ -74,8 +74,8 @@ interface Accessibility {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 52px;
-      height: 52px;
+      width: 64px;
+      height: 64px;
       border: none;
       border-radius: 50%;
       background: var(--dga-green-700);

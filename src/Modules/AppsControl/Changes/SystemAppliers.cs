@@ -107,6 +107,11 @@ public sealed class EntityPayload : ConfigPayload
 
     /// <summary>Id of an uploaded branding asset shown beside the sign-in form.</summary>
     public string? LoginImageKey { get; set; }
+
+    /// <summary>Id of an uploaded branding asset behind the portal's page titles.</summary>
+    public string? PortalHeroImageKey { get; set; }
+
+    public EntityContact? Contact { get; set; }
 }
 
 internal sealed partial class EntityApplier(AppsControlDbContext db) : ConfigApplier<GovernmentEntity, EntityPayload>(db)
@@ -141,6 +146,8 @@ internal sealed partial class EntityApplier(AppsControlDbContext db) : ConfigApp
         entity.LogoFileKey = await AssetAsync(refs, payload.LogoFileKey, "logoFileKey", errors, cancellationToken);
         entity.FooterImageKey = await AssetAsync(refs, payload.FooterImageKey, "footerImageKey", errors, cancellationToken);
         entity.LoginImageKey = await AssetAsync(refs, payload.LoginImageKey, "loginImageKey", errors, cancellationToken);
+        entity.PortalHeroImageKey = await AssetAsync(refs, payload.PortalHeroImageKey, "portalHeroImageKey", errors, cancellationToken);
+        entity.Contact = Contact(payload.Contact ?? new EntityContact(), errors);
         entity.InternalThemeColor = Color(payload.InternalThemeColor, "internalThemeColor", errors);
         entity.PortalThemeColor = Color(payload.PortalThemeColor, "portalThemeColor", errors);
 
@@ -167,6 +174,71 @@ internal sealed partial class EntityApplier(AppsControlDbContext db) : ConfigApp
     }
 
     private const int MaxFooterLinks = 12;
+
+    private const int MaxSocialLinks = 8;
+
+    private static readonly string[] Networks = ["X", "LINKEDIN", "INSTAGRAM", "YOUTUBE", "FACEBOOK", "SNAPCHAT", "TIKTOK", "WHATSAPP"];
+
+    private static EntityContact Contact(EntityContact contact, ValidationErrors errors)
+    {
+        static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        var result = new EntityContact
+        {
+            Phone = Clean(contact.Phone),
+            Email = Clean(contact.Email),
+            AddressAr = Clean(contact.AddressAr),
+            AddressEn = Clean(contact.AddressEn),
+            MapUrl = Clean(contact.MapUrl),
+        };
+        if (result.Phone is not null && !PhoneNumber().IsMatch(result.Phone))
+        {
+            errors.Add("contact.phone", "Use digits, spaces, + ( ) and -, 3 to 20 characters.");
+        }
+
+        if (result.Email is not null && (result.Email.Length > 200 || !EmailAddress().IsMatch(result.Email)))
+        {
+            errors.Add("contact.email", "Use an email address like info@example.gov.sa.");
+        }
+
+        errors.MaxLength("contact.addressAr", result.AddressAr, 200);
+        errors.MaxLength("contact.addressEn", result.AddressEn, 200);
+        if (result.MapUrl is not null && !IsWebAddress(result.MapUrl))
+        {
+            errors.Add("contact.mapUrl", "Use a web address (https://…).");
+        }
+
+        if (contact.Social.Count > MaxSocialLinks)
+        {
+            errors.Add("contact.social", $"At most {MaxSocialLinks} accounts.");
+        }
+
+        foreach (var (link, i) in contact.Social.Select((l, i) => (l, i)))
+        {
+            var network = link.Network?.Trim().ToUpperInvariant() ?? string.Empty;
+            if (!Networks.Contains(network))
+            {
+                errors.Add($"contact.social[{i}].network", $"Use one of {string.Join(", ", Networks)}.");
+            }
+
+            if (!IsWebAddress(link.Url))
+            {
+                errors.Add($"contact.social[{i}].url", "Use a web address (https://…).");
+            }
+
+            result.Social.Add(new SocialLink { Network = network, Url = link.Url?.Trim() ?? string.Empty });
+        }
+
+        return result;
+    }
+
+    private static bool IsWebAddress(string? url) =>
+        !string.IsNullOrWhiteSpace(url) && url.Length <= 500 && Uri.TryCreate(url.Trim(), UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp);
+
+    [System.Text.RegularExpressions.GeneratedRegex(@"^[0-9+() \-]{3,20}$")]
+    private static partial System.Text.RegularExpressions.Regex PhoneNumber();
+
+    [System.Text.RegularExpressions.GeneratedRegex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$")]
+    private static partial System.Text.RegularExpressions.Regex EmailAddress();
 
     /// <summary>An uploaded image's id, or null; reported when it matches no upload.</summary>
     private static async Task<string?> AssetAsync(RefResolver refs, string? key, string field, ValidationErrors errors, CancellationToken cancellationToken)
@@ -232,6 +304,8 @@ internal sealed partial class EntityApplier(AppsControlDbContext db) : ConfigApp
             PortalThemeColor = entity.PortalThemeColor,
             FooterImageKey = entity.FooterImageKey,
             LoginImageKey = entity.LoginImageKey,
+            PortalHeroImageKey = entity.PortalHeroImageKey,
+            Contact = entity.Contact,
         });
 
     protected override Task BeforeDeleteAsync(AppsControlDbContext context, GovernmentEntity entity, CancellationToken cancellationToken) =>

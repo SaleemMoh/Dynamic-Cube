@@ -8,6 +8,7 @@ using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Tests.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 
 namespace DynamicCube.Modules.Content.Tests;
@@ -87,5 +88,49 @@ public sealed class ContentTests(DatabaseFixture fixture) : IAsyncLifetime
         var faq = await Should.ThrowAsync<ChangeValidationException>(() => host.PublishAsync(ContentChangeTypes.Area,
             new Change(ContentChangeTypes.Faq, TestHost.Unique("BAD"), ChangeOperation.Create, new FaqPayload { NameAr = "س", NameEn = "S", AnswerAr = "ج", TopicAr = "موضوع", ServiceCode = "not a code" })));
         faq.Errors.Keys.Order().ShouldBe(["answerEn", "serviceCode", "topicEn"]);
+    }
+
+    [Fact]
+    public async Task Visitors_answer_whether_a_page_helped_once_and_may_change_their_answer()
+    {
+        fixture.RequireConnectionString();
+        var ct = TestContext.Current.CancellationToken;
+        using var client = _factory.CreateClient();
+        var page = $"service:{TestHost.Unique("FB").ToLowerInvariant()}";
+        var visitor = Guid.NewGuid();
+
+        (await client.PostAsJsonAsync("/api/content/v1/feedback", new { page, helpful = true, visitor }, ct)).EnsureSuccessStatusCode();
+        await client.PostAsJsonAsync("/api/content/v1/feedback", new { page, helpful = false, visitor = Guid.NewGuid() }, ct);
+        var changed = await client.PostAsJsonAsync("/api/content/v1/feedback", new { page, helpful = false, visitor }, ct);
+        var summary = await changed.Content.ReadFromJsonAsync<FeedbackSummary>(ct);
+
+        summary!.Total.ShouldBe(2, "one answer per visitor");
+        summary.Helpful.ShouldBe(0);
+        summary.Mine.ShouldBe(false);
+        var anonymous = await client.GetFromJsonAsync<FeedbackSummary>($"/api/content/v1/feedback?page={page}", ct);
+        anonymous!.Mine.ShouldBeNull();
+        (await client.PostAsJsonAsync("/api/content/v1/feedback", new { page, helpful = true }, ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest, "visitors send their id");
+        (await client.PostAsJsonAsync("/api/content/v1/feedback", new { page = "<script>", helpful = true, visitor }, ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Signed_in_users_rate_a_service_once_and_anyone_reads_the_average()
+    {
+        fixture.RequireConnectionString();
+        var ct = TestContext.Current.CancellationToken;
+        await using var host = new TestHost(fixture.RequireConnectionString());
+        var service = TestHost.Unique("RATED");
+
+        await host.AsAsync("applicant1", sp => sp.GetRequiredService<FeedbackService>().RateAsync(service, 5, ct));
+        await host.AsAsync("applicant1", sp => sp.GetRequiredService<FeedbackService>().RateAsync(service, 4, ct));
+        var mine = await host.AsAsync("applicant2", sp => sp.GetRequiredService<FeedbackService>().RateAsync(service, 3, ct));
+        await Should.ThrowAsync<FeedbackValidationException>(() => host.AsAsync("applicant2", sp => sp.GetRequiredService<FeedbackService>().RateAsync(service, 6, ct)));
+
+        mine.Count.ShouldBe(2);
+        mine.Average.ShouldBe(3.5);
+        mine.Mine.ShouldBe(3);
+        using var client = _factory.CreateClient();
+        (await client.GetFromJsonAsync<RatingSummary>($"/api/content/v1/ratings/{service}", ct))!.Count.ShouldBe(2);
+        (await client.PutAsJsonAsync($"/api/content/v1/ratings/{service}", new { stars = 5 }, ct)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }
 }

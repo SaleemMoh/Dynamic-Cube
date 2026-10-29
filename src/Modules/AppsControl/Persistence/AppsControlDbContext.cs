@@ -80,6 +80,8 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
             b.Property(e => e.PortalThemeColor).HasMaxLength(7);
             b.Property(e => e.FooterImageKey).HasMaxLength(100);
             b.Property(e => e.LoginImageKey).HasMaxLength(100);
+            b.Property(e => e.PortalHeroImageKey).HasMaxLength(100);
+            b.Property(e => e.Contact).HasColumnType("jsonb").HasConversion(JsonColumn.Converter<EntityContact>(), JsonColumn.Comparer<EntityContact>());
         });
         modelBuilder.Entity<BrandingAsset>(b =>
         {

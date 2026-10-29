@@ -3,43 +3,58 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatTabsModule } from '@angular/material/tabs';
 import { Router, RouterLink } from '@angular/router';
 import { ActingPartyService, AuthService, ContentApi, FeeTable, FieldError, I18nService, LocalizePipe, ServicesApi, TranslatePipe, requestErrors } from '@dynamic-cube/shared';
 import { catchError, firstValueFrom, of } from 'rxjs';
+import { PageFeedback } from '../portal/page-feedback';
+import { PortalStore } from '../portal/portal-store';
 import { CHANNEL_ICONS, CostPipe, DurationPipe, PARTY_KIND_KEYS } from '../portal/portal-text';
+import { ServiceRating } from '../portal/service-rating';
+import { ServiceTile } from '../portal/service-tile';
+import { SuggestionsCard } from '../portal/suggestions-card';
+
+type ServiceTab = 'steps' | 'terms' | 'documents' | 'levels';
 
 /**
- * The service card: what the service is, its steps, terms and required documents, and a side card with the audience,
- * duration, channels, cost and contacts. Anyone may read it; starting the service asks for sign-in first, and a
+ * The service card as the DGA guide lays it out: title and start button, description, underline tabs (steps, terms,
+ * required documents, levels), a side card with the audience, duration, channels, cost and contacts, then related
+ * services, comments and suggestions, the rating and "was this page helpful?". Anyone may read it; starting the service asks for sign-in first, and a
  * signed-in applicant sees whether the acting party may apply and the fee of each level for them.
  */
 @Component({
   selector: 'dc-service-page',
-  imports: [MatButtonModule, MatIconModule, MatProgressBarModule, MatTabsModule, RouterLink, FeeTable, LocalizePipe, TranslatePipe, CostPipe, DurationPipe],
+  imports: [
+    MatButtonModule,
+    MatIconModule,
+    MatProgressBarModule,
+    RouterLink,
+    FeeTable,
+    LocalizePipe,
+    TranslatePipe,
+    CostPipe,
+    DurationPipe,
+    PageFeedback,
+    ServiceRating,
+    ServiceTile,
+    SuggestionsCard,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (card.value(); as c) {
-      <nav class="dc-crumbs" [attr.aria-label]="'portal.breadcrumb' | dcTranslate">
-        <a routerLink="/">{{ 'portal.home' | dcTranslate }}</a>
-        <span aria-hidden="true">/</span>
+      <div class="dc-page">
+      <div class="dc-main">
+      <ol class="dc-crumbs" [attr.aria-label]="'portal.breadcrumb' | dcTranslate">
+        <li><a routerLink="/">{{ 'portal.home' | dcTranslate }}</a></li>
         @if (c.category; as category) {
-          <a [routerLink]="['/services']" [queryParams]="{ category: category.code }" data-testid="crumb-category">{{ { ar: category.nameAr, en: category.nameEn } | dcLocalize }}</a>
+          <li><a [routerLink]="['/services']" [queryParams]="{ category: category.code }" data-testid="crumb-category">{{ { ar: category.nameAr, en: category.nameEn } | dcLocalize }}</a></li>
         } @else {
-          <a routerLink="/services">{{ 'portal.services' | dcTranslate }}</a>
+          <li><a routerLink="/services">{{ 'portal.services' | dcTranslate }}</a></li>
         }
-        <span aria-hidden="true">/</span>
-        <span>{{ { ar: c.service.nameAr, en: c.service.nameEn } | dcLocalize }}</span>
-      </nav>
+        <li aria-current="page">{{ { ar: c.service.nameAr, en: c.service.nameEn } | dcLocalize }}</li>
+      </ol>
 
       <header class="dc-head">
-        <span class="dc-head__icon" aria-hidden="true"><mat-icon fontSet="material-symbols-outlined">{{ c.service.icon || 'description' }}</mat-icon></span>
-        <div class="dc-head__text">
-          <h1 data-testid="service-title">{{ { ar: c.service.nameAr, en: c.service.nameEn } | dcLocalize }}</h1>
-          @if (c.service.descriptionAr || c.service.descriptionEn) {
-            <p>{{ { ar: c.service.descriptionAr ?? '', en: c.service.descriptionEn ?? '' } | dcLocalize }}</p>
-          }
-        </div>
+        <h1 data-testid="service-title">{{ { ar: c.service.nameAr, en: c.service.nameEn } | dcLocalize }}</h1>
         <div class="dc-head__start">
           @if (!auth.isAuthenticated()) {
             <button matButton="filled" (click)="signIn()" data-testid="start-request">
@@ -65,6 +80,9 @@ import { CHANNEL_ICONS, CostPipe, DurationPipe, PARTY_KIND_KEYS } from '../porta
           }
         </div>
       </header>
+      @if (c.service.descriptionAr || c.service.descriptionEn) {
+        <p class="dc-lead">{{ { ar: c.service.descriptionAr ?? '', en: c.service.descriptionEn ?? '' } | dcLocalize }}</p>
+      }
       @if (view.value(); as v) {
         @if (v.service.documentType) {
           <section class="dc-docs" data-testid="document-choice">
@@ -111,23 +129,34 @@ import { CHANNEL_ICONS, CostPipe, DurationPipe, PARTY_KIND_KEYS } from '../porta
         </ul>
       }
 
-      <div class="dc-body">
-        <mat-tab-group class="dc-body__tabs" mat-stretch-tabs="false" animationDuration="0ms">
-          <mat-tab [label]="'portal.steps' | dcTranslate">
+      <div class="dc-utabs dc-body__tabs" role="tablist">
+        @for (t of tabs(); track t) {
+          <button
+            role="tab"
+            class="dc-utabs__tab"
+            [class.dc-utabs__tab--active]="tab() === t"
+            [attr.aria-selected]="tab() === t"
+            (click)="tab.set(t)"
+            [attr.data-testid]="'service-tab-' + t"
+          >
+            {{ 'portal.tab.' + t | dcTranslate }}
+          </button>
+        }
+      </div>
+      <div class="dc-panel" role="tabpanel">
+        @switch (tab()) {
+          @case ('steps') {
             @if (c.card.steps.length) {
               <ol class="dc-steps" data-testid="card-steps">
                 @for (step of c.card.steps; track $index) {
-                  <li>
-                    <span class="dc-steps__number">{{ $index + 1 }}</span>
-                    <span>{{ { ar: step.textAr, en: step.textEn } | dcLocalize }}</span>
-                  </li>
+                  <li>{{ { ar: step.textAr, en: step.textEn } | dcLocalize }}</li>
                 }
               </ol>
             } @else {
               <p class="dc-muted dc-tab-empty">{{ 'portal.noSteps' | dcTranslate }}</p>
             }
-          </mat-tab>
-          <mat-tab [label]="'portal.terms' | dcTranslate">
+          }
+          @case ('terms') {
             @if (terms(); as paragraphs) {
               <ul class="dc-terms" data-testid="card-terms">
                 @for (p of paragraphs; track $index) {
@@ -137,8 +166,8 @@ import { CHANNEL_ICONS, CostPipe, DurationPipe, PARTY_KIND_KEYS } from '../porta
             } @else {
               <p class="dc-muted dc-tab-empty">{{ 'portal.noTerms' | dcTranslate }}</p>
             }
-          </mat-tab>
-          <mat-tab [label]="'portal.requiredDocuments' | dcTranslate">
+          }
+          @case ('documents') {
             @if (c.card.requiredDocuments.length) {
               <ul class="dc-documents" data-testid="card-documents">
                 @for (d of c.card.requiredDocuments; track $index) {
@@ -156,28 +185,28 @@ import { CHANNEL_ICONS, CostPipe, DurationPipe, PARTY_KIND_KEYS } from '../porta
             } @else {
               <p class="dc-muted dc-tab-empty">{{ 'portal.noDocuments' | dcTranslate }}</p>
             }
-          </mat-tab>
-          @if (c.levels.length) {
-            <mat-tab [label]="'portal.levels' | dcTranslate">
-              <div class="dc-levels" data-testid="card-levels">
-                @for (level of c.levels; track level.code) {
-                  <section class="dc-levels__level">
-                    <h3>{{ { ar: level.nameAr, en: level.nameEn } | dcLocalize }}</h3>
-                    @if (level.descriptionAr || level.descriptionEn) {
-                      <p class="dc-muted">{{ { ar: level.descriptionAr ?? '', en: level.descriptionEn ?? '' } | dcLocalize }}</p>
-                    }
-                    <p>{{ 'portal.duration' | dcTranslate }}: {{ level.slaWorkingDays | dcDuration }}</p>
-                    @if (view.value()?.feesByLevel?.[level.code]; as lines) {
-                      <dc-fee-table [lines]="lines" />
-                    } @else {
-                      <p>{{ 'portal.cost' | dcTranslate }}: {{ level.cost | dcCost }}</p>
-                    }
-                  </section>
-                }
-              </div>
-            </mat-tab>
           }
-        </mat-tab-group>
+          @case ('levels') {
+            <div class="dc-levels" data-testid="card-levels">
+              @for (level of c.levels; track level.code) {
+                <section class="dc-levels__level">
+                  <h3>{{ { ar: level.nameAr, en: level.nameEn } | dcLocalize }}</h3>
+                  @if (level.descriptionAr || level.descriptionEn) {
+                    <p class="dc-muted">{{ { ar: level.descriptionAr ?? '', en: level.descriptionEn ?? '' } | dcLocalize }}</p>
+                  }
+                  <p>{{ 'portal.duration' | dcTranslate }}: {{ level.slaWorkingDays | dcDuration }}</p>
+                  @if (view.value()?.feesByLevel?.[level.code]; as lines) {
+                    <dc-fee-table [lines]="lines" />
+                  } @else {
+                    <p>{{ 'portal.cost' | dcTranslate }}: {{ level.cost | dcCost }}</p>
+                  }
+                </section>
+              }
+            </div>
+          }
+        }
+      </div>
+      </div>
 
         <aside class="dc-side" data-testid="service-side">
           <dl>
@@ -221,25 +250,59 @@ import { CHANNEL_ICONS, CostPipe, DurationPipe, PARTY_KIND_KEYS } from '../porta
               </dd>
             </div>
           </dl>
-          @if (c.card.faqUrl || hasFaqs() || c.card.phone || c.card.email) {
+          @if (c.card.faqUrl || hasFaqs() || phone() || email()) {
             <div class="dc-side__contacts">
-              <h2>{{ 'portal.contact' | dcTranslate }}</h2>
-              @if (hasFaqs()) {
-                <a routerLink="/faq" [queryParams]="{ service: c.service.code }" data-testid="service-faqs"
-                  ><mat-icon fontSet="material-symbols-outlined" aria-hidden="true">quiz</mat-icon>{{ 'portal.faq' | dcTranslate }}</a
-                >
-              } @else if (c.card.faqUrl; as faq) {
-                <a [href]="faq" [attr.target]="faq.startsWith('/') ? null : '_blank'" rel="noopener"><mat-icon fontSet="material-symbols-outlined" aria-hidden="true">quiz</mat-icon>{{ 'portal.faq' | dcTranslate }}</a>
+              @if (hasFaqs() || c.card.faqUrl) {
+                <div class="dc-side__contact">
+                  <span class="dc-side__label"><mat-icon fontSet="material-symbols-outlined" aria-hidden="true">quiz</mat-icon>{{ 'portal.faq' | dcTranslate }}</span>
+                  @if (hasFaqs()) {
+                    <a routerLink="/faq" [queryParams]="{ service: c.service.code }" data-testid="service-faqs"
+                      ><mat-icon fontSet="material-symbols-outlined" aria-hidden="true">open_in_new</mat-icon>{{ 'portal.serviceFaqs' | dcTranslate }}</a
+                    >
+                  } @else if (c.card.faqUrl; as faq) {
+                    <a [href]="faq" [attr.target]="faq.startsWith('/') ? null : '_blank'" rel="noopener"
+                      ><mat-icon fontSet="material-symbols-outlined" aria-hidden="true">open_in_new</mat-icon>{{ 'portal.serviceFaqs' | dcTranslate }}</a
+                    >
+                  }
+                </div>
               }
-              @if (c.card.phone; as phone) {
-                <a [href]="'tel:' + phone.replaceAll(' ', '')"><mat-icon fontSet="material-symbols-outlined" aria-hidden="true">call</mat-icon><span dir="ltr">{{ phone }}</span></a>
+              @if (phone(); as phone) {
+                <div class="dc-side__contact">
+                  <span class="dc-side__label"><mat-icon fontSet="material-symbols-outlined" aria-hidden="true">call</mat-icon>{{ 'contact.phone' | dcTranslate }}</span>
+                  <a [href]="'tel:' + phone.replaceAll(' ', '')"><mat-icon fontSet="material-symbols-outlined" aria-hidden="true">open_in_new</mat-icon><span dir="ltr">{{ phone }}</span></a>
+                </div>
               }
-              @if (c.card.email; as email) {
-                <a [href]="'mailto:' + email"><mat-icon fontSet="material-symbols-outlined" aria-hidden="true">mail</mat-icon><span dir="ltr">{{ email }}</span></a>
+              @if (email(); as email) {
+                <div class="dc-side__contact">
+                  <span class="dc-side__label"><mat-icon fontSet="material-symbols-outlined" aria-hidden="true">mail</mat-icon>{{ 'contact.email' | dcTranslate }}</span>
+                  <a [href]="'mailto:' + email"><mat-icon fontSet="material-symbols-outlined" aria-hidden="true">open_in_new</mat-icon><span dir="ltr">{{ email }}</span></a>
+                </div>
               }
             </div>
           }
         </aside>
+      </div>
+
+      @if (related().length) {
+        <section class="dc-related" aria-labelledby="dc-related-title" data-testid="related-services">
+          <div class="dc-related__inner">
+            <div class="dc-related__head">
+              <h2 id="dc-related-title">{{ 'portal.related' | dcTranslate }}</h2>
+              <a matButton [routerLink]="['/services']" [queryParams]="c.category ? { category: c.category.code } : {}">{{ 'portal.viewAll' | dcTranslate }}</a>
+            </div>
+            <ul class="dc-related__list">
+              @for (s of related(); track s.code) {
+                <li><dc-service-tile [service]="s" /></li>
+              }
+            </ul>
+          </div>
+        </section>
+      }
+
+      <div class="dc-after">
+        <dc-suggestions-card />
+        <dc-service-rating [service]="c.service.code" />
+        <dc-page-feedback [page]="'service:' + c.service.code.toLowerCase()" />
       </div>
     } @else if (card.isLoading()) {
       <mat-progress-bar mode="indeterminate" />
@@ -259,7 +322,9 @@ export class ServicePage {
   private readonly content = inject(ContentApi);
   protected readonly kindKeys = PARTY_KIND_KEYS;
   protected readonly channelIcons = CHANNEL_ICONS;
+  private readonly store = inject(PortalStore);
   protected readonly starting = signal(false);
+  protected readonly tab = signal<ServiceTab>('steps');
   protected readonly errors = signal<FieldError[]>([]);
 
   protected readonly card = rxResource({ params: () => this.code(), stream: ({ params }) => this.api.serviceCard(params) });
@@ -280,6 +345,20 @@ export class ServicePage {
     const paragraphs = text.split('\n').map((p) => p.trim()).filter((p) => p);
     return paragraphs.length ? paragraphs : null;
   });
+  protected readonly tabs = computed<ServiceTab[]>(() => (this.card.value()?.levels.length ? ['steps', 'terms', 'documents', 'levels'] : ['steps', 'terms', 'documents']));
+  /** Other services of the same category. */
+  protected readonly related = computed(() => {
+    const card = this.card.value();
+    if (!card) return [];
+    const category = card.category?.code ?? card.service.categoryCode;
+    return this.store
+      .services()
+      .filter((s) => s.code !== card.service.code && !!category && s.categoryCode === category)
+      .slice(0, 3);
+  });
+  /** The service's own contacts, else the entity's. */
+  protected readonly phone = computed(() => this.card.value()?.card.phone || this.store.help().phone || null);
+  protected readonly email = computed(() => this.card.value()?.card.email || this.store.help().email || null);
   protected readonly channels = computed(() => {
     const channels = this.card.value()?.card.channels ?? [];
     return channels.length ? channels : (['PORTAL'] as const);

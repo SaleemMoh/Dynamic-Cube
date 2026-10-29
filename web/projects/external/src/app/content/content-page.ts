@@ -1,39 +1,43 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { RouterLink } from '@angular/router';
 import { ContentApi, I18nService, LocalizePipe, MarkdownView, TranslatePipe } from '@dynamic-cube/shared';
+import { PageFeedback } from '../portal/page-feedback';
+import { PageHero } from '../portal/page-hero';
 
 /** A portal page (terms of use, privacy, about) written in the Content Manager. */
 @Component({
   selector: 'dc-content-page',
-  imports: [MatProgressBarModule, RouterLink, LocalizePipe, MarkdownView, TranslatePipe],
+  imports: [MatProgressBarModule, LocalizePipe, MarkdownView, PageFeedback, PageHero, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (page.hasValue()) {
       @let p = page.value();
-      <nav class="dc-crumbs" [attr.aria-label]="'portal.breadcrumb' | dcTranslate">
-        <a routerLink="/">{{ 'portal.home' | dcTranslate }}</a>
-        <span aria-hidden="true">/</span>
-        <span>{{ { ar: p.titleAr, en: p.titleEn } | dcLocalize }}</span>
-      </nav>
-      <article class="dc-content-page">
-        <h1 data-testid="page-title">{{ { ar: p.titleAr, en: p.titleEn } | dcLocalize }}</h1>
-        <dc-markdown [source]="i18n.localize({ ar: p.bodyAr, en: p.bodyEn })" data-testid="page-body" />
-        <p class="dc-muted dc-content-page__updated">{{ 'pages.updated' | dcTranslate }} {{ updated() }}</p>
-      </article>
+      <dc-page-hero data-testid="page-title" [title]="{ ar: p.titleAr, en: p.titleEn } | dcLocalize" />
+      <div class="dc-portal-block dc-page-body">
+        <article class="dc-content-page">
+          <dc-markdown [source]="i18n.localize({ ar: p.bodyAr, en: p.bodyEn })" data-testid="page-body" />
+          <p class="dc-muted dc-content-page__updated">{{ 'pages.updated' | dcTranslate }} {{ updated() }}</p>
+        </article>
+        <dc-page-feedback [page]="'page:' + slug()" />
+      </div>
     } @else if (page.isLoading()) {
       <mat-progress-bar mode="indeterminate" />
     } @else if (page.error()) {
-      <p class="dc-errors" role="alert" data-testid="page-not-found">{{ 'pages.notFound' | dcTranslate }}</p>
+      <div class="dc-portal-block dc-page-body">
+        <p class="dc-errors" role="alert" data-testid="page-not-found">{{ 'pages.notFound' | dcTranslate }}</p>
+      </div>
     }
   `,
   styles: `
+    :host {
+      display: block;
+      width: 100%;
+    }
     .dc-content-page {
       max-width: 52rem;
-    }
-    .dc-content-page h1 {
-      margin: 0 0 1.25rem;
+      font-size: 16px;
+      line-height: 28px;
     }
     .dc-content-page__updated {
       margin-top: 2rem;

@@ -66,8 +66,14 @@ public sealed class GovernmentEntity : ConfigEntity
     /// <summary>Id of the <see cref="BrandingAsset"/> shown beside the sign-in form.</summary>
     public string? LoginImageKey { get; set; }
 
+    /// <summary>Id of the <see cref="BrandingAsset"/> behind the titles of the portal's pages.</summary>
+    public string? PortalHeroImageKey { get; set; }
+
+    /// <summary>Phone, email, location and social accounts shown on the portal.</summary>
+    public EntityContact Contact { get; set; } = new();
+
     /// <summary>The uploaded images in use (anyone may load these).</summary>
-    public IEnumerable<string> AssetKeys() => new[] { LogoFileKey, FooterImageKey, LoginImageKey }.OfType<string>();
+    public IEnumerable<string> AssetKeys() => new[] { LogoFileKey, FooterImageKey, LoginImageKey, PortalHeroImageKey }.OfType<string>();
 }
 
 public enum AppType

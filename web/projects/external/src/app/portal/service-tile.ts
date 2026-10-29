@@ -5,7 +5,7 @@ import { LocalizePipe, PortalServiceSummary, TranslatePipe } from '@dynamic-cube
 import { PortalStore } from './portal-store';
 import { PARTY_KIND_KEYS } from './portal-text';
 
-/** A service as a card: icon, name, short description, audience and category tags, and an arrow to its card page. */
+/** A service as a DGA card: icon in a green circle, name, two lines of description, tags (audience, category, free) and a square arrow. */
 @Component({
   selector: 'dc-service-tile',
   imports: [MatIconModule, RouterLink, LocalizePipe, TranslatePipe],
@@ -22,18 +22,21 @@ import { PARTY_KIND_KEYS } from './portal-text';
       }
       <span class="dc-tile__tags">
         @for (kind of s.partyKinds; track kind) {
-          <span class="dc-tile__tag">{{ kindKeys[kind] | dcTranslate }}</span>
+          <span class="dc-tag">{{ kindKeys[kind] | dcTranslate }}</span>
         }
         @if (category(); as c) {
-          <span class="dc-tile__tag dc-tile__tag--category">{{ { ar: c.nameAr, en: c.nameEn } | dcLocalize }}</span>
+          <span class="dc-tag dc-tag--info">{{ { ar: c.nameAr, en: c.nameEn } | dcLocalize }}</span>
         }
-      </span>
-      <span class="dc-tile__arrow" aria-hidden="true">
-        <mat-icon fontSet="material-symbols-outlined">arrow_back</mat-icon>
+        @if (free()) {
+          <span class="dc-tag dc-tag--success">{{ 'portal.free' | dcTranslate }}</span>
+        }
       </span>
       @if (note()) {
         <span class="dc-tile__note">{{ note() }}</span>
       }
+      <span class="dc-square-button dc-tile__arrow" aria-hidden="true">
+        <mat-icon fontSet="material-symbols-outlined" class="dc-flip-ltr">arrow_back</mat-icon>
+      </span>
     </a>
   `,
   styles: `
@@ -42,12 +45,11 @@ import { PARTY_KIND_KEYS } from './portal-text';
       height: 100%;
     }
     .dc-tile {
-      position: relative;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 16px;
       height: 100%;
-      min-height: 15rem;
+      min-height: 21rem;
       padding: 24px;
       border: 1px solid var(--dga-border);
       border-radius: 16px;
@@ -60,7 +62,7 @@ import { PARTY_KIND_KEYS } from './portal-text';
     }
     .dc-tile:hover,
     .dc-tile:focus-visible {
-      border-color: var(--dga-green-400);
+      border-color: var(--dga-green-700);
       box-shadow: 0 8px 24px rgb(16 24 40 / 8%);
     }
     .dc-tile:focus-visible {
@@ -71,11 +73,12 @@ import { PARTY_KIND_KEYS } from './portal-text';
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
-      background: var(--dga-green-50);
-      color: var(--dga-green-700);
+      width: 56px;
+      height: 56px;
+      margin-bottom: 8px;
+      border-radius: 50%;
+      background: var(--dga-green-700);
+      color: #ffffff;
     }
     .dc-tile__icon mat-icon {
       font-size: 28px;
@@ -84,54 +87,34 @@ import { PARTY_KIND_KEYS } from './portal-text';
     }
     .dc-tile__name {
       margin: 0;
-      font-size: 18px;
+      font-size: 20px;
       font-weight: 700;
-      line-height: 28px;
+      line-height: 30px;
     }
     .dc-tile__description {
       display: -webkit-box;
       margin: 0;
       overflow: hidden;
       color: var(--dga-text-3);
-      font-size: 14px;
-      line-height: 22px;
+      font-size: 16px;
+      line-height: 26px;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
     }
     .dc-tile__tags {
       display: flex;
       flex-wrap: wrap;
-      gap: 6px;
+      gap: 8px;
       margin-top: auto;
-      padding-inline-end: 44px;
-    }
-    .dc-tile__tag {
-      padding: 2px 10px;
-      border-radius: 999px;
-      background: var(--dga-gray-100);
-      color: var(--dga-text-2);
-      font-size: 12px;
-      line-height: 20px;
-    }
-    .dc-tile__tag--category {
-      background: var(--dga-green-50);
-      color: var(--dga-green-800);
+      padding-top: 8px;
     }
     .dc-tile__arrow {
-      position: absolute;
-      inset-inline-end: 20px;
-      bottom: 20px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: var(--dga-green-700);
-      color: #ffffff;
+      align-self: flex-start;
+      margin-top: 8px;
     }
-    :host-context([dir='ltr']) .dc-tile__arrow mat-icon {
-      transform: scaleX(-1);
+    .dc-tile:hover .dc-tile__arrow {
+      border-color: var(--dga-green-700);
+      color: var(--dga-green-700);
     }
     .dc-tile__note {
       color: #b54708;
@@ -147,4 +130,9 @@ export class ServiceTile {
   private readonly store = inject(PortalStore);
   protected readonly kindKeys = PARTY_KIND_KEYS;
   protected readonly category = computed(() => this.store.category(this.service().categoryCode));
+  /** No fee at any level. */
+  protected readonly free = computed(() => {
+    const cost = this.service().cost;
+    return !!cost && !cost.dependsOnRequest && cost.min === 0 && cost.max === 0;
+  });
 }

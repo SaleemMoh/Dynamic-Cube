@@ -133,6 +133,25 @@ export interface BrandingInfo {
   portalThemeColor?: string | null;
   footerImageUrl?: string | null;
   loginImageUrl?: string | null;
+  /** Behind the titles of the portal's pages. */
+  portalHeroImageUrl?: string | null;
+  contact?: EntityContact | null;
+}
+
+/** How the public reaches the entity. */
+export interface EntityContact {
+  phone?: string | null;
+  email?: string | null;
+  addressAr?: string | null;
+  addressEn?: string | null;
+  mapUrl?: string | null;
+  social: SocialLink[];
+}
+
+/** X, LINKEDIN, INSTAGRAM, YOUTUBE, FACEBOOK, SNAPCHAT, TIKTOK or WHATSAPP. */
+export interface SocialLink {
+  network: string;
+  url: string;
 }
 
 export interface UploadedAsset {

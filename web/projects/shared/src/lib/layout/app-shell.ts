@@ -9,8 +9,8 @@ import { AppFooter } from './app-footer';
 import { GovBar } from './gov-bar';
 
 /**
- * Common page frame following the DGA design: government bar, white 72px header (brand, optional navigation,
- * actions, language), page content and the green footer. The `dir` directive propagates the current direction.
+ * Common page frame following the DGA design: government bar, white 80px header (brand, optional navigation,
+ * actions, language), page content, an optional full-width strip before the footer and the green footer. The `dir` directive propagates the current direction.
  */
 @Component({
   selector: 'dc-app-shell',
@@ -41,17 +41,19 @@ import { GovBar } from './gov-bar';
           <span class="dc-shell__spacer"></span>
           <div class="dc-shell__actions">
             <ng-content select="[dcShellActions]" />
-            <dc-language-switcher />
+            <dc-language-switcher [short]="true" />
           </div>
         </div>
       </header>
       <main class="dc-shell__main" [class.dc-shell__main--fluid]="fluid()">
         <ng-content />
       </main>
+      <ng-content select="[dcShellBeforeFooter]" />
       <dc-app-footer
         [links]="allFooterLinks()"
         [entityName]="{ ar: branding().nameAr, en: branding().nameEn }"
         [imageUrl]="branding().footerImageUrl"
+        [logoUrl]="branding().logoUrl"
       />
     </div>
   `,
@@ -69,7 +71,7 @@ import { GovBar } from './gov-bar';
       display: flex;
       align-items: stretch;
       gap: 16px;
-      min-height: 72px;
+      min-height: 80px;
       max-width: 80rem;
       margin-inline: auto;
       padding-inline: 1.5rem;
@@ -79,6 +81,8 @@ import { GovBar } from './gov-bar';
     }
     .dc-shell__brand {
       display: flex;
+      flex: 0 1 auto;
+      min-width: 0;
       align-items: center;
       gap: 12px;
       color: var(--dga-text);
@@ -95,7 +99,8 @@ import { GovBar } from './gov-bar';
       color: #ffffff;
     }
     .dc-shell__logo-img {
-      height: 40px;
+      flex: none;
+      height: 48px;
       width: auto;
       max-width: 12rem;
       object-fit: contain;
@@ -104,11 +109,15 @@ import { GovBar } from './gov-bar';
       font-size: 18px;
       font-weight: 700;
       line-height: 28px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .dc-shell__nav {
       display: flex;
       align-items: stretch;
-      gap: 12px;
+      gap: 4px;
+      white-space: nowrap;
       margin-inline-start: 16px;
     }
     .dc-shell__spacer {
@@ -118,11 +127,18 @@ import { GovBar } from './gov-bar';
       display: flex;
       align-items: stretch;
     }
+    /* Every action fills the header's height with its content centred (icon buttons included). */
+    .dc-shell__actions > * {
+      display: flex;
+      align-items: center;
+    }
     /* Header actions: full-height text buttons with a grey hover, as in the DGA nav header. */
     .dc-shell__actions ::ng-deep .mat-mdc-button {
-      height: 72px;
-      min-width: 72px;
+      height: 80px;
+      min-width: 64px;
       padding: 8px 16px;
+      font-size: 16px;
+      white-space: nowrap;
       border-radius: 4px;
       --mat-button-text-label-text-color: var(--dga-text);
       --mat-button-text-state-layer-color: var(--dga-text);

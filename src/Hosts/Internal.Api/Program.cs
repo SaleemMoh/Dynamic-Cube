@@ -40,6 +40,7 @@ app.MapDocumentsInternal();
 app.MapDecisionsInternal();
 app.MapCommunicationInternal();
 app.MapPaymentsInternal();
+app.MapContentInternal();
 
 app.Run();
 

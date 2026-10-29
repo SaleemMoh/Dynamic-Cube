@@ -23,54 +23,60 @@ import { PortalStore } from '../portal/portal-store';
     </section>
   `,
   styles: `
-    .dc-stats {
-      padding: 32px;
-      border-radius: 24px;
-      background: var(--dga-green-50);
+    :host {
+      display: block;
+    }
+    .dc-stats h2 {
+      margin: 0;
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 44px;
     }
     .dc-stats__tiles {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
-      gap: 16px;
-      margin: 20px 0 0;
+      grid-template-columns: repeat(auto-fit, minmax(13rem, 15rem));
+      justify-content: center;
+      gap: 32px;
+      margin: 32px 0 0;
       padding: 0;
       list-style: none;
     }
     .dc-stats__tile {
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      padding: 20px 24px;
+      align-items: center;
+      gap: 12px;
+      padding: 24px;
       border-radius: 16px;
       background: #ffffff;
-      box-shadow: 0 1px 3px rgb(16 24 40 / 6%);
+      box-shadow: 0 1px 2px rgb(16 24 40 / 4%);
+      text-align: center;
     }
     .dc-stats__icon {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 40px;
-      height: 40px;
+      width: 64px;
+      height: 64px;
       margin-bottom: 8px;
-      border-radius: 10px;
-      background: var(--dga-green-700);
-      color: #ffffff;
+      border-radius: 50%;
+      background: #ecfdf3;
+      color: var(--dga-green-700);
+    }
+    .dc-stats__icon mat-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
     }
     .dc-stats__value {
-      align-self: flex-start;
-      color: var(--dga-green-950);
-      font-size: 32px;
-      font-weight: 700;
-      line-height: 40px;
+      color: var(--dga-green-800);
+      font-size: 48px;
+      font-weight: 500;
+      line-height: 60px;
     }
     .dc-stats__label {
-      color: var(--dga-text-3);
-    }
-
-    .dc-stats h2 {
-      margin: 0;
-      font-size: 28px;
-      font-weight: 700;
+      color: var(--dga-text);
+      font-size: 18px;
     }
   `,
 })

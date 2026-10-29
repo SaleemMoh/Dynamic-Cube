@@ -22,7 +22,9 @@ public sealed record BrandingInfo(
     string? InternalThemeColor = null,
     string? PortalThemeColor = null,
     string? FooterImageUrl = null,
-    string? LoginImageUrl = null);
+    string? LoginImageUrl = null,
+    string? PortalHeroImageUrl = null,
+    EntityContact? Contact = null);
 
 public sealed record UploadedAsset(string Key, string Url);
 
@@ -51,7 +53,9 @@ internal static partial class BrandingEndpoints
                 entity?.InternalThemeColor,
                 entity?.PortalThemeColor,
                 entity?.FooterImageKey is { } footer ? AssetUrl(footer) : null,
-                entity?.LoginImageKey is { } login ? AssetUrl(login) : null));
+                entity?.LoginImageKey is { } login ? AssetUrl(login) : null,
+                entity?.PortalHeroImageKey is { } hero ? AssetUrl(hero) : null,
+                entity?.Contact ?? new EntityContact()));
         }).AllowAnonymous();
 
         // Anyone may load the images in use; other (e.g. not yet approved) uploads only for Apps Control administrators.

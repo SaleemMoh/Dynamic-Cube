@@ -32,3 +32,36 @@ public sealed class Faq : ConfigEntity
 
     public int Order { get; set; }
 }
+
+/// <summary>
+/// One answer to "Was this page helpful?". A visitor answers once per page and may change the answer: signed-in users
+/// by their subject, others by the random visitor id their browser keeps.
+/// </summary>
+public sealed class PageFeedback
+{
+    public Guid Id { get; set; } = Guid.CreateVersion7();
+
+    /// <summary>Which page: <c>home</c>, <c>service:CODE</c>, <c>page:slug</c>, <c>faq</c>…</summary>
+    public string PageKey { get; set; } = string.Empty;
+
+    /// <summary><c>user:SUBJECT</c> or <c>visitor:ID</c>.</summary>
+    public string VoterKey { get; set; } = string.Empty;
+
+    public bool Helpful { get; set; }
+
+    public DateTimeOffset AnsweredAt { get; set; }
+}
+
+/// <summary>A signed-in user's rating of a service, one to five stars; rating again replaces it.</summary>
+public sealed class ServiceRating
+{
+    public Guid Id { get; set; } = Guid.CreateVersion7();
+
+    public string ServiceCode { get; set; } = string.Empty;
+
+    public string UserId { get; set; } = string.Empty;
+
+    public int Stars { get; set; }
+
+    public DateTimeOffset RatedAt { get; set; }
+}

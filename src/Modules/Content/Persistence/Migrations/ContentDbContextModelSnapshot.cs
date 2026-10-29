@@ -212,6 +212,78 @@ namespace DynamicCube.Modules.Content.Persistence.Migrations
                     b.ToTable("faq", "cms");
                 });
 
+            modelBuilder.Entity("DynamicCube.Modules.Content.Domain.PageFeedback", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("AnsweredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("answered_at");
+
+                    b.Property<bool>("Helpful")
+                        .HasColumnType("boolean")
+                        .HasColumnName("helpful");
+
+                    b.Property<string>("PageKey")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("page_key");
+
+                    b.Property<string>("VoterKey")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("voter_key");
+
+                    b.HasKey("Id")
+                        .HasName("pk_page_feedback");
+
+                    b.HasIndex("PageKey", "VoterKey")
+                        .IsUnique()
+                        .HasDatabaseName("ix_page_feedback_page_key_voter_key");
+
+                    b.ToTable("page_feedback", "cms");
+                });
+
+            modelBuilder.Entity("DynamicCube.Modules.Content.Domain.ServiceRating", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("RatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("rated_at");
+
+                    b.Property<string>("ServiceCode")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("service_code");
+
+                    b.Property<int>("Stars")
+                        .HasColumnType("integer")
+                        .HasColumnName("stars");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_service_rating");
+
+                    b.HasIndex("ServiceCode", "UserId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_service_rating_service_code_user_id");
+
+                    b.ToTable("service_rating", "cms");
+                });
+
             modelBuilder.Entity("DynamicCube.Platform.Auditing.AuditEntry", b =>
                 {
                     b.Property<Guid>("Id")

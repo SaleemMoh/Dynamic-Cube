@@ -32,7 +32,23 @@ export interface FaqView {
   serviceCode: string | null;
 }
 
-/** Portal pages and frequently asked questions (anyone may read them). */
+/** How a page was found: answers so far and the visitor's own, if any. */
+export interface FeedbackSummary {
+  page: string;
+  helpful: number;
+  total: number;
+  mine: boolean | null;
+}
+
+/** A service's average rating, how many rated it and the user's own stars, if any. */
+export interface RatingSummary {
+  service: string;
+  average: number;
+  count: number;
+  mine: number | null;
+}
+
+/** Portal pages and frequently asked questions (anyone may read them), page feedback and service ratings. */
 @Injectable({ providedIn: 'root' })
 export class ContentApi {
   private readonly http = inject(HttpClient);
@@ -47,6 +63,24 @@ export class ContentApi {
 
   faqs(service?: string | null): Observable<FaqView[]> {
     return this.http.get<FaqView[]>(`${CONTENT_API}/faqs`, { params: service ? { service } : {} });
+  }
+
+  /** "Was this page helpful?" so far; `visitor` identifies a visitor who is not signed in. */
+  feedback(page: string, visitor: string | null): Observable<FeedbackSummary> {
+    return this.http.get<FeedbackSummary>(`${CONTENT_API}/feedback`, { params: visitor ? { page, visitor } : { page } });
+  }
+
+  answerFeedback(page: string, helpful: boolean, visitor: string | null): Observable<FeedbackSummary> {
+    return this.http.post<FeedbackSummary>(`${CONTENT_API}/feedback`, { page, helpful, visitor });
+  }
+
+  rating(service: string): Observable<RatingSummary> {
+    return this.http.get<RatingSummary>(`${CONTENT_API}/ratings/${encodeURIComponent(service)}`);
+  }
+
+  /** Signed-in users only. */
+  rate(service: string, stars: number): Observable<RatingSummary> {
+    return this.http.put<RatingSummary>(`${CONTENT_API}/ratings/${encodeURIComponent(service)}`, { stars });
   }
 }
 

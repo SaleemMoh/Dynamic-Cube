@@ -219,6 +219,10 @@ These are development values only; change them in `deploy/docker/.env` (see `.en
    configuration** exports whole types across modules. Import the file under **Change sets → Import package**.
    The review counts new, changed and unchanged items and compares each changed row field by field with the row as
    it is. Unchanged items are skipped, so re-importing an export drafts nothing.
+17. Open the portal (`http://localhost:4201`): title bands, category tabs, DGA service cards and the paged carousel.
+   On a service page, answer *Was this page helpful?* and, signed in, rate the service. The answers and ratings
+   appear in the internal system under **Portal content → Visitor feedback**. The entity's phone, email, location
+   and social accounts, and the image behind the portal's page titles, are set in **Apps Control → Branding**.
 
 The gateway credentials come from the secret store (`Secrets__MOMRAH_GATEWAY__clientId` / `__clientSecret`), never
 from the database; development values are in `appsettings.Development.json` and the compose file.

@@ -13,4 +13,5 @@ export const CONTENT_ROUTES: Routes = [
     data: { section: 'content-pages' },
     loadComponent: () => import('../apps-control/config/config-section-page').then((m) => m.ConfigSectionPage),
   },
+  { path: 'feedback', loadComponent: () => import('./feedback-report').then((m) => m.FeedbackReportPage) },
 ];

@@ -12,6 +12,10 @@ public sealed class ContentDbContext(DbContextOptions<ContentDbContext> options)
 
     public DbSet<Faq> Faqs => Set<Faq>();
 
+    public DbSet<PageFeedback> Feedback => Set<PageFeedback>();
+
+    public DbSet<ServiceRating> Ratings => Set<ServiceRating>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -29,6 +33,20 @@ public sealed class ContentDbContext(DbContextOptions<ContentDbContext> options)
             b.Property(e => e.TopicEn).HasMaxLength(200);
             b.Property(e => e.ServiceCode).HasMaxLength(100);
             b.HasIndex(e => e.ServiceCode);
+        });
+        modelBuilder.Entity<PageFeedback>(b =>
+        {
+            b.ToTable("page_feedback", Schema);
+            b.Property(e => e.PageKey).HasMaxLength(200).IsRequired();
+            b.Property(e => e.VoterKey).HasMaxLength(300).IsRequired();
+            b.HasIndex(e => new { e.PageKey, e.VoterKey }).IsUnique();
+        });
+        modelBuilder.Entity<ServiceRating>(b =>
+        {
+            b.ToTable("service_rating", Schema);
+            b.Property(e => e.ServiceCode).HasMaxLength(100).IsRequired();
+            b.Property(e => e.UserId).HasMaxLength(256).IsRequired();
+            b.HasIndex(e => new { e.ServiceCode, e.UserId }).IsUnique();
         });
     }
 }

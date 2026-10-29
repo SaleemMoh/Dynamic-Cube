@@ -27,6 +27,32 @@ public sealed class BrandingAsset : IHasAuditColumns
     public string? UpdatedBy { get; set; }
 }
 
+/// <summary>How the public reaches the entity: shown beside the portal's forms and on service pages.</summary>
+public sealed class EntityContact
+{
+    public string? Phone { get; set; }
+
+    public string? Email { get; set; }
+
+    public string? AddressAr { get; set; }
+
+    public string? AddressEn { get; set; }
+
+    /// <summary>A map address for the location (https).</summary>
+    public string? MapUrl { get; set; }
+
+    public List<SocialLink> Social { get; set; } = [];
+}
+
+/// <summary>The entity's account on a social network.</summary>
+public sealed class SocialLink
+{
+    /// <summary>X, LINKEDIN, INSTAGRAM, YOUTUBE, FACEBOOK, SNAPCHAT, TIKTOK or WHATSAPP.</summary>
+    public string Network { get; set; } = string.Empty;
+
+    public string Url { get; set; } = string.Empty;
+}
+
 /// <summary>A link in the footer of every app (privacy policy, terms, contact…).</summary>
 public sealed class FooterLink
 {

@@ -33,6 +33,7 @@ public static class ContentModule
         AddApplier<ContentPageApplier>(services);
         AddApplier<FaqApplier>(services);
         services.AddScoped<ContentService>();
+        services.AddScoped<FeedbackService>();
         return services;
     }
 
@@ -41,6 +42,14 @@ public static class ContentModule
     {
         var group = endpoints.MapGroup(ApiPrefix).AddEndpointFilter(ContentEndpoints.Errors).WithTags("Content");
         ContentEndpoints.MapPublic(group);
+        return endpoints;
+    }
+
+    /// <summary>Internal host: visitors' feedback for the content team.</summary>
+    public static IEndpointRouteBuilder MapContentInternal(this IEndpointRouteBuilder endpoints)
+    {
+        var group = endpoints.MapGroup(ApiPrefix).AddEndpointFilter(ContentEndpoints.Errors).WithTags("Content");
+        ContentEndpoints.MapInternal(group);
         return endpoints;
     }
 
@@ -71,6 +80,7 @@ internal static class ContentCatalog
             new("content.home", "الصفحة الرئيسية للبوابة", "Portal home page", "/content/home", ContentResources.Config, "home", 10),
             new("content.faqs", "الأسئلة الشائعة", "FAQs", "/content/faqs", ContentResources.Config, "quiz", 20),
             new("content.pages", "الصفحات", "Pages", "/content/pages", ContentResources.Config, "article", 30),
+            new("content.feedback", "آراء الزوار", "Visitor feedback", "/content/feedback", ContentResources.Config, "reviews", 40),
         ],
     };
 }

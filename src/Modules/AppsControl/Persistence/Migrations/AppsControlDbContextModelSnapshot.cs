@@ -601,6 +601,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("code");
 
+                    b.Property<string>("Contact")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("contact");
+
                     b.Property<string>("CrNumber")
                         .HasColumnType("text")
                         .HasColumnName("cr_number");
@@ -664,6 +669,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)")
                         .HasColumnName("owner");
+
+                    b.Property<string>("PortalHeroImageKey")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("portal_hero_image_key");
 
                     b.Property<string>("PortalThemeColor")
                         .HasMaxLength(7)

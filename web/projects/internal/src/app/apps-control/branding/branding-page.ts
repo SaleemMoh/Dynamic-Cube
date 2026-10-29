@@ -6,7 +6,19 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { AppsControlApi, AuthImageSrc, ConfigRow, FooterLink, I18nService, TranslatePipe, problemMessages, themeVariables } from '@dynamic-cube/shared';
+import { MatSelectModule } from '@angular/material/select';
+import {
+  AppsControlApi,
+  AuthImageSrc,
+  ConfigRow,
+  EntityContact,
+  FooterLink,
+  I18nService,
+  SocialLink,
+  TranslatePipe,
+  problemMessages,
+  themeVariables,
+} from '@dynamic-cube/shared';
 import { firstValueFrom } from 'rxjs';
 import { ExportButton } from '../change-sets/export-button';
 import { JsonImportButton } from '../change-sets/json-import-button';
@@ -25,12 +37,18 @@ type LinkForm = FormGroup<{
 }>;
 
 /** The images the entity uploads: its field in the entity row and what the card says. */
-type ImageSlot = 'logoFileKey' | 'footerImageKey' | 'loginImageKey';
-const IMAGES: { slot: ImageSlot; key: string; icon: string }[] = [
+type ImageSlot = 'logoFileKey' | 'footerImageKey' | 'loginImageKey' | 'portalHeroImageKey';
+const IMAGES: { slot: ImageSlot; key: string; icon: string; wide?: boolean }[] = [
   { slot: 'logoFileKey', key: 'logo', icon: 'image' },
   { slot: 'footerImageKey', key: 'footerImage', icon: 'branding_watermark' },
-  { slot: 'loginImageKey', key: 'loginImage', icon: 'wallpaper' },
+  { slot: 'loginImageKey', key: 'loginImage', icon: 'wallpaper', wide: true },
+  { slot: 'portalHeroImageKey', key: 'heroImage', icon: 'panorama', wide: true },
 ];
+
+/** Social networks the portal shows icons for. */
+const NETWORKS = ['X', 'LINKEDIN', 'INSTAGRAM', 'YOUTUBE', 'FACEBOOK', 'SNAPCHAT', 'TIKTOK', 'WHATSAPP'];
+
+type SocialForm = FormGroup<{ network: FormControl<string>; url: FormControl<string> }>;
 
 type ThemeField = 'internalThemeColor' | 'portalThemeColor';
 const THEMES: { field: ThemeField; key: string; kind: 'internal' | 'portal'; fallback: string }[] = [
@@ -56,6 +74,7 @@ const PRESETS = ['#ca9f45', '#1b8354', '#136f40', '#0e7490', '#1d4ed8', '#4338ca
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
+    MatSelectModule,
     MatTooltipModule,
     TranslatePipe,
   ],
@@ -155,7 +174,7 @@ const PRESETS = ['#ca9f45', '#1b8354', '#136f40', '#0e7490', '#1d4ed8', '#4338ca
         <section class="dc-card dc-image" [attr.data-testid]="'image-' + img.key">
           <h2>{{ 'branding.' + img.key | dcTranslate }}</h2>
           <p class="dc-muted">{{ 'branding.' + img.key + 'Hint' | dcTranslate }}</p>
-          <div class="dc-image__preview" [class.dc-image__preview--wide]="img.slot === 'loginImageKey'">
+          <div class="dc-image__preview" [class.dc-image__preview--wide]="img.wide">
             @if (urlOf(img.slot); as url) {
               <img [dcAuthSrc]="url" [alt]="'branding.' + img.key | dcTranslate" />
             } @else {
@@ -180,6 +199,61 @@ const PRESETS = ['#ca9f45', '#1b8354', '#136f40', '#0e7490', '#1d4ed8', '#4338ca
         </section>
       }
     </div>
+
+    <section class="dc-card" [formGroup]="contact" data-testid="branding-contact">
+      <h2>{{ 'branding.contact' | dcTranslate }}</h2>
+      <p class="dc-muted">{{ 'branding.contactHint' | dcTranslate }}</p>
+      <div class="dc-contact">
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'branding.phone' | dcTranslate }}</mat-label>
+          <input matInput dir="ltr" formControlName="phone" data-testid="contact-phone" />
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'branding.email' | dcTranslate }}</mat-label>
+          <input matInput dir="ltr" formControlName="email" data-testid="contact-email" />
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'branding.addressAr' | dcTranslate }}</mat-label>
+          <input matInput formControlName="addressAr" />
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'branding.addressEn' | dcTranslate }}</mat-label>
+          <input matInput formControlName="addressEn" />
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic" class="dc-contact__wide">
+          <mat-label>{{ 'branding.mapUrl' | dcTranslate }}</mat-label>
+          <input matInput dir="ltr" formControlName="mapUrl" placeholder="https://" />
+        </mat-form-field>
+      </div>
+      <h3>{{ 'branding.social' | dcTranslate }}</h3>
+      @for (link of social.controls; track link; let i = $index) {
+        <div class="dc-link-row" [formGroup]="link" [attr.data-social]="i">
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>{{ 'branding.network' | dcTranslate }}</mat-label>
+            <mat-select formControlName="network">
+              @for (n of networks; track n) {
+                <mat-option [value]="n">{{ 'branding.network.' + n | dcTranslate }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field subscriptSizing="dynamic" class="dc-link-row__url">
+            <mat-label>{{ 'branding.url' | dcTranslate }}</mat-label>
+            <input matInput dir="ltr" formControlName="url" placeholder="https://" />
+          </mat-form-field>
+          @if (canEdit()) {
+            <button matIconButton type="button" (click)="social.removeAt(i)" [attr.aria-label]="'config.delete' | dcTranslate">
+              <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
+            </button>
+          }
+        </div>
+      }
+      @if (canEdit()) {
+        <button matButton type="button" (click)="addSocial()" data-testid="add-social">
+          <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+          {{ 'branding.addSocial' | dcTranslate }}
+        </button>
+      }
+    </section>
 
     <section class="dc-card">
       <h2>{{ 'branding.footerLinks' | dcTranslate }}</h2>
@@ -305,6 +379,18 @@ const PRESETS = ['#ca9f45', '#1b8354', '#136f40', '#0e7490', '#1d4ed8', '#4338ca
       font-size: 13px;
       text-decoration: underline;
     }
+    .dc-contact {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+      gap: 12px;
+    }
+    .dc-contact__wide {
+      grid-column: 1 / -1;
+    }
+    .dc-card h3 {
+      margin: 16px 0 8px;
+      font-size: 15px;
+    }
     .dc-images {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
@@ -372,7 +458,16 @@ export class BrandingPage {
   protected readonly presets = PRESETS;
   protected readonly busy = signal(false);
   protected readonly errors = signal<string[]>([]);
-  protected readonly keys = signal<Record<ImageSlot, string | null>>({ logoFileKey: null, footerImageKey: null, loginImageKey: null });
+  protected readonly keys = signal<Record<ImageSlot, string | null>>({ logoFileKey: null, footerImageKey: null, loginImageKey: null, portalHeroImageKey: null });
+  protected readonly networks = NETWORKS;
+  protected readonly contact = new FormGroup({
+    phone: new FormControl('', { nonNullable: true }),
+    email: new FormControl('', { nonNullable: true }),
+    addressAr: new FormControl('', { nonNullable: true }),
+    addressEn: new FormControl('', { nonNullable: true }),
+    mapUrl: new FormControl('', { nonNullable: true }),
+  });
+  protected readonly social = new FormArray<SocialForm>([]);
   protected readonly colors = signal<Record<ThemeField, string | null>>({ internalThemeColor: null, portalThemeColor: null });
   protected readonly links = new FormArray<LinkForm>([]);
   protected readonly canEdit = computed(() => this.privileges.can(RESOURCE, 'EDIT'));
@@ -394,7 +489,20 @@ export class BrandingPage {
         logoFileKey: (row['logoFileKey'] as string | null) ?? null,
         footerImageKey: (row['footerImageKey'] as string | null) ?? null,
         loginImageKey: (row['loginImageKey'] as string | null) ?? null,
+        portalHeroImageKey: (row['portalHeroImageKey'] as string | null) ?? null,
       });
+      const contact = (row['contact'] as EntityContact | null) ?? null;
+      this.contact.reset({
+        phone: contact?.phone ?? '',
+        email: contact?.email ?? '',
+        addressAr: contact?.addressAr ?? '',
+        addressEn: contact?.addressEn ?? '',
+        mapUrl: contact?.mapUrl ?? '',
+      });
+      this.social.clear();
+      for (const link of contact?.social ?? []) {
+        this.addSocial(link);
+      }
       this.colors.set({
         internalThemeColor: (row['internalThemeColor'] as string | null) ?? null,
         portalThemeColor: (row['portalThemeColor'] as string | null) ?? null,
@@ -447,6 +555,15 @@ export class BrandingPage {
     );
   }
 
+  protected addSocial(link?: SocialLink): void {
+    this.social.push(
+      new FormGroup({
+        network: new FormControl(link?.network ?? 'X', { nonNullable: true }),
+        url: new FormControl(link?.url ?? '', { nonNullable: true, validators: Validators.required }),
+      }),
+    );
+  }
+
   protected async upload(slot: ImageSlot, input: HTMLInputElement): Promise<void> {
     const file = input.files?.[0];
     input.value = '';
@@ -486,6 +603,7 @@ export class BrandingPage {
         ...this.keys(),
         ...this.colors(),
         footerLinks: this.links.getRawValue(),
+        contact: { ...this.contact.getRawValue(), social: this.social.getRawValue() },
       });
     } catch (error) {
       this.errors.set(problemMessages(error));

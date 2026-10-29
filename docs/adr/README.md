@@ -32,3 +32,4 @@ Status values: Proposed · Accepted · Superseded.
 | [0025](0025-portal-content.md) | Portal content as a module of pages and questions (Markdown, anonymous reads); the home page stays a setting with a structured editor; the notification rule builder edits rules as stored | Accepted |
 | [0026](0026-look-accounts-json-import.md) | Branding drives colours and sign-in pages; accounts are maintained through the identity provider (managed or federated); JSON import on every screen | Accepted |
 | [0027](0027-configuration-packages.md) | Configuration packages: export by code from any screen, UPSERT import, unchanged rows skipped, field-by-field review | Accepted |
+| [0028](0028-portal-dga-layout.md) | The portal follows the DGA layout of entity portals (title bands, tabs, cards, filter panels, service page anatomy); page feedback and service ratings are stored | Accepted |

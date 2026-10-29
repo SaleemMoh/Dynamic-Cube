@@ -118,4 +118,27 @@ public sealed class BrandingTests(AppsControlFixture fixture) : IAsyncLifetime
         ex.Errors.Keys.ShouldContain("logoFileKey");
         ex.Errors.Keys.ShouldContain("footerLinks[0].url");
     }
+
+    [Fact]
+    public async Task Contact_details_and_social_accounts_are_checked()
+    {
+        var ex = await Should.ThrowAsync<ChangeValidationException>(() => _harness.DraftAsync(AppsControlAreas.System,
+            new Change(AppsControlChangeTypes.Entity, "ENTITY", ChangeOperation.Update, new
+            {
+                nameAr = "جهة",
+                nameEn = "Entity",
+                portalHeroImageKey = Guid.NewGuid().ToString(),
+                contact = new
+                {
+                    phone = "call us",
+                    email = "not-an-email",
+                    mapUrl = "javascript:alert(1)",
+                    social = new[] { new { network = "MYSPACE", url = "https://example.com" }, new { network = "X", url = "ftp://x" } },
+                },
+            })));
+
+        ex.Errors.Keys.ShouldBe(
+            ["portalHeroImageKey", "contact.phone", "contact.email", "contact.mapUrl", "contact.social[0].network", "contact.social[1].url"],
+            ignoreOrder: true);
+    }
 }

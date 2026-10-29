@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { APPS_CONTROL_API, ContentApi, FooterLink, LocalizedText, PortalCategory, ServicesApi } from '@dynamic-cube/shared';
+import { APPS_CONTROL_API, BrandingService, ContentApi, FooterLink, LocalizedText, PortalCategory, ServicesApi } from '@dynamic-cube/shared';
 import { catchError, map, of } from 'rxjs';
 
 export type StatisticMetric = 'SERVICES' | 'REQUESTS' | 'IN_PROGRESS' | 'COMPLETED';
@@ -38,6 +38,7 @@ export class PortalStore {
   private readonly api = inject(ServicesApi);
   private readonly http = inject(HttpClient);
   private readonly content = inject(ContentApi);
+  private readonly branding = inject(BrandingService).branding;
 
   readonly catalog = rxResource({ stream: () => this.api.portalCatalog() });
   readonly statistics = rxResource({ stream: () => this.api.portalStatistics().pipe(catchError(() => of(null))) });
@@ -61,7 +62,26 @@ export class PortalStore {
   readonly categories = computed<PortalCategory[]>(() => this.catalog.value()?.categories ?? []);
   readonly services = computed(() => this.catalog.value()?.services ?? []);
   readonly tiles = computed(() => this.setting.value()?.statistics ?? DEFAULT_TILES);
-  readonly help = computed(() => this.setting.value()?.help ?? {});
+  /** Phone and email from the home setting's help, else the entity's contact details (branding). */
+  readonly help = computed(() => {
+    const help = this.setting.value()?.help ?? {};
+    const contact = this.branding().contact;
+    return { ...help, phone: help.phone || contact?.phone || null, email: help.email || contact?.email || null };
+  });
+  /** The entity's contact details for side panels: phone, email, location and social accounts. */
+  readonly contact = computed(() => {
+    const contact = this.branding().contact;
+    const help = this.help();
+    return {
+      phone: help.phone,
+      email: help.email,
+      address: contact?.addressAr || contact?.addressEn ? { ar: contact.addressAr ?? '', en: contact.addressEn ?? '' } : null,
+      mapUrl: contact?.mapUrl ?? null,
+      social: contact?.social ?? [],
+    };
+  });
+  /** When the catalog last changed: the "last modified" line above the footer. */
+  readonly lastUpdated = computed(() => this.catalog.value()?.lastUpdated ?? null);
 
   heroTitle(fallback: LocalizedText): LocalizedText {
     const s = this.setting.value();

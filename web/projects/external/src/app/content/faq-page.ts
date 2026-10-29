@@ -2,13 +2,13 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, signal } f
 import { rxResource } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MatExpansionModule } from '@angular/material/expansion';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RouterLink } from '@angular/router';
 import { ContentApi, FaqView, I18nService, LocalizePipe, LocalizedText, MarkdownView, TranslatePipe, markdownText } from '@dynamic-cube/shared';
 import { catchError, of } from 'rxjs';
+import { PageFeedback } from '../portal/page-feedback';
+import { PageHero } from '../portal/page-hero';
 import { PortalStore } from '../portal/portal-store';
 
 interface Topic {
@@ -23,42 +23,30 @@ interface Topic {
   imports: [
     FormsModule,
     MatExpansionModule,
-    MatFormFieldModule,
     MatIconModule,
-    MatInputModule,
     MatProgressBarModule,
     RouterLink,
     LocalizePipe,
     MarkdownView,
+    PageFeedback,
+    PageHero,
     TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <nav class="dc-crumbs" [attr.aria-label]="'portal.breadcrumb' | dcTranslate">
-      <a routerLink="/">{{ 'portal.home' | dcTranslate }}</a>
-      <span aria-hidden="true">/</span>
-      @if (serviceName(); as name) {
-        <a routerLink="/faq">{{ 'faq.title' | dcTranslate }}</a>
-        <span aria-hidden="true">/</span>
-        <span>{{ name | dcLocalize }}</span>
-      } @else {
-        <span>{{ 'faq.title' | dcTranslate }}</span>
-      }
-    </nav>
+    <dc-page-hero [title]="'faq.title' | dcTranslate" [text]="serviceName() ? null : ('faq.lead' | dcTranslate)" />
+    <div class="dc-portal-block dc-page-body">
     <header class="dc-faq__head">
-      <h1>{{ 'faq.title' | dcTranslate }}</h1>
       @if (serviceName(); as name) {
         <p class="dc-muted" data-testid="faq-service">
           {{ 'faq.ofService' | dcTranslate }} <a [routerLink]="['/services', service()]">{{ name | dcLocalize }}</a> ·
           <a routerLink="/faq">{{ 'faq.all' | dcTranslate }}</a>
         </p>
-      } @else {
-        <p class="dc-muted">{{ 'faq.lead' | dcTranslate }}</p>
       }
-      <mat-form-field subscriptSizing="dynamic" class="dc-faq__search">
-        <mat-icon matPrefix fontSet="material-symbols-outlined">search</mat-icon>
-        <input matInput [placeholder]="'faq.search' | dcTranslate" [ngModel]="query()" (ngModelChange)="query.set($event)" data-testid="faq-search" />
-      </mat-form-field>
+      <label class="dc-dga-search__field dc-faq__search">
+        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">search</mat-icon>
+        <input type="search" [placeholder]="'faq.search' | dcTranslate" [attr.aria-label]="'faq.search' | dcTranslate" [ngModel]="query()" (ngModelChange)="query.set($event)" data-testid="faq-search" />
+      </label>
     </header>
 
     @if (faqs.isLoading()) {
@@ -83,19 +71,26 @@ interface Topic {
         <p class="dc-muted" data-testid="faq-empty">{{ (query().trim() ? 'faq.noMatch' : 'faq.empty') | dcTranslate }}</p>
       }
     }
+    <dc-page-feedback [page]="service() ? 'faq:' + service()!.toLowerCase() : 'faq'" />
+    </div>
   `,
   styles: `
+    :host {
+      display: block;
+      width: 100%;
+    }
     .dc-faq__head {
       display: grid;
-      gap: 0.5rem;
-      margin-bottom: 1.5rem;
+      gap: 0.75rem;
     }
-    .dc-faq__head h1,
     .dc-faq__head p {
       margin: 0;
     }
     .dc-faq__search {
       max-width: 36rem;
+    }
+    .dc-faq__topic h2 {
+      font-size: 24px !important;
     }
     .dc-faq__topic {
       margin-bottom: 1.75rem;

@@ -394,6 +394,23 @@ Manager (they stay in Services), scheduled publishing, and server-side search ac
   - Development re-links accounts by username.
   - Production refuses the sign-in with 403 instead of failing with 500.
 
+**Portal aligned with the DGA entity-portal layout** ([ADR-0028](adr/0028-portal-dga-layout.md)):
+
+- **Title bands:** on the home, services, requests, documents, FAQ and content pages, over the entity's hero image.
+- **Shell:** a filled current section in the header, "En" / "ع", the last-modified line in Riyadh time, and
+  underlined footer links with the entity logo in white.
+- **Home:** search with a dark button (its menu searches one category), underline category tabs, DGA cards with
+  tags, a carousel paged by views with dots, and centred statistics.
+- **Service page:**
+  - The start button beside the title, underline tabs and a bordered side card with contacts.
+  - Related services on a light green band.
+  - Comments and suggestions, a rating out of five stars, and "Was this page helpful?".
+- **Requests and documents:** filter panels (status and search) over portal tables.
+- **Request form:** the wizard beside the entity's contact card, with 48px fields.
+- **Branding:** the entity's contact details (phone, email, location, map link, social accounts) and the portal hero
+  image.
+- **Visitor feedback:** answers and ratings for the content team (*Portal content → Visitor feedback*).
+
 Still open from 3d: following references inside structured definitions (questions in a service version, roles in a
 workflow graph), carrying branding images in a package, and comparing two environments directly.
 

@@ -13,8 +13,9 @@ import { AuthService } from './auth.service';
   template: `
     @if (auth.user(); as user) {
       <button matButton class="dc-user-menu" [matMenuTriggerFor]="menu" data-testid="user-menu">
-        <mat-icon fontSet="material-symbols-outlined">account_circle</mat-icon>
+        <mat-icon fontSet="material-symbols-outlined">person</mat-icon>
         {{ user.name }}
+        <mat-icon class="dc-user-menu__chevron" fontSet="material-symbols-outlined" iconPositionEnd>expand_more</mat-icon>
       </button>
       <mat-menu #menu="matMenu">
         <button mat-menu-item (click)="auth.logout()" data-testid="logout">

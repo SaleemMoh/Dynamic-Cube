@@ -7,6 +7,7 @@ import { Router, RouterLink } from '@angular/router';
 import { BillCard, FeeTable, FieldError, LocalizePipe, RequestAnswers, RequestView, ServiceWizard, ServicesApi, TranslatePipe, WizardMove, requestErrors } from '@dynamic-cube/shared';
 import { firstValueFrom } from 'rxjs';
 import { RequestDocuments } from '../documents/request-documents';
+import { ContactCard } from '../portal/contact-card';
 
 /**
  * A request: the wizard while it is a draft (saved at every step), then its answers, fees, status and history. A request
@@ -14,11 +15,16 @@ import { RequestDocuments } from '../documents/request-documents';
  */
 @Component({
   selector: 'dc-request-page',
-  imports: [BillCard, RequestDocuments, DatePipe, MatButtonModule, MatIconModule, MatProgressBarModule, RouterLink, FeeTable, LocalizePipe, RequestAnswers, ServiceWizard, TranslatePipe],
+  imports: [BillCard, ContactCard, RequestDocuments, DatePipe, MatButtonModule, MatIconModule, MatProgressBarModule, RouterLink, FeeTable, LocalizePipe, RequestAnswers, ServiceWizard, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <a routerLink="/requests" class="dc-link">{{ 'requests.title' | dcTranslate }}</a>
+    <div class="dc-request">
+    <div class="dc-request__main">
     @if (view(); as v) {
+      <ol class="dc-crumbs" [attr.aria-label]="'portal.breadcrumb' | dcTranslate">
+        <li><a routerLink="/requests">{{ 'requests.title' | dcTranslate }}</a></li>
+        <li aria-current="page">{{ { ar: v.request.serviceNameAr, en: v.request.serviceNameEn } | dcLocalize }}</li>
+      </ol>
       <header class="dc-request__header">
         <h1>{{ { ar: v.request.serviceNameAr, en: v.request.serviceNameEn } | dcLocalize }}</h1>
         <span
@@ -74,7 +80,10 @@ import { RequestDocuments } from '../documents/request-documents';
         />
         @if (v.request.status === 'DRAFT') {
           <div class="dc-request__secondary">
-            <button matButton type="button" (click)="cancel(v)" [disabled]="busy()" data-testid="cancel-draft">{{ 'requests.cancelDraft' | dcTranslate }}</button>
+            <span class="dc-muted">{{ 'requests.savedAsDraft' | dcTranslate }}</span>
+            <button matButton type="button" class="dc-secondary-button" (click)="cancel(v)" [disabled]="busy()" data-testid="cancel-draft">
+              {{ 'requests.cancelDraft' | dcTranslate }}
+            </button>
           </div>
         }
       } @else {
@@ -117,15 +126,57 @@ import { RequestDocuments } from '../documents/request-documents';
     } @else {
       <mat-progress-bar mode="indeterminate" />
     }
+    </div>
+    <dc-contact-card class="dc-request__side" />
+    </div>
   `,
   styles: `
+    .dc-request {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 24rem;
+      gap: 32px 48px;
+      align-items: start;
+      padding-top: 16px;
+    }
+    .dc-request__main {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-width: 0;
+    }
+    .dc-request__main > .dc-crumbs {
+      margin-bottom: -8px;
+    }
+    .dc-request__side {
+      position: sticky;
+      top: 16px;
+    }
+    @media (max-width: 64rem) {
+      .dc-request {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .dc-request__side {
+        position: static;
+      }
+    }
     .dc-request__header {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       gap: 1rem;
     }
+    .dc-request__header h1 {
+      margin: 0;
+      font-size: 36px;
+      font-weight: 700;
+      line-height: 48px;
+    }
     .dc-request__secondary {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
       margin-top: 1rem;
     }
     .dc-request__done {
