@@ -86,6 +86,7 @@ internal static class WorkflowCatalog
     public static SystemCatalogContribution Contribution { get; } = new()
     {
         Module = "workflow",
+        Classes = WorkflowClasses.All,
         Resources =
         [
             // Configuration roles maintain workflows; they do not work on requests.

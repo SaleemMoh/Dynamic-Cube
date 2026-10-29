@@ -2,6 +2,7 @@ using System.Text.Json.Nodes;
 using DynamicCube.Modules.AppsControl.Domain;
 using DynamicCube.Modules.AppsControl.Lookups;
 using DynamicCube.Modules.AppsControl.Persistence;
+using DynamicCube.Platform.Lookups;
 using Microsoft.EntityFrameworkCore;
 
 namespace DynamicCube.Modules.AppsControl.Changes;
@@ -272,7 +273,7 @@ public sealed class DomainPayload : ConfigPayload
     public List<ExternalCodePayload> ExternalCodes { get; set; } = [];
 }
 
-internal sealed class DomainApplier(AppsControlDbContext db) : ConfigApplier<DomainValue, DomainPayload>(db)
+internal sealed class DomainApplier(AppsControlDbContext db, IEnumerable<IDomainRules> rules) : ConfigApplier<DomainValue, DomainPayload>(db)
 {
     public override string EntityType => AppsControlChangeTypes.Domain;
 
@@ -377,6 +378,11 @@ internal sealed class DomainApplier(AppsControlDbContext db) : ConfigApplier<Dom
 
         var attributes = payload.Attributes ?? [];
         await AttributeValues.ValidateAsync(cls.Attributes, attributes, refs, errors, "attributes.", cancellationToken);
+        foreach (var rule in rules.Where(r => r.ClassCode == cls.Code))
+        {
+            await rule.ValidateAsync(entity.Code, attributes, errors, cancellationToken);
+        }
+
         entity.Attributes = attributes.ToJsonString();
 
         ChildSync.RequireUnique(payload.ExternalCodes, x => (x.ProviderCode, x.Direction), "externalCodes", errors);
@@ -428,6 +434,15 @@ internal sealed class DomainApplier(AppsControlDbContext db) : ConfigApplier<Dom
         if (await context.Domains.AnyAsync(d => d.ParentDomainId == entity.Id, cancellationToken))
         {
             throw new DynamicCube.Platform.ChangeSets.ChangeSetException($"Value '{entity.Code}' is the parent of other values.");
+        }
+
+        var classCode = await context.Classes.Where(c => c.Id == entity.ClassId).Select(c => c.Code).SingleAsync(cancellationToken);
+        foreach (var rule in rules.Where(r => r.ClassCode == classCode))
+        {
+            if (await rule.UsedByAsync(entity.Code, cancellationToken) is { } usage)
+            {
+                throw new DynamicCube.Platform.ChangeSets.ChangeSetException($"Value '{entity.Code}' is used by {usage}.");
+            }
         }
     }
 

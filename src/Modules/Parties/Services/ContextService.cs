@@ -1,8 +1,10 @@
 using System.Globalization;
 using System.Text.Json.Nodes;
+using DynamicCube.Modules.Parties.Changes;
 using DynamicCube.Modules.Parties.Domain;
 using DynamicCube.Modules.Parties.Persistence;
 using DynamicCube.Platform.Integration;
+using DynamicCube.Platform.Lookups;
 using DynamicCube.Platform.Parties;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -39,6 +41,7 @@ internal sealed partial class ContextService(
     IApplicantIdentity applicant,
     IIntegrationGateway gateway,
     TimeProvider clock,
+    ILookupDirectory lookups,
     ILogger<ContextService> logger)
 {
     /// <summary>The signed-in individual, registered when missing.</summary>
@@ -89,7 +92,7 @@ internal sealed partial class ContextService(
         }
 
         var number = individual.PrimaryIdentifier.Value;
-        var types = await context.RelationshipTypes.AsNoTracking().Where(t => t.IsActive).ToListAsync(cancellationToken);
+        var types = await lookups.ValuesAsync(PartyClasses.RelationshipType, cancellationToken);
         var results = new List<(ContextSource Source, IntegrationResult Result)>();
         foreach (var source in sources)
         {
@@ -124,7 +127,7 @@ internal sealed partial class ContextService(
         return warnings;
     }
 
-    private async Task ApplyAsync(Party individual, ContextSource source, IReadOnlyList<JsonNode?> items, List<RelationshipType> types, DateTimeOffset now, CancellationToken cancellationToken)
+    private async Task ApplyAsync(Party individual, ContextSource source, IReadOnlyList<JsonNode?> items, IReadOnlyList<LookupValue> types, DateTimeOffset now, CancellationToken cancellationToken)
     {
         var existing = await context.Relationships
             .Where(r => r.IndividualId == individual.Id && r.Source == RecordSource.Integration && r.SourceReference == source.Code && r.EndedAt == null)
@@ -171,14 +174,14 @@ internal sealed partial class ContextService(
                 continue;
             }
 
-            var relationship = existing.FirstOrDefault(r => r.PrincipalId == principal.Id && r.RelationshipTypeId == type.Id && !seen.Contains(r.Id));
+            var relationship = existing.FirstOrDefault(r => r.PrincipalId == principal.Id && r.RelationshipCode == type.Code && !seen.Contains(r.Id));
             if (relationship is null)
             {
                 relationship = new Relationship
                 {
                     IndividualId = individual.Id,
                     PrincipalId = principal.Id,
-                    RelationshipTypeId = type.Id,
+                    RelationshipCode = type.Code,
                     Source = RecordSource.Integration,
                     SourceReference = source.Code,
                 };
@@ -209,34 +212,35 @@ internal sealed partial class ContextService(
     public async Task<IReadOnlyList<ActingContext>> ListAsync(Guid individualId, CancellationToken cancellationToken)
     {
         var today = DateOnly.FromDateTime(clock.GetUtcNow().UtcDateTime);
+        var types = (await lookups.ValuesAsync(PartyClasses.RelationshipType, cancellationToken)).Where(t => t.Flag(PartyClasses.CanAct)).ToList();
+        var codes = types.Select(t => t.Code).ToList();
         var rows = await context.Relationships.AsNoTracking()
             .Include(r => r.Principal!).ThenInclude(p => p.Identifiers)
-            .Include(r => r.RelationshipType)
-            .Where(r => r.IndividualId == individualId && r.EndedAt == null && r.RelationshipType!.CanAct && r.RelationshipType.IsActive && r.Principal!.Status == PartyStatus.Active)
+            .Where(r => r.IndividualId == individualId && r.EndedAt == null && codes.Contains(r.RelationshipCode) && r.Principal!.Status == PartyStatus.Active)
             .Where(r => (r.ValidFrom == null || r.ValidFrom <= today) && (r.ValidTo == null || r.ValidTo >= today))
-            .OrderBy(r => r.RelationshipType!.DisplayOrder).ThenBy(r => r.Principal!.NameAr)
             .ToListAsync(cancellationToken);
 
         // One context per principal: the first (highest) relationship type wins; services are merged.
-        return [.. rows.GroupBy(r => r.PrincipalId).Select(g =>
+        return [.. rows.OrderBy(r => codes.IndexOf(r.RelationshipCode)).ThenBy(r => r.Principal!.NameAr, StringComparer.Ordinal).GroupBy(r => r.PrincipalId).Select(g =>
         {
             var first = g.First();
+            var type = types[codes.IndexOf(first.RelationshipCode)];
             var services = g.Any(r => r.Services.Count == 0) ? [] : g.SelectMany(r => r.Services).Distinct().ToList();
             var identifier = first.Principal!.PrimaryIdentifier;
             return new ActingContext(first.PrincipalId, first.Principal.Kind, first.Principal.NameAr, first.Principal.NameEn, identifier.Type, identifier.Value,
-                first.RelationshipType!.Code, first.RelationshipType.NameAr, first.RelationshipType.NameEn, services, g.Max(r => r.ValidTo));
+                type.Code, type.NameAr, type.NameEn, services, g.Max(r => r.ValidTo));
         })];
     }
 
     public static ActingContext Self(Party individual) =>
         new(individual.Id, individual.Kind, individual.NameAr, individual.NameEn, individual.PrimaryIdentifier.Type, individual.PrimaryIdentifier.Value, null, null, null, [], null);
 
-    private static RelationshipType? RelationshipTypeOf(ContextSource source, JsonNode? item, List<RelationshipType> types)
+    private static LookupValue? RelationshipTypeOf(ContextSource source, JsonNode? item, IReadOnlyList<LookupValue> types)
     {
         var code = JsonPaths.ReadText(item, source.RelationCodePath)?.Trim();
         if (code is not null)
         {
-            var mapped = types.FirstOrDefault(t => t.ExternalCodes.Any(c => c.Provider == source.RelationProvider && c.Code == code));
+            var mapped = types.FirstOrDefault(t => PartyClasses.ProviderCodes(t).Any(c => c.Provider == source.RelationProvider && c.Code == code));
             if (mapped is not null)
             {
                 return mapped;

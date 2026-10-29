@@ -3,6 +3,7 @@ using DynamicCube.Modules.AppsControl.Domain;
 using DynamicCube.Modules.AppsControl.Lookups;
 using DynamicCube.Modules.AppsControl.Persistence;
 using DynamicCube.Platform.ChangeSets;
+using DynamicCube.Platform.Lookups;
 using DynamicCube.Platform.Security;
 using Microsoft.EntityFrameworkCore;
 
@@ -135,8 +136,68 @@ public sealed class AppsControlSeeder(
         }
 
         await context.SaveChangesAsync(cancellationToken);
+        await SeedModuleClassesAsync(catalog.SelectMany(c => c.Classes).ToList(), cancellationToken);
         await ClassViewGenerator.RegenerateAsync(context, null, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// The modules' classes: SYSTEM-owned with their attributes kept as the product defines them. Their starting values
+    /// are added when missing and then belong to the entity (renamed, reordered or deactivated in change sets).
+    /// </summary>
+    private async Task SeedModuleClassesAsync(IReadOnlyList<CatalogClass> definitions, CancellationToken cancellationToken)
+    {
+        var classes = await UpsertAsync(context.Classes.Include(c => c.Attributes), definitions.Select(c => (c.Code, c.NameAr, c.NameEn, (Action<LookupClass>)(e =>
+        {
+            e.DescriptionAr = c.DescriptionAr;
+            e.DescriptionEn = c.DescriptionEn;
+        }))), cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
+        foreach (var definition in definitions)
+        {
+            var cls = classes[definition.Code];
+            foreach (var (attribute, i) in definition.Attributes.Select((a, i) => (a, i)))
+            {
+                var row = cls.Attributes.FirstOrDefault(a => a.Code == attribute.Code);
+                if (row is null)
+                {
+                    row = new AttributeDefinition { ClassId = cls.Id, Code = attribute.Code };
+                    context.AttributeDefinitions.Add(row);
+                }
+
+                row.NameAr = attribute.NameAr;
+                row.NameEn = attribute.NameEn;
+                row.DataType = attribute.DataType switch
+                {
+                    LookupAttributeTypes.Number => AttributeDataType.Number,
+                    LookupAttributeTypes.Date => AttributeDataType.Date,
+                    LookupAttributeTypes.Bool => AttributeDataType.Bool,
+                    LookupAttributeTypes.DomainRef => AttributeDataType.DomainRef,
+                    LookupAttributeTypes.Json => AttributeDataType.Json,
+                    _ => AttributeDataType.Text,
+                };
+                row.RefClassCode = attribute.RefClass;
+                row.IsRequired = attribute.Required;
+                row.DisplayOrder = (i + 1) * 10;
+            }
+
+            var codes = definition.Values.Select(v => v.Code).ToList();
+            var present = await context.Domains.Where(d => d.ClassId == cls.Id && codes.Contains(d.Code)).Select(d => d.Code).ToListAsync(cancellationToken);
+            foreach (var (value, i) in definition.Values.Select((v, i) => (v, i)).Where(x => !present.Contains(x.v.Code)))
+            {
+                context.Domains.Add(new DomainValue
+                {
+                    ClassId = cls.Id,
+                    Code = value.Code,
+                    NameAr = value.NameAr,
+                    NameEn = value.NameEn,
+                    DisplayOrder = (i + 1) * 10,
+                    Attributes = value.Attributes?.ToJsonString() ?? "{}",
+                });
+            }
+        }
+
+        await context.SaveChangesAsync(cancellationToken);
     }
 
     /// <summary>Adds missing SYSTEM rows and refreshes existing ones; returns all rows of <paramref name="definitions"/> by code.</summary>

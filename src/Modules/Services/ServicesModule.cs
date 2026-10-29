@@ -5,6 +5,7 @@ using DynamicCube.Modules.Services.Runtime;
 using DynamicCube.Platform;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Communication;
+using DynamicCube.Platform.Lookups;
 using DynamicCube.Platform.Security;
 using DynamicCube.Platform.Services;
 using DynamicCube.Platform.Workflow;
@@ -34,13 +35,13 @@ public static class ServicesModule
         services.AddChangeArea(ServiceChangeTypes.Area, "الخدمات", "Services");
         services.AddSystemCatalog(ServicesCatalog.Contribution);
 
-        AddApplier<ServiceCategoryApplier>(services);
         AddApplier<ServiceDefinitionApplier>(services);
         AddApplier<QuestionApplier>(services);
         AddApplier<ServiceVersionApplier>(services);
         services.AddScoped<IChangeSetPublishHook<ServicesDbContext>, VersionCompiler>();
         services.AddScoped<IChangeSetPublishHook<ServicesDbContext>, ServiceWorkflowProvisioner>();
         services.AddScoped<IServiceCatalog, ServiceCatalog>();
+        services.AddScoped<IDomainRules, ServiceCategoryRules>();
         services.AddSingleton<ServiceCatalogCache>();
         services.AddScoped<Eligibility>();
         services.AddScoped<FeeCalculator>();
@@ -87,6 +88,7 @@ internal static class ServicesCatalog
     public static SystemCatalogContribution Contribution { get; } = new()
     {
         Module = "services",
+        Classes = ServiceClasses.All,
         Resources =
         [
             new(ServiceResources.Root, "الخدمات", "Services", "INTERNAL", null, [CatalogActions.View]),

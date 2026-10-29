@@ -28,7 +28,7 @@ public sealed class PackageTests(DatabaseFixture fixture)
     public async Task The_classification_packages_publish()
     {
         await using var host = new TestHost(fixture.RequireConnectionString());
-        await host.PublishAsync(ServiceChangeTypes.Area, [.. Items("classification-new.json")]);
+        await Packages.ServicesAsync(host, Items("classification-new.json"));
 
         var version = await host.AsAsync("admin", sp => sp.GetRequiredService<ServicesDbContext>().Versions.AsNoTracking().SingleAsync(v => v.Code == "CLASSIFICATION_NEW/1"));
         version.Resolved.ShouldNotBeNull();
@@ -52,7 +52,7 @@ public sealed class PackageTests(DatabaseFixture fixture)
         versions.ShouldBe(["CLASSIFICATION_NEW/1", "CLASSIFICATION_NEW/2", "CLASSIFICATION_NEW/3"]);
 
         // Renewal and extension act on the certificate; their workflows amend it.
-        await host.PublishAsync(ServiceChangeTypes.Area, [.. Items("classification-renewal.json")]);
+        await Packages.ServicesAsync(host, Items("classification-renewal.json"));
         await host.PublishAsync(WorkflowChangeTypes.Area, [.. Items("classification-renewal-workflow.json")]);
         var followUps = await host.AsAsync("admin", sp => sp.GetRequiredService<ServicesDbContext>().Services.AsNoTracking()
             .Where(s => s.DocumentType == "CLS_CERTIFICATE").OrderBy(s => s.DisplayOrder).Select(s => s.Code).ToListAsync());

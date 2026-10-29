@@ -2,6 +2,7 @@ using DynamicCube.Modules.Parties.Domain;
 using DynamicCube.Modules.Parties.Persistence;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Integration;
+using DynamicCube.Platform.Lookups;
 using DynamicCube.Platform.Parties;
 using Microsoft.EntityFrameworkCore;
 
@@ -40,61 +41,6 @@ internal abstract class PartyApplier<TEntity, TPayload>(PartiesDbContext context
     }
 
     protected static string? Blank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
-}
-
-public sealed class RelationshipTypePayload : ConfigPayload
-{
-    public bool CanAct { get; set; }
-
-    public int DisplayOrder { get; set; }
-
-    public List<ExternalCode> ExternalCodes { get; set; } = [];
-}
-
-internal sealed class RelationshipTypeApplier(PartiesDbContext db) : PartyApplier<RelationshipType, RelationshipTypePayload>(db)
-{
-    public override string EntityType => PartyChangeTypes.RelationshipType;
-
-    protected override IQueryable<RelationshipType> Query(PartiesDbContext context) => context.RelationshipTypes;
-
-    protected override IQueryable<RelationshipType> ListQuery(PartiesDbContext context, string? parent) =>
-        Query(context).OrderBy(t => t.DisplayOrder).ThenBy(t => t.Code);
-
-    protected override async Task ApplyAsync(RelationshipType entity, RelationshipTypePayload payload, ConfigRefs<PartiesDbContext> refs, ValidationErrors errors, RelationshipType? existing, CancellationToken cancellationToken)
-    {
-        ChildSync.RequireUnique(payload.ExternalCodes, c => (c.Provider, c.Code), "externalCodes", errors);
-        foreach (var (code, i) in payload.ExternalCodes.Select((c, i) => (c, i)))
-        {
-            errors.Required($"externalCodes[{i}].provider", code.Provider);
-            errors.Required($"externalCodes[{i}].code", code.Code);
-        }
-
-        // A provider code may point to one relationship type only, or translation would be ambiguous.
-        var others = await refs.Context.RelationshipTypes.AsNoTracking().Where(t => t.Code != entity.Code).ToListAsync(cancellationToken);
-        foreach (var code in payload.ExternalCodes)
-        {
-            var clash = others.FirstOrDefault(t => t.ExternalCodes.Any(c => c.Provider == code.Provider && c.Code == code.Code));
-            if (clash is not null)
-            {
-                errors.Add("externalCodes", $"{code.Provider} code '{code.Code}' is already mapped to '{clash.Code}'.");
-            }
-        }
-
-        entity.CanAct = payload.CanAct;
-        entity.DisplayOrder = payload.DisplayOrder;
-        entity.ExternalCodes = payload.ExternalCodes;
-    }
-
-    protected override Task<RelationshipTypePayload> ToPayloadAsync(PartiesDbContext context, RelationshipType entity, CancellationToken cancellationToken) =>
-        Task.FromResult(new RelationshipTypePayload { CanAct = entity.CanAct, DisplayOrder = entity.DisplayOrder, ExternalCodes = entity.ExternalCodes });
-
-    protected override async Task BeforeDeleteAsync(PartiesDbContext context, RelationshipType entity, CancellationToken cancellationToken)
-    {
-        if (await context.Relationships.AnyAsync(r => r.RelationshipTypeId == entity.Id, cancellationToken))
-        {
-            throw new ChangeSetException($"Relationship type '{entity.Code}' is in use; deactivate it instead.");
-        }
-    }
 }
 
 public sealed class ProfileFieldPayload : ConfigPayload
@@ -174,83 +120,6 @@ internal sealed class ProfileFieldApplier(PartiesDbContext db) : PartyApplier<Pr
         });
 }
 
-public sealed class CredentialTypePayload : ConfigPayload
-{
-    public PartyKind PartyKind { get; set; }
-
-    public string? IssuerAr { get; set; }
-
-    public string? IssuerEn { get; set; }
-
-    public bool HasExpiry { get; set; } = true;
-}
-
-internal sealed class CredentialTypeApplier(PartiesDbContext db) : PartyApplier<CredentialType, CredentialTypePayload>(db)
-{
-    public override string EntityType => PartyChangeTypes.CredentialType;
-
-    protected override IQueryable<CredentialType> Query(PartiesDbContext context) => context.CredentialTypes;
-
-    protected override Task ApplyAsync(CredentialType entity, CredentialTypePayload payload, ConfigRefs<PartiesDbContext> refs, ValidationErrors errors, CredentialType? existing, CancellationToken cancellationToken)
-    {
-        errors.MaxLength("issuerAr", payload.IssuerAr, 500);
-        errors.MaxLength("issuerEn", payload.IssuerEn, 500);
-        entity.PartyKind = payload.PartyKind;
-        entity.IssuerAr = Blank(payload.IssuerAr);
-        entity.IssuerEn = Blank(payload.IssuerEn);
-        entity.HasExpiry = payload.HasExpiry;
-        return Task.CompletedTask;
-    }
-
-    protected override Task<CredentialTypePayload> ToPayloadAsync(PartiesDbContext context, CredentialType entity, CancellationToken cancellationToken) =>
-        Task.FromResult(new CredentialTypePayload { PartyKind = entity.PartyKind, IssuerAr = entity.IssuerAr, IssuerEn = entity.IssuerEn, HasExpiry = entity.HasExpiry });
-
-    protected override async Task BeforeDeleteAsync(PartiesDbContext context, CredentialType entity, CancellationToken cancellationToken)
-    {
-        if (await context.Credentials.AnyAsync(c => c.CredentialTypeId == entity.Id, cancellationToken))
-        {
-            throw new ChangeSetException($"Credential type '{entity.Code}' is in use; deactivate it instead.");
-        }
-    }
-}
-
-public sealed class SanctionTypePayload : ConfigPayload
-{
-    public bool BlocksApplications { get; set; } = true;
-
-    public int? DefaultDays { get; set; }
-}
-
-internal sealed class SanctionTypeApplier(PartiesDbContext db) : PartyApplier<SanctionType, SanctionTypePayload>(db)
-{
-    public override string EntityType => PartyChangeTypes.SanctionType;
-
-    protected override IQueryable<SanctionType> Query(PartiesDbContext context) => context.SanctionTypes;
-
-    protected override Task ApplyAsync(SanctionType entity, SanctionTypePayload payload, ConfigRefs<PartiesDbContext> refs, ValidationErrors errors, SanctionType? existing, CancellationToken cancellationToken)
-    {
-        if (payload.DefaultDays is < 1 or > 3650)
-        {
-            errors.Add("defaultDays", "Must be between 1 and 3650.");
-        }
-
-        entity.BlocksApplications = payload.BlocksApplications;
-        entity.DefaultDays = payload.DefaultDays;
-        return Task.CompletedTask;
-    }
-
-    protected override Task<SanctionTypePayload> ToPayloadAsync(PartiesDbContext context, SanctionType entity, CancellationToken cancellationToken) =>
-        Task.FromResult(new SanctionTypePayload { BlocksApplications = entity.BlocksApplications, DefaultDays = entity.DefaultDays });
-
-    protected override async Task BeforeDeleteAsync(PartiesDbContext context, SanctionType entity, CancellationToken cancellationToken)
-    {
-        if (await context.Sanctions.AnyAsync(s => s.SanctionTypeId == entity.Id, cancellationToken))
-        {
-            throw new ChangeSetException($"Sanction type '{entity.Code}' is in use; deactivate it instead.");
-        }
-    }
-}
-
 public sealed class ContextSourcePayload : ConfigPayload
 {
     public string OperationCode { get; set; } = string.Empty;
@@ -290,7 +159,7 @@ public sealed class ContextSourcePayload : ConfigPayload
     public int DisplayOrder { get; set; }
 }
 
-internal sealed class ContextSourceApplier(PartiesDbContext db) : PartyApplier<ContextSource, ContextSourcePayload>(db)
+internal sealed class ContextSourceApplier(PartiesDbContext db, ILookupDirectory lookups) : PartyApplier<ContextSource, ContextSourcePayload>(db)
 {
     public override string EntityType => PartyChangeTypes.ContextSource;
 
@@ -326,9 +195,9 @@ internal sealed class ContextSourceApplier(PartiesDbContext db) : PartyApplier<C
         }
 
         var defaultType = Blank(payload.DefaultRelationshipCode);
-        if (defaultType is not null)
+        if (defaultType is not null && await lookups.FindAsync(PartyClasses.RelationshipType, defaultType, cancellationToken) is null)
         {
-            await refs.ResolveAsync(refs.Context.RelationshipTypes, PartyChangeTypes.RelationshipType, defaultType, "defaultRelationshipCode", errors, cancellationToken);
+            errors.Add("defaultRelationshipCode", $"Relationship type '{defaultType}' does not exist.");
         }
 
         if (payload.RefreshMinutes is < 1 or > 7 * 24 * 60)

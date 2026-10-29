@@ -1,10 +1,10 @@
 using DynamicCube.Modules.Parties.Changes;
 using DynamicCube.Modules.Parties.Endpoints;
 using DynamicCube.Modules.Parties.Persistence;
-using DynamicCube.Modules.Parties.Seeding;
 using DynamicCube.Modules.Parties.Services;
 using DynamicCube.Platform;
 using DynamicCube.Platform.ChangeSets;
+using DynamicCube.Platform.Lookups;
 using DynamicCube.Platform.Parties;
 using DynamicCube.Platform.Security;
 using Microsoft.AspNetCore.Builder;
@@ -31,10 +31,7 @@ public static class PartiesModule
         services.AddSystemCatalog(PartiesCatalog.Contribution);
         services.AddHttpContextAccessor();
 
-        AddApplier<RelationshipTypeApplier>(services);
         AddApplier<ProfileFieldApplier>(services);
-        AddApplier<CredentialTypeApplier>(services);
-        AddApplier<SanctionTypeApplier>(services);
         AddApplier<ContextSourceApplier>(services);
 
         services.AddScoped<IApplicantIdentity, ClaimsApplicantIdentity>();
@@ -44,7 +41,9 @@ public static class PartiesModule
         services.AddScoped<PartyAdminService>();
         services.AddScoped<IActingPartyAccessor, ActingPartyAccessor>();
         services.AddScoped<IPartyFacts, PartyFactsProvider>();
-        services.AddScoped<PartiesSeeder>();
+        services.AddScoped<IDomainRules, RelationshipTypeRules>();
+        services.AddScoped<IDomainRules, CredentialTypeRules>();
+        services.AddScoped<IDomainRules, SanctionTypeRules>();
         return services;
     }
 
@@ -81,6 +80,7 @@ internal static class PartiesCatalog
     public static SystemCatalogContribution Contribution { get; } = new()
     {
         Module = "party",
+        Classes = PartyClasses.All,
         Resources =
         [
             new(PartyResources.Root, "سجل المتعاملين", "Party registry", "INTERNAL", null, [CatalogActions.View]),

@@ -5,6 +5,7 @@ import {
   Edge,
   GRID,
   NODE_H,
+  NODE_ICONS,
   NODE_TYPES,
   NODE_W,
   NodeDef,
@@ -17,20 +18,9 @@ import {
   moveNode,
   sameOutlet,
 } from './designer-model';
+import { DesignerReferences } from './designer-references';
 
-/** Icon of each node type (Material Symbols). */
-export const NODE_ICONS: Record<NodeType, string> = {
-  START: 'play_circle',
-  HUMAN_TASK: 'person',
-  PARALLEL_SPLIT: 'call_split',
-  JOIN: 'merge',
-  GATEWAY: 'alt_route',
-  DECISION: 'rule',
-  DOCUMENT: 'description',
-  PAYMENT: 'payments',
-  VISIT: 'location_on',
-  END: 'flag',
-};
+export { NODE_ICONS };
 
 /** The data type carried when a palette item is dragged onto the canvas. */
 export const PALETTE_MIME = 'application/x-dc-workflow-node';
@@ -131,7 +121,7 @@ interface DrawnEdge {
                 [class]="'dc-canvas__box dc-canvas__box--' + n.type"
               />
               <text x="14" y="38" class="dc-canvas__icon material-symbols-outlined" aria-hidden="true">
-                {{ icons[n.type] }}
+                {{ refs.stepIcon(n.type) }}
               </text>
               <text x="44" y="28" class="dc-canvas__name">{{ clip(name(n), 20) }}</text>
               <text x="44" y="46" class="dc-canvas__code">{{ clip(n.code, 24) }}</text>
@@ -320,7 +310,7 @@ export class DesignerCanvas {
   protected readonly w = NODE_W;
   protected readonly h = NODE_H;
   protected readonly grid = GRID;
-  protected readonly icons = NODE_ICONS;
+  protected readonly refs = inject(DesignerReferences);
   protected readonly drag = signal<Drag | null>(null);
 
   protected readonly connecting = computed(() => {

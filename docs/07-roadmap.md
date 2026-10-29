@@ -164,8 +164,8 @@ page, DGA components). Browsing needs no sign-in; starting a service does.
   levels), **channels**, **cost** (from the fees: *Free*, an amount, a range or *depends on the request*, VAT
   included) and the **FAQ link, phone and email**.
 - **Configuration.** `svc.category` (Services configuration → *Service categories*: names, description, icon,
-  order) groups services; a service's category must exist, and categories in use cannot be deleted (existing
-  category codes became categories). The card fields are `definition.card` of a service version (audience,
+  order) groups services; categories in use cannot be deleted (existing category codes became categories). Since
+  [ADR-0032](adr/0032-lookups-in-class-domain.md) categories are values of class `SVC_CATEGORY`. The card fields are `definition.card` of a service version (audience,
   steps, terms, required documents, channels, FAQ link, phone, email; bilingual, versioned and checked on publish).
   The public setting `PORTAL_HOME` in Apps Control holds the hero title and text, banner image, statistics tiles and
   help links. Anonymous endpoints: `GET /api/services/v1/portal/catalog`, `/portal/services/{code}` and

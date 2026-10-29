@@ -17,7 +17,7 @@ import {
   TranslatePipe,
   problemMessages,
 } from '@dynamic-cube/shared';
-import { forkJoin, map, of } from 'rxjs';
+import { catchError, forkJoin, map, of } from 'rxjs';
 import { DraftsService } from '../drafts.service';
 import { ConfigField, ConfigType, scopeOf } from './config-types';
 import { emptyToNull, fromDate, fromJsonText, payloadOf, toDate, toJsonText, withCurrentValues } from './form-values';
@@ -89,7 +89,12 @@ export class ConfigEditor {
           ? this.api.list(f.ref).pipe(map(coded))
           : f.optionsUrl
             ? this.http.get<{ code: string; nameAr: string; nameEn: string }[]>(f.optionsUrl).pipe(map(coded))
-            : this.api.classDomains(f.refDomains!).pipe(map((rows) => rows.map((r): FormOption => ({ value: r.code, label: { ar: r.nameAr, en: r.nameEn } })))),
+            : // A class's values; the field's own options stand in when the class has none or cannot be read.
+              this.api.classDomains(f.refDomains!).pipe(
+                map((rows) => rows.map((r): FormOption => ({ value: r.code, label: { ar: r.nameAr, en: r.nameEn } }))),
+                map((options) => (options.length ? options : (f.options ?? []))),
+                catchError(() => of(f.options ?? [])),
+              ),
       );
       return (sources.length ? forkJoin(sources) : of([] as FormOption[][])).pipe(
         map((lists) => this.buildSchema(new Map(lookups.map((f, i) => [f.code, lists[i]])))),

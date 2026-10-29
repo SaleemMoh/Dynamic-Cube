@@ -11,7 +11,6 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { I18nService, JsonLogicRule, LocalizePipe, RuleEditor, RuleVariable, TranslatePipe, localize } from '@dynamic-cube/shared';
-import { NODE_ICONS } from './designer-canvas';
 import { ActionDef, AssignmentDef, NodeDef, NodeType, Outlet, WorkflowDraft, newAction, replaceNode } from './designer-model';
 import { DesignerReferences } from './designer-references';
 import { DesignerStore } from './designer-store';
@@ -53,7 +52,6 @@ export class DesignerPanel {
   readonly versionNameEnChange = output<string>();
   readonly remove = output<void>();
 
-  protected readonly icons = NODE_ICONS;
   protected readonly actionKinds: ActionDef['kind'][] = ['COMPLETE', 'APPROVE', 'REJECT', 'RETURN'];
   protected readonly node = this.store.selectedNode;
 
@@ -153,7 +151,8 @@ export class DesignerPanel {
   });
 
   protected typeName(type: NodeType): string {
-    return this.i18n.translate('designer.type.' + type);
+    const name = this.refs.stepName(type);
+    return name ? localize(name, this.i18n.language()) : this.i18n.translate('designer.type.' + type);
   }
 
   protected name(n: { nameAr?: string; nameEn?: string; code: string }): string {

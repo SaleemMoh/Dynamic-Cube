@@ -26,13 +26,7 @@ public sealed class PartiesDbContext(DbContextOptions<PartiesDbContext> options)
 
     public DbSet<Sanction> Sanctions => Set<Sanction>();
 
-    public DbSet<RelationshipType> RelationshipTypes => Set<RelationshipType>();
-
     public DbSet<ProfileField> ProfileFields => Set<ProfileField>();
-
-    public DbSet<CredentialType> CredentialTypes => Set<CredentialType>();
-
-    public DbSet<SanctionType> SanctionTypes => Set<SanctionType>();
 
     public DbSet<ContextSource> ContextSources => Set<ContextSource>();
 
@@ -40,19 +34,12 @@ public sealed class PartiesDbContext(DbContextOptions<PartiesDbContext> options)
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.ConfigTable<RelationshipType>(Schema, "relationship_type", b => b.Property(e => e.ExternalCodes).HasJsonColumn());
         modelBuilder.ConfigTable<ProfileField>(Schema, "profile_field", b =>
         {
             b.Property(e => e.OperationCode).HasMaxLength(100);
             b.Property(e => e.OutputName).HasMaxLength(100);
             b.Property(e => e.Inputs).HasJsonColumn();
         });
-        modelBuilder.ConfigTable<CredentialType>(Schema, "credential_type", b =>
-        {
-            b.Property(e => e.IssuerAr).HasMaxLength(500);
-            b.Property(e => e.IssuerEn).HasMaxLength(500);
-        });
-        modelBuilder.ConfigTable<SanctionType>(Schema, "sanction_type");
         modelBuilder.ConfigTable<ContextSource>(Schema, "context_source", b =>
         {
             b.Property(e => e.OperationCode).HasMaxLength(100).IsRequired();
@@ -91,7 +78,7 @@ public sealed class PartiesDbContext(DbContextOptions<PartiesDbContext> options)
             AuditColumns(b);
             b.HasOne(e => e.Individual).WithMany().HasForeignKey(e => e.IndividualId).OnDelete(DeleteBehavior.Cascade);
             b.HasOne(e => e.Principal).WithMany().HasForeignKey(e => e.PrincipalId).OnDelete(DeleteBehavior.Cascade);
-            b.HasOne(e => e.RelationshipType).WithMany().HasForeignKey(e => e.RelationshipTypeId).OnDelete(DeleteBehavior.Restrict);
+            b.Property(e => e.RelationshipCode).HasMaxLength(100).IsRequired();
             b.HasIndex(e => new { e.IndividualId, e.PrincipalId });
             b.HasIndex(e => e.PrincipalId);
         });
@@ -109,9 +96,9 @@ public sealed class PartiesDbContext(DbContextOptions<PartiesDbContext> options)
             b.Property(e => e.Number).HasMaxLength(100).IsRequired();
             b.Property(e => e.Data).HasColumnType("jsonb");
             AuditColumns(b);
-            b.HasOne(e => e.CredentialType).WithMany().HasForeignKey(e => e.CredentialTypeId).OnDelete(DeleteBehavior.Restrict);
+            b.Property(e => e.CredentialTypeCode).HasMaxLength(100).IsRequired();
             b.HasOne<Party>().WithMany().HasForeignKey(e => e.PartyId).OnDelete(DeleteBehavior.Cascade);
-            b.HasIndex(e => new { e.PartyId, e.CredentialTypeId, e.Number }).IsUnique();
+            b.HasIndex(e => new { e.PartyId, e.CredentialTypeCode, e.Number }).IsUnique();
         });
         modelBuilder.Entity<Project>(b =>
         {
@@ -133,7 +120,7 @@ public sealed class PartiesDbContext(DbContextOptions<PartiesDbContext> options)
             b.Property(e => e.LiftedBy).HasMaxLength(128);
             b.Property(e => e.LiftReason).HasMaxLength(2000);
             AuditColumns(b);
-            b.HasOne(e => e.SanctionType).WithMany().HasForeignKey(e => e.SanctionTypeId).OnDelete(DeleteBehavior.Restrict);
+            b.Property(e => e.SanctionTypeCode).HasMaxLength(100).IsRequired();
             b.HasOne<Party>().WithMany().HasForeignKey(e => e.PartyId).OnDelete(DeleteBehavior.Cascade);
             b.HasIndex(e => e.PartyId);
         });

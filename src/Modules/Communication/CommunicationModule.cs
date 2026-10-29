@@ -5,6 +5,7 @@ using DynamicCube.Modules.Communication.Runtime;
 using DynamicCube.Platform;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Communication;
+using DynamicCube.Platform.Lookups;
 using DynamicCube.Platform.Security;
 using DynamicCube.Platform.Templates;
 using Microsoft.AspNetCore.Builder;
@@ -78,6 +79,15 @@ internal static class CommunicationCatalog
     public static SystemCatalogContribution Contribution { get; } = new()
     {
         Module = "communication",
+        Classes =
+        [
+            new CatalogClass("COM_CHANNEL", "قنوات الإرسال", "Dispatch channels", [],
+            [
+                new CatalogValue("IN_APP", "داخل المنصة", "In-app"),
+                new CatalogValue("EMAIL", "البريد الإلكتروني", "Email"),
+                new CatalogValue("SMS", "رسالة نصية", "SMS"),
+            ]),
+        ],
         Resources =
         [
             new(CommunicationResources.Config, "إعداد التنبيهات", "Notification configuration", "INTERNAL", null, CatalogActions.Edits),

@@ -10,6 +10,20 @@ public sealed partial class ValidationErrors
 
     public bool HasErrors => _errors.Count > 0;
 
+    /// <summary>Copies every problem into <paramref name="target"/>, renaming each field with <paramref name="rename"/>.</summary>
+    public void CopyTo(ValidationErrors target, Func<string, string> rename)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        ArgumentNullException.ThrowIfNull(rename);
+        foreach (var (field, messages) in _errors)
+        {
+            foreach (var message in messages)
+            {
+                target.Add(rename(field), message);
+            }
+        }
+    }
+
     public void Add(string field, string message)
     {
         if (!_errors.TryGetValue(field, out var list))

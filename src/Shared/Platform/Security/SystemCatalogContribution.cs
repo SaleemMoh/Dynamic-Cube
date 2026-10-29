@@ -14,6 +14,9 @@ public sealed class SystemCatalogContribution
     public CatalogMenuGroup? MenuGroup { get; init; }
 
     public IReadOnlyList<CatalogMenu> Menus { get; init; } = [];
+
+    /// <summary>The module's classes in Class/Domain: lookups and lists of options it owns.</summary>
+    public IReadOnlyList<Lookups.CatalogClass> Classes { get; init; } = [];
 }
 
 /// <summary>A securable resource. <paramref name="Parent"/> may name a resource of another module.</summary>

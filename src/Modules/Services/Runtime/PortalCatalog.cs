@@ -1,7 +1,9 @@
+using DynamicCube.Modules.Services.Changes;
 using DynamicCube.Modules.Services.Definitions;
 using DynamicCube.Modules.Services.Domain;
 using DynamicCube.Modules.Services.Persistence;
 using DynamicCube.Platform.Documents;
+using DynamicCube.Platform.Lookups;
 using DynamicCube.Platform.Parties;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -178,12 +180,12 @@ public sealed class PortalCatalogService(ServicesDbContext context, ServiceCatal
             cost);
     }
 
+    /// <summary>The categories: values of class <c>SVC_CATEGORY</c>.</summary>
     private async Task<List<PortalCategory>> CategoriesAsync(CancellationToken cancellationToken) =>
-        await context.Categories.AsNoTracking()
-            .Where(c => c.IsActive)
-            .OrderBy(c => c.DisplayOrder).ThenBy(c => c.Code)
-            .Select(c => new PortalCategory(c.Code, c.NameAr, c.NameEn, c.DescriptionAr, c.DescriptionEn, c.Icon))
-            .ToListAsync(cancellationToken);
+        providers.GetService<ILookupDirectory>() is { } lookups
+            ? [.. (await lookups.ValuesAsync(ServiceClasses.Category, cancellationToken))
+                .Select(c => new PortalCategory(c.Code, c.NameAr, c.NameEn, c.Text("DESCRIPTION_AR"), c.Text("DESCRIPTION_EN"), c.Text("ICON")))]
+            : [];
 
     /// <summary>Active services with a published version: the listed ones, or the one named <paramref name="code"/> listed or not.</summary>
     private async Task<List<(Service Service, Guid VersionId, DateTimeOffset? PublishedAt)>> ListedAsync(string? code, CancellationToken cancellationToken)

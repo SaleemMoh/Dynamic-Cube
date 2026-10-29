@@ -12,8 +12,8 @@ import { AppsControlApi, BusinessAppContext, ConfigRow, I18nService, LocalizePip
 import { firstValueFrom } from 'rxjs';
 import { DraftsService } from '../../apps-control/drafts.service';
 import { PrivilegesService } from '../../apps-control/privileges.service';
-import { DesignerCanvas, NODE_ICONS, PALETTE_MIME } from './designer-canvas';
-import { NODE_TYPES, NodeType, Problem, WorkflowDraft, arrange, disconnect, removeNode, toDefinition } from './designer-model';
+import { DesignerCanvas, PALETTE_MIME } from './designer-canvas';
+import { NodeType, Problem, WorkflowDraft, arrange, disconnect, removeNode, toDefinition } from './designer-model';
 import { DesignerPanel } from './designer-panel';
 import { DesignerReferences } from './designer-references';
 import { DesignerStore } from './designer-store';
@@ -67,8 +67,6 @@ export class DesignerPage {
   readonly workflowCode = input<string | undefined>();
   readonly version = input<string | undefined>();
 
-  protected readonly types = NODE_TYPES.filter((t) => t !== 'START');
-  protected readonly icons = NODE_ICONS;
   private readonly appContext = inject(BusinessAppContext);
   protected readonly workflows = rxResource({ params: () => ({ app: this.appContext.current() }), stream: ({ params }) => this.api.list('wf.workflow', null, params.app) });
   private readonly versions = rxResource({ stream: () => this.api.list('wf.workflow-version') });

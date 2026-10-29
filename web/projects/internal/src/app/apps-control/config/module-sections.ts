@@ -595,6 +595,7 @@ export const SERVICE_SECTIONS: ConfigSection[] = [
             label: t('النمط', 'Archetype'),
             required: true,
             defaultValue: 'ISSUANCE',
+            refDomains: 'SVC_ARCHETYPE',
             options: [
               opt('ISSUANCE', 'إصدار', 'Issuance'),
               opt('AMENDMENT', 'تعديل', 'Amendment'),
@@ -719,6 +720,7 @@ export const SERVICE_SECTIONS: ConfigSection[] = [
             label: t('نوع الإجابة', 'Answer type'),
             required: true,
             defaultValue: 'TEXT',
+            refDomains: 'SVC_QUESTION_TYPE',
             options: [
               opt('TEXT', 'نص', 'Text'),
               opt('TEXTAREA', 'نص طويل', 'Long text'),
@@ -1001,6 +1003,7 @@ export const COMMUNICATION_SECTIONS: ConfigSection[] = [
             code: 'channels',
             type: 'select',
             label: t('القنوات', 'Channels'),
+            refDomains: 'COM_CHANNEL',
             options: channels,
             multiple: true,
             required: true,
@@ -1147,6 +1150,7 @@ export const VISIT_SECTIONS: ConfigSection[] = [
             type: 'select',
             label: t('من يجري الزيارة', 'Who carries it out'),
             required: true,
+            refDomains: 'VIS_MODE',
             options: [opt('FIELD', 'ميدانية', 'Field'), opt('EXTERNAL', 'جهة معاينة خارجية', 'External body'), opt('MANUAL', 'تسجيل يدوي', 'Manual')],
           },
           { code: 'descriptionAr', type: 'textarea', label: t('الوصف بالعربية', 'Description (Arabic)') },

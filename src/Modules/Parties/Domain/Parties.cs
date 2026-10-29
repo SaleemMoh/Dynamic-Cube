@@ -106,9 +106,8 @@ public sealed class Relationship : IAuditable, IHasAuditColumns
 
     public Party? Principal { get; set; }
 
-    public Guid RelationshipTypeId { get; set; }
-
-    public RelationshipType? RelationshipType { get; set; }
+    /// <summary>A value of class <c>PARTY_RELATIONSHIP_TYPE</c>.</summary>
+    public string RelationshipCode { get; set; } = string.Empty;
 
     /// <summary>Service codes the relationship covers; empty means all services.</summary>
     public List<string> Services { get; set; } = [];
@@ -168,9 +167,8 @@ public sealed class Credential : IAuditable, IHasAuditColumns
 
     public Guid PartyId { get; set; }
 
-    public Guid CredentialTypeId { get; set; }
-
-    public CredentialType? CredentialType { get; set; }
+    /// <summary>A value of class <c>PARTY_CREDENTIAL_TYPE</c>.</summary>
+    public string CredentialTypeCode { get; set; } = string.Empty;
 
     public string Number { get; set; } = string.Empty;
 
@@ -246,9 +244,8 @@ public sealed class Sanction : IAuditable, IHasAuditColumns
 
     public Guid PartyId { get; set; }
 
-    public Guid SanctionTypeId { get; set; }
-
-    public SanctionType? SanctionType { get; set; }
+    /// <summary>A value of class <c>PARTY_SANCTION_TYPE</c>.</summary>
+    public string SanctionTypeCode { get; set; } = string.Empty;
 
     public string Reason { get; set; } = string.Empty;
 

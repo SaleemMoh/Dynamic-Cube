@@ -115,10 +115,10 @@
   </button>
 } @else if (node(); as n) {
   <h2 class="dc-panel__title">
-    <mat-icon fontSet="material-symbols-outlined">{{ icons[n.type] }}</mat-icon>
+    <mat-icon fontSet="material-symbols-outlined">{{ refs.stepIcon(n.type) }}</mat-icon>
     {{ typeName(n.type) }}
   </h2>
-  <p class="dc-panel__muted">{{ 'designer.typeHint.' + n.type | dcTranslate }}</p>
+  <p class="dc-panel__muted">{{ refs.stepHint(n.type) ? (refs.stepHint(n.type)! | dcLocalize) : ('designer.typeHint.' + n.type | dcTranslate) }}</p>
 
   <mat-form-field subscriptSizing="dynamic">
     <mat-label>{{ 'designer.field.code' | dcTranslate }}</mat-label>
@@ -808,7 +808,9 @@
 
   @if (n.type === 'START' || n.type === 'JOIN' || n.type === 'DECISION' || n.type === 'DOCUMENT' || n.type === 'PAYMENT' || n.type === 'VISIT') {
     <mat-form-field subscriptSizing="dynamic">
-      <mat-label>{{ (n.type === 'PAYMENT' ? 'designer.field.paidNext' : n.type === 'VISIT' ? 'designer.field.visitedNext' : 'designer.field.next') | dcTranslate }}</mat-label>
+      <mat-label>{{
+        (n.type === 'PAYMENT' ? 'designer.field.paidNext' : n.type === 'VISIT' ? 'designer.field.visitedNext' : 'designer.field.next') | dcTranslate
+      }}</mat-label>
       <mat-select [ngModel]="n.next ?? null" (ngModelChange)="patch({ next: $event })" data-testid="node-next">
         @for (t of targets(); track t.code) {
           <mat-option [value]="t.code">{{ name(t) }} ({{ t.code }})</mat-option>

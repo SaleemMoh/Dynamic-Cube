@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json.Nodes;
+using DynamicCube.Modules.AppsControl.Changes;
 using DynamicCube.Modules.Parties.Changes;
 using DynamicCube.Modules.Parties.Domain;
 using DynamicCube.Modules.Parties.Services;
@@ -104,13 +105,14 @@ public sealed class RegistryTests(DatabaseFixture fixture) : IAsyncLifetime
     public async Task Credentials_and_projects_are_recorded_with_their_data()
     {
         var credentialType = TestHost.Unique("DGA_TECH");
-        await _host.PublishAsync(PartyChangeTypes.Area, new Change(PartyChangeTypes.CredentialType, credentialType, ChangeOperation.Create, new CredentialTypePayload
+        // Credential types are values of class PARTY_CREDENTIAL_TYPE (Class/Domain); an expiry date is required by default.
+        await _host.PublishAsync(AppsControlAreas.Lookups, new Change(PartyChangeTypes.CredentialType, credentialType, ChangeOperation.Create, new
         {
-            NameAr = "شهادة التصنيف الفني",
-            NameEn = "Technical classification certificate",
-            PartyKind = PartyKind.Establishment,
-            IssuerAr = "هيئة الحكومة الرقمية",
-            IssuerEn = "Digital Government Authority",
+            nameAr = "شهادة التصنيف الفني",
+            nameEn = "Technical classification certificate",
+            partyKind = "ESTABLISHMENT",
+            issuerAr = "هيئة الحكومة الرقمية",
+            issuerEn = "Digital Government Authority",
         }));
         var party = await AdminAsync(s => s.RegisterAsync(new RegisterPartyRequest(PartyKind.Establishment, IdentifierTypes.CrNumber, PartyTestSupport.CrNumber(), "شركة تقنية", "Tech co."), CancellationToken.None));
 

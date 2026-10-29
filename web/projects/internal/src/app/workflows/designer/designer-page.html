@@ -116,7 +116,7 @@
   <div class="dc-designer__body">
     <aside class="dc-designer__palette" [attr.aria-label]="'designer.palette' | dcTranslate">
       <h2>{{ 'designer.palette' | dcTranslate }}</h2>
-      @for (t of types; track t) {
+      @for (t of refs.paletteTypes(); track t) {
         <button
           type="button"
           class="dc-designer__item"
@@ -126,10 +126,10 @@
           [disabled]="view() !== 'canvas'"
           [attr.data-testid]="'palette-' + t"
         >
-          <mat-icon fontSet="material-symbols-outlined">{{ icons[t] }}</mat-icon>
+          <mat-icon fontSet="material-symbols-outlined">{{ refs.stepIcon(t) }}</mat-icon>
           <span>
-            <strong>{{ 'designer.type.' + t | dcTranslate }}</strong>
-            <small>{{ 'designer.typeHint.' + t | dcTranslate }}</small>
+            <strong>{{ refs.stepName(t) ? (refs.stepName(t)! | dcLocalize) : ('designer.type.' + t | dcTranslate) }}</strong>
+            <small>{{ refs.stepHint(t) ? (refs.stepHint(t)! | dcLocalize) : ('designer.typeHint.' + t | dcTranslate) }}</small>
           </span>
         </button>
       }

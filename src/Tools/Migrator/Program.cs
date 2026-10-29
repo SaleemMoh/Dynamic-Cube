@@ -14,7 +14,6 @@ using DynamicCube.Modules.Integration;
 using DynamicCube.Modules.Integration.Persistence;
 using DynamicCube.Modules.Parties;
 using DynamicCube.Modules.Parties.Persistence;
-using DynamicCube.Modules.Parties.Seeding;
 using DynamicCube.Modules.Payments;
 using DynamicCube.Modules.Payments.Persistence;
 using DynamicCube.Modules.Services;
@@ -69,7 +68,6 @@ try
     using (var scope = host.Services.CreateScope())
     {
         await scope.ServiceProvider.GetRequiredService<AppsControlSeeder>().SeedAsync(CancellationToken.None);
-        await scope.ServiceProvider.GetRequiredService<PartiesSeeder>().SeedAsync(CancellationToken.None);
         logger.LogInformation("System data seeded");
     }
 

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using DynamicCube.Modules.AppsControl.Changes;
 using DynamicCube.Modules.Services.Changes;
 using DynamicCube.Modules.Services.Persistence;
 using DynamicCube.Platform.ChangeSets;
@@ -25,13 +26,28 @@ internal static class Packages
             var exists = await host.AsAsync("admin", sp => sp.GetRequiredService<ServicesDbContext>().Services.AsNoTracking().AnyAsync(s => s.Code == "SITE_VISIT"));
             if (!exists)
             {
-                await host.PublishAsync(ServiceChangeTypes.Area, [.. Items("portal-services.json").Where(i => i.EntityType.StartsWith("svc.", StringComparison.Ordinal))]);
+                await ServicesAsync(host, [.. Items("portal-services.json").Where(i => i.EntityType.StartsWith("svc.", StringComparison.Ordinal))]);
             }
         }
         finally
         {
             PortalLock.Release();
         }
+    }
+
+    /// <summary>
+    /// Publishes the services items of a package as an import does: categories (values of class SVC_CATEGORY) in a
+    /// Classes &amp; domains change set, then the rest in a Services one.
+    /// </summary>
+    public static async Task ServicesAsync(TestHost host, List<Change> items)
+    {
+        var categories = items.Where(i => i.EntityType == ServiceChangeTypes.Category).ToList();
+        if (categories.Count > 0)
+        {
+            await host.PublishAsync(AppsControlAreas.Lookups, [.. categories]);
+        }
+
+        await host.PublishAsync(ServiceChangeTypes.Area, [.. items.Except(categories)]);
     }
 
     public static List<Change> Items(string file)

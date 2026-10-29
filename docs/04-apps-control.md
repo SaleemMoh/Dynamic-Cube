@@ -153,6 +153,10 @@ A user's menu = items whose resource the user holds `VIEW` on, for the requested
 
 ## 4.8 Class / Domain
 
+Modules contribute their own classes (SYSTEM-owned, with attributes and starting values) through the system catalog;
+lists such as service categories, party relationship / credential / sanction types and the workflow designer's step
+types are classes, edited on their module's screens or here. See [ADR-0032](adr/0032-lookups-in-class-domain.md).
+
 **`class`** — lookup type.
 
 | Column | Notes |

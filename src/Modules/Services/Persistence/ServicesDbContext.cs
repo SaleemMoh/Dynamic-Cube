@@ -10,7 +10,6 @@ public sealed class ServicesDbContext(DbContextOptions<ServicesDbContext> option
 
     public DbSet<Service> Services => Set<Service>();
 
-    public DbSet<ServiceCategory> Categories => Set<ServiceCategory>();
 
     public DbSet<Question> Questions => Set<Question>();
 
@@ -35,12 +34,6 @@ public sealed class ServicesDbContext(DbContextOptions<ServicesDbContext> option
             b.Property(e => e.NumberPrefix).HasMaxLength(20).IsRequired();
             b.Property(e => e.DocumentType).HasMaxLength(100);
             b.Property(e => e.PartyKinds).HasJsonColumn();
-        });
-        modelBuilder.ConfigTable<ServiceCategory>(Schema, "category", b =>
-        {
-            b.Property(e => e.DescriptionAr).HasMaxLength(1000);
-            b.Property(e => e.DescriptionEn).HasMaxLength(1000);
-            b.Property(e => e.Icon).HasMaxLength(100);
         });
         modelBuilder.ConfigTable<Question>(Schema, "question", b =>
         {

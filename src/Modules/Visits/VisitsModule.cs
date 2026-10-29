@@ -5,6 +5,7 @@ using DynamicCube.Modules.Visits.Runtime;
 using DynamicCube.Platform;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Communication;
+using DynamicCube.Platform.Lookups;
 using DynamicCube.Platform.Security;
 using DynamicCube.Platform.Visits;
 using Microsoft.AspNetCore.Builder;
@@ -73,6 +74,21 @@ internal static class VisitsCatalog
     public static SystemCatalogContribution Contribution { get; } = new()
     {
         Module = "visits",
+        Classes =
+        [
+            new CatalogClass("VIS_MODE", "طرق تنفيذ الزيارات", "Visit modes", [],
+            [
+                new CatalogValue("FIELD", "ميدانية", "Field"),
+                new CatalogValue("EXTERNAL", "جهة معاينة خارجية", "External body"),
+                new CatalogValue("MANUAL", "تسجيل يدوي", "Manual"),
+            ]),
+            new CatalogClass("VIS_OUTCOME_KIND", "أنواع نتائج الزيارات", "Visit outcome kinds", [],
+            [
+                new CatalogValue("PASS", "مطابق", "Pass"),
+                new CatalogValue("FAIL", "غير مطابق", "Fail"),
+                new CatalogValue("OTHER", "أخرى", "Other"),
+            ]),
+        ],
         Resources =
         [
             new(VisitResources.Registry, "الزيارات الميدانية", "Field visits", "INTERNAL", null, [CatalogActions.View, CatalogActions.Edit]),

@@ -1,6 +1,8 @@
 using System.Text.Json.Nodes;
+using DynamicCube.Modules.Parties.Changes;
 using DynamicCube.Modules.Parties.Domain;
 using DynamicCube.Modules.Parties.Persistence;
+using DynamicCube.Platform.Lookups;
 using DynamicCube.Platform.Parties;
 using DynamicCube.Platform.Security;
 using DynamicCube.Platform.Services;
@@ -63,7 +65,7 @@ public sealed record AddSanctionRequest(string TypeCode, string Reason, DateOnly
 public sealed record LiftSanctionRequest(string Reason);
 
 /// <summary>Employee-side registry operations: search, detail, manual registration and records.</summary>
-internal sealed class PartyAdminService(PartiesDbContext context, PartyDirectory directory, ProfileService profiles, ICurrentUser user, IServiceProvider services, TimeProvider clock)
+internal sealed class PartyAdminService(PartiesDbContext context, PartyDirectory directory, ProfileService profiles, ICurrentUser user, IServiceProvider services, ILookupDirectory lookups, TimeProvider clock)
 {
     /// <param name="app">Only parties with a request for a service of this business app.</param>
     public async Task<(IReadOnlyList<PartySummary> Items, int Total)> SearchAsync(string? search, PartyKind? kind, int skip, int take, CancellationToken cancellationToken, string? app = null)
@@ -99,23 +101,25 @@ internal sealed class PartyAdminService(PartiesDbContext context, PartyDirectory
         var relationships = await context.Relationships.AsNoTracking()
             .Include(r => r.Individual!).ThenInclude(p => p.Identifiers)
             .Include(r => r.Principal!).ThenInclude(p => p.Identifiers)
-            .Include(r => r.RelationshipType)
             .Where(r => r.IndividualId == id || r.PrincipalId == id)
-            .OrderBy(r => r.EndedAt != null).ThenBy(r => r.RelationshipType!.DisplayOrder)
             .ToListAsync(cancellationToken);
-        var credentials = await context.Credentials.AsNoTracking().Include(c => c.CredentialType).Where(c => c.PartyId == id).OrderBy(c => c.ExpiresOn).ToListAsync(cancellationToken);
+        var relationshipTypes = await TypesAsync(PartyClasses.RelationshipType, cancellationToken);
+        var credentials = await context.Credentials.AsNoTracking().Where(c => c.PartyId == id).OrderBy(c => c.ExpiresOn).ToListAsync(cancellationToken);
+        var credentialTypes = await TypesAsync(PartyClasses.CredentialType, cancellationToken);
         var projects = await context.Projects.AsNoTracking().Where(p => p.PartyId == id).OrderByDescending(p => p.StartOn).ToListAsync(cancellationToken);
-        var sanctions = await context.Sanctions.AsNoTracking().Include(s => s.SanctionType).Where(s => s.PartyId == id).OrderByDescending(s => s.StartsOn).ToListAsync(cancellationToken);
+        var sanctions = await context.Sanctions.AsNoTracking().Where(s => s.PartyId == id).OrderByDescending(s => s.StartsOn).ToListAsync(cancellationToken);
+        var sanctionTypes = await TypesAsync(PartyClasses.SanctionType, cancellationToken);
         var today = Today();
         return new PartyDetail(
             Summary(party),
             [.. party.Identifiers.OrderByDescending(i => i.IsPrimary).Select(i => new IdentifierInfo(i.Type, i.Value, i.IsPrimary))],
             await profiles.GetAsync(id, cancellationToken),
-            [.. relationships.Select(Relationship)],
-            [.. credentials.Select(c => new CredentialInfo(c.Id, c.CredentialType!.Code, c.CredentialType.NameAr, c.CredentialType.NameEn, c.Number, c.IssuedOn, c.ExpiresOn,
+            [.. relationships.OrderBy(r => r.EndedAt != null).ThenBy(r => Order(relationshipTypes, r.RelationshipCode)).Select(r => Relationship(r, relationshipTypes))],
+            [.. credentials.Select(c => new CredentialInfo(c.Id, c.CredentialTypeCode, NameAr(credentialTypes, c.CredentialTypeCode), NameEn(credentialTypes, c.CredentialTypeCode), c.Number, c.IssuedOn, c.ExpiresOn,
                 c.Status == CredentialStatus.Active && c.ExpiresOn < today ? CredentialStatus.Expired : c.Status, c.Data is null ? null : JsonNode.Parse(c.Data), c.Source))],
             [.. projects.Select(p => new ProjectInfo(p.Id, p.Number, p.NameAr, p.NameEn, p.ClientName, p.ContractValue, p.StartOn, p.EndOn, p.Status, p.Source))],
-            [.. sanctions.Select(s => new SanctionInfo(s.Id, s.SanctionType!.Code, s.SanctionType.NameAr, s.SanctionType.NameEn, s.SanctionType.BlocksApplications,
+            [.. sanctions.Select(s => new SanctionInfo(s.Id, s.SanctionTypeCode, NameAr(sanctionTypes, s.SanctionTypeCode), NameEn(sanctionTypes, s.SanctionTypeCode),
+                !sanctionTypes.TryGetValue(s.SanctionTypeCode, out var type) || PartyClasses.Flag(type, PartyClasses.BlocksApplications, true),
                 s.Reason, s.StartsOn, s.EndsOn, s.IsActiveOn(today), s.LiftedAt, s.LiftedBy, s.LiftReason, s.CreatedBy))],
             party.ContextsRefreshedAt);
     }
@@ -172,7 +176,7 @@ internal sealed class PartyAdminService(PartiesDbContext context, PartyDirectory
             errors.Add("individualIdentifier", "A 10-digit national ID or iqama number is required.");
         }
 
-        var type = await context.RelationshipTypes.AsNoTracking().SingleOrDefaultAsync(t => t.Code == request.RelationshipCode && t.IsActive, cancellationToken);
+        var type = await ActiveTypeAsync(PartyClasses.RelationshipType, request.RelationshipCode, cancellationToken);
         if (type is null)
         {
             errors.Add("relationshipCode", $"'{request.RelationshipCode}' does not exist.");
@@ -195,7 +199,7 @@ internal sealed class PartyAdminService(PartiesDbContext context, PartyDirectory
         {
             IndividualId = individual.Id,
             PrincipalId = principalId,
-            RelationshipTypeId = type!.Id,
+            RelationshipCode = type!.Code,
             Services = request.Services?.Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s.Trim()).Distinct().ToList() ?? [],
             ValidFrom = request.ValidFrom,
             ValidTo = request.ValidTo,
@@ -223,21 +227,21 @@ internal sealed class PartyAdminService(PartiesDbContext context, PartyDirectory
     {
         var party = await RequireAsync(partyId, cancellationToken);
         var errors = new ValidationErrors();
-        var type = await context.CredentialTypes.AsNoTracking().SingleOrDefaultAsync(t => t.Code == request.TypeCode && t.IsActive, cancellationToken);
-        if (type is null || type.PartyKind != party.Kind)
+        var type = await ActiveTypeAsync(PartyClasses.CredentialType, request.TypeCode, cancellationToken);
+        if (type is null || !string.Equals(type.Text(PartyClasses.PartyKind), party.Kind.ToString(), StringComparison.OrdinalIgnoreCase))
         {
             errors.Add("typeCode", $"'{request.TypeCode}' is not a credential type of {party.Kind} parties.");
         }
 
         errors.Required("number", request.Number);
         errors.MaxLength("number", request.Number, 100);
-        if (type?.HasExpiry == true && request.ExpiresOn is null)
+        if (type is not null && PartyClasses.Flag(type, PartyClasses.HasExpiry, true) && request.ExpiresOn is null)
         {
             errors.Add("expiresOn", "Required for this credential type.");
         }
 
         errors.ThrowIfAny();
-        if (await context.Credentials.AnyAsync(c => c.PartyId == partyId && c.CredentialTypeId == type!.Id && c.Number == request.Number.Trim(), cancellationToken))
+        if (await context.Credentials.AnyAsync(c => c.PartyId == partyId && c.CredentialTypeCode == type!.Code && c.Number == request.Number.Trim(), cancellationToken))
         {
             throw new PartyConflictException($"Credential {request.Number} is already recorded.");
         }
@@ -245,7 +249,7 @@ internal sealed class PartyAdminService(PartiesDbContext context, PartyDirectory
         var credential = new Credential
         {
             PartyId = partyId,
-            CredentialTypeId = type!.Id,
+            CredentialTypeCode = type!.Code,
             Number = request.Number.Trim(),
             IssuedOn = request.IssuedOn,
             ExpiresOn = request.ExpiresOn,
@@ -298,7 +302,7 @@ internal sealed class PartyAdminService(PartiesDbContext context, PartyDirectory
     {
         await RequireAsync(partyId, cancellationToken);
         var errors = new ValidationErrors();
-        var type = await context.SanctionTypes.AsNoTracking().SingleOrDefaultAsync(t => t.Code == request.TypeCode && t.IsActive, cancellationToken);
+        var type = await ActiveTypeAsync(PartyClasses.SanctionType, request.TypeCode, cancellationToken);
         if (type is null)
         {
             errors.Add("typeCode", $"'{request.TypeCode}' does not exist.");
@@ -307,14 +311,14 @@ internal sealed class PartyAdminService(PartiesDbContext context, PartyDirectory
         errors.Required("reason", request.Reason);
         errors.MaxLength("reason", request.Reason, 2000);
         var startsOn = request.StartsOn ?? Today();
-        var endsOn = request.EndsOn ?? (type?.DefaultDays is int days ? startsOn.AddDays(days) : null);
+        var endsOn = request.EndsOn ?? (type?.Whole(PartyClasses.DefaultDays) is int days ? startsOn.AddDays(days) : null);
         if (endsOn < startsOn)
         {
             errors.Add("endsOn", "Must not be before startsOn.");
         }
 
         errors.ThrowIfAny();
-        var sanction = new Sanction { PartyId = partyId, SanctionTypeId = type!.Id, Reason = request.Reason.Trim(), StartsOn = startsOn, EndsOn = endsOn };
+        var sanction = new Sanction { PartyId = partyId, SanctionTypeCode = type!.Code, Reason = request.Reason.Trim(), StartsOn = startsOn, EndsOn = endsOn };
         context.Sanctions.Add(sanction);
         await context.SaveChangesAsync(cancellationToken);
         return sanction.Id;
@@ -367,7 +371,21 @@ internal sealed class PartyAdminService(PartiesDbContext context, PartyDirectory
     internal static PartySummary Summary(Party p) =>
         new(p.Id, p.Kind, p.NameAr, p.NameEn, p.Status, p.PrimaryIdentifier.Type, p.PrimaryIdentifier.Value, p.Source);
 
-    private static RelationshipInfo Relationship(Relationship r) =>
+    private static RelationshipInfo Relationship(Relationship r, IReadOnlyDictionary<string, LookupValue> types) =>
         new(r.Id, r.IndividualId, r.Individual!.NameAr, r.Individual.PrimaryIdentifier.Value, r.PrincipalId, r.Principal!.NameAr, r.Principal.PrimaryIdentifier.Value,
-            r.RelationshipType!.Code, r.RelationshipType.NameAr, r.RelationshipType.NameEn, r.RelationshipType.CanAct, r.Services, r.ValidFrom, r.ValidTo, r.Source, r.SourceReference, r.EndedAt);
+            r.RelationshipCode, NameAr(types, r.RelationshipCode), NameEn(types, r.RelationshipCode), types.TryGetValue(r.RelationshipCode, out var type) && type.Flag(PartyClasses.CanAct),
+            r.Services, r.ValidFrom, r.ValidTo, r.Source, r.SourceReference, r.EndedAt);
+
+    /// <summary>The values of a type class by code, inactive ones included (records keep the types they were given).</summary>
+    private async Task<IReadOnlyDictionary<string, LookupValue>> TypesAsync(string classCode, CancellationToken cancellationToken) =>
+        (await lookups.ValuesAsync(classCode, cancellationToken, includeInactive: true)).ToDictionary(t => t.Code, StringComparer.Ordinal);
+
+    private async Task<LookupValue?> ActiveTypeAsync(string classCode, string? code, CancellationToken cancellationToken) =>
+        string.IsNullOrWhiteSpace(code) ? null : await lookups.FindAsync(classCode, code.Trim(), cancellationToken) is { IsActive: true } type ? type : null;
+
+    private static int Order(IReadOnlyDictionary<string, LookupValue> types, string code) => types.TryGetValue(code, out var type) ? type.DisplayOrder : int.MaxValue;
+
+    private static string NameAr(IReadOnlyDictionary<string, LookupValue> types, string code) => types.TryGetValue(code, out var type) ? type.NameAr : code;
+
+    private static string NameEn(IReadOnlyDictionary<string, LookupValue> types, string code) => types.TryGetValue(code, out var type) ? type.NameEn : code;
 }

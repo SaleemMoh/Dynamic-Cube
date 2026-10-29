@@ -1,7 +1,8 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { AppsControlApi, ConfigRow, LocalizedText, VersionDefinition } from '@dynamic-cube/shared';
+import { AppsControlApi, ConfigRow, DomainItem, LocalizedText, VersionDefinition } from '@dynamic-cube/shared';
 import { catchError, of } from 'rxjs';
+import { NODE_ICONS, NODE_TYPES, NodeType } from './designer-model';
 
 export interface RefOption {
   value: string;
@@ -41,6 +42,36 @@ export class DesignerReferences {
   private readonly orgUnitRows = this.list('apps.org-unit');
   private readonly positionRows = this.list('apps.position');
   private readonly service = signal<string | null>(null);
+  /** The step types as class WF_STEP_TYPE (Class/Domain) names them: active ones, in their order. */
+  private readonly stepRows = toSignal(this.api.classDomains('WF_STEP_TYPE').pipe(catchError(() => of([] as DomainItem[]))), {
+    initialValue: [] as DomainItem[],
+  });
+  private readonly steps = computed(() => new Map(this.stepRows().map((d) => [d.code, d])));
+
+  /** What the palette offers: the active step types in the class's order (every type until the class is read). */
+  readonly paletteTypes = computed<NodeType[]>(() => {
+    const rows = this.stepRows().filter((d) => (NODE_TYPES as readonly string[]).includes(d.code));
+    const types = rows.length ? rows.map((d) => d.code as NodeType) : [...NODE_TYPES];
+    return types.filter((t) => t !== 'START');
+  });
+
+  /** The name of a step type from its class value, or null to use the built-in one. */
+  stepName(type: NodeType): LocalizedText | null {
+    const row = this.steps().get(type);
+    return row ? { ar: row.nameAr, en: row.nameEn } : null;
+  }
+
+  stepHint(type: NodeType): LocalizedText | null {
+    const attributes = this.steps().get(type)?.attributes;
+    const ar = attributes?.['HINT_AR'];
+    const en = attributes?.['HINT_EN'];
+    return typeof ar === 'string' && typeof en === 'string' && ar && en ? { ar, en } : null;
+  }
+
+  stepIcon(type: NodeType): string {
+    const icon = this.steps().get(type)?.attributes?.['ICON'];
+    return typeof icon === 'string' && icon ? icon : NODE_ICONS[type];
+  }
 
   readonly roles = computed(() => options(this.roleRows()));
   readonly ruleSets = computed(() => options(this.ruleSetRows()));
@@ -54,7 +85,9 @@ export class DesignerReferences {
   visitType(code: string | null | undefined): { outcomes: RefOption[]; fields: QuestionRef[] } {
     const row = this.visitTypeRows().find((r) => r.code === code);
     const outcomes = (row?.['outcomes'] as { code: string; nameAr: string; nameEn: string }[] | undefined) ?? [];
-    const fields = (row?.['fields'] as { code: string; labelAr: string; labelEn: string; type: string; options?: { code: string; labelAr: string; labelEn: string }[] }[] | undefined) ?? [];
+    const fields =
+      (row?.['fields'] as
+        { code: string; labelAr: string; labelEn: string; type: string; options?: { code: string; labelAr: string; labelEn: string }[] }[] | undefined) ?? [];
     return {
       outcomes: outcomes.map((o) => ({ value: o.code, label: { ar: o.nameAr, en: o.nameEn } })),
       fields: fields.map((f) => ({

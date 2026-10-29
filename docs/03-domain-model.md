@@ -63,9 +63,11 @@ are delegated for. Every request records both the **submitter** (individual) and
   are fetched again. Manual fields are entered by employees.
 - **Credentials, projects, sanctions** — recorded with source and validity; credentials keep nested data as
   JSON. A sanction must be lifted by someone other than who recorded it.
-- Configuration (relationship types, context sources, profile fields, credential and sanction types) goes
-  through change sets (area `party.registry`); registry operations are on the internal API, the acting
-  contexts on the external API.
+- Configuration (context sources, profile fields) goes through change sets (area `party.registry`); relationship,
+  credential and sanction types are values of classes `PARTY_RELATIONSHIP_TYPE`, `PARTY_CREDENTIAL_TYPE` and
+  `PARTY_SANCTION_TYPE` in Class/Domain (area `apps.lookups`, same screens; records keep the type's code; see
+  [ADR-0032](adr/0032-lookups-in-class-domain.md)). Registry operations are on the internal API, the acting contexts
+  on the external API.
 
 ---
 
@@ -127,8 +129,9 @@ result.
   and a window of days around the issue or expiry date. One open request per document and service; rules see the
   document as `document`; the workflow's document step with `target: SOURCE` amends it (validity KEEP, RESET, RENEW
   or EXTEND). See [ADR-0021](adr/0021-follow-up-services.md).
-- **Category** (1g) `svc.category` — names, description, icon and order; a service names an existing category,
-  which groups it in the portal (home tabs, search filter, header menu).
+- **Category** (1g) `svc.category` — names, description, icon and order; a service names a category, which groups
+  it in the portal (home tabs, search filter, header menu). Categories are values of class `SVC_CATEGORY` in
+  Class/Domain ([ADR-0032](adr/0032-lookups-in-class-domain.md)).
 - **Service card** (1g) — `definition.card` of a version: target audience, numbered steps, terms of use,
   required documents (with notes), channels (`PORTAL`, `MOBILE_APP`, `BRANCH`, `CALL_CENTER`), FAQ link, phone and
   email. Duration comes from the levels and cost from the fees (fixed amounts and bracket ranges; *depends on the

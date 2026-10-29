@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using DynamicCube.Modules.AppsControl.Changes;
 using DynamicCube.Modules.Services.Changes;
 using DynamicCube.Modules.Services.Definitions;
 using DynamicCube.Modules.Services.Domain;
@@ -145,16 +146,11 @@ public sealed class ConfigurationTests(DatabaseFixture fixture) : IAsyncLifetime
         var category = TestHost.Unique("CAT");
         ServicePayload Payload(string? categoryCode) => new() { NameAr = "خدمة", NameEn = "Service", PartyKinds = [Platform.Parties.PartyKind.Establishment], CategoryCode = categoryCode };
 
-        var missing = await Should.ThrowAsync<ChangeValidationException>(() => _host.PublishAsync(ServiceChangeTypes.Area,
-            new Change(ServiceChangeTypes.Service, sample.Service, ChangeOperation.Create, Payload(category))));
-        missing.Errors["categoryCode"].Single().ShouldContain("does not exist");
-
-        // A category created in the same change set is fine.
-        await _host.PublishAsync(ServiceChangeTypes.Area,
-            [.. sample.Questions(),
-            new Change(ServiceChangeTypes.Category, category, ChangeOperation.Create, new ServiceCategoryPayload { NameAr = "التصاريح", NameEn = "Permits", Icon = "event" }),
-            new Change(ServiceChangeTypes.Service, sample.Service, ChangeOperation.Create, Payload(category))]);
-        await Should.ThrowAsync<ChangeSetException>(() => _host.PublishAsync(ServiceChangeTypes.Area, new Change(ServiceChangeTypes.Category, category, ChangeOperation.Delete, null)));
+        // Categories are values of class SVC_CATEGORY (Class/Domain), published in their own change set; one in use
+        // cannot be deleted.
+        await _host.PublishAsync(AppsControlAreas.Lookups, new Change(ServiceChangeTypes.Category, category, ChangeOperation.Create, new { nameAr = "التصاريح", nameEn = "Permits", icon = "event" }));
+        await _host.PublishAsync(ServiceChangeTypes.Area, [.. sample.Questions(), new Change(ServiceChangeTypes.Service, sample.Service, ChangeOperation.Create, Payload(category))]);
+        await Should.ThrowAsync<ChangeSetException>(() => _host.PublishAsync(AppsControlAreas.Lookups, new Change(ServiceChangeTypes.Category, category, ChangeOperation.Delete, null)));
 
         var bad = sample.Definition();
         bad.Card = new ServiceCardDefinition

@@ -1,13 +1,15 @@
 using System.Text.Json.Nodes;
+using DynamicCube.Modules.Parties.Changes;
 using DynamicCube.Modules.Parties.Domain;
 using DynamicCube.Modules.Parties.Persistence;
+using DynamicCube.Platform.Lookups;
 using DynamicCube.Platform.Parties;
 using Microsoft.EntityFrameworkCore;
 
 namespace DynamicCube.Modules.Parties.Services;
 
 /// <summary>Party facts for rules in other modules (eligibility, fees, prefill).</summary>
-internal sealed class PartyFactsProvider(PartiesDbContext context, ProfileService profiles, TimeProvider clock) : IPartyFacts
+internal sealed class PartyFactsProvider(PartiesDbContext context, ProfileService profiles, ILookupDirectory lookups, TimeProvider clock) : IPartyFacts
 {
     public async Task<PartyFacts?> GetAsync(Guid partyId, bool refreshProfile, CancellationToken cancellationToken)
     {
@@ -28,12 +30,13 @@ internal sealed class PartyFactsProvider(PartiesDbContext context, ProfileServic
             .Where(v => v.PartyId == partyId && v.Field!.IsActive)
             .Select(v => new { v.Field!.Code, v.Value })
             .ToListAsync(cancellationToken);
-        var sanctions = await context.Sanctions.AsNoTracking().Include(s => s.SanctionType)
+        var sanctions = await context.Sanctions.AsNoTracking()
             .Where(s => s.PartyId == partyId && s.LiftedAt == null && s.StartsOn <= today && (s.EndsOn == null || s.EndsOn >= today))
             .ToListAsync(cancellationToken);
-        var credentials = await context.Credentials.AsNoTracking().Include(c => c.CredentialType)
+        var credentials = await context.Credentials.AsNoTracking()
             .Where(c => c.PartyId == partyId)
             .ToListAsync(cancellationToken);
+        var sanctionTypes = (await lookups.ValuesAsync(PartyClasses.SanctionType, cancellationToken, includeInactive: true)).ToDictionary(t => t.Code, StringComparer.Ordinal);
 
         return new PartyFacts(
             party.Id,
@@ -42,9 +45,10 @@ internal sealed class PartyFactsProvider(PartiesDbContext context, ProfileServic
             party.NameEn,
             party.Identifiers.GroupBy(i => i.Type).ToDictionary(g => g.Key, g => g.OrderByDescending(i => i.IsPrimary).First().Value),
             profile.ToDictionary(p => p.Code, p => p.Value is null ? null : JsonNode.Parse(p.Value)),
-            [.. sanctions.Select(s => new SanctionFact(s.SanctionType!.Code, s.SanctionType.BlocksApplications, s.StartsOn, s.EndsOn))],
+            [.. sanctions.Select(s => new SanctionFact(
+                s.SanctionTypeCode, !sanctionTypes.TryGetValue(s.SanctionTypeCode, out var type) || PartyClasses.Flag(type, PartyClasses.BlocksApplications, true), s.StartsOn, s.EndsOn))],
             [.. credentials.Select(c => new CredentialFact(
-                c.CredentialType!.Code,
+                c.CredentialTypeCode,
                 c.Number,
                 (c.Status == CredentialStatus.Active && c.ExpiresOn < today ? CredentialStatus.Expired : c.Status).ToString().ToUpperInvariant(),
                 c.IssuedOn,

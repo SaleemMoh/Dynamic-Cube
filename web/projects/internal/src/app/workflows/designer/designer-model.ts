@@ -619,3 +619,17 @@ export function check(def: WorkflowDraft): Problem[] {
   }
   return problems;
 }
+
+/** Icon of each node type (Material Symbols). */
+export const NODE_ICONS: Record<NodeType, string> = {
+  START: 'play_circle',
+  HUMAN_TASK: 'person',
+  PARALLEL_SPLIT: 'call_split',
+  JOIN: 'merge',
+  GATEWAY: 'alt_route',
+  DECISION: 'rule',
+  DOCUMENT: 'description',
+  PAYMENT: 'payments',
+  VISIT: 'location_on',
+  END: 'flag',
+};

@@ -19,7 +19,9 @@ public sealed class ClassificationPackageTests(DatabaseFixture fixture)
     {
         await using var host = new WorkflowHost(fixture);
         // The service first: publishing it gives it its workflow, whose version 2 the workflow package adds.
-        await host.Host.PublishAsync(ServiceChangeTypes.Area, [.. Items("classification-new.json")]);
+        var service = Items("classification-new.json");
+        await host.Host.PublishAsync(AppsControlAreas.Lookups, [.. service.Where(i => i.EntityType == ServiceChangeTypes.Category)]);
+        await host.Host.PublishAsync(ServiceChangeTypes.Area, [.. service.Where(i => i.EntityType != ServiceChangeTypes.Category)]);
         var items = Items("classification-workflow.json");
         await host.Host.PublishAsync(AppsControlAreas.Security, [.. items.Where(i => i.EntityType.StartsWith("apps.", StringComparison.Ordinal))]);
         await host.Host.PublishAsync(WorkflowChangeTypes.Area, [.. items.Where(i => i.EntityType.StartsWith("wf.", StringComparison.Ordinal))]);

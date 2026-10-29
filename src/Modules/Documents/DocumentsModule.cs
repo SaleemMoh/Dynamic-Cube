@@ -6,6 +6,7 @@ using DynamicCube.Platform;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Communication;
 using DynamicCube.Platform.Documents;
+using DynamicCube.Platform.Lookups;
 using DynamicCube.Platform.Security;
 using DynamicCube.Platform.Templates;
 using Microsoft.AspNetCore.Builder;
@@ -89,6 +90,16 @@ internal static class DocumentsCatalog
     public static SystemCatalogContribution Contribution { get; } = new()
     {
         Module = "documents",
+        Classes =
+        [
+            new CatalogClass("DOC_VALIDITY_MODE", "صلاحية المستند عند التعديل", "Validity on amendment", [],
+            [
+                new CatalogValue("KEEP", "تبقى كما هي", "Keep"),
+                new CatalogValue("RESET", "مدة جديدة من اليوم", "A new period from today"),
+                new CatalogValue("RENEW", "مدة جديدة من تاريخ الانتهاء", "A new period from the expiry"),
+                new CatalogValue("EXTEND", "تمديد بعدد أشهر", "Extend by months"),
+            ]),
+        ],
         Resources =
         [
             new(DocumentResources.Registry, "سجل المستندات", "Document registry", "INTERNAL", null, [CatalogActions.View, CatalogActions.Edit]),

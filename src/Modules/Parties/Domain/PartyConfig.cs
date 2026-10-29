@@ -2,24 +2,6 @@ using DynamicCube.Platform.Parties;
 
 namespace DynamicCube.Modules.Parties.Domain;
 
-/// <summary>A provider's code for a configuration value, e.g. MCI relation type <c>1</c> = OWNER.</summary>
-public sealed class ExternalCode
-{
-    public string Provider { get; set; } = string.Empty;
-
-    public string Code { get; set; } = string.Empty;
-}
-
-/// <summary>Owner, partner, manager, delegate…; <see cref="CanAct"/> decides whether it gives an acting context.</summary>
-public sealed class RelationshipType : ConfigEntity
-{
-    public bool CanAct { get; set; }
-
-    public int DisplayOrder { get; set; }
-
-    public List<ExternalCode> ExternalCodes { get; set; } = [];
-}
-
 public enum ProfileDataType
 {
     Text,
@@ -56,25 +38,6 @@ public sealed class ProfileField : ConfigEntity
     public int RefreshHours { get; set; } = 24;
 
     public int DisplayOrder { get; set; }
-}
-
-public sealed class CredentialType : ConfigEntity
-{
-    public PartyKind PartyKind { get; set; }
-
-    public string? IssuerAr { get; set; }
-
-    public string? IssuerEn { get; set; }
-
-    public bool HasExpiry { get; set; } = true;
-}
-
-public sealed class SanctionType : ConfigEntity
-{
-    /// <summary>The party may not submit new requests while the sanction is active.</summary>
-    public bool BlocksApplications { get; set; } = true;
-
-    public int? DefaultDays { get; set; }
 }
 
 /// <summary>

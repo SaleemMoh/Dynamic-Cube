@@ -212,9 +212,11 @@ namespace DynamicCube.Modules.Parties.Persistence.Migrations
                         .HasColumnType("character varying(128)")
                         .HasColumnName("created_by");
 
-                    b.Property<Guid>("CredentialTypeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("credential_type_id");
+                    b.Property<string>("CredentialTypeCode")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("credential_type_code");
 
                     b.Property<string>("Data")
                         .HasColumnType("jsonb")
@@ -272,113 +274,11 @@ namespace DynamicCube.Modules.Parties.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_credential");
 
-                    b.HasIndex("CredentialTypeId")
-                        .HasDatabaseName("ix_credential_credential_type_id");
-
-                    b.HasIndex("PartyId", "CredentialTypeId", "Number")
+                    b.HasIndex("PartyId", "CredentialTypeCode", "Number")
                         .IsUnique()
-                        .HasDatabaseName("ix_credential_party_id_credential_type_id_number");
+                        .HasDatabaseName("ix_credential_party_id_credential_type_code_number");
 
                     b.ToTable("credential", "party");
-                });
-
-            modelBuilder.Entity("DynamicCube.Modules.Parties.Domain.CredentialType", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("BusinessApp")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("business_app");
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("code");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)")
-                        .HasColumnName("created_by");
-
-                    b.Property<string>("EntityCode")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("entity_code");
-
-                    b.Property<bool>("HasExpiry")
-                        .HasColumnType("boolean")
-                        .HasColumnName("has_expiry");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_active");
-
-                    b.Property<string>("IssuerAr")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("issuer_ar");
-
-                    b.Property<string>("IssuerEn")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("issuer_en");
-
-                    b.Property<string>("NameAr")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("name_ar");
-
-                    b.Property<string>("NameEn")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("name_en");
-
-                    b.Property<string>("Owner")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
-                        .HasColumnName("owner");
-
-                    b.Property<string>("PartyKind")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
-                        .HasColumnName("party_kind");
-
-                    b.Property<uint>("RowVersion")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)")
-                        .HasColumnName("updated_by");
-
-                    b.HasKey("Id")
-                        .HasName("pk_credential_type");
-
-                    b.HasIndex("Code")
-                        .IsUnique()
-                        .HasDatabaseName("ix_credential_type_code");
-
-                    b.ToTable("credential_type", "party");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.Parties.Domain.Party", b =>
@@ -768,9 +668,11 @@ namespace DynamicCube.Modules.Parties.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("principal_id");
 
-                    b.Property<Guid>("RelationshipTypeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("relationship_type_id");
+                    b.Property<string>("RelationshipCode")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("relationship_code");
 
                     b.Property<uint>("RowVersion")
                         .IsConcurrencyToken()
@@ -817,105 +719,10 @@ namespace DynamicCube.Modules.Parties.Persistence.Migrations
                     b.HasIndex("PrincipalId")
                         .HasDatabaseName("ix_relationship_principal_id");
 
-                    b.HasIndex("RelationshipTypeId")
-                        .HasDatabaseName("ix_relationship_relationship_type_id");
-
                     b.HasIndex("IndividualId", "PrincipalId")
                         .HasDatabaseName("ix_relationship_individual_id_principal_id");
 
                     b.ToTable("relationship", "party");
-                });
-
-            modelBuilder.Entity("DynamicCube.Modules.Parties.Domain.RelationshipType", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("BusinessApp")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("business_app");
-
-                    b.Property<bool>("CanAct")
-                        .HasColumnType("boolean")
-                        .HasColumnName("can_act");
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("code");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)")
-                        .HasColumnName("created_by");
-
-                    b.Property<int>("DisplayOrder")
-                        .HasColumnType("integer")
-                        .HasColumnName("display_order");
-
-                    b.Property<string>("EntityCode")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("entity_code");
-
-                    b.Property<string>("ExternalCodes")
-                        .IsRequired()
-                        .HasColumnType("jsonb")
-                        .HasColumnName("external_codes");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_active");
-
-                    b.Property<string>("NameAr")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("name_ar");
-
-                    b.Property<string>("NameEn")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("name_en");
-
-                    b.Property<string>("Owner")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
-                        .HasColumnName("owner");
-
-                    b.Property<uint>("RowVersion")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)")
-                        .HasColumnName("updated_by");
-
-                    b.HasKey("Id")
-                        .HasName("pk_relationship_type");
-
-                    b.HasIndex("Code")
-                        .IsUnique()
-                        .HasDatabaseName("ix_relationship_type_code");
-
-                    b.ToTable("relationship_type", "party");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.Parties.Domain.Sanction", b =>
@@ -968,9 +775,11 @@ namespace DynamicCube.Modules.Parties.Persistence.Migrations
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
 
-                    b.Property<Guid>("SanctionTypeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("sanction_type_id");
+                    b.Property<string>("SanctionTypeCode")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("sanction_type_code");
 
                     b.Property<DateOnly>("StartsOn")
                         .HasColumnType("date")
@@ -991,97 +800,7 @@ namespace DynamicCube.Modules.Parties.Persistence.Migrations
                     b.HasIndex("PartyId")
                         .HasDatabaseName("ix_sanction_party_id");
 
-                    b.HasIndex("SanctionTypeId")
-                        .HasDatabaseName("ix_sanction_sanction_type_id");
-
                     b.ToTable("sanction", "party");
-                });
-
-            modelBuilder.Entity("DynamicCube.Modules.Parties.Domain.SanctionType", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<bool>("BlocksApplications")
-                        .HasColumnType("boolean")
-                        .HasColumnName("blocks_applications");
-
-                    b.Property<string>("BusinessApp")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("business_app");
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("code");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)")
-                        .HasColumnName("created_by");
-
-                    b.Property<int?>("DefaultDays")
-                        .HasColumnType("integer")
-                        .HasColumnName("default_days");
-
-                    b.Property<string>("EntityCode")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("entity_code");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_active");
-
-                    b.Property<string>("NameAr")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("name_ar");
-
-                    b.Property<string>("NameEn")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("name_en");
-
-                    b.Property<string>("Owner")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
-                        .HasColumnName("owner");
-
-                    b.Property<uint>("RowVersion")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)")
-                        .HasColumnName("updated_by");
-
-                    b.HasKey("Id")
-                        .HasName("pk_sanction_type");
-
-                    b.HasIndex("Code")
-                        .IsUnique()
-                        .HasDatabaseName("ix_sanction_type_code");
-
-                    b.ToTable("sanction_type", "party");
                 });
 
             modelBuilder.Entity("DynamicCube.Platform.Auditing.AuditEntry", b =>
@@ -1353,21 +1072,12 @@ namespace DynamicCube.Modules.Parties.Persistence.Migrations
 
             modelBuilder.Entity("DynamicCube.Modules.Parties.Domain.Credential", b =>
                 {
-                    b.HasOne("DynamicCube.Modules.Parties.Domain.CredentialType", "CredentialType")
-                        .WithMany()
-                        .HasForeignKey("CredentialTypeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_credential_credential_type_credential_type_id");
-
                     b.HasOne("DynamicCube.Modules.Parties.Domain.Party", null)
                         .WithMany()
                         .HasForeignKey("PartyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_credential_party_party_id");
-
-                    b.Navigation("CredentialType");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.Parties.Domain.PartyIdentifier", b =>
@@ -1425,18 +1135,9 @@ namespace DynamicCube.Modules.Parties.Persistence.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_relationship_party_principal_id");
 
-                    b.HasOne("DynamicCube.Modules.Parties.Domain.RelationshipType", "RelationshipType")
-                        .WithMany()
-                        .HasForeignKey("RelationshipTypeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_relationship_relationship_type_relationship_type_id");
-
                     b.Navigation("Individual");
 
                     b.Navigation("Principal");
-
-                    b.Navigation("RelationshipType");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.Parties.Domain.Sanction", b =>
@@ -1447,15 +1148,6 @@ namespace DynamicCube.Modules.Parties.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_sanction_party_party_id");
-
-                    b.HasOne("DynamicCube.Modules.Parties.Domain.SanctionType", "SanctionType")
-                        .WithMany()
-                        .HasForeignKey("SanctionTypeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_sanction_sanction_type_sanction_type_id");
-
-                    b.Navigation("SanctionType");
                 });
 
             modelBuilder.Entity("DynamicCube.Platform.ChangeSets.ChangeItem", b =>
