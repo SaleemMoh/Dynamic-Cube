@@ -276,8 +276,8 @@ Delivered in slices. Each designer covers what the runtime can run today; node t
 |---|---|---|
 | **3a** | Workflow Designer: canvas, palette, connections, side panel per step, visual JSONLogic rule editor, checks as you draw, test run, publish as a new version | ✅ |
 | **3b** | Service & Form Builder: form (steps, sections, question bank, layouts, live preview), service card, rules, required documents, output, related services | ✅ |
-| 3c | Notification rule builder; Portal Content Manager (banner, categories, tiles, FAQs, help links, pages) | Next |
-| 3d | Configuration packages: export from any screen, import with a diff preview | Planned |
+| **3c** | Notification rule builder; Portal Content Manager (banner, categories, tiles, FAQs, help links, pages) | ✅ |
+| 3d | Configuration packages: export from any screen, import with a diff preview | Next |
 | 3e | Visits: field app (offline PWA), external inspection integration, manual entry | Planned |
 | 3f | Sub-requests: prerequisite, bundled, spawned | Planned |
 
@@ -331,6 +331,32 @@ test run.
 
 Still open from 3b: uploading required documents (attachments), related and prerequisite services, a single-page
 mode of the wizard, and choosing the preview's language independently of the app.
+
+**3c delivered** ([ADR-0025](adr/0025-portal-content.md)):
+
+- **Notification rule builder.** In *Notifications → Notification rules*, a rule is built in three parts:
+  - *When*: the event, grouped by module, and an optional condition in the visual rule editor over the event's
+    facts.
+  - *Who*: the applicant, named roles or employees, or the role or employee the event names.
+  - *What*: the template, only the channels it has wording for, and the language.
+
+  The message is previewed on the event's sample facts for each chosen channel.
+- **Content module** (schema `cms`): portal pages (Markdown in Arabic and English, linked from the footer) and
+  frequently asked questions (topic, optional service, order). Both are configured through change sets and read
+  anonymously by the portal.
+- **Content Manager** (*Portal content*):
+  - *Portal home page*: hero wording and banner, statistics tiles (counted or fixed, icons, order) and help links,
+    with a preview. It is saved as the `PORTAL_HOME` setting.
+  - *FAQs* and *Pages*: written with a side-by-side preview that uses the portal's own renderer.
+- **Portal:**
+  - `/faq`: questions grouped by topic, with search.
+  - `/faq?service=CODE`: one service's questions, linked from its service page.
+  - `/pages/:slug`: a page.
+  - The footer links pages and questions.
+- Package `portal-content.json`: about, terms of use and privacy pages, and ten questions.
+
+Still open from 3c: images and attachments in pages (they need a file runtime), categories edited from the Content
+Manager (they stay in Services), scheduled publishing, and server-side search across questions.
 
 Scope of the slices:
 

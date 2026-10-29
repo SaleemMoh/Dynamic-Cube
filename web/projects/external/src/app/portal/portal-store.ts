@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { APPS_CONTROL_API, LocalizedText, PortalCategory, ServicesApi } from '@dynamic-cube/shared';
+import { APPS_CONTROL_API, ContentApi, FooterLink, LocalizedText, PortalCategory, ServicesApi } from '@dynamic-cube/shared';
 import { catchError, map, of } from 'rxjs';
 
 export type StatisticMetric = 'SERVICES' | 'REQUESTS' | 'IN_PROGRESS' | 'COMPLETED';
@@ -37,6 +37,7 @@ const DEFAULT_TILES: StatisticTile[] = [
 export class PortalStore {
   private readonly api = inject(ServicesApi);
   private readonly http = inject(HttpClient);
+  private readonly content = inject(ContentApi);
 
   readonly catalog = rxResource({ stream: () => this.api.portalCatalog() });
   readonly statistics = rxResource({ stream: () => this.api.portalStatistics().pipe(catchError(() => of(null))) });
@@ -48,6 +49,14 @@ export class PortalStore {
         catchError(() => of<PortalHomeSetting>({})),
       ),
   });
+
+  readonly pages = rxResource({ stream: () => this.content.pages().pipe(catchError(() => of([]))) });
+
+  /** Footer: the pages marked for it, then the questions. */
+  readonly footerLinks = computed<FooterLink[]>(() => [
+    ...(this.pages.value() ?? []).filter((p) => p.showInFooter).map((p) => ({ labelAr: p.titleAr, labelEn: p.titleEn, url: `/pages/${p.slug}` })),
+    { labelAr: 'الأسئلة الشائعة', labelEn: 'FAQs', url: '/faq' },
+  ]);
 
   readonly categories = computed<PortalCategory[]>(() => this.catalog.value()?.categories ?? []);
   readonly services = computed(() => this.catalog.value()?.services ?? []);

@@ -1,0 +1,112 @@
+<h2 mat-dialog-title>{{ (isPage ? (data.row ? 'content.editPage' : 'content.newPage') : data.row ? 'content.editFaq' : 'content.newFaq') | dcTranslate }}</h2>
+<mat-dialog-content class="dc-ce">
+  <div class="dc-ce__meta">
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>{{ 'config.code' | dcTranslate }}</mat-label>
+      <input matInput dir="ltr" [ngModel]="code()" (ngModelChange)="code.set($event)" [disabled]="!!data.row" data-testid="content-code" />
+      @if (isPage) {
+        <mat-hint dir="ltr">/pages/{{ slug() }}</mat-hint>
+      }
+    </mat-form-field>
+    <mat-form-field subscriptSizing="dynamic" class="dc-ce__order">
+      <mat-label>{{ 'content.order' | dcTranslate }}</mat-label>
+      <input matInput type="number" min="0" [ngModel]="order()" (ngModelChange)="order.set($event)" />
+    </mat-form-field>
+    @if (isPage) {
+      <mat-checkbox [ngModel]="showInFooter()" (ngModelChange)="showInFooter.set($event)" data-testid="content-footer">{{
+        'content.showInFooter' | dcTranslate
+      }}</mat-checkbox>
+    } @else {
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'content.service' | dcTranslate }}</mat-label>
+        <mat-select [ngModel]="serviceCode()" (ngModelChange)="serviceCode.set($event)" data-testid="content-service">
+          <mat-option [value]="null">{{ 'content.noService' | dcTranslate }}</mat-option>
+          @for (s of serviceOptions(); track s.code) {
+            <mat-option [value]="s.code">{{ s.name | dcLocalize }} ({{ s.code }})</mat-option>
+          }
+        </mat-select>
+        <mat-hint>{{ 'content.serviceHint' | dcTranslate }}</mat-hint>
+      </mat-form-field>
+    }
+    <mat-checkbox [ngModel]="active()" (ngModelChange)="active.set($event)">{{ 'content.published' | dcTranslate }}</mat-checkbox>
+  </div>
+
+  @if (!isPage) {
+    <div class="dc-ce__topic">
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'content.topicAr' | dcTranslate }}</mat-label>
+        <input matInput dir="rtl" [ngModel]="topicAr()" (ngModelChange)="topicAr.set($event)" data-testid="content-topic-ar" />
+      </mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'content.topicEn' | dcTranslate }}</mat-label>
+        <input matInput dir="ltr" [ngModel]="topicEn()" (ngModelChange)="topicEn.set($event)" data-testid="content-topic-en" />
+      </mat-form-field>
+      @if (topics().length) {
+        <div class="dc-ce__chips">
+          <span class="dc-ce__muted">{{ 'content.topics' | dcTranslate }}</span>
+          @for (t of topics(); track t.en) {
+            <button matButton type="button" class="dc-ce__chip" (click)="useTopic(t)">{{ t | dcLocalize }}</button>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <mat-button-toggle-group
+    class="dc-ce__lang"
+    [ngModel]="language()"
+    (ngModelChange)="language.set($event)"
+    [attr.aria-label]="'content.language' | dcTranslate"
+  >
+    <mat-button-toggle value="ar" data-testid="content-lang-ar">العربية</mat-button-toggle>
+    <mat-button-toggle value="en" data-testid="content-lang-en">English</mat-button-toggle>
+  </mat-button-toggle-group>
+
+  @let lang = language();
+  <div class="dc-ce__write" [attr.dir]="lang === 'ar' ? 'rtl' : 'ltr'">
+    <div class="dc-ce__source">
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ (isPage ? 'content.title' : 'content.question') | dcTranslate }}</mat-label>
+        @if (lang === 'ar') {
+          <input matInput [ngModel]="titleAr()" (ngModelChange)="titleAr.set($event)" data-testid="content-title-ar" />
+        } @else {
+          <input matInput [ngModel]="titleEn()" (ngModelChange)="titleEn.set($event)" data-testid="content-title-en" />
+        }
+      </mat-form-field>
+      <mat-form-field subscriptSizing="dynamic" class="dc-ce__body">
+        <mat-label>{{ (isPage ? 'content.body' : 'content.answer') | dcTranslate }}</mat-label>
+        @if (lang === 'ar') {
+          <textarea matInput [rows]="isPage ? 18 : 10" [ngModel]="bodyAr()" (ngModelChange)="bodyAr.set($event)" data-testid="content-body-ar"></textarea>
+        } @else {
+          <textarea matInput [rows]="isPage ? 18 : 10" [ngModel]="bodyEn()" (ngModelChange)="bodyEn.set($event)" data-testid="content-body-en"></textarea>
+        }
+      </mat-form-field>
+      <p class="dc-ce__muted" dir="auto">{{ 'content.markdownHint' | dcTranslate }}</p>
+    </div>
+    <section class="dc-ce__preview" [attr.aria-label]="'content.preview' | dcTranslate" data-testid="content-preview">
+      <span class="dc-ce__badge">{{ 'content.preview' | dcTranslate }}</span>
+      @if (isPage) {
+        <h1>{{ lang === 'ar' ? titleAr() : titleEn() }}</h1>
+      } @else {
+        <strong class="dc-ce__question">{{ lang === 'ar' ? titleAr() : titleEn() }}</strong>
+      }
+      <dc-markdown [source]="lang === 'ar' ? bodyAr() : bodyEn()" />
+    </section>
+  </div>
+</mat-dialog-content>
+@if (errors().length) {
+  <ul class="dc-errors" role="alert">
+    @for (e of errors(); track $index) {
+      <li dir="ltr">{{ e }}</li>
+    }
+  </ul>
+}
+<mat-dialog-actions align="end">
+  @if (problems().length) {
+    <span class="dc-ce__problem" data-testid="content-problem">{{ problems()[0] | dcTranslate }}</span>
+  }
+  <button matButton mat-dialog-close type="button">{{ 'form.cancel' | dcTranslate }}</button>
+  <button matButton="filled" type="button" [disabled]="problems().length > 0" (click)="save()" data-testid="content-save">
+    {{ drafts.saveLabel(data.type.entityType) | dcTranslate }}
+  </button>
+</mat-dialog-actions>

@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { I18nService, TranslatePipe } from '@dynamic-cube/shared';
 import { InternalShell } from './layout/internal-shell';
+import { NOTIFY_RULE_TRANSLATIONS } from './communication/notify-rule-translations';
+import { CONTENT_TRANSLATIONS } from './content/content-translations';
 import { MODULE_TRANSLATIONS } from './module-translations';
 import { PAYMENT_TRANSLATIONS } from './payments/payment-translations';
 import { PHASE_1E_TRANSLATIONS } from './phase-1e-translations';
@@ -27,5 +29,7 @@ export class App {
     inject(I18nService).register(PAYMENT_TRANSLATIONS);
     inject(I18nService).register(DESIGNER_TRANSLATIONS);
     inject(I18nService).register(BUILDER_TRANSLATIONS);
+    inject(I18nService).register(NOTIFY_RULE_TRANSLATIONS);
+    inject(I18nService).register(CONTENT_TRANSLATIONS);
   }
 }

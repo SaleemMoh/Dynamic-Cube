@@ -14,5 +14,8 @@ export const routes: Routes = [
   // Public: the QR code on every document opens /verify/CODE.
   { path: 'verify', loadComponent: () => import('./documents/verify-page').then((m) => m.VerifyPage) },
   { path: 'verify/:code', loadComponent: () => import('./documents/verify-page').then((m) => m.VerifyPage) },
+  // Public: questions and pages written in the Content Manager.
+  { path: 'faq', loadComponent: () => import('./content/faq-page').then((m) => m.FaqPage) },
+  { path: 'pages/:slug', loadComponent: () => import('./content/content-page').then((m) => m.ContentPage) },
   { path: '**', redirectTo: '' },
 ];

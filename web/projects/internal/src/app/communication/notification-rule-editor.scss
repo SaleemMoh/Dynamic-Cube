@@ -1,0 +1,111 @@
+.dc-nr {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 22rem;
+  gap: 1.25rem;
+  min-height: 60vh;
+}
+.dc-nr__form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.dc-nr__form mat-form-field {
+  width: 100%;
+}
+.dc-nr h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.75rem 0 0;
+  font-size: 15px;
+}
+.dc-nr__step {
+  display: inline-grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: var(--dynamic-cube-gold-50, #faf7f0);
+  color: var(--dynamic-cube-gold-700, #8a6a26);
+  font-size: 13px;
+}
+.dc-nr__pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 0.5rem;
+}
+.dc-nr__recipient {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.5rem;
+  border: 1px solid var(--dga-gray-200, #e5e7eb);
+  border-radius: 8px;
+}
+.dc-nr__kind {
+  width: 11rem !important;
+}
+.dc-nr__grow {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+.dc-nr__channels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.dc-nr__muted {
+  margin: 0;
+  color: var(--dga-text-3, #6c737f);
+  font-size: 12px;
+}
+.dc-nr__preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 10px;
+  background: var(--dga-gray-25, #fcfcfd);
+  border: 1px solid var(--dga-gray-200, #e5e7eb);
+  overflow: auto;
+}
+.dc-nr__previewhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.dc-nr__previewhead h3 {
+  margin: 0;
+}
+.dc-nr__message {
+  display: grid;
+  gap: 0.375rem;
+  padding: 0.75rem;
+  border: 1px solid var(--dga-gray-200, #e5e7eb);
+  border-radius: 8px;
+  background: #fff;
+}
+.dc-nr__message p {
+  margin: 0;
+  white-space: pre-line;
+}
+.dc-nr__message iframe {
+  width: 100%;
+  height: 14rem;
+  border: 0;
+}
+.dc-nr__badge {
+  justify-self: start;
+  padding: 0 0.5rem;
+  border-radius: 999px;
+  background: var(--dga-gray-100, #f3f4f6);
+  font-size: 11px;
+}
+.dc-nr__problem {
+  margin-inline-end: auto;
+  color: #b42318;
+  font-size: 13px;
+}

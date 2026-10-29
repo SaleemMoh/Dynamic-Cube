@@ -14,7 +14,7 @@ import { APP_TRANSLATIONS } from './translations';
   imports: [MatIconModule, MatMenuModule, RouterOutlet, RouterLink, RouterLinkActive, ActingContextSelector, AppShell, HelpButtons, LocalizePipe, NotificationBell, TranslatePipe, UserMenu],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <dc-app-shell [title]="'app.title' | dcTranslate" [fluid]="isHome()">
+    <dc-app-shell [title]="'app.title' | dcTranslate" [fluid]="isHome()" [footerLinks]="store.footerLinks()">
       <a dcShellNav class="dc-nav-link" routerLink="/" routerLinkActive="dc-nav-link--active" [routerLinkActiveOptions]="{ exact: true }" data-testid="nav-home">{{ 'portal.home' | dcTranslate }}</a>
       <button dcShellNav class="dc-nav-link" [class.dc-nav-link--active]="inServices()" [matMenuTriggerFor]="categories" data-testid="nav-services">
         {{ 'nav.services' | dcTranslate }}

@@ -2,6 +2,16 @@ import { TranslationDictionary } from '@dynamic-cube/shared';
 
 export const APP_TRANSLATIONS: TranslationDictionary = {
   ar: {
+    'faq.title': 'الأسئلة الشائعة',
+    'faq.lead': 'إجابات عن أكثر ما يسأل عنه المستفيدون. ابحث بكلمة أو تصفح المواضيع.',
+    'faq.ofService': 'أسئلة خدمة',
+    'faq.all': 'جميع الأسئلة',
+    'faq.search': 'ابحث في الأسئلة',
+    'faq.general': 'أسئلة عامة',
+    'faq.empty': 'لا توجد أسئلة منشورة بعد.',
+    'faq.noMatch': 'لا توجد أسئلة تطابق البحث.',
+    'pages.updated': 'آخر تحديث:',
+    'pages.notFound': 'الصفحة غير موجودة.',
     'app.title': 'ديناميك كيوب — البوابة الإلكترونية',
     'app.description': 'تقديم الطلبات ومتابعتها والشهادات',
     'nav.services': 'الخدمات',
@@ -101,6 +111,16 @@ export const APP_TRANSLATIONS: TranslationDictionary = {
     'portal.channel.CALL_CENTER': 'مركز الاتصال',
   },
   en: {
+    'faq.title': 'Frequently asked questions',
+    'faq.lead': 'Answers to what applicants ask most. Search by a word or browse the topics.',
+    'faq.ofService': 'Questions about',
+    'faq.all': 'All questions',
+    'faq.search': 'Search the questions',
+    'faq.general': 'General questions',
+    'faq.empty': 'No questions are published yet.',
+    'faq.noMatch': 'No questions match your search.',
+    'pages.updated': 'Last updated:',
+    'pages.notFound': 'Page not found.',
     'app.title': 'Dynamic Cube — E-Services Portal',
     'app.description': 'Apply, track requests and manage certificates',
     'nav.services': 'Services',

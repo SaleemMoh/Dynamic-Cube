@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { FooterLink } from '../apps-control/apps-control.models';
 import { I18nService } from '../i18n/i18n.service';
 import { LocalizedText } from '../i18n/language';
@@ -10,7 +11,7 @@ import { LocalizePipe } from '../i18n/translate.pipe';
  */
 @Component({
   selector: 'dc-app-footer',
-  imports: [LocalizePipe],
+  imports: [RouterLink, LocalizePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <footer class="dc-footer">
@@ -18,14 +19,18 @@ import { LocalizePipe } from '../i18n/translate.pipe';
         @if (links().length) {
           <nav class="dc-footer__links" [attr.aria-label]="i18n.translate('footer.links')">
             @for (link of links(); track link.url) {
-              <a
-                class="dc-footer__link"
-                [href]="link.url"
-                [attr.target]="isExternal(link.url) ? '_blank' : null"
-                [attr.rel]="isExternal(link.url) ? 'noopener' : null"
-              >
-                {{ { ar: link.labelAr, en: link.labelEn } | dcLocalize }}
-              </a>
+              @if (!isRoute(link.url)) {
+                <a
+                  class="dc-footer__link"
+                  [href]="link.url"
+                  [attr.target]="isExternal(link.url) ? '_blank' : null"
+                  [attr.rel]="isExternal(link.url) ? 'noopener' : null"
+                >
+                  {{ { ar: link.labelAr, en: link.labelEn } | dcLocalize }}
+                </a>
+              } @else {
+                <a class="dc-footer__link" [routerLink]="link.url">{{ { ar: link.labelAr, en: link.labelEn } | dcLocalize }}</a>
+              }
             }
           </nav>
         }
@@ -81,6 +86,11 @@ export class AppFooter {
   private readonly year = String(new Date().getFullYear());
   protected readonly copyright = computed(() => this.fill('footer.copyright'));
   protected readonly owner = computed(() => this.fill('footer.owner'));
+
+  /** A page of this application, followed without reloading it. */
+  protected isRoute(url: string): boolean {
+    return /^\/(?!\/)[^?#]*$/.test(url);
+  }
 
   protected isExternal(url: string): boolean {
     return /^https?:/i.test(url);

@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>DynamicCube.Modules.Content.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\shared\ModuleTests\*.cs" Link="Infrastructure\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Using Include="DynamicCube.Platform.Configuration" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Modules\AppsControl\DynamicCube.Modules.AppsControl.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Integration\DynamicCube.Modules.Integration.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Parties\DynamicCube.Modules.Parties.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Services\DynamicCube.Modules.Services.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Communication\DynamicCube.Modules.Communication.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Payments\DynamicCube.Modules.Payments.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Content\DynamicCube.Modules.Content.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Decisions\DynamicCube.Modules.Decisions.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Documents\DynamicCube.Modules.Documents.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Workflow\DynamicCube.Modules.Workflow.csproj" />
+    <ProjectReference Include="..\..\src\Hosts\External.Api\DynamicCube.External.Api.csproj" Aliases="ExternalApi" />
+  </ItemGroup>
+
+</Project>

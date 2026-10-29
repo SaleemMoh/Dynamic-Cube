@@ -1,0 +1,164 @@
+{
+  "title": "Portal pages and frequently asked questions",
+  "items": [
+    {
+      "entityType": "cms.page",
+      "entityCode": "ABOUT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "عن البوابة",
+        "nameEn": "About the portal",
+        "bodyAr": "## من نحن\n\nتقدّم **بوابة الخدمات الإلكترونية** خدمات الجهة للأفراد والمنشآت إلكترونيًا: تقديم الطلبات ومتابعتها، وسداد الرسوم، واستلام الشهادات والتحقق منها.\n\n## ما الذي يمكنك فعله؟\n\n- تصفح [الخدمات](/services) وبطاقة كل خدمة قبل تسجيل الدخول\n- تقديم الطلب ومتابعة حالته من صفحة **طلباتي**\n- التحقق من صحة أي وثيقة من [صفحة التحقق](/verify)\n\n> للمساعدة اتصل على 199040.",
+        "bodyEn": "## Who we are\n\nThe **e-services portal** offers the entity's services to individuals and establishments online: applying and following requests, paying fees, and receiving and verifying certificates.\n\n## What can you do?\n\n- Browse the [services](/services) and each service's card before signing in\n- Apply and follow your request from **My requests**\n- Check any document on the [verification page](/verify)\n\n> For help call 199040.",
+        "showInFooter": true,
+        "order": 10
+      }
+    },
+    {
+      "entityType": "cms.page",
+      "entityCode": "TERMS_OF_USE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "شروط الاستخدام",
+        "nameEn": "Terms of use",
+        "bodyAr": "## القبول\n\nباستخدامك البوابة فإنك توافق على هذه الشروط.\n\n## صحة البيانات\n\n1. يتحمل مقدم الطلب مسؤولية صحة البيانات والمستندات المرفقة.\n2. يحق للجهة رفض الطلب أو إلغاء الوثيقة إذا ثبت عدم صحة البيانات.\n\n## الاستخدام المقبول\n\nيُمنع استخدام البوابة لأي غرض مخالف للأنظمة، أو محاولة الوصول إلى بيانات الآخرين.",
+        "bodyEn": "## Acceptance\n\nBy using the portal you accept these terms.\n\n## Accurate information\n\n1. The applicant is responsible for the accuracy of the data and attached documents.\n2. The entity may reject the request or cancel the document if the data proves inaccurate.\n\n## Acceptable use\n\nThe portal may not be used for any unlawful purpose, nor to try to reach other people's data.",
+        "showInFooter": true,
+        "order": 20
+      }
+    },
+    {
+      "entityType": "cms.page",
+      "entityCode": "PRIVACY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "سياسة الخصوصية",
+        "nameEn": "Privacy policy",
+        "bodyAr": "## البيانات التي نجمعها\n\nنجمع البيانات اللازمة لتقديم الخدمة فقط: بيانات الهوية من **النفاذ الوطني الموحد**، وبيانات المنشأة من الجهات المختصة، وما تدخله في نماذج الطلبات.\n\n## كيف نستخدمها\n\n- لمعالجة طلباتك وإصدار وثائقك\n- لإرسال التنبيهات المتعلقة بطلباتك\n\nلا نشارك بياناتك إلا وفق الأنظمة المعمول بها في المملكة العربية السعودية.",
+        "bodyEn": "## Data we collect\n\nWe collect only what the service needs: identity data from the **National Single Sign-On**, establishment data from the competent authorities, and what you enter in request forms.\n\n## How we use it\n\n- To process your requests and issue your documents\n- To send notifications about your requests\n\nWe share your data only as the laws of the Kingdom of Saudi Arabia allow.",
+        "showInFooter": true,
+        "order": 30
+      }
+    },
+    {
+      "entityType": "cms.faq",
+      "entityCode": "FAQ_SIGN_IN",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "كيف أسجل الدخول إلى البوابة؟",
+        "nameEn": "How do I sign in to the portal?",
+        "answerAr": "يتم تسجيل الدخول عبر **النفاذ الوطني الموحد** باستخدام رقم الهوية أو الإقامة. اختر *تسجيل الدخول* أعلى الصفحة.",
+        "answerEn": "Sign in through the **National Single Sign-On** with your ID or iqama number. Choose *Sign in* at the top of the page.",
+        "topicAr": "الحساب والدخول",
+        "topicEn": "Account and sign-in",
+        "serviceCode": null,
+        "order": 10
+      }
+    },
+    {
+      "entityType": "cms.faq",
+      "entityCode": "FAQ_ACT_FOR_ESTABLISHMENT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "كيف أقدم طلبًا باسم منشأتي؟",
+        "nameEn": "How do I apply on behalf of my establishment?",
+        "answerAr": "بعد تسجيل الدخول اختر المنشأة من قائمة **التعامل بصفة** أعلى الصفحة. تظهر المنشآت المسجلة باسمك في السجل التجاري.",
+        "answerEn": "After signing in, choose the establishment from **Acting as** at the top of the page. The establishments registered under your name in the commercial registry are listed.",
+        "topicAr": "الحساب والدخول",
+        "topicEn": "Account and sign-in",
+        "serviceCode": null,
+        "order": 20
+      }
+    },
+    {
+      "entityType": "cms.faq",
+      "entityCode": "FAQ_TRACK_REQUEST",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "كيف أتابع حالة طلبي؟",
+        "nameEn": "How do I follow my request?",
+        "answerAr": "من صفحة **طلباتي** تظهر حالة كل طلب ومراحله. ويصلك تنبيه عند كل تغيير مهم، كإعادة الطلب للاستكمال أو اعتماده.",
+        "answerEn": "**My requests** shows each request's status and steps. You are notified of every important change, such as a request returned for completion or approved.",
+        "topicAr": "الطلبات",
+        "topicEn": "Requests",
+        "serviceCode": null,
+        "order": 30
+      }
+    },
+    {
+      "entityType": "cms.faq",
+      "entityCode": "FAQ_RETURNED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "أُعيد طلبي للاستكمال، ماذا أفعل؟",
+        "nameEn": "My request was returned for completion. What do I do?",
+        "answerAr": "افتح الطلب من **طلباتي**، واقرأ ملاحظات الموظف، ثم عدّل البيانات المطلوبة وأعد الإرسال. يستمر الطلب من حيث توقف.",
+        "answerEn": "Open the request from **My requests**, read the employee's notes, correct what is asked and resubmit. The request continues where it stopped.",
+        "topicAr": "الطلبات",
+        "topicEn": "Requests",
+        "serviceCode": null,
+        "order": 40
+      }
+    },
+    {
+      "entityType": "cms.faq",
+      "entityCode": "FAQ_PAY_SADAD",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "كيف أسدد رسوم الخدمة؟",
+        "nameEn": "How do I pay the service fee?",
+        "answerAr": "تصدر فاتورة **سداد** برقم يظهر في صفحة الطلب. ادفعها من تطبيق البنك أو الصراف خلال مدة السداد الموضحة، وتُستكمل معالجة الطلب تلقائيًا بعد السداد.",
+        "answerEn": "A **SADAD** bill is issued with a number shown on the request page. Pay it from your bank app or an ATM within the period shown; processing continues automatically once paid.",
+        "topicAr": "السداد",
+        "topicEn": "Payment",
+        "serviceCode": null,
+        "order": 50
+      }
+    },
+    {
+      "entityType": "cms.faq",
+      "entityCode": "FAQ_VERIFY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "كيف أتحقق من صحة شهادة؟",
+        "nameEn": "How do I check a certificate is genuine?",
+        "answerAr": "امسح رمز QR المطبوع على الشهادة، أو أدخل رمز التحقق في [صفحة التحقق](/verify). تظهر حالة الشهادة وتاريخ انتهائها.",
+        "answerEn": "Scan the QR code printed on the certificate, or type its verification code on the [verification page](/verify). Its status and expiry date are shown.",
+        "topicAr": "الوثائق",
+        "topicEn": "Documents",
+        "serviceCode": null,
+        "order": 60
+      }
+    },
+    {
+      "entityType": "cms.faq",
+      "entityCode": "FAQ_EVENT_PERMIT_WHEN",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "متى أقدم طلب تصريح الفعالية؟",
+        "nameEn": "When should I apply for an event permit?",
+        "answerAr": "قدّم الطلب قبل موعد الفعالية بـ **14 يومًا** على الأقل، ليتسع الوقت للمراجعة والسداد.",
+        "answerEn": "Apply at least **14 days** before the event, to leave time for review and payment.",
+        "topicAr": "تصاريح الفعاليات",
+        "topicEn": "Event permits",
+        "serviceCode": "EVENT_PERMIT",
+        "order": 70
+      }
+    },
+    {
+      "entityType": "cms.faq",
+      "entityCode": "FAQ_EVENT_PERMIT_FEE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "ما رسوم تصريح الفعالية؟",
+        "nameEn": "What is the event permit fee?",
+        "answerAr": "رسوم التصريح **500 ريال** شاملة ضريبة القيمة المضافة، وتُسدد عبر سداد بعد تقديم الطلب.",
+        "answerEn": "The permit costs **500 SAR**, VAT included, paid through SADAD after applying.",
+        "topicAr": "تصاريح الفعاليات",
+        "topicEn": "Event permits",
+        "serviceCode": "EVENT_PERMIT",
+        "order": 80
+      }
+    }
+  ]
+}

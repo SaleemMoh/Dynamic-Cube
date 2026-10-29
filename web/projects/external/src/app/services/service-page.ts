@@ -5,8 +5,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { Router, RouterLink } from '@angular/router';
-import { ActingPartyService, AuthService, FeeTable, FieldError, I18nService, LocalizePipe, ServicesApi, TranslatePipe, requestErrors } from '@dynamic-cube/shared';
-import { firstValueFrom, of } from 'rxjs';
+import { ActingPartyService, AuthService, ContentApi, FeeTable, FieldError, I18nService, LocalizePipe, ServicesApi, TranslatePipe, requestErrors } from '@dynamic-cube/shared';
+import { catchError, firstValueFrom, of } from 'rxjs';
 import { CHANNEL_ICONS, CostPipe, DurationPipe, PARTY_KIND_KEYS } from '../portal/portal-text';
 
 /**
@@ -221,10 +221,14 @@ import { CHANNEL_ICONS, CostPipe, DurationPipe, PARTY_KIND_KEYS } from '../porta
               </dd>
             </div>
           </dl>
-          @if (c.card.faqUrl || c.card.phone || c.card.email) {
+          @if (c.card.faqUrl || hasFaqs() || c.card.phone || c.card.email) {
             <div class="dc-side__contacts">
               <h2>{{ 'portal.contact' | dcTranslate }}</h2>
-              @if (c.card.faqUrl; as faq) {
+              @if (hasFaqs()) {
+                <a routerLink="/faq" [queryParams]="{ service: c.service.code }" data-testid="service-faqs"
+                  ><mat-icon fontSet="material-symbols-outlined" aria-hidden="true">quiz</mat-icon>{{ 'portal.faq' | dcTranslate }}</a
+                >
+              } @else if (c.card.faqUrl; as faq) {
                 <a [href]="faq" [attr.target]="faq.startsWith('/') ? null : '_blank'" rel="noopener"><mat-icon fontSet="material-symbols-outlined" aria-hidden="true">quiz</mat-icon>{{ 'portal.faq' | dcTranslate }}</a>
               }
               @if (c.card.phone; as phone) {
@@ -252,6 +256,7 @@ export class ServicePage {
   private readonly router = inject(Router);
   private readonly acting = inject(ActingPartyService);
   private readonly i18n = inject(I18nService);
+  private readonly content = inject(ContentApi);
   protected readonly kindKeys = PARTY_KIND_KEYS;
   protected readonly channelIcons = CHANNEL_ICONS;
   protected readonly starting = signal(false);
@@ -263,6 +268,10 @@ export class ServicePage {
     params: () => (this.auth.isAuthenticated() ? { code: this.code(), party: this.acting.current()?.partyId } : null),
     stream: ({ params }) => (params ? this.api.service(params.code) : of(undefined)),
   });
+
+  /** Questions about this service written in the Content Manager (its page links to them). */
+  private readonly faqs = rxResource({ params: () => this.code(), stream: ({ params }) => this.content.faqs(params).pipe(catchError(() => of([]))) });
+  protected readonly hasFaqs = computed(() => (this.faqs.value() ?? []).length > 0);
 
   /** Terms of use in the current language, one paragraph per line. */
   protected readonly terms = computed(() => {

@@ -1,0 +1,191 @@
+<header class="dc-page__header">
+  <h1>{{ 'portalHome.title' | dcTranslate }}</h1>
+  <span class="dc-he__spacer"></span>
+  @if (dirty()) {
+    <span class="dc-he__dirty" data-testid="home-dirty">{{ 'portalHome.unsaved' | dcTranslate }}</span>
+    <button matButton type="button" (click)="reset()">{{ 'portalHome.reset' | dcTranslate }}</button>
+  }
+  <button matButton="filled" type="button" [disabled]="!dirty() || problems().length > 0 || saving()" (click)="save()" data-testid="home-save">
+    {{ drafts.saveLabel('apps.setting') | dcTranslate }}
+  </button>
+</header>
+<p class="dc-muted">{{ 'portalHome.lead' | dcTranslate }}</p>
+@if (settings.isLoading()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+@if (problems().length) {
+  <p class="dc-he__problem" role="status" data-testid="home-problem">{{ problems()[0] | dcTranslate }}</p>
+}
+@if (errors().length) {
+  <ul class="dc-errors" role="alert">
+    @for (e of errors(); track $index) {
+      <li dir="ltr">{{ e }}</li>
+    }
+  </ul>
+}
+
+<div class="dc-he">
+  <div class="dc-he__form">
+    <section class="dc-card">
+      <h2>{{ 'portalHome.hero' | dcTranslate }}</h2>
+      <div class="dc-he__pair">
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'portalHome.titleAr' | dcTranslate }}</mat-label>
+          <input matInput dir="rtl" [ngModel]="home().heroTitleAr" (ngModelChange)="set('heroTitleAr', $event)" data-testid="home-title-ar" />
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'portalHome.titleEn' | dcTranslate }}</mat-label>
+          <input matInput dir="ltr" [ngModel]="home().heroTitleEn" (ngModelChange)="set('heroTitleEn', $event)" data-testid="home-title-en" />
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'portalHome.textAr' | dcTranslate }}</mat-label>
+          <textarea matInput dir="rtl" rows="3" [ngModel]="home().heroTextAr" (ngModelChange)="set('heroTextAr', $event)" data-testid="home-text-ar"></textarea>
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'portalHome.textEn' | dcTranslate }}</mat-label>
+          <textarea matInput dir="ltr" rows="3" [ngModel]="home().heroTextEn" (ngModelChange)="set('heroTextEn', $event)" data-testid="home-text-en"></textarea>
+        </mat-form-field>
+      </div>
+      <mat-form-field subscriptSizing="dynamic" class="dc-he__wide">
+        <mat-label>{{ 'portalHome.banner' | dcTranslate }}</mat-label>
+        <input matInput dir="ltr" [ngModel]="home().bannerUrl" (ngModelChange)="set('bannerUrl', $event || null)" data-testid="home-banner" />
+        <mat-hint>{{ 'portalHome.bannerHint' | dcTranslate }}</mat-hint>
+      </mat-form-field>
+    </section>
+
+    <section class="dc-card">
+      <h2>{{ 'portalHome.tiles' | dcTranslate }}</h2>
+      <p class="dc-muted">{{ 'portalHome.tilesHint' | dcTranslate }}</p>
+      @for (t of home().statistics; track $index; let i = $index, first = $first, last = $last) {
+        <div class="dc-he__tile" [attr.data-testid]="'tile-' + i">
+          <div class="dc-he__tilehead">
+            <mat-button-toggle-group
+              [ngModel]="t.metric ? 'metric' : 'value'"
+              (ngModelChange)="tileKind(i, $event)"
+              [attr.aria-label]="'portalHome.tileKind' | dcTranslate"
+            >
+              <mat-button-toggle value="metric">{{ 'portalHome.counted' | dcTranslate }}</mat-button-toggle>
+              <mat-button-toggle value="value">{{ 'portalHome.fixed' | dcTranslate }}</mat-button-toggle>
+            </mat-button-toggle-group>
+            <span class="dc-he__spacer"></span>
+            <button matIconButton type="button" [disabled]="first" (click)="moveTile(i, -1)" [matTooltip]="'portalHome.up' | dcTranslate">
+              <mat-icon fontSet="material-symbols-outlined">arrow_upward</mat-icon>
+            </button>
+            <button matIconButton type="button" [disabled]="last" (click)="moveTile(i, 1)" [matTooltip]="'portalHome.down' | dcTranslate">
+              <mat-icon fontSet="material-symbols-outlined">arrow_downward</mat-icon>
+            </button>
+            <button
+              matIconButton
+              type="button"
+              (click)="removeTile(i)"
+              [matTooltip]="'portalHome.removeTile' | dcTranslate"
+              [attr.data-testid]="'tile-remove-' + i"
+            >
+              <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
+            </button>
+          </div>
+          <div class="dc-he__tilegrid">
+            @if (t.metric) {
+              <mat-form-field subscriptSizing="dynamic">
+                <mat-label>{{ 'portalHome.metric' | dcTranslate }}</mat-label>
+                <mat-select [ngModel]="t.metric" (ngModelChange)="tile(i, { metric: $event })" data-testid="tile-metric">
+                  @for (m of metrics; track m) {
+                    <mat-option [value]="m">{{ 'portalHome.metric.' + m | dcTranslate }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            } @else {
+              <mat-form-field subscriptSizing="dynamic">
+                <mat-label>{{ 'portalHome.value' | dcTranslate }}</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  min="0"
+                  [ngModel]="t.value"
+                  (ngModelChange)="tile(i, { value: $event === null ? undefined : +$event })"
+                  data-testid="tile-value"
+                />
+              </mat-form-field>
+            }
+            <mat-form-field subscriptSizing="dynamic">
+              <mat-label>{{ 'portalHome.icon' | dcTranslate }}</mat-label>
+              <mat-icon matPrefix fontSet="material-symbols-outlined">{{ t.icon || 'insights' }}</mat-icon>
+              <input matInput dir="ltr" [ngModel]="t.icon" (ngModelChange)="tile(i, { icon: $event || undefined })" />
+            </mat-form-field>
+            <mat-form-field subscriptSizing="dynamic">
+              <mat-label>{{ 'portalHome.labelAr' | dcTranslate }}</mat-label>
+              <input matInput dir="rtl" [ngModel]="t.labelAr" (ngModelChange)="tile(i, { labelAr: $event })" data-testid="tile-label-ar" />
+            </mat-form-field>
+            <mat-form-field subscriptSizing="dynamic">
+              <mat-label>{{ 'portalHome.labelEn' | dcTranslate }}</mat-label>
+              <input matInput dir="ltr" [ngModel]="t.labelEn" (ngModelChange)="tile(i, { labelEn: $event })" data-testid="tile-label-en" />
+            </mat-form-field>
+          </div>
+        </div>
+      }
+      <button matButton type="button" [disabled]="home().statistics.length >= 6" (click)="addTile()" data-testid="tile-add">
+        <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+        {{ 'portalHome.addTile' | dcTranslate }}
+      </button>
+    </section>
+
+    <section class="dc-card">
+      <h2>{{ 'portalHome.help' | dcTranslate }}</h2>
+      <div class="dc-he__pair">
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'portalHome.phone' | dcTranslate }}</mat-label>
+          <input matInput dir="ltr" [ngModel]="home().help.phone" (ngModelChange)="setHelp('phone', $event)" data-testid="home-phone" />
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'portalHome.email' | dcTranslate }}</mat-label>
+          <input matInput dir="ltr" [ngModel]="home().help.email" (ngModelChange)="setHelp('email', $event)" data-testid="home-email" />
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'portalHome.contactUrl' | dcTranslate }}</mat-label>
+          <input matInput dir="ltr" [ngModel]="home().help.contactUrl" (ngModelChange)="setHelp('contactUrl', $event)" />
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'portalHome.accessibilityUrl' | dcTranslate }}</mat-label>
+          <input matInput dir="ltr" [ngModel]="home().help.accessibilityUrl" (ngModelChange)="setHelp('accessibilityUrl', $event)" />
+        </mat-form-field>
+      </div>
+    </section>
+  </div>
+
+  @let lang = previewLanguage();
+  <aside class="dc-he__preview" [attr.dir]="lang === 'ar' ? 'rtl' : 'ltr'" data-testid="home-preview">
+    <div class="dc-he__previewhead" dir="auto">
+      <strong>{{ 'portalHome.preview' | dcTranslate }}</strong>
+      <mat-button-toggle-group [ngModel]="lang" (ngModelChange)="previewLanguage.set($event)" [attr.aria-label]="'content.language' | dcTranslate">
+        <mat-button-toggle value="ar">ع</mat-button-toggle>
+        <mat-button-toggle value="en">EN</mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+    <div class="dc-he__hero" [style.background-image]="home().bannerUrl ? 'url(' + home().bannerUrl + ')' : null">
+      <h3>{{ lang === 'ar' ? home().heroTitleAr : home().heroTitleEn }}</h3>
+      <p>{{ lang === 'ar' ? home().heroTextAr : home().heroTextEn }}</p>
+      <span class="dc-he__search"><mat-icon fontSet="material-symbols-outlined">search</mat-icon></span>
+    </div>
+    <div class="dc-he__tiles">
+      @for (t of home().statistics; track $index) {
+        <div class="dc-he__ptile">
+          <mat-icon fontSet="material-symbols-outlined">{{ t.icon || 'insights' }}</mat-icon>
+          <strong dir="ltr">{{ t.metric ? '—' : (t.value ?? 0) }}</strong>
+          <span>{{ lang === 'ar' ? t.labelAr : t.labelEn }}</span>
+        </div>
+      }
+    </div>
+    @if (home().help.phone || home().help.email) {
+      <div class="dc-he__help">
+        <mat-icon fontSet="material-symbols-outlined">support_agent</mat-icon>
+        @if (home().help.phone; as phone) {
+          <span dir="ltr">{{ phone }}</span>
+        }
+        @if (home().help.email; as email) {
+          <span dir="ltr">{{ email }}</span>
+        }
+      </div>
+    }
+    <p class="dc-muted dc-he__note" dir="auto">{{ 'portalHome.countedNote' | dcTranslate }}</p>
+  </aside>
+</div>

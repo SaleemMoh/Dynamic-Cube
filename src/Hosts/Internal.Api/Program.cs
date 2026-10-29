@@ -1,6 +1,7 @@
 using DynamicCube.Hosting;
 using DynamicCube.Modules.AppsControl;
 using DynamicCube.Modules.Communication;
+using DynamicCube.Modules.Content;
 using DynamicCube.Modules.Decisions;
 using DynamicCube.Modules.Documents;
 using DynamicCube.Modules.Integration;
@@ -26,6 +27,7 @@ builder.Services.AddDocuments(builder.Configuration);
 builder.Services.AddDecisions(builder.Configuration);
 builder.Services.AddCommunication(builder.Configuration);
 builder.Services.AddPayments(builder.Configuration);
+builder.Services.AddContent(builder.Configuration);
 
 var app = builder.Build();
 app.MapDynamicCubeDefaults();

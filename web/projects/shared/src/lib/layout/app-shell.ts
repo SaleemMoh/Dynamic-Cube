@@ -1,6 +1,7 @@
 import { BidiModule } from '@angular/cdk/bidi';
-import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
+import { FooterLink } from '../apps-control/apps-control.models';
 import { BrandingService } from '../apps-control/branding';
 import { I18nService } from '../i18n/i18n.service';
 import { LanguageSwitcher } from '../i18n/language-switcher';
@@ -48,7 +49,7 @@ import { GovBar } from './gov-bar';
         <ng-content />
       </main>
       <dc-app-footer
-        [links]="branding().footerLinks"
+        [links]="allFooterLinks()"
         [entityName]="{ ar: branding().nameAr, en: branding().nameEn }"
       />
     </div>
@@ -169,6 +170,13 @@ export class AppShell {
   readonly title = input.required<string>();
   /** Full-width content without padding (for layouts with their own side navigation). */
   readonly fluid = input(false);
+  /** Links the application adds after the branding's footer links (e.g. the portal's pages); they replace a branding link of the same name. */
+  readonly footerLinks = input<FooterLink[]>([]);
   protected readonly i18n = inject(I18nService);
   protected readonly branding = inject(BrandingService).branding;
+  protected readonly allFooterLinks = computed(() => {
+    const own = this.footerLinks();
+    const same = (a: FooterLink, b: FooterLink) => a.labelAr.trim() === b.labelAr.trim() || a.labelEn.trim().toLowerCase() === b.labelEn.trim().toLowerCase();
+    return [...this.branding().footerLinks.filter((b) => !own.some((o) => same(o, b))), ...own];
+  });
 }

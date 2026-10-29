@@ -29,3 +29,4 @@ Status values: Proposed · Accepted · Superseded.
 | [0022](0022-payments.md) | Payments as a module: bills through the Integration Manager, signed provider callbacks, a workflow step that waits for payment | Accepted |
 | [0023](0023-workflow-designer.md) | The Workflow Designer edits the same definition the engine runs: canvas, checks as you draw, visual rules, test run, next version through change sets | Accepted |
 | [0024](0024-service-builder.md) | The Service Builder edits the version definition; form layouts (tabs, accordion, columns, widths) join the runtime first | Accepted |
+| [0025](0025-portal-content.md) | Portal content as a module of pages and questions (Markdown, anonymous reads); the home page stays a setting with a structured editor; the notification rule builder edits rules as stored | Accepted |

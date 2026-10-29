@@ -43,6 +43,7 @@ src/
   Modules/Decisions    Decision rules (schema dec): rule sets, versions, built-in RULES engine, evaluation log
   Modules/Communication Notifications (schema com): message templates, rules, email/SMS/in-app, message log
   Modules/Payments     Payments (schema pay): providers, bills, signed payment notifications, receipts, expiry
+  Modules/Content      Portal content (schema cms): pages and frequently asked questions, read anonymously
   Shared/Platform      Kernel: persistence base, audit, outbox, change sets, files, JSONLogic, i18n
   Shared/Hosting       Shared host setup: logging, telemetry, health, Keycloak JWT
   Tools/Migrator       Applies database migrations (run before upgrades)
@@ -59,6 +60,7 @@ tests/
   Decisions.Tests      Rules engine, versions, evaluation log, calculators
   Communication.Tests  Rules, dispatch, delivery and retries, notifications, a real SMTP check (optional)
   Payments.Tests       Bills, provider registration, signed notifications over HTTP, expiry, staff actions
+  Content.Tests        Pages and questions through change sets, anonymous reads over HTTP, checks
   shared/ModuleTests   Test database, fake provider and MoMRAH samples shared by the module test projects
   Hosts.Tests          API host smoke tests
   shared/              Cases shared by the .NET and Angular JSONLogic evaluators
@@ -193,6 +195,16 @@ These are development values only; change them in `deploy/docker/.env` (see `.en
    and the availability window; **Service card** the portal card with its preview; **Workflow** what the workflow does,
    with a link to the designer; **Preview** the applicant's wizard on a desktop or a phone. **Check on the server**,
    then **Add to draft**; once `checker` approves, new requests use the new version.
+14. Import `deploy/config-packages/portal-content.json` and have `checker` approve it. On the portal, the footer now
+   links *About the portal*, *Terms of use* and *Privacy policy*, plus **FAQs** (`/faq`): questions grouped by topic,
+   with search. The *Temporary event permit* page links to its own questions. In the internal system, **Portal
+   content** has three parts:
+   - **Portal home page**: edit the hero, banner, statistics tiles and help links, with a preview.
+   - **FAQs** and **Pages**: write in Markdown beside a preview that uses the portal's own renderer.
+
+   **Notifications → Notification rules** opens the rule builder. Choose the event, an optional condition, who
+   receives the message (the applicant, roles, employees, or the employee the event names) and the template's
+   channels, and check the message preview on the event's sample facts.
 
 The gateway credentials come from the secret store (`Secrets__MOMRAH_GATEWAY__clientId` / `__clientSecret`), never
 from the database; development values are in `appsettings.Development.json` and the compose file.

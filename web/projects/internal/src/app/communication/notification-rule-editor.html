@@ -1,0 +1,195 @@
+<h2 mat-dialog-title>{{ (data.row ? 'notifyRule.edit' : 'notifyRule.new') | dcTranslate }}</h2>
+<mat-dialog-content class="dc-nr">
+  <div class="dc-nr__form">
+    <div class="dc-nr__pair">
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'config.code' | dcTranslate }}</mat-label>
+        <input matInput dir="ltr" [ngModel]="code()" (ngModelChange)="code.set($event)" [disabled]="!!data.row" data-testid="rule-code" />
+      </mat-form-field>
+      <mat-checkbox [ngModel]="active()" (ngModelChange)="active.set($event)">{{ 'notifyRule.active' | dcTranslate }}</mat-checkbox>
+    </div>
+    <div class="dc-nr__pair">
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'config.nameAr' | dcTranslate }}</mat-label>
+        <input matInput dir="rtl" [ngModel]="nameAr()" (ngModelChange)="nameAr.set($event)" data-testid="rule-name-ar" />
+      </mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'config.nameEn' | dcTranslate }}</mat-label>
+        <input matInput dir="ltr" [ngModel]="nameEn()" (ngModelChange)="nameEn.set($event)" data-testid="rule-name-en" />
+      </mat-form-field>
+    </div>
+
+    <h3><span class="dc-nr__step">1</span> {{ 'notifyRule.when' | dcTranslate }}</h3>
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>{{ 'notifyRule.event' | dcTranslate }}</mat-label>
+      <mat-select [ngModel]="eventCode()" (ngModelChange)="eventCode.set($event)" data-testid="rule-event">
+        @for (m of modules(); track m) {
+          <mat-optgroup [label]="'notifyRule.module.' + m | dcTranslate">
+            @for (e of eventsOf(m); track e.code) {
+              <mat-option [value]="e.code"
+                >{{ { ar: e.nameAr, en: e.nameEn } | dcLocalize }} <small dir="ltr" class="dc-nr__muted">{{ e.code }}</small></mat-option
+              >
+            }
+          </mat-optgroup>
+        }
+      </mat-select>
+    </mat-form-field>
+    <dc-rule-editor
+      [label]="'notifyRule.condition' | dcTranslate"
+      [rule]="condition()"
+      [variables]="variables()"
+      testId="rule-condition"
+      (ruleChange)="condition.set($event)"
+    />
+    <p class="dc-nr__muted">{{ 'notifyRule.conditionHint' | dcTranslate }}</p>
+
+    <h3><span class="dc-nr__step">2</span> {{ 'notifyRule.who' | dcTranslate }}</h3>
+    @for (r of recipients(); track $index; let i = $index) {
+      <div class="dc-nr__recipient" [attr.data-testid]="'recipient-' + i">
+        <mat-form-field subscriptSizing="dynamic" class="dc-nr__kind">
+          <mat-select
+            [ngModel]="r.kind"
+            (ngModelChange)="recipient(i, { kind: $event })"
+            [attr.aria-label]="'notifyRule.recipientKind' | dcTranslate"
+            data-testid="recipient-kind"
+          >
+            @for (k of kinds; track k) {
+              <mat-option [value]="k">{{ 'notifyRule.kind.' + k | dcTranslate }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        @if (r.kind === 'PARTY') {
+          <span class="dc-nr__muted dc-nr__grow">{{ 'notifyRule.partyHint' | dcTranslate }}</span>
+        } @else {
+          <mat-button-toggle-group
+            [ngModel]="r.fromEvent !== null ? 'event' : 'named'"
+            (ngModelChange)="valueMode(i, $event)"
+            class="dc-nr__mode"
+            data-testid="recipient-mode"
+          >
+            <mat-button-toggle value="named">{{ (r.kind === 'ROLE' ? 'notifyRule.namedRoles' : 'notifyRule.namedUsers') | dcTranslate }}</mat-button-toggle>
+            <mat-button-toggle value="event">{{ 'notifyRule.fromEvent' | dcTranslate }}</mat-button-toggle>
+          </mat-button-toggle-group>
+          @if (r.fromEvent !== null) {
+            <mat-form-field subscriptSizing="dynamic" class="dc-nr__grow">
+              <mat-select
+                [ngModel]="r.fromEvent"
+                (ngModelChange)="recipient(i, { fromEvent: $event })"
+                [attr.aria-label]="'notifyRule.fromEvent' | dcTranslate"
+                data-testid="recipient-field"
+              >
+                @for (v of variables(); track v.path) {
+                  <mat-option [value]="v.path"
+                    ><span dir="ltr">{{ v.path }}</span></mat-option
+                  >
+                }
+              </mat-select>
+            </mat-form-field>
+          } @else {
+            <mat-form-field subscriptSizing="dynamic" class="dc-nr__grow">
+              <mat-select
+                multiple
+                [ngModel]="r.codes"
+                (ngModelChange)="recipient(i, { codes: $event })"
+                [attr.aria-label]="(r.kind === 'ROLE' ? 'notifyRule.namedRoles' : 'notifyRule.namedUsers') | dcTranslate"
+                data-testid="recipient-codes"
+              >
+                @for (o of r.kind === 'ROLE' ? roleOptions() : userOptions(); track o.value) {
+                  <mat-option [value]="o.value">{{ o.label | dcLocalize }} ({{ o.value }})</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          }
+        }
+        <button matIconButton type="button" (click)="removeRecipient(i)" [matTooltip]="'rule.remove' | dcTranslate">
+          <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+        </button>
+      </div>
+    }
+    <button matButton type="button" (click)="addRecipient()" data-testid="add-recipient">
+      <mat-icon fontSet="material-symbols-outlined">person_add</mat-icon>
+      {{ 'notifyRule.addRecipient' | dcTranslate }}
+    </button>
+
+    <h3><span class="dc-nr__step">3</span> {{ 'notifyRule.what' | dcTranslate }}</h3>
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>{{ 'notifyRule.template' | dcTranslate }}</mat-label>
+      <mat-select [ngModel]="templateCode()" (ngModelChange)="templateCode.set($event)" data-testid="rule-template">
+        @for (t of templateOptions(); track t.code) {
+          <mat-option [value]="t.code">{{ { ar: t.nameAr, en: t.nameEn } | dcLocalize }} ({{ t.code }})</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <div class="dc-nr__channels" role="group" [attr.aria-label]="'notifyRule.channels' | dcTranslate">
+      @for (c of channels; track c) {
+        <mat-checkbox
+          [checked]="chosen().includes(c)"
+          [disabled]="!!template() && !covered().has(c)"
+          (change)="toggleChannel(c, $event.checked)"
+          [attr.data-testid]="'channel-' + c"
+        >
+          {{ 'notifyRule.channel.' + c | dcTranslate }}
+        </mat-checkbox>
+      }
+    </div>
+    @if (template() && covered().size < channels.length) {
+      <p class="dc-nr__muted">{{ 'notifyRule.uncoveredHint' | dcTranslate }}</p>
+    }
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>{{ 'notifyRule.language' | dcTranslate }}</mat-label>
+      <mat-select [ngModel]="language()" (ngModelChange)="language.set($event)">
+        <mat-option value="AR">{{ 'notifyRule.lang.AR' | dcTranslate }}</mat-option>
+        <mat-option value="EN">{{ 'notifyRule.lang.EN' | dcTranslate }}</mat-option>
+      </mat-select>
+      <mat-hint>{{ 'notifyRule.languageHint' | dcTranslate }}</mat-hint>
+    </mat-form-field>
+  </div>
+
+  <aside class="dc-nr__preview" data-testid="rule-preview">
+    <div class="dc-nr__previewhead">
+      <h3>{{ 'notifyRule.preview' | dcTranslate }}</h3>
+      <mat-button-toggle-group
+        [ngModel]="previewLanguage()"
+        (ngModelChange)="previewLanguage.set($event)"
+        [attr.aria-label]="'notifyRule.language' | dcTranslate"
+      >
+        <mat-button-toggle value="ar">ع</mat-button-toggle>
+        <mat-button-toggle value="en">EN</mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+    @if (eventCode()) {
+      <p class="dc-nr__muted">{{ 'notifyRule.previewHint' | dcTranslate }} {{ eventName(eventCode()!) }}</p>
+    }
+    @for (p of shownPreviews(); track p.channel) {
+      <section class="dc-nr__message" [attr.data-testid]="'preview-' + p.channel">
+        <span class="dc-nr__badge">{{ 'notifyRule.channel.' + p.channel | dcTranslate }}</span>
+        @if (previewLanguage() === 'ar' ? p.titleAr : p.titleEn; as title) {
+          <strong [attr.dir]="previewLanguage() === 'ar' ? 'rtl' : 'ltr'">{{ title }}</strong>
+        }
+        @if (p.channel === 'EMAIL') {
+          <iframe sandbox="" [srcdoc]="emailHtml(p)" [title]="'notifyRule.channel.EMAIL' | dcTranslate"></iframe>
+        } @else {
+          <p [attr.dir]="previewLanguage() === 'ar' ? 'rtl' : 'ltr'">{{ previewLanguage() === 'ar' ? p.bodyAr : p.bodyEn }}</p>
+        }
+      </section>
+    } @empty {
+      <p class="dc-nr__muted">{{ 'notifyRule.noPreview' | dcTranslate }}</p>
+    }
+  </aside>
+</mat-dialog-content>
+@if (errors().length) {
+  <ul class="dc-errors" role="alert">
+    @for (e of errors(); track $index) {
+      <li dir="ltr">{{ e }}</li>
+    }
+  </ul>
+}
+<mat-dialog-actions align="end">
+  @if (problems().length) {
+    <span class="dc-nr__problem" data-testid="rule-problem">{{ problems()[0] | dcTranslate }}</span>
+  }
+  <button matButton mat-dialog-close type="button">{{ 'form.cancel' | dcTranslate }}</button>
+  <button matButton="filled" type="button" [disabled]="problems().length > 0" (click)="save()" data-testid="rule-save">
+    {{ drafts.saveLabel(data.type.entityType) | dcTranslate }}
+  </button>
+</mat-dialog-actions>

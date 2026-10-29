@@ -983,6 +983,7 @@ export const COMMUNICATION_SECTIONS: ConfigSection[] = [
         title: t('قواعد التنبيه', 'Notification rules'),
         key: 'code',
         columns: ['eventCode', 'templateCode', 'channels'],
+        editor: () => import('../../communication/notification-rule-editor').then((m) => m.NotificationRuleEditor),
         fields: [
           {
             code: 'eventCode',
@@ -1129,6 +1130,56 @@ export const PAYMENT_SECTIONS: ConfigSection[] = [
   },
 ];
 
+const contentEditor = () => import('../../content/content-editor').then((m) => m.ContentEditor);
+const contentOrder = number('order', t('الترتيب', 'Order'), 0);
+
+export const CONTENT_SECTIONS: ConfigSection[] = [
+  {
+    path: 'content-faqs',
+    title: t('الأسئلة الشائعة', 'FAQs'),
+    resource: 'content.config',
+    types: [
+      {
+        entityType: 'cms.faq',
+        title: t('الأسئلة الشائعة', 'FAQs'),
+        key: 'code',
+        columns: ['topicAr', 'serviceCode', 'order'],
+        nameLabels: { ar: t('السؤال بالعربية', 'Question (Arabic)'), en: t('السؤال بالإنجليزية', 'Question (English)') },
+        editor: contentEditor,
+        fields: [
+          { code: 'answerAr', type: 'textarea', label: t('الإجابة بالعربية', 'Answer (Arabic)'), required: true },
+          { code: 'answerEn', type: 'textarea', label: t('الإجابة بالإنجليزية', 'Answer (English)'), required: true },
+          { code: 'topicAr', type: 'text', label: t('الموضوع بالعربية', 'Topic (Arabic)') },
+          { code: 'topicEn', type: 'text', label: t('الموضوع بالإنجليزية', 'Topic (English)') },
+          { code: 'serviceCode', type: 'select', label: t('الخدمة', 'Service'), ref: 'svc.service' },
+          contentOrder,
+        ],
+      },
+    ],
+  },
+  {
+    path: 'content-pages',
+    title: t('صفحات البوابة', 'Portal pages'),
+    resource: 'content.config',
+    types: [
+      {
+        entityType: 'cms.page',
+        title: t('صفحات البوابة', 'Portal pages'),
+        key: 'code',
+        columns: ['showInFooter', 'order'],
+        nameLabels: { ar: t('العنوان بالعربية', 'Title (Arabic)'), en: t('العنوان بالإنجليزية', 'Title (English)') },
+        editor: contentEditor,
+        fields: [
+          { code: 'bodyAr', type: 'textarea', label: t('المحتوى بالعربية (Markdown)', 'Content in Arabic (Markdown)'), required: true },
+          { code: 'bodyEn', type: 'textarea', label: t('المحتوى بالإنجليزية (Markdown)', 'Content in English (Markdown)'), required: true },
+          { code: 'showInFooter', type: 'checkbox', label: t('رابط في تذييل البوابة', 'Link in the portal footer') },
+          contentOrder,
+        ],
+      },
+    ],
+  },
+];
+
 export const ALL_CONFIG_SECTIONS: ConfigSection[] = [
   ...CONFIG_SECTIONS,
   ...INTEGRATION_SECTIONS,
@@ -1139,4 +1190,5 @@ export const ALL_CONFIG_SECTIONS: ConfigSection[] = [
   ...DECISION_SECTIONS,
   ...COMMUNICATION_SECTIONS,
   ...PAYMENT_SECTIONS,
+  ...CONTENT_SECTIONS,
 ];

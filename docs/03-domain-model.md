@@ -390,3 +390,11 @@ sections (show/hide/order), announcements & circulars (type, priority, start/end
 attachment), guides & regulations, service display (show/hide, rename, order, featured),
 sectors display. Roles: portal admin, content editor, content approver, viewer. Uses change
 sets (create → review → approve → publish), preview, drafts and change log.
+
+Delivered so far (3c, [ADR-0025](adr/0025-portal-content.md)):
+
+| Entity | Fields | Notes |
+|---|---|---|
+| `cms.page` | code, title (name, ar/en), body (Markdown, ar/en), show in footer, order, active | Address `/pages/{code in lower case, _ → -}`; read anonymously |
+| `cms.faq` | code, question (name, ar/en), answer (Markdown, ar/en), topic (ar/en, optional), service code (optional), order, active | Grouped by topic on `/faq`; a service's questions are linked from its page |
+| `PORTAL_HOME` (setting) | hero title and text, banner, statistics tiles (counted metric or fixed value, icon, labels), help phone / email / links | Edited with a structured form; categories and service display stay in Services |
