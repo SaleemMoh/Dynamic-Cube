@@ -2,9 +2,9 @@ using System.Text.Json;
 using DynamicCube.Modules.Services.Changes;
 using DynamicCube.Modules.Services.Persistence;
 using DynamicCube.Platform.ChangeSets;
+using DynamicCube.Tests.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using DynamicCube.Tests.Infrastructure;
 
 namespace DynamicCube.Modules.Services.Tests;
 
