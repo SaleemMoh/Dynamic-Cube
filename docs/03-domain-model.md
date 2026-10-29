@@ -273,8 +273,9 @@ early-warning thresholds; escalation chains; breach reporting.
 `wf.workflow-version` `CODE/N`, immutable once published). Node types so far: `START`, `HUMAN_TASK`,
 `PARALLEL_SPLIT`, `JOIN` (`ALL` / `ANY` / `COUNT`), `GATEWAY` (JSONLogic routes over the answers, the level and
 the last action of each step, then a default) and `END` (`APPROVED`, `REJECTED`, `CLOSED`). A human task has an
-assignment (`ROLE` with optional org unit and position, `USER`, or `PREVIOUS_ACTOR` of a step falling back to a
-role; mode `QUEUE`, `DISTRIBUTE` with a distributor role, or `AUTO` least-loaded), `excludeActorsOf` for
+assignment (`ROLE` with optional org unit and position, `USER`, `PREVIOUS_ACTOR` of a step falling back to a
+role, or `ORG_UNIT`: a unit fixed, chosen by a rule or taken from a previous actor, levels up, a position in it, sub-units
+and climbing when nobody qualifies, see [ADR-0030](adr/0030-org-structure-routing.md); mode `QUEUE`, `DISTRIBUTE` with a distributor role, or `AUTO` least-loaded), `excludeActorsOf` for
 maker-checker, actions (`COMPLETE`, `APPROVE`, `REJECT`, `RETURN`; comment required or shown to the applicant;
 resulting display status; `RETURN` may resume at another step), an optional display status and an SLA
 (`workingDays`, `byLevel`, `warnPercent`, `escalateToRole`). The overall deadline is the service level's target

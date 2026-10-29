@@ -116,6 +116,13 @@ namespace DynamicCube.Modules.Workflow.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("candidate_org_unit");
 
+                    b.PrimitiveCollection<List<string>>("CandidateOrgUnits")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text[]")
+                        .HasColumnName("candidate_org_units")
+                        .HasDefaultValueSql("'{}'::text[]");
+
                     b.Property<string>("CandidatePosition")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")

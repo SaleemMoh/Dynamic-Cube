@@ -418,10 +418,10 @@ internal sealed class ActionCenter(
                 return open.Where(t => t.Assignee != null && assignees.Contains(t.Assignee));
             case InboxBox.Queue:
                 return open.Where(t => t.Assignee == null && t.Mode != AssignmentMode.Distribute
-                    && (t.CandidateUser != null || t.CandidateRole != null || t.CandidateOrgUnit != null || t.CandidatePosition != null)
+                    && (t.CandidateUser != null || t.CandidateRole != null || t.CandidateOrgUnits.Count > 0 || t.CandidatePosition != null)
                     && (t.CandidateUser == null || t.CandidateUser == user)
                     && (t.CandidateRole == null || roles.Contains(t.CandidateRole))
-                    && (t.CandidateOrgUnit == null || units.Contains(t.CandidateOrgUnit))
+                    && (t.CandidateOrgUnits.Count == 0 || t.CandidateOrgUnits.Any(u => units.Contains(u)))
                     && (t.CandidatePosition == null || positions.Contains(t.CandidatePosition))
                     && !t.ExcludedUsers.Contains(user));
             case InboxBox.Distribute:

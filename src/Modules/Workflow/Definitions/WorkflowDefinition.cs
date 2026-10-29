@@ -198,6 +198,28 @@ public enum TargetKind
 
     /// <summary>Whoever completed <see cref="TaskAssignment.Step"/> in this instance (falls back to the role, if any).</summary>
     PreviousActor,
+
+    /// <summary>
+    /// A unit of the organization structure: everyone in it, or the holders of a position there (its manager…),
+    /// optionally with a role. The unit is fixed, chosen by a rule, or taken from a previous actor's unit.
+    /// </summary>
+    OrgUnit,
+}
+
+/// <summary>Where an <see cref="TargetKind.OrgUnit"/> assignment finds its unit.</summary>
+public enum UnitSource
+{
+    /// <summary><see cref="TaskAssignment.OrgUnit"/>.</summary>
+    Fixed,
+
+    /// <summary><see cref="TaskAssignment.UnitRule"/>: a rule over the request that gives a unit code (e.g. by region).</summary>
+    Rule,
+
+    /// <summary>
+    /// The unit of whoever completed <see cref="TaskAssignment.Step"/> (or the last completed task), or a unit above it by
+    /// <see cref="TaskAssignment.LevelsUp"/>.
+    /// </summary>
+    Actor,
 }
 
 public enum AssignmentMode
@@ -225,6 +247,21 @@ public sealed class TaskAssignment
     public string? User { get; set; }
 
     public string? Step { get; set; }
+
+    /// <summary>Org-structure assignments: where the unit comes from.</summary>
+    public UnitSource? UnitFrom { get; set; }
+
+    /// <summary>JSONLogic over the request's facts giving a unit code (<see cref="UnitSource.Rule"/>).</summary>
+    public JsonNode? UnitRule { get; set; }
+
+    /// <summary>How many levels above the found unit to go (0 = the unit itself, 1 = its parent…).</summary>
+    public int LevelsUp { get; set; }
+
+    /// <summary>Also the units below it.</summary>
+    public bool IncludeSubUnits { get; set; }
+
+    /// <summary>When nobody in the unit qualifies, try the unit above it, and so on up to the top.</summary>
+    public bool ClimbWhenEmpty { get; set; }
 
     public AssignmentMode Mode { get; set; }
 

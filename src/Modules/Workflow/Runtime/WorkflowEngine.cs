@@ -650,6 +650,9 @@ internal sealed class WorkflowEngine(
                 }
 
                 break;
+            case TargetKind.OrgUnit:
+                await RouteToUnitAsync(run, task, assignment, cancellationToken);
+                break;
             default:
                 SetRole(task, assignment);
                 break;
@@ -693,8 +696,37 @@ internal sealed class WorkflowEngine(
     {
         task.CandidateRole = assignment.Role;
         task.CandidateOrgUnit = assignment.OrgUnit;
+        task.CandidateOrgUnits = assignment.OrgUnit is { } unit ? [unit] : [];
         task.CandidatePosition = assignment.Position;
     }
+
+    /// <summary>
+    /// Routes the task through the organization structure: finds the unit (fixed, by rule, or the previous actor's), goes
+    /// up the configured levels, and offers it to the unit's staff (or the holders of the position there). A unit that
+    /// cannot be found leaves the task to the role alone.
+    /// </summary>
+    private async Task RouteToUnitAsync(Run run, WorkTask task, TaskAssignment assignment, CancellationToken cancellationToken)
+    {
+        var start = assignment.UnitFrom switch
+        {
+            UnitSource.Fixed => assignment.OrgUnit,
+            UnitSource.Rule => JsonPaths.Text(evaluator.Evaluate(assignment.UnitRule!, await RuleContextAsync(run, cancellationToken))),
+            _ => await assignments.UnitOfAsync(assignment.Step is { } step ? LastActor(run, step) : LastActor(run), cancellationToken),
+        };
+        task.CandidateRole = assignment.Role;
+        var route = await assignments.RouteAsync(start, assignment, task.ExcludedUsers, cancellationToken);
+        if (route is null)
+        {
+            return;
+        }
+
+        task.CandidateOrgUnit = route.Value.Unit;
+        task.CandidateOrgUnits = [.. route.Value.Units];
+        task.CandidatePosition = assignment.Position;
+    }
+
+    private static string? LastActor(Run run) =>
+        run.Tasks.Where(t => t.Status == WorkTaskStatus.Completed).OrderByDescending(t => t.CompletedAt).Select(t => t.CompletedBy).FirstOrDefault();
 
     private static string? LastActor(Run run, string nodeCode) =>
         run.Tasks.Where(t => t.NodeCode == nodeCode && t.Status == WorkTaskStatus.Completed).OrderByDescending(t => t.CompletedAt).Select(t => t.CompletedBy).FirstOrDefault();

@@ -77,6 +77,7 @@ public sealed class WorkflowDbContext(DbContextOptions<WorkflowDbContext> option
             b.Property(e => e.CandidateRole).HasMaxLength(100);
             b.Property(e => e.CandidateOrgUnit).HasMaxLength(100);
             b.Property(e => e.CandidatePosition).HasMaxLength(100);
+            b.Property(e => e.CandidateOrgUnits).HasDefaultValueSql("'{}'::text[]");
             b.Property(e => e.CandidateUser).HasMaxLength(256);
             b.Property(e => e.DistributorRole).HasMaxLength(100);
             b.Property(e => e.Assignee).HasMaxLength(256);

@@ -33,16 +33,28 @@ internal sealed class StaffDirectory(AppsControlDbContext context, AccessResolve
                 && (r.EffectiveFrom == null || r.EffectiveFrom <= today) && (r.EffectiveTo == null || r.EffectiveTo >= today)));
         }
 
-        if (query.OrgUnit is not null || query.Position is not null)
+        if (query.OrgUnit is not null || query.Position is not null || query.OrgUnits is not null)
         {
             var unit = query.OrgUnit;
+            var units = query.OrgUnits?.ToList();
             var position = query.Position;
             users = users.Where(u => context.UserAssignments.Any(a => a.UserId == u.Id
-                && (unit == null || a.OrgUnit!.Code == unit) && (position == null || a.Position!.Code == position)
+                && (unit == null || a.OrgUnit!.Code == unit) && (units == null || units.Contains(a.OrgUnit!.Code))
+                && (position == null || a.Position!.Code == position)
                 && (a.EffectiveFrom == null || a.EffectiveFrom <= today) && (a.EffectiveTo == null || a.EffectiveTo >= today)));
         }
 
         return await LoadAsync(users.OrderBy(u => u.Code).Take(MaxResults), cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<OrgUnitNode>> OrgUnitsAsync(CancellationToken cancellationToken)
+    {
+        var today = Today();
+        return await context.OrgUnits.AsNoTracking()
+            .Where(u => u.IsActive && (u.EffectiveFrom == null || u.EffectiveFrom <= today) && (u.EffectiveTo == null || u.EffectiveTo >= today))
+            .OrderBy(u => u.Code)
+            .Select(u => new OrgUnitNode(u.Code, u.Parent != null ? u.Parent.Code : null, u.NameAr, u.NameEn))
+            .ToListAsync(cancellationToken);
     }
 
     private IQueryable<UserAccount> Active() => context.Users.AsNoTracking().Where(u => u.IsActive && u.Status == UserStatus.Active);
@@ -71,6 +83,7 @@ internal sealed class StaffDirectory(AppsControlDbContext context, AccessResolve
             [.. assignments.Where(x => x.UserId == r.Id).Select(x => x.Unit).Distinct()],
             [.. assignments.Where(x => x.UserId == r.Id && x.Position != null).Select(x => x.Position!).Distinct()],
             r.Email,
-            r.Mobile))];
+            r.Mobile,
+            [.. assignments.Where(x => x.UserId == r.Id).Select(x => new StaffPlacement(x.Unit, x.Position)).Distinct()]))];
     }
 }

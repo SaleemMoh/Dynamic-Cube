@@ -38,6 +38,8 @@ export class DesignerReferences {
   private readonly questionRows = this.list('svc.question');
   private readonly versionRows = this.list('svc.service-version');
   private readonly userRows = this.list('apps.user');
+  private readonly orgUnitRows = this.list('apps.org-unit');
+  private readonly positionRows = this.list('apps.position');
   private readonly service = signal<string | null>(null);
 
   readonly roles = computed(() => options(this.roleRows()));
@@ -45,6 +47,8 @@ export class DesignerReferences {
   readonly documentTypes = computed(() => options(this.documentTypeRows()));
   readonly providers = computed(() => options(this.providerRows()));
   readonly visitTypes = computed(() => options(this.visitTypeRows()));
+  readonly orgUnits = computed(() => options(this.orgUnitRows().filter((u) => u.isActive !== false)));
+  readonly positions = computed(() => options(this.positionRows().filter((p) => p.isActive !== false)));
 
   /** A visit type's outcomes and form fields, for routing on its result. */
   visitType(code: string | null | undefined): { outcomes: RefOption[]; fields: QuestionRef[] } {

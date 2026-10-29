@@ -34,3 +34,4 @@ Status values: Proposed · Accepted · Superseded.
 | [0027](0027-configuration-packages.md) | Configuration packages: export by code from any screen, UPSERT import, unchanged rows skipped, field-by-field review | Accepted |
 | [0028](0028-portal-dga-layout.md) | The portal follows the DGA layout of entity portals (title bands, tabs, cards, filter panels, service page anatomy); page feedback and service ratings are stored | Accepted |
 | [0029](0029-field-visits.md) | Field visits as a module: a workflow step that waits for the outcome, an offline-first field app with an outbox, external inspection bodies through the Integration Manager | Accepted |
+| [0030](0030-org-structure-routing.md) | Tasks routed through the organization structure: a unit fixed, chosen by a rule or taken from a previous actor; levels up, a position in the unit, sub-units, climbing when empty | Accepted |

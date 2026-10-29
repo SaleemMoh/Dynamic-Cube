@@ -210,6 +210,38 @@ internal static partial class DefinitionValidator
         }
     }
 
+    private static void OrgUnitTarget(TaskAssignment assignment, string field, Dictionary<string, NodeDefinition> nodes, ValidationErrors errors)
+    {
+        switch (assignment.UnitFrom)
+        {
+            case UnitSource.Fixed:
+                errors.Required(field + ".orgUnit", assignment.OrgUnit);
+                break;
+            case UnitSource.Rule:
+                if (assignment.UnitRule is null)
+                {
+                    errors.Add(field + ".unitRule", "Give the rule that chooses the unit.");
+                }
+
+                break;
+            case UnitSource.Actor:
+                if (assignment.Step is not null && (!nodes.TryGetValue(assignment.Step, out var step) || step.Type != NodeType.HumanTask))
+                {
+                    errors.Add(field + ".step", "Name a human task of this workflow.");
+                }
+
+                break;
+            default:
+                errors.Add(field + ".unitFrom", "Say where the unit comes from: FIXED, RULE or ACTOR.");
+                break;
+        }
+
+        if (assignment.LevelsUp is < 0 or > 10)
+        {
+            errors.Add(field + ".levelsUp", "Between 0 and 10 levels.");
+        }
+    }
+
     private static void HumanTask(NodeDefinition node, string field, Dictionary<string, NodeDefinition> nodes, ValidationErrors errors)
     {
         if (node.Assignment is not { } assignment)
@@ -232,6 +264,9 @@ internal static partial class DefinitionValidator
                         errors.Add(field + ".assignment.step", "Name a human task of this workflow.");
                     }
 
+                    break;
+                case TargetKind.OrgUnit:
+                    OrgUnitTarget(assignment, field + ".assignment", nodes, errors);
                     break;
             }
 

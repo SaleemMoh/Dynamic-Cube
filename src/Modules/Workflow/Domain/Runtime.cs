@@ -140,7 +140,11 @@ public sealed class WorkTask : IAuditable
 
     public string? CandidateRole { get; set; }
 
+    /// <summary>The unit the task was routed to (shown in inboxes).</summary>
     public string? CandidateOrgUnit { get; set; }
+
+    /// <summary>Units whose staff may take the task: <see cref="CandidateOrgUnit"/>, and the units below it when included.</summary>
+    public List<string> CandidateOrgUnits { get; set; } = [];
 
     public string? CandidatePosition { get; set; }
 

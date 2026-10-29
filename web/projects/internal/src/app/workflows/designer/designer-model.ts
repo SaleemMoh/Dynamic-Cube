@@ -20,12 +20,18 @@ export interface ActionDef {
 }
 
 export interface AssignmentDef {
-  target: 'ROLE' | 'USER' | 'PREVIOUS_ACTOR';
+  target: 'ROLE' | 'USER' | 'PREVIOUS_ACTOR' | 'ORG_UNIT';
   role?: string | null;
   orgUnit?: string | null;
   position?: string | null;
   user?: string | null;
   step?: string | null;
+  /** Org-structure routing: where the unit comes from. */
+  unitFrom?: 'FIXED' | 'RULE' | 'ACTOR' | null;
+  unitRule?: JsonRule;
+  levelsUp?: number;
+  includeSubUnits?: boolean;
+  climbWhenEmpty?: boolean;
   mode: 'QUEUE' | 'DISTRIBUTE' | 'AUTO';
   distributorRole?: string | null;
 }
@@ -559,7 +565,9 @@ export function check(def: WorkflowDraft): Problem[] {
           !a ||
           (a.target === 'ROLE' && !a.role) ||
           (a.target === 'USER' && !a.user) ||
-          (a.target === 'PREVIOUS_ACTOR' && byCode.get(a.step ?? '')?.type !== 'HUMAN_TASK')
+          (a.target === 'PREVIOUS_ACTOR' && byCode.get(a.step ?? '')?.type !== 'HUMAN_TASK') ||
+          (a.target === 'ORG_UNIT' &&
+            (!a.unitFrom || (a.unitFrom === 'FIXED' && !a.orgUnit) || (a.unitFrom === 'RULE' && (a.unitRule === null || a.unitRule === undefined))))
         ) {
           p(n, 'designer.problem.assignment');
         }

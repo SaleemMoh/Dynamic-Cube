@@ -156,7 +156,7 @@
       <mat-form-field subscriptSizing="dynamic">
         <mat-label>{{ 'designer.field.target' | dcTranslate }}</mat-label>
         <mat-select [ngModel]="n.assignment?.target ?? 'ROLE'" (ngModelChange)="assignment({ target: $event })" data-testid="assign-target">
-          @for (t of ['ROLE', 'USER', 'PREVIOUS_ACTOR']; track t) {
+          @for (t of ['ROLE', 'USER', 'PREVIOUS_ACTOR', 'ORG_UNIT']; track t) {
             <mat-option [value]="t">{{ 'designer.target.' + t | dcTranslate }}</mat-option>
           }
         </mat-select>
@@ -181,6 +181,86 @@
               }
             </mat-select>
           </mat-form-field>
+        }
+        @case ('ORG_UNIT') {
+          <p class="dc-panel__hint">{{ 'designer.orgHint' | dcTranslate }}</p>
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>{{ 'designer.field.unitFrom' | dcTranslate }}</mat-label>
+            <mat-select [ngModel]="n.assignment?.unitFrom ?? null" (ngModelChange)="assignment({ unitFrom: $event })" data-testid="assign-unit-from">
+              @for (u of ['FIXED', 'RULE', 'ACTOR']; track u) {
+                <mat-option [value]="u">{{ 'designer.unitFrom.' + u | dcTranslate }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          @switch (n.assignment?.unitFrom) {
+            @case ('FIXED') {
+              <mat-form-field subscriptSizing="dynamic">
+                <mat-label>{{ 'designer.field.orgUnit' | dcTranslate }}</mat-label>
+                <mat-select [ngModel]="n.assignment?.orgUnit ?? null" (ngModelChange)="assignment({ orgUnit: $event })" data-testid="assign-org-unit">
+                  @for (u of refs.orgUnits(); track u.value) {
+                    <mat-option [value]="u.value">{{ u.label | dcLocalize }} ({{ u.value }})</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            }
+            @case ('RULE') {
+              <dc-rule-editor
+                mode="value"
+                [label]="'designer.field.unitRule' | dcTranslate"
+                [rule]="n.assignment?.unitRule ?? null"
+                [variables]="variables()"
+                (ruleChange)="assignment({ unitRule: $event })"
+              />
+              <p class="dc-panel__hint">{{ 'designer.unitRuleHint' | dcTranslate }}</p>
+            }
+            @case ('ACTOR') {
+              <mat-form-field subscriptSizing="dynamic">
+                <mat-label>{{ 'designer.field.actorOf' | dcTranslate }}</mat-label>
+                <mat-select [ngModel]="n.assignment?.step ?? ''" (ngModelChange)="assignment({ step: $event || null })" data-testid="assign-actor-step">
+                  <mat-option value="">{{ 'designer.lastActor' | dcTranslate }}</mat-option>
+                  @for (t of tasks(); track t.code) {
+                    @if (t.code !== n.code) {
+                      <mat-option [value]="t.code">{{ name(t) }} ({{ t.code }})</mat-option>
+                    }
+                  }
+                </mat-select>
+              </mat-form-field>
+            }
+          }
+          @if (n.assignment?.unitFrom) {
+            <mat-form-field subscriptSizing="dynamic">
+              <mat-label>{{ 'designer.field.levelsUp' | dcTranslate }}</mat-label>
+              <mat-select [ngModel]="n.assignment?.levelsUp ?? 0" (ngModelChange)="assignment({ levelsUp: $event })" data-testid="assign-levels-up">
+                @for (l of [0, 1, 2, 3]; track l) {
+                  <mat-option [value]="l">{{ 'designer.levelsUp.' + l | dcTranslate }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field subscriptSizing="dynamic">
+              <mat-label>{{ 'designer.field.position' | dcTranslate }}</mat-label>
+              <mat-select [ngModel]="n.assignment?.position ?? null" (ngModelChange)="assignment({ position: $event })" data-testid="assign-position">
+                <mat-option [value]="null">{{ 'designer.anyoneInUnit' | dcTranslate }}</mat-option>
+                @for (p of refs.positions(); track p.value) {
+                  <mat-option [value]="p.value">{{ p.label | dcLocalize }} ({{ p.value }})</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field subscriptSizing="dynamic">
+              <mat-label>{{ 'designer.field.alsoRole' | dcTranslate }}</mat-label>
+              <mat-select [ngModel]="n.assignment?.role ?? null" (ngModelChange)="assignment({ role: $event })">
+                <mat-option [value]="null">—</mat-option>
+                @for (r of refs.roles(); track r.value) {
+                  <mat-option [value]="r.value">{{ r.label | dcLocalize }} ({{ r.value }})</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-checkbox [ngModel]="!!n.assignment?.includeSubUnits" (ngModelChange)="assignment({ includeSubUnits: $event })" data-testid="assign-sub-units">{{
+              'designer.field.includeSubUnits' | dcTranslate
+            }}</mat-checkbox>
+            <mat-checkbox [ngModel]="!!n.assignment?.climbWhenEmpty" (ngModelChange)="assignment({ climbWhenEmpty: $event })" data-testid="assign-climb">{{
+              'designer.field.climbWhenEmpty' | dcTranslate
+            }}</mat-checkbox>
+          }
         }
         @case ('PREVIOUS_ACTOR') {
           <mat-form-field subscriptSizing="dynamic">

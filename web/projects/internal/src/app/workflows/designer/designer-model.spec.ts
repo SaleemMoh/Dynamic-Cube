@@ -69,13 +69,31 @@ describe('designer model', () => {
     def = connect(def, 'VISIT_1', 'cancelled', 'DONE');
     def = { ...def, nodes: def.nodes.map((n) => (n.code === 'VISIT_1' ? { ...n, visitType: 'SITE' } : n)) };
     expect(def.nodes.find((n) => n.code === 'VISIT_1')!.outcomes).toEqual({ OUTCOME: 'DONE' });
-    expect(edges(def).filter((e) => e.from === 'VISIT_1').map((e) => e.outlet.kind)).toEqual(['next', 'outcome', 'cancelled']);
+    expect(
+      edges(def)
+        .filter((e) => e.from === 'VISIT_1')
+        .map((e) => e.outlet.kind),
+    ).toEqual(['next', 'outcome', 'cancelled']);
     expect(check(def)).toEqual([]);
     const renamed = renameNode(def, 'DONE', 'END_OK');
     expect(renamed.nodes.find((n) => n.code === 'VISIT_1')).toMatchObject({ outcomes: { OUTCOME: 'END_OK' }, cancelled: 'END_OK' });
     const removed = removeNode(def, 'DONE');
     expect(removed.nodes.find((n) => n.code === 'VISIT_1')).toMatchObject({ outcomes: {}, cancelled: null });
     expect(disconnect(def, 'VISIT_1', { kind: 'outcome', index: 0 }).nodes.find((n) => n.code === 'VISIT_1')!.outcomes).toEqual({});
+  });
+
+  it('an org-structure assignment needs to know where its unit comes from', () => {
+    const assign = (assignment: object) => ({
+      ...base(),
+      nodes: base().nodes.map((n) => (n.code === 'REVIEW' ? { ...n, assignment: { mode: 'QUEUE', ...assignment } as never } : n)),
+    });
+    const keys = (assignment: object) => check(assign(assignment)).map((p) => p.key);
+    expect(keys({ target: 'ORG_UNIT' })).toContain('designer.problem.assignment');
+    expect(keys({ target: 'ORG_UNIT', unitFrom: 'FIXED' })).toContain('designer.problem.assignment');
+    expect(keys({ target: 'ORG_UNIT', unitFrom: 'RULE' })).toContain('designer.problem.assignment');
+    expect(keys({ target: 'ORG_UNIT', unitFrom: 'FIXED', orgUnit: 'BRANCH' })).toEqual([]);
+    expect(keys({ target: 'ORG_UNIT', unitFrom: 'RULE', unitRule: { var: 'data.branch' } })).toEqual([]);
+    expect(keys({ target: 'ORG_UNIT', unitFrom: 'ACTOR', levelsUp: 1, position: 'MANAGER' })).toEqual([]);
   });
 
   it('saves a position for every step and only for steps', () => {
