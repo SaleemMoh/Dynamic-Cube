@@ -38,6 +38,8 @@ export * from './lib/services/service.models';
 export * from './lib/services/services.api';
 export * from './lib/services/service-form';
 export * from './lib/services/fee-table';
+export * from './lib/services/bill-card';
+export * from './lib/payments/payments.api';
 export * from './lib/services/request-answers';
 export * from './lib/services/service-wizard';
 export * from './lib/workflow/workflow.models';

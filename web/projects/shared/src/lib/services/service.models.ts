@@ -3,7 +3,7 @@ import { PartyKind } from '../party/party.models';
 
 export type QuestionType = 'TEXT' | 'TEXTAREA' | 'NUMBER' | 'DATE' | 'SELECT' | 'CHECKBOX';
 export type StepType = 'FORM' | 'LEVEL' | 'FEES' | 'REVIEW' | 'DECLARATION';
-export type StatusCategory = 'DRAFT' | 'SUBMITTED' | 'IN_PROGRESS' | 'PENDING_CUSTOMER' | 'PENDING_EXTERNAL' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'CLOSED';
+export type StatusCategory = 'DRAFT' | 'SUBMITTED' | 'IN_PROGRESS' | 'PENDING_CUSTOMER' | 'PENDING_EXTERNAL' | 'PENDING_PAYMENT' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'CLOSED';
 
 export interface QuestionSnapshot {
   code: string;
@@ -251,6 +251,38 @@ export interface RequestView {
   stepErrors: FieldError[];
   /** What happened to the request, for the applicant (returns and decisions carry their reason). */
   timeline: TimelineEntry[];
+  /** Bills issued by the request's payment steps. */
+  bills?: BillInfo[] | null;
+}
+
+export type BillStatus = 'PENDING' | 'PAID' | 'EXPIRED' | 'CANCELLED';
+
+export interface BillLine {
+  code: string;
+  nameAr: string;
+  nameEn: string;
+  net: number;
+  vat: number;
+  total: number;
+}
+
+/** A bill: what to pay, the number to pay with, until when, and how it was paid. */
+export interface BillInfo {
+  id: string;
+  number: string;
+  providerCode: string;
+  providerBillNumber: string | null;
+  billerCode: string | null;
+  status: BillStatus;
+  lines: BillLine[];
+  total: number;
+  issuedAt: string;
+  dueAt: string;
+  paidAt: string | null;
+  paymentReference: string | null;
+  payUrl: string | null;
+  instructionsAr: string | null;
+  instructionsEn: string | null;
 }
 
 export interface TimelineEntry {

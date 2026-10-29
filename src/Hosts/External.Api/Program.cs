@@ -5,6 +5,7 @@ using DynamicCube.Modules.Decisions;
 using DynamicCube.Modules.Documents;
 using DynamicCube.Modules.Integration;
 using DynamicCube.Modules.Parties;
+using DynamicCube.Modules.Payments;
 using DynamicCube.Modules.Services;
 using DynamicCube.Modules.Workflow;
 
@@ -24,6 +25,7 @@ builder.Services.AddWorkflow(builder.Configuration);
 builder.Services.AddDocuments(builder.Configuration);
 builder.Services.AddDecisions(builder.Configuration);
 builder.Services.AddCommunication(builder.Configuration);
+builder.Services.AddPayments(builder.Configuration);
 
 var app = builder.Build();
 app.MapDynamicCubeDefaults();
@@ -33,6 +35,7 @@ app.MapServicesExternal();
 app.MapDocumentsExternal();
 app.MapDecisionsExternal();
 app.MapCommunicationExternal();
+app.MapPaymentsExternal();
 
 app.Run();
 

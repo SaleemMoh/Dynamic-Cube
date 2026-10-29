@@ -109,7 +109,7 @@ public sealed class PortalCatalogService(ServicesDbContext context, ServiceCatal
         return new PortalStatistics(
             services,
             counts.Sum(c => c.Count),
-            Count(StatusCategory.Submitted, StatusCategory.InProgress, StatusCategory.PendingCustomer, StatusCategory.PendingExternal),
+            Count(StatusCategory.Submitted, StatusCategory.InProgress, StatusCategory.PendingCustomer, StatusCategory.PendingExternal, StatusCategory.PendingPayment),
             Count(StatusCategory.Approved, StatusCategory.Rejected, StatusCategory.Closed));
     }
 

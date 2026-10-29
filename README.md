@@ -21,7 +21,9 @@ with a question bank, levels, fees and eligibility; the applicant's wizard with 
 (parallel reviews with maker-checker, distribution, returns to the applicant, deadlines on the working calendar) and
 the employees' Action Center; issued documents with PDF printing and public QR verification, versioned decision rules
 with a test console, and notifications (in-app, email, SMS) driven by rules over events. Every module's
-configuration is edited through the same maker-checker change sets. See the [roadmap](docs/07-roadmap.md) for what comes next.
+configuration is edited through the same maker-checker change sets. Phase 2 has started: follow-up services on issued
+documents (renewal, extension) and payments (SADAD bills, signed payment notifications, a workflow step that waits
+for payment). See the [roadmap](docs/07-roadmap.md) for what comes next.
 
 ## Repository layout
 
@@ -38,10 +40,11 @@ src/
   Modules/Documents    Issued documents (schema doc): types, print templates, numbers, versions, PDF, verification
   Modules/Decisions    Decision rules (schema dec): rule sets, versions, built-in RULES engine, evaluation log
   Modules/Communication Notifications (schema com): message templates, rules, email/SMS/in-app, message log
+  Modules/Payments     Payments (schema pay): providers, bills, signed payment notifications, receipts, expiry
   Shared/Platform      Kernel: persistence base, audit, outbox, change sets, files, JSONLogic, i18n
   Shared/Hosting       Shared host setup: logging, telemetry, health, Keycloak JWT
   Tools/Migrator       Applies database migrations (run before upgrades)
-  Tools/MockGateway    Development stand-in for the MoMRAH API gateway (MCI operations) — never deployed
+  Tools/MockGateway    Development stand-in for the MoMRAH API gateway (MCI operations, SADAD bills and payment page) — never deployed
 tests/
   Platform.Tests       Unit tests
   Platform.IntegrationTests  PostgreSQL integration tests
@@ -53,6 +56,7 @@ tests/
   Documents.Tests      Issuing, amendments, printing, status actions, reminders, verification
   Decisions.Tests      Rules engine, versions, evaluation log, calculators
   Communication.Tests  Rules, dispatch, delivery and retries, notifications, a real SMTP check (optional)
+  Payments.Tests       Bills, provider registration, signed notifications over HTTP, expiry, staff actions
   shared/ModuleTests   Test database, fake provider and MoMRAH samples shared by the module test projects
   Hosts.Tests          API host smoke tests
   shared/              Cases shared by the .NET and Angular JSONLogic evaluators
@@ -101,7 +105,7 @@ To open the database in DataGrip (or DBeaver, pgAdmin): *New → Data Source →
 `5432`, database `dynamic_cube`, user `dynamic_cube`, password `dynamic_cube`. Tables are grouped by schema:
 `apps` (Apps Control), `integ` (Integration Manager), `party` (Party Registry), `svc` (Services), `wf` (workflows and
 tasks), `doc` (issued documents), `dec` (decision rules and evaluations), `com` (notifications and the message log),
-`cfg` (change sets),
+`pay` (payment providers and bills), `cfg` (change sets),
 `audit` (audit log), `platform` (outbox, keys).
 
 The **field app** is the inspectors' app for site visits (offline-capable, phone/tablet). It is a shell for now;
@@ -165,6 +169,14 @@ These are development values only; change them in `deploy/docker/.env` (see `.en
    *Services on this document* renewal and extension are locked, with the dates their windows open (renewal from 90
    days before expiry). When a window is open, *Start service* makes a request for that certificate (its number and
    expiry are filled in); on approval the certificate keeps its number and gets a new version and expiry date.
+11. Import `deploy/config-packages/payments-sadad.json` and then `classification-payment.json`, and approve them. In
+   Docker Compose set the provider's payment page (**Payments → Payment providers**, `SADAD`) to
+   `http://localhost:5090/sadad/pay/{billNumber}` if the mock gateway is published elsewhere. Submit a *Premium*
+   classification request: it is *Awaiting payment* and its page shows the bill (amount, SADAD number, biller code,
+   due date). *Pay now* opens the mock SADAD page; paying there sends a signed notification to the external API, and
+   the request moves on to the request manager's review with the receipt on its page. In the internal system,
+   **Payments → Bills** lists the bills; a bill's page shows its history and lets staff record a payment made
+   elsewhere or cancel the bill (the request then closes as *not paid*). Unpaid bills expire after 7 days.
 
 The gateway credentials come from the secret store (`Secrets__MOMRAH_GATEWAY__clientId` / `__clientSecret`), never
 from the database; development values are in `appsettings.Development.json` and the compose file.

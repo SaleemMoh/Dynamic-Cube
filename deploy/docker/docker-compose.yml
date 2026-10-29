@@ -10,6 +10,8 @@ x-dotnet-env: &dotnet-env
 x-gateway-secrets: &gateway-secrets
   Secrets__MOMRAH_GATEWAY__clientId: ${MOMRAH_CLIENT_ID:-dev-consumer-key}
   Secrets__MOMRAH_GATEWAY__clientSecret: ${MOMRAH_CLIENT_SECRET:-dev-consumer-secret}
+  # Payment notifications from SADAD are signed with this key (the mock gateway signs with the same one).
+  Secrets__SADAD_CALLBACK__key: ${SADAD_CALLBACK_KEY:-dev-sadad-callback-key}
 
 services:
   postgres:
@@ -105,7 +107,8 @@ services:
     ports:
       - "5081:8080"
 
-  # Development stand-in for the MoMRAH gateway (MCI operations); connection base URL http://mock-gateway:8080.
+  # Development stand-in for the MoMRAH gateway (MCI operations, SADAD bills and payment page); connection base URL
+  # http://mock-gateway:8080, payment page http://localhost:5090/sadad/pay/{billNumber}.
   mock-gateway:
     build:
       context: ../..
@@ -113,6 +116,10 @@ services:
       args:
         PROJECT: src/Tools/MockGateway/DynamicCube.MockGateway.csproj
         ASSEMBLY: DynamicCube.MockGateway.dll
+    environment:
+      Sadad__CallbackUrl: http://external-api:8080/api/payments/v1/callbacks/SADAD
+      Sadad__CallbackKey: ${SADAD_CALLBACK_KEY:-dev-sadad-callback-key}
+      Sadad__ReturnUrl: http://localhost:4201/requests
     ports:
       - "5090:8080"
 

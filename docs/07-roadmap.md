@@ -201,8 +201,8 @@ Delivered in slices:
 | Slice | Content | Status |
 |---|---|---|
 | **2a** | Follow-up services on issued documents: availability windows, requests bound to a document, renewal and extension | ✅ |
-| 2b | Payments: bills (SADAD / Tahseel through the Integration Manager), payment callbacks, waiting for payment, receipts | Next |
-| 2c | Sanctions: progressive penalties by offence, bans by kind of service, document status actions from sanctions, committee review | Planned |
+| **2b** | Payments: bills (SADAD / Tahseel through the Integration Manager), payment callbacks, waiting for payment, receipts | ✅ |
+| 2c | Sanctions: progressive penalties by offence, bans by kind of service, document status actions from sanctions, committee review | Next |
 | 2d | Remaining classification follow-ups: add / remove sector, modify / upgrade grade, update certificate data, appeal; draft expiry job | Planned |
 | 2e | Classification calculator (public, stateless) and dashboards v1 | Planned |
 
@@ -227,13 +227,36 @@ Delivered in slices:
   ACTIVE or EXPIRED, from 15 days before until 90 days after expiry; both prefill the certificate number and expiry and
   ask for a declaration) and `classification-renewal-workflow.json` (version 2 of their workflows: renew the
   certificate for 24 months from its expiry; extend it by 3 months).
-Still open from 2a: fees on follow-ups (2b), sanctions banning renewals (2c), choosing the document when an applicant
-holds several from the service's wizard (today from the service page or the document page), and a review step before
-renewals (a new workflow version).
+
+Still open from 2a: fees on follow-ups (a payment step in their workflows, possible since 2b), sanctions banning
+renewals (2c), choosing the document when an applicant holds several from the service's wizard (today from the
+service page or the document page), and a review step before renewals (a new workflow version).
+
+**2b delivered** ([ADR-0022](adr/0022-payments.md)):
+
+- **Payments module.** Bills with the platform's number and the provider's (SADAD) number, lines with VAT, a due
+  date and a history; providers as configuration (`pay.provider`): the Integration Manager operation that registers
+  the bill, the biller code, days to pay, payment page, instructions, the signing secret's name and where
+  notifications carry their values. A provider without an operation is manual (cashier).
+- **Signed payment notifications** on the external host (`POST /api/payments/v1/callbacks/{provider}`, HMAC-SHA256
+  over the body in `X-Signature`): the amount must match; repeats change nothing; late payments are recorded.
+  Unpaid bills expire by a worker job.
+- **Workflow PAYMENT step.** Bills the request's fees (or a JSONLogic amount) and waits: the request is *awaiting
+  payment* and its deadline stands still; paid, it continues; expired or cancelled, it takes the step's `expired`
+  way (e.g. *closed — not paid*). Nothing to pay: it passes on.
+- **Screens.** The request page shows the bill (amount, SADAD number, biller code, due date, how to pay, *Pay now*)
+  and, once paid, the receipt; staff get *Payments → Bills* (search, bill page with history, record a payment,
+  cancel) and *Payment providers*; staff request pages show the bills too.
+- **Packages.** `payments-sadad.json` (the SADAD bill operation on the MOMRAH gateway, the default provider `SADAD`
+  and three notifications) and `classification-payment.json` (`CLASSIFICATION_NEW/4`: Premium and Diamond fees paid
+  before the request manager's review; an unpaid bill closes the request). The mock gateway has SADAD's API and a
+  payment page that sends the signed notification.
+
+Still open from 2b: refunds and partial payments, reconciliation reports, a fee step on follow-up services.
 
 - Amendment services: renewal, extension (2a); add/remove sector, upgrade, update data, appeal (2d).
 - ~~**Availability rules** (status + date windows) and certificate page with available / locked services~~ (2a).
-- Payments: SADAD / Tahseel bills and callbacks; service-level fees end to end (2b).
+- ~~Payments: SADAD / Tahseel bills and callbacks; service-level fees end to end~~ (2b).
 - ~~Scheduled document-date alerts~~ (done in 1e); draft expiry (2d).
 - Sanctions and document status actions (2c).
 - Classification calculator (public, stateless) (2e).

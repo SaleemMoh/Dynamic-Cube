@@ -81,6 +81,9 @@ public enum TokenStatus
     AtJoin,
     Done,
     Cancelled,
+
+    /// <summary>At a payment step: waits for its bill to be paid (or to expire).</summary>
+    WaitingPayment,
 }
 
 /// <summary>An open split a token belongs to: its id, the split node and how many branches it started.</summary>
@@ -240,6 +243,9 @@ public static class WorkflowEventTypes
     public const string Decided = "DECIDED";
     public const string DocumentIssued = "DOCUMENT_ISSUED";
     public const string DocumentAmended = "DOCUMENT_AMENDED";
+    public const string BillIssued = "BILL_ISSUED";
+    public const string PaymentReceived = "PAYMENT_RECEIVED";
+    public const string PaymentNotReceived = "PAYMENT_NOT_RECEIVED";
 }
 
 /// <summary>Out of office: the delegate works on the delegator's assigned tasks between the dates.</summary>

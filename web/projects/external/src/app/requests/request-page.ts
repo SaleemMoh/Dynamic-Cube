@@ -4,18 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Router, RouterLink } from '@angular/router';
-import {
-  FeeTable,
-  FieldError,
-  LocalizePipe,
-  RequestAnswers,
-  RequestView,
-  ServiceWizard,
-  ServicesApi,
-  TranslatePipe,
-  WizardMove,
-  requestErrors,
-} from '@dynamic-cube/shared';
+import { BillCard, FeeTable, FieldError, LocalizePipe, RequestAnswers, RequestView, ServiceWizard, ServicesApi, TranslatePipe, WizardMove, requestErrors } from '@dynamic-cube/shared';
 import { firstValueFrom } from 'rxjs';
 import { RequestDocuments } from '../documents/request-documents';
 
@@ -25,7 +14,7 @@ import { RequestDocuments } from '../documents/request-documents';
  */
 @Component({
   selector: 'dc-request-page',
-  imports: [RequestDocuments, DatePipe, MatButtonModule, MatIconModule, MatProgressBarModule, RouterLink, FeeTable, LocalizePipe, RequestAnswers, ServiceWizard, TranslatePipe],
+  imports: [BillCard, RequestDocuments, DatePipe, MatButtonModule, MatIconModule, MatProgressBarModule, RouterLink, FeeTable, LocalizePipe, RequestAnswers, ServiceWizard, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <a routerLink="/requests" class="dc-link">{{ 'requests.title' | dcTranslate }}</a>
@@ -36,7 +25,7 @@ import { RequestDocuments } from '../documents/request-documents';
           class="dc-badge"
           [class.dc-badge--success]="v.request.status === 'APPROVED'"
           [class.dc-badge--danger]="v.request.status === 'REJECTED'"
-          [class.dc-badge--warning]="v.request.status === 'PENDING_CUSTOMER'"
+          [class.dc-badge--warning]="v.request.status === 'PENDING_CUSTOMER' || v.request.status === 'PENDING_PAYMENT'"
           [class.dc-badge--info]="v.request.status === 'SUBMITTED' || v.request.status === 'IN_PROGRESS'"
           data-testid="request-status"
           >{{ 'displayStatus.' + v.request.displayStatus | dcTranslate }}</span>
@@ -54,6 +43,9 @@ import { RequestDocuments } from '../documents/request-documents';
         }
       </p>
 
+      @for (bill of v.bills ?? []; track bill.id) {
+        <dc-bill-card [bill]="bill" />
+      }
       @if (v.request.status === 'PENDING_CUSTOMER') {
         <div class="dc-card dc-request__returned" role="status" data-testid="returned-banner">
           <mat-icon fontSet="material-symbols-outlined">edit_note</mat-icon>

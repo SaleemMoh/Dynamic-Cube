@@ -34,6 +34,9 @@ public enum NodeType
 
     /// <summary>Issues (or amends) a document for the holder, e.g. the certificate.</summary>
     Document,
+
+    /// <summary>Bills the subject's fees (or an amount) and waits until the bill is paid; an unpaid bill takes <c>expired</c>.</summary>
+    Payment,
     End,
 }
 
@@ -112,6 +115,21 @@ public sealed class NodeDefinition
 
     /// <summary>Document: months of the new period (RESET, RENEW; default the type's validity) or of the extension (EXTEND).</summary>
     public int? ValidityMonths { get; set; }
+
+    /// <summary>Payment: JSONLogic giving the total to pay (VAT included); default the subject's fees (<c>fees</c>).</summary>
+    public JsonNode? Amount { get; set; }
+
+    /// <summary>Payment: VAT rate of <see cref="Amount"/> (default 0.15).</summary>
+    public decimal? VatRate { get; set; }
+
+    /// <summary>Payment: the payment provider (default: the installation's default provider).</summary>
+    public string? Provider { get; set; }
+
+    /// <summary>Payment: days the bill stays payable (default: the provider's).</summary>
+    public int? DueDays { get; set; }
+
+    /// <summary>Payment: where an unpaid bill goes once it expires or is cancelled.</summary>
+    public string? Expired { get; set; }
 }
 
 public enum DocumentTarget

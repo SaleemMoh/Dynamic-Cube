@@ -10,6 +10,9 @@ public enum StatusCategory
     InProgress,
     PendingCustomer,
     PendingExternal,
+
+    /// <summary>A bill was issued; processing continues once it is paid.</summary>
+    PendingPayment,
     Approved,
     Rejected,
     Cancelled,

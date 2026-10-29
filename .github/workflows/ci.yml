@@ -59,6 +59,7 @@ jobs:
           dotnet ef migrations has-pending-model-changes --project src/Modules/Documents --no-build --configuration Release
           dotnet ef migrations has-pending-model-changes --project src/Modules/Decisions --no-build --configuration Release
           dotnet ef migrations has-pending-model-changes --project src/Modules/Communication --no-build --configuration Release
+          dotnet ef migrations has-pending-model-changes --project src/Modules/Payments --no-build --configuration Release
 
   frontend:
     name: Frontend (Angular)

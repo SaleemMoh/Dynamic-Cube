@@ -5,7 +5,9 @@ using DynamicCube.Modules.Services.Domain;
 using DynamicCube.Modules.Services.Persistence;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Expressions;
+using DynamicCube.Platform.Payments;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DynamicCube.Modules.Services.Runtime;
 
@@ -14,7 +16,7 @@ public sealed record RequestPage(IReadOnlyList<RequestSummary> Items, int Total)
 public sealed record PreviewRequest(string ServiceCode, VersionDefinition Definition);
 
 /// <summary>Employee-side reads: requests with their timeline, and previews of definitions before they are published.</summary>
-internal sealed class RequestAdminService(ServicesDbContext context, ServiceCatalogCache cache, JsonLogicEvaluator evaluator)
+internal sealed class RequestAdminService(ServicesDbContext context, ServiceCatalogCache cache, JsonLogicEvaluator evaluator, IServiceProvider services)
 {
     public async Task<RequestPage> SearchAsync(string? service, StatusCategory? status, string? search, int skip, int take, CancellationToken cancellationToken)
     {
@@ -52,7 +54,8 @@ internal sealed class RequestAdminService(ServicesDbContext context, ServiceCata
             .Select(e => new TimelineEntry(e.At, e.UserId, e.Type, e.FromStatus, e.ToStatus, e.Comment))
             .ToListAsync(cancellationToken);
         var view = new RequestView(RequestService.Summary(entity, (service.NameAr, service.NameEn)), entity.VersionNumber, entity.LevelCode, entity.CurrentStep,
-            JsonNode.Parse(entity.Data)!.AsObject(), entity.Fees, new Dictionary<string, IReadOnlyList<FeeLine>>(), version, [], timeline);
+            JsonNode.Parse(entity.Data)!.AsObject(), entity.Fees, new Dictionary<string, IReadOnlyList<FeeLine>>(), version, [], timeline,
+            services.GetService<IPayments>() is { } payments ? await payments.OfSubjectAsync(RequestSubject.Type, entity.Id, cancellationToken) : []);
         return new RequestDetail(view, entity.SubmitterPartyId, entity.SubmitterName, entity.BeneficiaryPartyId, timeline);
     }
 

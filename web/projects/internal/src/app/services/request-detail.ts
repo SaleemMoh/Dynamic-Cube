@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RouterLink } from '@angular/router';
-import { FeeTable, LocalizePipe, RequestAnswers, ServicesApi, TranslatePipe, WorkflowApi } from '@dynamic-cube/shared';
+import { BillCard, FeeTable, LocalizePipe, RequestAnswers, ServicesApi, TranslatePipe, WorkflowApi } from '@dynamic-cube/shared';
 import { catchError, of } from 'rxjs';
 import { InstanceFactsCard } from '../action-center/instance-facts';
 import { WorkflowCard } from '../action-center/workflow-card';
@@ -11,7 +11,7 @@ import { WorkflowCard } from '../action-center/workflow-card';
 /** One request as submitted: who, what, the answers, fees, its workflow (when it has one) and the timeline. */
 @Component({
   selector: 'dc-request-detail',
-  imports: [DatePipe, InstanceFactsCard, MatProgressBarModule, RouterLink, FeeTable, LocalizePipe, RequestAnswers, TranslatePipe, WorkflowCard],
+  imports: [BillCard, DatePipe, InstanceFactsCard, MatProgressBarModule, RouterLink, FeeTable, LocalizePipe, RequestAnswers, TranslatePipe, WorkflowCard],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <a routerLink="/services/requests" class="dc-link">{{ 'requests.title' | dcTranslate }}</a>
@@ -48,6 +48,9 @@ import { WorkflowCard } from '../action-center/workflow-card';
             <h2>{{ 'fees.grandTotal' | dcTranslate }}</h2>
             <dc-fee-table [lines]="d.view.fees" />
           </section>
+          @for (bill of d.view.bills ?? []; track bill.id) {
+            <dc-bill-card [bill]="bill" />
+          }
           <section class="dc-card">
             <h2>{{ 'requests.timeline' | dcTranslate }}</h2>
             <ol class="dc-timeline" data-testid="timeline">

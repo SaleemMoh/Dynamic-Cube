@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using DynamicCube.Modules.Services.Domain;
 using DynamicCube.Modules.Services.Persistence;
@@ -36,6 +37,9 @@ internal sealed class RequestSubject(ServicesDbContext context, IPartyFacts part
             ["submitterPartyId"] = request.SubmitterPartyId.ToString(),
             // The beneficiary: decisions and documents read its profile, identifiers and credentials.
             ["party"] = party?.ToJson() ?? new JsonObject { ["id"] = request.BeneficiaryPartyId.ToString() },
+            // What a payment step bills by default: the fees computed at submission.
+            ["fees"] = JsonSerializer.SerializeToNode(request.Fees, JsonSerializerOptions.Web),
+            ["feeTotal"] = request.FeeTotal,
             // A follow-up request: a document step with target SOURCE amends this document.
             ["document"] = document?.ToJson(),
         };
@@ -49,6 +53,7 @@ internal sealed class RequestSubject(ServicesDbContext context, IPartyFacts part
         var to = update.Status switch
         {
             SubjectStatus.PendingCustomer => StatusCategory.PendingCustomer,
+            SubjectStatus.PendingPayment => StatusCategory.PendingPayment,
             SubjectStatus.Approved => StatusCategory.Approved,
             SubjectStatus.Rejected => StatusCategory.Rejected,
             SubjectStatus.Closed => StatusCategory.Closed,

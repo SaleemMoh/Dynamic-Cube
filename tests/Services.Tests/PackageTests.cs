@@ -4,7 +4,9 @@ using DynamicCube.Modules.AppsControl.Changes;
 using DynamicCube.Modules.Communication.Changes;
 using DynamicCube.Modules.Decisions.Changes;
 using DynamicCube.Modules.Documents.Changes;
+using DynamicCube.Modules.Integration.Changes;
 using DynamicCube.Modules.Parties.Changes;
+using DynamicCube.Modules.Payments.Changes;
 using DynamicCube.Modules.Services.Changes;
 using DynamicCube.Modules.Services.Persistence;
 using DynamicCube.Modules.Workflow.Changes;
@@ -55,6 +57,17 @@ public sealed class PackageTests(DatabaseFixture fixture)
         followUps.ShouldBe(["CLASSIFICATION_RENEW", "CLASSIFICATION_EXTEND"]);
         var renewal = await host.AsAsync("admin", sp => sp.GetRequiredService<WorkflowDbContext>().Versions.AsNoTracking().SingleAsync(v => v.Code == "CLASSIFICATION_EXTEND/2"));
         renewal.PublishedAt.ShouldNotBeNull();
+
+        // SADAD over the MoMRAH gateway, the bill messages, and version 4: paid levels pay before processing.
+        var momrah = Items("momrah-mci.json");
+        await host.PublishAsync(IntegrationChangeTypes.Area, [.. momrah.Where(i => i.EntityType.StartsWith("integ.", StringComparison.Ordinal))]);
+        var sadad = Items("payments-sadad.json");
+        await host.PublishAsync(IntegrationChangeTypes.Area, [.. sadad.Where(i => i.EntityType.StartsWith("integ.", StringComparison.Ordinal))]);
+        await host.PublishAsync(PaymentChangeTypes.Area, [.. sadad.Where(i => i.EntityType.StartsWith("pay.", StringComparison.Ordinal))]);
+        await host.PublishAsync(CommunicationChangeTypes.Area, [.. sadad.Where(i => i.EntityType.StartsWith("com.", StringComparison.Ordinal))]);
+        await host.PublishAsync(WorkflowChangeTypes.Area, [.. Items("classification-payment.json")]);
+        var paid = await host.AsAsync("admin", sp => sp.GetRequiredService<WorkflowDbContext>().Versions.AsNoTracking().SingleAsync(v => v.Code == "CLASSIFICATION_NEW/4"));
+        paid.Definition.ShouldContain("\"PAYMENT\"");
 
         // A small establishment with good staffing, a gold DGA category and a 95M track record: grade 2 in both sectors.
         var graded = await GradeAsync(host, new JsonObject

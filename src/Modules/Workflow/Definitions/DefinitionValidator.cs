@@ -112,6 +112,21 @@ internal static partial class DefinitionValidator
 
                 Target(node.Next, field + ".next", nodes, errors, required: true);
                 break;
+            case NodeType.Payment:
+                CheckRule(node.Amount, field + ".amount", evaluator, errors);
+                if (node.VatRate is < 0 or > 1)
+                {
+                    errors.Add(field + ".vatRate", "Must be between 0 and 1.");
+                }
+
+                if (node.DueDays is < 1 or > 90)
+                {
+                    errors.Add(field + ".dueDays", "Must be between 1 and 90.");
+                }
+
+                Target(node.Next, field + ".next", nodes, errors, required: true);
+                Target(node.Expired, field + ".expired", nodes, errors, required: true);
+                break;
             case NodeType.Document:
                 errors.Required(field + ".documentType", node.DocumentType);
                 if (node.Validity == ValidityMode.Extend && node.ValidityMonths is null)
@@ -286,7 +301,7 @@ internal static partial class DefinitionValidator
     }
 
     internal static IEnumerable<string> Targets(NodeDefinition node) =>
-        new[] { node.Next, node.Default }
+        new[] { node.Next, node.Default, node.Expired }
             .Concat(node.Branches)
             .Concat(node.Routes.Select(r => r.To))
             .Concat(node.Actions.Select(a => a.To ?? a.ResumeAt ?? (a.Kind == ActionKind.Return ? node.Code : null)))

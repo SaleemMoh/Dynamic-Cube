@@ -161,7 +161,7 @@ Owned collections: **timeline** (every transition, action, comment, notification
 
 **Level 1 — status categories (fixed, used by engine, SLA and reports):**
 
-`DRAFT` → `SUBMITTED` → `IN_PROGRESS` ⇄ `PENDING_CUSTOMER` ⇄ `PENDING_EXTERNAL` →
+`DRAFT` → `SUBMITTED` → `IN_PROGRESS` ⇄ `PENDING_CUSTOMER` ⇄ `PENDING_PAYMENT` ⇄ `PENDING_EXTERNAL` →
 `APPROVED` | `REJECTED` | `CANCELLED` → `CLOSED`
 
 **Level 2 — display statuses (configurable, what users see).** Each maps to exactly one
@@ -174,14 +174,14 @@ category and is typically generated from step + action + actor:
 | Initial approval / Initial rejection | IN_PROGRESS |
 | Correction required | PENDING_CUSTOMER |
 | Corrected | IN_PROGRESS |
-| Pending – Payment | PENDING_CUSTOMER |
+| Pending – Payment | PENDING_PAYMENT |
 | Pending – Inspection / Visit output | PENDING_EXTERNAL / IN_PROGRESS |
 | Pending – {Third party} | PENDING_EXTERNAL |
 | {Role/Department} – Approval / Rejection | IN_PROGRESS |
 | Approved / Rejected | APPROVED / REJECTED |
 | Cancelled by request manager / Cancelled – returned to beneficiary | CANCELLED |
 
-SLA clocks can pause on `PENDING_CUSTOMER` (configurable per service).
+SLA clocks can pause on `PENDING_CUSTOMER` (configurable per service); they always stand still on `PENDING_PAYMENT`.
 
 ### Sub-requests
 
@@ -239,6 +239,13 @@ once published; instances stay on their version.
 | **Document** | Issue / amend / suspend / cancel an Issued Document |
 | **Notification** | Send templated messages |
 | **Script** (advanced) | Sandboxed script, privileged |
+
+**Payment step (implemented 2b, `PAYMENT`):** bills the request's fees (or a JSONLogic `amount`, VAT included, with
+`vatRate`) through the Payments module with the step's `provider` (default: the installation's) and `dueDays`, then
+waits; paid → `next`, expired or cancelled → `expired` (required), nothing to pay → `next` at once. The bill is in
+the facts as `payments.{step}` (number, provider number, total, status). Bills, providers and notifications are
+described in [ADR-0022](adr/0022-payments.md): a bill has the platform's number (`BILL-YYYY-000001`) and the
+provider's, lines with net, VAT and total, a due date, a status (PENDING, PAID, EXPIRED, CANCELLED) and a history.
 
 ### Action catalog (configurable per human task)
 

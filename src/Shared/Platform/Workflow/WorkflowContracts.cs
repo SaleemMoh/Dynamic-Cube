@@ -35,6 +35,9 @@ public enum SubjectStatus
 {
     InProgress,
     PendingCustomer,
+
+    /// <summary>A bill was issued; processing continues once it is paid.</summary>
+    PendingPayment,
     Approved,
     Rejected,
     Closed,

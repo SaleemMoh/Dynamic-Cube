@@ -59,6 +59,7 @@ host to call the internal API instead (option, not built on day one).
 | `Workflow` | `wf` | Workflow definitions & versions, engine, instances, tasks, actions, SLA timers |
 | `Requests` | `req` | Requests, sub-requests, data payload, timeline, attachments, payments, visits |
 | `Documents` | `doc` | Issued document registry, versions, line items, templates, verification |
+| `Payments` | `pay` | Payment providers, bills, signed provider notifications, receipts, bill expiry |
 | `Decisions` | `dec` | Decision step contract, rule sets (engine implementation pluggable) |
 | `Reporting` | `rpt` | Datasets, generated views, dashboards, report definitions |
 | `Content` | `cms` | Portal content manager |
@@ -89,6 +90,7 @@ src/
     Workflow/
     Requests/
     Documents/
+    Payments/
     Decisions/
     Reporting/
     Content/

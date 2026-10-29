@@ -2,6 +2,7 @@ using System.Text.Json.Nodes;
 using DynamicCube.Modules.Services.Definitions;
 using DynamicCube.Modules.Services.Domain;
 using DynamicCube.Platform.Parties;
+using DynamicCube.Platform.Payments;
 
 namespace DynamicCube.Modules.Services.Runtime;
 
@@ -72,7 +73,8 @@ public sealed record RequestView(
     IReadOnlyDictionary<string, IReadOnlyList<FeeLine>> FeesByLevel,
     ResolvedVersion Version,
     IReadOnlyList<FieldError> StepErrors,
-    IReadOnlyList<TimelineEntry> Timeline);
+    IReadOnlyList<TimelineEntry> Timeline,
+    IReadOnlyList<BillInfo>? Bills = null);
 
 public sealed record TimelineEntry(DateTimeOffset At, string UserId, string Type, StatusCategory? FromStatus, StatusCategory? ToStatus, string? Comment);
 

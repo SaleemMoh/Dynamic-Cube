@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json.Nodes;
 using DynamicCube.Modules.Workflow.Definitions;
 using DynamicCube.Modules.Workflow.Domain;
@@ -7,6 +8,7 @@ using DynamicCube.Platform.Decisions;
 using DynamicCube.Platform.Documents;
 using DynamicCube.Platform.Expressions;
 using DynamicCube.Platform.Integration;
+using DynamicCube.Platform.Payments;
 using DynamicCube.Platform.Persistence;
 using DynamicCube.Platform.Security;
 using DynamicCube.Platform.Workflow;
@@ -226,6 +228,10 @@ internal sealed class WorkflowEngine(
                 await AdvanceAsync(run, token, cancellationToken);
                 break;
 
+            case NodeType.Payment:
+                await BillAsync(run, token, node, cancellationToken);
+                break;
+
             case NodeType.End:
                 token.Status = TokenStatus.Done;
                 Complete(run, node);
@@ -310,6 +316,134 @@ internal sealed class WorkflowEngine(
         run.Event(issued.Amended ? WorkflowEventTypes.DocumentAmended : WorkflowEventTypes.DocumentIssued, null, null, $"{issued.Number} v{issued.Version}", node: node.Code);
     }
 
+    /// <summary>
+    /// Bills the subject's fees (or the node's amount) and waits for the bill, with the deadline paused; nothing to pay
+    /// passes straight on. The bill is kept as <c>payments.&lt;node&gt;</c>.
+    /// </summary>
+    private async Task BillAsync(Run run, WorkflowToken token, NodeDefinition node, CancellationToken cancellationToken)
+    {
+        var facts = await RuleContextAsync(run, cancellationToken);
+        var lines = PaymentLines(node, facts);
+        if (lines.Sum(l => l.Total) <= 0)
+        {
+            SetFact(run, "payments", node.Code, new JsonObject { ["status"] = "NOT_NEEDED", ["total"] = 0 });
+            token.NodeCode = node.Next!;
+            await AdvanceAsync(run, token, cancellationToken);
+            return;
+        }
+
+        var payments = services.GetService<IPayments>() ?? throw new WorkflowConflictException("Payments are not installed.");
+        var payer = JsonPaths.ReadText(facts, "party.id") is { } id && Guid.TryParse(id, out var party)
+            ? party
+            : throw new WorkflowConflictException($"Step '{node.Code}': the payer is not known.");
+        var instance = run.Instance;
+        BillInfo bill;
+        try
+        {
+            bill = await payments.CreateBillAsync(
+                new BillRequest(node.Provider, instance.SubjectType, instance.SubjectId, instance.SubjectNumber, payer, instance.PartyNameAr,
+                    $"{instance.TitleAr} — {instance.SubjectNumber}", $"{instance.TitleEn} — {instance.SubjectNumber}", lines, node.DueDays),
+                cancellationToken);
+        }
+        catch (PaymentException ex)
+        {
+            throw new WorkflowConflictException($"Step '{node.Code}': {ex.Message}");
+        }
+
+        SetFact(run, "payments", node.Code, new JsonObject
+        {
+            ["billId"] = bill.Id.ToString(),
+            ["number"] = bill.Number,
+            ["providerBillNumber"] = bill.ProviderBillNumber,
+            ["total"] = bill.Total,
+            ["status"] = bill.Status,
+            ["dueAt"] = bill.DueAt.ToString("O", CultureInfo.InvariantCulture),
+        });
+        token.Status = TokenStatus.WaitingPayment;
+        instance.PausedAt ??= run.Now;
+        run.Event(WorkflowEventTypes.BillIssued, null, null, $"{bill.ProviderBillNumber} · {bill.Total.ToString("0.00", CultureInfo.InvariantCulture)}", visible: true, node: node.Code);
+        run.Update(SubjectStatus.PendingPayment, node.DisplayStatus ?? "AWAITING_PAYMENT", "BILL_ISSUED", null);
+    }
+
+    /// <summary>The subject's fee lines, or one line for the node's amount (VAT included).</summary>
+    private List<BillLine> PaymentLines(NodeDefinition node, JsonObject facts)
+    {
+        if (node.Amount is null)
+        {
+            return [.. (facts["fees"] as JsonArray ?? []).OfType<JsonObject>().Select(f => new BillLine(
+                f["code"]?.GetValue<string>() ?? "FEE",
+                f["nameAr"]?.GetValue<string>() ?? string.Empty,
+                f["nameEn"]?.GetValue<string>() ?? string.Empty,
+                f["net"]?.GetValue<decimal>() ?? 0,
+                f["vat"]?.GetValue<decimal>() ?? 0,
+                f["total"]?.GetValue<decimal>() ?? 0))];
+        }
+
+        var total = evaluator.Evaluate(node.Amount, facts) is JsonValue value && decimal.TryParse(value.ToString(), NumberStyles.Number, CultureInfo.InvariantCulture, out var amount)
+            ? decimal.Round(amount, 2)
+            : throw new WorkflowConflictException($"Step '{node.Code}': the amount is not a number.");
+        var net = decimal.Round(total / (1 + (node.VatRate ?? 0.15m)), 2);
+        return [new BillLine(node.Code, node.NameAr, node.NameEn, net, total - net, total)];
+    }
+
+    /// <summary>
+    /// A bill closed: the branch waiting for it moves on, to <c>next</c> when paid, to <c>expired</c> otherwise, and the
+    /// deadline moves by the working days spent waiting. Bills of other subjects, or no longer awaited, change nothing.
+    /// </summary>
+    public async Task PaymentClosedAsync(BillClosed bill, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(bill);
+        var id = await context.Instances.Where(i => i.SubjectType == bill.SubjectType && i.SubjectId == bill.SubjectId && i.Status != InstanceStatus.Completed && i.Status != InstanceStatus.Cancelled)
+            .Select(i => (Guid?)i.Id).SingleOrDefaultAsync(cancellationToken);
+        if (id is null)
+        {
+            return;
+        }
+
+        await using var work = await unitOfWork.BeginAsync(cancellationToken);
+        var run = await LoadAsync(id.Value, System, null, cancellationToken);
+        var facts = JsonNode.Parse(run.Instance.Facts)?.AsObject() ?? [];
+        var token = run.Tokens.FirstOrDefault(t => t.Status == TokenStatus.WaitingPayment
+            && facts["payments"]?[t.NodeCode]?["billId"]?.GetValue<string>() == bill.BillId.ToString());
+        if (token is null)
+        {
+            return;
+        }
+
+        var node = run.Version.Node(token.NodeCode);
+        var entry = facts["payments"]![token.NodeCode]!.AsObject();
+        entry["status"] = bill.Status;
+        entry["closedAt"] = bill.At.ToString("O", CultureInfo.InvariantCulture);
+        entry["paymentReference"] = bill.PaymentReference;
+        run.Instance.Facts = facts.ToJsonString();
+
+        var instance = run.Instance;
+        if (!run.Tokens.Any(t => t != token && t.Status is TokenStatus.WaitingCustomer or TokenStatus.WaitingPayment))
+        {
+            if (instance.PausedAt is { } paused && instance.DueAt is { } due)
+            {
+                // The deadline stood still while the applicant had the bill to pay.
+                instance.DueAt = run.Calendar.AddWorkingDays(due, run.Calendar.WorkingDaysBetween(paused, run.Now));
+            }
+
+            instance.PausedAt = null;
+        }
+
+        run.Event(bill.Paid ? WorkflowEventTypes.PaymentReceived : WorkflowEventTypes.PaymentNotReceived, null, null, bill.Paid ? bill.PaymentReference : bill.Status, visible: true, node: node.Code);
+        run.Update(SubjectStatus.InProgress, bill.Paid ? "PAID" : "PAYMENT_" + bill.Status, bill.Paid ? "PAID" : "PAYMENT_NOT_RECEIVED", null);
+        token.Status = TokenStatus.Active;
+        token.NodeCode = bill.Paid ? node.Next! : node.Expired!;
+        await AdvanceAsync(run, token, cancellationToken);
+        if (run.Pending is { EventType: "STATUS_CHANGED" } entered)
+        {
+            // Entering the next task is not news to the applicant; the payment is.
+            run.Pending = entered with { EventType = bill.Paid ? "PAID" : "PAYMENT_NOT_RECEIVED" };
+        }
+
+        await FinishAsync(run, cancellationToken);
+        await work.CommitAsync(cancellationToken);
+    }
+
     private JsonObject Map(Dictionary<string, JsonNode?> fields, JsonObject facts) =>
         new(fields.Select(f => KeyValuePair.Create(f.Key, evaluator.Evaluate(f.Value, facts)?.DeepClone())));
 
@@ -356,7 +490,7 @@ internal sealed class WorkflowEngine(
         }
 
         // Branches still running (join any / count) are no longer needed.
-        foreach (var other in run.Tokens.Where(t => (t.Status is TokenStatus.Active or TokenStatus.WaitingCustomer or TokenStatus.AtJoin) && t.Forks.Any(f => f.Id == fork.Id)).ToList())
+        foreach (var other in run.Tokens.Where(t => (t.Status is TokenStatus.Active or TokenStatus.WaitingCustomer or TokenStatus.WaitingPayment or TokenStatus.AtJoin) && t.Forks.Any(f => f.Id == fork.Id)).ToList())
         {
             CancelToken(run, other);
         }
@@ -463,7 +597,7 @@ internal sealed class WorkflowEngine(
 
     private static void Complete(Run run, NodeDefinition node)
     {
-        foreach (var token in run.Tokens.Where(t => t.Status is TokenStatus.Active or TokenStatus.WaitingCustomer or TokenStatus.AtJoin).ToList())
+        foreach (var token in run.Tokens.Where(t => t.Status is TokenStatus.Active or TokenStatus.WaitingCustomer or TokenStatus.WaitingPayment or TokenStatus.AtJoin).ToList())
         {
             CancelToken(run, token);
         }
@@ -510,6 +644,7 @@ internal sealed class WorkflowEngine(
         var produced = JsonNode.Parse(run.Instance.Facts)?.AsObject() ?? [];
         facts["decisions"] = produced["decisions"]?.DeepClone() ?? new JsonObject();
         facts["documents"] = produced["documents"]?.DeepClone() ?? new JsonObject();
+        facts["payments"] = produced["payments"]?.DeepClone() ?? new JsonObject();
         return facts;
     }
 
@@ -534,7 +669,8 @@ internal sealed class WorkflowEngine(
         var instance = run.Instance;
         if (instance.Status != InstanceStatus.Completed)
         {
-            instance.Status = run.Tokens.Any(t => t.Status == TokenStatus.WaitingCustomer) ? InstanceStatus.WaitingCustomer : InstanceStatus.Running;
+            // A bill to pay is the applicant's turn too.
+            instance.Status = run.Tokens.Any(t => t.Status is TokenStatus.WaitingCustomer or TokenStatus.WaitingPayment) ? InstanceStatus.WaitingCustomer : InstanceStatus.Running;
         }
 
         foreach (var token in run.NewTokens)
@@ -595,7 +731,7 @@ internal sealed class WorkflowEngine(
         /// <summary>The applicant-visible reason of the last action (e.g. a rejection), for the final status.</summary>
         public string? Reason { get; set; }
 
-        public SubjectUpdate? Pending { get; private set; }
+        public SubjectUpdate? Pending { get; set; }
 
         public int Steps { get; set; }
 
