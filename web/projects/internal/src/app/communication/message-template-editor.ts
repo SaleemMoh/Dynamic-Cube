@@ -10,7 +10,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { ChannelPreview, CommunicationApi, LocalizePipe, MessageTemplateWording, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
+import { ChannelPreview, CommunicationApi, LocalizePipe, MessageTemplateWording, RichTextEditor, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
 import { catchError, debounceTime, filter, of, switchMap } from 'rxjs';
 import { ConfigEditorData } from '../apps-control/config/config-editor';
 import { DraftsService } from '../apps-control/drafts.service';
@@ -55,6 +55,7 @@ export function samplePaths(value: unknown, prefix = ''): string[] {
     MatInputModule,
     MatSelectModule,
     MatTabsModule,
+    RichTextEditor,
     LocalizePipe,
     TranslatePipe,
   ],
@@ -106,17 +107,29 @@ export function samplePaths(value: unknown, prefix = ''): string[] {
           <mat-tab [label]="'channel.EMAIL' | dcTranslate">
             <div class="dc-msg__fields">
               @for (key of emailKeys; track key) {
-                <mat-form-field subscriptSizing="dynamic" [class.dc-msg__code]="key.includes('Body')">
-                  <mat-label>{{ 'msgTemplates.' + key | dcTranslate }}</mat-label>
-                  <textarea
-                    matInput
-                    [rows]="key.includes('Body') ? 7 : 1"
-                    [attr.dir]="key.includes('Body') || key.endsWith('En') ? 'ltr' : 'rtl'"
-                    [ngModel]="value(key)"
-                    (ngModelChange)="set(key, $event)"
-                    [attr.data-testid]="'msg-' + key"
-                  ></textarea>
-                </mat-form-field>
+                @if (key.includes('Body')) {
+                  <!-- The body is written in a rich text editor; it is stored as HTML. -->
+                  <dc-rich-text-editor
+                    [label]="'msgTemplates.' + key | dcTranslate"
+                    [dir]="key.endsWith('En') ? 'ltr' : 'rtl'"
+                    [value]="value(key)"
+                    (valueChange)="set(key, $event)"
+                    [fields]="paths()"
+                    [minRows]="7"
+                    [testId]="'msg-' + key"
+                  />
+                } @else {
+                  <mat-form-field subscriptSizing="dynamic">
+                    <mat-label>{{ 'msgTemplates.' + key | dcTranslate }}</mat-label>
+                    <input
+                      matInput
+                      [attr.dir]="key.endsWith('En') ? 'ltr' : 'rtl'"
+                      [ngModel]="value(key)"
+                      (ngModelChange)="set(key, $event)"
+                      [attr.data-testid]="'msg-' + key"
+                    />
+                  </mat-form-field>
+                }
               }
             </div>
           </mat-tab>
@@ -234,10 +247,6 @@ export function samplePaths(value: unknown, prefix = ''): string[] {
       display: grid;
       gap: 0.75rem;
       padding-top: 0.75rem;
-    }
-    .dc-msg__code textarea {
-      font-family: ui-monospace, monospace;
-      font-size: 13px;
     }
     .dc-msg__preview-bar {
       display: flex;

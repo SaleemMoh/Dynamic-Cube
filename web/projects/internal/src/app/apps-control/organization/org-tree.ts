@@ -61,3 +61,15 @@ export function matchingCodes(rows: ConfigRow[], term: string): Set<string> | nu
   }
   return result;
 }
+
+/** Codes of the units under `code` at any depth, nearest first. */
+export function descendantsOf(rows: ConfigRow[], code: string): string[] {
+  const result: string[] = [];
+  let level = [code];
+  while (level.length) {
+    const next = rows.filter((r) => level.includes(r['parentCode'] as string) && r.code !== code && !result.includes(r.code)).map((r) => r.code);
+    result.push(...next);
+    level = next;
+  }
+  return result;
+}

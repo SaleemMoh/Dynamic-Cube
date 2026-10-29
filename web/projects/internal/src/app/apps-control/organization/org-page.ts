@@ -20,6 +20,7 @@ import { CONFIG_SECTIONS } from '../config/config-types';
 import { ConfirmData, ConfirmDialog } from '../confirm-dialog';
 import { DraftsService } from '../drafts.service';
 import { PrivilegesService } from '../privileges.service';
+import { OrgEmployees } from './org-employees';
 import { buildOrgTree, matchingCodes, pathTo } from './org-tree';
 
 const RESOURCE = 'apps-control.organization';
@@ -44,6 +45,7 @@ const RESOURCE = 'apps-control.organization';
     MatTabsModule,
     MatTooltipModule,
     ConfigTable,
+    OrgEmployees,
     LocalizePipe,
     TranslatePipe,
   ],
@@ -196,6 +198,7 @@ const RESOURCE = 'apps-control.organization';
                     }
                   </div>
                 }
+                <dc-org-employees [unitCode]="unit.code" [units]="rows()" [canEdit]="canEditUsers()" />
               </div>
             } @else {
               <div class="dc-org__placeholder">
@@ -208,6 +211,7 @@ const RESOURCE = 'apps-control.organization';
       </mat-tab>
       @for (type of otherTypes; track type.entityType) {
         <mat-tab [label]="type.title | dcLocalize">
+          <p class="dc-muted dc-org__hint">{{ (type.entityType === 'apps.position' ? 'org.positionsHint' : 'org.typesHint') | dcTranslate }}</p>
           <dc-config-table [type]="type" [resource]="resource" />
         </mat-tab>
       }
@@ -440,6 +444,11 @@ const RESOURCE = 'apps-control.organization';
       font-size: 18px;
       color: var(--dynamic-cube-gold-700);
     }
+    .dc-org__hint {
+      max-width: 60rem;
+      margin: 12px 0 0;
+      line-height: 1.7;
+    }
     .dc-org__placeholder {
       display: grid;
       place-items: center;
@@ -481,6 +490,8 @@ export class OrgPage {
   protected readonly canCreate = computed(() => this.privileges.can(RESOURCE, 'CREATE'));
   protected readonly canEdit = computed(() => this.privileges.can(RESOURCE, 'EDIT'));
   protected readonly canDelete = computed(() => this.privileges.can(RESOURCE, 'DELETE'));
+  /** Placing employees changes their user rows. */
+  protected readonly canEditUsers = computed(() => this.privileges.can('apps-control.users', 'EDIT'));
 
   /** Open while searching (so matches show), else as the user left it; the first level starts open. */
   protected isOpen(code: string): boolean {

@@ -341,8 +341,9 @@ internal sealed class UserApplier(AppsControlDbContext db) : ConfigApplier<UserA
         entity.BusinessApp == businessApp || entity.Roles.Any(r => r.Role?.BusinessApp == businessApp)
         || (entity.BusinessApp is null && entity.Roles.All(r => r.Role?.BusinessApp is null));
 
+    /// <summary>With roles and placements: the org structure lists a unit's employees from it.</summary>
     protected override IQueryable<UserAccount> ListQuery(AppsControlDbContext context, string? parent) =>
-        context.Users.Include(u => u.Roles).ThenInclude(r => r.Role).OrderBy(u => u.Code);
+        Query(context).OrderBy(u => u.Code);
 
     protected override async Task ApplyAsync(UserAccount entity, UserPayload payload, RefResolver refs, ValidationErrors errors, UserAccount? existing, CancellationToken cancellationToken)
     {
