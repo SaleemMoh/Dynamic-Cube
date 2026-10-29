@@ -13,7 +13,7 @@ import { MasterItem, MasterList } from '../master/master-list';
 import { PrivilegesService } from '../privileges.service';
 import { PermissionCards } from './permission-cards';
 import { RoleEditor, RoleEditorData } from './role-editor';
-import { RoleRow, permissionsOf, roleScreens, screenTree } from './role-models';
+import { RoleRow, menuChoices, permissionsOf, roleScreens, screenTree } from './role-models';
 import { ExportButton } from '../change-sets/export-button';
 import { JsonImportButton } from '../change-sets/json-import-button';
 
@@ -134,6 +134,7 @@ export class RolesPage {
         menus: this.api.list('apps.menu').pipe(catchError(() => of([]))),
         groups: this.api.list('apps.menu-group').pipe(catchError(() => of([]))),
         apps: this.api.list('apps.app').pipe(catchError(() => of([]))),
+        lovs: this.api.list('apps.lov').pipe(catchError(() => of([]))),
       }),
   });
   private readonly tree = computed(() =>
@@ -199,6 +200,8 @@ export class RolesPage {
       role,
       screens: this.tree(),
       apps: this.lists.value().apps,
+      lovs: this.lists.value().lovs,
+      menus: menuChoices(this.lists.value().menus, this.lists.value().groups),
       readonly: readonly || (role !== null && role.owner === 'SYSTEM'),
     };
     const saved = await firstValueFrom(

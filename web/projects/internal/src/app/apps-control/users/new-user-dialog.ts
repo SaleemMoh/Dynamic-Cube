@@ -10,7 +10,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { AppsControlApi, ConfigRow, I18nService, LocalizePipe, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
+import { AppsControlApi, ConfigRow, DualList, DualListOption, I18nService, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
 import { catchError, firstValueFrom, of } from 'rxjs';
 import { DraftsService } from '../drafts.service';
 import { temporaryPassword } from './password';
@@ -36,7 +36,7 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     MatProgressBarModule,
     MatSelectModule,
     MatTooltipModule,
-    LocalizePipe,
+    DualList,
     TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -79,15 +79,11 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           <mat-label>{{ 'newUser.mobile' | dcTranslate }}</mat-label>
           <input matInput dir="ltr" [ngModel]="mobile()" (ngModelChange)="mobile.set($event)" />
         </mat-form-field>
-        <mat-form-field subscriptSizing="dynamic">
-          <mat-label>{{ 'newUser.roles' | dcTranslate }}</mat-label>
-          <mat-select multiple [ngModel]="roles()" (ngModelChange)="roles.set($event)" data-testid="new-user-roles">
-            @for (r of roleOptions(); track r.code) {
-              <mat-option [value]="r.code">{{ { ar: r.nameAr, en: r.nameEn } | dcLocalize }} ({{ r.code }})</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
       </div>
+      <section class="dc-nu__roles">
+        <h3>{{ 'newUser.roles' | dcTranslate }}</h3>
+        <dc-dual-list [ngModel]="roles()" (ngModelChange)="roles.set($event)" [options]="roleChoices()" testId="new-user-roles" />
+      </section>
 
       @if (caps()?.canCreate) {
         <section class="dc-nu__section" data-testid="new-user-account">
@@ -141,6 +137,10 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 12px;
     }
+    .dc-nu__roles h3 {
+      margin: 0 0 8px;
+      font-size: 14px;
+    }
     .dc-nu__section {
       display: grid;
       justify-items: start;
@@ -191,6 +191,9 @@ export class NewUserDialog {
   private readonly roleRows = rxResource({ stream: () => this.api.list('apps.role').pipe(catchError(() => of([] as ConfigRow[]))) });
   protected readonly caps = computed(() => (this.capabilities.hasValue() ? this.capabilities.value() : null));
   protected readonly roleOptions = computed(() => (this.roleRows.hasValue() ? this.roleRows.value() : []).filter((r) => r.isActive !== false));
+  protected readonly roleChoices = computed<DualListOption[]>(() =>
+    this.roleOptions().map((r) => ({ value: r.code, label: { ar: r.nameAr, en: r.nameEn }, hint: { ar: r.code, en: r.code } })),
+  );
 
   protected readonly userName = signal('');
   protected readonly email = signal('');

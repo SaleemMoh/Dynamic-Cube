@@ -1900,6 +1900,33 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.ToTable("role", "apps");
                 });
 
+            modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.RoleMenu", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("MenuId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("menu_id");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("role_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_role_menu");
+
+                    b.HasIndex("MenuId")
+                        .HasDatabaseName("ix_role_menu_menu_id");
+
+                    b.HasIndex("RoleId", "MenuId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_role_menu_role_id_menu_id");
+
+                    b.ToTable("role_menu", "apps");
+                });
+
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.Setting", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2798,6 +2825,25 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.Navigation("App");
                 });
 
+            modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.RoleMenu", b =>
+                {
+                    b.HasOne("DynamicCube.Modules.AppsControl.Domain.Menu", "Menu")
+                        .WithMany()
+                        .HasForeignKey("MenuId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_role_menu_menus_menu_id");
+
+                    b.HasOne("DynamicCube.Modules.AppsControl.Domain.Role", null)
+                        .WithMany("Menus")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_role_menu_role_role_id");
+
+                    b.Navigation("Menu");
+                });
+
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.Setting", b =>
                 {
                     b.HasOne("DynamicCube.Modules.AppsControl.Domain.App", "App")
@@ -2907,6 +2953,8 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.Role", b =>
                 {
                     b.Navigation("Grants");
+
+                    b.Navigation("Menus");
 
                     b.Navigation("Privileges");
                 });

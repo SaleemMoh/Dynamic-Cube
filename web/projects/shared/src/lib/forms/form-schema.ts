@@ -27,8 +27,11 @@ export interface FormSection {
   fields: FormField[];
 }
 
-/** `icon` is a Material Symbols name chosen from the icon picker (or typed). */
-export type FormFieldType = 'text' | 'textarea' | 'number' | 'date' | 'select' | 'checkbox' | 'icon';
+/**
+ * `icon` is a Material Symbols name chosen from the icon picker (or typed). `dualList` chooses several options by moving
+ * them between an available and a chosen list.
+ */
+export type FormFieldType = 'text' | 'textarea' | 'number' | 'date' | 'select' | 'checkbox' | 'icon' | 'dualList';
 
 export interface FormField {
   code: string;

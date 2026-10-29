@@ -85,6 +85,13 @@ public sealed partial class AccessResolver(
             .Where(p => roleIds.Contains(p.RoleId) && p.Resource!.IsActive)
             .Select(p => new { p.Resource!.Code, p.Actions })
             .ToListAsync(cancellationToken);
+
+        // A menu item assigned to a role opens its screen for the role.
+        var menuScreens = await context.RoleMenus.AsNoTracking()
+            .Where(m => roleIds.Contains(m.RoleId) && m.Menu!.IsActive && m.Menu.Resource != null && m.Menu.Resource.IsActive)
+            .Select(m => m.Menu!.Resource!.Code)
+            .ToListAsync(cancellationToken);
+        privilegeRows.AddRange(menuScreens.Select(code => new { Code = code, Actions = new List<string> { PrivilegeActions.View } }));
         var privileges = privilegeRows
             .GroupBy(p => p.Code, StringComparer.Ordinal)
             .ToDictionary(g => g.Key, g => (IReadOnlySet<string>)g.SelectMany(p => p.Actions).ToHashSet(StringComparer.Ordinal), StringComparer.Ordinal);

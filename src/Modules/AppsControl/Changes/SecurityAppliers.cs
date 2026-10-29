@@ -104,6 +104,9 @@ public sealed class RolePayload : ConfigPayload
     public List<PrivilegePayload> Privileges { get; set; } = [];
 
     public List<GrantPayload> Grants { get; set; } = [];
+
+    /// <summary>Codes of the menu items the role shows (each opens its screen for the role).</summary>
+    public List<string> Menus { get; set; } = [];
 }
 
 internal sealed class RoleApplier(AppsControlDbContext db, JsonLogicEvaluator evaluator) : ConfigApplier<Role, RolePayload>(db)
@@ -122,6 +125,7 @@ internal sealed class RoleApplier(AppsControlDbContext db, JsonLogicEvaluator ev
             .Include(r => r.Privileges).ThenInclude(p => p.Resource)
             .Include(r => r.Grants).ThenInclude(g => g.Lov)
             .Include(r => r.Grants).ThenInclude(g => g.Resource)
+            .Include(r => r.Menus).ThenInclude(m => m.Menu)
             .AsSplitQuery();
 
     protected override IQueryable<Role> ListQuery(AppsControlDbContext context, string? parent) =>
@@ -194,11 +198,19 @@ internal sealed class RoleApplier(AppsControlDbContext db, JsonLogicEvaluator ev
             });
         }
 
+        ChildSync.RequireUnique(payload.Menus, m => m, "menus", errors);
+        var menus = new List<RoleMenu>();
+        foreach (var (code, i) in payload.Menus.Select((m, i) => (m, i)))
+        {
+            menus.Add(new RoleMenu { RoleId = entity.Id, MenuId = await refs.MenuAsync(code, $"menus[{i}]", errors, cancellationToken) ?? Guid.Empty });
+        }
+
         if (errors.HasErrors || refs.IsValidating)
         {
             return;
         }
 
+        ChildSync.Sync(entity.Menus, menus, m => m.MenuId, (_, _) => { });
         ChildSync.Sync(entity.Privileges, privileges, p => p.ResourceId, (from, to) =>
         {
             to.Actions = from.Actions;
@@ -227,6 +239,7 @@ internal sealed class RoleApplier(AppsControlDbContext db, JsonLogicEvaluator ev
                     FieldRules = p.FieldRules is null ? null : System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(p.FieldRules),
                 })
                 .ToList(),
+            Menus = [.. entity.Menus.Select(m => m.Menu?.Code ?? string.Empty).Order(StringComparer.Ordinal)],
             Grants = entity.Grants
                 .OrderBy(g => g.Lov?.Code).ThenBy(g => g.Resource?.Code)
                 .Select(g => new GrantPayload

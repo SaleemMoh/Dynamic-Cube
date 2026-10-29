@@ -54,6 +54,21 @@ public sealed class Role : ConfigEntity
     public List<Privilege> Privileges { get; } = [];
 
     public List<LovGrant> Grants { get; } = [];
+
+    /// <summary>Menu items the role shows; each gives the role VIEW on the screen the item opens.</summary>
+    public List<RoleMenu> Menus { get; } = [];
+}
+
+/// <summary>A menu item assigned to a role.</summary>
+public sealed class RoleMenu : IAuditable
+{
+    public Guid Id { get; set; } = Guid.CreateVersion7();
+
+    public Guid RoleId { get; set; }
+
+    public Guid MenuId { get; set; }
+
+    public Menu? Menu { get; set; }
 }
 
 /// <summary>Actions a role may perform on a resource, with optional per-field rules.</summary>

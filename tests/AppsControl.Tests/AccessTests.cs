@@ -122,6 +122,35 @@ public sealed class AccessTests(AppsControlFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_menu_item_assigned_to_a_role_shows_in_the_menu_and_opens_its_screen()
+    {
+        var userName = Harness.Unique("clerk").ToLowerInvariant();
+        var role = Harness.Unique("CLERK");
+        await _harness.PublishAsync(
+            AppsControlAreas.Security,
+            new Change(AppsControlChangeTypes.Role, role, ChangeOperation.Create, new { nameAr = "كاتب", nameEn = "Clerk", menus = new[] { "apps-control.lovs" } }),
+            new Change(AppsControlChangeTypes.User, userName, ChangeOperation.Create, new { nameAr = "كاتب", nameEn = "Clerk", roles = new[] { new { roleCode = role } } }));
+
+        var (access, menu) = await _harness.AsAsync(userName, async sp =>
+        {
+            var snapshot = await sp.GetRequiredService<AccessResolver>().GetAsync(CancellationToken.None);
+            return (snapshot, await sp.GetRequiredService<MenuService>().GetMenuAsync("INTERNAL", snapshot, CancellationToken.None));
+        });
+
+        access.Can(AppsControlResources.Lovs, PrivilegeActions.View).ShouldBeTrue("the item opens its screen");
+        access.Can(AppsControlResources.Lovs, PrivilegeActions.Edit).ShouldBeFalse();
+        menu.ShouldHaveSingleItem().Items.Select(i => i.Code).ShouldBe(["apps-control.lovs"]);
+
+        var payload = await _harness.AsAsync("admin", sp => sp.GetServices<IConfigApplier>().Single(a => a.EntityType == AppsControlChangeTypes.Role).GetAsync(role, CancellationToken.None));
+        payload!.Value.GetProperty("menus").EnumerateArray().Select(m => m.GetString()).ShouldBe(["apps-control.lovs"]);
+
+        var ex = await Should.ThrowAsync<ChangeValidationException>(() => _harness.DraftAsync(
+            AppsControlAreas.Security,
+            new Change(AppsControlChangeTypes.Role, Harness.Unique("ROLE"), ChangeOperation.Create, new { nameAr = "دور", nameEn = "Role", menus = new[] { "NO_SUCH_MENU" } })));
+        ex.Errors.Keys.ShouldContain("menus[0]");
+    }
+
+    [Fact]
     public async Task Privileges_must_use_actions_the_resource_offers()
     {
         var ex = await Should.ThrowAsync<ChangeValidationException>(() => _harness.DraftAsync(

@@ -35,6 +35,8 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
 
     public DbSet<Privilege> Privileges => Set<Privilege>();
 
+    public DbSet<RoleMenu> RoleMenus => Set<RoleMenu>();
+
     public DbSet<MenuGroup> MenuGroups => Set<MenuGroup>();
 
     public DbSet<Menu> Menus => Set<Menu>();
@@ -142,6 +144,15 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
             b.HasOne(e => e.App).WithMany().HasForeignKey(e => e.AppId).OnDelete(DeleteBehavior.Restrict);
             b.HasMany(e => e.Privileges).WithOne().HasForeignKey(p => p.RoleId).OnDelete(DeleteBehavior.Cascade);
             b.HasMany(e => e.Grants).WithOne().HasForeignKey(g => g.RoleId).OnDelete(DeleteBehavior.Cascade);
+            b.HasMany(e => e.Menus).WithOne().HasForeignKey(m => m.RoleId).OnDelete(DeleteBehavior.Cascade);
+        });
+        modelBuilder.Entity<RoleMenu>(b =>
+        {
+            b.ToTable("role_menu", Schema);
+            b.HasIndex(e => new { e.RoleId, e.MenuId }).IsUnique();
+
+            // A deleted menu item simply leaves the roles it was assigned to.
+            b.HasOne(e => e.Menu).WithMany().HasForeignKey(e => e.MenuId).OnDelete(DeleteBehavior.Cascade);
         });
         modelBuilder.Entity<Privilege>(b =>
         {

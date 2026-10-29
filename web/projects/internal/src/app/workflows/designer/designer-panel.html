@@ -196,7 +196,7 @@
             @case ('FIXED') {
               <mat-form-field subscriptSizing="dynamic">
                 <mat-label>{{ 'designer.field.orgUnit' | dcTranslate }}</mat-label>
-                <mat-select [ngModel]="n.assignment?.orgUnit ?? null" (ngModelChange)="assignment({ orgUnit: $event })" data-testid="assign-org-unit">
+                <mat-select [ngModel]="n.assignment.orgUnit ?? null" (ngModelChange)="assignment({ orgUnit: $event })" data-testid="assign-org-unit">
                   @for (u of refs.orgUnits(); track u.value) {
                     <mat-option [value]="u.value">{{ u.label | dcLocalize }} ({{ u.value }})</mat-option>
                   }
@@ -207,7 +207,7 @@
               <dc-rule-editor
                 mode="value"
                 [label]="'designer.field.unitRule' | dcTranslate"
-                [rule]="n.assignment?.unitRule ?? null"
+                [rule]="n.assignment.unitRule ?? null"
                 [variables]="variables()"
                 (ruleChange)="assignment({ unitRule: $event })"
               />
@@ -216,7 +216,7 @@
             @case ('ACTOR') {
               <mat-form-field subscriptSizing="dynamic">
                 <mat-label>{{ 'designer.field.actorOf' | dcTranslate }}</mat-label>
-                <mat-select [ngModel]="n.assignment?.step ?? ''" (ngModelChange)="assignment({ step: $event || null })" data-testid="assign-actor-step">
+                <mat-select [ngModel]="n.assignment.step ?? ''" (ngModelChange)="assignment({ step: $event || null })" data-testid="assign-actor-step">
                   <mat-option value="">{{ 'designer.lastActor' | dcTranslate }}</mat-option>
                   @for (t of tasks(); track t.code) {
                     @if (t.code !== n.code) {
@@ -230,7 +230,7 @@
           @if (n.assignment?.unitFrom) {
             <mat-form-field subscriptSizing="dynamic">
               <mat-label>{{ 'designer.field.levelsUp' | dcTranslate }}</mat-label>
-              <mat-select [ngModel]="n.assignment?.levelsUp ?? 0" (ngModelChange)="assignment({ levelsUp: $event })" data-testid="assign-levels-up">
+              <mat-select [ngModel]="n.assignment.levelsUp ?? 0" (ngModelChange)="assignment({ levelsUp: $event })" data-testid="assign-levels-up">
                 @for (l of [0, 1, 2, 3]; track l) {
                   <mat-option [value]="l">{{ 'designer.levelsUp.' + l | dcTranslate }}</mat-option>
                 }
@@ -238,7 +238,7 @@
             </mat-form-field>
             <mat-form-field subscriptSizing="dynamic">
               <mat-label>{{ 'designer.field.position' | dcTranslate }}</mat-label>
-              <mat-select [ngModel]="n.assignment?.position ?? null" (ngModelChange)="assignment({ position: $event })" data-testid="assign-position">
+              <mat-select [ngModel]="n.assignment.position ?? null" (ngModelChange)="assignment({ position: $event })" data-testid="assign-position">
                 <mat-option [value]="null">{{ 'designer.anyoneInUnit' | dcTranslate }}</mat-option>
                 @for (p of refs.positions(); track p.value) {
                   <mat-option [value]="p.value">{{ p.label | dcLocalize }} ({{ p.value }})</mat-option>
@@ -247,17 +247,17 @@
             </mat-form-field>
             <mat-form-field subscriptSizing="dynamic">
               <mat-label>{{ 'designer.field.alsoRole' | dcTranslate }}</mat-label>
-              <mat-select [ngModel]="n.assignment?.role ?? null" (ngModelChange)="assignment({ role: $event })">
+              <mat-select [ngModel]="n.assignment.role ?? null" (ngModelChange)="assignment({ role: $event })">
                 <mat-option [value]="null">—</mat-option>
                 @for (r of refs.roles(); track r.value) {
                   <mat-option [value]="r.value">{{ r.label | dcLocalize }} ({{ r.value }})</mat-option>
                 }
               </mat-select>
             </mat-form-field>
-            <mat-checkbox [ngModel]="!!n.assignment?.includeSubUnits" (ngModelChange)="assignment({ includeSubUnits: $event })" data-testid="assign-sub-units">{{
+            <mat-checkbox [ngModel]="!!n.assignment.includeSubUnits" (ngModelChange)="assignment({ includeSubUnits: $event })" data-testid="assign-sub-units">{{
               'designer.field.includeSubUnits' | dcTranslate
             }}</mat-checkbox>
-            <mat-checkbox [ngModel]="!!n.assignment?.climbWhenEmpty" (ngModelChange)="assignment({ climbWhenEmpty: $event })" data-testid="assign-climb">{{
+            <mat-checkbox [ngModel]="!!n.assignment.climbWhenEmpty" (ngModelChange)="assignment({ climbWhenEmpty: $event })" data-testid="assign-climb">{{
               'designer.field.climbWhenEmpty' | dcTranslate
             }}</mat-checkbox>
           }

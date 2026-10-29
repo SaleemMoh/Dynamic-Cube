@@ -12,13 +12,18 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { ConfigRow, I18nService, LocalizePipe, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
 import { DraftsService } from '../drafts.service';
 import { PermissionCards } from './permission-cards';
-import { Permissions, RoleRow, ScreenNode, permissionsOf, privilegesOf, roleScreens } from './role-models';
+import { RoleMenus } from './role-menus';
+import { GrantRow, MenuChoiceGroup, Permissions, RoleRow, ScreenNode, permissionsOf, privilegesOf, roleScreens, screenCodes, splitGrants } from './role-models';
+import { ScreenData } from './screen-data';
 
 export interface RoleEditorData {
   /** The full role (with privileges and grants), or null for a new one. */
   role: RoleRow | null;
   screens: ScreenNode[];
   apps: ConfigRow[];
+  /** Lists of values (with the screens they are bound to). */
+  lovs: ConfigRow[];
+  menus: MenuChoiceGroup[];
   readonly?: boolean;
 }
 
@@ -42,6 +47,8 @@ const CODE = /^[A-Za-z][A-Za-z0-9_-]{0,99}$/;
     MatSelectModule,
     MatTooltipModule,
     PermissionCards,
+    RoleMenus,
+    ScreenData,
     LocalizePipe,
     TranslatePipe,
   ],
@@ -228,6 +235,20 @@ const CODE = /^[A-Za-z][A-Za-z0-9_-]{0,99}$/;
         (removed)="remove([$event])"
       />
 
+      <h3 class="dc-step"><span>3</span> {{ 'roles.data.title' | dcTranslate }}</h3>
+      <p class="dc-muted dc-step__hint">{{ 'roles.data.hint' | dcTranslate }}</p>
+      <dc-screen-data
+        [screens]="selectedScreens()"
+        [lovs]="data.lovs"
+        [grants]="screenGrants()"
+        [readonly]="!!data.readonly"
+        (grantsChange)="screenGrants.set($event)"
+      />
+
+      <h3 class="dc-step"><span>4</span> {{ 'roles.menus.title' | dcTranslate }}</h3>
+      <p class="dc-muted dc-step__hint">{{ 'roles.menus.hint' | dcTranslate }}</p>
+      <dc-role-menus [groups]="data.menus" [selected]="menus()" [readonly]="!!data.readonly" (selectedChange)="menus.set($event)" />
+
       <mat-expansion-panel class="dc-grants">
         <mat-expansion-panel-header>
           <mat-panel-title>{{ 'roles.grants' | dcTranslate }}</mat-panel-title>
@@ -269,6 +290,10 @@ const CODE = /^[A-Za-z][A-Za-z0-9_-]{0,99}$/;
       font-size: 18px;
       font-weight: 700;
       color: var(--dga-gray-900);
+    }
+    .dc-step__hint {
+      margin: -8px 0 12px;
+      font-size: 13px;
     }
     .dc-step span {
       display: inline-grid;
@@ -416,7 +441,12 @@ export class RoleEditor {
     referenceCode: new FormControl<string | null>(this.data.role?.referenceCode ?? null),
     isActive: new FormControl(this.data.role?.isActive ?? true, { nonNullable: true }),
   });
-  protected readonly grants = new FormControl(JSON.stringify(this.data.role?.grants ?? [], null, 2), { nonNullable: true });
+  private readonly initialGrants = splitGrants(this.data.role?.grants ?? [], this.selectedScreens().flatMap(screenCodes));
+  /** Grants on the role's screens, edited per screen. */
+  protected readonly screenGrants = signal<GrantRow[]>(this.initialGrants.onScreens);
+  /** The other grants (everywhere, or on screens the role does not open), as JSON. */
+  protected readonly grants = new FormControl(JSON.stringify(this.initialGrants.others, null, 2), { nonNullable: true });
+  protected readonly menus = signal<string[]>(this.data.role?.menus ?? []);
 
   constructor() {
     if (this.data.role) {
@@ -465,6 +495,8 @@ export class RoleEditor {
   protected remove(codes: string[]): void {
     if (!codes.length) return;
     this.selected.update((s) => s.filter((c) => !codes.includes(c)));
+    const dropped = codes.flatMap((c) => (this.byCode.get(c) ? screenCodes(this.byCode.get(c)!) : [c]));
+    this.screenGrants.update((g) => g.filter((x) => !x.resourceCode || !dropped.includes(x.resourceCode)));
     this.permissions.update((p) => {
       const next = { ...p };
       for (const code of codes) {
@@ -492,9 +524,9 @@ export class RoleEditor {
       this.errors.set([this.i18n.translate('roles.fillRequired')]);
       return;
     }
-    let grants: unknown;
+    let grants: GrantRow[];
     try {
-      grants = JSON.parse(this.grants.value || '[]');
+      grants = [...(JSON.parse(this.grants.value || '[]') as GrantRow[]), ...this.screenGrants()];
     } catch {
       this.errors.set([`${this.i18n.translate('roles.grants')}: ${this.i18n.translate('form.invalidJson')}`]);
       return;
@@ -508,6 +540,7 @@ export class RoleEditor {
       referenceCode: value.referenceCode?.trim() || null,
       privileges: privilegesOf(this.permissions(), this.data.role?.privileges ?? []),
       grants,
+      menus: this.menus(),
     };
     try {
       await this.drafts.addChange('apps.role', value.code.trim(), this.data.role ? 'UPDATE' : 'CREATE', payload);

@@ -28,7 +28,9 @@ public sealed class LovService(AppsControlDbContext context, GrantResolver grant
     public const int DefaultPageSize = 50;
 
     /// <param name="publicOnly">True on the external host: only LOVs marked public are served.</param>
-    public async Task<LovPage> GetValuesAsync(string lovCode, AccessSnapshot access, LovQuery query, bool publicOnly, CancellationToken cancellationToken)
+    /// <param name="unrestricted">Every value, whatever the user's grants (for administrators choosing values to grant).</param>
+    public async Task<LovPage> GetValuesAsync(
+        string lovCode, AccessSnapshot access, LovQuery query, bool publicOnly, CancellationToken cancellationToken, bool unrestricted = false)
     {
         ArgumentNullException.ThrowIfNull(access);
         ArgumentNullException.ThrowIfNull(query);
@@ -42,7 +44,7 @@ public sealed class LovService(AppsControlDbContext context, GrantResolver grant
             throw new LovNotFoundException(lovCode);
         }
 
-        var grant = await grants.ResolveAsync(lov, access, query.Resource, cancellationToken);
+        var grant = unrestricted ? GrantSet.Everything : await grants.ResolveAsync(lov, access, query.Resource, cancellationToken);
         var pageSize = Math.Clamp(query.PageSize <= 0 ? (lov.SearchMode == LovSearchMode.Full ? lov.MaxRows : DefaultPageSize) : query.PageSize, 1, lov.MaxRows);
         var page = Math.Max(1, query.Page);
         var offset = (page - 1) * pageSize;

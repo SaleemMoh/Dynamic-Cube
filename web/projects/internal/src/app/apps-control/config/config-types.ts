@@ -17,6 +17,8 @@ export interface ConfigField {
   refDomains?: string;
   multiple?: boolean;
   visibleWhen?: JsonLogicRule;
+  /** For `refList`: shown as two lists to move items between (available and chosen) instead of a dropdown. */
+  picker?: 'dual';
   /** For `refList`: property holding the code in each list item, e.g. `roleCode`. */
   itemKey?: string;
   /** Default for new rows. */
@@ -305,6 +307,7 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
             itemKey: 'roleCode',
             label: t('الأدوار', 'Roles'),
             ref: 'apps.role',
+            picker: 'dual',
           },
           {
             code: 'assignments',
@@ -353,6 +356,7 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
               '[{"lovCode": "...", "grantType": "VALUES", "grantedValues": ["..."]}]',
             ),
           },
+          { code: 'menus', type: 'select', multiple: true, label: t('عناصر القائمة', 'Menu items'), ref: 'apps.menu', defaultValue: [] },
         ],
       },
     ],

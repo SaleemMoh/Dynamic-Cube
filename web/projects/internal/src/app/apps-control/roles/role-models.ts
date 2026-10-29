@@ -7,11 +7,42 @@ export interface PrivilegeRow {
   fieldRules?: Record<string, string> | null;
 }
 
+export type GrantType = 'ALL' | 'VALUES' | 'RULE' | 'NONE';
+
+/** Values of a list a role may see: everywhere (`resourceCode` null) or on one screen. */
+export interface GrantRow {
+  lovCode: string;
+  resourceCode: string | null;
+  grantType: GrantType;
+  grantedValues: string[];
+  rule?: unknown;
+  defaultValue?: string | null;
+}
+
 export interface RoleRow extends ConfigRow {
   appCode: string | null;
   referenceCode: string | null;
   privileges: PrivilegeRow[];
-  grants: unknown[];
+  grants: GrantRow[];
+  /** Menu item codes the role shows. */
+  menus?: string[];
+}
+
+/** A list (LOV) used on a screen: on the screen itself or on one of its sub-resources. */
+export interface ScreenList {
+  lovCode: string;
+  name: LocalizedText;
+  /** Where the grant applies: the resource the list is bound to (or the screen). */
+  resourceCode: string;
+  /** Fields of the screen that show the list. */
+  fields: string[];
+}
+
+/** A menu group with its items, for choosing the items a role shows. */
+export interface MenuChoiceGroup {
+  code: string;
+  name: LocalizedText;
+  items: { code: string; name: LocalizedText; app: string | null }[];
 }
 
 /** A resource as the role editor shows it. */
@@ -118,4 +149,65 @@ export function privilegesOf(permissions: Permissions, existing: PrivilegeRow[])
     .filter(([, actions]) => actions.length)
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([resourceCode, actions]) => ({ resourceCode, actions, fieldRules: rules.get(resourceCode) ?? null }));
+}
+
+/** Codes of a screen and its sub-resources. */
+export function screenCodes(screen: ScreenNode): string[] {
+  return [screen.code, ...screen.children.map((c) => c.code)];
+}
+
+/**
+ * The lists a screen uses: the LOVs bound to its fields (or to its sub-resources'), and lists the role already restricts
+ * on it.
+ */
+export function screenLists(screen: ScreenNode, lovs: ConfigRow[], grants: GrantRow[]): ScreenList[] {
+  const codes = screenCodes(screen);
+  const names = new Map(lovs.map((l) => [l.code, { ar: l.nameAr, en: l.nameEn } as LocalizedText]));
+  const lists = new Map<string, ScreenList>();
+  for (const lov of lovs) {
+    for (const binding of (lov['bindings'] as { resourceCode: string; fieldCode: string }[] | undefined) ?? []) {
+      if (!codes.includes(binding.resourceCode)) continue;
+      const key = `${lov.code}|${binding.resourceCode}`;
+      const list = lists.get(key) ?? { lovCode: lov.code, name: names.get(lov.code)!, resourceCode: binding.resourceCode, fields: [] };
+      list.fields.push(binding.fieldCode);
+      lists.set(key, list);
+    }
+  }
+  for (const grant of grants) {
+    if (!grant.resourceCode || !codes.includes(grant.resourceCode)) continue;
+    const key = `${grant.lovCode}|${grant.resourceCode}`;
+    if (!lists.has(key)) {
+      lists.set(key, {
+        lovCode: grant.lovCode,
+        name: names.get(grant.lovCode) ?? { ar: grant.lovCode, en: grant.lovCode },
+        resourceCode: grant.resourceCode,
+        fields: [],
+      });
+    }
+  }
+  return [...lists.values()];
+}
+
+/** Menu items by group (groups in display order, items without a group last), for the role's menu choice. */
+export function menuChoices(menus: ConfigRow[], groups: ConfigRow[]): MenuChoiceGroup[] {
+  const order = (r: ConfigRow) => Number(r['displayOrder'] ?? 0);
+  const sorted = [...groups].sort((a, b) => order(a) - order(b) || a.code.localeCompare(b.code));
+  const item = (m: ConfigRow) => ({ code: m.code, name: { ar: m.nameAr, en: m.nameEn } as LocalizedText, app: (m['appCode'] as string | null) ?? null });
+  const items = (group: string | null) =>
+    menus
+      .filter((m) => ((m['groupCode'] as string | null) ?? null) === group && m['itemType'] !== 'GROUP')
+      .sort((a, b) => order(a) - order(b) || a.code.localeCompare(b.code))
+      .map(item);
+  const result = sorted.map((g) => ({ code: g.code, name: { ar: g.nameAr, en: g.nameEn } as LocalizedText, items: items(g.code) }));
+  const known = new Set(groups.map((g) => g.code));
+  const orphans = menus.filter((m) => m['groupCode'] && !known.has(m['groupCode'] as string) && m['itemType'] !== 'GROUP').map(item);
+  const loose = [...items(null), ...orphans];
+  if (loose.length) result.push({ code: '', name: { ar: 'عناصر أخرى', en: 'Other items' }, items: loose });
+  return result.filter((g) => g.items.length);
+}
+
+/** Grants on the given resources, and the others (everywhere, or on screens not shown). */
+export function splitGrants(grants: GrantRow[], resources: string[]): { onScreens: GrantRow[]; others: GrantRow[] } {
+  const on = (g: GrantRow) => !!g.resourceCode && resources.includes(g.resourceCode);
+  return { onScreens: grants.filter(on), others: grants.filter((g) => !on(g)) };
 }

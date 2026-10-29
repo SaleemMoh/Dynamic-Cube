@@ -134,6 +134,10 @@ Screens, services and reports register themselves as resources.
 **`privilege`** — `role_id`, `resource_id`, `actions` (text[] ⊆ `VIEW`, `CREATE`, `EDIT`,
 `DELETE`, `APPROVE`, `EXPORT`, `PRINT`), `field_rules` (jsonb: field → `HIDDEN` | `READONLY`).
 
+**`role_menu`** — `role_id`, `menu_id`: the menu items a role shows. An assigned item gives the role `VIEW` on the
+screen it opens, so a role can be built from the menu alone; items whose screen the role may view show anyway. A
+deleted item leaves the roles it was assigned to.
+
 "Copy privileges from another role" is a built-in admin action.
 
 ## 4.7 Menus
@@ -367,8 +371,14 @@ definitions. *Classes & domains*, *Roles & privileges* and *Menus* are two-panel
 side, the chosen row's values, permissions or menus on the other; counts from
 `GET admin/counts/{apps.class|apps.role|apps.menu-group}`); a role's privileges are picked as screens and then
 ticked per action, including the sub-resources of each screen ([ADR-0018](adr/0018-internal-system-look.md)).
-The other nested lists (LOV grants, assignments, LOV bindings) are edited as JSON until the visual builders of
-Phase 3. Form fields can reference an LOV (`lov`, `lovParentField` for
+The role editor continues with the **data in the dropdowns** of each chosen screen: the LOVs bound to the screen's
+fields (and to its sub-resources'), each with *As the general grant says*, *All values*, *Only these values* (picked
+from the list's values, read through `GET admin/lovs/{code}/values` without the administrator's own grants), *Nothing*
+or *By a rule*; any other LOV can be restricted on the screen too. These are `lov_grant` rows with the screen as
+`resource`. Then the **menu items** the role shows, ticked by menu group (`menus` on the role). Grants everywhere, or
+on screens the role does not open, stay as JSON under *Other list grants*. A user's roles, on the user screen and in
+*New user*, are chosen with the same two-list picker as screens (shared `dc-dual-list`, form field type `dualList`).
+The other nested lists (assignments, LOV bindings) are edited as JSON until their visual builders. Form fields can reference an LOV (`lov`, `lovParentField` for
 cascading lists); options come from `lovs/{code}/values`, already filtered by the user's grants.
 
 **Branding.** The *Branding* screen (resource `apps-control.installation`) sets the entity logo and the footer

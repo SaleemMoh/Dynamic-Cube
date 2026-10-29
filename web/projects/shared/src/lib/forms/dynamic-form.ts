@@ -14,6 +14,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { JsonValue, jsonLogic } from '../expressions/jsonlogic';
 import { LocalizePipe, TranslatePipe } from '../i18n/translate.pipe';
 import { FormField, FormOption, FormSchema, FormSection } from './form-schema';
+import { DualList } from './dual-list';
 import { pickIcon } from './icon-picker';
 import { LOV_SOURCE } from './lov-source';
 
@@ -37,6 +38,7 @@ export type FormValue = Record<string, unknown>;
     MatInputModule,
     MatSelectModule,
     MatTabsModule,
+    DualList,
     LocalizePipe,
     TranslatePipe,
   ],
@@ -106,7 +108,7 @@ export class DynamicForm {
 
   /** Spans the whole row in a section laid out automatically. */
   protected wide(section: FormSection, field: FormField): boolean {
-    return !section.columns && (field.width === 'full' || field.type === 'checkbox' || field.type === 'textarea');
+    return !section.columns && (field.width === 'full' || field.type === 'checkbox' || field.type === 'textarea' || field.type === 'dualList');
   }
 
   protected isVisible(code: string): boolean {

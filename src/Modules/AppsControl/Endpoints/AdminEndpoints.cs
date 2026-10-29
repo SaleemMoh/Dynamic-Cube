@@ -2,6 +2,7 @@ using System.Text.Json;
 using DynamicCube.Modules.AppsControl.Access;
 using DynamicCube.Modules.AppsControl.Changes;
 using DynamicCube.Modules.AppsControl.Domain;
+using DynamicCube.Modules.AppsControl.Lovs;
 using DynamicCube.Modules.AppsControl.Persistence;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Persistence;
@@ -102,6 +103,15 @@ internal static class AdminEndpoints
         BrandingEndpoints.MapAdmin(admin);
         AccountEndpoints.Map(admin);
         AccountEndpoints.MapPortal(admin);
+
+        // Every value of a list, whatever the administrator's own grants: to choose the values a role may see.
+        admin.MapGet("/lovs/{code}/values", async (string code, string? q, int? size, AccessResolver resolver, LovService lovs, CancellationToken ct) =>
+            {
+                var access = await resolver.GetAsync(ct);
+                return TypedResults.Ok(await lovs.GetValuesAsync(code, access, new LovQuery(null, q, 1, size ?? 0, null), false, ct, unrestricted: true));
+            })
+            .RequirePrivilege(AppsControlResources.Roles, PrivilegeActions.View)
+            .WithName("GetLovValuesForGrants");
 
         admin.MapGet("/types", async (IEnumerable<IConfigApplier> appliers, AccessResolver resolver, IChangeApprovalPolicy policy, CancellationToken ct) =>
         {

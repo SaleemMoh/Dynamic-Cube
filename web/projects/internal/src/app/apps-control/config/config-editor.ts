@@ -205,7 +205,7 @@ export class ConfigEditor {
     ];
     const details: FormField[] = type.fields.map((f) => ({
       code: f.code,
-      type: f.type === 'json' ? 'textarea' : f.type === 'refList' ? 'select' : f.type,
+      type: f.type === 'json' ? 'textarea' : f.type === 'refList' ? (f.picker === 'dual' ? 'dualList' : 'select') : f.type,
       label: f.label,
       hint: f.hint,
       required: f.required,
