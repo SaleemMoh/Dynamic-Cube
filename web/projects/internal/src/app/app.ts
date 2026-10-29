@@ -6,6 +6,7 @@ import { MODULE_TRANSLATIONS } from './module-translations';
 import { PAYMENT_TRANSLATIONS } from './payments/payment-translations';
 import { PHASE_1E_TRANSLATIONS } from './phase-1e-translations';
 import { APP_TRANSLATIONS } from './translations';
+import { DESIGNER_TRANSLATIONS } from './workflows/designer/designer-translations';
 
 @Component({
   selector: 'dc-root',
@@ -23,5 +24,6 @@ export class App {
     inject(I18nService).register(MODULE_TRANSLATIONS);
     inject(I18nService).register(PHASE_1E_TRANSLATIONS);
     inject(I18nService).register(PAYMENT_TRANSLATIONS);
+    inject(I18nService).register(DESIGNER_TRANSLATIONS);
   }
 }

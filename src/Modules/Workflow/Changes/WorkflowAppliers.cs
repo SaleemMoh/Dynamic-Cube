@@ -124,7 +124,9 @@ internal sealed partial class WorkflowVersionApplier(WorkflowDbContext db, JsonL
         entity.IsRetired = payload.IsRetired;
         if (existing is not null)
         {
-            if (!JsonElement.DeepEquals(JsonDocument.Parse(serialized).RootElement, JsonDocument.Parse(existing.Definition).RootElement))
+            // Compared as definitions: a version stored before a field existed has no such key, the payload has it empty.
+            var stored = ChangeJson.Serialize(JsonSerializer.Deserialize<WorkflowDefinition>(existing.Definition, ChangeJson.Options));
+            if (!JsonElement.DeepEquals(JsonDocument.Parse(serialized).RootElement, JsonDocument.Parse(stored).RootElement))
             {
                 errors.Add("definition", $"Published versions cannot change; add version {workflowCode}/{number + 1} instead.");
             }

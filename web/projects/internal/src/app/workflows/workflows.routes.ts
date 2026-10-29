@@ -10,4 +10,8 @@ export const WORKFLOWS_ROUTES: Routes = [
     path: 'versions',
     loadComponent: () => import('./workflow-version-list').then((m) => m.WorkflowVersionList),
   },
+  {
+    path: 'designer',
+    loadComponent: () => import('./designer/designer-page').then((m) => m.DesignerPage),
+  },
 ];

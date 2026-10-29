@@ -2,6 +2,8 @@
  * Public API surface of @dynamic-cube/shared
  */
 export * from './lib/expressions/jsonlogic';
+export * from './lib/expressions/rule-editor';
+export * from './lib/expressions/rule-model';
 export * from './lib/i18n/language';
 export * from './lib/i18n/translations';
 export * from './lib/i18n/i18n.service';

@@ -1,0 +1,665 @@
+<ng-template #actionEditor let-a let-i="index">
+  <div class="dc-panel__action" [attr.data-testid]="'action-' + a.code">
+    <div class="dc-panel__pair">
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'designer.field.actionCode' | dcTranslate }}</mat-label>
+        <input
+          matInput
+          dir="ltr"
+          [ngModel]="a.code"
+          (ngModelChange)="action(i, { code: $event.trim().toUpperCase() })"
+          [ngModelOptions]="{ updateOn: 'blur' }"
+        />
+      </mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'designer.field.actionKind' | dcTranslate }}</mat-label>
+        <mat-select [ngModel]="a.kind" (ngModelChange)="action(i, { kind: $event })">
+          @for (k of actionKinds; track k) {
+            <mat-option [value]="k">{{ 'designer.actionKind.' + k | dcTranslate }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <div class="dc-panel__pair">
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'designer.field.nameAr' | dcTranslate }}</mat-label>
+        <input matInput dir="rtl" [ngModel]="a.nameAr" (ngModelChange)="action(i, { nameAr: $event })" [ngModelOptions]="{ updateOn: 'blur' }" />
+      </mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'designer.field.nameEn' | dcTranslate }}</mat-label>
+        <input matInput dir="ltr" [ngModel]="a.nameEn" (ngModelChange)="action(i, { nameEn: $event })" [ngModelOptions]="{ updateOn: 'blur' }" />
+      </mat-form-field>
+    </div>
+    @if (a.kind === 'RETURN') {
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'designer.field.resumeAt' | dcTranslate }}</mat-label>
+        <mat-select [ngModel]="a.resumeAt ?? null" (ngModelChange)="action(i, { resumeAt: $event })">
+          <mat-option [value]="null">{{ 'designer.sameTask' | dcTranslate }}</mat-option>
+          @for (t of tasks(); track t.code) {
+            <mat-option [value]="t.code">{{ name(t) }} ({{ t.code }})</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    } @else {
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'designer.field.to' | dcTranslate }}</mat-label>
+        <mat-select [ngModel]="a.to ?? null" (ngModelChange)="action(i, { to: $event })" data-testid="action-to">
+          @for (t of targets(); track t.code) {
+            <mat-option [value]="t.code">{{ name(t) }} ({{ t.code }})</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>{{ 'designer.field.displayStatusAfter' | dcTranslate }}</mat-label>
+      <input
+        matInput
+        dir="ltr"
+        [ngModel]="a.displayStatus ?? ''"
+        (ngModelChange)="action(i, { displayStatus: $event.trim() || null })"
+        [ngModelOptions]="{ updateOn: 'blur' }"
+      />
+    </mat-form-field>
+    @if (a.kind !== 'REJECT' && a.kind !== 'RETURN') {
+      <mat-checkbox [ngModel]="!!a.commentRequired" (ngModelChange)="action(i, { commentRequired: $event })">{{
+        'designer.field.commentRequired' | dcTranslate
+      }}</mat-checkbox>
+      <mat-checkbox [ngModel]="!!a.commentToApplicant" (ngModelChange)="action(i, { commentToApplicant: $event })">{{
+        'designer.field.commentToApplicant' | dcTranslate
+      }}</mat-checkbox>
+    } @else {
+      <p class="dc-panel__hint">{{ 'designer.commentShown' | dcTranslate }}</p>
+    }
+  </div>
+</ng-template>
+
+@if (edge(); as e) {
+  <h2 class="dc-panel__title">
+    <mat-icon fontSet="material-symbols-outlined">arrow_downward</mat-icon>
+    {{ 'designer.arrow' | dcTranslate }}
+  </h2>
+  <p class="dc-panel__muted">
+    <button type="button" class="dc-panel__link" (click)="selectNode(e.from.code)">
+      {{ name(e.from) }}
+    </button>
+    → {{ 'designer.outlet.' + e.outlet.kind | dcTranslate }}
+  </p>
+  <mat-form-field subscriptSizing="dynamic">
+    <mat-label>{{ 'designer.field.to' | dcTranslate }}</mat-label>
+    <mat-select [ngModel]="e.edge.to" (ngModelChange)="retarget($event)" data-testid="edge-to">
+      @for (t of nodes(); track t.code) {
+        @if (t.type !== 'START' && t.code !== e.from.code) {
+          <mat-option [value]="t.code">{{ name(t) }} ({{ t.code }})</mat-option>
+        }
+      }
+    </mat-select>
+  </mat-form-field>
+  @if (e.outlet.kind === 'route') {
+    <dc-rule-editor
+      [label]="'designer.field.when' | dcTranslate"
+      [rule]="e.from.routes![e.outlet.index!].when"
+      [variables]="variables()"
+      testId="edge-condition"
+      (ruleChange)="edgeCondition(e.from.code, e.outlet.index!, $event)"
+    />
+  }
+  @if (e.outlet.kind === 'action' || e.outlet.kind === 'resume') {
+    <p class="dc-panel__hint">{{ 'designer.editActionOnTask' | dcTranslate }}</p>
+    <button matButton="outlined" type="button" (click)="selectNode(e.from.code)">
+      {{ 'designer.openTask' | dcTranslate }}
+    </button>
+  }
+  <button matButton type="button" class="dc-panel__danger" (click)="remove.emit()" data-testid="edge-delete">
+    <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
+    {{ 'designer.deleteArrow' | dcTranslate }}
+  </button>
+} @else if (node(); as n) {
+  <h2 class="dc-panel__title">
+    <mat-icon fontSet="material-symbols-outlined">{{ icons[n.type] }}</mat-icon>
+    {{ typeName(n.type) }}
+  </h2>
+  <p class="dc-panel__muted">{{ 'designer.typeHint.' + n.type | dcTranslate }}</p>
+
+  <mat-form-field subscriptSizing="dynamic">
+    <mat-label>{{ 'designer.field.code' | dcTranslate }}</mat-label>
+    <input matInput #code dir="ltr" [ngModel]="n.code" (ngModelChange)="setCode($event)" [ngModelOptions]="{ updateOn: 'blur' }" data-testid="node-code" />
+    @if (codeTaken(code.value)) {
+      <mat-hint class="dc-panel__bad">{{ 'designer.codeTaken' | dcTranslate }}</mat-hint>
+    }
+  </mat-form-field>
+  <mat-form-field subscriptSizing="dynamic">
+    <mat-label>{{ 'designer.field.nameAr' | dcTranslate }}</mat-label>
+    <input
+      matInput
+      dir="rtl"
+      [ngModel]="n.nameAr"
+      (ngModelChange)="patch({ nameAr: $event })"
+      [ngModelOptions]="{ updateOn: 'blur' }"
+      data-testid="node-name-ar"
+    />
+  </mat-form-field>
+  <mat-form-field subscriptSizing="dynamic">
+    <mat-label>{{ 'designer.field.nameEn' | dcTranslate }}</mat-label>
+    <input
+      matInput
+      dir="ltr"
+      [ngModel]="n.nameEn"
+      (ngModelChange)="patch({ nameEn: $event })"
+      [ngModelOptions]="{ updateOn: 'blur' }"
+      data-testid="node-name-en"
+    />
+  </mat-form-field>
+
+  @switch (n.type) {
+    @case ('HUMAN_TASK') {
+      <h3>{{ 'designer.section.assignment' | dcTranslate }}</h3>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'designer.field.target' | dcTranslate }}</mat-label>
+        <mat-select [ngModel]="n.assignment?.target ?? 'ROLE'" (ngModelChange)="assignment({ target: $event })" data-testid="assign-target">
+          @for (t of ['ROLE', 'USER', 'PREVIOUS_ACTOR']; track t) {
+            <mat-option [value]="t">{{ 'designer.target.' + t | dcTranslate }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      @switch (n.assignment?.target ?? 'ROLE') {
+        @case ('ROLE') {
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>{{ 'designer.field.role' | dcTranslate }}</mat-label>
+            <mat-select [ngModel]="n.assignment?.role ?? null" (ngModelChange)="assignment({ role: $event })" data-testid="assign-role">
+              @for (r of refs.roles(); track r.value) {
+                <mat-option [value]="r.value">{{ r.label | dcLocalize }} ({{ r.value }})</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+        @case ('USER') {
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>{{ 'designer.field.user' | dcTranslate }}</mat-label>
+            <mat-select [ngModel]="n.assignment?.user ?? null" (ngModelChange)="assignment({ user: $event })">
+              @for (u of refs.users(); track u.value) {
+                <mat-option [value]="u.value">{{ u.label | dcLocalize }} ({{ u.value }})</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+        @case ('PREVIOUS_ACTOR') {
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>{{ 'designer.field.step' | dcTranslate }}</mat-label>
+            <mat-select [ngModel]="n.assignment?.step ?? null" (ngModelChange)="assignment({ step: $event })">
+              @for (t of tasks(); track t.code) {
+                @if (t.code !== n.code) {
+                  <mat-option [value]="t.code">{{ name(t) }} ({{ t.code }})</mat-option>
+                }
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>{{ 'designer.field.fallbackRole' | dcTranslate }}</mat-label>
+            <mat-select [ngModel]="n.assignment?.role ?? null" (ngModelChange)="assignment({ role: $event })">
+              <mat-option [value]="null">—</mat-option>
+              @for (r of refs.roles(); track r.value) {
+                <mat-option [value]="r.value">{{ r.label | dcLocalize }} ({{ r.value }})</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+      }
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'designer.field.mode' | dcTranslate }}</mat-label>
+        <mat-select [ngModel]="n.assignment?.mode ?? 'QUEUE'" (ngModelChange)="assignment({ mode: $event })" data-testid="assign-mode">
+          @for (m of ['QUEUE', 'DISTRIBUTE', 'AUTO']; track m) {
+            <mat-option [value]="m">{{ 'designer.mode.' + m | dcTranslate }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      @if (n.assignment?.mode === 'DISTRIBUTE') {
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'designer.field.distributorRole' | dcTranslate }}</mat-label>
+          <mat-select [ngModel]="n.assignment!.distributorRole ?? null" (ngModelChange)="assignment({ distributorRole: $event })">
+            @for (r of refs.roles(); track r.value) {
+              <mat-option [value]="r.value">{{ r.label | dcLocalize }} ({{ r.value }})</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'designer.field.excludeActorsOf' | dcTranslate }}</mat-label>
+        <mat-select multiple [ngModel]="n.excludeActorsOf ?? []" (ngModelChange)="patch({ excludeActorsOf: $event })">
+          @for (t of tasks(); track t.code) {
+            @if (t.code !== n.code) {
+              <mat-option [value]="t.code">{{ name(t) }} ({{ t.code }})</mat-option>
+            }
+          }
+        </mat-select>
+        <mat-hint>{{ 'designer.excludeHint' | dcTranslate }}</mat-hint>
+      </mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'designer.field.displayStatus' | dcTranslate }}</mat-label>
+        <input
+          matInput
+          dir="ltr"
+          placeholder="UNDER_REVIEW"
+          [ngModel]="n.displayStatus ?? ''"
+          (ngModelChange)="patch({ displayStatus: $event.trim() || null })"
+          [ngModelOptions]="{ updateOn: 'blur' }"
+        />
+      </mat-form-field>
+
+      <h3>{{ 'designer.section.deadline' | dcTranslate }}</h3>
+      <div class="dc-panel__pair">
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'designer.field.workingDays' | dcTranslate }}</mat-label>
+          <input
+            matInput
+            type="number"
+            min="1"
+            [ngModel]="n.sla?.workingDays ?? null"
+            (ngModelChange)="sla({ workingDays: num($event) })"
+            [ngModelOptions]="{ updateOn: 'blur' }"
+            data-testid="sla-days"
+          />
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'designer.field.warnPercent' | dcTranslate }}</mat-label>
+          <input
+            matInput
+            type="number"
+            min="1"
+            max="99"
+            [ngModel]="n.sla?.warnPercent ?? 75"
+            (ngModelChange)="sla({ warnPercent: num($event) ?? 75 })"
+            [ngModelOptions]="{ updateOn: 'blur' }"
+          />
+        </mat-form-field>
+      </div>
+      @for (l of refs.levels(); track l.value) {
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'designer.field.daysForLevel' | dcTranslate }} {{ l.label | dcLocalize }}</mat-label>
+          <input
+            matInput
+            type="number"
+            min="1"
+            [ngModel]="n.sla?.byLevel?.[l.value] ?? null"
+            (ngModelChange)="levelDays(l.value, num($event))"
+            [ngModelOptions]="{ updateOn: 'blur' }"
+          />
+        </mat-form-field>
+      }
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'designer.field.escalateToRole' | dcTranslate }}</mat-label>
+        <mat-select [ngModel]="n.sla?.escalateToRole ?? null" (ngModelChange)="sla({ escalateToRole: $event })">
+          <mat-option [value]="null">—</mat-option>
+          @for (r of refs.roles(); track r.value) {
+            <mat-option [value]="r.value">{{ r.label | dcLocalize }} ({{ r.value }})</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <h3>{{ 'designer.section.actions' | dcTranslate }}</h3>
+      <mat-accordion multi>
+        @for (a of n.actions ?? []; track $index; let i = $index; let first = $first; let last = $last) {
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>{{ name(a) }}</mat-panel-title>
+              <mat-panel-description dir="ltr">{{ a.kind === 'RETURN' ? '↩' : '→ ' + (a.to ?? '?') }}</mat-panel-description>
+            </mat-expansion-panel-header>
+            <ng-container *ngTemplateOutlet="actionEditor; context: { $implicit: a, index: i }" />
+            <div class="dc-panel__rowactions">
+              <button matIconButton type="button" [disabled]="first" (click)="moveAction(i, -1)" [matTooltip]="'designer.up' | dcTranslate">
+                <mat-icon fontSet="material-symbols-outlined">arrow_upward</mat-icon>
+              </button>
+              <button matIconButton type="button" [disabled]="last" (click)="moveAction(i, 1)" [matTooltip]="'designer.down' | dcTranslate">
+                <mat-icon fontSet="material-symbols-outlined">arrow_downward</mat-icon>
+              </button>
+              <button matButton type="button" class="dc-panel__danger" (click)="removeAction(i)">
+                {{ 'designer.removeAction' | dcTranslate }}
+              </button>
+            </div>
+          </mat-expansion-panel>
+        }
+      </mat-accordion>
+      <button matButton type="button" [matMenuTriggerFor]="kinds" data-testid="add-action">
+        <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+        {{ 'designer.addAction' | dcTranslate }}
+      </button>
+      <mat-menu #kinds="matMenu">
+        @for (k of actionKinds; track k) {
+          <button mat-menu-item type="button" (click)="addAction(k)" [attr.data-testid]="'add-action-' + k">
+            {{ 'designer.actionKind.' + k | dcTranslate }}
+          </button>
+        }
+      </mat-menu>
+      <p class="dc-panel__hint">{{ 'designer.actionsHint' | dcTranslate }}</p>
+    }
+
+    @case ('PARALLEL_SPLIT') {
+      <h3>{{ 'designer.section.branches' | dcTranslate }}</h3>
+      @for (b of n.branches ?? []; track $index; let i = $index) {
+        <div class="dc-panel__line">
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-select [ngModel]="b" (ngModelChange)="branch(i, $event)" [attr.aria-label]="'designer.section.branches' | dcTranslate">
+              @for (t of targets(); track t.code) {
+                <mat-option [value]="t.code">{{ name(t) }} ({{ t.code }})</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <button matIconButton type="button" (click)="removeBranch(i)" [matTooltip]="'rule.remove' | dcTranslate">
+            <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+          </button>
+        </div>
+      }
+      <button matButton type="button" (click)="addBranch()">
+        <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+        {{ 'designer.addBranch' | dcTranslate }}
+      </button>
+    }
+
+    @case ('JOIN') {
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'designer.field.joinMode' | dcTranslate }}</mat-label>
+        <mat-select [ngModel]="n.mode ?? 'ALL'" (ngModelChange)="patch({ mode: $event, count: $event === 'COUNT' ? (n.count ?? 2) : null })">
+          @for (m of ['ALL', 'ANY', 'COUNT']; track m) {
+            <mat-option [value]="m">{{ 'designer.join.' + m | dcTranslate }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      @if (n.mode === 'COUNT') {
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'designer.field.count' | dcTranslate }}</mat-label>
+          <input
+            matInput
+            type="number"
+            min="1"
+            [ngModel]="n.count ?? 2"
+            (ngModelChange)="patch({ count: num($event) })"
+            [ngModelOptions]="{ updateOn: 'blur' }"
+          />
+        </mat-form-field>
+      }
+    }
+
+    @case ('GATEWAY') {
+      <h3>{{ 'designer.section.routes' | dcTranslate }}</h3>
+      <p class="dc-panel__hint">{{ 'designer.routesHint' | dcTranslate }}</p>
+      @for (r of n.routes ?? []; track $index; let i = $index; let first = $first; let last = $last) {
+        <div class="dc-panel__route" [attr.data-testid]="'route-' + i">
+          <div class="dc-panel__line">
+            <strong>#{{ i + 1 }}</strong>
+            <mat-form-field subscriptSizing="dynamic">
+              <mat-label>{{ 'designer.field.to' | dcTranslate }}</mat-label>
+              <mat-select [ngModel]="r.to" (ngModelChange)="route(i, { to: $event })">
+                @for (t of targets(); track t.code) {
+                  <mat-option [value]="t.code">{{ name(t) }} ({{ t.code }})</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <button matIconButton type="button" [disabled]="first" (click)="moveRoute(i, -1)" [matTooltip]="'designer.up' | dcTranslate">
+              <mat-icon fontSet="material-symbols-outlined">arrow_upward</mat-icon>
+            </button>
+            <button matIconButton type="button" [disabled]="last" (click)="moveRoute(i, 1)" [matTooltip]="'designer.down' | dcTranslate">
+              <mat-icon fontSet="material-symbols-outlined">arrow_downward</mat-icon>
+            </button>
+            <button matIconButton type="button" (click)="removeRoute(i)" [matTooltip]="'rule.remove' | dcTranslate">
+              <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+            </button>
+          </div>
+          <dc-rule-editor
+            [label]="'designer.field.when' | dcTranslate"
+            [rule]="r.when"
+            [variables]="variables()"
+            [testId]="'route-when-' + i"
+            (ruleChange)="route(i, { when: $event })"
+          />
+        </div>
+      }
+      <button matButton type="button" (click)="addRoute()" data-testid="add-route">
+        <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+        {{ 'designer.addRoute' | dcTranslate }}
+      </button>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'designer.field.default' | dcTranslate }}</mat-label>
+        <mat-select [ngModel]="n.default ?? null" (ngModelChange)="patch({ default: $event })" data-testid="gateway-default">
+          @for (t of targets(); track t.code) {
+            <mat-option [value]="t.code">{{ name(t) }} ({{ t.code }})</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
+
+    @case ('DECISION') {
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'designer.field.ruleSet' | dcTranslate }}</mat-label>
+        <mat-select [ngModel]="n.ruleSet ?? null" (ngModelChange)="patch({ ruleSet: $event })" data-testid="decision-rule-set">
+          @for (r of refs.ruleSets(); track r.value) {
+            <mat-option [value]="r.value">{{ r.label | dcLocalize }} ({{ r.value }})</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'designer.field.result' | dcTranslate }}</mat-label>
+        <input
+          matInput
+          dir="ltr"
+          [placeholder]="n.code"
+          [ngModel]="n.result ?? ''"
+          (ngModelChange)="patch({ result: $event.trim() || null })"
+          [ngModelOptions]="{ updateOn: 'blur' }"
+        />
+        <mat-hint dir="ltr">decisions.{{ n.result || n.code }}</mat-hint>
+      </mat-form-field>
+      <h3>{{ 'designer.section.input' | dcTranslate }}</h3>
+      <p class="dc-panel__hint">{{ 'designer.inputHint' | dcTranslate }}</p>
+      <dc-mapping-editor [mapping]="n.input ?? {}" [variables]="variables()" (mappingChange)="patch({ input: $event })" />
+    }
+
+    @case ('DOCUMENT') {
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'designer.field.documentType' | dcTranslate }}</mat-label>
+        <mat-select [ngModel]="n.documentType ?? null" (ngModelChange)="patch({ documentType: $event })" data-testid="document-type">
+          @for (d of refs.documentTypes(); track d.value) {
+            <mat-option [value]="d.value">{{ d.label | dcLocalize }} ({{ d.value }})</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'designer.field.documentTarget' | dcTranslate }}</mat-label>
+        <mat-select [ngModel]="n.target ?? 'ISSUE'" (ngModelChange)="patch({ target: $event })">
+          <mat-option value="ISSUE">{{ 'designer.documentTarget.ISSUE' | dcTranslate }}</mat-option>
+          <mat-option value="SOURCE">{{ 'designer.documentTarget.SOURCE' | dcTranslate }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <div class="dc-panel__pair">
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'designer.field.validity' | dcTranslate }}</mat-label>
+          <mat-select [ngModel]="n.validity ?? null" (ngModelChange)="patch({ validity: $event })">
+            <mat-option [value]="null">{{ 'designer.validity.default' | dcTranslate }}</mat-option>
+            @for (v of ['KEEP', 'RESET', 'RENEW', 'EXTEND']; track v) {
+              <mat-option [value]="v">{{ 'designer.validity.' + v | dcTranslate }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'designer.field.validityMonths' | dcTranslate }}</mat-label>
+          <input
+            matInput
+            type="number"
+            min="1"
+            [ngModel]="n.validityMonths ?? null"
+            (ngModelChange)="patch({ validityMonths: num($event) })"
+            [ngModelOptions]="{ updateOn: 'blur' }"
+          />
+        </mat-form-field>
+      </div>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'designer.field.reason' | dcTranslate }}</mat-label>
+        <input
+          matInput
+          dir="auto"
+          [ngModel]="n.reason ?? ''"
+          (ngModelChange)="patch({ reason: $event.trim() || null })"
+          [ngModelOptions]="{ updateOn: 'blur' }"
+        />
+      </mat-form-field>
+      <h3>{{ 'designer.section.data' | dcTranslate }}</h3>
+      <dc-mapping-editor [mapping]="n.data ?? {}" [variables]="variables()" (mappingChange)="patch({ data: $event })" />
+      <h3>{{ 'designer.section.lines' | dcTranslate }}</h3>
+      <dc-rule-editor
+        mode="value"
+        [label]="'designer.field.linesSource' | dcTranslate"
+        [rule]="n.lines?.source ?? null"
+        [variables]="variables()"
+        (ruleChange)="
+          patch({
+            lines: $event === null && !n.lines?.fields ? null : { ...(n.lines ?? {}), source: $event },
+          })
+        "
+      />
+      @if (n.lines) {
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'designer.field.linesAs' | dcTranslate }}</mat-label>
+          <input
+            matInput
+            dir="ltr"
+            placeholder="item"
+            [ngModel]="n.lines.as ?? ''"
+            (ngModelChange)="patch({ lines: { ...n.lines, as: $event.trim() || null } })"
+            [ngModelOptions]="{ updateOn: 'blur' }"
+          />
+        </mat-form-field>
+        <dc-mapping-editor [mapping]="n.lines.fields ?? {}" [variables]="variables()" (mappingChange)="patch({ lines: { ...n.lines, fields: $event } })" />
+      }
+    }
+
+    @case ('PAYMENT') {
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'designer.field.provider' | dcTranslate }}</mat-label>
+        <mat-select [ngModel]="n.provider ?? null" (ngModelChange)="patch({ provider: $event })" data-testid="payment-provider">
+          <mat-option [value]="null">{{ 'designer.defaultProvider' | dcTranslate }}</mat-option>
+          @for (p of refs.providers(); track p.value) {
+            <mat-option [value]="p.value">{{ p.label | dcLocalize }} ({{ p.value }})</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <dc-rule-editor
+        mode="value"
+        [label]="'designer.field.amount' | dcTranslate"
+        [rule]="n.amount ?? null"
+        [variables]="variables()"
+        (ruleChange)="patch({ amount: $event })"
+      />
+      <p class="dc-panel__hint">{{ 'designer.amountHint' | dcTranslate }}</p>
+      <div class="dc-panel__pair">
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'designer.field.vatRate' | dcTranslate }}</mat-label>
+          <input
+            matInput
+            type="number"
+            step="0.01"
+            min="0"
+            max="1"
+            placeholder="0.15"
+            [ngModel]="n.vatRate ?? null"
+            (ngModelChange)="patch({ vatRate: num($event) })"
+            [ngModelOptions]="{ updateOn: 'blur' }"
+          />
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'designer.field.dueDays' | dcTranslate }}</mat-label>
+          <input
+            matInput
+            type="number"
+            min="1"
+            max="90"
+            [ngModel]="n.dueDays ?? null"
+            (ngModelChange)="patch({ dueDays: num($event) })"
+            [ngModelOptions]="{ updateOn: 'blur' }"
+          />
+        </mat-form-field>
+      </div>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'designer.field.displayStatus' | dcTranslate }}</mat-label>
+        <input
+          matInput
+          dir="ltr"
+          placeholder="AWAITING_PAYMENT"
+          [ngModel]="n.displayStatus ?? ''"
+          (ngModelChange)="patch({ displayStatus: $event.trim() || null })"
+          [ngModelOptions]="{ updateOn: 'blur' }"
+        />
+      </mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'designer.field.expired' | dcTranslate }}</mat-label>
+        <mat-select [ngModel]="n.expired ?? null" (ngModelChange)="patch({ expired: $event })" data-testid="payment-expired">
+          @for (t of targets(); track t.code) {
+            <mat-option [value]="t.code">{{ name(t) }} ({{ t.code }})</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
+
+    @case ('END') {
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'designer.field.outcome' | dcTranslate }}</mat-label>
+        <mat-select [ngModel]="n.outcome ?? null" (ngModelChange)="patch({ outcome: $event })" data-testid="end-outcome">
+          @for (o of ['APPROVED', 'REJECTED', 'CLOSED']; track o) {
+            <mat-option [value]="o">{{ 'designer.outcome.' + o | dcTranslate }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'designer.field.displayStatus' | dcTranslate }}</mat-label>
+        <input
+          matInput
+          dir="ltr"
+          [ngModel]="n.displayStatus ?? ''"
+          (ngModelChange)="patch({ displayStatus: $event.trim() || null })"
+          [ngModelOptions]="{ updateOn: 'blur' }"
+        />
+      </mat-form-field>
+    }
+  }
+
+  @if (n.type === 'START' || n.type === 'JOIN' || n.type === 'DECISION' || n.type === 'DOCUMENT' || n.type === 'PAYMENT') {
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>{{ (n.type === 'PAYMENT' ? 'designer.field.paidNext' : 'designer.field.next') | dcTranslate }}</mat-label>
+      <mat-select [ngModel]="n.next ?? null" (ngModelChange)="patch({ next: $event })" data-testid="node-next">
+        @for (t of targets(); track t.code) {
+          <mat-option [value]="t.code">{{ name(t) }} ({{ t.code }})</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  }
+
+  @if (n.type !== 'START') {
+    <button matButton type="button" class="dc-panel__danger" (click)="remove.emit()" data-testid="node-delete">
+      <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
+      {{ 'designer.deleteNode' | dcTranslate }}
+    </button>
+  }
+} @else {
+  <h2 class="dc-panel__title">
+    <mat-icon fontSet="material-symbols-outlined">tune</mat-icon>
+    {{ 'designer.version' | dcTranslate }}
+  </h2>
+  <mat-form-field subscriptSizing="dynamic">
+    <mat-label>{{ 'designer.field.nameAr' | dcTranslate }}</mat-label>
+    <input matInput dir="rtl" [ngModel]="versionNameAr()" (ngModelChange)="versionNameArChange.emit($event)" data-testid="version-name-ar" />
+  </mat-form-field>
+  <mat-form-field subscriptSizing="dynamic">
+    <mat-label>{{ 'designer.field.nameEn' | dcTranslate }}</mat-label>
+    <input matInput dir="ltr" [ngModel]="versionNameEn()" (ngModelChange)="versionNameEnChange.emit($event)" data-testid="version-name-en" />
+  </mat-form-field>
+  <mat-form-field subscriptSizing="dynamic">
+    <mat-label>{{ 'designer.field.slaWorkingDays' | dcTranslate }}</mat-label>
+    <input
+      matInput
+      type="number"
+      min="1"
+      [ngModel]="store.definition().slaWorkingDays ?? null"
+      (ngModelChange)="slaDays(num($event))"
+      [ngModelOptions]="{ updateOn: 'blur' }"
+    />
+    <mat-hint>{{ 'designer.slaHint' | dcTranslate }}</mat-hint>
+  </mat-form-field>
+  <p class="dc-panel__hint">{{ 'designer.howTo' | dcTranslate }}</p>
+}

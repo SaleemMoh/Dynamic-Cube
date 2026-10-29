@@ -23,7 +23,8 @@ the employees' Action Center; issued documents with PDF printing and public QR v
 with a test console, and notifications (in-app, email, SMS) driven by rules over events. Every module's
 configuration is edited through the same maker-checker change sets. Phase 2 has started: follow-up services on issued
 documents (renewal, extension) and payments (SADAD bills, signed payment notifications, a workflow step that waits
-for payment). See the [roadmap](docs/07-roadmap.md) for what comes next.
+for payment). Phase 3 (builders) has started with the Workflow Designer: workflows drawn on a canvas, conditions
+without JSON, checks as you draw and a test run. See the [roadmap](docs/07-roadmap.md) for what comes next.
 
 ## Repository layout
 
@@ -177,6 +178,13 @@ These are development values only; change them in `deploy/docker/.env` (see `.en
    the request moves on to the request manager's review with the receipt on its page. In the internal system,
    **Payments → Bills** lists the bills; a bill's page shows its history and lets staff record a payment made
    elsewhere or cancel the bill (the request then closes as *not paid*). Unpaid bills expire after 7 days.
+12. Sign in to the internal system as `maker` and open **Action Center → Workflow designer** (or *Open in the
+   designer* on a row of **Workflow versions**). Choose a service's workflow: its latest version is drawn and the
+   designer prepares the next one. Add steps from the palette, connect them by dragging from the dots under a step,
+   select a step or an arrow to edit it in the side panel (a gateway's conditions are picked from the service's
+   questions and levels), and watch the problems list as you go. **Test run** tries it with sample answers (you
+   choose each task's action and whether the bill is paid); **Check on the server** runs the publish checks;
+   **Add to draft** saves it as the next version, which `checker` approves like any other change.
 
 The gateway credentials come from the secret store (`Secrets__MOMRAH_GATEWAY__clientId` / `__clientSecret`), never
 from the database; development values are in `appsettings.Development.json` and the compose file.

@@ -1,0 +1,193 @@
+<header class="dc-page__header dc-designer__header">
+  <h1>{{ 'designer.title' | dcTranslate }}</h1>
+  <div class="dc-designer__pick">
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>{{ 'wfVersions.workflow' | dcTranslate }}</mat-label>
+      <mat-select [ngModel]="workflow()" (ngModelChange)="open($event, null)" data-testid="designer-workflow">
+        @for (w of workflows.value() ?? []; track w.code) {
+          <mat-option [value]="w.code">{{ { ar: w.nameAr, en: w.nameEn } | dcLocalize }} ({{ w.code }})</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    @if (workflow()) {
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'designer.startFrom' | dcTranslate }}</mat-label>
+        <mat-select [ngModel]="base()" (ngModelChange)="open(workflow()!, $event)" data-testid="designer-base">
+          @for (v of versionsOf(); track v.code) {
+            <mat-option [value]="+v.code.split('/')[1]">{{ v.code }} — {{ { ar: v.nameAr, en: v.nameEn } | dcLocalize }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <span class="dc-designer__target" dir="ltr" data-testid="designer-target">→ {{ workflow() }}/{{ nextNumber() }}</span>
+    }
+  </div>
+</header>
+
+@if (workflow()) {
+  <div class="dc-designer__toolbar" role="toolbar" [attr.aria-label]="'designer.title' | dcTranslate">
+    <button
+      matIconButton
+      type="button"
+      (click)="store.undo()"
+      [disabled]="!store.canUndo()"
+      [matTooltip]="'designer.undo' | dcTranslate"
+      data-testid="designer-undo"
+    >
+      <mat-icon fontSet="material-symbols-outlined">undo</mat-icon>
+    </button>
+    <button
+      matIconButton
+      type="button"
+      (click)="store.redo()"
+      [disabled]="!store.canRedo()"
+      [matTooltip]="'designer.redo' | dcTranslate"
+      data-testid="designer-redo"
+    >
+      <mat-icon fontSet="material-symbols-outlined">redo</mat-icon>
+    </button>
+    <button matIconButton type="button" (click)="arrange()" [matTooltip]="'designer.arrange' | dcTranslate" data-testid="designer-arrange">
+      <mat-icon fontSet="material-symbols-outlined">account_tree</mat-icon>
+    </button>
+    <button
+      matIconButton
+      type="button"
+      (click)="deleteSelection()"
+      [disabled]="!store.selection()"
+      [matTooltip]="'designer.delete' | dcTranslate"
+      data-testid="designer-delete"
+    >
+      <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
+    </button>
+    <span class="dc-designer__sep"></span>
+    <button matIconButton type="button" (click)="zoomBy(-0.1)" [matTooltip]="'designer.zoomOut' | dcTranslate">
+      <mat-icon fontSet="material-symbols-outlined">zoom_out</mat-icon>
+    </button>
+    <span class="dc-designer__zoom" dir="ltr">{{ (zoom() * 100).toFixed(0) }}%</span>
+    <button matIconButton type="button" (click)="zoomBy(0.1)" [matTooltip]="'designer.zoomIn' | dcTranslate">
+      <mat-icon fontSet="material-symbols-outlined">zoom_in</mat-icon>
+    </button>
+    <span class="dc-designer__sep"></span>
+    <div class="dc-designer__views" role="tablist">
+      @for (v of ['canvas', 'json', 'test']; track v) {
+        <button
+          matButton
+          type="button"
+          role="tab"
+          [attr.aria-selected]="view() === v"
+          [class.dc-designer__view--on]="view() === v"
+          (click)="showView($any(v))"
+          [attr.data-testid]="'designer-view-' + v"
+        >
+          {{ 'designer.view.' + v | dcTranslate }}
+        </button>
+      }
+    </div>
+    <span class="dc-designer__grow"></span>
+    <span class="dc-designer__status" [class.dc-designer__status--bad]="errorsOnly().length > 0" data-testid="designer-status">
+      <mat-icon fontSet="material-symbols-outlined">{{ errorsOnly().length ? 'error' : 'check_circle' }}</mat-icon>
+      {{ errorsOnly().length ? errorsOnly().length + ' ' + ('designer.problems' | dcTranslate) : ('designer.noProblems' | dcTranslate) }}
+    </span>
+    <button matButton="outlined" type="button" (click)="check()" [disabled]="busy()" data-testid="designer-check">
+      <mat-icon fontSet="material-symbols-outlined">fact_check</mat-icon>
+      {{ 'designer.check' | dcTranslate }}
+    </button>
+    @if (canCreate()) {
+      <button matButton="filled" type="button" (click)="save()" [disabled]="busy() || errorsOnly().length > 0" data-testid="designer-save">
+        <mat-icon fontSet="material-symbols-outlined">save</mat-icon>
+        {{ drafts.saveLabel('wf.workflow-version') | dcTranslate }}
+      </button>
+    }
+  </div>
+
+  @if (errors().length) {
+    <ul class="dc-errors" role="alert">
+      @for (e of errors(); track $index) {
+        <li dir="ltr">{{ e }}</li>
+      }
+    </ul>
+  }
+  @if (savedAs(); as code) {
+    <p class="dc-designer__saved" role="status" data-testid="designer-saved">
+      <mat-icon fontSet="material-symbols-outlined">task_alt</mat-icon>
+      {{ 'designer.saved' | dcTranslate }} <bdi dir="ltr">{{ code }}</bdi>
+    </p>
+  }
+
+  <div class="dc-designer__body">
+    <aside class="dc-designer__palette" [attr.aria-label]="'designer.palette' | dcTranslate">
+      <h2>{{ 'designer.palette' | dcTranslate }}</h2>
+      @for (t of types; track t) {
+        <button
+          type="button"
+          class="dc-designer__item"
+          draggable="true"
+          (dragstart)="dragStart($event, t)"
+          (click)="add(t)"
+          [disabled]="view() !== 'canvas'"
+          [attr.data-testid]="'palette-' + t"
+        >
+          <mat-icon fontSet="material-symbols-outlined">{{ icons[t] }}</mat-icon>
+          <span>
+            <strong>{{ 'designer.type.' + t | dcTranslate }}</strong>
+            <small>{{ 'designer.typeHint.' + t | dcTranslate }}</small>
+          </span>
+        </button>
+      }
+      <p class="dc-muted dc-designer__tip">{{ 'designer.tip' | dcTranslate }}</p>
+    </aside>
+
+    <main class="dc-designer__main">
+      @switch (view()) {
+        @case ('canvas') {
+          <dc-designer-canvas [zoom]="zoom()" />
+        }
+        @case ('json') {
+          <div class="dc-designer__json">
+            @if (jsonError()) {
+              <p class="dc-errors" role="alert">{{ 'wfVersions.invalidJson' | dcTranslate }}</p>
+            }
+            <textarea dir="ltr" [ngModel]="jsonText()" (ngModelChange)="jsonText.set($event)" spellcheck="false" data-testid="designer-json"></textarea>
+          </div>
+        }
+        @case ('test') {
+          <dc-designer-test-run />
+        }
+      }
+    </main>
+
+    <aside class="dc-designer__panel">
+      <dc-designer-panel
+        [versionNameAr]="versionNameAr()"
+        [versionNameEn]="versionNameEn()"
+        (versionNameArChange)="versionNameAr.set($event)"
+        (versionNameEnChange)="versionNameEn.set($event)"
+        (remove)="deleteSelection()"
+      />
+    </aside>
+  </div>
+
+  <section class="dc-designer__problems" [attr.aria-label]="'designer.problems' | dcTranslate" data-testid="designer-problems">
+    @if (serverProblems(); as server) {
+      <div class="dc-designer__server" [class.dc-designer__server--ok]="server.length === 0" data-testid="designer-server">
+        <strong>{{ (server.length ? 'designer.serverProblems' : 'designer.serverOk') | dcTranslate }}</strong>
+        <ul>
+          @for (m of server; track $index) {
+            <li dir="ltr">{{ m }}</li>
+          }
+        </ul>
+      </div>
+    }
+    <ul class="dc-designer__list">
+      @for (p of store.problems(); track $index) {
+        <li [class.dc-designer__warn]="p.warning">
+          <button type="button" (click)="selectProblem(p)">
+            <mat-icon fontSet="material-symbols-outlined">{{ p.warning ? 'warning' : 'error' }}</mat-icon>
+            {{ problemText(p) }}
+          </button>
+        </li>
+      }
+    </ul>
+  </section>
+} @else {
+  <p class="dc-empty">{{ 'designer.choose' | dcTranslate }}</p>
+}

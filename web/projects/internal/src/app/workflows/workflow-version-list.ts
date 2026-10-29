@@ -10,6 +10,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { RouterLink } from '@angular/router';
 import { AppsControlApi, ConfigRow, LocalizePipe, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
 import { DraftsService } from '../apps-control/drafts.service';
 import { PrivilegesService } from '../apps-control/privileges.service';
@@ -77,14 +78,19 @@ export class WorkflowGraphDialog {
     MatSelectModule,
     MatTableModule,
     MatTooltipModule,
+    RouterLink,
     LocalizePipe,
     TranslatePipe,
     WorkflowGraph,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <header class="dc-page__header">
+    <header class="dc-page__header dc-versions__header">
       <h1>{{ 'wfVersions.title' | dcTranslate }}</h1>
+      <a matButton="filled" routerLink="/workflows/designer" [queryParams]="{ workflowCode: workflow() ?? undefined }" data-testid="open-designer">
+        <mat-icon fontSet="material-symbols-outlined">design_services</mat-icon>
+        {{ 'designer.open' | dcTranslate }}
+      </a>
     </header>
     <p class="dc-muted">{{ 'wfVersions.hint' | dcTranslate }}</p>
 
@@ -176,6 +182,18 @@ export class WorkflowGraphDialog {
           <button matIconButton (click)="showGraph(row)" [matTooltip]="'wfVersions.graph' | dcTranslate" [attr.data-testid]="'graph-' + row.code">
             <mat-icon fontSet="material-symbols-outlined">account_tree</mat-icon>
           </button>
+          <a
+            matIconButton
+            routerLink="/workflows/designer"
+            [queryParams]="{
+              workflowCode: row.code.split('/')[0],
+              version: row.code.split('/')[1],
+            }"
+            [matTooltip]="'designer.openFrom' | dcTranslate"
+            [attr.data-testid]="'design-' + row.code"
+          >
+            <mat-icon fontSet="material-symbols-outlined">design_services</mat-icon>
+          </a>
           @if (canEdit() && !row['isRetired']) {
             <button matIconButton (click)="retire(row)" [matTooltip]="'versions.retire' | dcTranslate">
               <mat-icon fontSet="material-symbols-outlined">archive</mat-icon>
@@ -188,6 +206,12 @@ export class WorkflowGraphDialog {
     </table>
   `,
   styles: `
+    .dc-versions__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
     .dc-authoring {
       display: grid;
       gap: 0.25rem;

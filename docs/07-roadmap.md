@@ -202,9 +202,11 @@ Delivered in slices:
 |---|---|---|
 | **2a** | Follow-up services on issued documents: availability windows, requests bound to a document, renewal and extension | ✅ |
 | **2b** | Payments: bills (SADAD / Tahseel through the Integration Manager), payment callbacks, waiting for payment, receipts | ✅ |
-| 2c | Sanctions: progressive penalties by offence, bans by kind of service, document status actions from sanctions, committee review | Next |
-| 2d | Remaining classification follow-ups: add / remove sector, modify / upgrade grade, update certificate data, appeal; draft expiry job | Planned |
-| 2e | Classification calculator (public, stateless) and dashboards v1 | Planned |
+| 2c | Sanctions: progressive penalties by offence, bans by kind of service, document status actions from sanctions, committee review | Postponed |
+| 2d | Remaining classification follow-ups: add / remove sector, modify / upgrade grade, update certificate data, appeal; draft expiry job | Postponed |
+| 2e | Classification calculator (public, stateless) and dashboards v1 | Postponed |
+
+2c, 2d and 2e are postponed until after the Phase 3 builders; nothing in Phase 3 depends on them.
 
 **2a delivered** ([ADR-0021](adr/0021-follow-up-services.md)):
 
@@ -267,8 +269,48 @@ Still open from 2b: refunds and partial payments, reconciliation reports, a fee 
 Visual designers over the runtime delivered in Phase 1; what they produce is the same versioned configuration,
 saved as change sets with maker-checker, so everything stays reviewable and can be exported as packages.
 
+Delivered in slices. Each designer covers what the runtime can run today; node types or rules without a runtime
+(notification, integration and timer steps) are added to the designer together with their runtime.
+
+| Slice | Content | Status |
+|---|---|---|
+| **3a** | Workflow Designer: canvas, palette, connections, side panel per step, visual JSONLogic rule editor, checks as you draw, test run, publish as a new version | ✅ |
+| 3b | Service & Form Builder: form (steps, sections, question bank, layouts, live preview), service card, rules, required documents, output, related services | Next |
+| 3c | Notification rule builder; Portal Content Manager (banner, categories, tiles, FAQs, help links, pages) | Planned |
+| 3d | Configuration packages: export from any screen, import with a diff preview | Planned |
+| 3e | Visits: field app (offline PWA), external inspection integration, manual entry | Planned |
+| 3f | Sub-requests: prerequisite, bundled, spawned | Planned |
+
+**3a delivered** ([ADR-0023](adr/0023-workflow-designer.md)):
+
+- **Canvas.** *Action Center → Workflow designer* (or *Open in the designer* on any version) opens a workflow's latest
+  version, or an earlier one, and prepares the next. Steps come from a palette (drag or click); dragging from the
+  handles under a step connects it: next, a task's actions, a split's branches, a gateway's conditions and its
+  otherwise, a payment's paid and not-paid ways. Steps move freely (snapped to a grid) or are arranged
+  automatically; undo and redo, delete, zoom.
+- **Side panel.** Per step: code (renaming updates every reference), names, who works on a task (role, employee or
+  whoever completed an earlier step; queue, distribution or automatic), separation of duties, displayed status,
+  deadlines per service level and escalation, actions with their targets, returns and where they resume, branches,
+  join mode, gateway routes in order, the rule set and inputs of a decision, the document type, target, validity,
+  data and lines of a document step, the provider, amount, VAT and days of a payment, an end's outcome.
+- **Rules without JSON.** A shared visual JSONLogic editor (all / any of comparisons; a field, text or number as a
+  value) with the service's questions, levels, tasks' actions, decision results and bill statuses suggested;
+  anything else is edited as JSON, checked as it is typed.
+- **Checks.** The server's structural checks run as you draw, listed with the step they concern and counted on the
+  canvas; *Check on the server* runs the full publish validation without saving.
+- **Test run.** Sample answers, a service level and fees; gateways are evaluated as on the server, splits and joins
+  behave as in the engine, and you choose each task's action and whether the bill is paid, with the current steps
+  highlighted.
+- **Saving.** The version goes into a change set as `WORKFLOW/N+1` with where its steps were drawn
+  (`definition.layout`); the JSON view shows exactly what is saved and can be edited.
+
+Still open from 3a: comments on steps, copy and paste, a minimap for large workflows, and rule-set results in the
+test run.
+
+Scope of the slices:
+
 - **Workflow Designer** (canvas): drag nodes (human task, parallel split / join, gateway, decision, document,
-  notification, integration, timer, end) from a palette, connect them, edit each node in a side panel
+  payment, end; notification, integration and timer steps once the engine runs them) from a palette, connect them, edit each node in a side panel
   (assignment, actions, deadlines per service level, display status, conditions in a JSONLogic rule editor),
   validation as you draw (unreachable nodes, missing ends, unclosed splits), test run with sample data, and
   publish as a new version of the service's workflow. Replaces hand-written JSON.

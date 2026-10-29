@@ -10,6 +10,9 @@ internal static partial class DefinitionValidator
 {
     private const string Field = "definition.nodes";
 
+    /// <summary>Largest coordinate a node may be drawn at.</summary>
+    private const double MaxCanvas = 20_000;
+
     public static void Validate(WorkflowDefinition definition, JsonLogicEvaluator evaluator, ValidationErrors errors)
     {
         var nodes = definition.Nodes;
@@ -37,6 +40,18 @@ internal static partial class DefinitionValidator
         for (var i = 0; i < nodes.Count; i++)
         {
             Node(nodes[i], $"{Field}[{i}]", byCode, evaluator, errors);
+        }
+
+        foreach (var (code, position) in definition.Layout ?? [])
+        {
+            if (!byCode.ContainsKey(code))
+            {
+                errors.Add("definition.layout", $"Node '{code}' does not exist.");
+            }
+            else if (position is null || !double.IsFinite(position.X) || !double.IsFinite(position.Y) || position.X is < 0 or > MaxCanvas || position.Y is < 0 or > MaxCanvas)
+            {
+                errors.Add("definition.layout", $"The position of '{code}' must be between 0 and {MaxCanvas}.");
+            }
         }
 
         if (!errors.HasErrors)

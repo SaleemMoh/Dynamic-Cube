@@ -1,0 +1,203 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  height: calc(100vh - 7.5rem);
+  min-height: 36rem;
+}
+.dc-designer__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.dc-designer__pick {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+.dc-designer__pick mat-form-field {
+  min-width: 16rem;
+}
+.dc-designer__target {
+  font-family: ui-monospace, monospace;
+  font-weight: 600;
+}
+.dc-designer__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--dga-gray-200, #e5e7eb);
+  border-radius: 8px;
+  background: #fff;
+}
+.dc-designer__sep {
+  width: 1px;
+  height: 1.5rem;
+  margin-inline: 0.25rem;
+  background: var(--dga-gray-200, #e5e7eb);
+}
+.dc-designer__grow {
+  flex: 1;
+}
+.dc-designer__zoom {
+  min-width: 3rem;
+  text-align: center;
+  font-size: 13px;
+}
+.dc-designer__views {
+  display: flex;
+  gap: 0.125rem;
+}
+.dc-designer__view--on {
+  background: var(--dynamic-cube-gold-50, #faf7f0);
+  font-weight: 700;
+}
+.dc-designer__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-inline-end: 0.5rem;
+  color: var(--dynamic-cube-green, #136f40);
+  font-size: 14px;
+}
+.dc-designer__status--bad {
+  color: #b42318;
+}
+.dc-designer__saved {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0;
+  color: var(--dynamic-cube-green, #136f40);
+}
+.dc-designer__body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 13rem minmax(0, 1fr) 22rem;
+  min-height: 0;
+  border: 1px solid var(--dga-gray-200, #e5e7eb);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+.dc-designer__palette,
+.dc-designer__panel {
+  overflow: auto;
+  padding: 0.75rem;
+}
+.dc-designer__palette {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  border-inline-end: 1px solid var(--dga-gray-200, #e5e7eb);
+}
+.dc-designer__palette h2 {
+  margin: 0 0 0.25rem;
+  font-size: 15px;
+}
+.dc-designer__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border: 1px solid var(--dga-gray-200, #e5e7eb);
+  border-radius: 8px;
+  background: #fff;
+  font: inherit;
+  text-align: start;
+  cursor: grab;
+}
+.dc-designer__item:hover:not(:disabled) {
+  border-color: var(--dynamic-cube-gold, #ca9f45);
+  background: var(--dynamic-cube-gold-50, #faf7f0);
+}
+.dc-designer__item span {
+  display: grid;
+}
+.dc-designer__item small {
+  color: var(--dga-text-3, #6c737f);
+  font-size: 12px;
+}
+.dc-designer__tip {
+  margin-top: 0.5rem;
+  font-size: 12px;
+}
+.dc-designer__main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+.dc-designer__panel {
+  min-width: 0;
+  overflow-x: hidden;
+  border-inline-start: 1px solid var(--dga-gray-200, #e5e7eb);
+}
+.dc-designer__json {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0.5rem;
+}
+.dc-designer__json textarea {
+  flex: 1;
+  width: 100%;
+  min-height: 20rem;
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+  resize: none;
+}
+.dc-designer__problems {
+  max-height: 9rem;
+  overflow: auto;
+}
+.dc-designer__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dc-designer__list button {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.125rem 0;
+  border: 0;
+  background: none;
+  color: #b42318;
+  font: inherit;
+  font-size: 13px;
+  text-align: start;
+  cursor: pointer;
+}
+.dc-designer__warn button {
+  color: #b54708;
+}
+.dc-designer__list mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+.dc-designer__server {
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  background: #fef3f2;
+  font-size: 13px;
+}
+.dc-designer__server--ok {
+  background: var(--dynamic-cube-green-50, #e8f3ed);
+}
+.dc-designer__server ul {
+  margin: 0.25rem 0 0;
+}
+@media (max-width: 1200px) {
+  .dc-designer__body {
+    grid-template-columns: 11rem minmax(0, 1fr) 18rem;
+  }
+}

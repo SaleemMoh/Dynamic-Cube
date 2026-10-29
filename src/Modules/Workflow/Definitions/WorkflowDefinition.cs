@@ -13,6 +13,17 @@ public sealed class WorkflowDefinition
     public int? SlaWorkingDays { get; set; }
 
     public List<NodeDefinition> Nodes { get; set; } = [];
+
+    /// <summary>Where the designer drew each node (node code → position); the engine ignores it.</summary>
+    public Dictionary<string, NodePosition>? Layout { get; set; }
+}
+
+/// <summary>A node's top-left corner on the designer's canvas.</summary>
+public sealed class NodePosition
+{
+    public double X { get; set; }
+
+    public double Y { get; set; }
 }
 
 public enum NodeType

@@ -100,6 +100,7 @@ internal static class WorkflowCatalog
             new("action-center.supervision", "متابعة المهام", "Task supervision", "/action-center/supervision", WorkflowResources.Supervision, "monitoring", 20),
             new("workflows.workflows", "مسارات العمل", "Workflows", "/workflows", WorkflowResources.Config, "account_tree", 30),
             new("workflows.versions", "إصدارات المسارات", "Workflow versions", "/workflows/versions", WorkflowResources.Config, "history_edu", 40),
+            new("workflows.designer", "مصمم مسارات العمل", "Workflow designer", "/workflows/designer", WorkflowResources.Config, "design_services", 45),
         ],
     };
 }
