@@ -84,3 +84,9 @@ public interface IServiceWorkflows
     /// <summary>Puts the service's workflow and its versions at the service's level (entity and business app); runs in the caller's unit of work.</summary>
     Task ScopeAsync(string serviceCode, string? entityCode, string? businessApp, CancellationToken cancellationToken, IReadOnlyList<string>? sharedApps = null);
 }
+
+/// <summary>
+/// The workflow cannot run as it is configured (e.g. a decision step whose rule set has no published version): the
+/// request is not taken, and the message says what to fix.
+/// </summary>
+public sealed class WorkflowConfigurationException(string message, Exception? inner = null) : Exception(message, inner);

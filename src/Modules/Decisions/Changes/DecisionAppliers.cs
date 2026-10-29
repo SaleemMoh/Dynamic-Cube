@@ -6,6 +6,7 @@ using DynamicCube.Modules.Decisions.Persistence;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Decisions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DynamicCube.Modules.Decisions.Changes;
 
@@ -35,7 +36,7 @@ public sealed class RuleSetPayload : ConfigPayload
     public bool IsPublic { get; set; }
 }
 
-internal sealed class RuleSetApplier(DecisionsDbContext db, IEnumerable<IDecisionEngine> engines) : DecisionApplierBase<RuleSet, RuleSetPayload>(db)
+internal sealed class RuleSetApplier(DecisionsDbContext db, IEnumerable<IDecisionEngine> engines, IServiceProvider services) : DecisionApplierBase<RuleSet, RuleSetPayload>(db)
 {
     public override string EntityType => DecisionChangeTypes.RuleSet;
 
@@ -55,6 +56,16 @@ internal sealed class RuleSetApplier(DecisionsDbContext db, IEnumerable<IDecisio
         if (existing is not null && existing.Engine != engine && await refs.Context.Versions.AnyAsync(v => v.RuleSetId == existing.Id, cancellationToken))
         {
             errors.Add("engine", "The engine of a rule set with versions cannot change; add a new rule set.");
+        }
+
+        if (existing is { IsActive: true } && !payload.IsActive)
+        {
+            var users = await RuleSetGuard.WorkflowsUsingAsync(services, existing.Code, cancellationToken);
+            if (users.Count > 0)
+            {
+                RuleSetGuard.Explain(errors, "isActive", existing.Code, users, "Deactivating this rule set",
+                    $"Deactivate '{existing.Code}' again once no published workflow uses it.");
+            }
         }
 
         entity.DescriptionAr = string.IsNullOrWhiteSpace(payload.DescriptionAr) ? null : payload.DescriptionAr.Trim();
@@ -90,7 +101,7 @@ public sealed class RuleSetVersionPayload : ConfigPayload
 /// Rule-set versions, keyed <c>RULE_SET/N</c>, checked by their engine. A new version takes the next number; afterwards
 /// only its names and the retired flag may change, so recorded evaluations always point at the configuration used.
 /// </summary>
-internal sealed partial class RuleSetVersionApplier(DecisionsDbContext db, IEnumerable<IDecisionEngine> engines, TimeProvider clock)
+internal sealed partial class RuleSetVersionApplier(DecisionsDbContext db, IEnumerable<IDecisionEngine> engines, TimeProvider clock, IServiceProvider services)
     : DecisionApplierBase<RuleSetVersion, RuleSetVersionPayload>(db)
 {
     public override string EntityType => DecisionChangeTypes.Version;
@@ -116,6 +127,16 @@ internal sealed partial class RuleSetVersionApplier(DecisionsDbContext db, IEnum
             if (!JsonNode.DeepEquals(configuration, JsonNode.Parse(existing.Configuration)))
             {
                 errors.Add("configuration", $"Published versions cannot change; add version {code}/{number + 1} instead.");
+            }
+
+            if (!existing.IsRetired && payload.IsRetired && !await HasOtherVersionAsync(refs, existing, code, cancellationToken))
+            {
+                var users = await RuleSetGuard.WorkflowsUsingAsync(services, code, cancellationToken);
+                if (users.Count > 0)
+                {
+                    RuleSetGuard.Explain(errors, "isRetired", code, users, $"Retiring {entity.Code}, the last version of '{code}' in use,",
+                        $"Or publish a newer version of '{code}' first (or add it to this change set before this item), then retire {entity.Code}.");
+                }
             }
 
             return;
@@ -152,6 +173,11 @@ internal sealed partial class RuleSetVersionApplier(DecisionsDbContext db, IEnum
         }
     }
 
+    /// <summary>Another version of the rule set stays in use (published and not retired, or created in the same change set).</summary>
+    private static async Task<bool> HasOtherVersionAsync(ConfigRefs<DecisionsDbContext> refs, RuleSetVersion version, string code, CancellationToken cancellationToken) =>
+        refs.Draft?.Items.Any(i => i.EntityType == DecisionChangeTypes.Version && i.Operation == ChangeOperation.Create && i.EntityCode.StartsWith(code + "/", StringComparison.Ordinal)) == true
+        || await refs.Context.Versions.AnyAsync(v => v.RuleSetId == version.RuleSetId && v.Id != version.Id && !v.IsRetired, cancellationToken);
+
     protected override Task<RuleSetVersionPayload> ToPayloadAsync(DecisionsDbContext context, RuleSetVersion entity, CancellationToken cancellationToken) =>
         Task.FromResult(new RuleSetVersionPayload { IsRetired = entity.IsRetired, Configuration = JsonNode.Parse(entity.Configuration), PublishedAt = entity.PublishedAt });
 
@@ -177,4 +203,20 @@ internal sealed partial class RuleSetVersionApplier(DecisionsDbContext db, IEnum
 
     [GeneratedRegex("^[A-Z][A-Z0-9_\\-]{0,50}/[1-9][0-9]{0,3}$")]
     private static partial Regex Key();
+}
+
+/// <summary>Stops a change that would leave published workflows deciding with a rule set that cannot be evaluated.</summary>
+internal static class RuleSetGuard
+{
+    public static Task<IReadOnlyList<string>> WorkflowsUsingAsync(IServiceProvider services, string code, CancellationToken cancellationToken) =>
+        services.GetService<IRuleSetUsage>() is { } usage ? usage.WorkflowsUsingAsync(code, cancellationToken) : Task.FromResult<IReadOnlyList<string>>([]);
+
+    public static void Explain(ValidationErrors errors, string field, string code, IReadOnlyList<string> workflows, string change, string alternative)
+    {
+        errors.Add(field, $"{change} would stop every request at the decision step of these published workflow versions: {string.Join(", ", workflows)}. It cannot be published until they no longer use '{code}':");
+        errors.Add(field, "1. Open Workflows → Workflow designer for each workflow listed.");
+        errors.Add(field, $"2. In its decision step, choose another rule set that has a published version, or remove the step; then publish the new workflow version (its change set approved).");
+        errors.Add(field, "3. Retire the old workflow versions listed above (Workflows → Workflow versions) once no request runs on them.");
+        errors.Add(field, "4. " + alternative);
+    }
 }

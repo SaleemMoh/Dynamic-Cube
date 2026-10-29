@@ -4,6 +4,7 @@ using DynamicCube.Modules.Workflow.Definitions;
 using DynamicCube.Modules.Workflow.Domain;
 using DynamicCube.Modules.Workflow.Persistence;
 using DynamicCube.Platform.ChangeSets;
+using DynamicCube.Platform.Decisions;
 using DynamicCube.Platform.Expressions;
 using DynamicCube.Platform.Services;
 using Microsoft.EntityFrameworkCore;
@@ -104,7 +105,7 @@ public sealed class WorkflowVersionPayload : ConfigPayload
 /// Workflow versions, keyed <c>WORKFLOW/N</c>. A new version takes the next number; afterwards only its names and the
 /// retired flag may change, so instances always run on the graph they started with.
 /// </summary>
-internal sealed partial class WorkflowVersionApplier(WorkflowDbContext db, JsonLogicEvaluator evaluator, TimeProvider clock)
+internal sealed partial class WorkflowVersionApplier(WorkflowDbContext db, JsonLogicEvaluator evaluator, TimeProvider clock, IServiceProvider services)
     : WorkflowApplierBase<WorkflowVersion, WorkflowVersionPayload>(db)
 {
     public override string EntityType => WorkflowChangeTypes.Version;
@@ -151,6 +152,41 @@ internal sealed partial class WorkflowVersionApplier(WorkflowDbContext db, JsonL
         }
 
         DefinitionValidator.Validate(definition, evaluator, errors);
+        if (refs.IsValidating)
+        {
+            await CheckRuleSetsAsync(definition, refs, errors, cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Decision steps need a rule set with a published version (in use, or created in the same change set); otherwise
+    /// every request would stop at that step.
+    /// </summary>
+    private async Task CheckRuleSetsAsync(WorkflowDefinition definition, ConfigRefs<WorkflowDbContext> refs, ValidationErrors errors, CancellationToken cancellationToken)
+    {
+        if (services.GetService<IDecisionService>() is not { } decisions)
+        {
+            return;
+        }
+
+        for (var i = 0; i < definition.Nodes.Count; i++)
+        {
+            var code = definition.Nodes[i].RuleSet;
+            if (definition.Nodes[i].Type != NodeType.Decision || string.IsNullOrWhiteSpace(code))
+            {
+                continue;
+            }
+
+            var pending = refs.Draft?.Items.Any(item => item.EntityType == RuleSetVersionType && item.Operation == ChangeOperation.Create && item.EntityCode.StartsWith(code + "/", StringComparison.Ordinal)) == true;
+            if (!pending && !await decisions.IsReadyAsync(code, cancellationToken))
+            {
+                var field = $"definition.nodes[{i}].ruleSet";
+                errors.Add(field, $"The decision step '{definition.Nodes[i].Code}' uses rule set '{code}', which has no published version in use, so every request would stop at this step. This version cannot be published until that is fixed:");
+                errors.Add(field, $"1. Open Decision rules → Rule sets and find '{code}' (create it there if it does not exist, and make sure it is active).");
+                errors.Add(field, $"2. In Decision rules → Rule set versions, add a version of '{code}' with its rules, try it in the test console, and publish it (its change set approved) — or add that version to this change set before this workflow version.");
+                errors.Add(field, "3. Publish this workflow version again. Or, in the designer, choose another rule set that has a published version for this step, or remove the step.");
+            }
+        }
     }
 
     protected override Task<WorkflowVersionPayload> ToPayloadAsync(WorkflowDbContext context, WorkflowVersion entity, CancellationToken cancellationToken) =>
@@ -179,4 +215,7 @@ internal sealed partial class WorkflowVersionApplier(WorkflowDbContext db, JsonL
 
     [GeneratedRegex("^[A-Z][A-Z0-9_\\-]{0,50}/[1-9][0-9]{0,3}$")]
     private static partial Regex Key();
+
+    /// <summary>The Decisions module's rule-set version change type (this module does not reference it).</summary>
+    private const string RuleSetVersionType = "dec.rule-set-version";
 }

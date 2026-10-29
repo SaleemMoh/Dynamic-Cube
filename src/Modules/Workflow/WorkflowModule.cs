@@ -5,6 +5,7 @@ using DynamicCube.Modules.Workflow.Runtime;
 using DynamicCube.Platform;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Communication;
+using DynamicCube.Platform.Decisions;
 using DynamicCube.Platform.Payments;
 using DynamicCube.Platform.Security;
 using DynamicCube.Platform.Services;
@@ -47,6 +48,7 @@ public static class WorkflowModule
         services.AddScoped<SlaMonitor>();
         services.AddScoped<ServiceWorkflows>();
         services.AddScoped<IServiceWorkflows>(sp => sp.GetRequiredService<ServiceWorkflows>());
+        services.AddScoped<IRuleSetUsage, RuleSetUsage>();
         services.AddCommunicationEvents(TaskNotifications.Types);
         return services;
     }

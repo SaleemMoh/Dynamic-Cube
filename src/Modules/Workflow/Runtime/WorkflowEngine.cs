@@ -78,7 +78,16 @@ internal sealed class WorkflowEngine(
         var run = new Run(instance, version, calendar, now, System, null, [], []);
         run.Event(WorkflowEventTypes.Started, null, null);
         var token = run.NewToken(version.Definition.Nodes.Single(n => n.Type == NodeType.Start).Code, []);
-        await AdvanceAsync(run, token, cancellationToken);
+        try
+        {
+            await AdvanceAsync(run, token, cancellationToken);
+        }
+        catch (WorkflowConflictException ex)
+        {
+            // The first steps run before anyone acts: a failure there is the workflow's configuration, not the request's.
+            throw new WorkflowConfigurationException($"Workflow {version.WorkflowCode}/{version.Number}: {ex.Message}", ex);
+        }
+
         await FinishAsync(run, cancellationToken);
         await work.CommitAsync(cancellationToken);
     }
@@ -111,7 +120,14 @@ internal sealed class WorkflowEngine(
             token.NodeCode = token.ResumeAt ?? token.NodeCode;
             token.ResumeAt = null;
             run.Resuming.Add(token.Id);
-            await AdvanceAsync(run, token, cancellationToken);
+            try
+            {
+                await AdvanceAsync(run, token, cancellationToken);
+            }
+            catch (WorkflowConflictException ex)
+            {
+                throw new WorkflowConfigurationException($"Workflow {run.Instance.WorkflowCode}/{run.Instance.VersionNumber}: {ex.Message}", ex);
+            }
         }
 
         await FinishAsync(run, cancellationToken);

@@ -35,7 +35,20 @@ public sealed record DecisionResult(Guid EvaluationId, string RuleSetCode, int V
 public interface IDecisionService
 {
     Task<DecisionResult> EvaluateAsync(DecisionRequest request, CancellationToken cancellationToken);
+
+    /// <summary>Whether the rule set exists, is active and has a published version in use (so it can be evaluated).</summary>
+    Task<bool> IsReadyAsync(string ruleSetCode, CancellationToken cancellationToken);
 }
 
 /// <summary>The decision cannot be made: no such rule set or version, unknown engine, or the engine failed.</summary>
 public sealed class DecisionException(string message, Exception? inner = null) : Exception(message, inner);
+
+/// <summary>
+/// Where rule sets are used, so a rule set cannot be retired or deactivated while a published workflow still decides with
+/// it (implemented by the Workflow module).
+/// </summary>
+public interface IRuleSetUsage
+{
+    /// <summary>Published, not retired workflow versions (<c>CODE/N</c>) with a decision step that uses the rule set.</summary>
+    Task<IReadOnlyList<string>> WorkflowsUsingAsync(string ruleSetCode, CancellationToken cancellationToken);
+}

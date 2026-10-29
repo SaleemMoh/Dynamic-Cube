@@ -38,9 +38,23 @@ internal sealed class DecisionService(DecisionsDbContext context, IEnumerable<ID
     public async Task<DecisionResult> EvaluateAsync(DecisionRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var (ruleSet, version) = await LoadAsync(request.RuleSetCode, null, cancellationToken);
+        RuleSet ruleSet;
+        RuleSetVersion version;
+        try
+        {
+            (ruleSet, version) = await LoadAsync(request.RuleSetCode, null, cancellationToken);
+        }
+        catch (DecisionNotFoundException ex)
+        {
+            // Callers of the contract (workflow decision steps) know only DecisionException.
+            throw new DecisionException(ex.Message, ex);
+        }
+
         return await RunAsync(ruleSet, version, request.Input, request.SubjectType, request.SubjectId, request.SubjectNumber, cancellationToken);
     }
+
+    public Task<bool> IsReadyAsync(string ruleSetCode, CancellationToken cancellationToken) =>
+        context.Versions.AsNoTracking().AnyAsync(v => v.RuleSet!.Code == ruleSetCode && v.RuleSet.IsActive && !v.IsRetired, cancellationToken);
 
     /// <summary>Tries a version out (the test console); recorded as a <c>TRY</c> evaluation.</summary>
     public async Task<DecisionResult> TryAsync(string code, TryRequest request, CancellationToken cancellationToken)

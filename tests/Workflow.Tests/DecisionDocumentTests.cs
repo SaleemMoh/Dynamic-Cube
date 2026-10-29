@@ -28,6 +28,16 @@ public sealed class DecisionDocumentTests(DatabaseFixture fixture)
         next,
     };
 
+    private const string Rules = """
+        {
+          "variables": [{ "code": "grade", "rule": {"if": [{">=": [{"var": "input.score"}, 80]}, 1, {">=": [{"var": "input.score"}, 50]}, 3, 0]} }],
+          "items": { "source": {"var": "input.sectors"}, "as": "sector", "output": { "sector": {"var": "sector"}, "grade": {"var": "vars.grade"} } },
+          "output": { "grade": {"var": "vars.grade"}, "eligible": {">": [{"var": "vars.grade"}, 0]} }
+        }
+        """;
+
+    private static object RuleSetVersion(bool retired) => new { nameAr = "1", nameEn = "1", isRetired = retired, configuration = JsonNode.Parse(Rules) };
+
     private static object Issue(string code, string documentType, string next) => new
     {
         code,
@@ -47,18 +57,7 @@ public sealed class DecisionDocumentTests(DatabaseFixture fixture)
         await host.Host.PublishAsync(
             DecisionChangeTypes.Area,
             new Change(DecisionChangeTypes.RuleSet, ruleSet, ChangeOperation.Create, new { nameAr = "الدرجة", nameEn = "Grade", engine = "RULES" }),
-            new Change(DecisionChangeTypes.Version, ruleSet + "/1", ChangeOperation.Create, new
-            {
-                nameAr = "1",
-                nameEn = "1",
-                configuration = JsonNode.Parse("""
-                    {
-                      "variables": [{ "code": "grade", "rule": {"if": [{">=": [{"var": "input.score"}, 80]}, 1, {">=": [{"var": "input.score"}, 50]}, 3, 0]} }],
-                      "items": { "source": {"var": "input.sectors"}, "as": "sector", "output": { "sector": {"var": "sector"}, "grade": {"var": "vars.grade"} } },
-                      "output": { "grade": {"var": "vars.grade"}, "eligible": {">": [{"var": "vars.grade"}, 0]} }
-                    }
-                    """),
-            }));
+            new Change(DecisionChangeTypes.Version, ruleSet + "/1", ChangeOperation.Create, RuleSetVersion(false)));
 
         var template = Unique("TPL");
         var type = Unique("CERT");
@@ -147,5 +146,68 @@ public sealed class DecisionDocumentTests(DatabaseFixture fixture)
         ex.Errors.Keys.ShouldContain(k => k.Contains("result"));
         ex.Errors.Keys.ShouldContain(k => k.Contains("documentType"));
         ex.Errors.Keys.ShouldContain(k => k.Contains("data.x"));
+    }
+
+    [Fact]
+    public async Task A_workflow_cannot_be_published_with_a_rule_set_that_has_no_published_version()
+    {
+        await using var host = new WorkflowHost(fixture);
+        var ruleSet = Unique("EMPTY");
+        await host.Host.PublishAsync(DecisionChangeTypes.Area, new Change(DecisionChangeTypes.RuleSet, ruleSet, ChangeOperation.Create, new { nameAr = "فارغة", nameEn = "Empty", engine = "RULES" }));
+
+        var ex = await Should.ThrowAsync<ChangeValidationException>(() => host.WorkflowAsync(
+        [
+            Start("GRADE"),
+            Decide("GRADE", ruleSet, "END"),
+            End("END", "APPROVED"),
+        ]));
+
+        // The problem and the steps to fix it, under the step's rule set.
+        var messages = ex.Errors.Single(e => e.Key.EndsWith(".ruleSet", StringComparison.Ordinal)).Value;
+        messages[0].ShouldContain($"'{ruleSet}'");
+        messages[0].ShouldContain("'GRADE'");
+        messages.Skip(1).Select(m => m[..2]).ShouldBe(["1.", "2.", "3."]);
+    }
+
+    [Fact]
+    public async Task The_last_version_of_a_rule_set_in_use_cannot_be_retired_nor_the_rule_set_deactivated()
+    {
+        await using var host = new WorkflowHost(fixture);
+        var (ruleSet, _) = await ConfigureAsync(host);
+        var workflow = await host.WorkflowAsync([Start("GRADE"), Decide("GRADE", ruleSet, "END"), End("END", "APPROVED")]);
+
+        var retire = await Should.ThrowAsync<ChangeValidationException>(() =>
+            host.Host.PublishAsync(DecisionChangeTypes.Area, new Change(DecisionChangeTypes.Version, ruleSet + "/1", ChangeOperation.Update, RuleSetVersion(true))));
+        var deactivate = await Should.ThrowAsync<ChangeValidationException>(() =>
+            host.Host.PublishAsync(DecisionChangeTypes.Area, new Change(DecisionChangeTypes.RuleSet, ruleSet, ChangeOperation.Update, new { nameAr = "الدرجة", nameEn = "Grade", engine = "RULES", isActive = false })));
+
+        retire.Errors["isRetired"][0].ShouldContain(workflow + "/");
+        retire.Errors["isRetired"].Skip(1).Select(m => m[..2]).ShouldBe(["1.", "2.", "3.", "4."]);
+        deactivate.Errors["isActive"][0].ShouldContain(workflow + "/");
+
+        // With a newer version in use, the old one may be retired.
+        await host.Host.PublishAsync(
+            DecisionChangeTypes.Area,
+            new Change(DecisionChangeTypes.Version, ruleSet + "/2", ChangeOperation.Create, RuleSetVersion(false)),
+            new Change(DecisionChangeTypes.Version, ruleSet + "/1", ChangeOperation.Update, RuleSetVersion(true)));
+    }
+
+    [Fact]
+    public async Task A_rule_set_that_can_no_longer_be_evaluated_stops_the_start_with_a_configuration_error()
+    {
+        await using var host = new WorkflowHost(fixture);
+        var (ruleSet, _) = await ConfigureAsync(host);
+        var workflow = await host.WorkflowAsync([Start("GRADE"), Decide("GRADE", ruleSet, "END"), End("END", "APPROVED")]);
+        await host.Host.AsAsync("admin", async sp =>
+        {
+            var decisions = sp.GetRequiredService<Decisions.Persistence.DecisionsDbContext>();
+            await decisions.Versions.Where(v => v.RuleSet!.Code == ruleSet).ExecuteUpdateAsync(u => u.SetProperty(v => v.IsRetired, true));
+            return true;
+        });
+
+        var ex = await Should.ThrowAsync<WorkflowConfigurationException>(() => host.StartAsync(workflow, new JsonObject { ["SCORE"] = 90 }));
+
+        ex.Message.ShouldContain(ruleSet);
+        ex.Message.ShouldContain($"Workflow {workflow}/");
     }
 }

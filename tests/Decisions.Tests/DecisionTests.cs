@@ -112,7 +112,8 @@ public sealed class DecisionTests(DatabaseFixture fixture)
     public async Task Unknown_or_failing_rule_sets_raise_decision_errors()
     {
         await using var host = new TestHost(fixture.RequireConnectionString());
-        await Should.ThrowAsync<DecisionNotFoundException>(() => host.AsAsync("analyst", sp => sp.GetRequiredService<IDecisionService>().EvaluateAsync(new DecisionRequest("NOPE", [], "T", Guid.Empty, null), CancellationToken.None)));
+        // Callers of the contract (workflow decision steps) get DecisionException for a missing rule set too.
+        await Should.ThrowAsync<DecisionException>(() => host.AsAsync("analyst", sp => sp.GetRequiredService<IDecisionService>().EvaluateAsync(new DecisionRequest("NOPE", [], "T", Guid.Empty, null), CancellationToken.None)));
 
         var code = TestHost.Unique("PRIVATE");
         await host.PublishAsync(

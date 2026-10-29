@@ -4,6 +4,7 @@ using DynamicCube.Modules.Services.Runtime;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Parties;
 using DynamicCube.Platform.Security;
+using DynamicCube.Platform.Workflow;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -106,6 +107,14 @@ internal static class ServiceEndpoints
         catch (RequestConflictException ex)
         {
             return Results.Problem(statusCode: StatusCodes.Status409Conflict, detail: ex.Message);
+        }
+        catch (WorkflowConfigurationException ex)
+        {
+            // The service's set-up is incomplete: the applicant's draft is kept and the entity has something to fix.
+            return Results.Problem(
+                statusCode: StatusCodes.Status409Conflict,
+                title: "The service is not ready to take requests.",
+                detail: $"لا يمكن تقديم الطلب حاليًا لأن إعداد الخدمة غير مكتمل، وحُفظت مسودتك. The service cannot take requests yet; your draft is kept. ({ex.Message})");
         }
         catch (ActingPartyException ex)
         {
