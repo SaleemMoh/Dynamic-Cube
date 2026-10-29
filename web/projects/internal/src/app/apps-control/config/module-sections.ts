@@ -1,26 +1,44 @@
-import { FormOption, LocalizedText } from '@dynamic-cube/shared';
+import { FormOption, LocalizedText, StructuredColumn, StructuredShape } from '@dynamic-cube/shared';
 import { CONFIG_SECTIONS, ConfigField, ConfigRowLink, ConfigSection } from './config-types';
 
 const t = (ar: string, en: string): LocalizedText => ({ ar, en });
 const opt = (value: string, ar: string, en: string): FormOption => ({ value, label: t(ar, en) });
-const number = (
-  code: string,
-  label: LocalizedText,
-  defaultValue: number,
-  hint?: LocalizedText,
-): ConfigField => ({ code, type: 'number', label, defaultValue, hint });
+const number = (code: string, label: LocalizedText, defaultValue: number, hint?: LocalizedText): ConfigField => ({
+  code,
+  type: 'number',
+  label,
+  defaultValue,
+  hint,
+});
 const path = (code: string, label: LocalizedText, hint?: LocalizedText): ConfigField => ({
   code,
   type: 'text',
   label,
   hint,
 });
-const json = (
-  code: string,
-  label: LocalizedText,
-  hint: LocalizedText,
-  defaultValue: unknown = [],
-): ConfigField => ({ code, type: 'json', label, hint, defaultValue });
+/** Nested data edited through a form made for its shape (rows, a list, properties), with a JSON view. */
+const json = (code: string, label: LocalizedText, structure: StructuredShape, hint?: LocalizedText, defaultValue: unknown = []): ConfigField => ({
+  code,
+  type: 'json',
+  label,
+  structure,
+  hint,
+  defaultValue,
+});
+const col = (key: string, label: LocalizedText, type: StructuredColumn['type'] = 'text', extra: Partial<StructuredColumn> = {}): StructuredColumn => ({
+  key,
+  label,
+  type,
+  ...extra,
+});
+const table = (...columns: StructuredColumn[]): StructuredShape => ({ kind: 'table', columns });
+const list = (item: 'text' | 'number' = 'text'): StructuredShape => ({ kind: 'list', item });
+const object = (...properties: StructuredColumn[]): StructuredShape => ({ kind: 'object', properties });
+/** A JSONLogic rule: written as JSON. */
+const JSON_RULE: StructuredShape = { kind: 'json' };
+const REQ: Partial<StructuredColumn> = { required: true };
+const LTR: Partial<StructuredColumn> = { ltr: true };
+const LTR_REQ: Partial<StructuredColumn> = { ltr: true, required: true };
 
 /** From a service or a workflow row to the workflow's versions. */
 function workflowVersionsLink(param: 'service' | 'workflowCode'): ConfigRowLink {
@@ -35,15 +53,28 @@ function workflowVersionsLink(param: 'service' | 'workflowCode'): ConfigRowLink 
   };
 }
 
-const partyKinds = [
-  opt('INDIVIDUAL', 'فرد', 'Individual'),
-  opt('ESTABLISHMENT', 'منشأة', 'Establishment'),
-];
-const outcomes = 'SUCCESS | NOT_FOUND | BUSINESS_ERROR | TECHNICAL_ERROR';
-const responseCodesHint = t(
-  `[{"code": "001-000001", "outcome": "NOT_FOUND", "messageAr": "…", "messageEn": "…"}] — النتائج: ${outcomes}`,
-  `[{"code": "001-000001", "outcome": "NOT_FOUND", "messageAr": "…", "messageEn": "…"}] — outcomes: ${outcomes}`,
+const partyKinds = [opt('INDIVIDUAL', 'فرد', 'Individual'), opt('ESTABLISHMENT', 'منشأة', 'Establishment')];
+/** What a provider's response code means, with the message shown for it. */
+const responseCodes = table(
+  col('code', t('الرمز', 'Code'), 'text', LTR_REQ),
+  col('outcome', t('النتيجة', 'Outcome'), 'select', {
+    required: true,
+    options: [
+      opt('SUCCESS', 'نجاح', 'Success'),
+      opt('NOT_FOUND', 'غير موجود', 'Not found'),
+      opt('BUSINESS_ERROR', 'خطأ عمل', 'Business error'),
+      opt('TECHNICAL_ERROR', 'خطأ فني', 'Technical error'),
+    ],
+  }),
+  col('messageAr', t('الرسالة بالعربية', 'Arabic message')),
+  col('messageEn', t('الرسالة بالإنجليزية', 'English message'), 'text', LTR),
 );
+const parameterLocations = [
+  opt('PATH', 'المسار', 'Path'),
+  opt('QUERY', 'الاستعلام', 'Query'),
+  opt('HEADER', 'الترويسة', 'Header'),
+  opt('BODY', 'المحتوى', 'Body'),
+];
 
 /** Integration Manager configuration screens (internal system → Integrations). */
 export const INTEGRATION_SECTIONS: ConfigSection[] = [
@@ -94,10 +125,7 @@ export const INTEGRATION_SECTIONS: ConfigSection[] = [
             type: 'text',
             label: t('العنوان الأساسي', 'Base URL'),
             required: true,
-            hint: t(
-              'مثال: https://apiservicesstg.balady.gov.sa',
-              'e.g. https://apiservicesstg.balady.gov.sa',
-            ),
+            hint: t('مثال: https://apiservicesstg.balady.gov.sa', 'e.g. https://apiservicesstg.balady.gov.sa'),
           },
           {
             code: 'authType',
@@ -109,11 +137,7 @@ export const INTEGRATION_SECTIONS: ConfigSection[] = [
               opt('NONE', 'بدون', 'None'),
               opt('BASIC', 'اسم مستخدم وكلمة مرور', 'Basic'),
               opt('API_KEY', 'مفتاح API', 'API key'),
-              opt(
-                'OAUTH2_CLIENT_CREDENTIALS',
-                'OAuth2 (بيانات العميل)',
-                'OAuth2 client credentials',
-              ),
+              opt('OAUTH2_CLIENT_CREDENTIALS', 'OAuth2 (بيانات العميل)', 'OAuth2 client credentials'),
             ],
           },
           {
@@ -142,25 +166,13 @@ export const INTEGRATION_SECTIONS: ConfigSection[] = [
             visibleWhen: { '==': [{ var: 'authType' }, 'API_KEY'] },
           },
           number('timeoutSeconds', t('مهلة الاستجابة (ثانية)', 'Timeout (seconds)'), 30),
-          number(
-            'retryCount',
-            t('عدد مرات إعادة المحاولة', 'Retries'),
-            2,
-            t('للعمليات الآمنة للتكرار فقط', 'Idempotent operations only'),
-          ),
-          number(
-            'circuitBreakerFailures',
-            t('الإخفاقات قبل الإيقاف المؤقت', 'Failures before pausing'),
-            5,
-          ),
+          number('retryCount', t('عدد مرات إعادة المحاولة', 'Retries'), 2, t('للعمليات الآمنة للتكرار فقط', 'Idempotent operations only')),
+          number('circuitBreakerFailures', t('الإخفاقات قبل الإيقاف المؤقت', 'Failures before pausing'), 5),
           number('circuitBreakerSeconds', t('مدة الإيقاف المؤقت (ثانية)', 'Pause (seconds)'), 60),
           json(
             'headers',
             t('ترويسات ثابتة', 'Fixed headers'),
-            t(
-              '[{"name": "Accept-Language", "value": "ar"}]',
-              '[{"name": "Accept-Language", "value": "ar"}]',
-            ),
+            table(col('name', t('الاسم', 'Name'), 'text', LTR_REQ), col('value', t('القيمة', 'Value'), 'text', LTR)),
           ),
         ],
       },
@@ -177,38 +189,14 @@ export const INTEGRATION_SECTIONS: ConfigSection[] = [
         key: 'code',
         columns: ['statusCodePath', 'businessCodePath'],
         fields: [
-          path(
-            'statusCodePath',
-            t('مسار رمز الحالة', 'Status code path'),
-            t('مثال: statusDetails.code', 'e.g. statusDetails.code'),
-          ),
+          path('statusCodePath', t('مسار رمز الحالة', 'Status code path'), t('مثال: statusDetails.code', 'e.g. statusDetails.code')),
           path('statusMessagePath', t('مسار رسالة الحالة', 'Status message path')),
-          json(
-            'successStatusCodes',
-            t('رموز الحالة الناجحة', 'Success status codes'),
-            t('["200"]', '["200"]'),
-          ),
-          path(
-            'businessCodePath',
-            t('مسار رمز العمل', 'Business code path'),
-            t('مثال: data.responseCode', 'e.g. data.responseCode'),
-          ),
+          json('successStatusCodes', t('رموز الحالة الناجحة', 'Success status codes'), list(), t('مثال: 200', 'e.g. 200')),
+          path('businessCodePath', t('مسار رمز العمل', 'Business code path'), t('مثال: data.responseCode', 'e.g. data.responseCode')),
           path('businessMessagePath', t('مسار رسالة العمل', 'Business message path')),
-          json(
-            'successBusinessCodes',
-            t('رموز العمل الناجحة', 'Success business codes'),
-            t('["1"]', '["1"]'),
-          ),
-          path(
-            'resultPath',
-            t('مسار البيانات', 'Result path'),
-            t('مثال: data.result', 'e.g. data.result'),
-          ),
-          json(
-            'responseCodes',
-            t('رموز الاستجابة المشتركة', 'Shared response codes'),
-            responseCodesHint,
-          ),
+          json('successBusinessCodes', t('رموز العمل الناجحة', 'Success business codes'), list(), t('مثال: 1', 'e.g. 1')),
+          path('resultPath', t('مسار البيانات', 'Result path'), t('مثال: data.result', 'e.g. data.result')),
+          json('responseCodes', t('رموز الاستجابة المشتركة', 'Shared response codes'), responseCodes),
         ],
       },
     ],
@@ -250,10 +238,7 @@ export const INTEGRATION_SECTIONS: ConfigSection[] = [
             type: 'text',
             label: t('المسار', 'Path'),
             required: true,
-            hint: t(
-              'مثال: /v1/MCI-DIP/CR-Information/{crNumber}',
-              'e.g. /v1/MCI-DIP/CR-Information/{crNumber}',
-            ),
+            hint: t('مثال: /v1/MCI-DIP/CR-Information/{crNumber}', 'e.g. /v1/MCI-DIP/CR-Information/{crNumber}'),
           },
           {
             code: 'descriptionAr',
@@ -268,31 +253,24 @@ export const INTEGRATION_SECTIONS: ConfigSection[] = [
           json(
             'parameters',
             t('المدخلات', 'Inputs'),
-            t(
-              '[{"name": "crNumber", "location": "PATH", "isRequired": true, "isMasked": false, "sampleValue": "1010000000"}] — المواقع: PATH | QUERY | HEADER | BODY',
-              '[{"name": "crNumber", "location": "PATH", "isRequired": true, "isMasked": false, "sampleValue": "1010000000"}] — locations: PATH | QUERY | HEADER | BODY',
+            table(
+              col('name', t('الاسم', 'Name'), 'text', LTR_REQ),
+              col('location', t('الموقع', 'Location'), 'select', { required: true, defaultValue: 'QUERY', options: parameterLocations }),
+              col('target', t('الاسم لدى المزود', 'Name at the provider'), 'text', LTR),
+              col('isRequired', t('إلزامي', 'Required'), 'checkbox', { defaultValue: true }),
+              col('isMasked', t('يُخفى في السجل', 'Masked in the log'), 'checkbox'),
+              col('sampleValue', t('قيمة للتجربة', 'Sample value'), 'text', LTR),
             ),
           ),
           json(
             'outputs',
             t('المخرجات', 'Outputs'),
-            t(
-              '[{"name": "crNumbers", "path": "Licenses[*].Commercial_NO"}]',
-              '[{"name": "crNumbers", "path": "Licenses[*].Commercial_NO"}]',
-            ),
+            table(col('name', t('الاسم', 'Name'), 'text', LTR_REQ), col('path', t('المسار في الاستجابة', 'Path in the response'), 'text', LTR_REQ)),
+            t('مثال للمسار: Licenses[*].Commercial_NO', 'Path example: Licenses[*].Commercial_NO'),
           ),
-          json('responseCodes', t('رموز الاستجابة', 'Response codes'), responseCodesHint),
-          json(
-            'maskFields',
-            t('حقول تُخفى في السجل', 'Fields masked in the log'),
-            t('["Commercial_Name", "phoneNumber"]', '["Commercial_Name", "phoneNumber"]'),
-          ),
-          number(
-            'cacheSeconds',
-            t('مدة التخزين المؤقت (ثانية)', 'Cache (seconds)'),
-            0,
-            t('0 = بدون تخزين', '0 = no caching'),
-          ),
+          json('responseCodes', t('رموز الاستجابة', 'Response codes'), responseCodes),
+          json('maskFields', t('حقول تُخفى في السجل', 'Fields masked in the log'), list(), t('مثال: phoneNumber', 'e.g. phoneNumber')),
+          number('cacheSeconds', t('مدة التخزين المؤقت (ثانية)', 'Cache (seconds)'), 0, t('0 = بدون تخزين', '0 = no caching')),
           {
             code: 'isIdempotent',
             type: 'checkbox',
@@ -312,10 +290,7 @@ const identifierTypes = (kind: 'INDIVIDUAL' | 'ESTABLISHMENT') =>
         opt('GCC_ID', 'هوية خليجية', 'GCC ID'),
         opt('PASSPORT', 'جواز سفر', 'Passport'),
       ]
-    : [
-        opt('CR_NUMBER', 'سجل تجاري', 'CR number'),
-        opt('UNIFIED_NUMBER', 'الرقم الموحد', 'Unified number'),
-      ];
+    : [opt('CR_NUMBER', 'سجل تجاري', 'CR number'), opt('UNIFIED_NUMBER', 'الرقم الموحد', 'Unified number')];
 
 /** Party Registry configuration screens (internal system → Party registry). */
 export const PARTY_SECTIONS: ConfigSection[] = [
@@ -339,7 +314,7 @@ export const PARTY_SECTIONS: ConfigSection[] = [
           json(
             'externalCodes',
             t('رموز الجهات الخارجية', 'Provider codes'),
-            t('[{"provider": "MCI", "code": "1"}]', '[{"provider": "MCI", "code": "1"}]'),
+            table(col('provider', t('المزود', 'Provider'), 'text', LTR_REQ), col('code', t('الرمز لدى المزود', 'Code at the provider'), 'text', LTR_REQ)),
           ),
         ],
       },
@@ -386,22 +361,10 @@ export const PARTY_SECTIONS: ConfigSection[] = [
             options: identifierTypes('ESTABLISHMENT'),
             defaultValue: 'CR_NUMBER',
           },
-          path(
-            'identifierPath',
-            t('مسار المعرّف', 'Identifier path'),
-            t('مثال: Commercial_NO', 'e.g. Commercial_NO'),
-          ),
-          path(
-            'nameArPath',
-            t('مسار الاسم بالعربية', 'Arabic name path'),
-            t('مثال: Commercial_Name', 'e.g. Commercial_Name'),
-          ),
+          path('identifierPath', t('مسار المعرّف', 'Identifier path'), t('مثال: Commercial_NO', 'e.g. Commercial_NO')),
+          path('nameArPath', t('مسار الاسم بالعربية', 'Arabic name path'), t('مثال: Commercial_Name', 'e.g. Commercial_Name')),
           path('nameEnPath', t('مسار الاسم بالإنجليزية', 'English name path')),
-          path(
-            'relationCodePath',
-            t('مسار رمز الصفة', 'Relation code path'),
-            t('مثال: RelationTypeInfo.Id', 'e.g. RelationTypeInfo.Id'),
-          ),
+          path('relationCodePath', t('مسار رمز الصفة', 'Relation code path'), t('مثال: RelationTypeInfo.Id', 'e.g. RelationTypeInfo.Id')),
           {
             code: 'relationProvider',
             type: 'text',
@@ -415,11 +378,7 @@ export const PARTY_SECTIONS: ConfigSection[] = [
             ref: 'party.relationship-type',
           },
           path('statusPath', t('مسار الحالة', 'Status path'), t('مثال: Status', 'e.g. Status')),
-          json(
-            'activeStatuses',
-            t('الحالات المقبولة', 'Accepted statuses'),
-            t('["Active"]', '["Active"]'),
-          ),
+          json('activeStatuses', t('الحالات المقبولة', 'Accepted statuses'), list(), t('فارغ: كل الحالات. مثال: Active', 'Empty: every status. e.g. Active')),
           path('validFromPath', t('مسار تاريخ البداية', 'Valid-from path')),
           path('validToPath', t('مسار تاريخ النهاية', 'Valid-to path')),
           path('servicesPath', t('مسار الخدمات المفوضة', 'Delegated services path')),
@@ -480,9 +439,12 @@ export const PARTY_SECTIONS: ConfigSection[] = [
             ...json(
               'inputs',
               t('المدخلات', 'Inputs'),
-              t(
-                '[{"parameter": "crNumber", "identifierType": "CR_NUMBER"}]',
-                '[{"parameter": "crNumber", "identifierType": "CR_NUMBER"}]',
+              table(
+                col('parameter', t('مدخل العملية', 'Operation input'), 'text', LTR_REQ),
+                col('identifierType', t('المعرّف', 'Identifier'), 'select', {
+                  required: true,
+                  options: [...identifierTypes('INDIVIDUAL'), ...identifierTypes('ESTABLISHMENT')],
+                }),
               ),
             ),
             visibleWhen: { '!!': [{ var: 'operationCode' }] },
@@ -658,10 +620,7 @@ export const SERVICE_SECTIONS: ConfigSection[] = [
             type: 'select',
             label: t('المسودات عند نشر إصدار جديد', 'Drafts when a new version is published'),
             defaultValue: 'CONTINUE',
-            options: [
-              opt('CONTINUE', 'تكمل على إصدارها', 'Continue on their version'),
-              opt('RESTART', 'تنتقل للإصدار الجديد', 'Move to the new version'),
-            ],
+            options: [opt('CONTINUE', 'تكمل على إصدارها', 'Continue on their version'), opt('RESTART', 'تنتقل للإصدار الجديد', 'Move to the new version')],
           },
         ],
       },
@@ -750,10 +709,12 @@ export const SERVICE_SECTIONS: ConfigSection[] = [
             ...json(
               'options',
               t('الخيارات', 'Options'),
-              t(
-                '[{"value": "ICT", "labelAr": "…", "labelEn": "…"}] — عند عدم استخدام قائمة قيم',
-                '[{"value": "ICT", "labelAr": "…", "labelEn": "…"}] — when no list of values is used',
+              table(
+                col('value', t('القيمة', 'Value'), 'text', LTR_REQ),
+                col('labelAr', t('الاسم بالعربية', 'Arabic label'), 'text', REQ),
+                col('labelEn', t('الاسم بالإنجليزية', 'English label'), 'text', LTR_REQ),
               ),
+              t('عند عدم استخدام قائمة قيم', 'When no list of values is used'),
             ),
             visibleWhen: { '==': [{ var: 'type' }, 'SELECT'] },
           },
@@ -766,20 +727,20 @@ export const SERVICE_SECTIONS: ConfigSection[] = [
           json(
             'validation',
             t('القيود', 'Limits'),
-            t(
-              '{"min": 0, "max": 100, "maxLength": 200, "pattern": "^[0-9]{10}$"}',
-              '{"min": 0, "max": 100, "maxLength": 200, "pattern": "^[0-9]{10}$"}',
+            object(
+              col('min', t('أقل قيمة', 'Minimum'), 'number'),
+              col('max', t('أعلى قيمة', 'Maximum'), 'number'),
+              col('maxLength', t('أقصى طول', 'Longest text'), 'number'),
+              col('pattern', t('النمط (تعبير نمطي)', 'Pattern (regular expression)'), 'text', LTR),
             ),
+            undefined,
             {},
           ),
           {
             code: 'prefill',
             type: 'text',
             label: t('تعبئة من بيانات المتعامل', 'Prefill from the party'),
-            hint: t(
-              'مثال: party.identifiers.CR_NUMBER أو party.profile.CR_CAPITAL',
-              'e.g. party.identifiers.CR_NUMBER or party.profile.CR_CAPITAL',
-            ),
+            hint: t('مثال: party.identifiers.CR_NUMBER أو party.profile.CR_CAPITAL', 'e.g. party.identifiers.CR_NUMBER or party.profile.CR_CAPITAL'),
           },
         ],
       },
@@ -829,9 +790,16 @@ export const WORKFLOW_SECTIONS: ConfigSection[] = [
   },
 ];
 
-const fieldLabelsHint = t(
-  '[{"code": "city", "nameAr": "المدينة", "nameEn": "City", "isPublic": true}] — isPublic: يظهر في صفحة التحقق العامة',
-  '[{"code": "city", "nameAr": "المدينة", "nameEn": "City", "isPublic": true}] — isPublic: shown on the public verification page',
+/** Labels of a document's data (or line-item) fields. */
+const documentFields = table(
+  col('code', t('الرمز', 'Code'), 'text', LTR_REQ),
+  col('nameAr', t('الاسم بالعربية', 'Arabic name'), 'text', REQ),
+  col('nameEn', t('الاسم بالإنجليزية', 'English name'), 'text', LTR_REQ),
+  col('isPublic', t('يظهر في التحقق العام', 'Shown on public verification'), 'checkbox'),
+);
+const documentFieldsHint = t(
+  '«يظهر في التحقق العام»: يُعرض في صفحة التحقق من المستند لأي زائر.',
+  '"Shown on public verification": anyone checking the document sees it.',
 );
 
 /** Document configuration screens (internal system → Documents); the print template editor shows a live preview. */
@@ -873,10 +841,7 @@ export const DOCUMENT_SECTIONS: ConfigSection[] = [
           {
             code: 'onePerHolder',
             type: 'checkbox',
-            label: t(
-              'مستند واحد لكل صاحب (الإصدار مرة أخرى يعدّله)',
-              'One per holder (issuing again amends it)',
-            ),
+            label: t('مستند واحد لكل صاحب (الإصدار مرة أخرى يعدّله)', 'One per holder (issuing again amends it)'),
           },
           {
             code: 'amendResetsValidity',
@@ -891,13 +856,9 @@ export const DOCUMENT_SECTIONS: ConfigSection[] = [
             ref: 'doc.template',
             required: true,
           },
-          json(
-            'alertDaysBefore',
-            t('أيام التذكير قبل الانتهاء', 'Reminder days before expiry'),
-            t('مثال: [90, 30]', 'e.g. [90, 30]'),
-          ),
-          json('fields', t('حقول البيانات', 'Data fields'), fieldLabelsHint),
-          json('lineFields', t('حقول البنود', 'Line-item fields'), fieldLabelsHint),
+          json('alertDaysBefore', t('أيام التذكير قبل الانتهاء', 'Reminder days before expiry'), list('number'), t('مثال: 90 ثم 30', 'e.g. 90 then 30')),
+          json('fields', t('حقول البيانات', 'Data fields'), documentFields, documentFieldsHint),
+          json('lineFields', t('حقول البنود', 'Line-item fields'), documentFields, documentFieldsHint),
         ],
       },
     ],
@@ -912,8 +873,7 @@ export const DOCUMENT_SECTIONS: ConfigSection[] = [
         title: t('قوالب الطباعة', 'Print templates'),
         key: 'code',
         columns: ['pageSize', 'landscape'],
-        editor: () =>
-          import('../../documents/template-editor').then((m) => m.DocumentTemplateEditor),
+        editor: () => import('../../documents/template-editor').then((m) => m.DocumentTemplateEditor),
         fields: [],
       },
     ],
@@ -954,10 +914,7 @@ export const DECISION_SECTIONS: ConfigSection[] = [
           {
             code: 'isPublic',
             type: 'checkbox',
-            label: t(
-              'حاسبة عامة في البوابة (بدون تسجيل دخول)',
-              'Public calculator on the portal (no sign-in)',
-            ),
+            label: t('حاسبة عامة في البوابة (بدون تسجيل دخول)', 'Public calculator on the portal (no sign-in)'),
           },
         ],
       },
@@ -965,11 +922,9 @@ export const DECISION_SECTIONS: ConfigSection[] = [
   },
 ];
 
-const channels = [
-  opt('IN_APP', 'داخل المنصة', 'In-app'),
-  opt('EMAIL', 'البريد الإلكتروني', 'Email'),
-  opt('SMS', 'رسالة نصية', 'SMS'),
-];
+const recipientKinds = [opt('PARTY', 'المتعامل', 'Party'), opt('ROLE', 'حاملو دور', 'Holders of a role'), opt('USER', 'موظف', 'Employee')];
+
+const channels = [opt('IN_APP', 'داخل المنصة', 'In-app'), opt('EMAIL', 'البريد الإلكتروني', 'Email'), opt('SMS', 'رسالة نصية', 'SMS')];
 
 /** Notification screens (internal system → Notifications); the message template editor previews on an event's sample. */
 export const COMMUNICATION_SECTIONS: ConfigSection[] = [
@@ -1012,19 +967,18 @@ export const COMMUNICATION_SECTIONS: ConfigSection[] = [
           json(
             'recipients',
             t('المستلمون', 'Recipients'),
+            table(col('kind', t('المستلم', 'Recipient'), 'select', { required: true, options: recipientKinds }), col('value', t('القيمة', 'Value'), 'value')),
             t(
-              '[{"kind": "PARTY"}, {"kind": "ROLE", "value": "CLS_MANAGER"}, {"kind": "USER", "value": {"var": "task.assignee"}}] — PARTY: المتعامل (افتراضياً party.id)',
-              '[{"kind": "PARTY"}, {"kind": "ROLE", "value": "CLS_MANAGER"}, {"kind": "USER", "value": {"var": "task.assignee"}}] — PARTY: the party (party.id by default)',
+              'المتعامل: صاحب الطلب (افتراضياً). الدور: رمز الدور. الموظف: اسم المستخدم أو تعبير مثل {"var": "task.assignee"}.',
+              'Party: the applicant (by default). Role: the role code. User: a user name or an expression such as {"var": "task.assignee"}.',
             ),
             [{ kind: 'PARTY' }],
           ),
           json(
             'condition',
             t('الشرط (JSONLogic)', 'Condition (JSONLogic)'),
-            t(
-              'فارغ: دائماً. مثال: {"==": [{"var": "document.alertDays"}, 90]}',
-              'Empty: always. e.g. {"==": [{"var": "document.alertDays"}, 90]}',
-            ),
+            JSON_RULE,
+            t('فارغ: دائماً. مثال: {"==": [{"var": "document.alertDays"}, 90]}', 'Empty: always. e.g. {"==": [{"var": "document.alertDays"}, 90]}'),
             null,
           ),
           {
@@ -1047,10 +1001,7 @@ export const COMMUNICATION_SECTIONS: ConfigSection[] = [
         entityType: 'com.template',
         title: t('قوالب الرسائل', 'Message templates'),
         key: 'code',
-        editor: () =>
-          import('../../communication/message-template-editor').then(
-            (m) => m.MessageTemplateEditor,
-          ),
+        editor: () => import('../../communication/message-template-editor').then((m) => m.MessageTemplateEditor),
         fields: [],
       },
     ],
@@ -1075,26 +1026,16 @@ export const PAYMENT_SECTIONS: ConfigSection[] = [
             type: 'select',
             label: t('عملية إنشاء الفاتورة', 'Bill creation operation'),
             ref: 'integ.operation',
-            hint: t(
-              'اتركه فارغاً للسداد اليدوي (الصندوق)',
-              'Leave empty for manual payment (cashier)',
-            ),
+            hint: t('اتركه فارغاً للسداد اليدوي (الصندوق)', 'Leave empty for manual payment (cashier)'),
           },
-          path(
-            'billNumberOutput',
-            t('رقم الفاتورة في المخرجات', 'Bill number in the output'),
-            t('مثال: sadadNumber', 'e.g. sadadNumber'),
-          ),
+          path('billNumberOutput', t('رقم الفاتورة في المخرجات', 'Bill number in the output'), t('مثال: sadadNumber', 'e.g. sadadNumber')),
           { code: 'billerCode', type: 'text', label: t('رمز المفوتر', 'Biller code') },
           number('dueDays', t('مدة السداد (يوم)', 'Days to pay'), 7),
           {
             code: 'payUrlTemplate',
             type: 'text',
             label: t('رابط السداد', 'Payment page URL'),
-            hint: t(
-              'مثال: https://…/pay/{billNumber}?amount={amount}',
-              'e.g. https://…/pay/{billNumber}?amount={amount}',
-            ),
+            hint: t('مثال: https://…/pay/{billNumber}?amount={amount}', 'e.g. https://…/pay/{billNumber}?amount={amount}'),
           },
           {
             code: 'instructionsAr',
@@ -1110,18 +1051,20 @@ export const PAYMENT_SECTIONS: ConfigSection[] = [
             code: 'callbackSecret',
             type: 'text',
             label: t('اسم سر توقيع الإشعارات', 'Callback signing secret name'),
-            hint: t(
-              'اسم السر في مخزن الأسرار وليس قيمته',
-              "The secret's name in the secret store, never its value",
-            ),
+            hint: t('اسم السر في مخزن الأسرار وليس قيمته', "The secret's name in the secret store, never its value"),
           },
           json(
             'callback',
             t('حقول إشعار السداد', 'Payment notification fields'),
-            t(
-              '{"billNumber": "sadadNumber", "status": "status", "paidValue": "PAID", "amount": "amount", "reference": "paymentReference"}',
-              '{"billNumber": "sadadNumber", "status": "status", "paidValue": "PAID", "amount": "amount", "reference": "paymentReference"}',
+            object(
+              col('billNumber', t('رقم الفاتورة', 'Bill number'), 'text', LTR),
+              col('status', t('الحالة', 'Status'), 'text', LTR),
+              col('paidValue', t('قيمة الحالة عند السداد', 'Status value when paid'), 'text', LTR),
+              col('amount', t('المبلغ', 'Amount'), 'text', LTR),
+              col('reference', t('مرجع السداد', 'Payment reference'), 'text', LTR),
+              col('paidAt', t('وقت السداد', 'Paid at'), 'text', LTR),
             ),
+            t('أسماء الحقول في إشعار المزود', "Field names in the provider's notification"),
             {},
           ),
           { code: 'isDefault', type: 'checkbox', label: t('المزود الافتراضي', 'Default provider') },
@@ -1129,6 +1072,16 @@ export const PAYMENT_SECTIONS: ConfigSection[] = [
       },
     ],
   },
+];
+
+const outcomeKinds = [opt('PASS', 'مطابق', 'Pass'), opt('FAIL', 'غير مطابق', 'Fail'), opt('OTHER', 'أخرى', 'Other')];
+const visitFieldTypes = [
+  opt('TEXT', 'نص', 'Text'),
+  opt('TEXTAREA', 'نص طويل', 'Long text'),
+  opt('NUMBER', 'رقم', 'Number'),
+  opt('DATE', 'تاريخ', 'Date'),
+  opt('SELECT', 'اختيار', 'Choice'),
+  opt('CHECKBOX', 'نعم/لا', 'Yes/no'),
 ];
 
 /** Visit configuration screens (internal system → Field visits). */
@@ -1155,14 +1108,64 @@ export const VISIT_SECTIONS: ConfigSection[] = [
           },
           { code: 'descriptionAr', type: 'textarea', label: t('الوصف بالعربية', 'Description (Arabic)') },
           { code: 'descriptionEn', type: 'textarea', label: t('الوصف بالإنجليزية', 'Description (English)') },
-          json('outcomes', t('النتائج', 'Outcomes'), t('[{"code": "PASS", "nameAr": "مطابق", "nameEn": "Compliant", "kind": "PASS"}]', '[{"code": "PASS", "nameAr": "مطابق", "nameEn": "Compliant", "kind": "PASS"}]'), []),
-          json('fields', t('حقول المفتش', 'Inspector fields'), t('[{"code": "notes", "labelAr": "…", "labelEn": "…", "type": "TEXTAREA", "required": true}]', '[{"code": "notes", "labelAr": "…", "labelEn": "…", "type": "TEXTAREA", "required": true}]'), []),
+          json(
+            'outcomes',
+            t('النتائج', 'Outcomes'),
+            table(
+              col('code', t('الرمز', 'Code'), 'text', LTR_REQ),
+              col('nameAr', t('الاسم بالعربية', 'Arabic name'), 'text', REQ),
+              col('nameEn', t('الاسم بالإنجليزية', 'English name'), 'text', LTR_REQ),
+              col('kind', t('النوع', 'Kind'), 'select', { required: true, refDomains: 'VIS_OUTCOME_KIND', options: outcomeKinds }),
+            ),
+          ),
+          json(
+            'fields',
+            t('حقول المفتش', 'Inspector fields'),
+            table(
+              col('code', t('الرمز', 'Code'), 'text', LTR_REQ),
+              col('labelAr', t('الاسم بالعربية', 'Arabic label'), 'text', REQ),
+              col('labelEn', t('الاسم بالإنجليزية', 'English label'), 'text', LTR_REQ),
+              col('type', t('النوع', 'Type'), 'select', { required: true, defaultValue: 'TEXT', options: visitFieldTypes }),
+              col('required', t('إلزامي', 'Required'), 'checkbox'),
+              col('options', t('الخيارات', 'Options'), 'table', {
+                columns: [
+                  col('code', t('الرمز', 'Code'), 'text', LTR_REQ),
+                  col('labelAr', t('بالعربية', 'Arabic'), 'text', REQ),
+                  col('labelEn', t('بالإنجليزية', 'English'), 'text', LTR_REQ),
+                ],
+              }),
+            ),
+          ),
           number('photosRequired', t('أقل عدد من الصور', 'Fewest photos'), 0),
           { code: 'requireLocation', type: 'checkbox', label: t('تسجيل الموقع إلزامي', 'Position required') },
           { code: 'requireSignature', type: 'checkbox', label: t('التوقيع إلزامي', 'Signature required') },
           { code: 'inspectorRole', type: 'select', label: t('دور المفتشين', 'Inspectors role'), ref: 'apps.role' },
           number('dueDays', t('مدة الإتمام (يوم)', 'Days to complete'), 5),
-          json('external', t('جهة المعاينة الخارجية', 'External inspection body'), t('{"createOperation": "…", "resultOperation": "…"}', '{"createOperation": "…", "resultOperation": "…"}'), null),
+          json(
+            'external',
+            t('جهة المعاينة الخارجية', 'External inspection body'),
+            object(
+              col('createOperation', t('عملية إنشاء الزيارة', 'Create operation'), 'select', { ref: 'integ.operation' }),
+              col('referenceOutput', t('مخرج المرجع', 'Reference output'), 'text', LTR),
+              col('resultOperation', t('عملية قراءة النتيجة', 'Result operation'), 'select', { ref: 'integ.operation' }),
+              col('pollMinutes', t('الاستعلام كل (دقيقة)', 'Poll every (minutes)'), 'number'),
+              col('callbackSecret', t('سر توقيع الإشعار', 'Callback signing secret'), 'text', LTR),
+              col('inputs', t('مدخلات العملية', 'Operation inputs'), 'map'),
+              col('result', t('حقول النتيجة', 'Result fields'), 'object', {
+                columns: [
+                  col('reference', t('المرجع', 'Reference'), 'text', LTR),
+                  col('status', t('الحالة', 'Status'), 'text', LTR),
+                  col('completedValue', t('قيمة الإنجاز', 'Completed value'), 'text', LTR),
+                  col('outcome', t('النتيجة', 'Outcome'), 'text', LTR),
+                  col('data', t('البيانات', 'Data'), 'text', LTR),
+                  col('report', t('التقرير', 'Report'), 'text', LTR),
+                ],
+              }),
+              col('outcomeMap', t('ترجمة النتائج', 'Outcome translation'), 'map'),
+            ),
+            t('للزيارات لدى جهة معاينة خارجية', 'For visits by an external inspection body'),
+            null,
+          ),
         ],
       },
     ],

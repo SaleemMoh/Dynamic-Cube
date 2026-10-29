@@ -18,6 +18,9 @@ import {
   DecisionsApi,
   EvaluationView,
   LocalizePipe,
+  StructuredColumn,
+  StructuredInput,
+  StructuredShape,
   TraceStep,
   TranslatePipe,
   problemMessages,
@@ -25,6 +28,33 @@ import {
 import { firstValueFrom } from 'rxjs';
 import { DraftsService } from '../apps-control/drafts.service';
 import { PrivilegesService } from '../apps-control/privileges.service';
+
+const t = (ar: string, en: string) => ({ ar, en });
+/** Named steps: a code and a JSONLogic rule that may read input, vars and earlier steps. */
+const STEPS: StructuredColumn[] = [
+  { key: 'code', label: t('الاسم', 'Name'), type: 'text', ltr: true, required: true },
+  { key: 'rule', label: t('القاعدة (JSONLogic)', 'Rule (JSONLogic)'), type: 'value', required: true },
+];
+
+/** The built-in RULES engine's configuration: steps, per-item results and the overall output. */
+const RULES_SHAPE: StructuredShape = {
+  kind: 'object',
+  properties: [
+    { key: 'variables', label: t('الخطوات', 'Steps'), type: 'table', columns: STEPS },
+    {
+      key: 'items',
+      label: t('نتيجة لكل عنصر (اختياري)', 'A result per element (optional)'),
+      type: 'object',
+      columns: [
+        { key: 'source', label: t('العناصر (قاعدة)', 'Elements (rule)'), type: 'value' },
+        { key: 'as', label: t('اسم العنصر', 'Element name'), type: 'text', ltr: true },
+        { key: 'variables', label: t('خطوات العنصر', 'Element steps'), type: 'table', columns: STEPS },
+        { key: 'output', label: t('نتيجة العنصر', 'Element result'), type: 'map' },
+      ],
+    },
+    { key: 'output', label: t('النتيجة', 'Result'), type: 'map' },
+  ],
+};
 
 /** A first version of the built-in RULES engine: variables, per-item results and the overall output. */
 const STARTER = {
@@ -249,6 +279,7 @@ export function traceText(step: TraceStep): string {
     MatTableModule,
     MatTabsModule,
     MatTooltipModule,
+    StructuredInput,
     LocalizePipe,
     TranslatePipe,
   ],
@@ -323,20 +354,14 @@ export function traceText(step: TraceStep): string {
               <h2>
                 {{ 'versions.new' | dcTranslate }} <span dir="ltr" class="dc-code">{{ code }}/{{ nextNumber() }}</span>
               </h2>
-              <label class="dc-field-label" for="dc-dec-config">{{ 'decisions.configuration' | dcTranslate }}</label>
-              <mat-form-field subscriptSizing="dynamic">
-                <textarea
-                  id="dc-dec-config"
-                  matInput
-                  rows="22"
-                  dir="ltr"
-                  spellcheck="false"
-                  class="dc-json"
-                  [ngModel]="text()"
-                  (ngModelChange)="text.set($event)"
-                  data-testid="rule-set-config"
-                ></textarea>
-              </mat-form-field>
+              <span class="dc-field-label" id="dc-dec-config">{{ 'decisions.configuration' | dcTranslate }}</span>
+              <dc-structured-input
+                [shape]="configShape"
+                [ngModel]="parsed()"
+                (ngModelChange)="text.set(stringify($event))"
+                testId="rule-set-config"
+                aria-labelledby="dc-dec-config"
+              />
               @if (!parsed()) {
                 <p class="dc-errors" role="alert">{{ 'decisions.invalidJson' | dcTranslate }}</p>
               }
@@ -441,6 +466,7 @@ export class RuleSetVersions {
     stream: ({ params }) => this.decisions.evaluations({ ruleSet: params, take: 100 }),
   });
   protected readonly text = signal('');
+  protected readonly configShape = RULES_SHAPE;
   protected readonly errors = signal<string[]>([]);
   protected readonly canCreate = computed(() => this.privileges.can('decisions.config', 'CREATE'));
   protected readonly canEdit = computed(() => this.privileges.can('decisions.config', 'EDIT'));
@@ -460,6 +486,14 @@ export class RuleSetVersions {
       return null;
     }
   });
+
+  /** The configuration as saved: items only when it has elements. */
+  protected stringify(value: unknown): string {
+    const config = { ...((value as Record<string, unknown>) ?? {}) };
+    const items = config['items'] as Record<string, unknown> | undefined;
+    if (items && !items['source']) delete config['items'];
+    return JSON.stringify(config, null, 2);
+  }
 
   protected choose(code: string): void {
     this.ruleSet.set(code);

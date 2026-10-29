@@ -1,7 +1,10 @@
 import { Type } from '@angular/core';
-import { FormFieldType, FormOption, JsonLogicRule, LocalizedText } from '@dynamic-cube/shared';
+import { FormFieldType, FormOption, JsonLogicRule, LocalizedText, StructuredShape } from '@dynamic-cube/shared';
 
-/** A field of a configuration editor. Besides form field types: `json` (nested data) and `refList` (codes → objects). */
+/**
+ * A field of a configuration editor. Besides form field types: `json` (nested data, edited through a form made for its
+ * `structure` — rows, lists, properties — with a JSON view) and `refList` (codes → objects).
+ */
 export interface ConfigField {
   code: string;
   type: FormFieldType | 'json' | 'refList';
@@ -21,6 +24,8 @@ export interface ConfigField {
   picker?: 'dual';
   /** For `refList`: property holding the code in each list item, e.g. `roleCode`. */
   itemKey?: string;
+  /** For `json`: what it holds (without, it is edited as JSON). */
+  structure?: StructuredShape;
   /** Default for new rows. */
   defaultValue?: unknown;
   /** Options come from an API returning `{ code, nameAr, nameEn }[]` (e.g. the events modules raise). */
@@ -107,9 +112,7 @@ const effectiveTo: ConfigField = {
   type: 'date',
   label: t('يسري حتى', 'Effective to'),
 };
-const actions = ['VIEW', 'CREATE', 'EDIT', 'DELETE', 'APPROVE', 'EXPORT', 'PRINT'].map((a) =>
-  opt(a, a, a),
-);
+const actions = ['VIEW', 'CREATE', 'EDIT', 'DELETE', 'APPROVE', 'EXPORT', 'PRINT'].map((a) => opt(a, a, a));
 
 /** Apps Control screens built from field definitions. Nested lists are edited as JSON until visual editors arrive. */
 export const CONFIG_SECTIONS: ConfigSection[] = [
@@ -165,16 +168,25 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
             code: 'calendarDisplay',
             type: 'select',
             label: t('عرض التقويم', 'Calendar display'),
-            options: [
-              opt('GREGORIAN', 'ميلادي', 'Gregorian'),
-              opt('HIJRI', 'هجري', 'Hijri'),
-              opt('BOTH', 'كلاهما', 'Both'),
-            ],
+            options: [opt('GREGORIAN', 'ميلادي', 'Gregorian'), opt('HIJRI', 'هجري', 'Hijri'), opt('BOTH', 'كلاهما', 'Both')],
           },
           {
             code: 'weekendDays',
             type: 'json',
-            label: t('أيام العطلة (1=الاثنين … 7=الأحد)', 'Weekend days (1=Mon … 7=Sun)'),
+            label: t('أيام العطلة', 'Weekend days'),
+            structure: {
+              kind: 'list',
+              item: 'number',
+              options: [
+                opt('1', 'الاثنين', 'Monday'),
+                opt('2', 'الثلاثاء', 'Tuesday'),
+                opt('3', 'الأربعاء', 'Wednesday'),
+                opt('4', 'الخميس', 'Thursday'),
+                opt('5', 'الجمعة', 'Friday'),
+                opt('6', 'السبت', 'Saturday'),
+                opt('7', 'الأحد', 'Sunday'),
+              ],
+            },
           },
           { code: 'copyright', type: 'text', label: t('حقوق النشر', 'Copyright') },
         ],
@@ -260,6 +272,7 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
             code: 'attributes',
             type: 'json',
             label: t('خصائص (المنطقة، الأمانة…)', 'Attributes (region, amanah…)'),
+            structure: { kind: 'map', keyLabel: t('الخاصية', 'Attribute'), valueLabel: t('القيمة', 'Value') },
             defaultValue: {},
           },
           effectiveFrom,
@@ -312,11 +325,7 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
             code: 'status',
             type: 'select',
             label: t('الحالة', 'Status'),
-            options: [
-              opt('ACTIVE', 'نشط', 'Active'),
-              opt('LOCKED', 'مقفل', 'Locked'),
-              opt('DISABLED', 'معطل', 'Disabled'),
-            ],
+            options: [opt('ACTIVE', 'نشط', 'Active'), opt('LOCKED', 'مقفل', 'Locked'), opt('DISABLED', 'معطل', 'Disabled')],
             required: true,
             defaultValue: 'ACTIVE',
           },
@@ -340,10 +349,16 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
             type: 'json',
             label: t('التكليفات (الوحدة والمسمى)', 'Assignments (unit and position)'),
             defaultValue: [],
-            hint: t(
-              '[{"orgUnitCode": "...", "positionCode": "...", "isPrimary": true}]',
-              '[{"orgUnitCode": "...", "positionCode": "...", "isPrimary": true}]',
-            ),
+            structure: {
+              kind: 'table',
+              columns: [
+                { key: 'orgUnitCode', label: t('الوحدة', 'Unit'), type: 'select', ref: 'apps.org-unit', required: true },
+                { key: 'positionCode', label: t('المسمى', 'Position'), type: 'select', ref: 'apps.position' },
+                { key: 'isPrimary', label: t('أساسي', 'Primary'), type: 'checkbox' },
+                { key: 'effectiveFrom', label: t('من', 'From'), type: 'date' },
+                { key: 'effectiveTo', label: t('إلى', 'To'), type: 'date' },
+              ],
+            },
           },
         ],
       },
@@ -367,20 +382,42 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
             type: 'json',
             label: t('الصلاحيات', 'Privileges'),
             defaultValue: [],
-            hint: t(
-              '[{"resourceCode": "...", "actions": ["VIEW"]}]',
-              '[{"resourceCode": "...", "actions": ["VIEW"]}]',
-            ),
+            structure: {
+              kind: 'table',
+              columns: [
+                { key: 'resourceCode', label: t('الشاشة', 'Screen'), type: 'select', ref: 'apps.resource', required: true },
+                { key: 'actions', label: t('الإجراءات', 'Actions'), type: 'tags', ltr: true, defaultValue: ['VIEW'] },
+                { key: 'fieldRules', label: t('قواعد الحقول', 'Field rules'), type: 'map' },
+              ],
+            },
           },
           {
             code: 'grants',
             type: 'json',
             label: t('صلاحيات القيم', 'LOV grants'),
             defaultValue: [],
-            hint: t(
-              '[{"lovCode": "...", "grantType": "VALUES", "grantedValues": ["..."]}]',
-              '[{"lovCode": "...", "grantType": "VALUES", "grantedValues": ["..."]}]',
-            ),
+            structure: {
+              kind: 'table',
+              columns: [
+                { key: 'lovCode', label: t('القائمة', 'List'), type: 'select', ref: 'apps.lov', required: true },
+                { key: 'resourceCode', label: t('الشاشة (فارغ: الكل)', 'Screen (empty: all)'), type: 'select', ref: 'apps.resource' },
+                {
+                  key: 'grantType',
+                  label: t('الصلاحية', 'Access'),
+                  type: 'select',
+                  required: true,
+                  defaultValue: 'ALL',
+                  options: [
+                    opt('ALL', 'الكل', 'All'),
+                    opt('VALUES', 'قيم محددة', 'Some values'),
+                    opt('RULE', 'حسب قاعدة', 'By a rule'),
+                    opt('NONE', 'لا شيء', 'None'),
+                  ],
+                },
+                { key: 'grantedValues', label: t('القيم', 'Values'), type: 'tags', ltr: true },
+                { key: 'rule', label: t('القاعدة', 'Rule'), type: 'value' },
+              ],
+            },
           },
           { code: 'menus', type: 'select', multiple: true, label: t('عناصر القائمة', 'Menu items'), ref: 'apps.menu', defaultValue: [] },
         ],
@@ -405,9 +442,7 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
             label: t('النوع', 'Type'),
             required: true,
             defaultValue: 'SCREEN',
-            options: ['SCREEN', 'API', 'REPORT', 'SERVICE', 'WORKFLOW_ACTION', 'FIELD'].map((v) =>
-              opt(v, v, v),
-            ),
+            options: ['SCREEN', 'API', 'REPORT', 'SERVICE', 'WORKFLOW_ACTION', 'FIELD'].map((v) => opt(v, v, v)),
           },
           {
             code: 'parentCode',
@@ -457,9 +492,7 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
             label: t('النوع', 'Type'),
             required: true,
             defaultValue: 'SCREEN',
-            options: ['GROUP', 'SCREEN', 'SERVICE', 'REPORT', 'DASHBOARD', 'QUEUE', 'URL'].map(
-              (v) => opt(v, v, v),
-            ),
+            options: ['GROUP', 'SCREEN', 'SERVICE', 'REPORT', 'DASHBOARD', 'QUEUE', 'URL'].map((v) => opt(v, v, v)),
           },
           {
             code: 'target',
@@ -493,11 +526,7 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
         title: t('مجموعات القوائم', 'Menu groups'),
         key: 'code',
         columns: ['appCode'],
-        fields: [
-          { ...appRef, required: true },
-          displayOrder,
-          { code: 'icon', type: 'icon', label: t('الأيقونة', 'Icon') },
-        ],
+        fields: [{ ...appRef, required: true }, displayOrder, { code: 'icon', type: 'icon', label: t('الأيقونة', 'Icon') }],
       },
     ],
   },
@@ -518,11 +547,7 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
             label: t('المصدر', 'Source'),
             required: true,
             defaultValue: 'CLASS',
-            options: [
-              opt('CLASS', 'تصنيف', 'Class'),
-              opt('DATA_OBJECT', 'كائن بيانات', 'Data object'),
-              opt('SQL', 'استعلام مقيد', 'Restricted SQL'),
-            ],
+            options: [opt('CLASS', 'تصنيف', 'Class'), opt('DATA_OBJECT', 'كائن بيانات', 'Data object'), opt('SQL', 'استعلام مقيد', 'Restricted SQL')],
           },
           {
             code: 'classCode',
@@ -546,10 +571,7 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
             label: t('عمود القيمة', 'Value column'),
             visibleWhen: { '!=': [{ var: 'sourceType' }, 'CLASS'] },
             requiredWhen: { '==': [{ var: 'sourceType' }, 'DATA_OBJECT'] },
-            hint: t(
-              'للاستعلام: اختياري، الافتراضي value و display_ar و display_en',
-              'For SQL: optional; defaults to value, display_ar, display_en',
-            ),
+            hint: t('للاستعلام: اختياري، الافتراضي value و display_ar و display_en', 'For SQL: optional; defaults to value, display_ar, display_en'),
           },
           {
             code: 'displayArColumn',
@@ -557,10 +579,7 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
             label: t('عمود الاسم العربي', 'Arabic label column'),
             visibleWhen: { '!=': [{ var: 'sourceType' }, 'CLASS'] },
             requiredWhen: { '==': [{ var: 'sourceType' }, 'DATA_OBJECT'] },
-            hint: t(
-              'للاستعلام: اختياري، الافتراضي value و display_ar و display_en',
-              'For SQL: optional; defaults to value, display_ar, display_en',
-            ),
+            hint: t('للاستعلام: اختياري، الافتراضي value و display_ar و display_en', 'For SQL: optional; defaults to value, display_ar, display_en'),
           },
           {
             code: 'displayEnColumn',
@@ -568,10 +587,7 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
             label: t('عمود الاسم الإنجليزي', 'English label column'),
             visibleWhen: { '!=': [{ var: 'sourceType' }, 'CLASS'] },
             requiredWhen: { '==': [{ var: 'sourceType' }, 'DATA_OBJECT'] },
-            hint: t(
-              'للاستعلام: اختياري، الافتراضي value و display_ar و display_en',
-              'For SQL: optional; defaults to value, display_ar, display_en',
-            ),
+            hint: t('للاستعلام: اختياري، الافتراضي value و display_ar و display_en', 'For SQL: optional; defaults to value, display_ar, display_en'),
           },
           {
             code: 'parentColumn',
@@ -594,6 +610,7 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
             code: 'staticFilter',
             type: 'json',
             label: t('شرط ثابت (JSONLogic)', 'Static filter (JSONLogic)'),
+            structure: { kind: 'json' },
             visibleWhen: { '==': [{ var: 'sourceType' }, 'CLASS'] },
           },
           {
@@ -601,10 +618,7 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
             type: 'select',
             label: t('البحث', 'Search'),
             defaultValue: 'FULL',
-            options: [
-              opt('FULL', 'قائمة كاملة', 'Full list'),
-              opt('TYPEAHEAD', 'بحث أثناء الكتابة', 'Type-ahead'),
-            ],
+            options: [opt('FULL', 'قائمة كاملة', 'Full list'), opt('TYPEAHEAD', 'بحث أثناء الكتابة', 'Type-ahead')],
           },
           {
             code: 'maxRows',
@@ -627,6 +641,21 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
             type: 'json',
             label: t('الربط بالشاشات', 'Screen bindings'),
             defaultValue: [],
+            structure: {
+              kind: 'table',
+              columns: [
+                { key: 'resourceCode', label: t('الشاشة', 'Screen'), type: 'select', ref: 'apps.resource', required: true },
+                { key: 'fieldCode', label: t('الحقل', 'Field'), type: 'text', ltr: true, required: true },
+                {
+                  key: 'selectionMode',
+                  label: t('الاختيار', 'Selection'),
+                  type: 'select',
+                  required: true,
+                  defaultValue: 'SINGLE',
+                  options: [opt('SINGLE', 'قيمة واحدة', 'One value'), opt('MULTI', 'عدة قيم', 'Several values')],
+                },
+              ],
+            },
           },
         ],
       },
@@ -655,20 +684,31 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
             type: 'json',
             label: t('الأعمدة', 'Columns'),
             defaultValue: [],
-            hint: t(
-              '[{"name": "code", "searchable": true}]',
-              '[{"name": "code", "searchable": true}]',
-            ),
+            structure: {
+              kind: 'table',
+              columns: [
+                { key: 'name', label: t('اسم العمود', 'Column name'), type: 'text', ltr: true, required: true },
+                { key: 'dataType', label: t('نوع البيانات', 'Data type'), type: 'text', ltr: true },
+                { key: 'labelAr', label: t('العنوان بالعربية', 'Arabic label'), type: 'text' },
+                { key: 'labelEn', label: t('العنوان بالإنجليزية', 'English label'), type: 'text', ltr: true },
+                { key: 'filterable', label: t('للتصفية', 'Filterable'), type: 'checkbox' },
+                { key: 'searchable', label: t('للبحث', 'Searchable'), type: 'checkbox' },
+              ],
+            },
           },
           {
             code: 'scopeBindings',
             type: 'json',
             label: t('نطاقات البيانات', 'Data scopes'),
             defaultValue: [],
-            hint: t(
-              '[{"columnName": "sector_code", "lovCode": "LOV_SECTOR"}]',
-              '[{"columnName": "sector_code", "lovCode": "LOV_SECTOR"}]',
-            ),
+            structure: {
+              kind: 'table',
+              columns: [
+                { key: 'columnName', label: t('العمود', 'Column'), type: 'text', ltr: true, required: true },
+                { key: 'lovCode', label: t('القائمة', 'List'), type: 'select', ref: 'apps.lov', required: true },
+                { key: 'appliesTo', label: t('ينطبق على (فارغ: الكل)', 'Applies to (empty: all)'), type: 'tags', ltr: true },
+              ],
+            },
           },
         ],
       },
@@ -694,7 +734,13 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
             defaultValue: 'TEXT',
             options: ['TEXT', 'NUMBER', 'BOOL', 'JSON'].map((v) => opt(v, v, v)),
           },
-          { code: 'value', type: 'json', label: t('القيمة (JSON)', 'Value (JSON)') },
+          {
+            code: 'value',
+            type: 'json',
+            label: t('القيمة', 'Value'),
+            structure: { kind: 'json' },
+            hint: t('نص بين علامتي تنصيص، أو رقم، أو true/false، أو كائن JSON', 'Text in quotes, a number, true/false, or a JSON object'),
+          },
           { code: 'description', type: 'textarea', label: t('الوصف', 'Description') },
           { code: 'isSecret', type: 'checkbox', label: t('سري', 'Secret') },
           {

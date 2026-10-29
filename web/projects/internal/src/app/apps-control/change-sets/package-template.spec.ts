@@ -20,7 +20,7 @@ describe('package template', () => {
 
     expect(item.entityCode).toBe('EXAMPLE_CODE');
     expect(item.payload['nameAr']).toBe('');
-    expect(item.payload['privileges']).toEqual([{ resourceCode: '...', actions: ['VIEW'] }]);
+    expect(item.payload['privileges']).toEqual([{ resourceCode: '...', actions: ['VIEW'], fieldRules: {} }]);
     for (const field of role.fields) {
       expect(item._help[`payload.${field.code}`]).toContain(field.label.en);
     }

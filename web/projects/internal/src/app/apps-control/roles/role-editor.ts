@@ -9,7 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { ConfigRow, I18nService, LocalizePipe, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
+import { ConfigRow, I18nService, LocalizePipe, StructuredInput, StructuredShape, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
 import { DraftsService } from '../drafts.service';
 import { PermissionCards } from './permission-cards';
 import { RoleMenus } from './role-menus';
@@ -53,6 +53,7 @@ const CODE = /^[A-Za-z][A-Za-z0-9_-]{0,99}$/;
     PermissionCards,
     RoleMenus,
     ScreenData,
+    StructuredInput,
     LocalizePipe,
     TranslatePipe,
   ],
@@ -269,9 +270,7 @@ const CODE = /^[A-Za-z][A-Za-z0-9_-]{0,99}$/;
           <mat-panel-title>{{ 'roles.grants' | dcTranslate }}</mat-panel-title>
           <mat-panel-description>{{ 'roles.grantsHint' | dcTranslate }}</mat-panel-description>
         </mat-expansion-panel-header>
-        <mat-form-field subscriptSizing="dynamic" class="dc-grants__json">
-          <textarea matInput rows="6" dir="ltr" class="mono" [formControl]="grants" data-testid="role-grants"></textarea>
-        </mat-form-field>
+        <dc-structured-input [shape]="grantsShape" [formControl]="grants" testId="role-grants" />
       </mat-expansion-panel>
     </mat-dialog-content>
     <mat-dialog-actions>
@@ -453,15 +452,50 @@ export class RoleEditor {
     nameAr: new FormControl(this.data.role?.nameAr ?? '', { nonNullable: true, validators: Validators.required }),
     code: new FormControl(this.data.role?.code ?? '', { nonNullable: true, validators: [Validators.required, Validators.pattern(CODE)] }),
     appCode: new FormControl<string | null>(this.data.role?.appCode ?? null),
-    businessApp: new FormControl<string | null>(this.data.role ? ((this.data.role['businessApp'] as string | null) ?? null) : (this.data.defaultBusinessApp ?? null)),
+    businessApp: new FormControl<string | null>(
+      this.data.role ? ((this.data.role['businessApp'] as string | null) ?? null) : (this.data.defaultBusinessApp ?? null),
+    ),
     referenceCode: new FormControl<string | null>(this.data.role?.referenceCode ?? null),
     isActive: new FormControl(this.data.role?.isActive ?? true, { nonNullable: true }),
   });
   private readonly initialGrants = splitGrants(this.data.role?.grants ?? [], this.selectedScreens().flatMap(screenCodes));
   /** Grants on the role's screens, edited per screen. */
   protected readonly screenGrants = signal<GrantRow[]>(this.initialGrants.onScreens);
-  /** The other grants (everywhere, or on screens the role does not open), as JSON. */
-  protected readonly grants = new FormControl(JSON.stringify(this.initialGrants.others, null, 2), { nonNullable: true });
+  /** The other grants (everywhere, or on screens the role does not open). */
+  protected readonly grants = new FormControl<GrantRow[]>(this.initialGrants.others, { nonNullable: true });
+  protected readonly grantsShape: StructuredShape = {
+    kind: 'table',
+    columns: [
+      {
+        key: 'lovCode',
+        label: { ar: 'القائمة', en: 'List' },
+        type: 'select',
+        required: true,
+        options: this.data.lovs.map((l) => ({ value: l.code, label: { ar: `${l.nameAr} (${l.code})`, en: `${l.nameEn} (${l.code})` } })),
+      },
+      {
+        key: 'resourceCode',
+        label: { ar: 'الشاشة (فارغ: الكل)', en: 'Screen (empty: all)' },
+        type: 'select',
+        options: this.data.screens.map((r) => ({ value: r.code, label: r.name })),
+      },
+      {
+        key: 'grantType',
+        label: { ar: 'الصلاحية', en: 'Access' },
+        type: 'select',
+        required: true,
+        defaultValue: 'ALL',
+        options: [
+          { value: 'ALL', label: { ar: 'الكل', en: 'All' } },
+          { value: 'VALUES', label: { ar: 'قيم محددة', en: 'Some values' } },
+          { value: 'RULE', label: { ar: 'حسب قاعدة', en: 'By a rule' } },
+          { value: 'NONE', label: { ar: 'لا شيء', en: 'None' } },
+        ],
+      },
+      { key: 'grantedValues', label: { ar: 'القيم', en: 'Values' }, type: 'tags', ltr: true },
+      { key: 'rule', label: { ar: 'القاعدة', en: 'Rule' }, type: 'value' },
+    ],
+  };
   protected readonly menus = signal<string[]>(this.data.role?.menus ?? []);
 
   constructor() {
@@ -540,13 +574,7 @@ export class RoleEditor {
       this.errors.set([this.i18n.translate('roles.fillRequired')]);
       return;
     }
-    let grants: GrantRow[];
-    try {
-      grants = [...(JSON.parse(this.grants.value || '[]') as GrantRow[]), ...this.screenGrants()];
-    } catch {
-      this.errors.set([`${this.i18n.translate('roles.grants')}: ${this.i18n.translate('form.invalidJson')}`]);
-      return;
-    }
+    const grants: GrantRow[] = [...(this.grants.value ?? []), ...this.screenGrants()];
     const value = this.form.getRawValue();
     const payload = {
       nameAr: value.nameAr.trim(),

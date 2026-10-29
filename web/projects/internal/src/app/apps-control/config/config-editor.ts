@@ -12,15 +12,17 @@ import {
   FormOption,
   FormSchema,
   FormValue,
-  I18nService,
   LocalizePipe,
+  StructuredColumn,
   TranslatePipe,
+  lookupColumns,
   problemMessages,
+  withColumnOptions,
 } from '@dynamic-cube/shared';
 import { catchError, forkJoin, map, of } from 'rxjs';
 import { DraftsService } from '../drafts.service';
 import { ConfigField, ConfigType, scopeOf } from './config-types';
-import { emptyToNull, fromDate, fromJsonText, payloadOf, toDate, toJsonText, withCurrentValues } from './form-values';
+import { emptyToNull, fromDate, payloadOf, toDate, withCurrentValues } from './form-values';
 
 export interface ConfigEditorData {
   type: ConfigType;
@@ -71,11 +73,11 @@ export class ConfigEditor {
   private readonly api = inject(AppsControlApi);
   private readonly http = inject(HttpClient);
   protected readonly drafts = inject(DraftsService);
-  private readonly i18n = inject(I18nService);
   private readonly appContext = inject(BusinessAppContext);
 
   protected readonly errors = signal<string[]>([]);
   protected readonly initial = this.initialValue();
+  private columnOptions: (column: StructuredColumn) => FormOption[] | undefined = (c) => c.options;
 
   /** Form schema, once option lists for reference fields are loaded. */
   protected readonly schema = rxResource({
@@ -96,8 +98,28 @@ export class ConfigEditor {
                 catchError(() => of(f.options ?? [])),
               ),
       );
-      return (sources.length ? forkJoin(sources) : of([] as FormOption[][])).pipe(
-        map((lists) => this.buildSchema(new Map(lookups.map((f, i) => [f.code, lists[i]])))),
+      // Columns of nested data whose options are rows of another type or values of a class.
+      const columns = fields.flatMap((f) => lookupColumns(f.structure));
+      const columnKey = (c: StructuredColumn) => (c.ref ? 'ref:' + c.ref : 'class:' + c.refDomains);
+      const columnKeys = [...new Set(columns.map(columnKey))];
+      const columnSources = columnKeys.map((key) =>
+        key.startsWith('ref:')
+          ? this.api.list(key.slice(4)).pipe(map(coded), catchError(() => of([] as FormOption[])))
+          : this.api.classDomains(key.slice(6)).pipe(
+              map((rows) => rows.map((r): FormOption => ({ value: r.code, label: { ar: r.nameAr, en: r.nameEn } }))),
+              catchError(() => of([] as FormOption[])),
+            ),
+      );
+      const all = [...sources, ...columnSources];
+      return (all.length ? forkJoin(all) : of([] as FormOption[][])).pipe(
+        map((lists) => {
+          const columnOptions = new Map(columnKeys.map((k, i) => [k, lists[sources.length + i]]));
+          this.columnOptions = (c) => {
+            const loaded = columnOptions.get(columnKey(c));
+            return loaded?.length ? loaded : c.options;
+          };
+          return this.buildSchema(new Map(lookups.map((f, i) => [f.code, lists[i]])));
+        }),
       );
     },
   });
@@ -162,12 +184,8 @@ export class ConfigEditor {
       case 'date':
         return fromDate(raw);
       case 'json':
-        try {
-          // An emptied list stays a list (the server's payload lists are not nullable).
-          return fromJsonText(raw) ?? (Array.isArray(field.defaultValue) ? [] : null);
-        } catch {
-          throw new Error(`${this.i18n.localize(field.label)}: ${this.i18n.translate('form.invalidJson')}`);
-        }
+        // An emptied list stays a list (the server's payload lists are not nullable).
+        return raw === null || raw === undefined || raw === '' ? (Array.isArray(field.defaultValue) ? [] : null) : raw;
       case 'refList': {
         // Keep the other properties of items that stay selected (e.g. org-unit scope of a role).
         const existing = ((this.data.row?.[field.code] as Record<string, unknown>[] | undefined) ?? []).filter((i) => i && typeof i === 'object');
@@ -199,7 +217,7 @@ export class ConfigEditor {
           value[field.code] = toDate(current);
           break;
         case 'json':
-          value[field.code] = toJsonText(current);
+          value[field.code] = current ?? null;
           break;
         case 'refList':
           value[field.code] = ((current as Record<string, unknown>[] | undefined) ?? []).map((i) => i[field.itemKey!]);
@@ -222,7 +240,8 @@ export class ConfigEditor {
     ];
     const details: FormField[] = type.fields.map((f) => ({
       code: f.code,
-      type: f.type === 'json' ? 'textarea' : f.type === 'refList' ? (f.picker === 'dual' ? 'dualList' : 'select') : f.type,
+      type: f.type === 'json' ? 'structured' : f.type === 'refList' ? (f.picker === 'dual' ? 'dualList' : 'select') : f.type,
+      structure: f.type === 'json' ? withColumnOptions(f.structure ?? { kind: 'json' }, this.columnOptions) : undefined,
       label: f.label,
       hint: f.hint,
       required: f.required,

@@ -1,4 +1,4 @@
-import { LocalizedText } from '@dynamic-cube/shared';
+import { LocalizedText, StructuredColumn, StructuredShape } from '@dynamic-cube/shared';
 import { ConfigField, ConfigSection, ConfigType } from '../config/config-types';
 
 /** An entity type a package can carry: its section, how its key is formed and its payload fields. */
@@ -51,7 +51,9 @@ export const EXTRA_TEMPLATE_ENTITIES: TemplateEntity[] = [
       json('attributes', t('قيم الخصائص', 'Attribute values'), '{"MIN_CAPITAL": 50000}', { defaultValue: {} }),
       { code: 'effectiveFrom', type: 'date', label: t('يسري من', 'Effective from') },
       { code: 'effectiveTo', type: 'date', label: t('يسري حتى', 'Effective to') },
-      json('externalCodes', t('رموز الأنظمة الأخرى', 'External codes'), '[{"providerCode": "MCI", "externalCode": "17", "direction": "BOTH"}]', { defaultValue: [] }),
+      json('externalCodes', t('رموز الأنظمة الأخرى', 'External codes'), '[{"providerCode": "MCI", "externalCode": "17", "direction": "BOTH"}]', {
+        defaultValue: [],
+      }),
     ],
   },
   {
@@ -130,17 +132,93 @@ export function fieldHelp(field: ConfigField): string {
   if (field.type === 'date') {
     parts.push('format yyyy-MM-dd');
   }
-  if (field.hint && field.type === 'json') {
-    parts.push(`e.g. ${field.hint.en}`);
-  } else if (field.hint) {
+  if (field.type === 'json' && field.structure) {
+    parts.push(shapeHelp(field.structure));
+  }
+  if (field.hint) {
     parts.push(both(field.hint));
   }
   return parts.join(' — ');
 }
 
+/** What nested data holds: the columns of each row, the properties of an object, the items of a list. */
+export function shapeHelp(shape: StructuredShape): string {
+  const columns = (list: StructuredColumn[]) =>
+    list
+      .map((c) => {
+        const values = c.options?.length
+          ? ` (${c.options.map((o) => o.value).join('|')})`
+          : c.ref
+            ? ` (code of a ${c.ref} row)`
+            : c.refDomains
+              ? ` (value of class ${c.refDomains})`
+              : '';
+        return `${c.key}: ${c.type}${values}${c.required ? ', required' : ''}`;
+      })
+      .join('; ');
+  switch (shape.kind) {
+    case 'table':
+      return `a list of rows {${columns(shape.columns)}}`;
+    case 'object':
+      return `an object {${columns(shape.properties)}}`;
+    case 'list':
+      return `a list of ${shape.item === 'number' ? 'numbers' : 'texts'}${shape.options?.length ? ` from ${shape.options.map((o) => o.value).join(', ')}` : ''}`;
+    case 'map':
+      return 'an object of names and values';
+    default:
+      return 'JSON';
+  }
+}
+
+/** An example of nested data: one row of a table, every property of an object. */
+export function shapeExample(shape: StructuredShape): unknown {
+  const column = (c: StructuredColumn): unknown => {
+    if (c.defaultValue !== undefined) return c.defaultValue;
+    switch (c.type) {
+      case 'number':
+        return 0;
+      case 'checkbox':
+        return false;
+      case 'date':
+        return '2026-01-01';
+      case 'tags':
+        return ['...'];
+      case 'table':
+        return [Object.fromEntries((c.columns ?? []).map((n) => [n.key, column(n)]))];
+      case 'object':
+        return Object.fromEntries((c.columns ?? []).map((n) => [n.key, column(n)]));
+      case 'map':
+        return {};
+      case 'select':
+        return c.options?.[0]?.value !== undefined && !c.ref && !c.refDomains ? (c.numeric ? Number(c.options[0].value) : c.options[0].value) : '...';
+      default:
+        return '...';
+    }
+  };
+  switch (shape.kind) {
+    case 'table':
+      return [Object.fromEntries(shape.columns.map((c) => [c.key, column(c)]))];
+    case 'object':
+      return Object.fromEntries(shape.properties.map((c) => [c.key, column(c)]));
+    case 'list':
+      return shape.options?.length
+        ? [shape.item === 'number' ? Number(shape.options[0].value) : shape.options[0].value]
+        : shape.item === 'number'
+          ? [1]
+          : ['...'];
+    case 'map':
+      return { KEY: '...' };
+    default:
+      return null;
+  }
+}
+
 /** An example value for a field, or undefined when the field is best left out (the server default applies). */
 export function exampleValue(field: ConfigField): unknown {
-  // Structured fields: the example in the hint teaches more than an empty default.
+  // Structured fields: an example of the shape teaches more than an empty default.
+  if (field.type === 'json' && field.structure && field.structure.kind !== 'json') {
+    return shapeExample(field.structure);
+  }
   if (field.type === 'json') {
     const text = field.hint?.en.split(' — ')[0];
     try {
@@ -183,11 +261,12 @@ export function buildTemplate(entities: TemplateEntity[]): object {
     _help: {
       _help: 'Explanations like this one are ignored on import; you may delete them.',
       title: 'Required. Becomes the title of the draft change sets the package creates (one per configuration area).',
-      items: 'Required. 1 to 2000 changes, applied in order; an item may refer to rows created by earlier items. UPSERT creates or updates by whether the row exists.',
+      items:
+        'Required. 1 to 2000 changes, applied in order; an item may refer to rows created by earlier items. UPSERT creates or updates by whether the row exists.',
       'items[].entityType': 'Required. What the item changes (see each example item).',
       'items[].entityCode': 'Required. The key of the row (its format is explained in each item).',
       'items[].operation': 'Required. CREATE a new row, UPDATE an existing one (the payload replaces it), or DELETE it (no payload).',
-      'items[].payload': 'Required for CREATE and UPDATE: the row\'s fields, explained in each item\'s _help.',
+      'items[].payload': "Required for CREATE and UPDATE: the row's fields, explained in each item's _help.",
     },
     items: entities.map((entity) => {
       const help: Record<string, string> = {
@@ -216,7 +295,11 @@ export function withoutHelp(value: unknown): unknown {
     return value.map(withoutHelp);
   }
   if (value && typeof value === 'object') {
-    return Object.fromEntries(Object.entries(value).filter(([key]) => key !== '_help').map(([key, v]) => [key, withoutHelp(v)]));
+    return Object.fromEntries(
+      Object.entries(value)
+        .filter(([key]) => key !== '_help')
+        .map(([key, v]) => [key, withoutHelp(v)]),
+    );
   }
   return value;
 }

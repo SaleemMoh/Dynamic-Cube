@@ -20,6 +20,8 @@ import {
   VisitFieldType,
   VisitMode,
   VisitOutcome,
+  StructuredInput,
+  StructuredShape,
   problemMessages,
 } from '@dynamic-cube/shared';
 import { catchError, of } from 'rxjs';
@@ -37,10 +39,43 @@ interface FieldRow {
   labelEn: string;
   type: VisitFieldType;
   required: boolean;
-  options: string;
+  options: VisitOption[];
+}
+
+interface VisitOption {
+  code: string;
+  labelAr: string;
+  labelEn: string;
 }
 
 const DEFAULT_RESULT = { reference: 'reference', status: 'status', completedValue: 'COMPLETED', outcome: 'outcome', data: 'findings', report: 'report' };
+
+const t = (ar: string, en: string) => ({ ar, en });
+/** A choice field's options. */
+const OPTIONS: StructuredShape = {
+  kind: 'table',
+  columns: [
+    { key: 'code', label: t('الرمز', 'Code'), type: 'text', ltr: true, required: true },
+    { key: 'labelAr', label: t('بالعربية', 'Arabic'), type: 'text', required: true },
+    { key: 'labelEn', label: t('بالإنجليزية', 'English'), type: 'text', ltr: true, required: true },
+  ],
+};
+/** Operation input → value or JSONLogic over the visit and the request. */
+const INPUTS: StructuredShape = { kind: 'map', keyLabel: t('مدخل العملية', 'Operation input'), valueLabel: t('القيمة أو التعبير', 'Value or expression') };
+/** Where results carry their values. */
+const RESULT: StructuredShape = {
+  kind: 'object',
+  properties: [
+    { key: 'reference', label: t('المرجع', 'Reference'), type: 'text', ltr: true },
+    { key: 'status', label: t('الحالة', 'Status'), type: 'text', ltr: true },
+    { key: 'completedValue', label: t('قيمة الإنجاز', 'Completed value'), type: 'text', ltr: true },
+    { key: 'outcome', label: t('النتيجة', 'Outcome'), type: 'text', ltr: true },
+    { key: 'data', label: t('البيانات', 'Data'), type: 'text', ltr: true },
+    { key: 'report', label: t('التقرير', 'Report'), type: 'text', ltr: true },
+  ],
+};
+/** External outcome value → outcome code. */
+const OUTCOME_MAP: StructuredShape = { kind: 'map', keyLabel: t('قيمة الجهة', 'External value'), valueLabel: t('رمز النتيجة', 'Outcome code') };
 
 /**
  * Edits a visit type: who carries it out, its outcomes, what the inspector records, the evidence required, and for
@@ -59,6 +94,7 @@ const DEFAULT_RESULT = { reference: 'reference', status: 'status', completedValu
     MatInputModule,
     MatSelectModule,
     MatTooltipModule,
+    StructuredInput,
     LocalizePipe,
     TranslatePipe,
   ],
@@ -183,10 +219,10 @@ const DEFAULT_RESULT = { reference: 'reference', status: 'status', completedValu
               </div>
               <mat-checkbox [ngModel]="f.required" (ngModelChange)="setField(i, { required: $event })">{{ 'visitTypes.required' | dcTranslate }}</mat-checkbox>
               @if (f.type === 'SELECT') {
-                <mat-form-field subscriptSizing="dynamic" class="dc-vte__wide">
-                  <mat-label>{{ 'visitTypes.options' | dcTranslate }}</mat-label>
-                  <textarea matInput rows="3" dir="ltr" [ngModel]="f.options" (ngModelChange)="setField(i, { options: $event })"></textarea>
-                </mat-form-field>
+                <div class="dc-vte__wide">
+                  <span class="dc-field-label">{{ 'visitTypes.options' | dcTranslate }}</span>
+                  <dc-structured-input [shape]="optionsShape" [ngModel]="f.options" (ngModelChange)="setField(i, { options: $event })" />
+                </div>
               }
             </div>
           }
@@ -254,19 +290,19 @@ const DEFAULT_RESULT = { reference: 'reference', status: 'status', completedValu
               <mat-hint>{{ 'visitTypes.callbackSecretHint' | dcTranslate }}</mat-hint>
             </mat-form-field>
           </div>
-          <mat-form-field subscriptSizing="dynamic" class="dc-vte__wide">
-            <mat-label>{{ 'visitTypes.inputs' | dcTranslate }}</mat-label>
-            <textarea matInput rows="4" dir="ltr" spellcheck="false" [ngModel]="inputs()" (ngModelChange)="inputs.set($event)"></textarea>
-            <mat-hint dir="ltr">{{ 'visitTypes.inputsHint' | dcTranslate }}</mat-hint>
-          </mat-form-field>
-          <mat-form-field subscriptSizing="dynamic" class="dc-vte__wide">
-            <mat-label>{{ 'visitTypes.resultFields' | dcTranslate }}</mat-label>
-            <textarea matInput rows="4" dir="ltr" spellcheck="false" [ngModel]="result()" (ngModelChange)="result.set($event)"></textarea>
-          </mat-form-field>
-          <mat-form-field subscriptSizing="dynamic" class="dc-vte__wide">
-            <mat-label>{{ 'visitTypes.outcomeMap' | dcTranslate }}</mat-label>
-            <textarea matInput rows="3" dir="ltr" spellcheck="false" [ngModel]="outcomeMap()" (ngModelChange)="outcomeMap.set($event)"></textarea>
-          </mat-form-field>
+          <div class="dc-vte__wide">
+            <span class="dc-field-label">{{ 'visitTypes.inputs' | dcTranslate }}</span>
+            <dc-structured-input [shape]="inputsShape" [ngModel]="inputs()" (ngModelChange)="inputs.set($event)" testId="vte-inputs" />
+            <small class="dc-muted">{{ 'visitTypes.inputsHint' | dcTranslate }}</small>
+          </div>
+          <div class="dc-vte__wide">
+            <span class="dc-field-label">{{ 'visitTypes.resultFields' | dcTranslate }}</span>
+            <dc-structured-input [shape]="resultShape" [ngModel]="result()" (ngModelChange)="result.set($event)" testId="vte-result" />
+          </div>
+          <div class="dc-vte__wide">
+            <span class="dc-field-label">{{ 'visitTypes.outcomeMap' | dcTranslate }}</span>
+            <dc-structured-input [shape]="outcomeMapShape" [ngModel]="outcomeMap()" (ngModelChange)="outcomeMap.set($event)" testId="vte-outcome-map" />
+          </div>
         </section>
       }
 
@@ -371,7 +407,7 @@ export class VisitTypeEditor {
       labelEn: f.labelEn,
       type: f.type,
       required: f.required,
-      options: (f.options ?? []).map((o) => `${o.code} | ${o.labelAr} | ${o.labelEn}`).join('\n'),
+      options: (f.options ?? []).map((o) => ({ code: o.code, labelAr: o.labelAr, labelEn: o.labelEn })),
     })),
   );
   protected readonly photosRequired = signal(Number(this.row?.['photosRequired'] ?? 0));
@@ -382,9 +418,13 @@ export class VisitTypeEditor {
   protected readonly resultOperation = signal<string | null>((this.external?.['resultOperation'] as string) ?? null);
   protected readonly pollMinutes = signal(Number(this.external?.['pollMinutes'] ?? 15));
   protected readonly callbackSecret = signal((this.external?.['callbackSecret'] as string) ?? '');
-  protected readonly inputs = signal(JSON.stringify(this.external?.['inputs'] ?? { visitNumber: { var: 'visit.number' } }, null, 2));
-  protected readonly result = signal(JSON.stringify(this.external?.['result'] ?? DEFAULT_RESULT, null, 2));
-  protected readonly outcomeMap = signal(JSON.stringify(this.external?.['outcomeMap'] ?? {}, null, 2));
+  protected readonly inputs = signal<unknown>(this.external?.['inputs'] ?? { visitNumber: { var: 'visit.number' } });
+  protected readonly result = signal<unknown>(this.external?.['result'] ?? DEFAULT_RESULT);
+  protected readonly outcomeMap = signal<unknown>(this.external?.['outcomeMap'] ?? {});
+  protected readonly optionsShape = OPTIONS;
+  protected readonly inputsShape = INPUTS;
+  protected readonly resultShape = RESULT;
+  protected readonly outcomeMapShape = OUTCOME_MAP;
   protected readonly errors = signal<string[]>([]);
 
   private readonly roleRows = toSignal(this.api.list('apps.role').pipe(catchError(() => of([] as ConfigRow[]))), { initialValue: [] as ConfigRow[] });
@@ -409,14 +449,14 @@ export class VisitTypeEditor {
     if (this.mode() !== 'EXTERNAL') {
       const fields = this.fields();
       if (
-        fields.some((f) => !FIELD_CODE.test(f.code) || !f.labelAr.trim() || !f.labelEn.trim() || (f.type === 'SELECT' && !parseOptions(f.options).length)) ||
+        fields.some((f) => !FIELD_CODE.test(f.code) || !f.labelAr.trim() || !f.labelEn.trim() || (f.type === 'SELECT' && !cleanOptions(f.options).length)) ||
         new Set(fields.map((f) => f.code)).size !== fields.length
       ) {
         list.push('visitTypes.problem.fields');
       }
     } else {
       if (!this.createOperation() || (!this.resultOperation() && !this.callbackSecret().trim())) list.push('visitTypes.problem.external');
-      if ([this.inputs(), this.result(), this.outcomeMap()].some((t) => !isJsonObject(t))) list.push('visitTypes.problem.json');
+      if ([this.inputs(), this.result(), this.outcomeMap()].some((v) => !isObject(v))) list.push('visitTypes.problem.json');
     }
     return list;
   });
@@ -438,7 +478,7 @@ export class VisitTypeEditor {
   }
 
   protected addField(): void {
-    this.fields.update((list) => [...list, { code: '', labelAr: '', labelEn: '', type: 'TEXT', required: false, options: '' }]);
+    this.fields.update((list) => [...list, { code: '', labelAr: '', labelEn: '', type: 'TEXT', required: false, options: [] }]);
   }
 
   protected removeField(index: number): void {
@@ -466,7 +506,7 @@ export class VisitTypeEditor {
             labelEn: f.labelEn.trim(),
             type: f.type,
             required: f.required,
-            options: f.type === 'SELECT' ? parseOptions(f.options) : [],
+            options: f.type === 'SELECT' ? cleanOptions(f.options) : [],
           })),
       photosRequired: external ? 0 : this.photosRequired(),
       requireLocation: !external && this.requireLocation(),
@@ -474,12 +514,12 @@ export class VisitTypeEditor {
       external: external
         ? {
             createOperation: this.createOperation(),
-            inputs: JSON.parse(this.inputs()),
+            inputs: this.inputs(),
             referenceOutput: this.referenceOutput().trim() || 'reference',
             resultOperation: this.resultOperation(),
             pollMinutes: this.pollMinutes(),
-            result: JSON.parse(this.result()),
-            outcomeMap: JSON.parse(this.outcomeMap()),
+            result: this.result(),
+            outcomeMap: this.outcomeMap(),
             callbackSecret: this.callbackSecret().trim() || null,
           }
         : null,
@@ -497,20 +537,17 @@ function named(r: ConfigRow) {
   return { code: r.code, nameAr: (r.nameAr as string) || r.code, nameEn: (r.nameEn as string) || r.code };
 }
 
-/** `CODE | Arabic | English` lines (the English label defaults to the Arabic one). */
-function parseOptions(text: string): { code: string; labelAr: string; labelEn: string }[] {
-  return text
-    .split('\n')
-    .map((line) => line.split('|').map((p) => p.trim()))
-    .filter((p) => p[0])
-    .map(([code, ar, en]) => ({ code: code.toUpperCase(), labelAr: ar || code, labelEn: en || ar || code }));
+/** Options with a code (the English label defaults to the Arabic one). */
+function cleanOptions(options: VisitOption[]): VisitOption[] {
+  return (options ?? [])
+    .filter((o) => o?.code?.trim())
+    .map((o) => ({
+      code: o.code.trim().toUpperCase(),
+      labelAr: o.labelAr?.trim() || o.code.trim(),
+      labelEn: o.labelEn?.trim() || o.labelAr?.trim() || o.code.trim(),
+    }));
 }
 
-function isJsonObject(text: string): boolean {
-  try {
-    const v = JSON.parse(text);
-    return !!v && typeof v === 'object' && !Array.isArray(v);
-  } catch {
-    return false;
-  }
+function isObject(value: unknown): boolean {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
 }

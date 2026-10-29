@@ -44,6 +44,23 @@
                   <small class="dc-form__hint">{{ field.hint | dcLocalize }}</small>
                 }
               }
+              @case ('structured') {
+                <span class="dc-field-label" [id]="field.code + '-label'">
+                  {{ field.label | dcLocalize }}
+                  @if (isRequired(field.code)) {
+                    <span class="dc-required" aria-hidden="true">*</span>
+                  }
+                </span>
+                <dc-structured-input
+                  [formControlName]="field.code"
+                  [shape]="field.structure ?? { kind: 'json' }"
+                  [testId]="'structured-' + field.code"
+                  [attr.aria-labelledby]="field.code + '-label'"
+                />
+                @if (field.hint) {
+                  <small class="dc-form__hint">{{ field.hint | dcLocalize }}</small>
+                }
+              }
               @case ('date') {
                 <label class="dc-field-label" [for]="field.code">
                   {{ field.label | dcLocalize }}

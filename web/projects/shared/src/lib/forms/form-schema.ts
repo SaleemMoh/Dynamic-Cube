@@ -1,5 +1,6 @@
 import { JsonLogicRule } from '../expressions/jsonlogic';
 import { LocalizedText } from '../i18n/language';
+import type { StructuredShape } from './structured-input';
 
 /**
  * Schema-driven form definition produced by the Service Builder and rendered by {@link DynamicForm}.
@@ -29,9 +30,10 @@ export interface FormSection {
 
 /**
  * `icon` is a Material Symbols name chosen from the icon picker (or typed). `dualList` chooses several options by moving
- * them between an available and a chosen list.
+ * them between an available and a chosen list. `structured` edits nested data (rows, lists, objects) through a form made
+ * for its {@link FormField.structure}, with a JSON view.
  */
-export type FormFieldType = 'text' | 'textarea' | 'number' | 'date' | 'select' | 'checkbox' | 'icon' | 'dualList';
+export type FormFieldType = 'text' | 'textarea' | 'number' | 'date' | 'select' | 'checkbox' | 'icon' | 'dualList' | 'structured';
 
 export interface FormField {
   code: string;
@@ -55,6 +57,8 @@ export interface FormField {
   readonly?: boolean;
   /** In a section with columns: full row, half or a third (default one column); `full` also spans a section without columns. */
   width?: FieldWidth;
+  /** For `structured` fields: what the value holds. */
+  structure?: StructuredShape;
   /** Limits checked in the browser and again on the server. */
   min?: number;
   max?: number;
