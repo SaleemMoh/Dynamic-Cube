@@ -1,9 +1,14 @@
 namespace DynamicCube.Modules.AppsControl.Accounts;
 
-/// <summary>Where employee accounts live and who maintains them.</summary>
+/// <summary>
+/// Where accounts live and who maintains them: employees' accounts (<c>AppsControl:Identity</c>) and applicants' portal
+/// accounts (<c>AppsControl:PortalIdentity</c>, whose user name is the national ID).
+/// </summary>
 public sealed class IdentityOptions
 {
     public const string SectionName = "AppsControl:Identity";
+
+    public const string PortalSectionName = "AppsControl:PortalIdentity";
 
     /// <summary><c>Keycloak</c> to maintain accounts through its admin API; <c>None</c> (default) when another team or system does.</summary>
     public string Provider { get; init; } = "None";
@@ -45,9 +50,23 @@ public sealed record AccountView(
     string? Email,
     bool EmailVerified,
     IReadOnlyList<string> RequiredActions,
-    DateTimeOffset? CreatedAt);
+    DateTimeOffset? CreatedAt,
+    string? FirstName = null,
+    string? LastName = null,
+    IReadOnlyDictionary<string, string>? Attributes = null);
 
-public sealed record NewAccountRequest(string UserName, string? Email, string? FirstName, string? LastName, string? TemporaryPassword, bool SendSetupEmail);
+/// <param name="Attributes">Extra profile attributes, e.g. <c>national_id</c> for a portal account.</param>
+public sealed record NewAccountRequest(
+    string UserName,
+    string? Email,
+    string? FirstName,
+    string? LastName,
+    string? TemporaryPassword,
+    bool SendSetupEmail,
+    IReadOnlyDictionary<string, string>? Attributes = null);
+
+/// <summary>A page of accounts and how many match in all.</summary>
+public sealed record AccountPage(IReadOnlyList<AccountView> Items, int Total);
 
 /// <summary>A new password the user must change on the next sign-in, or an email with a link to choose one.</summary>
 public sealed record PasswordRequest(string? TemporaryPassword, bool SendEmail);
@@ -74,6 +93,9 @@ public interface IAccountDirectory
 
     Task<AccountView> GetAsync(string userName, CancellationToken cancellationToken);
 
+    /// <summary>Accounts whose user name, name or email contains <paramref name="search"/> (all when empty), oldest first.</summary>
+    Task<AccountPage> SearchAsync(string? search, int first, int max, CancellationToken cancellationToken);
+
     Task<AccountView> CreateAsync(NewAccountRequest request, CancellationToken cancellationToken);
 
     Task SetEnabledAsync(string userName, bool enabled, CancellationToken cancellationToken);
@@ -93,6 +115,9 @@ internal sealed class UnmanagedAccountDirectory : IAccountDirectory
     public Task<AccountView> GetAsync(string userName, CancellationToken cancellationToken) =>
         Task.FromResult(new AccountView(userName, false, false, "EXTERNAL", false, null, false, [], null));
 
+    public Task<AccountPage> SearchAsync(string? search, int first, int max, CancellationToken cancellationToken) =>
+        Task.FromResult(new AccountPage([], 0));
+
     public Task<AccountView> CreateAsync(NewAccountRequest request, CancellationToken cancellationToken) => throw Unavailable();
 
     public Task SetEnabledAsync(string userName, bool enabled, CancellationToken cancellationToken) => throw Unavailable();
@@ -102,5 +127,5 @@ internal sealed class UnmanagedAccountDirectory : IAccountDirectory
     public Task SignOutAsync(string userName, CancellationToken cancellationToken) => throw Unavailable();
 
     private static AccountException Unavailable() =>
-        new("Accounts are maintained in the identity provider, not in Apps Control (AppsControl:Identity:Provider is None).", AccountProblem.Unavailable);
+        new("Accounts are maintained in the identity provider, not in Apps Control (its Provider setting is None).", AccountProblem.Unavailable);
 }

@@ -3,8 +3,10 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
   AccountCapabilities,
+  AccountPage,
   AccountView,
   NewAccountRequest,
+  NewPortalAccountRequest,
   ChangeOperation,
   ChangeSetDetail,
   ExportRequest,
@@ -97,6 +99,35 @@ export class AppsControlApi {
 
   signOutAccount(userName: string): Observable<void> {
     return this.http.post<void>(`${APPS_CONTROL_API}/admin/accounts/${encodeURIComponent(userName)}/sign-out`, {});
+  }
+
+  portalAccountCapabilities(): Observable<AccountCapabilities> {
+    return this.http.get<AccountCapabilities>(`${APPS_CONTROL_API}/admin/portal-accounts/capabilities`);
+  }
+
+  /** Applicants' portal accounts whose national ID, name or email contains `search`. */
+  portalAccounts(search: string, first: number, max: number): Observable<AccountPage> {
+    return this.http.get<AccountPage>(`${APPS_CONTROL_API}/admin/portal-accounts`, { params: { search, first, max } });
+  }
+
+  portalAccount(nationalId: string): Observable<AccountView> {
+    return this.http.get<AccountView>(`${APPS_CONTROL_API}/admin/portal-accounts/${encodeURIComponent(nationalId)}`);
+  }
+
+  createPortalAccount(request: NewPortalAccountRequest): Observable<AccountView> {
+    return this.http.post<AccountView>(`${APPS_CONTROL_API}/admin/portal-accounts`, request);
+  }
+
+  setPortalAccountEnabled(nationalId: string, enabled: boolean): Observable<void> {
+    return this.http.post<void>(`${APPS_CONTROL_API}/admin/portal-accounts/${encodeURIComponent(nationalId)}/${enabled ? 'enable' : 'disable'}`, {});
+  }
+
+  setPortalAccountPassword(nationalId: string, request: { temporaryPassword: string | null; sendEmail: boolean }): Observable<void> {
+    return this.http.post<void>(`${APPS_CONTROL_API}/admin/portal-accounts/${encodeURIComponent(nationalId)}/password`, request);
+  }
+
+  signOutPortalAccount(nationalId: string): Observable<void> {
+    return this.http.post<void>(`${APPS_CONTROL_API}/admin/portal-accounts/${encodeURIComponent(nationalId)}/sign-out`, {});
   }
 
   uiTexts(app: string): Observable<UiTextItem[]> {

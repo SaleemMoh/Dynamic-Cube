@@ -98,6 +98,23 @@ Apps Control.
   set here. Users are linked to their accounts on first sign-in. Accounts linked to a federation or identity provider
   keep their passwords there in either mode.
 
+**Portal accounts** (*Apps Control → Portal accounts*, resource `apps-control.portal-accounts`) are applicants' accounts
+in the portal realm, configured by `AppsControl:PortalIdentity` (realm `dynamic-cube-external`, client
+`dynamic-cube-portal-accounts`, secret `Secrets:KEYCLOAK_PORTAL_ADMIN:clientSecret`; the Keycloak address defaults to
+`AppsControl:Identity:BaseUrl`).
+
+- The **user name an applicant signs in with is the national ID or iqama number** (10 digits starting with 1 or 2). It
+  is also stored as the `national_id` attribute, which the portal's tokens carry, so the account reaches the
+  applicant's party and requests.
+- The list searches by national ID, name or email and flags accounts whose temporary password is not changed yet.
+- **New account** takes the national ID, names and email, with a temporary password or an emailed link. Once created,
+  the dialog shows the sign-in details to hand over (user name and temporary password) with a copy button.
+- An account can be activated or deactivated (deactivating ends its sessions), given a new password, or signed out.
+- An individual's page in the party registry shows the portal account and its user name, and creates one when there is
+  none, prefilled from the party.
+- Applicants are not Apps Control users: these actions act on the account only. With Nafath connected, accounts linked
+  to it keep their passwords there.
+
 **`user_assignment`** — `user_id`, `org_unit_id`, `position_id`, `is_primary`,
 `effective_from`, `effective_to`.
 

@@ -112,6 +112,19 @@
       "name": "External API (token audience)",
       "enabled": true,
       "bearerOnly": true
+    },
+    {
+      "clientId": "dynamic-cube-portal-accounts",
+      "name": "Dynamic Cube portal accounts (Apps Control)",
+      "description": "Service account the internal API uses to create applicants' portal accounts, enable/disable them and set passwords. Development secret only.",
+      "enabled": true,
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "dev-portal-accounts-secret",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "protocol": "openid-connect"
     }
   ],
   "users": [
@@ -154,6 +167,21 @@
       "attributes": {
         "national_id": [
           "2000000002"
+        ]
+      }
+    },
+    {
+      "id": "e6fbdd0d-fdfb-5689-ac3c-a7610d1089bb",
+      "username": "service-account-dynamic-cube-portal-accounts",
+      "enabled": true,
+      "serviceAccountClientId": "dynamic-cube-portal-accounts",
+      "clientRoles": {
+        "realm-management": [
+          "manage-users",
+          "view-users",
+          "query-users",
+          "view-realm",
+          "view-identity-providers"
         ]
       }
     }

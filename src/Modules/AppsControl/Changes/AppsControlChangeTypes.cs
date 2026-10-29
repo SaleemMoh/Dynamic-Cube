@@ -46,6 +46,7 @@ public static class AppsControlResources
     public const string Installation = "apps-control.installation";
     public const string Organization = "apps-control.organization";
     public const string Users = "apps-control.users";
+    public const string PortalAccounts = "apps-control.portal-accounts";
     public const string Roles = "apps-control.roles";
     public const string Resources = "apps-control.resources";
     public const string Menus = "apps-control.menus";

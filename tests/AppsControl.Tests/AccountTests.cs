@@ -1,6 +1,7 @@
 extern alias InternalApi;
 
 using System.Collections.Concurrent;
+using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
@@ -53,8 +54,16 @@ internal sealed class FakeKeycloak : HttpMessageHandler
         switch (request.Method.Method, parts)
         {
             case ("GET", ["users"]):
-                var name = System.Web.HttpUtility.ParseQueryString(request.RequestUri.Query)["username"];
-                return Json(Users.Values.Where(u => (string)u["username"]! == name).ToList());
+                var query = System.Web.HttpUtility.ParseQueryString(request.RequestUri.Query);
+                if (query["username"] is { } name)
+                {
+                    return Json(Users.Values.Where(u => (string)u["username"]! == name).ToList());
+                }
+
+                return Json(Search(query["search"]).Skip(int.Parse(query["first"] ?? "0", CultureInfo.InvariantCulture))
+                    .Take(int.Parse(query["max"] ?? "100", CultureInfo.InvariantCulture)).ToList());
+            case ("GET", ["users", "count"]):
+                return Json(Search(System.Web.HttpUtility.ParseQueryString(request.RequestUri.Query)["search"]).Count());
             case ("POST", ["users"]):
                 var created = JsonNode.Parse(body!)!.AsObject();
                 if (Users.Values.Any(u => (string)u["username"]! == (string)created["username"]!))
@@ -89,6 +98,10 @@ internal sealed class FakeKeycloak : HttpMessageHandler
                 return new HttpResponseMessage(HttpStatusCode.NotFound);
         }
     }
+
+    private IEnumerable<JsonObject> Search(string? search) => Users.Values
+        .Where(u => search is null || new[] { "username", "firstName", "lastName", "email" }.Any(f => ((string?)u[f])?.Contains(search, StringComparison.OrdinalIgnoreCase) == true))
+        .OrderBy(u => (string)u["username"]!, StringComparer.Ordinal);
 
     private static HttpResponseMessage Json(object value, HttpStatusCode status = HttpStatusCode.OK) =>
         new(status) { Content = new StringContent(JsonSerializer.Serialize(value), Encoding.UTF8, "application/json") };
@@ -211,5 +224,73 @@ public sealed class AccountTests(AppsControlFixture fixture)
         (await admin.PostAsync(new Uri($"/api/apps-control/v1/admin/accounts/{userName}/enable", UriKind.Relative), null, ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
         var invalid = await admin.PostAsJsonAsync(new Uri("/api/apps-control/v1/admin/accounts", UriKind.Relative), new NewAccountRequest("bad name!", null, null, null, "x", false), ct);
         invalid.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Portal_accounts_sign_in_with_the_national_id()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var keycloak = new FakeKeycloak();
+        var portal = new PortalAccountService(Directory(keycloak));
+
+        var created = await portal.CreateAsync(new NewPortalAccountRequest(" 1012345678 ", "سارة", "العتيبي", null, "Temp@12345", false), ct);
+        created.UserName.ShouldBe("1012345678", "the national ID is the user name");
+        created.FirstName.ShouldBe("سارة");
+        created.Attributes!["national_id"].ShouldBe("1012345678", "the portal's tokens carry it as the national_id claim");
+        created.RequiredActions.ShouldBe(["UPDATE_PASSWORD"]);
+
+        (await Should.ThrowAsync<AccountException>(() => portal.CreateAsync(new NewPortalAccountRequest("3012345678", "x", null, null, "Temp@12345", false), ct)))
+            .Field.ShouldBe("nationalId");
+        (await Should.ThrowAsync<AccountException>(() => portal.CreateAsync(new NewPortalAccountRequest("2012345678", " ", null, null, "Temp@12345", false), ct)))
+            .Field.ShouldBe("firstName");
+        await Should.ThrowAsync<AccountException>(() => portal.GetAsync("../users", ct));
+
+        await portal.CreateAsync(new NewPortalAccountRequest("2012345678", "Omar", "Khan", "omar@example.com", null, true), ct);
+        keycloak.Users["svc"] = new JsonObject { ["id"] = "svc", ["username"] = "service-account-x", ["serviceAccountClientId"] = "x", ["enabled"] = true };
+        var all = await portal.SearchAsync(null, 0, 20, ct);
+        all.Items.Select(a => a.UserName).ShouldBe(["1012345678", "2012345678"], "service accounts are not applicants");
+        (await portal.SearchAsync("omar", 0, 20, ct)).Items.ShouldHaveSingleItem().UserName.ShouldBe("2012345678");
+        var page = await portal.SearchAsync(null, 1, 1, ct);
+        page.Items.ShouldHaveSingleItem().UserName.ShouldBe("2012345678");
+
+        await portal.SetEnabledAsync("1012345678", false, ct);
+        (await portal.GetAsync("1012345678", ct)).Enabled.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task Portal_accounts_need_their_own_privilege()
+    {
+        fixture.RequireConnectionString();
+        var ct = TestContext.Current.CancellationToken;
+        var keycloak = new FakeKeycloak();
+        await using var factory = new WebApplicationFactory<InternalApi::Program>().WithWebHostBuilder(builder =>
+        {
+            builder.UseEnvironment("Testing");
+            builder.UseSetting("ConnectionStrings:DynamicCube", fixture.ConnectionString!);
+            builder.UseSetting("AppsControl:BootstrapUsers:admin:0", "SYSTEM_ADMIN");
+            builder.ConfigureTestServices(services =>
+            {
+                services.AddAuthentication(options =>
+                {
+                    options.DefaultScheme = TestAuthHandler.SchemeName;
+                    options.DefaultAuthenticateScheme = TestAuthHandler.SchemeName;
+                    options.DefaultChallengeScheme = TestAuthHandler.SchemeName;
+                }).AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.SchemeName, null);
+                services.AddKeyedScoped<IAccountDirectory>(PortalAccountService.DirectoryKey, (_, _) => Directory(keycloak));
+            });
+        });
+
+        using var admin = factory.CreateClient();
+        admin.DefaultRequestHeaders.Add(TestAuthHandler.Header, "admin");
+        var create = await admin.PostAsJsonAsync(
+            new Uri("/api/apps-control/v1/admin/portal-accounts", UriKind.Relative), new NewPortalAccountRequest("1098765432", "Huda", null, null, "Temp@12345", false), ct);
+        create.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var page = await admin.GetFromJsonAsync<AccountPage>(new Uri("/api/apps-control/v1/admin/portal-accounts?search=huda", UriKind.Relative), ct);
+        page!.Items.ShouldHaveSingleItem().UserName.ShouldBe("1098765432");
+        (await admin.GetAsync(new Uri("/api/apps-control/v1/admin/portal-accounts/12", UriKind.Relative), ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        using var staff = factory.CreateClient();
+        staff.DefaultRequestHeaders.Add(TestAuthHandler.Header, Harness.Unique("staff").ToLowerInvariant());
+        (await staff.GetAsync(new Uri("/api/apps-control/v1/admin/portal-accounts", UriKind.Relative), ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 }

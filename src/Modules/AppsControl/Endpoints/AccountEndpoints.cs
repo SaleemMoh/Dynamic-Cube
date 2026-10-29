@@ -45,6 +45,41 @@ internal static class AccountEndpoints
         }).RequirePrivilege(AppsControlResources.Users, PrivilegeActions.Edit).WithName("SignOutAccount");
     }
 
+    /// <summary>Applicants' portal accounts, by national ID. Guarded by the Portal accounts resource.</summary>
+    public static void MapPortal(RouteGroupBuilder admin)
+    {
+        var accounts = admin.MapGroup("/portal-accounts").AddEndpointFilter(Errors);
+        accounts.MapGet("/capabilities", (PortalAccountService service, CancellationToken ct) => service.CapabilitiesAsync(ct))
+            .RequirePrivilege(AppsControlResources.PortalAccounts, PrivilegeActions.View).WithName("GetPortalAccountCapabilities");
+        accounts.MapGet("/", (string? search, int? first, int? max, PortalAccountService service, CancellationToken ct) =>
+                service.SearchAsync(search, first ?? 0, max ?? 20, ct))
+            .RequirePrivilege(AppsControlResources.PortalAccounts, PrivilegeActions.View).WithName("SearchPortalAccounts");
+        accounts.MapGet("/{nationalId}", (string nationalId, PortalAccountService service, CancellationToken ct) => service.GetAsync(nationalId, ct))
+            .RequirePrivilege(AppsControlResources.PortalAccounts, PrivilegeActions.View).WithName("GetPortalAccount");
+        accounts.MapPost("/", (NewPortalAccountRequest request, PortalAccountService service, CancellationToken ct) => service.CreateAsync(request, ct))
+            .RequirePrivilege(AppsControlResources.PortalAccounts, PrivilegeActions.Create).WithName("CreatePortalAccount");
+        accounts.MapPost("/{nationalId}/enable", async (string nationalId, PortalAccountService service, CancellationToken ct) =>
+        {
+            await service.SetEnabledAsync(nationalId, true, ct);
+            return Results.NoContent();
+        }).RequirePrivilege(AppsControlResources.PortalAccounts, PrivilegeActions.Edit).WithName("EnablePortalAccount");
+        accounts.MapPost("/{nationalId}/disable", async (string nationalId, PortalAccountService service, CancellationToken ct) =>
+        {
+            await service.SetEnabledAsync(nationalId, false, ct);
+            return Results.NoContent();
+        }).RequirePrivilege(AppsControlResources.PortalAccounts, PrivilegeActions.Edit).WithName("DisablePortalAccount");
+        accounts.MapPost("/{nationalId}/password", async (string nationalId, PasswordRequest request, PortalAccountService service, CancellationToken ct) =>
+        {
+            await service.SetPasswordAsync(nationalId, request, ct);
+            return Results.NoContent();
+        }).RequirePrivilege(AppsControlResources.PortalAccounts, PrivilegeActions.Edit).WithName("SetPortalAccountPassword");
+        accounts.MapPost("/{nationalId}/sign-out", async (string nationalId, PortalAccountService service, CancellationToken ct) =>
+        {
+            await service.SignOutAsync(nationalId, ct);
+            return Results.NoContent();
+        }).RequirePrivilege(AppsControlResources.PortalAccounts, PrivilegeActions.Edit).WithName("SignOutPortalAccount");
+    }
+
     private static async ValueTask<object?> Errors(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
     {
         try

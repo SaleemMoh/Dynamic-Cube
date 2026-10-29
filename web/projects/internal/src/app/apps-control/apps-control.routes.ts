@@ -16,6 +16,7 @@ export const APPS_CONTROL_ROUTES: Routes = [
   { path: 'organization', loadComponent: () => import('./organization/org-page').then((m) => m.OrgPage) },
   { path: 'menus', loadComponent: () => import('./menus/menus-page').then((m) => m.MenusPage) },
   { path: 'menus/:code', loadComponent: () => import('./menus/menus-page').then((m) => m.MenusPage) },
+  { path: 'portal-accounts', loadComponent: () => import('./portal-accounts/portal-accounts-page').then((m) => m.PortalAccountsPage) },
   ...CONFIG_SECTIONS.filter((section) => !OWN_SCREENS.includes(section.path)).map((section) => ({
     path: section.path,
     data: { section: section.path },

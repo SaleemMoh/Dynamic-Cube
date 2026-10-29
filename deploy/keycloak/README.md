@@ -44,6 +44,16 @@ The development realm defines the client with the secret `dev-accounts-secret`. 
 - When employees come from Active Directory, LDAP or Entra ID, also set `AppsControl__Identity__Mode=Federated`, so
   Apps Control only enables, disables and signs out.
 
+Applicants' portal accounts are maintained the same way in the external realm, through the confidential client
+`dynamic-cube-portal-accounts` (same realm-management roles; development secret `dev-portal-accounts-secret`). The user
+name is the national ID, also stored as the `national_id` attribute. Per installation:
+
+- Generate a new secret and put it in the internal API's secret store as `Secrets__KEYCLOAK_PORTAL_ADMIN__clientSecret`.
+- Set `AppsControl__PortalIdentity__Provider=Keycloak` (the address defaults to `AppsControl__Identity__BaseUrl`; set
+  `AppsControl__PortalIdentity__BaseUrl` when the portal realm is on another Keycloak).
+- A Keycloak started before this client existed does not re-import the realm: add the client and its service-account
+  roles in the admin console, or recreate the realm.
+
 ## Development users
 
 Password for all: `Dev@12345`
@@ -53,7 +63,7 @@ Password for all: `Dev@12345`
 | internal | `admin`, `maker`, `checker` | Receive `SYSTEM_ADMIN`, `CONFIG_MAKER`, `CONFIG_CHECKER` on first sign-in (`AppsControl:BootstrapUsers` in development) |
 | internal | `manager`, `analyst1`, `analyst2`, `auditor1`, `director` | Classification staff; their roles come from the `classification-workflow.json` package (see `deploy/config-packages`) |
 | internal | `inspector1`, `supervisor` | Field inspector (field app) and visits supervisor; their roles come from the `site-visits.json` package |
-| external | `1000000001`, `2000000002` | Applicants; `national_id` attribute mapped into tokens |
+| external | `1000000001`, `2000000002` | Applicants; `national_id` attribute mapped into tokens. More are created from *Apps Control → Portal accounts* |
 
 The development Keycloak keeps no data: every fresh start re-imports both realms. Apps Control links each account to
 the user's Keycloak ID (the token's `sub`), so the realm files give every user a fixed `id`, and a re-import keeps them.
@@ -73,7 +83,7 @@ curl -s -X POST http://localhost:8080/realms/dynamic-cube-internal/protocol/open
 
 Per customer installation:
 
-- **Remove** the test users and the `dynamic-cube-dev-tools` client; give `dynamic-cube-accounts` a new secret.
+- **Remove** the test users and the `dynamic-cube-dev-tools` client; give `dynamic-cube-accounts` and `dynamic-cube-portal-accounts` new secrets.
 - Set real redirect URIs / web origins on the SPA clients.
 - **Internal realm**: add LDAP / Active Directory user federation for employees.
 - **External realm**: add **Nafath** as identity provider and map the national ID to the `national_id`

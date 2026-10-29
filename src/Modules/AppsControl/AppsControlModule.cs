@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 
 namespace DynamicCube.Modules.AppsControl;
 
@@ -104,6 +105,27 @@ public static class AppsControlModule
         }
 
         services.AddScoped<AccountService>();
+
+        // Applicants' portal accounts: another realm, maintained the same way (user name = national ID).
+        var portal = new IdentityOptions
+        {
+            BaseUrl = configuration[$"{IdentityOptions.SectionName}:BaseUrl"],
+            Realm = "dynamic-cube-external",
+            ClientId = "dynamic-cube-portal-accounts",
+            SecretName = "KEYCLOAK_PORTAL_ADMIN",
+        };
+        configuration.GetSection(IdentityOptions.PortalSectionName).Bind(portal);
+        if (string.Equals(portal.Provider, "Keycloak", StringComparison.OrdinalIgnoreCase))
+        {
+            services.AddKeyedScoped<IAccountDirectory>(PortalAccountService.DirectoryKey, (sp, _) => new KeycloakAccountDirectory(
+                sp.GetRequiredService<IHttpClientFactory>(), Options.Create(portal), sp.GetRequiredService<ISecretStore>(), sp.GetRequiredService<TimeProvider>()));
+        }
+        else
+        {
+            services.AddKeyedScoped<IAccountDirectory, UnmanagedAccountDirectory>(PortalAccountService.DirectoryKey);
+        }
+
+        services.AddScoped<PortalAccountService>();
         return services;
     }
 

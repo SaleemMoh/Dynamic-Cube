@@ -267,6 +267,26 @@ export interface AccountView {
   emailVerified: boolean;
   requiredActions: string[];
   createdAt: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  /** Profile attributes, e.g. `national_id` on a portal account. */
+  attributes?: Record<string, string> | null;
+}
+
+/** A page of accounts and how many match in all. */
+export interface AccountPage {
+  items: AccountView[];
+  total: number;
+}
+
+/** An applicant's portal account: the national ID or iqama number is the user name to sign in with. */
+export interface NewPortalAccountRequest {
+  nationalId: string;
+  firstName: string;
+  lastName: string | null;
+  email: string | null;
+  temporaryPassword: string | null;
+  sendSetupEmail: boolean;
 }
 
 export interface NewAccountRequest {

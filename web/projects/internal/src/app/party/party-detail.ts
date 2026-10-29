@@ -9,9 +9,10 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { RouterLink } from '@angular/router';
-import { AppsControlApi, FormOption, FormValue, I18nService, LocalizePipe, PartyApi, SanctionInfo, RelationshipInfo, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
-import { firstValueFrom } from 'rxjs';
+import { AppsControlApi, FormOption, FormValue, I18nService, LocalizePipe, PartyApi, PartySummary, SanctionInfo, RelationshipInfo, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
+import { catchError, firstValueFrom, of } from 'rxjs';
 import { ConfirmData, ConfirmDialog } from '../apps-control/confirm-dialog';
+import { PortalAccountData, PortalAccountDialog } from '../apps-control/portal-accounts/portal-account-dialog';
 import { PrivilegesService } from '../apps-control/privileges.service';
 import { FormDialog, FormDialogData } from '../common/form-dialog';
 
@@ -70,6 +71,32 @@ import { FormDialog, FormDialogData } from '../common/form-dialog';
             <li>{{ m }}</li>
           }
         </ul>
+      }
+
+      @if (portalId(); as nationalId) {
+        <section class="dc-party__portal" data-testid="party-portal-account">
+          <span class="dc-party__portal-icon" aria-hidden="true"><mat-icon fontSet="material-symbols-outlined">badge</mat-icon></span>
+          <div class="dc-party__portal-text">
+            <strong>{{ 'portalAccount.title' | dcTranslate }}</strong>
+            @if (portalAccount.value(); as a) {
+              @if (a.exists) {
+                <span>
+                  {{ 'portalAccount.userName' | dcTranslate }}: <span class="mono" dir="ltr" data-testid="party-portal-user">{{ a.userName }}</span>
+                </span>
+              } @else {
+                <span class="dc-muted">{{ 'portalAccount.none' | dcTranslate }}</span>
+              }
+            }
+          </div>
+          @if (portalAccount.value()?.exists) {
+            <span class="dc-pill" [class.dc-pill--green]="portalAccount.value()?.enabled">{{
+              (portalAccount.value()?.enabled ? 'account.active' : 'account.inactive') | dcTranslate
+            }}</span>
+          }
+          <button matButton="outlined" type="button" (click)="openPortalAccount(nationalId, d.party)" data-testid="party-portal-open">
+            {{ (portalAccount.value()?.exists ? 'portalAccount.manage' : 'portalAccount.create') | dcTranslate }}
+          </button>
+        </section>
       }
 
       <mat-tab-group mat-stretch-tabs="false" animationDuration="0ms">
@@ -266,6 +293,32 @@ import { FormDialog, FormDialogData } from '../common/form-dialog';
     }
   `,
   styles: `
+    .dc-party__portal {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px 14px;
+      margin-block-end: 12px;
+      padding: 12px 14px;
+      border: 1px solid var(--dga-gray-200);
+      border-radius: var(--shell-radius);
+      background: var(--dga-white, #fff);
+    }
+    .dc-party__portal-icon {
+      display: grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--dynamic-cube-gold-50);
+      color: var(--dynamic-cube-gold-700);
+    }
+    .dc-party__portal-text {
+      display: grid;
+      flex: 1;
+      min-width: 12rem;
+      gap: 2px;
+    }
     .dc-actions {
       display: flex;
       flex-wrap: wrap;
@@ -297,6 +350,28 @@ export class PartyDetail {
   protected readonly canEdit = computed(() => this.privileges.can('party.parties', 'EDIT'));
 
   protected readonly detail = rxResource({ params: () => this.id(), stream: ({ params }) => this.api.get(params) });
+
+  /** An individual's portal account: its user name is the national ID or iqama number. */
+  protected readonly portalId = computed(() => {
+    const d = this.detail.hasValue() ? this.detail.value() : null;
+    if (d?.party.kind !== 'INDIVIDUAL' || !this.privileges.can('apps-control.portal-accounts', 'VIEW')) return null;
+    return d.identifiers.find((i) => (i.type === 'NATIONAL_ID' || i.type === 'IQAMA') && /^[12][0-9]{9}$/.test(i.value))?.value ?? null;
+  });
+  protected readonly portalAccount = rxResource({
+    params: () => this.portalId() ?? undefined,
+    stream: ({ params }) => this.appsControl.portalAccount(params).pipe(catchError(() => of(null))),
+  });
+
+  protected openPortalAccount(nationalId: string, party: PartySummary): void {
+    const [firstName, ...rest] = (party.nameAr || party.nameEn || '').split(' ');
+    const data: PortalAccountData = { nationalId, firstName, lastName: rest.join(' ') || null };
+    this.dialog
+      .open(PortalAccountDialog, { data, width: '640px', maxWidth: '95vw', autoFocus: false })
+      .afterClosed()
+      .subscribe((changed) => {
+        if (changed) this.portalAccount.reload();
+      });
+  }
 
   protected other(row: RelationshipInfo): { id: string; name: string; identifier: string } {
     return row.principalId === this.id()

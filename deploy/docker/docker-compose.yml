@@ -84,6 +84,9 @@ services:
       AppsControl__Identity__Provider: Keycloak
       AppsControl__Identity__BaseUrl: http://keycloak:8080
       Secrets__KEYCLOAK_ADMIN__clientSecret: dev-accounts-secret
+      # Applicants' portal accounts (user name = national ID), in the portal realm.
+      AppsControl__PortalIdentity__Provider: Keycloak
+      Secrets__KEYCLOAK_PORTAL_ADMIN__clientSecret: dev-portal-accounts-secret
     volumes:
       - files:/data/files
     depends_on:

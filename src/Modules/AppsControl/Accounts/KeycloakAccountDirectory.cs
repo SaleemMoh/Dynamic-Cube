@@ -9,7 +9,8 @@ using Microsoft.Extensions.Options;
 namespace DynamicCube.Modules.AppsControl.Accounts;
 
 /// <summary>
-/// Employee accounts in a Keycloak realm, through its admin REST API with a service-account token. Accounts linked to a
+/// Accounts in a Keycloak realm (employees', or applicants' portal accounts), through its admin REST API with a
+/// service-account token. Accounts linked to a
 /// user federation (LDAP, Active Directory) or to an identity provider (Entra ID, Nafath…) belong to that system:
 /// their passwords cannot be set here, but they can still be enabled, disabled and signed out.
 /// </summary>
@@ -58,6 +59,20 @@ internal sealed class KeycloakAccountDirectory(IHttpClientFactory httpClients, I
         return View(user, source);
     }
 
+    public async Task<AccountPage> SearchAsync(string? search, int first, int max, CancellationToken cancellationToken)
+    {
+        var query = string.IsNullOrWhiteSpace(search) ? string.Empty : $"search={Uri.EscapeDataString(search.Trim())}&";
+        var users = await GetAsync<List<UserRep>>($"users?{query}first={Math.Max(0, first)}&max={Math.Clamp(max, 1, 100)}&briefRepresentation=false", cancellationToken) ?? [];
+        var total = await GetAsync<int?>($"users/count{(query.Length == 0 ? string.Empty : "?" + query.TrimEnd('&'))}", cancellationToken) ?? users.Count;
+        var items = new List<AccountView>(users.Count);
+        foreach (var user in users.Where(u => u.ServiceAccountClientId is null))
+        {
+            items.Add(View(user, await SourceAsync(user, cancellationToken)));
+        }
+
+        return new AccountPage(items, total);
+    }
+
     public async Task<AccountView> CreateAsync(NewAccountRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -90,6 +105,7 @@ internal sealed class KeycloakAccountDirectory(IHttpClientFactory httpClients, I
             LastName = request.LastName,
             Enabled = true,
             RequiredActions = ["UPDATE_PASSWORD"],
+            Attributes = request.Attributes?.ToDictionary(a => a.Key, a => new List<string> { a.Value }),
         };
         using (var response = await SendAsync(HttpMethod.Post, "users", create, cancellationToken))
         {
@@ -180,7 +196,10 @@ internal sealed class KeycloakAccountDirectory(IHttpClientFactory httpClients, I
         user.Email,
         user.EmailVerified ?? false,
         user.RequiredActions ?? [],
-        user.CreatedTimestamp is { } ms ? DateTimeOffset.FromUnixTimeMilliseconds(ms) : null);
+        user.CreatedTimestamp is { } ms ? DateTimeOffset.FromUnixTimeMilliseconds(ms) : null,
+        user.FirstName,
+        user.LastName,
+        user.Attributes?.Where(a => a.Value.Count > 0).ToDictionary(a => a.Key, a => a.Value[0]));
 
     private async Task<UserRep> RequireAsync(string userName, CancellationToken cancellationToken) =>
         await FindAsync(userName, cancellationToken) ?? throw new AccountException($"There is no sign-in account '{userName}'.", AccountProblem.NotFound);
@@ -235,7 +254,7 @@ internal sealed class KeycloakAccountDirectory(IHttpClientFactory httpClients, I
         }
     }
 
-    private string BaseUrl => (Options.BaseUrl ?? throw new AccountException("AppsControl:Identity:BaseUrl is not set.", AccountProblem.Unavailable)).TrimEnd('/');
+    private string BaseUrl => (Options.BaseUrl ?? throw new AccountException($"The Keycloak address (BaseUrl) for the realm {Options.Realm} is not set.", AccountProblem.Unavailable)).TrimEnd('/');
 
     private async Task<string> TokenAsync(HttpClient client, CancellationToken cancellationToken)
     {
@@ -339,6 +358,10 @@ internal sealed class KeycloakAccountDirectory(IHttpClientFactory httpClients, I
         public List<string>? RequiredActions { get; init; }
 
         public long? CreatedTimestamp { get; init; }
+
+        public Dictionary<string, List<string>>? Attributes { get; init; }
+
+        public string? ServiceAccountClientId { get; init; }
     }
 
     private sealed record ComponentRep(string? Id, string? Name, string? ProviderId);
