@@ -11,7 +11,11 @@ import { AppsControlApi, I18nService, LocalizePipe, PackageCheck, PackageItemChe
 import { firstValueFrom } from 'rxjs';
 import { ALL_CONFIG_SECTIONS } from '../config/module-sections';
 import { problemLines } from './json-package';
+import { PayloadDiffView } from './payload-diff-view';
 import { templateEntities, withoutHelp } from './package-template';
+
+type ItemStatus = 'new' | 'changed' | 'deleted' | 'unchanged' | 'problems';
+const STATUSES: ItemStatus[] = ['new', 'changed', 'deleted', 'unchanged', 'problems'];
 
 export interface PackageReviewData {
   fileName: string;
@@ -19,12 +23,13 @@ export interface PackageReviewData {
 }
 
 /**
- * Shows an uploaded package before anything is imported: its title and items, and every problem found by a dry run
- * on the server. Import is offered only when there are none. Closes with the number of drafts created.
+ * Shows an uploaded package before anything is imported: its title and items, what each would add or change (field by
+ * field against the row as it is) and every problem found by a dry run on the server. Import is offered only when
+ * there are none; items that change nothing are skipped. Closes with the number of drafts created.
  */
 @Component({
   selector: 'dc-package-review-dialog',
-  imports: [JsonPipe, MatButtonModule, MatDialogModule, MatIconModule, MatProgressBarModule, MatSlideToggleModule, LocalizePipe, TranslatePipe],
+  imports: [JsonPipe, MatButtonModule, MatDialogModule, MatIconModule, MatProgressBarModule, MatSlideToggleModule, LocalizePipe, PayloadDiffView, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <h2 mat-dialog-title>{{ 'packages.reviewTitle' | dcTranslate }}</h2>
@@ -50,10 +55,10 @@ export interface PackageReviewData {
             <span class="dc-muted">{{ 'changeSets.items' | dcTranslate }}</span>
             <strong>{{ check.items.length }}</strong>
           </div>
-          @for (op of operations(); track op.name) {
-            <div>
-              <span class="dc-muted">{{ 'packages.op.' + op.name | dcTranslate }}</span>
-              <strong>{{ op.count }}</strong>
+          @for (tally of tallies(); track tally.key) {
+            <div [attr.data-testid]="'package-count-' + tally.key">
+              <span class="dc-muted">{{ 'packages.status.' + tally.key | dcTranslate }}</span>
+              <strong>{{ tally.count }}</strong>
             </div>
           }
           <div>
@@ -75,9 +80,22 @@ export interface PackageReviewData {
             {{ 'packages.copyProblems' | dcTranslate }} ({{ allProblems().length }})
           </button>
         }
-        @if (failing()) {
-          <mat-slide-toggle [checked]="onlyProblems()" (change)="onlyProblems.set($event.checked)">{{ 'packages.onlyProblems' | dcTranslate }}</mat-slide-toggle>
+        @if (check.isValid && !changes()) {
+          <p class="dc-review__ok" data-testid="package-up-to-date">
+            <mat-icon fontSet="material-symbols-outlined">task_alt</mat-icon>
+            {{ 'packages.upToDate' | dcTranslate }}
+          </p>
         }
+        <div class="dc-review__filters">
+          @if (failing()) {
+            <mat-slide-toggle [checked]="onlyProblems()" (change)="onlyProblems.set($event.checked)">{{ 'packages.onlyProblems' | dcTranslate }}</mat-slide-toggle>
+          }
+          @if (unchangedCount()) {
+            <mat-slide-toggle [checked]="hideUnchanged()" (change)="hideUnchanged.set($event.checked)" data-testid="package-hide-unchanged">
+              {{ ('packages.hideUnchanged' | dcTranslate).replace('{count}', '' + unchangedCount()) }}
+            </mat-slide-toggle>
+          }
+        </div>
         <table class="dc-review__items">
           <thead>
             <tr>
@@ -100,13 +118,23 @@ export interface PackageReviewData {
                 <td class="mono">{{ item.entityCode }}</td>
                 <td><span class="dc-review__op">{{ item.operation }}</span></td>
                 <td>{{ name(item) | dcLocalize }}</td>
-                <td>
-                  @if (hasErrors(item)) {
-                    <span class="dc-badge dc-badge--danger">{{ 'packages.problems' | dcTranslate }}</span>
-                  } @else if (item.exists && item.operation === 'CREATE') {
-                    <span class="dc-badge dc-badge--warning">{{ 'packages.exists' | dcTranslate }}</span>
-                  } @else {
-                    <span class="dc-badge dc-badge--success">{{ 'packages.ok' | dcTranslate }}</span>
+                <td [attr.data-status]="status(item)">
+                  @switch (status(item)) {
+                    @case ('problems') {
+                      <span class="dc-badge dc-badge--danger">{{ 'packages.problems' | dcTranslate }}</span>
+                    }
+                    @case ('unchanged') {
+                      <span class="dc-badge">{{ 'packages.status.unchanged' | dcTranslate }}</span>
+                    }
+                    @case ('new') {
+                      <span class="dc-badge dc-badge--success">{{ 'packages.status.new' | dcTranslate }}</span>
+                    }
+                    @case ('deleted') {
+                      <span class="dc-badge dc-badge--danger">{{ 'packages.status.deleted' | dcTranslate }}</span>
+                    }
+                    @default {
+                      <span class="dc-badge dc-badge--warning">{{ 'packages.status.changed' | dcTranslate }}</span>
+                    }
                   }
                 </td>
               </tr>
@@ -120,7 +148,9 @@ export interface PackageReviewData {
                       }
                     </ul>
                   }
-                  @if (item.payload) {
+                  @if (status(item) === 'changed' && item.current) {
+                    <dc-payload-diff [before]="item.current" [after]="item.incoming ?? item.payload" />
+                  } @else if (item.payload && status(item) !== 'unchanged') {
                     <details>
                       <summary>{{ 'packages.data' | dcTranslate }}</summary>
                       <pre dir="ltr">{{ item.payload | json }}</pre>
@@ -135,9 +165,9 @@ export interface PackageReviewData {
     </mat-dialog-content>
     <mat-dialog-actions>
       <button matButton mat-dialog-close>{{ 'form.cancel' | dcTranslate }}</button>
-      <button matButton="filled" [disabled]="!check()?.isValid || busy()" (click)="import()" data-testid="package-import">
+      <button matButton="filled" [disabled]="!check()?.isValid || !changes() || busy()" (click)="import()" data-testid="package-import">
         <mat-icon fontSet="material-symbols-outlined">upload</mat-icon>
-        {{ 'packages.confirm' | dcTranslate }}
+        {{ 'packages.confirm' | dcTranslate }} ({{ changes() }})
       </button>
     </mat-dialog-actions>
   `,
@@ -157,6 +187,11 @@ export interface PackageReviewData {
     }
     .dc-review__copy {
       margin-inline-end: 12px;
+    }
+    .dc-review__filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 24px;
     }
     .dc-review__ok,
     .dc-review__bad {
@@ -230,15 +265,18 @@ export class PackageReviewDialog {
   protected readonly problems = signal<string[]>([]);
   protected readonly check = signal<PackageCheck | null>(null);
   protected readonly onlyProblems = signal(false);
+  protected readonly hideUnchanged = signal(true);
   protected readonly failing = computed(() => this.check()?.items.filter((i) => this.hasErrors(i)).length ?? 0);
-  protected readonly shown = computed(() => (this.check()?.items ?? []).filter((i) => !this.onlyProblems() || this.hasErrors(i)));
-  protected readonly operations = computed(() => {
-    const counts = new Map<string, number>();
-    for (const item of this.check()?.items ?? []) {
-      const op = (item.operation ?? '?').toUpperCase();
-      counts.set(op, (counts.get(op) ?? 0) + 1);
-    }
-    return [...counts].map(([name, count]) => ({ name, count }));
+  protected readonly unchangedCount = computed(() => this.check()?.items.filter((i) => this.status(i) === 'unchanged').length ?? 0);
+  /** Items the import drafts: unchanged updates are skipped. */
+  protected readonly changes = computed(() => (this.check()?.items.length ?? 0) - this.unchangedCount());
+  protected readonly shown = computed(() =>
+    (this.check()?.items ?? []).filter((i) => (!this.onlyProblems() || this.hasErrors(i)) && (!this.hideUnchanged() || this.onlyProblems() || this.status(i) !== 'unchanged')),
+  );
+  protected readonly tallies = computed(() => {
+    const counts = new Map<ItemStatus, number>();
+    for (const item of this.check()?.items ?? []) counts.set(this.status(item), (counts.get(this.status(item)) ?? 0) + 1);
+    return STATUSES.filter((key) => counts.has(key)).map((key) => ({ key, count: counts.get(key)! }));
   });
   protected readonly areas = computed(() =>
     [...new Set((this.check()?.items ?? []).map((i) => i.area).filter((a): a is string => !!a))].map((a) => this.i18n.translate('area.' + a)).join('، ') || '—',
@@ -255,6 +293,20 @@ export class PackageReviewDialog {
     const text = [this.data.fileName, ...this.allProblems()].join('\n');
     if (this.clipboard.copy(text)) {
       this.snackBar.open(this.i18n.translate('packages.problemsCopied'), undefined, { duration: 3000 });
+    }
+  }
+
+  /** What importing the item does: adds, changes, deletes or leaves the row as it is; or it cannot be imported. */
+  protected status(item: PackageItemCheck): ItemStatus {
+    if (this.hasErrors(item)) return 'problems';
+    if (item.unchanged) return 'unchanged';
+    switch ((item.operation ?? '').toUpperCase()) {
+      case 'CREATE':
+        return 'new';
+      case 'DELETE':
+        return 'deleted';
+      default:
+        return 'changed';
     }
   }
 

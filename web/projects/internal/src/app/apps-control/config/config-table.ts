@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -20,7 +21,7 @@ import { ConfigRowAction, ConfigType } from './config-types';
 /** Published rows of one configuration type with new / edit / delete actions that go into a draft change set. */
 @Component({
   selector: 'dc-config-table',
-  imports: [MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, MatTableModule, MatTooltipModule, RouterLink, LocalizePipe, TranslatePipe],
+  imports: [MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatIconModule, MatInputModule, MatTableModule, MatTooltipModule, RouterLink, LocalizePipe, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="dc-toolbar">
@@ -29,9 +30,12 @@ import { ConfigRowAction, ConfigType } from './config-types';
         <input matInput [placeholder]="'config.search' | dcTranslate" (input)="search.set($any($event.target).value)" />
       </mat-form-field>
       <span class="dc-toolbar__spacer"></span>
-      <button matButton="outlined" type="button" (click)="exportJson()" [disabled]="!rows().length" [attr.data-testid]="'export-' + type().entityType">
+      <button matButton="outlined" type="button" (click)="exportPackage()" [disabled]="!rows().length" [attr.data-testid]="'export-' + type().entityType">
         <mat-icon fontSet="material-symbols-outlined">download</mat-icon>
-        {{ 'jsonImport.export' | dcTranslate }}
+        {{ 'export.button' | dcTranslate }}
+        @if (selected().size) {
+          ({{ selected().size }})
+        }
       </button>
       @if (canCreate() || canEdit()) {
         <button matButton="outlined" type="button" (click)="importJson()" [attr.data-testid]="'import-' + type().entityType">
@@ -54,6 +58,19 @@ import { ConfigRowAction, ConfigType } from './config-types';
       </ul>
     }
     <table mat-table [dataSource]="rows()" class="dc-table">
+      <ng-container matColumnDef="select">
+        <th mat-header-cell *matHeaderCellDef class="dc-table__select">
+          <mat-checkbox
+            [checked]="allSelected()"
+            [indeterminate]="selected().size > 0 && !allSelected()"
+            (change)="selectAll($event.checked)"
+            [attr.aria-label]="'export.selectAll' | dcTranslate"
+          />
+        </th>
+        <td mat-cell *matCellDef="let row" class="dc-table__select">
+          <mat-checkbox [checked]="selected().has(row.code)" (change)="select(row.code, $event.checked)" [attr.aria-label]="row.code" [attr.data-testid]="'select-' + row.code" />
+        </td>
+      </ng-container>
       <ng-container matColumnDef="code">
         <th mat-header-cell *matHeaderCellDef>{{ 'config.code' | dcTranslate }}</th>
         <td mat-cell *matCellDef="let row" dir="ltr" class="dc-code">{{ row.code }}</td>
@@ -129,6 +146,9 @@ import { ConfigRowAction, ConfigType } from './config-types';
     .dc-code {
       font-family: monospace;
     }
+    .dc-table__select {
+      width: 40px;
+    }
   `,
 })
 export class ConfigTable {
@@ -150,7 +170,10 @@ export class ConfigTable {
   protected readonly canCreate = computed(() => !this.singleton() && !this.type().noCreate && this.privileges.can(this.resource(), 'CREATE'));
   protected readonly canEdit = computed(() => this.privileges.can(this.resource(), 'EDIT'));
   protected readonly canDelete = computed(() => !this.singleton() && this.privileges.can(this.resource(), 'DELETE'));
-  protected readonly columns = computed(() => ['code', 'name', ...(this.type().columns ?? []), 'state', 'actions']);
+  protected readonly columns = computed(() => ['select', 'code', 'name', ...(this.type().columns ?? []), 'state', 'actions']);
+  /** Rows ticked for export (by code); kept while searching. */
+  protected readonly selected = signal(new Set<string>());
+  protected readonly allSelected = computed(() => this.rows().length > 0 && this.rows().every((r) => this.selected().has(r.code)));
   protected readonly rows = computed(() => {
     const rows = this.list.hasValue() ? this.list.value() : [];
     const term = this.search().trim().toLowerCase();
@@ -220,14 +243,30 @@ export class ConfigTable {
     }
   }
 
-  /** Downloads the rows shown as JSON, in the shape the import takes back. */
-  protected exportJson(): void {
-    const blob = new Blob([JSON.stringify(this.rows(), null, 2)], { type: 'application/json' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `${this.type().entityType}-${new Date().toISOString().slice(0, 10)}.json`;
-    link.click();
-    URL.revokeObjectURL(link.href);
+  protected select(code: string, on: boolean): void {
+    const next = new Set(this.selected());
+    if (on) next.add(code);
+    else next.delete(code);
+    this.selected.set(next);
+  }
+
+  protected selectAll(on: boolean): void {
+    const next = new Set(this.selected());
+    for (const row of this.rows()) {
+      if (on) next.add(row.code);
+      else next.delete(row.code);
+    }
+    this.selected.set(next);
+  }
+
+  /** Exports the ticked rows (or the whole type) as a package, with what they refer to. */
+  protected async exportPackage(): Promise<void> {
+    const { ExportDialog } = await import('../change-sets/export-dialog');
+    this.dialog.open(ExportDialog, {
+      data: { entityType: this.type().entityType, title: this.type().title, selected: [...this.selected()] },
+      width: '46rem',
+      maxWidth: '96vw',
+    });
   }
 
   protected async remove(row: ConfigRow): Promise<void> {

@@ -25,7 +25,8 @@ configuration is edited through the same maker-checker change sets. Phase 2 has 
 documents (renewal, extension) and payments (SADAD bills, signed payment notifications, a workflow step that waits
 for payment). Phase 3 (builders) has started with the Workflow Designer (workflows drawn on a canvas, conditions
 without JSON, checks as you draw, a test run) and the Service Builder (forms by drag and drop with layouts, rules and
-fees, the portal card and a live preview). See the [roadmap](docs/07-roadmap.md) for what comes next.
+fees, the portal card and a live preview), followed by configuration packages exported from any screen and imported
+with a field-by-field review. See the [roadmap](docs/07-roadmap.md) for what comes next.
 
 ## Repository layout
 
@@ -211,8 +212,13 @@ These are development values only; change them in `deploy/docker/.env` (see `.en
    employee signs in with the temporary password and must choose a new one. The **Sign-in account** button on a user
    activates or deactivates it at once, sets a password or signs the user out everywhere. Every configuration screen
    offers **Import JSON** (rows or a whole package, reviewed before anything is saved, with *Copy all problems*) and
-   **Export JSON**. Import `deploy/config-packages/organization-sample.json` to see the organization structure as a
+   **Export**. Import `deploy/config-packages/organization-sample.json` to see the organization structure as a
    tree.
+16. Tick a few rows on any configuration screen (for example *Integration → Connections*) and choose **Export**.
+   With *Include related configuration*, the package also carries what they refer to. **Change sets → Export
+   configuration** exports whole types across modules. Import the file under **Change sets → Import package**.
+   The review counts new, changed and unchanged items and compares each changed row field by field with the row as
+   it is. Unchanged items are skipped, so re-importing an export drafts nothing.
 
 The gateway credentials come from the secret store (`Secrets__MOMRAH_GATEWAY__clientId` / `__clientSecret`), never
 from the database; development values are in `appsettings.Development.json` and the compose file.

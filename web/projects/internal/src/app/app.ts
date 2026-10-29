@@ -10,6 +10,7 @@ import { PHASE_1E_TRANSLATIONS } from './phase-1e-translations';
 import { BUILDER_TRANSLATIONS } from './services/builder/builder-translations';
 import { APP_TRANSLATIONS } from './translations';
 import { UX_TRANSLATIONS } from './ux-translations';
+import { PACKAGE_TRANSLATIONS } from './apps-control/change-sets/package-translations';
 import { DESIGNER_TRANSLATIONS } from './workflows/designer/designer-translations';
 
 @Component({
@@ -33,5 +34,6 @@ export class App {
     inject(I18nService).register(NOTIFY_RULE_TRANSLATIONS);
     inject(I18nService).register(CONTENT_TRANSLATIONS);
     inject(I18nService).register(UX_TRANSLATIONS);
+    inject(I18nService).register(PACKAGE_TRANSLATIONS);
   }
 }

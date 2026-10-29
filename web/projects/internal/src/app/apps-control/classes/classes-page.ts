@@ -21,6 +21,7 @@ import { PrivilegesService } from '../privileges.service';
 import { ClassEditor, ClassEditorData } from './class-editor';
 import { ClassRow, DomainRow } from './class-models';
 import { DomainEditor, DomainEditorData } from './domain-editor';
+import { ExportButton } from '../change-sets/export-button';
 import { JsonImportButton } from '../change-sets/json-import-button';
 
 const RESOURCE = 'apps-control.classes';
@@ -32,6 +33,7 @@ const RESOURCE = 'apps-control.classes';
 @Component({
   selector: 'dc-classes-page',
   imports: [
+    ExportButton,
     JsonImportButton,
     MatButtonModule,
     MatFormFieldModule,
@@ -53,6 +55,7 @@ const RESOURCE = 'apps-control.classes';
         <h1>{{ 'classes.title' | dcTranslate }}</h1>
         <p>{{ 'classes.hint' | dcTranslate }}</p>
       </div>
+      <dc-export-button entityType="apps.class" [title]="{ ar: 'التصنيفات والقيم', en: 'Classes & domains' }" />
       <dc-json-import-button [title]="{ ar: 'التصنيفات والقيم', en: 'Classes & domains' }" [target]="{ entityType: 'apps.class', key: 'code' }" />
     </header>
     @if (errors().length) {

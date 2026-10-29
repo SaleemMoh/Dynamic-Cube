@@ -23,7 +23,6 @@ export const UX_TRANSLATIONS: TranslationDictionary = {
     'branding.removeImage': 'إزالة',
     'branding.upload': 'رفع صورة (حتى 2 ميجابايت)',
     'jsonImport.button': 'استيراد JSON',
-    'jsonImport.export': 'تصدير JSON',
     'jsonImport.title': 'استيراد JSON',
     'jsonImport.lead': 'الصق صفاً أو قائمة صفوف أو حزمة إعدادات كاملة. تُحدَّث الصفوف الموجودة ويُنشأ الباقي، وتراجع النتيجة قبل حفظ أي شيء.',
     'jsonImport.chooseFile': 'اختيار ملف',
@@ -134,7 +133,6 @@ export const UX_TRANSLATIONS: TranslationDictionary = {
     'branding.removeImage': 'Remove',
     'branding.upload': 'Upload image (up to 2 MB)',
     'jsonImport.button': 'Import JSON',
-    'jsonImport.export': 'Export JSON',
     'jsonImport.title': 'Import JSON',
     'jsonImport.lead':
       'Paste a row, a list of rows or a whole configuration package. Rows that exist are updated, the others created; the result is reviewed before anything is saved.',

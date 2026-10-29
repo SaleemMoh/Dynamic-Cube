@@ -56,9 +56,10 @@ public sealed record ExportSelection(string EntityType, List<string>? Codes);
 
 /// <summary>
 /// What to export, in apply order: put types before the types that refer to them. Rows maintained by the product
-/// (owner SYSTEM) come with every installation and are left out unless asked for.
+/// (owner SYSTEM) come with every installation and are left out unless asked for. Codes that do not exist are an error,
+/// or skipped with <see cref="SkipMissing"/> (when following references that may point at nothing).
 /// </summary>
-public sealed record ExportRequest(string? Title, List<ExportSelection> Types, bool IncludeSystem = false);
+public sealed record ExportRequest(string? Title, List<ExportSelection> Types, bool IncludeSystem = false, bool SkipMissing = false);
 
 public sealed record ExportedItem(string EntityType, string EntityCode, string Operation, JsonElement Payload);
 
@@ -175,7 +176,7 @@ internal static class AdminEndpoints
                 IEnumerable<JsonElement> rows;
                 if (selection.Codes is null)
                 {
-                    rows = (await applier.ExportAsync(ct)).Where(r => request.IncludeSystem || !IsSystem(r));
+                    rows = await applier.ExportAsync(ct);
                 }
                 else
                 {
@@ -186,7 +187,7 @@ internal static class AdminEndpoints
                         {
                             picked.Add(row);
                         }
-                        else
+                        else if (!request.SkipMissing)
                         {
                             missing.Add($"{applier.EntityType} {code}");
                         }
@@ -195,7 +196,7 @@ internal static class AdminEndpoints
                     rows = picked;
                 }
 
-                foreach (var row in rows)
+                foreach (var row in rows.Where(r => request.IncludeSystem || !IsSystem(r)))
                 {
                     var code = row.TryGetProperty("code", out var c) ? c.GetString() ?? string.Empty : string.Empty;
                     if (seen.Add((applier.EntityType, code)))

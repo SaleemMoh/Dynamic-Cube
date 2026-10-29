@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { AppsControlApi, AuthImageSrc, ConfigRow, FooterLink, I18nService, TranslatePipe, problemMessages, themeVariables } from '@dynamic-cube/shared';
 import { firstValueFrom } from 'rxjs';
+import { ExportButton } from '../change-sets/export-button';
 import { JsonImportButton } from '../change-sets/json-import-button';
 import { payloadOf } from '../config/form-values';
 import { DraftsService } from '../drafts.service';
@@ -48,6 +49,7 @@ const PRESETS = ['#ca9f45', '#1b8354', '#136f40', '#0e7490', '#1d4ed8', '#4338ca
   imports: [
     AuthImageSrc,
     FormsModule,
+    ExportButton,
     JsonImportButton,
     ReactiveFormsModule,
     MatButtonModule,
@@ -65,6 +67,7 @@ const PRESETS = ['#ca9f45', '#1b8354', '#136f40', '#0e7490', '#1d4ed8', '#4338ca
         <p>{{ 'branding.hint' | dcTranslate }}</p>
       </div>
       <div>
+        <dc-export-button entityType="apps.entity" [title]="{ ar: 'الهوية والشعار', en: 'Branding' }" />
         @if (canEdit()) {
           <dc-json-import-button
             [title]="{ ar: 'الهوية والشعار', en: 'Branding' }"

@@ -7,6 +7,8 @@ import {
   NewAccountRequest,
   ChangeOperation,
   ChangeSetDetail,
+  ExportRequest,
+  ExportedPackage,
   PackageCheck,
   ChangeSetStatus,
   ChangeSetSummary,
@@ -156,6 +158,11 @@ export class AppsControlApi {
   /** Imports a configuration package as draft change sets (one per area). */
   importPackage(pkg: { title: string; items: unknown[] }): Observable<ChangeSetDetail[]> {
     return this.http.post<ChangeSetDetail[]>(`${APPS_CONTROL_API}/change-sets/import`, pkg);
+  }
+
+  /** Exports rows as a configuration package (UPSERT items keyed by code). */
+  exportPackage(request: ExportRequest): Observable<ExportedPackage> {
+    return this.http.post<ExportedPackage>(`${APPS_CONTROL_API}/admin/export`, request);
   }
 
   /** Checks a package as the import would, keeping nothing: problems of the package and of each item. */

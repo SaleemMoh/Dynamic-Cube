@@ -19,6 +19,7 @@ import { DraftsService } from '../drafts.service';
 import { DetailsDialog, detailsOf } from '../master/details-dialog';
 import { MasterItem, MasterList } from '../master/master-list';
 import { PrivilegesService } from '../privileges.service';
+import { ExportButton } from '../change-sets/export-button';
 import { JsonImportButton } from '../change-sets/json-import-button';
 
 const RESOURCE = 'apps-control.menus';
@@ -33,6 +34,7 @@ const GROUP: ConfigType = types.find((t) => t.entityType === 'apps.menu-group')!
 @Component({
   selector: 'dc-menus-page',
   imports: [
+    ExportButton,
     JsonImportButton,
     MatButtonModule,
     MatFormFieldModule,
@@ -53,6 +55,7 @@ const GROUP: ConfigType = types.find((t) => t.entityType === 'apps.menu-group')!
         <h1>{{ 'menus.title' | dcTranslate }}</h1>
         <p>{{ 'menus.hint' | dcTranslate }}</p>
       </div>
+      <dc-export-button entityType="apps.menu" [title]="{ ar: 'القوائم', en: 'Menus' }" />
       <dc-json-import-button [title]="{ ar: 'القوائم', en: 'Menus' }" [target]="{ entityType: 'apps.menu-group', key: 'code' }" />
     </header>
     @if (errors().length) {

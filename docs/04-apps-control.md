@@ -268,8 +268,10 @@ without a release.
   (`cfg.change_set`, `cfg.change_item` with operation, entity type, code, before/after).
 - Maker-checker policy per area (e.g. roles and grants require approval; UI texts do not).
 - Publishing applies the change set atomically and writes `audit.audit_log`.
-- Export/import packages carry Apps Control configuration by `code`; `SYSTEM` rows are updated
-  by product upgrades, `ENTITY` rows never are.
+- Export/import packages carry configuration by `code` ([ADR-0027](adr/0027-configuration-packages.md)).
+  `POST /admin/export` returns `UPSERT` items. The import check resolves each item against the target and returns
+  the row as it is and as it would become; updates that change nothing are skipped. `SYSTEM` rows are updated by
+  product upgrades and left out of exports by default; `ENTITY` rows never are.
 
 ## 4.12 Apps Control API
 

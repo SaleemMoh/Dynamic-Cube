@@ -277,8 +277,8 @@ Delivered in slices. Each designer covers what the runtime can run today; node t
 | **3a** | Workflow Designer: canvas, palette, connections, side panel per step, visual JSONLogic rule editor, checks as you draw, test run, publish as a new version | ✅ |
 | **3b** | Service & Form Builder: form (steps, sections, question bank, layouts, live preview), service card, rules, required documents, output, related services | ✅ |
 | **3c** | Notification rule builder; Portal Content Manager (banner, categories, tiles, FAQs, help links, pages) | ✅ |
-| 3d | Configuration packages: export from any screen, import with a diff preview | Next |
-| 3e | Visits: field app (offline PWA), external inspection integration, manual entry | Planned |
+| **3d** | Configuration packages: export from any screen, import with a diff preview | ✅ |
+| 3e | Visits: field app (offline PWA), external inspection integration, manual entry | Next |
 | 3f | Sub-requests: prerequisite, bundled, spawned | Planned |
 
 **3a delivered** ([ADR-0023](adr/0023-workflow-designer.md)):
@@ -374,6 +374,28 @@ Manager (they stay in Services), scheduled publishing, and server-side search ac
   - A redesigned Action Center.
   - A steadier side menu: one current item, and it no longer moves when a page opens.
   - The Dashboard as the first entry, and denser screens.
+
+**3d delivered** ([ADR-0027](adr/0027-configuration-packages.md)):
+
+- **Export** from every configuration table (ticked rows or the whole type), from the classes, menus, roles,
+  branding and organization screens, and from *Change sets → Export configuration* (whole types, grouped by area).
+  - *Include related configuration* adds what the rows refer to, the values of classes and the versions of
+    services, workflows and rule sets.
+  - Product rows are left out unless asked for.
+  - Types come in apply order.
+- **Packages** use `UPSERT`: create where missing, update where present. Up to 2000 items.
+- **Import review:**
+  - Counts of new, changed, deleted, unchanged and failing items.
+  - A field-by-field comparison of each changed row with the row as it is.
+  - Unchanged items are hidden, and the import skips them. Re-importing an export drafts nothing.
+- Change-set details show nested changes the same way.
+- **Fix:** a development Keycloak that re-imports its realm no longer breaks sign-in into Apps Control.
+  - Realm users have fixed IDs.
+  - Development re-links accounts by username.
+  - Production refuses the sign-in with 403 instead of failing with 500.
+
+Still open from 3d: following references inside structured definitions (questions in a service version, roles in a
+workflow graph), carrying branding images in a package, and comparing two environments directly.
 
 Scope of the slices:
 

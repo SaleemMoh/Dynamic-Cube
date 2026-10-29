@@ -1,4 +1,4 @@
-import { DatePipe, JsonPipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,8 +9,6 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router, RouterLink } from '@angular/router';
 import {
   AppsControlApi,
-  AuthImageSrc,
-  ChangeItemInfo,
   ChangeSetDetail as Detail,
   I18nService,
   TranslatePipe,
@@ -19,6 +17,7 @@ import {
 import { Observable, firstValueFrom } from 'rxjs';
 import { ConfirmDialog, ConfirmData } from '../confirm-dialog';
 import { PrivilegesService } from '../privileges.service';
+import { PayloadDiffView } from './payload-diff-view';
 import { StatusChip } from './status-chip';
 
 const CHANGE_SETS = 'apps-control.change-sets';
@@ -27,12 +26,11 @@ const CHANGE_SETS = 'apps-control.change-sets';
 @Component({
   selector: 'dc-change-set-detail',
   imports: [
-    AuthImageSrc,
     DatePipe,
-    JsonPipe,
     MatButtonModule,
     MatCardModule,
     MatIconModule,
+    PayloadDiffView,
     RouterLink,
     StatusChip,
     TranslatePipe,
@@ -155,30 +153,7 @@ const CHANGE_SETS = 'apps-control.change-sets';
             }
           </mat-card-header>
           <mat-card-content>
-            <div class="dc-diff" dir="ltr">
-              @for (field of changedFields(item); track field) {
-                <div class="dc-diff__row">
-                  <span class="dc-diff__field">{{ field }}</span>
-                  @if (field === 'logoFileKey') {
-                    <span class="dc-diff__before">
-                      @if (item.before?.[field]; as key) {
-                        <img class="dc-diff__img" [dcAuthSrc]="assetUrl(key)" alt="" />
-                      }
-                    </span>
-                    <span class="dc-diff__after">
-                      @if (item.after?.[field]; as key) {
-                        <img class="dc-diff__img" [dcAuthSrc]="assetUrl(key)" alt="" />
-                      }
-                    </span>
-                  } @else {
-                    <code class="dc-diff__before">{{ item.before?.[field] | json }}</code>
-                    <code class="dc-diff__after">{{ item.after?.[field] | json }}</code>
-                  }
-                </div>
-              } @empty {
-                <span class="dc-muted">{{ 'changeSets.noFieldChanges' | dcTranslate }}</span>
-              }
-            </div>
+            <dc-payload-diff [before]="item.before" [after]="item.after" [depth]="item.operation === 'UPDATE' ? 6 : 1" />
           </mat-card-content>
         </mat-card>
       }
@@ -210,30 +185,6 @@ const CHANGE_SETS = 'apps-control.change-sets';
     }
     [data-op='DELETE'] {
       background: var(--mat-sys-error-container);
-    }
-    .dc-diff__row {
-      display: grid;
-      grid-template-columns: 12rem 1fr 1fr;
-      gap: 0.75rem;
-      padding-block: 0.25rem;
-      border-block-end: 1px solid var(--mat-sys-outline-variant);
-    }
-    .dc-diff__field {
-      font-weight: 600;
-    }
-    .dc-diff__before {
-      color: var(--mat-sys-error);
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-    .dc-diff__after {
-      color: var(--mat-sys-primary);
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-    .dc-diff__img {
-      max-height: 3rem;
-      max-width: 12rem;
     }
     .dc-note {
       padding: 0.75rem 1rem;
@@ -276,25 +227,6 @@ export class ChangeSetDetail {
       this.privileges.can(CHANGE_SETS, 'APPROVE')
     );
   });
-
-  protected assetUrl(key: unknown): string {
-    return `/api/apps-control/v1/branding/assets/${String(key)}`;
-  }
-
-  protected changedFields(item: ChangeItemInfo): string[] {
-    const keys = new Set([...Object.keys(item.before ?? {}), ...Object.keys(item.after ?? {})]);
-    // Key and ownership are not editable fields.
-    keys.delete('owner');
-    keys.delete('code');
-    if (item.operation === 'UPDATE') {
-      for (const key of [...keys]) {
-        if (JSON.stringify(item.before?.[key]) === JSON.stringify(item.after?.[key])) {
-          keys.delete(key);
-        }
-      }
-    }
-    return [...keys];
-  }
 
   protected submit(): void {
     void this.run(this.api.submit(this.id()));

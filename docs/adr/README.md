@@ -31,3 +31,4 @@ Status values: Proposed · Accepted · Superseded.
 | [0024](0024-service-builder.md) | The Service Builder edits the version definition; form layouts (tabs, accordion, columns, widths) join the runtime first | Accepted |
 | [0025](0025-portal-content.md) | Portal content as a module of pages and questions (Markdown, anonymous reads); the home page stays a setting with a structured editor; the notification rule builder edits rules as stored | Accepted |
 | [0026](0026-look-accounts-json-import.md) | Branding drives colours and sign-in pages; accounts are maintained through the identity provider (managed or federated); JSON import on every screen | Accepted |
+| [0027](0027-configuration-packages.md) | Configuration packages: export by code from any screen, UPSERT import, unchanged rows skipped, field-by-field review | Accepted |

@@ -12,6 +12,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { AppsControlApi, ConfigRow, I18nService, LocalizePipe, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
 import { firstValueFrom } from 'rxjs';
+import { ExportButton } from '../change-sets/export-button';
 import { JsonImportButton } from '../change-sets/json-import-button';
 import { ConfigEditor, ConfigEditorData } from '../config/config-editor';
 import { ConfigTable } from '../config/config-table';
@@ -32,6 +33,7 @@ const RESOURCE = 'apps-control.organization';
   selector: 'dc-org-page',
   imports: [
     NgTemplateOutlet,
+    ExportButton,
     FormsModule,
     JsonImportButton,
     MatButtonModule,
@@ -53,6 +55,7 @@ const RESOURCE = 'apps-control.organization';
         <p>{{ 'org.lead' | dcTranslate }}</p>
       </div>
       <div>
+        <dc-export-button entityType="apps.org-unit" [title]="{ ar: 'الهيكل التنظيمي', en: 'Organization structure' }" />
         @if (canEdit()) {
           <dc-json-import-button
             [title]="{ ar: 'الهيكل التنظيمي', en: 'Organization structure' }"

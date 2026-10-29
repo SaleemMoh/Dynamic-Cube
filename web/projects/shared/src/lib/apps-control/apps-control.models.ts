@@ -181,6 +181,42 @@ export interface PackageItemCheck {
   exists: boolean;
   payload: Record<string, unknown> | null;
   errors: Record<string, string[]>;
+  /** An update that would leave the row as it is; the import skips it. */
+  unchanged?: boolean;
+  /** The row as it is now, when it exists. */
+  current?: Record<string, unknown> | null;
+  /** The row as the package would leave it: the payload read as the server reads it, defaults filled in. */
+  incoming?: Record<string, unknown> | null;
+}
+
+/** Rows of one type to export: all of them, or the given codes. */
+export interface ExportSelection {
+  entityType: string;
+  codes?: string[] | null;
+}
+
+export interface ExportRequest {
+  title?: string;
+  /** In apply order: types before the types that refer to them. */
+  types: ExportSelection[];
+  /** Also export rows maintained by the product (they come with every installation). */
+  includeSystem?: boolean;
+  /** Skip codes that do not exist instead of failing (used when following references). */
+  skipMissing?: boolean;
+}
+
+export interface ExportedItem {
+  entityType: string;
+  entityCode: string;
+  operation: 'UPSERT';
+  payload: Record<string, unknown>;
+}
+
+/** An exported configuration package, importable as is here or in another environment. */
+export interface ExportedPackage {
+  title: string;
+  exportedAt: string;
+  items: ExportedItem[];
 }
 
 /** A package checked without saving anything. */

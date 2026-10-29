@@ -13,6 +13,7 @@ import { firstValueFrom } from 'rxjs';
 import { PrivilegesService } from '../privileges.service';
 import { PackageReviewData, PackageReviewDialog } from './package-review-dialog';
 import { StatusChip } from './status-chip';
+import { ExportButton } from './export-button';
 import { TemplateDialog } from './template-dialog';
 
 type Filter = 'TO_REVIEW' | 'MINE' | 'ALL';
@@ -20,7 +21,7 @@ type Filter = 'TO_REVIEW' | 'MINE' | 'ALL';
 /** Change-set inbox: what waits for my review, my own drafts and submissions, or everything. */
 @Component({
   selector: 'dc-change-set-list',
-  imports: [DatePipe, MatButtonModule, MatButtonToggleModule, MatIconModule, MatTableModule, RouterLink, StatusChip, TranslatePipe],
+  imports: [ExportButton, DatePipe, MatButtonModule, MatButtonToggleModule, MatIconModule, MatTableModule, RouterLink, StatusChip, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header class="dc-page__header">
@@ -30,8 +31,9 @@ type Filter = 'TO_REVIEW' | 'MINE' | 'ALL';
         <mat-button-toggle value="MINE" data-testid="filter-mine">{{ 'changeSets.mine' | dcTranslate }}</mat-button-toggle>
         <mat-button-toggle value="ALL">{{ 'changeSets.all' | dcTranslate }}</mat-button-toggle>
       </mat-button-toggle-group>
-      @if (privileges.can('apps-control.change-sets', 'CREATE')) {
-        <span class="dc-change-sets__actions">
+      <span class="dc-change-sets__actions">
+        <dc-export-button />
+        @if (privileges.can('apps-control.change-sets', 'CREATE')) {
           <button matButton="outlined" (click)="template()" data-testid="package-template">
             <mat-icon fontSet="material-symbols-outlined">download</mat-icon>
             {{ 'packages.template' | dcTranslate }}
@@ -40,9 +42,9 @@ type Filter = 'TO_REVIEW' | 'MINE' | 'ALL';
             <mat-icon fontSet="material-symbols-outlined">upload_file</mat-icon>
             {{ 'changeSets.import' | dcTranslate }}
           </button>
-        </span>
-        <input #file type="file" accept="application/json,.json" hidden (change)="importPackage(file)" data-testid="import-file" />
-      }
+          <input #file type="file" accept="application/json,.json" hidden (change)="importPackage(file)" data-testid="import-file" />
+        }
+      </span>
     </header>
 
     @if (rows().length === 0) {
