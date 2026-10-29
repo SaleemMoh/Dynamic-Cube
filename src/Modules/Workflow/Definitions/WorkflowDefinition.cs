@@ -48,6 +48,12 @@ public enum NodeType
 
     /// <summary>Bills the subject's fees (or an amount) and waits until the bill is paid; an unpaid bill takes <c>expired</c>.</summary>
     Payment,
+
+    /// <summary>
+    /// Requests a visit of a type (field inspection, external inspection, manual) and waits for its result: each outcome
+    /// can go its own way (<c>outcomes</c>), others take <c>next</c>; a cancelled visit takes <c>cancelled</c>.
+    /// </summary>
+    Visit,
     End,
 }
 
@@ -141,6 +147,24 @@ public sealed class NodeDefinition
 
     /// <summary>Payment: where an unpaid bill goes once it expires or is cancelled.</summary>
     public string? Expired { get; set; }
+
+    /// <summary>Visit: the visit type to request.</summary>
+    public string? VisitType { get; set; }
+
+    /// <summary>Visit: JSONLogic giving the site address (e.g. a question of the request).</summary>
+    public JsonNode? Site { get; set; }
+
+    /// <summary>Visit: JSONLogic giving the site's position, as <c>"lat,lng"</c> or an object with <c>lat</c> and <c>lng</c>.</summary>
+    public JsonNode? Location { get; set; }
+
+    /// <summary>Visit: what the inspector should know.</summary>
+    public string? Instructions { get; set; }
+
+    /// <summary>Visit: outcome code → the node it leads to (outcomes not listed take <see cref="Next"/>).</summary>
+    public Dictionary<string, string> Outcomes { get; set; } = [];
+
+    /// <summary>Visit: where a cancelled visit goes.</summary>
+    public string? Cancelled { get; set; }
 }
 
 public enum DocumentTarget

@@ -17,6 +17,8 @@ using DynamicCube.Modules.Parties.Persistence;
 using DynamicCube.Modules.Parties.Seeding;
 using DynamicCube.Modules.Payments;
 using DynamicCube.Modules.Payments.Persistence;
+using DynamicCube.Modules.Visits;
+using DynamicCube.Modules.Visits.Persistence;
 using DynamicCube.Modules.Services;
 using DynamicCube.Modules.Services.Persistence;
 using DynamicCube.Modules.Workflow;
@@ -42,6 +44,7 @@ builder.Services.AddDocuments(builder.Configuration);
 builder.Services.AddDecisions(builder.Configuration);
 builder.Services.AddCommunication(builder.Configuration);
 builder.Services.AddPayments(builder.Configuration);
+builder.Services.AddVisits(builder.Configuration);
 builder.Services.AddContent(builder.Configuration);
 
 using var host = builder.Build();
@@ -59,6 +62,7 @@ try
     await MigrateAsync<DecisionsDbContext>(host.Services, logger);
     await MigrateAsync<CommunicationDbContext>(host.Services, logger);
     await MigrateAsync<PaymentsDbContext>(host.Services, logger);
+    await MigrateAsync<VisitsDbContext>(host.Services, logger);
     await MigrateAsync<ContentDbContext>(host.Services, logger);
 
     // Product-owned configuration (SYSTEM rows) is inserted or refreshed on every run.

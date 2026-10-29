@@ -3,6 +3,7 @@ using DynamicCube.Modules.Services.Definitions;
 using DynamicCube.Modules.Services.Domain;
 using DynamicCube.Platform.Parties;
 using DynamicCube.Platform.Payments;
+using DynamicCube.Platform.Visits;
 
 namespace DynamicCube.Modules.Services.Runtime;
 
@@ -74,7 +75,8 @@ public sealed record RequestView(
     ResolvedVersion Version,
     IReadOnlyList<FieldError> StepErrors,
     IReadOnlyList<TimelineEntry> Timeline,
-    IReadOnlyList<BillInfo>? Bills = null);
+    IReadOnlyList<BillInfo>? Bills = null,
+    IReadOnlyList<VisitInfo>? Visits = null);
 
 public sealed record TimelineEntry(DateTimeOffset At, string UserId, string Type, StatusCategory? FromStatus, StatusCategory? ToStatus, string? Comment);
 

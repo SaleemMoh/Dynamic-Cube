@@ -8,6 +8,7 @@ using DynamicCube.Platform.Documents;
 using DynamicCube.Platform.Integration;
 using DynamicCube.Platform.Parties;
 using DynamicCube.Platform.Payments;
+using DynamicCube.Platform.Visits;
 using DynamicCube.Platform.Persistence;
 using DynamicCube.Platform.Security;
 using DynamicCube.Platform.Workflow;
@@ -376,7 +377,10 @@ internal sealed class RequestService(
         var bills = services.GetService<IPayments>() is { } payments && entity.StatusCategory != StatusCategory.Draft
             ? await payments.OfSubjectAsync(RequestSubject.Type, entity.Id, cancellationToken)
             : [];
-        return new RequestView(Summary(entity, (service.NameAr, service.NameEn)), entity.VersionNumber, entity.LevelCode, entity.CurrentStep, data, lines, byLevel, version, stepErrors, timeline, bills);
+        var visits = services.GetService<IVisits>() is { } registry && entity.StatusCategory != StatusCategory.Draft
+            ? await registry.OfSubjectAsync(RequestSubject.Type, entity.Id, cancellationToken)
+            : [];
+        return new RequestView(Summary(entity, (service.NameAr, service.NameEn)), entity.VersionNumber, entity.LevelCode, entity.CurrentStep, data, lines, byLevel, version, stepErrors, timeline, bills, visits);
     }
 
     /// <summary>Expires a draft past its date, or moves it to the current version when the service says so. True when expired.</summary>

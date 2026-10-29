@@ -8,6 +8,7 @@ using DynamicCube.Modules.Integration;
 using DynamicCube.Modules.Parties;
 using DynamicCube.Modules.Payments;
 using DynamicCube.Modules.Services;
+using DynamicCube.Modules.Visits;
 using DynamicCube.Modules.Workflow;
 using DynamicCube.Platform;
 using DynamicCube.Platform.ChangeSets;
@@ -70,6 +71,7 @@ public sealed class TestHost : IAsyncDisposable
         services.AddCommunication(configuration);
         services.AddPayments(configuration);
         services.AddContent(configuration);
+        services.AddVisits(configuration);
         configure?.Invoke(services);
         services.AddSingleton(Provider);
         services.AddHttpClient(IntegrationModule.HttpClientName).ConfigurePrimaryHttpMessageHandler(sp => sp.GetRequiredService<FakeProvider>());

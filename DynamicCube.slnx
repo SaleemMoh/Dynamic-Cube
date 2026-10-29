@@ -14,6 +14,7 @@
     <Project Path="src/Modules/AppsControl/DynamicCube.Modules.AppsControl.csproj" />
     <Project Path="src/Modules/Communication/DynamicCube.Modules.Communication.csproj" />
     <Project Path="src/Modules/Payments/DynamicCube.Modules.Payments.csproj" />
+    <Project Path="src/Modules/Visits/DynamicCube.Modules.Visits.csproj" />
     <Project Path="src/Modules/Content/DynamicCube.Modules.Content.csproj" />
     <Project Path="src/Modules/Decisions/DynamicCube.Modules.Decisions.csproj" />
     <Project Path="src/Modules/Documents/DynamicCube.Modules.Documents.csproj" />
@@ -42,6 +43,7 @@
     <Project Path="tests/Services.Tests/DynamicCube.Modules.Services.Tests.csproj" />
     <Project Path="tests/Communication.Tests/DynamicCube.Modules.Communication.Tests.csproj" />
     <Project Path="tests/Payments.Tests/DynamicCube.Modules.Payments.Tests.csproj" />
+    <Project Path="tests/Visits.Tests/DynamicCube.Modules.Visits.Tests.csproj" />
     <Project Path="tests/Content.Tests/DynamicCube.Modules.Content.Tests.csproj" />
     <Project Path="tests/Decisions.Tests/DynamicCube.Modules.Decisions.Tests.csproj" />
     <Project Path="tests/Documents.Tests/DynamicCube.Modules.Documents.Tests.csproj" />

@@ -10,6 +10,7 @@
     <ProjectReference Include="..\..\Modules\Communication\DynamicCube.Modules.Communication.csproj" />
     <ProjectReference Include="..\..\Modules\Services\DynamicCube.Modules.Services.csproj" />
     <ProjectReference Include="..\..\Modules\Payments\DynamicCube.Modules.Payments.csproj" />
+    <ProjectReference Include="..\..\Modules\Visits\DynamicCube.Modules.Visits.csproj" />
     <ProjectReference Include="..\..\Modules\Integration\DynamicCube.Modules.Integration.csproj" />
     <ProjectReference Include="..\..\Modules\Parties\DynamicCube.Modules.Parties.csproj" />
     <ProjectReference Include="..\..\Modules\Decisions\DynamicCube.Modules.Decisions.csproj" />

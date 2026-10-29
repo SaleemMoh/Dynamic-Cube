@@ -6,6 +6,7 @@ using DynamicCube.Modules.Documents;
 using DynamicCube.Modules.Integration;
 using DynamicCube.Modules.Parties;
 using DynamicCube.Modules.Payments;
+using DynamicCube.Modules.Visits;
 using DynamicCube.Modules.Services;
 using DynamicCube.Modules.Workflow;
 using DynamicCube.Platform.Security;
@@ -26,8 +27,10 @@ builder.Services.AddDocuments(builder.Configuration);
 builder.Services.AddDecisions(builder.Configuration);
 builder.Services.AddCommunication(builder.Configuration);
 builder.Services.AddPayments(builder.Configuration);
+builder.Services.AddVisits(builder.Configuration);
 builder.Services.AddHostedService<SlaBackgroundService>();
 builder.Services.AddHostedService<DocumentDatesBackgroundService>();
 builder.Services.AddHostedService<BillExpiryBackgroundService>();
+builder.Services.AddHostedService<ExternalVisitsBackgroundService>();
 
 builder.Build().Run();

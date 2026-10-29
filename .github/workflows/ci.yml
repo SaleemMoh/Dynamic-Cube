@@ -60,6 +60,7 @@ jobs:
           dotnet ef migrations has-pending-model-changes --project src/Modules/Decisions --no-build --configuration Release
           dotnet ef migrations has-pending-model-changes --project src/Modules/Communication --no-build --configuration Release
           dotnet ef migrations has-pending-model-changes --project src/Modules/Payments --no-build --configuration Release
+          dotnet ef migrations has-pending-model-changes --project src/Modules/Visits --no-build --configuration Release
           dotnet ef migrations has-pending-model-changes --project src/Modules/Content --no-build --configuration Release
 
   frontend:

@@ -142,6 +142,25 @@ internal static partial class DefinitionValidator
                 Target(node.Next, field + ".next", nodes, errors, required: true);
                 Target(node.Expired, field + ".expired", nodes, errors, required: true);
                 break;
+            case NodeType.Visit:
+                errors.Required(field + ".visitType", node.VisitType);
+                CheckRule(node.Site, field + ".site", evaluator, errors);
+                CheckRule(node.Location, field + ".location", evaluator, errors);
+                errors.MaxLength(field + ".instructions", node.Instructions, 4000);
+                if (node.DueDays is < 1 or > 90)
+                {
+                    errors.Add(field + ".dueDays", "Must be between 1 and 90.");
+                }
+
+                foreach (var (outcome, to) in node.Outcomes)
+                {
+                    CheckCode(outcome, $"{field}.outcomes", errors);
+                    Target(to, $"{field}.outcomes.{outcome}", nodes, errors, required: true);
+                }
+
+                Target(node.Next, field + ".next", nodes, errors, required: true);
+                Target(node.Cancelled, field + ".cancelled", nodes, errors, required: true);
+                break;
             case NodeType.Document:
                 errors.Required(field + ".documentType", node.DocumentType);
                 if (node.Validity == ValidityMode.Extend && node.ValidityMonths is null)
@@ -316,8 +335,9 @@ internal static partial class DefinitionValidator
     }
 
     internal static IEnumerable<string> Targets(NodeDefinition node) =>
-        new[] { node.Next, node.Default, node.Expired }
+        new[] { node.Next, node.Default, node.Expired, node.Cancelled }
             .Concat(node.Branches)
+            .Concat(node.Outcomes.Values)
             .Concat(node.Routes.Select(r => r.To))
             .Concat(node.Actions.Select(a => a.To ?? a.ResumeAt ?? (a.Kind == ActionKind.Return ? node.Code : null)))
             .Where(c => c is not null)
@@ -363,5 +383,7 @@ internal static partial class DefinitionValidator
         ["actions"] = new JsonObject(),
         ["decisions"] = new JsonObject(),
         ["documents"] = new JsonObject(),
+        ["payments"] = new JsonObject(),
+        ["visits"] = new JsonObject(),
     };
 }

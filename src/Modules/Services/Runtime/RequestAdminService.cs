@@ -6,6 +6,7 @@ using DynamicCube.Modules.Services.Persistence;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Expressions;
 using DynamicCube.Platform.Payments;
+using DynamicCube.Platform.Visits;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -55,7 +56,8 @@ internal sealed class RequestAdminService(ServicesDbContext context, ServiceCata
             .ToListAsync(cancellationToken);
         var view = new RequestView(RequestService.Summary(entity, (service.NameAr, service.NameEn)), entity.VersionNumber, entity.LevelCode, entity.CurrentStep,
             JsonNode.Parse(entity.Data)!.AsObject(), entity.Fees, new Dictionary<string, IReadOnlyList<FeeLine>>(), version, [], timeline,
-            services.GetService<IPayments>() is { } payments ? await payments.OfSubjectAsync(RequestSubject.Type, entity.Id, cancellationToken) : []);
+            services.GetService<IPayments>() is { } payments ? await payments.OfSubjectAsync(RequestSubject.Type, entity.Id, cancellationToken) : [],
+            services.GetService<IVisits>() is { } visits ? await visits.OfSubjectAsync(RequestSubject.Type, entity.Id, cancellationToken) : []);
         return new RequestDetail(view, entity.SubmitterPartyId, entity.SubmitterName, entity.BeneficiaryPartyId, timeline);
     }
 

@@ -11,6 +11,7 @@ using DynamicCube.Platform.Integration;
 using DynamicCube.Platform.Payments;
 using DynamicCube.Platform.Persistence;
 using DynamicCube.Platform.Security;
+using DynamicCube.Platform.Visits;
 using DynamicCube.Platform.Workflow;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -232,6 +233,10 @@ internal sealed class WorkflowEngine(
                 await BillAsync(run, token, node, cancellationToken);
                 break;
 
+            case NodeType.Visit:
+                await RequestVisitAsync(run, token, node, cancellationToken);
+                break;
+
             case NodeType.End:
                 token.Status = TokenStatus.Done;
                 Complete(run, node);
@@ -444,6 +449,105 @@ internal sealed class WorkflowEngine(
         await work.CommitAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// Requests the node's visit (Visits module) and waits for its result; the deadline keeps running, as the visit is the
+    /// entity's work. The visit is kept as <c>visits.&lt;node&gt;</c>.
+    /// </summary>
+    private async Task RequestVisitAsync(Run run, WorkflowToken token, NodeDefinition node, CancellationToken cancellationToken)
+    {
+        var visits = services.GetService<IVisits>() ?? throw new WorkflowConflictException("Field visits are not installed.");
+        var facts = await RuleContextAsync(run, cancellationToken);
+        var site = node.Site is null ? null : JsonPaths.Text(evaluator.Evaluate(node.Site, facts));
+        var (latitude, longitude) = node.Location is null ? (null, null) : Position(evaluator.Evaluate(node.Location, facts));
+        var party = JsonPaths.ReadText(facts, "party.id") is { } id && Guid.TryParse(id, out var partyId) ? partyId : (Guid?)null;
+        var instance = run.Instance;
+        VisitInfo visit;
+        try
+        {
+            visit = await visits.CreateAsync(
+                new VisitRequest(node.VisitType!, instance.SubjectType, instance.SubjectId, instance.SubjectNumber, party, instance.PartyNameAr,
+                    instance.TitleAr, instance.TitleEn, site, latitude, longitude, node.Instructions, node.DueDays, facts),
+                cancellationToken);
+        }
+        catch (VisitException ex)
+        {
+            throw new WorkflowConflictException($"Step '{node.Code}': {ex.Message}");
+        }
+
+        SetFact(run, "visits", node.Code, new JsonObject
+        {
+            ["visitId"] = visit.Id.ToString(),
+            ["number"] = visit.Number,
+            ["type"] = visit.VisitType,
+            ["status"] = visit.Status,
+            ["dueAt"] = visit.DueAt?.ToString("O", CultureInfo.InvariantCulture),
+        });
+        token.Status = TokenStatus.WaitingVisit;
+        run.Event(WorkflowEventTypes.VisitRequested, null, null, visit.Number, visible: true, node: node.Code);
+        run.Update(SubjectStatus.InProgress, node.DisplayStatus ?? "AWAITING_VISIT", "VISIT_REQUESTED", null);
+    }
+
+    /// <summary>A position given as <c>"lat,lng"</c> or as an object with <c>lat</c>/<c>lng</c> (or <c>latitude</c>/<c>longitude</c>).</summary>
+    private static (double? Latitude, double? Longitude) Position(JsonNode? value)
+    {
+        static double? Number(string? text) => double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var n) ? n : null;
+        return value switch
+        {
+            JsonObject o => (Number(JsonPaths.Text(o["lat"] ?? o["latitude"])), Number(JsonPaths.Text(o["lng"] ?? o["lon"] ?? o["longitude"]))),
+            JsonValue v when JsonPaths.Text(v)?.Split(',') is [var lat, var lng] => (Number(lat.Trim()), Number(lng.Trim())),
+            _ => (null, null),
+        };
+    }
+
+    /// <summary>
+    /// A visit closed: the branch waiting for it moves on, to the outcome's node (else <c>next</c>) when completed, to
+    /// <c>cancelled</c> otherwise; the outcome and the recorded data are kept for later rules and documents.
+    /// </summary>
+    public async Task VisitClosedAsync(VisitClosed visit, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(visit);
+        var id = await context.Instances.Where(i => i.SubjectType == visit.SubjectType && i.SubjectId == visit.SubjectId && i.Status != InstanceStatus.Completed && i.Status != InstanceStatus.Cancelled)
+            .Select(i => (Guid?)i.Id).SingleOrDefaultAsync(cancellationToken);
+        if (id is null)
+        {
+            return;
+        }
+
+        await using var work = await unitOfWork.BeginAsync(cancellationToken);
+        var run = await LoadAsync(id.Value, System, null, cancellationToken);
+        var facts = JsonNode.Parse(run.Instance.Facts)?.AsObject() ?? [];
+        var token = run.Tokens.FirstOrDefault(t => t.Status == TokenStatus.WaitingVisit
+            && facts["visits"]?[t.NodeCode]?["visitId"]?.GetValue<string>() == visit.VisitId.ToString());
+        if (token is null)
+        {
+            return;
+        }
+
+        var node = run.Version.Node(token.NodeCode);
+        var entry = facts["visits"]![token.NodeCode]!.AsObject();
+        entry["status"] = visit.Status;
+        entry["outcome"] = visit.Outcome;
+        entry["outcomeKind"] = visit.OutcomeKind;
+        entry["data"] = visit.Data.DeepClone();
+        entry["closedAt"] = visit.At.ToString("O", CultureInfo.InvariantCulture);
+        run.Instance.Facts = facts.ToJsonString();
+
+        var eventType = visit.Completed ? WorkflowEventTypes.VisitCompleted : WorkflowEventTypes.VisitCancelled;
+        run.Event(eventType, null, null, visit.Completed ? $"{visit.Number} · {visit.Outcome}" : visit.Number, visible: true, node: node.Code);
+        run.Update(SubjectStatus.InProgress, visit.Completed ? "VISIT_DONE" : "VISIT_CANCELLED", eventType, null);
+        token.Status = TokenStatus.Active;
+        token.NodeCode = !visit.Completed ? node.Cancelled! : visit.Outcome is { } outcome && node.Outcomes.TryGetValue(outcome, out var to) ? to : node.Next!;
+        await AdvanceAsync(run, token, cancellationToken);
+        if (run.Pending is { EventType: "STATUS_CHANGED" } entered)
+        {
+            // Entering the next task is not news to the applicant; the visit is.
+            run.Pending = entered with { EventType = eventType };
+        }
+
+        await FinishAsync(run, cancellationToken);
+        await work.CommitAsync(cancellationToken);
+    }
+
     private JsonObject Map(Dictionary<string, JsonNode?> fields, JsonObject facts) =>
         new(fields.Select(f => KeyValuePair.Create(f.Key, evaluator.Evaluate(f.Value, facts)?.DeepClone())));
 
@@ -490,7 +594,7 @@ internal sealed class WorkflowEngine(
         }
 
         // Branches still running (join any / count) are no longer needed.
-        foreach (var other in run.Tokens.Where(t => (t.Status is TokenStatus.Active or TokenStatus.WaitingCustomer or TokenStatus.WaitingPayment or TokenStatus.AtJoin) && t.Forks.Any(f => f.Id == fork.Id)).ToList())
+        foreach (var other in run.Tokens.Where(t => (t.Status is TokenStatus.Active or TokenStatus.WaitingCustomer or TokenStatus.WaitingPayment or TokenStatus.WaitingVisit or TokenStatus.AtJoin) && t.Forks.Any(f => f.Id == fork.Id)).ToList())
         {
             CancelToken(run, other);
         }
@@ -597,7 +701,7 @@ internal sealed class WorkflowEngine(
 
     private static void Complete(Run run, NodeDefinition node)
     {
-        foreach (var token in run.Tokens.Where(t => t.Status is TokenStatus.Active or TokenStatus.WaitingCustomer or TokenStatus.WaitingPayment or TokenStatus.AtJoin).ToList())
+        foreach (var token in run.Tokens.Where(t => t.Status is TokenStatus.Active or TokenStatus.WaitingCustomer or TokenStatus.WaitingPayment or TokenStatus.WaitingVisit or TokenStatus.AtJoin).ToList())
         {
             CancelToken(run, token);
         }
@@ -620,6 +724,13 @@ internal sealed class WorkflowEngine(
 
     private static void CancelToken(Run run, WorkflowToken token)
     {
+        if (token.Status == TokenStatus.WaitingVisit
+            && JsonNode.Parse(run.Instance.Facts)?["visits"]?[token.NodeCode]?["visitId"]?.GetValue<string>() is { } visit && Guid.TryParse(visit, out var visitId))
+        {
+            // The visit is no longer needed (the request finished or the branch was dropped at a join).
+            run.CancelledVisits.Add(visitId);
+        }
+
         token.Status = TokenStatus.Cancelled;
         foreach (var task in run.Tasks.Where(t => t.TokenId == token.Id && t.Status == WorkTaskStatus.Open))
         {
@@ -645,6 +756,7 @@ internal sealed class WorkflowEngine(
         facts["decisions"] = produced["decisions"]?.DeepClone() ?? new JsonObject();
         facts["documents"] = produced["documents"]?.DeepClone() ?? new JsonObject();
         facts["payments"] = produced["payments"]?.DeepClone() ?? new JsonObject();
+        facts["visits"] = produced["visits"]?.DeepClone() ?? new JsonObject();
         return facts;
     }
 
@@ -680,6 +792,13 @@ internal sealed class WorkflowEngine(
 
         context.Events.AddRange(run.Events);
         await context.SaveChangesAsync(cancellationToken);
+        if (run.CancelledVisits.Count > 0 && services.GetService<IVisits>() is { } visits)
+        {
+            foreach (var visit in run.CancelledVisits)
+            {
+                await visits.CancelAsync(visit, $"{instance.SubjectNumber}: no longer needed", cancellationToken);
+            }
+        }
 
         // While a branch waits for the applicant, the request shows that, whatever the other branches do.
         if (run.Pending is { } update && !(instance.Status == InstanceStatus.WaitingCustomer && update.Status == SubjectStatus.InProgress))
@@ -724,6 +843,9 @@ internal sealed class WorkflowEngine(
         public List<WorkTask> Tasks { get; } = tasks;
 
         public List<WorkflowEvent> Events { get; } = [];
+
+        /// <summary>Visits whose waiting branches were cancelled in this operation.</summary>
+        public List<Guid> CancelledVisits { get; } = [];
 
         /// <summary>Tokens resumed after the applicant's correction in this operation.</summary>
         public HashSet<Guid> Resuming { get; } = [];

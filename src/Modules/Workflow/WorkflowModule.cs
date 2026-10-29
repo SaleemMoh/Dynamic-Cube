@@ -6,6 +6,7 @@ using DynamicCube.Platform;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Communication;
 using DynamicCube.Platform.Payments;
+using DynamicCube.Platform.Visits;
 using DynamicCube.Platform.Security;
 using DynamicCube.Platform.Services;
 using DynamicCube.Platform.Workflow;
@@ -41,6 +42,7 @@ public static class WorkflowModule
         services.AddScoped<WorkflowEngine>();
         services.AddScoped<IWorkflowRuntime>(sp => sp.GetRequiredService<WorkflowEngine>());
         services.AddScoped<IPaymentListener, PaymentContinuation>();
+        services.AddScoped<IVisitListener, VisitContinuation>();
         services.AddScoped<ActionCenter>();
         services.AddScoped<SlaMonitor>();
         services.AddScoped<ServiceWorkflows>();

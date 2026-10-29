@@ -84,6 +84,9 @@ public enum TokenStatus
 
     /// <summary>At a payment step: waits for its bill to be paid (or to expire).</summary>
     WaitingPayment,
+
+    /// <summary>At a visit step: waits for the visit's result (the deadline keeps running: the visit is the entity's work).</summary>
+    WaitingVisit,
 }
 
 /// <summary>An open split a token belongs to: its id, the split node and how many branches it started.</summary>
@@ -246,6 +249,9 @@ public static class WorkflowEventTypes
     public const string BillIssued = "BILL_ISSUED";
     public const string PaymentReceived = "PAYMENT_RECEIVED";
     public const string PaymentNotReceived = "PAYMENT_NOT_RECEIVED";
+    public const string VisitRequested = "VISIT_REQUESTED";
+    public const string VisitCompleted = "VISIT_COMPLETED";
+    public const string VisitCancelled = "VISIT_CANCELLED";
 }
 
 /// <summary>Out of office: the delegate works on the delegator's assigned tasks between the dates.</summary>
