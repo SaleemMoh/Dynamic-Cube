@@ -15,6 +15,9 @@ export interface GraphNode {
   branches?: string[];
   routes?: { to: string }[];
   default?: string | null;
+  expired?: string | null;
+  cancelled?: string | null;
+  outcomes?: Record<string, string>;
   actions?: { code: string; kind: string; nameAr?: string; nameEn?: string; to?: string | null }[];
   assignment?: {
     target?: string;
@@ -54,6 +57,9 @@ export function graphEdges(definition: GraphDefinition, language: 'ar' | 'en'): 
     for (const b of n.branches ?? []) edges.push({ from: n.code, to: b, label: '' });
     (n.routes ?? []).forEach((r, i) => edges.push({ from: n.code, to: r.to, label: `#${i + 1}` }));
     if (n.default) edges.push({ from: n.code, to: n.default, label: '*' });
+    for (const [outcome, to] of Object.entries(n.outcomes ?? {})) edges.push({ from: n.code, to, label: outcome });
+    if (n.expired) edges.push({ from: n.code, to: n.expired, label: '✗' });
+    if (n.cancelled) edges.push({ from: n.code, to: n.cancelled, label: '✗' });
     for (const a of n.actions ?? []) {
       if (a.to)
         edges.push({

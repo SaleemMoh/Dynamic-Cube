@@ -33,3 +33,4 @@ Status values: Proposed · Accepted · Superseded.
 | [0026](0026-look-accounts-json-import.md) | Branding drives colours and sign-in pages; accounts are maintained through the identity provider (managed or federated); JSON import on every screen | Accepted |
 | [0027](0027-configuration-packages.md) | Configuration packages: export by code from any screen, UPSERT import, unchanged rows skipped, field-by-field review | Accepted |
 | [0028](0028-portal-dga-layout.md) | The portal follows the DGA layout of entity portals (title bands, tabs, cards, filter panels, service page anatomy); page feedback and service ratings are stored | Accepted |
+| [0029](0029-field-visits.md) | Field visits as a module: a workflow step that waits for the outcome, an offline-first field app with an outbox, external inspection bodies through the Integration Manager | Accepted |

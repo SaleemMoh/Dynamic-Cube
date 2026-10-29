@@ -17,7 +17,7 @@ export interface QuestionRef {
 }
 
 /**
- * What the side panel offers to pick from: roles, employees, rule sets, document types, payment providers, and the
+ * What the side panel offers to pick from: roles, employees, rule sets, document types, payment providers, visit types, and the
  * service's levels and questions (from its latest version). A list that cannot be read is simply empty.
  */
 @Injectable()
@@ -34,6 +34,7 @@ export class DesignerReferences {
   private readonly ruleSetRows = this.list('dec.rule-set');
   private readonly documentTypeRows = this.list('doc.document-type');
   private readonly providerRows = this.list('pay.provider');
+  private readonly visitTypeRows = this.list('vis.visit-type');
   private readonly questionRows = this.list('svc.question');
   private readonly versionRows = this.list('svc.service-version');
   private readonly userRows = this.list('apps.user');
@@ -43,6 +44,23 @@ export class DesignerReferences {
   readonly ruleSets = computed(() => options(this.ruleSetRows()));
   readonly documentTypes = computed(() => options(this.documentTypeRows()));
   readonly providers = computed(() => options(this.providerRows()));
+  readonly visitTypes = computed(() => options(this.visitTypeRows()));
+
+  /** A visit type's outcomes and form fields, for routing on its result. */
+  visitType(code: string | null | undefined): { outcomes: RefOption[]; fields: QuestionRef[] } {
+    const row = this.visitTypeRows().find((r) => r.code === code);
+    const outcomes = (row?.['outcomes'] as { code: string; nameAr: string; nameEn: string }[] | undefined) ?? [];
+    const fields = (row?.['fields'] as { code: string; labelAr: string; labelEn: string; type: string; options?: { code: string; labelAr: string; labelEn: string }[] }[] | undefined) ?? [];
+    return {
+      outcomes: outcomes.map((o) => ({ value: o.code, label: { ar: o.nameAr, en: o.nameEn } })),
+      fields: fields.map((f) => ({
+        code: f.code,
+        label: { ar: f.labelAr, en: f.labelEn },
+        type: f.type,
+        options: (f.options ?? []).map((o) => ({ value: o.code, label: { ar: o.labelAr, en: o.labelEn } })),
+      })),
+    };
+  }
   readonly users = computed(() => options(this.userRows().filter((u) => u['status'] !== 'DISABLED')));
 
   /** The service's latest version's definition. */

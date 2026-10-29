@@ -97,7 +97,7 @@ public sealed class ExternalApiTests(DatabaseFixture fixture) : IAsyncLifetime
         var ct = TestContext.Current.CancellationToken;
         await using (var host = new TestHost(connectionString))
         {
-            await host.PublishAsync(ServiceChangeTypes.Area, [.. Packages.Items("portal-services.json").Where(i => i.EntityType.StartsWith("svc.", StringComparison.Ordinal))]);
+            await Packages.PortalServicesAsync(host);
         }
 
         // No sign-in: the categories, the listed services with duration and cost, and the statistics.

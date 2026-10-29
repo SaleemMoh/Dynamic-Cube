@@ -1,0 +1,682 @@
+{
+  "title": "Site visits",
+  "items": [
+    {
+      "entityType": "integ.operation",
+      "entityCode": "CIS_BOOK_INSPECTION",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "حجز معاينة سلامة",
+        "nameEn": "Book a safety inspection",
+        "connectionCode": "MOMRAH_GATEWAY",
+        "envelopeProfileCode": "MOMRAH",
+        "descriptionAr": "يحيل طلب معاينة السلامة إلى جهة المعاينة ويعيد رقم المعاينة لديها.",
+        "descriptionEn": "Refers a safety inspection to the inspection body and returns its inspection number.",
+        "method": "POST",
+        "pathTemplate": "/v1/CIS/inspections",
+        "isIdempotent": false,
+        "parameters": [
+          {
+            "name": "visitNumber",
+            "location": "BODY",
+            "isRequired": true,
+            "isMasked": false,
+            "sampleValue": "VIS-2026-000001"
+          },
+          {
+            "name": "siteAddress",
+            "location": "BODY",
+            "isRequired": false,
+            "isMasked": false,
+            "sampleValue": "الرياض، حي العليا"
+          },
+          {
+            "name": "activity",
+            "location": "BODY",
+            "isRequired": false,
+            "isMasked": false,
+            "sampleValue": "فعالية مؤقتة"
+          },
+          {
+            "name": "dueDate",
+            "location": "BODY",
+            "isRequired": false,
+            "isMasked": false,
+            "sampleValue": "2026-11-05"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "reference",
+            "path": "inspectionId"
+          }
+        ],
+        "responseCodes": [
+          {
+            "code": "003-000001",
+            "outcome": "BUSINESS_ERROR",
+            "messageAr": "رقم الزيارة مطلوب.",
+            "messageEn": "The visit number is required."
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "integ.operation",
+      "entityCode": "CIS_INSPECTION_RESULT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "نتيجة معاينة السلامة",
+        "nameEn": "Safety inspection result",
+        "connectionCode": "MOMRAH_GATEWAY",
+        "envelopeProfileCode": "MOMRAH",
+        "descriptionAr": "يستعلم عن حالة المعاينة ونتيجتها وملاحظاتها.",
+        "descriptionEn": "Reads the inspection's status, result and findings.",
+        "method": "GET",
+        "pathTemplate": "/v1/CIS/inspections/{reference}",
+        "isIdempotent": true,
+        "parameters": [
+          {
+            "name": "reference",
+            "location": "PATH",
+            "isRequired": true,
+            "isMasked": false,
+            "sampleValue": "INS-100001"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "inspectionId",
+            "path": "inspectionId"
+          },
+          {
+            "name": "status",
+            "path": "status"
+          },
+          {
+            "name": "result",
+            "path": "result"
+          },
+          {
+            "name": "findings",
+            "path": "findings"
+          },
+          {
+            "name": "summary",
+            "path": "summary"
+          }
+        ],
+        "responseCodes": [
+          {
+            "code": "003-000002",
+            "outcome": "NOT_FOUND",
+            "messageAr": "المعاينة غير موجودة.",
+            "messageEn": "The inspection does not exist."
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.role",
+      "entityCode": "FIELD_INSPECTOR",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مفتش ميداني",
+        "nameEn": "Field inspector",
+        "appCode": "INTERNAL",
+        "privileges": [
+          {
+            "resourceCode": "visits.field",
+            "actions": [
+              "VIEW"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.role",
+      "entityCode": "VISIT_SUPERVISOR",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مشرف الزيارات",
+        "nameEn": "Visits supervisor",
+        "appCode": "INTERNAL",
+        "privileges": [
+          {
+            "resourceCode": "visits.registry",
+            "actions": [
+              "VIEW",
+              "EDIT"
+            ]
+          },
+          {
+            "resourceCode": "services.requests",
+            "actions": [
+              "VIEW"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.user",
+      "entityCode": "inspector1",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المفتش الأول",
+        "nameEn": "First Inspector",
+        "email": "inspector1@dynamic-cube.local",
+        "status": "ACTIVE",
+        "roles": [
+          {
+            "roleCode": "FIELD_INSPECTOR"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.user",
+      "entityCode": "supervisor",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مشرف الزيارات",
+        "nameEn": "Visits Supervisor",
+        "email": "supervisor@dynamic-cube.local",
+        "status": "ACTIVE",
+        "roles": [
+          {
+            "roleCode": "VISIT_SUPERVISOR"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "vis.visit-type",
+      "entityCode": "SITE_INSPECTION",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "معاينة الموقع",
+        "nameEn": "Site inspection",
+        "mode": "FIELD",
+        "descriptionAr": "يزور مفتشو الجهة الموقع ويسجلون النتيجة والصور وتوقيع ممثل المنشأة من تطبيق الزيارات.",
+        "descriptionEn": "The entity's inspectors visit the site and record the result, photos and the representative's signature in the field app.",
+        "outcomes": [
+          {
+            "code": "COMPLIANT",
+            "nameAr": "مطابق",
+            "nameEn": "Compliant",
+            "kind": "PASS"
+          },
+          {
+            "code": "NON_COMPLIANT",
+            "nameAr": "غير مطابق",
+            "nameEn": "Not compliant",
+            "kind": "FAIL"
+          },
+          {
+            "code": "NOT_ACCESSIBLE",
+            "nameAr": "تعذّر الوصول إلى الموقع",
+            "nameEn": "Site not accessible",
+            "kind": "OTHER"
+          }
+        ],
+        "fields": [
+          {
+            "code": "findings",
+            "labelAr": "ملاحظات المعاينة",
+            "labelEn": "Findings",
+            "type": "TEXTAREA",
+            "required": true,
+            "options": []
+          },
+          {
+            "code": "area",
+            "labelAr": "المساحة المعاينة (م²)",
+            "labelEn": "Area inspected (m²)",
+            "type": "NUMBER",
+            "required": false,
+            "options": []
+          },
+          {
+            "code": "signage",
+            "labelAr": "اللوحة التعريفية",
+            "labelEn": "Name board",
+            "type": "SELECT",
+            "required": true,
+            "options": [
+              {
+                "code": "PRESENT",
+                "labelAr": "موجودة ومطابقة",
+                "labelEn": "Present and compliant"
+              },
+              {
+                "code": "NON_COMPLIANT",
+                "labelAr": "موجودة وغير مطابقة",
+                "labelEn": "Present, not compliant"
+              },
+              {
+                "code": "MISSING",
+                "labelAr": "غير موجودة",
+                "labelEn": "Missing"
+              }
+            ]
+          },
+          {
+            "code": "safetyEquipment",
+            "labelAr": "أدوات السلامة متوفرة",
+            "labelEn": "Safety equipment in place",
+            "type": "CHECKBOX",
+            "required": false,
+            "options": []
+          },
+          {
+            "code": "followUpDate",
+            "labelAr": "موعد المتابعة",
+            "labelEn": "Follow-up date",
+            "type": "DATE",
+            "required": false,
+            "options": []
+          }
+        ],
+        "photosRequired": 1,
+        "requireLocation": true,
+        "requireSignature": true,
+        "inspectorRole": "FIELD_INSPECTOR",
+        "dueDays": 5
+      }
+    },
+    {
+      "entityType": "vis.visit-type",
+      "entityCode": "SAFETY_INSPECTION",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "معاينة السلامة",
+        "nameEn": "Safety inspection",
+        "mode": "EXTERNAL",
+        "descriptionAr": "تُحال إلى جهة معاينة السلامة عبر بوابة الوزارة، وترد النتيجة بالاستعلام الدوري أو بإشعار موقّع.",
+        "descriptionEn": "Referred to the safety inspection body through the ministry gateway; the result comes by periodic checks or a signed notification.",
+        "outcomes": [
+          {
+            "code": "COMPLIANT",
+            "nameAr": "مطابق",
+            "nameEn": "Compliant",
+            "kind": "PASS"
+          },
+          {
+            "code": "NON_COMPLIANT",
+            "nameAr": "غير مطابق",
+            "nameEn": "Not compliant",
+            "kind": "FAIL"
+          }
+        ],
+        "fields": [],
+        "photosRequired": 0,
+        "requireLocation": false,
+        "requireSignature": false,
+        "dueDays": 10,
+        "external": {
+          "createOperation": "CIS_BOOK_INSPECTION",
+          "inputs": {
+            "visitNumber": {
+              "var": "visit.number"
+            },
+            "siteAddress": {
+              "var": "visit.siteAddress"
+            },
+            "activity": {
+              "var": "data.PRT_EVENT_NAME"
+            },
+            "dueDate": {
+              "var": "visit.dueDate"
+            }
+          },
+          "referenceOutput": "reference",
+          "resultOperation": "CIS_INSPECTION_RESULT",
+          "pollMinutes": 1,
+          "result": {
+            "reference": "inspectionId",
+            "status": "status",
+            "completedValue": "COMPLETED",
+            "outcome": "result",
+            "data": "findings",
+            "report": "summary"
+          },
+          "outcomeMap": {},
+          "callbackSecret": "CIS_CALLBACK"
+        }
+      }
+    },
+    {
+      "entityType": "wf.workflow-version",
+      "entityCode": "SITE_VISIT/2",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 2 — زيارة المفتش للموقع",
+        "nameEn": "Version 2 — an inspector visits the site",
+        "definition": {
+          "slaWorkingDays": 10,
+          "nodes": [
+            {
+              "code": "START",
+              "type": "START",
+              "nameAr": "تقديم الطلب",
+              "nameEn": "Submitted",
+              "next": "SITE"
+            },
+            {
+              "code": "SITE",
+              "type": "VISIT",
+              "nameAr": "معاينة الموقع",
+              "nameEn": "Site inspection",
+              "visitType": "SITE_INSPECTION",
+              "site": {
+                "var": "data.PRT_LOCATION"
+              },
+              "instructions": "تواصل مع مقدم الطلب قبل الزيارة بيوم.",
+              "dueDays": 5,
+              "outcomes": {
+                "NON_COMPLIANT": "REJECTED"
+              },
+              "next": "APPROVED",
+              "cancelled": "CLOSED"
+            },
+            {
+              "code": "APPROVED",
+              "type": "END",
+              "nameAr": "اكتمال الطلب",
+              "nameEn": "Completed",
+              "outcome": "APPROVED"
+            },
+            {
+              "code": "REJECTED",
+              "type": "END",
+              "nameAr": "رفض لعدم المطابقة",
+              "nameEn": "Rejected: not compliant",
+              "outcome": "REJECTED",
+              "displayStatus": "REJECTED_NOT_COMPLIANT"
+            },
+            {
+              "code": "CLOSED",
+              "type": "END",
+              "nameAr": "إغلاق دون زيارة",
+              "nameEn": "Closed without a visit",
+              "outcome": "CLOSED",
+              "displayStatus": "CLOSED_NO_VISIT"
+            }
+          ],
+          "layout": {
+            "START": {
+              "x": 304,
+              "y": 24
+            },
+            "SITE": {
+              "x": 304,
+              "y": 144
+            },
+            "APPROVED": {
+              "x": 64,
+              "y": 304
+            },
+            "REJECTED": {
+              "x": 304,
+              "y": 304
+            },
+            "CLOSED": {
+              "x": 544,
+              "y": 304
+            }
+          }
+        }
+      }
+    },
+    {
+      "entityType": "wf.workflow-version",
+      "entityCode": "EVENT_PERMIT/2",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 2 — معاينة السلامة لدى الجهة المختصة",
+        "nameEn": "Version 2 — safety inspection by the inspection body",
+        "definition": {
+          "slaWorkingDays": 10,
+          "nodes": [
+            {
+              "code": "START",
+              "type": "START",
+              "nameAr": "تقديم الطلب",
+              "nameEn": "Submitted",
+              "next": "SAFETY"
+            },
+            {
+              "code": "SAFETY",
+              "type": "VISIT",
+              "nameAr": "معاينة السلامة",
+              "nameEn": "Safety inspection",
+              "visitType": "SAFETY_INSPECTION",
+              "site": {
+                "var": "data.PRT_LOCATION"
+              },
+              "dueDays": 10,
+              "outcomes": {
+                "NON_COMPLIANT": "REJECTED"
+              },
+              "next": "APPROVED",
+              "cancelled": "CLOSED"
+            },
+            {
+              "code": "APPROVED",
+              "type": "END",
+              "nameAr": "اكتمال الطلب",
+              "nameEn": "Completed",
+              "outcome": "APPROVED"
+            },
+            {
+              "code": "REJECTED",
+              "type": "END",
+              "nameAr": "رفض لعدم المطابقة",
+              "nameEn": "Rejected: not compliant",
+              "outcome": "REJECTED",
+              "displayStatus": "REJECTED_NOT_COMPLIANT"
+            },
+            {
+              "code": "CLOSED",
+              "type": "END",
+              "nameAr": "إغلاق دون زيارة",
+              "nameEn": "Closed without a visit",
+              "outcome": "CLOSED",
+              "displayStatus": "CLOSED_NO_VISIT"
+            }
+          ],
+          "layout": {
+            "START": {
+              "x": 304,
+              "y": 24
+            },
+            "SAFETY": {
+              "x": 304,
+              "y": 144
+            },
+            "APPROVED": {
+              "x": 64,
+              "y": 304
+            },
+            "REJECTED": {
+              "x": 304,
+              "y": 304
+            },
+            "CLOSED": {
+              "x": 544,
+              "y": 304
+            }
+          }
+        }
+      }
+    },
+    {
+      "entityType": "com.template",
+      "entityCode": "VIS_SCHEDULED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "موعد الزيارة الميدانية",
+        "nameEn": "Site visit date",
+        "inAppTitleAr": "حُدد موعد زيارة ميدانية لطلبك {{ visit.subjectNumber }}",
+        "inAppTitleEn": "A site visit was scheduled for request {{ visit.subjectNumber }}",
+        "inAppBodyAr": "{{ visit.typeNameAr }} يوم {{ visit.scheduledOn }} الساعة {{ visit.scheduledTime }} في {{ visit.siteAddress }}. يرجى إتاحة الموقع.",
+        "inAppBodyEn": "{{ visit.typeNameEn }} on {{ visit.scheduledOn }} at {{ visit.scheduledTime }}, {{ visit.siteAddress }}. Please make the site accessible.",
+        "link": "/requests/{{ visit.subjectId }}",
+        "emailSubjectAr": "حُدد موعد زيارة ميدانية لطلبك {{ visit.subjectNumber }}",
+        "emailSubjectEn": "A site visit was scheduled for request {{ visit.subjectNumber }}",
+        "emailBodyAr": "<p>{{ recipient.name }}،</p><p>{{ visit.typeNameAr }} يوم {{ visit.scheduledOn }} الساعة {{ visit.scheduledTime }} في {{ visit.siteAddress }}. يرجى إتاحة الموقع.</p><p>منصة الخدمات الإلكترونية</p>",
+        "emailBodyEn": "<p>Dear {{ recipient.name }},</p><p>{{ visit.typeNameEn }} on {{ visit.scheduledOn }} at {{ visit.scheduledTime }}, {{ visit.siteAddress }}. Please make the site accessible.</p><p>e-Services platform</p>"
+      }
+    },
+    {
+      "entityType": "com.template",
+      "entityCode": "VIS_ASSIGNED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "زيارة مسندة إليك",
+        "nameEn": "A visit assigned to you",
+        "inAppTitleAr": "زيارة جديدة: {{ visit.number }}",
+        "inAppTitleEn": "New visit: {{ visit.number }}",
+        "inAppBodyAr": "{{ visit.typeNameAr }} للطلب {{ visit.subjectNumber }} يوم {{ visit.scheduledOn }} الساعة {{ visit.scheduledTime }} — {{ visit.siteAddress }}. تجدها في تطبيق الزيارات.",
+        "inAppBodyEn": "{{ visit.typeNameEn }} for request {{ visit.subjectNumber }} on {{ visit.scheduledOn }} at {{ visit.scheduledTime }} — {{ visit.siteAddress }}. It is in the field app.",
+        "link": "/visits/{{ visit.id }}"
+      }
+    },
+    {
+      "entityType": "com.template",
+      "entityCode": "VIS_COMPLETED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تمت الزيارة الميدانية",
+        "nameEn": "Site visit done",
+        "inAppTitleAr": "تمت الزيارة الميدانية لطلبك {{ visit.subjectNumber }}",
+        "inAppTitleEn": "The site visit for request {{ visit.subjectNumber }} is done",
+        "inAppBodyAr": "نتيجة {{ visit.typeNameAr }}: {{ visit.outcomeNameAr }}.",
+        "inAppBodyEn": "{{ visit.typeNameEn }} outcome: {{ visit.outcomeNameEn }}.",
+        "link": "/requests/{{ visit.subjectId }}",
+        "emailSubjectAr": "تمت الزيارة الميدانية لطلبك {{ visit.subjectNumber }}",
+        "emailSubjectEn": "The site visit for request {{ visit.subjectNumber }} is done",
+        "emailBodyAr": "<p>{{ recipient.name }}،</p><p>نتيجة {{ visit.typeNameAr }}: {{ visit.outcomeNameAr }}.</p><p>منصة الخدمات الإلكترونية</p>",
+        "emailBodyEn": "<p>Dear {{ recipient.name }},</p><p>{{ visit.typeNameEn }} outcome: {{ visit.outcomeNameEn }}.</p><p>e-Services platform</p>"
+      }
+    },
+    {
+      "entityType": "com.template",
+      "entityCode": "VIS_REQUESTED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "زيارة بانتظار الجدولة",
+        "nameEn": "A visit to schedule",
+        "inAppTitleAr": "زيارة جديدة بانتظار الموعد: {{ visit.number }}",
+        "inAppTitleEn": "New visit to schedule: {{ visit.number }}",
+        "inAppBodyAr": "{{ visit.typeNameAr }} للطلب {{ visit.subjectNumber }} — {{ visit.siteAddress }}، قبل {{ visit.dueOn }}.",
+        "inAppBodyEn": "{{ visit.typeNameEn }} for request {{ visit.subjectNumber }} — {{ visit.siteAddress }}, due by {{ visit.dueOn }}.",
+        "link": "/visits/{{ visit.id }}"
+      }
+    },
+    {
+      "entityType": "com.rule",
+      "entityCode": "VIS_SCHEDULED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إبلاغ مقدم الطلب بموعد الزيارة",
+        "nameEn": "Tell the applicant the visit date",
+        "eventCode": "VISIT_SCHEDULED",
+        "templateCode": "VIS_SCHEDULED",
+        "condition": {
+          "==": [
+            {
+              "var": "visit.subjectType"
+            },
+            "SERVICE_REQUEST"
+          ]
+        },
+        "channels": [
+          "IN_APP",
+          "EMAIL"
+        ],
+        "recipients": [
+          {
+            "kind": "PARTY"
+          }
+        ],
+        "language": "AR"
+      }
+    },
+    {
+      "entityType": "com.rule",
+      "entityCode": "VIS_ASSIGNED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إبلاغ المفتش بالزيارة المسندة",
+        "nameEn": "Tell the inspector about an assigned visit",
+        "eventCode": "VISIT_ASSIGNED",
+        "templateCode": "VIS_ASSIGNED",
+        "channels": [
+          "IN_APP"
+        ],
+        "recipients": [
+          {
+            "kind": "USER",
+            "value": {
+              "var": "visit.inspector"
+            }
+          }
+        ],
+        "language": "AR"
+      }
+    },
+    {
+      "entityType": "com.rule",
+      "entityCode": "VIS_COMPLETED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إبلاغ مقدم الطلب بإتمام الزيارة",
+        "nameEn": "Tell the applicant the visit is done",
+        "eventCode": "VISIT_COMPLETED",
+        "templateCode": "VIS_COMPLETED",
+        "condition": {
+          "==": [
+            {
+              "var": "visit.subjectType"
+            },
+            "SERVICE_REQUEST"
+          ]
+        },
+        "channels": [
+          "IN_APP",
+          "EMAIL"
+        ],
+        "recipients": [
+          {
+            "kind": "PARTY"
+          }
+        ],
+        "language": "AR"
+      }
+    },
+    {
+      "entityType": "com.rule",
+      "entityCode": "VIS_REQUESTED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إبلاغ مشرفي الزيارات بزيارة جديدة",
+        "nameEn": "Tell the visit supervisors about a new visit",
+        "eventCode": "VISIT_REQUESTED",
+        "templateCode": "VIS_REQUESTED",
+        "channels": [
+          "IN_APP"
+        ],
+        "recipients": [
+          {
+            "kind": "ROLE",
+            "value": "VISIT_SUPERVISOR"
+          }
+        ],
+        "language": "AR"
+      }
+    }
+  ]
+}

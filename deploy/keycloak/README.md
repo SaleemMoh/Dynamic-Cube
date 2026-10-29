@@ -52,6 +52,7 @@ Password for all: `Dev@12345`
 |---|---|---|
 | internal | `admin`, `maker`, `checker` | Receive `SYSTEM_ADMIN`, `CONFIG_MAKER`, `CONFIG_CHECKER` on first sign-in (`AppsControl:BootstrapUsers` in development) |
 | internal | `manager`, `analyst1`, `analyst2`, `auditor1`, `director` | Classification staff; their roles come from the `classification-workflow.json` package (see `deploy/config-packages`) |
+| internal | `inspector1`, `supervisor` | Field inspector (field app) and visits supervisor; their roles come from the `site-visits.json` package |
 | external | `1000000001`, `2000000002` | Applicants; `national_id` attribute mapped into tokens |
 
 The development Keycloak keeps no data: every fresh start re-imports both realms. Apps Control links each account to

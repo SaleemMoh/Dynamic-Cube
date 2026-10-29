@@ -9,6 +9,8 @@ using DynamicCube.Modules.Parties.Changes;
 using DynamicCube.Modules.Payments.Changes;
 using DynamicCube.Modules.Services.Changes;
 using DynamicCube.Modules.Services.Persistence;
+using DynamicCube.Modules.Visits.Changes;
+using DynamicCube.Modules.Visits.Persistence;
 using DynamicCube.Modules.Workflow.Changes;
 using DynamicCube.Modules.Workflow.Persistence;
 using DynamicCube.Platform.ChangeSets;
@@ -68,6 +70,21 @@ public sealed class PackageTests(DatabaseFixture fixture)
         await host.PublishAsync(WorkflowChangeTypes.Area, [.. Items("classification-payment.json")]);
         var paid = await host.AsAsync("admin", sp => sp.GetRequiredService<WorkflowDbContext>().Versions.AsNoTracking().SingleAsync(v => v.Code == "CLASSIFICATION_NEW/4"));
         paid.Definition.ShouldContain("\"PAYMENT\"");
+
+        // Site visits: the portal's sample services get an inspector's visit and a safety inspection by the CIS.
+        await Packages.PortalServicesAsync(host);
+        var visits = Items("site-visits.json");
+        await host.PublishAsync(IntegrationChangeTypes.Area, [.. visits.Where(i => i.EntityType.StartsWith("integ.", StringComparison.Ordinal))]);
+        await host.PublishAsync(AppsControlAreas.Security, [.. visits.Where(i => i.EntityType.StartsWith("apps.", StringComparison.Ordinal))]);
+        await host.PublishAsync(VisitChangeTypes.Area, [.. visits.Where(i => i.EntityType.StartsWith("vis.", StringComparison.Ordinal))]);
+        await host.PublishAsync(WorkflowChangeTypes.Area, [.. visits.Where(i => i.EntityType.StartsWith("wf.", StringComparison.Ordinal))]);
+        await host.PublishAsync(CommunicationChangeTypes.Area, [.. visits.Where(i => i.EntityType.StartsWith("com.", StringComparison.Ordinal))]);
+        var inspected = await host.AsAsync("admin", sp => sp.GetRequiredService<WorkflowDbContext>().Versions.AsNoTracking()
+            .Where(v => (v.Code == "SITE_VISIT/2" || v.Code == "EVENT_PERMIT/2") && v.PublishedAt != null).Select(v => v.Definition).ToListAsync());
+        inspected.Count.ShouldBe(2);
+        inspected.ShouldAllBe(d => d.Contains("\"VISIT\""));
+        var types = await host.AsAsync("admin", sp => sp.GetRequiredService<VisitsDbContext>().Types.AsNoTracking().Where(t => t.Code.EndsWith("_INSPECTION")).OrderBy(t => t.Code).Select(t => t.Code).ToListAsync());
+        types.ShouldBe(["SAFETY_INSPECTION", "SITE_INSPECTION"]);
 
         // A small establishment with good staffing, a gold DGA category and a 95M track record: grade 2 in both sectors.
         var graded = await GradeAsync(host, new JsonObject

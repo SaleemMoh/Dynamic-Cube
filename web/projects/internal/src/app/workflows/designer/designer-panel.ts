@@ -112,6 +112,31 @@ export class DesignerPanel {
         })),
       });
     }
+    for (const v of this.nodes().filter((n) => n.type === 'VISIT')) {
+      const type = this.refs.visitType(v.visitType);
+      list.push({
+        path: `visits.${v.code}.outcome`,
+        label: t(`نتيجة الزيارة: ${v.nameAr}`, `Visit outcome: ${v.nameEn}`),
+        options: type.outcomes,
+      });
+      list.push({
+        path: `visits.${v.code}.outcomeKind`,
+        label: t(`تصنيف نتيجة الزيارة: ${v.nameAr}`, `Visit outcome kind: ${v.nameEn}`),
+        options: [
+          { value: 'PASS', label: t('مطابق', 'Pass') },
+          { value: 'FAIL', label: t('غير مطابق', 'Fail') },
+          { value: 'OTHER', label: t('أخرى', 'Other') },
+        ],
+      });
+      for (const f of type.fields) {
+        list.push({
+          path: `visits.${v.code}.data.${f.code}`,
+          label: t(`${f.label.ar} (${v.nameAr})`, `${f.label.en} (${v.nameEn})`),
+          type: f.type === 'NUMBER' ? 'number' : f.type === 'DATE' ? 'date' : f.type === 'CHECKBOX' ? 'boolean' : 'text',
+          options: f.type === 'CHECKBOX' ? [{ value: 'true', label: t('نعم', 'Yes') }] : f.options,
+        });
+      }
+    }
     list.push({ path: 'feeTotal', label: t('إجمالي الرسوم', 'Total fees'), type: 'number' });
     list.push({ path: 'party.id', label: t('معرّف المستفيد', 'Beneficiary id') });
     list.push({
@@ -254,7 +279,11 @@ export class DesignerPanel {
       case 'next':
       case 'default':
       case 'expired':
+      case 'cancelled':
         change[outlet.kind] = to;
+        break;
+      case 'outcome':
+        change.outcomes = Object.fromEntries(Object.entries(from.outcomes ?? {}).map(([o, t], k) => [o, k === i ? to : t]));
         break;
       case 'branch':
         change.branches = (from.branches ?? []).map((b, k) => (k === i ? to : b));
@@ -278,6 +307,38 @@ export class DesignerPanel {
       ...def,
       nodes: def.nodes.map((n) => (n.code === from ? { ...n, routes: (n.routes ?? []).map((r, i) => (i === index ? { ...r, when } : r)) } : n)),
     }));
+  }
+
+  /** The selected visit step's outcome routes, in order. */
+  protected readonly outcomeRoutes = computed(() => Object.entries(this.node()?.outcomes ?? {}).map(([outcome, to]) => ({ outcome, to })));
+
+  /** Outcomes of the selected visit step's type not yet routed (plus the row's own). */
+  protected outcomeChoices(current: string) {
+    const used = new Set(Object.keys(this.node()?.outcomes ?? {}));
+    return this.refs.visitType(this.node()?.visitType).outcomes.filter((o) => o.value === current || !used.has(o.value));
+  }
+
+  protected setOutcomes(rows: { outcome: string; to: string }[]): void {
+    this.patch({ outcomes: Object.fromEntries(rows.map((r) => [r.outcome, r.to])) });
+  }
+
+  protected setOutcomeCode(index: number, outcome: string): void {
+    this.setOutcomes(this.outcomeRoutes().map((r, k) => (k === index ? { ...r, outcome } : r)));
+  }
+
+  protected setOutcomeTarget(index: number, to: string): void {
+    this.setOutcomes(this.outcomeRoutes().map((r, k) => (k === index ? { ...r, to } : r)));
+  }
+
+  protected addOutcome(): void {
+    const free = this.outcomeChoices('')[0]?.value;
+    const target = this.targets()[0]?.code;
+    if (!free || !target) return;
+    this.setOutcomes([...this.outcomeRoutes(), { outcome: free, to: target }]);
+  }
+
+  protected removeOutcome(index: number): void {
+    this.setOutcomes(this.outcomeRoutes().filter((_, k) => k !== index));
   }
 
   protected selectNode(code: string): void {

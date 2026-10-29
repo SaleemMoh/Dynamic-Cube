@@ -69,6 +69,15 @@ import { TestLogEntry, TestState, choose, startRun, waiting } from './test-run';
                   <button matButton="outlined" type="button" (click)="pick(w.token.id, 'UNPAID')" data-testid="test-unpaid">
                     {{ 'designer.test.markUnpaid' | dcTranslate }}
                   </button>
+                } @else if (w.node.type === 'VISIT') {
+                  @for (o of visitOutcomes(w.node); track o.value) {
+                    <button matButton="outlined" type="button" (click)="pick(w.token.id, o.value)" [attr.data-testid]="'test-outcome-' + o.value">
+                      {{ o.label | dcLocalize }}
+                    </button>
+                  }
+                  <button matButton="outlined" type="button" (click)="pick(w.token.id, 'CANCELLED')" data-testid="test-visit-cancelled">
+                    {{ 'designer.test.cancelVisit' | dcTranslate }}
+                  </button>
                 } @else {
                   @for (a of w.node.actions ?? []; track a.code) {
                     <button matButton="outlined" type="button" (click)="pick(w.token.id, a.code)" [attr.data-testid]="'test-act-' + a.code">
@@ -191,6 +200,12 @@ export class DesignerTestRun {
 
   constructor() {
     inject(DestroyRef).onDestroy(() => this.store.active.set([]));
+  }
+
+  /** The outcomes to try at a visit step: its type's, or the ones it routes when the type is not known. */
+  protected visitOutcomes(node: NodeDef): { value: string; label: { ar: string; en: string } }[] {
+    const outcomes = this.refs.visitType(node.visitType).outcomes;
+    return outcomes.length ? outcomes : [...Object.keys(node.outcomes ?? {}), 'COMPLETED'].map((o) => ({ value: o, label: { ar: o, en: o } }));
   }
 
   protected name(node: NodeDef): string {

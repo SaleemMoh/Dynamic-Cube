@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RouterLink } from '@angular/router';
-import { BillCard, FeeTable, LocalizePipe, RequestAnswers, ServicesApi, TranslatePipe, WorkflowApi } from '@dynamic-cube/shared';
+import { BillCard, VisitCard, FeeTable, LocalizePipe, RequestAnswers, ServicesApi, TranslatePipe, WorkflowApi } from '@dynamic-cube/shared';
 import { catchError, of } from 'rxjs';
 import { InstanceFactsCard } from '../action-center/instance-facts';
 import { WorkflowCard } from '../action-center/workflow-card';
@@ -11,7 +11,7 @@ import { WorkflowCard } from '../action-center/workflow-card';
 /** One request as submitted: who, what, the answers, fees, its workflow (when it has one) and the timeline. */
 @Component({
   selector: 'dc-request-detail',
-  imports: [BillCard, DatePipe, InstanceFactsCard, MatProgressBarModule, RouterLink, FeeTable, LocalizePipe, RequestAnswers, TranslatePipe, WorkflowCard],
+  imports: [BillCard, VisitCard, DatePipe, InstanceFactsCard, MatProgressBarModule, RouterLink, FeeTable, LocalizePipe, RequestAnswers, TranslatePipe, WorkflowCard],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <a routerLink="/services/requests" class="dc-link">{{ 'requests.title' | dcTranslate }}</a>
@@ -51,6 +51,9 @@ import { WorkflowCard } from '../action-center/workflow-card';
           @for (bill of d.view.bills ?? []; track bill.id) {
             <dc-bill-card [bill]="bill" />
           }
+          @for (visit of d.view.visits ?? []; track visit.id) {
+            <a class="dc-request-visit" [routerLink]="['/visits', visit.id]"><dc-visit-card [visit]="visit" /></a>
+          }
           <section class="dc-card">
             <h2>{{ 'requests.timeline' | dcTranslate }}</h2>
             <ol class="dc-timeline" data-testid="timeline">
@@ -74,6 +77,10 @@ import { WorkflowCard } from '../action-center/workflow-card';
     }
   `,
   styles: `
+    .dc-request-visit {
+      color: inherit;
+      text-decoration: none;
+    }
     .dc-request-grid {
       display: grid;
       grid-template-columns: minmax(0, 2fr) minmax(18rem, 1fr);

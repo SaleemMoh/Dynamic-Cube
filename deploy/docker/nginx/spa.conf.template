@@ -1,4 +1,5 @@
 # Rendered by the Nginx image's envsubst step: ${API_UPSTREAM}, ${APP_CODE} and ${AUTH_*} are replaced.
+# AUTH_STORAGE is session (default) or local (the field app keeps its session across restarts for offline work).
 server {
     listen 8080;
     server_name _;
@@ -31,7 +32,13 @@ server {
     location = /config.json {
         default_type application/json;
         expires -1;
-        return 200 '{"app":"${APP_CODE}","auth":{"authority":"${AUTH_AUTHORITY}","clientId":"${AUTH_CLIENT_ID}","scope":"openid profile email","required":${AUTH_REQUIRED}}}';
+        return 200 '{"app":"${APP_CODE}","auth":{"authority":"${AUTH_AUTHORITY}","clientId":"${AUTH_CLIENT_ID}","scope":"openid profile email","required":${AUTH_REQUIRED},"storage":"${AUTH_STORAGE}"}}';
+    }
+
+    # The field app's service worker and manifest are checked for updates on every start.
+    location ~ ^/(?:sw\.js|manifest\.webmanifest)$ {
+        expires -1;
+        try_files $uri =404;
     }
 
     # Hashed bundles can be cached for a long time; index.html never.

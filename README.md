@@ -26,7 +26,9 @@ documents (renewal, extension) and payments (SADAD bills, signed payment notific
 for payment). Phase 3 (builders) has started with the Workflow Designer (workflows drawn on a canvas, conditions
 without JSON, checks as you draw, a test run) and the Service Builder (forms by drag and drop with layouts, rules and
 fees, the portal card and a live preview), followed by configuration packages exported from any screen and imported
-with a field-by-field review. See the [roadmap](docs/07-roadmap.md) for what comes next.
+with a field-by-field review, and field visits (a workflow step that waits for a visit's outcome, an offline field
+app for inspectors, external inspection bodies through the Integration Manager). See the
+[roadmap](docs/07-roadmap.md) for what comes next.
 
 ## Repository layout
 
@@ -44,11 +46,12 @@ src/
   Modules/Decisions    Decision rules (schema dec): rule sets, versions, built-in RULES engine, evaluation log
   Modules/Communication Notifications (schema com): message templates, rules, email/SMS/in-app, message log
   Modules/Payments     Payments (schema pay): providers, bills, signed payment notifications, receipts, expiry
+  Modules/Visits       Field visits (schema vis): visit types, visits, field reports, external inspections
   Modules/Content      Portal content (schema cms): pages and frequently asked questions, read anonymously
   Shared/Platform      Kernel: persistence base, audit, outbox, change sets, files, JSONLogic, i18n
   Shared/Hosting       Shared host setup: logging, telemetry, health, Keycloak JWT
   Tools/Migrator       Applies database migrations (run before upgrades)
-  Tools/MockGateway    Development stand-in for the MoMRAH API gateway (MCI operations, SADAD bills and payment page) — never deployed
+  Tools/MockGateway    Development stand-in for the MoMRAH API gateway (MCI operations, SADAD bills and payment page, CIS inspections) — never deployed
 tests/
   Platform.Tests       Unit tests
   Platform.IntegrationTests  PostgreSQL integration tests
@@ -61,6 +64,7 @@ tests/
   Decisions.Tests      Rules engine, versions, evaluation log, calculators
   Communication.Tests  Rules, dispatch, delivery and retries, notifications, a real SMTP check (optional)
   Payments.Tests       Bills, provider registration, signed notifications over HTTP, expiry, staff actions
+  Visits.Tests         Visit types, scheduling, field reports (evidence, idempotency), external booking, polling, signed results
   Content.Tests        Pages and questions through change sets, anonymous reads over HTTP, checks
   shared/ModuleTests   Test database, fake provider and MoMRAH samples shared by the module test projects
   Hosts.Tests          API host smoke tests
@@ -223,6 +227,14 @@ These are development values only; change them in `deploy/docker/.env` (see `.en
    On a service page, answer *Was this page helpful?* and, signed in, rate the service. The answers and ratings
    appear in the internal system under **Portal content → Visitor feedback**. The entity's phone, email, location
    and social accounts, and the image behind the portal's page titles, are set in **Apps Control → Branding**.
+18. Import `deploy/config-packages/site-visits.json` (after `portal-services.json` and `payments-sadad.json`) and ask for
+   a *Site visit request* in the portal: the request waits for its visit. Sign in to the internal system as
+   `supervisor`, open **Field visits → Visits** and schedule the visit with `inspector1`. On a phone, or a narrow
+   browser window, open the field app (`http://localhost:4202`) as `inspector1`. Start the visit, choose the outcome,
+   fill in the fields, take a photo, let it locate you, have the representative sign, and send it. Offline, the
+   report waits and goes when the connection returns. The request then moves on. A *Temporary event permit* goes to
+   the mock inspection body instead: report its result on
+   `http://localhost:5090/cis/inspections/{reference}`, or wait for the worker's check.
 
 The gateway credentials come from the secret store (`Secrets__MOMRAH_GATEWAY__clientId` / `__clientSecret`), never
 from the database; development values are in `appsettings.Development.json` and the compose file.

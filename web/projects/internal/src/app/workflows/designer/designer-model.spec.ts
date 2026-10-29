@@ -58,6 +58,26 @@ describe('designer model', () => {
     expect(check(unlinked).map((p) => p.key)).toEqual(expect.arrayContaining(['designer.problem.noNext', 'designer.problem.unreachable']));
   });
 
+  it('a visit step routes outcomes, has a cancelled way and is checked', () => {
+    let def = addNode(base(), 'VISIT', { x: 0, y: 0 }).def;
+    def = connect(def, 'START', 'next', 'VISIT_1');
+    expect(check(def).map((p) => p.key)).toEqual(
+      expect.arrayContaining(['designer.problem.visitType', 'designer.problem.noVisited', 'designer.problem.noVisitCancelled']),
+    );
+    def = connect(def, 'VISIT_1', 'next', 'REVIEW');
+    def = connect(def, 'VISIT_1', 'outcome', 'DONE');
+    def = connect(def, 'VISIT_1', 'cancelled', 'DONE');
+    def = { ...def, nodes: def.nodes.map((n) => (n.code === 'VISIT_1' ? { ...n, visitType: 'SITE' } : n)) };
+    expect(def.nodes.find((n) => n.code === 'VISIT_1')!.outcomes).toEqual({ OUTCOME: 'DONE' });
+    expect(edges(def).filter((e) => e.from === 'VISIT_1').map((e) => e.outlet.kind)).toEqual(['next', 'outcome', 'cancelled']);
+    expect(check(def)).toEqual([]);
+    const renamed = renameNode(def, 'DONE', 'END_OK');
+    expect(renamed.nodes.find((n) => n.code === 'VISIT_1')).toMatchObject({ outcomes: { OUTCOME: 'END_OK' }, cancelled: 'END_OK' });
+    const removed = removeNode(def, 'DONE');
+    expect(removed.nodes.find((n) => n.code === 'VISIT_1')).toMatchObject({ outcomes: {}, cancelled: null });
+    expect(disconnect(def, 'VISIT_1', { kind: 'outcome', index: 0 }).nodes.find((n) => n.code === 'VISIT_1')!.outcomes).toEqual({});
+  });
+
   it('saves a position for every step and only for steps', () => {
     const def = { ...base(), layout: { START: { x: 8, y: 8 }, GONE: { x: 1, y: 1 } } };
     const saved = toDefinition(def);

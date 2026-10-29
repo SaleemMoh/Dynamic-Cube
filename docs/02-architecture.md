@@ -60,6 +60,7 @@ host to call the internal API instead (option, not built on day one).
 | `Requests` | `req` | Requests, sub-requests, data payload, timeline, attachments, payments, visits |
 | `Documents` | `doc` | Issued document registry, versions, line items, templates, verification |
 | `Payments` | `pay` | Payment providers, bills, signed provider notifications, receipts, bill expiry |
+| `Visits` | `vis` | Visit types, visits (field, external inspection body, manual), photos, signatures, results, external polling and signed notifications |
 | `Decisions` | `dec` | Decision step contract, rule sets (engine implementation pluggable) |
 | `Reporting` | `rpt` | Datasets, generated views, dashboards, report definitions |
 | `Content` | `cms` | Portal content manager |
@@ -91,6 +92,7 @@ src/
     Requests/
     Documents/
     Payments/
+    Visits/
     Decisions/
     Reporting/
     Content/

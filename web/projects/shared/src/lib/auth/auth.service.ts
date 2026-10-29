@@ -13,8 +13,8 @@ export interface AuthUser {
 export const AUTH_CALLBACK_PATH = 'auth/callback';
 
 /**
- * OpenID Connect sign-in with authorization code + PKCE (oidc-client-ts). Tokens are kept in session storage and
- * renewed with the refresh token before they expire.
+ * OpenID Connect sign-in with authorization code + PKCE (oidc-client-ts). Tokens are kept in session storage (local
+ * storage when configured) and renewed with the refresh token before they expire.
  */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -29,7 +29,7 @@ export class AuthService {
     response_type: 'code',
     scope: this.config.auth.scope ?? 'openid profile email',
     automaticSilentRenew: true,
-    userStore: new WebStorageStateStore({ store: sessionStorage }),
+    userStore: new WebStorageStateStore({ store: this.config.auth.storage === 'local' ? localStorage : sessionStorage }),
   });
 
   readonly user = computed<AuthUser | null>(() => {
@@ -62,7 +62,8 @@ export class AuthService {
         this.current.set(await this.manager.signinSilent());
         return;
       } catch {
-        await this.manager.removeUser();
+        // Offline, the session is kept to be renewed later; online, the refresh token was refused.
+        if (navigator.onLine) await this.manager.removeUser();
       }
     }
     this.current.set(user && !user.expired ? user : null);

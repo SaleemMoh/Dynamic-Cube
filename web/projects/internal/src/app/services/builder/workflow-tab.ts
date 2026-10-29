@@ -14,6 +14,7 @@ interface WorkflowNode {
   documentType?: string | null;
   ruleSet?: string | null;
   provider?: string | null;
+  visitType?: string | null;
   outcome?: string | null;
 }
 
@@ -124,6 +125,7 @@ export class WorkflowTab {
       { key: 'documents', icon: 'description', items: of('DOCUMENT') },
       { key: 'decisions', icon: 'rule', items: of('DECISION') },
       { key: 'payments', icon: 'payments', items: of('PAYMENT') },
+      { key: 'visits', icon: 'location_on', items: of('VISIT') },
       { key: 'outcomes', icon: 'flag', items: of('END') },
     ];
   });
@@ -142,6 +144,8 @@ export class WorkflowTab {
         return n.ruleSet ?? null;
       case 'PAYMENT':
         return n.provider ?? this.i18n.translate('designer.defaultProvider');
+      case 'VISIT':
+        return n.visitType ?? null;
       case 'END':
         return n.outcome ?? null;
       default:

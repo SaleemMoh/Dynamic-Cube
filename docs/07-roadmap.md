@@ -279,8 +279,8 @@ Delivered in slices. Each designer covers what the runtime can run today; node t
 | **3b** | Service & Form Builder: form (steps, sections, question bank, layouts, live preview), service card, rules, required documents, output, related services | ✅ |
 | **3c** | Notification rule builder; Portal Content Manager (banner, categories, tiles, FAQs, help links, pages) | ✅ |
 | **3d** | Configuration packages: export from any screen, import with a diff preview | ✅ |
-| 3e | Visits: field app (offline PWA), external inspection integration, manual entry | Next |
-| 3f | Sub-requests: prerequisite, bundled, spawned | Planned |
+| **3e** | Visits: field app (offline PWA), external inspection integration, manual entry | ✅ |
+| 3f | Sub-requests: prerequisite, bundled, spawned | Next |
 
 **3a delivered** ([ADR-0023](adr/0023-workflow-designer.md)):
 
@@ -414,6 +414,45 @@ Manager (they stay in Services), scheduled publishing, and server-side search ac
 
 Still open from 3d: following references inside structured definitions (questions in a service version, roles in a
 workflow graph), carrying branding images in a package, and comparing two environments directly.
+
+**3e delivered** ([ADR-0029](adr/0029-field-visits.md)):
+
+- **Visit types** (*Field visits → Visit types*): carried out in the field app, by an external inspection body, or
+  recorded by staff. Each type has its outcomes (pass, fail, other), the fields the inspector fills in, the evidence
+  required (photos, position, signature), the inspectors' role and the days to complete. External types name the
+  booking operation, the inputs as rules, the result operation polled by the worker, the result paths, an outcome
+  map and the signing secret of notifications.
+- **Workflow `VISIT` step:**
+  - In the designer: drag from *visited*, *on an outcome* and *cancelled*.
+  - The site address and position come from rules, and instructions and days are set on the step.
+  - The outcome and the recorded values are available to later rules as `visits.<step>`.
+  - The test run lets you pick an outcome or cancel the visit.
+  - Requests show *Awaiting site visit*; the deadline keeps running.
+- **Visits register** (*Field visits → Visits*):
+  - Search and filters (status, type, overdue).
+  - Schedule and assign to an inspector of the type's role, least busy first.
+  - Record a result by hand, cancel with a reason (the request takes its cancelled way), or check an external
+    result now.
+  - The result page shows the recorded values, photos, the signature and the inspector's position.
+- **Field app** (`http://localhost:4202`, installable):
+  - The inspector's visits stay on the phone (IndexedDB) and the app opens offline (service worker).
+  - Start a visit, then directions, outcome, the type's fields, camera photos (reduced on the phone), GPS position
+    and the representative's signature.
+  - A draft is kept as the report is filled in.
+  - Reports go to an outbox, are sent when the connection returns, and are recorded once even if sent twice.
+- **External inspections:** the development gateway's inspection body (CIS) books inspections, answers results
+  after 30 seconds and offers a page that reports a result through a signed notification.
+- **Requests** show their visits in the portal (date, site, outcome) and on the internal request page.
+- **Package** `site-visits.json`:
+  - Two visit types: a site inspection by the entity's inspectors, and a safety inspection by the CIS.
+  - The CIS operations, the roles *Field inspector* and *Visits supervisor*, and the users `inspector1` and
+    `supervisor`.
+  - New workflow versions: *Site visit request* gets an inspector's visit, *Temporary event permit* a safety
+    inspection.
+  - Four messages with their rules: to schedule, scheduled, assigned, done.
+
+Still open from 3e: automatic assignment and inspectors' calendars and routes, follow-up visits created from a
+result, push notifications to the field app, and offline maps.
 
 Scope of the slices:
 

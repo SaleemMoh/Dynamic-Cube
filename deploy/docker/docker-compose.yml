@@ -12,6 +12,8 @@ x-gateway-secrets: &gateway-secrets
   Secrets__MOMRAH_GATEWAY__clientSecret: ${MOMRAH_CLIENT_SECRET:-dev-consumer-secret}
   # Payment notifications from SADAD are signed with this key (the mock gateway signs with the same one).
   Secrets__SADAD_CALLBACK__key: ${SADAD_CALLBACK_KEY:-dev-sadad-callback-key}
+  # Inspection results from the inspection body (CIS) are signed with this key (the mock gateway signs with the same one).
+  Secrets__CIS_CALLBACK__key: ${CIS_CALLBACK_KEY:-dev-cis-callback-key}
 
 services:
   postgres:
@@ -115,7 +117,8 @@ services:
       - "5081:8080"
 
   # Development stand-in for the MoMRAH gateway (MCI operations, SADAD bills and payment page); connection base URL
-  # http://mock-gateway:8080, payment page http://localhost:5090/sadad/pay/{billNumber}.
+  # http://mock-gateway:8080, payment page http://localhost:5090/sadad/pay/{billNumber}, inspection page
+  # http://localhost:5090/cis/inspections/{inspectionId}.
   mock-gateway:
     build:
       context: ../..
@@ -127,6 +130,8 @@ services:
       Sadad__CallbackUrl: http://external-api:8080/api/payments/v1/callbacks/SADAD
       Sadad__CallbackKey: ${SADAD_CALLBACK_KEY:-dev-sadad-callback-key}
       Sadad__ReturnUrl: http://localhost:4201/requests
+      Cis__CallbackUrl: http://external-api:8080/api/visits/v1/callbacks/SAFETY_INSPECTION
+      Cis__CallbackKey: ${CIS_CALLBACK_KEY:-dev-cis-callback-key}
     ports:
       - "5090:8080"
 
@@ -198,6 +203,7 @@ services:
     environment:
       API_UPSTREAM: http://internal-api:8080
       APP_CODE: FIELD
+      AUTH_STORAGE: local
     depends_on:
       - internal-api
     ports:

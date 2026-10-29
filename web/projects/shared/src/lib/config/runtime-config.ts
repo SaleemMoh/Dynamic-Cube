@@ -17,6 +17,11 @@ export interface AuthConfig {
   scope?: string;
   /** When false the app starts without sign-in (public pages); sign-in is offered on demand. */
   required?: boolean;
+  /**
+   * Where the session is kept: `session` (default, ends with the tab) or `local` (the field app, so an inspector who
+   * reopens it offline still has their session, renewed once back online).
+   */
+  storage?: 'session' | 'local';
 }
 
 export const RUNTIME_CONFIG = new InjectionToken<RuntimeConfig>('dc.runtimeConfig');

@@ -2,7 +2,7 @@ import { JsonValue, LocalizedText } from '@dynamic-cube/shared';
 import { GraphDefinition, graphEdges, layout } from '../workflow-graph';
 
 /** The node types the engine runs; the palette offers exactly these. */
-export const NODE_TYPES = ['START', 'HUMAN_TASK', 'PARALLEL_SPLIT', 'JOIN', 'GATEWAY', 'DECISION', 'DOCUMENT', 'PAYMENT', 'END'] as const;
+export const NODE_TYPES = ['START', 'HUMAN_TASK', 'PARALLEL_SPLIT', 'JOIN', 'GATEWAY', 'DECISION', 'DOCUMENT', 'PAYMENT', 'VISIT', 'END'] as const;
 export type NodeType = (typeof NODE_TYPES)[number];
 
 export type JsonRule = JsonValue;
@@ -77,6 +77,13 @@ export interface NodeDef {
   provider?: string | null;
   dueDays?: number | null;
   expired?: string | null;
+  visitType?: string | null;
+  site?: JsonRule;
+  location?: JsonRule;
+  instructions?: string | null;
+  /** Visit: outcome code → the node it leads to. */
+  outcomes?: Record<string, string>;
+  cancelled?: string | null;
   [key: string]: unknown;
 }
 
@@ -98,7 +105,7 @@ export const GRID = 8;
 export const MAX_CANVAS = 20000;
 
 /** Where an arrow leaves a node: the property that holds its target. */
-export type OutletKind = 'next' | 'branch' | 'route' | 'default' | 'action' | 'expired' | 'resume';
+export type OutletKind = 'next' | 'branch' | 'route' | 'default' | 'action' | 'expired' | 'resume' | 'cancelled' | 'outcome';
 
 export interface Outlet {
   kind: OutletKind;
@@ -146,6 +153,12 @@ export function handles(node: NodeDef): Handle[] {
         { kind: 'next', hint: 'designer.handle.paid', mark: '✓' },
         { kind: 'expired', hint: 'designer.handle.unpaid', mark: '✗' },
       ];
+    case 'VISIT':
+      return [
+        { kind: 'next', hint: 'designer.handle.visited', mark: '✓' },
+        { kind: 'outcome', hint: 'designer.handle.outcome', mark: '?' },
+        { kind: 'cancelled', hint: 'designer.handle.visitCancelled', mark: '✗' },
+      ];
     case 'END':
       return [];
   }
@@ -160,7 +173,15 @@ export function edges(def: WorkflowDraft): Edge[] {
         from: n.code,
         to: n.next,
         outlet: { kind: 'next' },
-        label: n.type === 'PAYMENT' ? 'designer.edge.paid' : '',
+        label: n.type === 'PAYMENT' ? 'designer.edge.paid' : n.type === 'VISIT' ? 'designer.edge.visited' : '',
+      });
+    Object.entries(n.outcomes ?? {}).forEach(([outcome, to], index) => out.push({ from: n.code, to, outlet: { kind: 'outcome', index }, label: outcome }));
+    if (n.cancelled)
+      out.push({
+        from: n.code,
+        to: n.cancelled,
+        outlet: { kind: 'cancelled' },
+        label: 'designer.edge.visitCancelled',
       });
     (n.branches ?? []).forEach((to, index) => out.push({ from: n.code, to, outlet: { kind: 'branch', index }, label: '' }));
     (n.routes ?? []).forEach((r, index) =>
@@ -220,6 +241,7 @@ const PREFIX: Record<NodeType, string> = {
   DECISION: 'DECISION',
   DOCUMENT: 'DOCUMENT',
   PAYMENT: 'PAYMENT',
+  VISIT: 'VISIT',
   END: 'END',
 };
 
@@ -232,6 +254,7 @@ const DEFAULT_NAMES: Record<NodeType, LocalizedText> = {
   DECISION: { ar: 'تقييم القواعد', en: 'Decision' },
   DOCUMENT: { ar: 'إصدار مستند', en: 'Issue document' },
   PAYMENT: { ar: 'سداد الرسوم', en: 'Payment' },
+  VISIT: { ar: 'زيارة ميدانية', en: 'Site visit' },
   END: { ar: 'النهاية', en: 'End' },
 };
 
@@ -262,6 +285,8 @@ export function newNode(def: WorkflowDraft, type: NodeType): NodeDef {
       return { ...node, documentType: null, target: 'ISSUE', next: null };
     case 'END':
       return { ...node, outcome: 'APPROVED' };
+    case 'VISIT':
+      return { ...node, visitType: null, outcomes: {}, next: null, cancelled: null };
     default:
       return { ...node, next: null };
   }
@@ -323,6 +348,17 @@ export function connect(def: WorkflowDraft, from: string, kind: OutletKind, to: 
     case 'expired':
       node.expired = to;
       break;
+    case 'cancelled':
+      node.cancelled = to;
+      break;
+    case 'outcome': {
+      // A placeholder outcome code: the panel picks the visit type's outcome it stands for.
+      const used = node.outcomes ?? {};
+      let code = 'OUTCOME';
+      for (let i = 2; code in used; i++) code = `OUTCOME_${i}`;
+      node.outcomes = { ...used, [code]: to };
+      break;
+    }
     case 'branch':
       if ((node.branches ?? []).includes(to)) return def;
       node.branches = [...(node.branches ?? []), to];
@@ -358,6 +394,12 @@ export function disconnect(def: WorkflowDraft, from: string, outlet: Outlet): Wo
     case 'expired':
       node.expired = null;
       break;
+    case 'cancelled':
+      node.cancelled = null;
+      break;
+    case 'outcome':
+      node.outcomes = Object.fromEntries(Object.entries(node.outcomes ?? {}).filter((_, k) => k !== i));
+      break;
     case 'branch':
       node.branches = (node.branches ?? []).filter((_, k) => k !== i);
       break;
@@ -382,6 +424,8 @@ export function removeNode(def: WorkflowDraft, code: string): WorkflowDraft {
     if (n.next === code) n.next = null;
     if (n.default === code) n.default = null;
     if (n.expired === code) n.expired = null;
+    if (n.cancelled === code) n.cancelled = null;
+    if (n.outcomes) n.outcomes = Object.fromEntries(Object.entries(n.outcomes).filter(([, to]) => to !== code));
     if (n.branches) n.branches = n.branches.filter((b) => b !== code);
     if (n.routes) n.routes = n.routes.filter((r) => r.to !== code);
     if (n.actions) {
@@ -409,6 +453,8 @@ export function renameNode(def: WorkflowDraft, from: string, to: string): Workfl
     n.next = swap(n.next);
     n.default = swap(n.default);
     n.expired = swap(n.expired);
+    n.cancelled = swap(n.cancelled);
+    if (n.outcomes) n.outcomes = Object.fromEntries(Object.entries(n.outcomes).map(([o, t]) => [o, swap(t)!]));
     if (n.branches) n.branches = n.branches.map((b) => swap(b)!);
     if (n.routes) for (const r of n.routes) r.to = swap(r.to)!;
     if (n.actions) {
@@ -497,6 +543,15 @@ export function check(def: WorkflowDraft): Problem[] {
       case 'PAYMENT':
         target(n, n.next, 'designer.problem.noPaid');
         target(n, n.expired, 'designer.problem.noUnpaid');
+        break;
+      case 'VISIT':
+        if (!n.visitType) p(n, 'designer.problem.visitType');
+        target(n, n.next, 'designer.problem.noVisited');
+        target(n, n.cancelled, 'designer.problem.noVisitCancelled');
+        for (const [outcome, to] of Object.entries(n.outcomes ?? {})) {
+          if (!CODE.test(outcome)) p(n, 'designer.problem.outcomeCode', { outcome });
+          target(n, to, 'designer.problem.noVisited');
+        }
         break;
       case 'HUMAN_TASK': {
         const a = n.assignment;

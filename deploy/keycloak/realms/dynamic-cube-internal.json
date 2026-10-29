@@ -220,6 +220,38 @@
       ]
     },
     {
+      "id": "f360643a-616f-5b0e-8190-68b0e2a2a82f",
+      "username": "inspector1",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Field",
+      "lastName": "Inspector",
+      "email": "inspector1@dynamic-cube.local",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Dev@12345",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "id": "7b500e7d-d70d-58af-bdfd-88fddad3f79d",
+      "username": "supervisor",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Visits",
+      "lastName": "Supervisor",
+      "email": "supervisor@dynamic-cube.local",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Dev@12345",
+          "temporary": false
+        }
+      ]
+    },
+    {
       "id": "bddaeb5d-2ca6-570f-b8a0-592d4efe9daa",
       "username": "service-account-dynamic-cube-accounts",
       "enabled": true,

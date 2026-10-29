@@ -597,6 +597,113 @@
       </mat-form-field>
     }
 
+    @case ('VISIT') {
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'designer.field.visitType' | dcTranslate }}</mat-label>
+        <mat-select [ngModel]="n.visitType ?? null" (ngModelChange)="patch({ visitType: $event })" data-testid="visit-type">
+          @for (v of refs.visitTypes(); track v.value) {
+            <mat-option [value]="v.value">{{ v.label | dcLocalize }} ({{ v.value }})</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <dc-rule-editor
+        mode="value"
+        [label]="'designer.field.site' | dcTranslate"
+        [rule]="n.site ?? null"
+        [variables]="variables()"
+        (ruleChange)="patch({ site: $event })"
+      />
+      <dc-rule-editor
+        mode="value"
+        [label]="'designer.field.location' | dcTranslate"
+        [rule]="n.location ?? null"
+        [variables]="variables()"
+        (ruleChange)="patch({ location: $event })"
+      />
+      <p class="dc-panel__hint">{{ 'designer.locationHint' | dcTranslate }}</p>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'designer.field.instructions' | dcTranslate }}</mat-label>
+        <textarea
+          matInput
+          rows="2"
+          [ngModel]="n.instructions ?? ''"
+          (ngModelChange)="patch({ instructions: $event.trim() || null })"
+          [ngModelOptions]="{ updateOn: 'blur' }"
+        ></textarea>
+      </mat-form-field>
+      <div class="dc-panel__pair">
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'designer.field.visitDueDays' | dcTranslate }}</mat-label>
+          <input
+            matInput
+            type="number"
+            min="1"
+            max="90"
+            [ngModel]="n.dueDays ?? null"
+            (ngModelChange)="patch({ dueDays: num($event) })"
+            [ngModelOptions]="{ updateOn: 'blur' }"
+          />
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'designer.field.displayStatus' | dcTranslate }}</mat-label>
+          <input
+            matInput
+            dir="ltr"
+            placeholder="AWAITING_VISIT"
+            [ngModel]="n.displayStatus ?? ''"
+            (ngModelChange)="patch({ displayStatus: $event.trim() || null })"
+            [ngModelOptions]="{ updateOn: 'blur' }"
+          />
+        </mat-form-field>
+      </div>
+      <h3>{{ 'designer.outcomeRoutes' | dcTranslate }}</h3>
+      <p class="dc-panel__hint">{{ 'designer.outcomeRoutesHint' | dcTranslate }}</p>
+      @for (r of outcomeRoutes(); track $index; let i = $index) {
+        <div class="dc-panel__pair" [attr.data-testid]="'visit-outcome-' + i">
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>{{ 'visit.outcome' | dcTranslate }}</mat-label>
+            <mat-select [ngModel]="r.outcome" (ngModelChange)="setOutcomeCode(i, $event)">
+              @if (!refs.visitType(n.visitType).outcomes.some((o) => o.value === r.outcome)) {
+                <mat-option [value]="r.outcome">{{ r.outcome }}</mat-option>
+              }
+              @for (o of outcomeChoices(r.outcome); track o.value) {
+                <mat-option [value]="o.value">{{ o.label | dcLocalize }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>{{ 'designer.field.to' | dcTranslate }}</mat-label>
+            <mat-select [ngModel]="r.to" (ngModelChange)="setOutcomeTarget(i, $event)">
+              @for (t of targets(); track t.code) {
+                <mat-option [value]="t.code">{{ name(t) }} ({{ t.code }})</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <button matIconButton type="button" (click)="removeOutcome(i)" [matTooltip]="'rule.remove' | dcTranslate">
+            <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+          </button>
+        </div>
+      }
+      <button
+        matButton="outlined"
+        type="button"
+        (click)="addOutcome()"
+        [disabled]="!outcomeChoices('').length || !targets().length"
+        data-testid="visit-add-outcome"
+      >
+        <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+        {{ 'designer.addOutcomeRoute' | dcTranslate }}
+      </button>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'designer.field.visitCancelled' | dcTranslate }}</mat-label>
+        <mat-select [ngModel]="n.cancelled ?? null" (ngModelChange)="patch({ cancelled: $event })" data-testid="visit-cancelled">
+          @for (t of targets(); track t.code) {
+            <mat-option [value]="t.code">{{ name(t) }} ({{ t.code }})</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
+
     @case ('END') {
       <mat-form-field subscriptSizing="dynamic">
         <mat-label>{{ 'designer.field.outcome' | dcTranslate }}</mat-label>
@@ -619,9 +726,9 @@
     }
   }
 
-  @if (n.type === 'START' || n.type === 'JOIN' || n.type === 'DECISION' || n.type === 'DOCUMENT' || n.type === 'PAYMENT') {
+  @if (n.type === 'START' || n.type === 'JOIN' || n.type === 'DECISION' || n.type === 'DOCUMENT' || n.type === 'PAYMENT' || n.type === 'VISIT') {
     <mat-form-field subscriptSizing="dynamic">
-      <mat-label>{{ (n.type === 'PAYMENT' ? 'designer.field.paidNext' : 'designer.field.next') | dcTranslate }}</mat-label>
+      <mat-label>{{ (n.type === 'PAYMENT' ? 'designer.field.paidNext' : n.type === 'VISIT' ? 'designer.field.visitedNext' : 'designer.field.next') | dcTranslate }}</mat-label>
       <mat-select [ngModel]="n.next ?? null" (ngModelChange)="patch({ next: $event })" data-testid="node-next">
         @for (t of targets(); track t.code) {
           <mat-option [value]="t.code">{{ name(t) }} ({{ t.code }})</mat-option>

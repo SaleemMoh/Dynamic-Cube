@@ -27,12 +27,12 @@ export interface TestState {
   nextId: number;
 }
 
-/** Steps that wait for the person trying the workflow: tasks (an action) and payments (paid or not). */
+/** Steps that wait for the person trying the workflow: tasks (an action), payments (paid or not), visits (an outcome). */
 export function waiting(def: WorkflowDraft, state: TestState): { token: TestToken; node: NodeDef }[] {
   const byCode = new Map(def.nodes.map((n) => [n.code, n]));
   return state.tokens
     .map((token) => ({ token, node: byCode.get(token.node)! }))
-    .filter((t) => t.node && (t.node.type === 'HUMAN_TASK' || t.node.type === 'PAYMENT'));
+    .filter((t) => t.node && (t.node.type === 'HUMAN_TASK' || t.node.type === 'PAYMENT' || t.node.type === 'VISIT'));
 }
 
 /** Starts a run at START with sample facts and lets it go as far as it can on its own. */
@@ -51,6 +51,7 @@ export function startRun(def: WorkflowDraft, data: Record<string, JsonValue>, le
       decisions: {},
       documents: {},
       payments: {},
+      visits: {},
       feeTotal,
     },
     log: [],
@@ -63,7 +64,7 @@ export function startRun(def: WorkflowDraft, data: Record<string, JsonValue>, le
   return advance(def, state);
 }
 
-/** The person takes an action on a task, or settles a bill (`PAID` / `UNPAID`). */
+/** The person takes an action on a task, settles a bill (`PAID` / `UNPAID`), or ends a visit (an outcome / `CANCELLED`). */
 export function choose(def: WorkflowDraft, state: TestState, tokenId: number, choice: string): TestState {
   const next = structuredClone(state);
   const token = next.tokens.find((t) => t.id === tokenId);
@@ -76,6 +77,12 @@ export function choose(def: WorkflowDraft, state: TestState, tokenId: number, ch
     };
     next.log.push({ node: node.code, key: paid ? 'designer.test.paid' : 'designer.test.unpaid' });
     return move(def, next, token, paid ? node.next : node.expired);
+  }
+  if (node.type === 'VISIT') {
+    const cancelled = choice === 'CANCELLED';
+    (next.facts['visits'] as Record<string, JsonValue>)[node.code] = cancelled ? { status: 'CANCELLED' } : { status: 'COMPLETED', outcome: choice, data: {} };
+    next.log.push({ node: node.code, key: cancelled ? 'designer.test.visitCancelled' : 'designer.test.visited', params: { outcome: choice } });
+    return move(def, next, token, cancelled ? node.cancelled : (node.outcomes?.[choice] ?? node.next));
   }
   const action = (node.actions ?? []).find((a) => a.code === choice);
   if (!action) return state;
@@ -150,6 +157,7 @@ function advance(def: WorkflowDraft, state: TestState): TestState {
           go(node.next);
           break;
         case 'HUMAN_TASK':
+        case 'VISIT':
           break;
         case 'PAYMENT': {
           const fees = Number(state.facts['feeTotal'] ?? 0);

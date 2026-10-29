@@ -4,7 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Router, RouterLink } from '@angular/router';
-import { BillCard, FeeTable, FieldError, LocalizePipe, RequestAnswers, RequestView, ServiceWizard, ServicesApi, TranslatePipe, WizardMove, requestErrors } from '@dynamic-cube/shared';
+import { BillCard, VisitCard, FeeTable, FieldError, LocalizePipe, RequestAnswers, RequestView, ServiceWizard, ServicesApi, TranslatePipe, WizardMove, requestErrors } from '@dynamic-cube/shared';
 import { firstValueFrom } from 'rxjs';
 import { RequestDocuments } from '../documents/request-documents';
 import { ContactCard } from '../portal/contact-card';
@@ -15,7 +15,7 @@ import { ContactCard } from '../portal/contact-card';
  */
 @Component({
   selector: 'dc-request-page',
-  imports: [BillCard, ContactCard, RequestDocuments, DatePipe, MatButtonModule, MatIconModule, MatProgressBarModule, RouterLink, FeeTable, LocalizePipe, RequestAnswers, ServiceWizard, TranslatePipe],
+  imports: [BillCard, VisitCard, ContactCard, RequestDocuments, DatePipe, MatButtonModule, MatIconModule, MatProgressBarModule, RouterLink, FeeTable, LocalizePipe, RequestAnswers, ServiceWizard, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="dc-request">
@@ -51,6 +51,9 @@ import { ContactCard } from '../portal/contact-card';
 
       @for (bill of v.bills ?? []; track bill.id) {
         <dc-bill-card [bill]="bill" />
+      }
+      @for (visit of v.visits ?? []; track visit.id) {
+        <dc-visit-card [visit]="visit" />
       }
       @if (v.request.status === 'PENDING_CUSTOMER') {
         <div class="dc-card dc-request__returned" role="status" data-testid="returned-banner">

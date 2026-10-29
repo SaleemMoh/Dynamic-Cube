@@ -28,6 +28,7 @@ export const NODE_ICONS: Record<NodeType, string> = {
   DECISION: 'rule',
   DOCUMENT: 'description',
   PAYMENT: 'payments',
+  VISIT: 'location_on',
   END: 'flag',
 };
 
@@ -245,7 +246,8 @@ interface DrawnEdge {
     }
     .dc-canvas__box--DECISION,
     .dc-canvas__box--DOCUMENT,
-    .dc-canvas__box--PAYMENT {
+    .dc-canvas__box--PAYMENT,
+    .dc-canvas__box--VISIT {
       fill: #f0f6ff;
       stroke: #84adff;
     }
@@ -364,7 +366,7 @@ export class DesignerCanvas {
           lx: path.mid.x,
           ly: path.mid.y + 4,
           label: clip(label, 22),
-          dashed: edge.outlet.kind === 'resume' || edge.outlet.kind === 'expired',
+          dashed: edge.outlet.kind === 'resume' || edge.outlet.kind === 'expired' || edge.outlet.kind === 'cancelled',
           selected: selection?.kind === 'edge' && selection.from === edge.from && sameOutlet(selection.outlet, edge.outlet),
         };
       });

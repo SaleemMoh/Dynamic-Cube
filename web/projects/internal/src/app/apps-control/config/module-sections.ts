@@ -1128,6 +1128,43 @@ export const PAYMENT_SECTIONS: ConfigSection[] = [
   },
 ];
 
+/** Visit configuration screens (internal system → Field visits). */
+export const VISIT_SECTIONS: ConfigSection[] = [
+  {
+    path: 'visit-types',
+    title: t('أنواع الزيارات', 'Visit types'),
+    resource: 'visits.config',
+    types: [
+      {
+        entityType: 'vis.visit-type',
+        title: t('أنواع الزيارات', 'Visit types'),
+        key: 'code',
+        columns: ['mode', 'inspectorRole', 'dueDays'],
+        editor: () => import('../../visits/visit-type-editor').then((m) => m.VisitTypeEditor),
+        fields: [
+          {
+            code: 'mode',
+            type: 'select',
+            label: t('من يجري الزيارة', 'Who carries it out'),
+            required: true,
+            options: [opt('FIELD', 'ميدانية', 'Field'), opt('EXTERNAL', 'جهة معاينة خارجية', 'External body'), opt('MANUAL', 'تسجيل يدوي', 'Manual')],
+          },
+          { code: 'descriptionAr', type: 'textarea', label: t('الوصف بالعربية', 'Description (Arabic)') },
+          { code: 'descriptionEn', type: 'textarea', label: t('الوصف بالإنجليزية', 'Description (English)') },
+          json('outcomes', t('النتائج', 'Outcomes'), t('[{"code": "PASS", "nameAr": "مطابق", "nameEn": "Compliant", "kind": "PASS"}]', '[{"code": "PASS", "nameAr": "مطابق", "nameEn": "Compliant", "kind": "PASS"}]'), []),
+          json('fields', t('حقول المفتش', 'Inspector fields'), t('[{"code": "notes", "labelAr": "…", "labelEn": "…", "type": "TEXTAREA", "required": true}]', '[{"code": "notes", "labelAr": "…", "labelEn": "…", "type": "TEXTAREA", "required": true}]'), []),
+          number('photosRequired', t('أقل عدد من الصور', 'Fewest photos'), 0),
+          { code: 'requireLocation', type: 'checkbox', label: t('تسجيل الموقع إلزامي', 'Position required') },
+          { code: 'requireSignature', type: 'checkbox', label: t('التوقيع إلزامي', 'Signature required') },
+          { code: 'inspectorRole', type: 'select', label: t('دور المفتشين', 'Inspectors role'), ref: 'apps.role' },
+          number('dueDays', t('مدة الإتمام (يوم)', 'Days to complete'), 5),
+          json('external', t('جهة المعاينة الخارجية', 'External inspection body'), t('{"createOperation": "…", "resultOperation": "…"}', '{"createOperation": "…", "resultOperation": "…"}'), null),
+        ],
+      },
+    ],
+  },
+];
+
 const contentEditor = () => import('../../content/content-editor').then((m) => m.ContentEditor);
 const contentOrder = number('order', t('الترتيب', 'Order'), 0);
 
@@ -1188,5 +1225,6 @@ export const ALL_CONFIG_SECTIONS: ConfigSection[] = [
   ...DECISION_SECTIONS,
   ...COMMUNICATION_SECTIONS,
   ...PAYMENT_SECTIONS,
+  ...VISIT_SECTIONS,
   ...CONTENT_SECTIONS,
 ];

@@ -8,7 +8,8 @@ using System.Text.Json.Nodes;
 
 // Development stand-in for the MoMRAH API gateway (apiservicesstg.balady.gov.sa): the OAuth2 token endpoint and the MCI
 // operations, answering with the response envelope and codes of the MCI integration guide; and a SADAD stand-in that
-// registers bills, offers a payment page and notifies the platform of payments, signed. Never deploy it.
+// registers bills, offers a payment page and notifies the platform of payments, signed; and an inspection body (CIS)
+// that books inspections, answers their results and notifies them, signed. Never deploy it.
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHttpClient();
 var app = builder.Build();
@@ -124,7 +125,115 @@ app.MapPost("/sadad/pay/{number}", async (string number, IHttpClientFactory clie
     return Results.Content(PayPage(bill, null), "text/html; charset=utf-8");
 });
 
+// CIS (inspection body): inspections booked by the platform (operation CIS_BOOK_INSPECTION), answered through the result
+// operation (CIS_INSPECTION_RESULT, polled by the worker) once done; a page of the mock reports a result at once with a
+// signed notification to the platform.
+var cis = app.MapGroup("/v1/CIS").AddEndpointFilter(async (context, next) =>
+{
+    var authorization = context.HttpContext.Request.Headers.Authorization.ToString();
+    var token = authorization.StartsWith("Bearer ", StringComparison.Ordinal) ? authorization[7..] : string.Empty;
+    return tokens.TryGetValue(token, out var expires) && expires > DateTimeOffset.UtcNow
+        ? await next(context)
+        : Results.Json(Status(401, "Access Token Expired"), statusCode: 401);
+});
+var inspections = new ConcurrentDictionary<string, Inspection>();
+var cisCallbackUrl = app.Configuration["Cis:CallbackUrl"] ?? "http://localhost:5081/api/visits/v1/callbacks/SAFETY_INSPECTION";
+var cisCallbackKey = app.Configuration["Cis:CallbackKey"] ?? "dev-cis-callback-key";
+var completeAfter = TimeSpan.FromSeconds(app.Configuration.GetValue("Cis:CompleteAfterSeconds", 30));
+
+cis.MapPost("/inspections", (JsonObject body) =>
+{
+    var visit = body["visitNumber"]?.ToString();
+    if (string.IsNullOrWhiteSpace(visit))
+    {
+        return Business("003-000001", "Visit number is required");
+    }
+
+    var id = "INS-" + Random.Shared.Next(100_000, 999_999).ToString(CultureInfo.InvariantCulture);
+    inspections[id] = new Inspection(id, visit, body["siteAddress"]?.ToString() ?? string.Empty, body["activity"]?.ToString() ?? string.Empty, DateTimeOffset.UtcNow);
+    return Success(new JsonObject { ["inspectionId"] = id, ["status"] = "SCHEDULED" });
+});
+
+cis.MapGet("/inspections/{id}", (string id) =>
+{
+    if (!inspections.TryGetValue(id, out var inspection))
+    {
+        return Business("003-000002", "Inspection not found");
+    }
+
+    // Done by itself after a while, compliant unless the activity mentions a violation.
+    var result = inspection.Result ?? (DateTimeOffset.UtcNow - inspection.BookedAt >= completeAfter ? (inspection.Activity.Contains("مخالف", StringComparison.Ordinal) ? "NON_COMPLIANT" : "COMPLIANT") : null);
+    return Success(InspectionResult(inspection, result));
+});
+
+app.MapGet("/cis/inspections/{id}", (string id) => inspections.TryGetValue(id, out var inspection)
+    ? Results.Content(InspectionPage(inspection, null), "text/html; charset=utf-8")
+    : Results.Content(Page("المعاينة غير موجودة", "<p>لا توجد معاينة بهذا الرقم.</p>"), "text/html; charset=utf-8", statusCode: 404));
+
+app.MapPost("/cis/inspections/{id}", async (string id, HttpRequest form, IHttpClientFactory clients) =>
+{
+    if (!inspections.TryGetValue(id, out var inspection))
+    {
+        return Results.NotFound();
+    }
+
+    var result = (await form.ReadFormAsync())["result"].ToString() is "NON_COMPLIANT" ? "NON_COMPLIANT" : "COMPLIANT";
+    var body = InspectionResult(inspection, result).ToJsonString();
+    using var request = new HttpRequestMessage(HttpMethod.Post, cisCallbackUrl) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
+    request.Headers.Add("X-Signature", Convert.ToHexStringLower(HMACSHA256.HashData(Encoding.UTF8.GetBytes(cisCallbackKey), Encoding.UTF8.GetBytes(body))));
+    try
+    {
+        var response = await clients.CreateClient().SendAsync(request);
+        if (!response.IsSuccessStatusCode)
+        {
+            return Results.Content(InspectionPage(inspection, $"رفضت المنصة الإشعار ({(int)response.StatusCode})."), "text/html; charset=utf-8");
+        }
+    }
+    catch (HttpRequestException ex)
+    {
+        return Results.Content(InspectionPage(inspection, $"تعذّر إبلاغ المنصة: {WebUtility.HtmlEncode(ex.Message)}"), "text/html; charset=utf-8");
+    }
+
+    inspections[id] = inspection = inspection with { Result = result };
+    return Results.Content(InspectionPage(inspection, null), "text/html; charset=utf-8");
+});
+
 app.Run();
+
+static JsonObject InspectionResult(Inspection inspection, string? result) => new()
+{
+    ["inspectionId"] = inspection.Id,
+    ["visitNumber"] = inspection.VisitNumber,
+    ["status"] = result is null ? "SCHEDULED" : "COMPLETED",
+    ["result"] = result,
+    ["findings"] = result is null ? null : new JsonObject
+    {
+        ["violations"] = result == "COMPLIANT" ? 0 : 2,
+        ["fireExtinguishers"] = result == "COMPLIANT" ? "OK" : "EXPIRED",
+        ["inspector"] = "مفتش الدفاع المدني",
+    },
+    ["summary"] = result switch
+    {
+        "COMPLIANT" => "الموقع مطابق لاشتراطات السلامة.",
+        "NON_COMPLIANT" => "طفايات الحريق منتهية ومخرج الطوارئ مغلق.",
+        _ => null,
+    },
+};
+
+string InspectionPage(Inspection inspection, string? error) => Page(
+    inspection.Result is null ? "معاينة السلامة" : "تمت المعاينة",
+    $"""
+    <dl>
+      <dt>رقم المعاينة</dt><dd dir="ltr">{inspection.Id}</dd>
+      <dt>رقم الزيارة في المنصة</dt><dd dir="ltr">{WebUtility.HtmlEncode(inspection.VisitNumber)}</dd>
+      <dt>الموقع</dt><dd>{WebUtility.HtmlEncode(inspection.SiteAddress)}</dd>
+      <dt>النشاط</dt><dd>{WebUtility.HtmlEncode(inspection.Activity)}</dd>
+    </dl>
+    {(error is null ? string.Empty : $"<p class=\"error\">{error}</p>")}
+    {(inspection.Result is { } result
+        ? $"<p class=\"ok\">أُبلغت المنصة بالنتيجة: {result}</p>"
+        : "<form method=\"post\"><button class=\"button\" name=\"result\" value=\"COMPLIANT\" data-testid=\"cis-compliant\">مطابق</button> <button class=\"button\" name=\"result\" value=\"NON_COMPLIANT\" data-testid=\"cis-non-compliant\">غير مطابق</button></form>")}
+    """);
 
 string PayPage(SadadBill bill, string? error) => Page(
     bill.Paid ? "تم السداد" : "سداد فاتورة",
@@ -144,7 +253,7 @@ string PayPage(SadadBill bill, string? error) => Page(
 
 static string Page(string title, string content) => $$"""
     <!doctype html>
-    <html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>{{title}} — سداد (بيئة التطوير)</title>
+    <html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>{{title}} — محاكاة (بيئة التطوير)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
       body { margin: 0; font-family: system-ui, sans-serif; background: #f3f4f6; color: #161616; }
@@ -156,7 +265,7 @@ static string Page(string title, string content) => $$"""
       .ok { color: #1b8354; font-weight: 600; } .error { color: #b42318; }
       footer { text-align: center; color: #6c737f; font-size: 13px; }
     </style></head>
-    <body><header>سداد — محاكاة لبيئة التطوير</header><main><h1>{{title}}</h1>{{content}}</main>
+    <body><header>بوابة المحاكاة — بيئة التطوير</header><main><h1>{{title}}</h1>{{content}}</main>
     <footer>صفحة تجريبية لا تُستخدم في الإنتاج</footer></body></html>
     """;
 
@@ -173,5 +282,7 @@ static IResult Business(string code, string message) => Results.Json(new JsonObj
     ["statusDetails"] = new JsonArray(new JsonObject { ["code"] = 200, ["message"] = "Ok" }),
     ["data"] = new JsonObject { ["responseCode"] = code, ["responseMessage"] = message },
 }, JsonSerializerOptions.Web);
+
+internal sealed record Inspection(string Id, string VisitNumber, string SiteAddress, string Activity, DateTimeOffset BookedAt, string? Result = null);
 
 internal sealed record SadadBill(string Number, string PlatformNumber, decimal Amount, string PayerName, string Description, string DueDate, bool Paid = false);

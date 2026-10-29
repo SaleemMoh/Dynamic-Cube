@@ -259,6 +259,30 @@ export interface RequestView {
   timeline: TimelineEntry[];
   /** Bills issued by the request's payment steps. */
   bills?: BillInfo[] | null;
+  /** Visits requested by the request's visit steps. */
+  visits?: VisitInfo[] | null;
+}
+
+export type VisitStatus = 'PENDING' | 'SCHEDULED' | 'IN_PROGRESS' | 'SENT' | 'COMPLETED' | 'CANCELLED';
+
+/** A visit as the applicant sees it: its type, when it is due or scheduled, and its outcome. */
+export interface VisitInfo {
+  id: string;
+  number: string;
+  visitType: string;
+  typeNameAr: string;
+  typeNameEn: string;
+  mode: 'FIELD' | 'EXTERNAL' | 'MANUAL';
+  status: VisitStatus;
+  requestedAt: string;
+  scheduledAt: string | null;
+  dueAt: string | null;
+  completedAt: string | null;
+  outcome: string | null;
+  outcomeNameAr: string | null;
+  outcomeNameEn: string | null;
+  outcomeKind: 'PASS' | 'FAIL' | 'OTHER' | null;
+  siteAddress: string | null;
 }
 
 export type BillStatus = 'PENDING' | 'PAID' | 'EXPIRED' | 'CANCELLED';

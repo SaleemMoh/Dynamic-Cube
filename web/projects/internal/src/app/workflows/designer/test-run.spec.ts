@@ -65,6 +65,25 @@ describe('designer test run', () => {
     expect(run.outcome).toBe('APPROVED');
   });
 
+  it('a visit waits for its outcome, routes it, and a cancelled visit takes its own way', () => {
+    const visit: WorkflowDraft = {
+      nodes: [
+        { code: 'START', type: 'START', nameAr: 's', nameEn: 's', next: 'SITE' },
+        { code: 'SITE', type: 'VISIT', nameAr: 'v', nameEn: 'v', visitType: 'T', outcomes: { FAIL: 'NO' }, next: 'YES', cancelled: 'GONE' },
+        { code: 'YES', type: 'END', nameAr: 'y', nameEn: 'y', outcome: 'APPROVED' },
+        { code: 'NO', type: 'END', nameAr: 'n', nameEn: 'n', outcome: 'REJECTED' },
+        { code: 'GONE', type: 'END', nameAr: 'g', nameEn: 'g', outcome: 'CLOSED' },
+      ],
+    };
+    const run = startRun(visit, {}, null);
+    expect(waiting(visit, run).map((w) => w.node.code)).toEqual(['SITE']);
+    expect(choose(visit, run, run.tokens[0].id, 'FAIL').outcome).toBe('REJECTED');
+    const passed = choose(visit, run, run.tokens[0].id, 'PASS');
+    expect(passed.outcome).toBe('APPROVED');
+    expect(passed.facts['visits']).toEqual({ SITE: { status: 'COMPLETED', outcome: 'PASS', data: {} } });
+    expect(choose(visit, run, run.tokens[0].id, 'CANCELLED').outcome).toBe('CLOSED');
+  });
+
   it('an unpaid bill takes the expired way', () => {
     let run = startRun(def, { __feeTotal: 100 }, null);
     run = choose(def, run, run.tokens[0].id, 'UNPAID');

@@ -12,6 +12,7 @@ import { APP_TRANSLATIONS } from './translations';
 import { UX_TRANSLATIONS } from './ux-translations';
 import { PACKAGE_TRANSLATIONS } from './apps-control/change-sets/package-translations';
 import { DESIGNER_TRANSLATIONS } from './workflows/designer/designer-translations';
+import { VISIT_TRANSLATIONS } from './visits/visit-translations';
 
 @Component({
   selector: 'dc-root',
@@ -35,5 +36,6 @@ export class App {
     inject(I18nService).register(CONTENT_TRANSLATIONS);
     inject(I18nService).register(UX_TRANSLATIONS);
     inject(I18nService).register(PACKAGE_TRANSLATIONS);
+    inject(I18nService).register(VISIT_TRANSLATIONS);
   }
 }
