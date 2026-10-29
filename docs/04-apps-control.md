@@ -12,7 +12,7 @@ are kept; the implementation is adapted for a single-entity, on-prem, multi-app 
 
 | Topic | Decision |
 |---|---|
-| Tenancy | **Single entity per installation.** Departments are org units, not companies |
+| Tenancy | **Several entities per installation, each with business apps** (Classification, Permits…); every configuration row is system, entity or app level ([ADR-0031](adr/0031-entities-business-apps-levels.md)). Departments are org units |
 | Terminology | Keep **Class / Domain** (lookup type / lookup value) |
 | Flex fields | Replace fixed `Flex_value_1..10` / dates / numbers with **typed attribute definitions** per class, values stored in **JSONB**, exposed to reporting through **generated typed views** |
 | LOV | Keep LOV as the **security & filter layer** above Class/Domain and other tables; replace free SQL with **generated queries** over registered sources; add **rule-based grants**; apply grants to **data**, not only dropdowns |

@@ -45,6 +45,11 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("BusinessApp")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("business_app");
+
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -60,6 +65,11 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)")
                         .HasColumnName("created_by");
+
+                    b.Property<string>("EntityCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("entity_code");
 
                     b.Property<string>("HintAr")
                         .HasMaxLength(2000)
@@ -215,6 +225,11 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
                         .HasColumnType("character varying(64)")
                         .HasColumnName("archetype");
 
+                    b.Property<string>("BusinessApp")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("business_app");
+
                     b.Property<string>("CategoryCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
@@ -262,6 +277,11 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
                     b.Property<bool>("DraftsAllowed")
                         .HasColumnType("boolean")
                         .HasColumnName("drafts_allowed");
+
+                    b.Property<string>("EntityCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("entity_code");
 
                     b.Property<string>("Icon")
                         .HasMaxLength(100)
@@ -342,6 +362,11 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("BusinessApp")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("business_app");
+
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -371,6 +396,11 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer")
                         .HasColumnName("display_order");
+
+                    b.Property<string>("EntityCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("entity_code");
 
                     b.Property<string>("Icon")
                         .HasMaxLength(100)
@@ -590,6 +620,11 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("BusinessApp")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("business_app");
+
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -610,6 +645,11 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("jsonb")
                         .HasColumnName("definition");
+
+                    b.Property<string>("EntityCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("entity_code");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")

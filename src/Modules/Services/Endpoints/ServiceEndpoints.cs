@@ -48,8 +48,8 @@ internal static class ServiceEndpoints
     /// <summary>Internal system: requests (read) and version previews.</summary>
     public static void MapInternal(RouteGroupBuilder group)
     {
-        group.MapGet("/admin/requests", async (string? service, StatusCategory? status, string? search, int? skip, int? take, RequestAdminService admin, CancellationToken ct) =>
-            TypedResults.Ok(await admin.SearchAsync(service, status, search, skip ?? 0, take ?? 50, ct)))
+        group.MapGet("/admin/requests", async (string? service, StatusCategory? status, string? search, string? app, int? skip, int? take, RequestAdminService admin, CancellationToken ct) =>
+            TypedResults.Ok(await admin.SearchAsync(service, status, search, skip ?? 0, take ?? 50, ct, app)))
             .RequirePrivilege(ServiceResources.Requests, CatalogActions.View).WithName("SearchRequests");
         group.MapGet("/admin/requests/{id:guid}", async (Guid id, RequestAdminService admin, CancellationToken ct) => TypedResults.Ok(await admin.GetAsync(id, ct)))
             .RequirePrivilege(ServiceResources.Requests, CatalogActions.View).WithName("GetRequest");

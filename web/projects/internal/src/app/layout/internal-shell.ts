@@ -2,7 +2,7 @@ import { BidiModule } from '@angular/cdk/bidi';
 import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { BrandingService, I18nService, LanguageSwitcher, NotificationBell, TranslatePipe, UserMenu } from '@dynamic-cube/shared';
+import { BrandingService, BusinessAppSelector, I18nService, LanguageSwitcher, NotificationBell, TranslatePipe, UserMenu } from '@dynamic-cube/shared';
 import { NavState } from './nav-state';
 
 /**
@@ -11,7 +11,7 @@ import { NavState } from './nav-state';
  */
 @Component({
   selector: 'dc-internal-shell',
-  imports: [BidiModule, MatButtonModule, MatIconModule, LanguageSwitcher, NotificationBell, TranslatePipe, UserMenu],
+  imports: [BidiModule, BusinessAppSelector, MatButtonModule, MatIconModule, LanguageSwitcher, NotificationBell, TranslatePipe, UserMenu],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="dc-ishell" [dir]="i18n.direction()">
@@ -39,6 +39,7 @@ import { NavState } from './nav-state';
         </a>
         <span class="dc-topbar__spacer"></span>
         <div class="dc-topbar__actions">
+          <dc-business-app-selector />
           <dc-notification-bell />
           <dc-language-switcher />
           <dc-user-menu />

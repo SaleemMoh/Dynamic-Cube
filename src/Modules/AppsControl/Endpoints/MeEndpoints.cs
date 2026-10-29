@@ -18,7 +18,12 @@ public sealed record MeInfo(
     IReadOnlyList<string> Roles,
     IReadOnlyList<string> OrgUnits,
     string? OrgUnit,
-    IReadOnlyList<string> Positions);
+    IReadOnlyList<string> Positions,
+    string? EntityCode = null,
+    IReadOnlyCollection<string>? BusinessApps = null);
+
+/// <summary>A business app the user may work in, for the app selector.</summary>
+public sealed record MyBusinessApp(string Code, string NameAr, string NameEn, string? EntityCode, string? Icon, int DisplayOrder);
 
 public sealed record GrantInfo(string Lov, bool All, IReadOnlyCollection<string> Values, string? DefaultValue);
 
@@ -35,8 +40,20 @@ internal static class MeEndpoints
         {
             var access = await resolver.GetAsync(ct);
             var user = access.User;
-            return TypedResults.Ok(new MeInfo(user.UserName, access.NameAr, access.NameEn, access.PreferredLanguage, user.App, user.Roles, user.OrgUnits, user.PrimaryOrgUnit, user.Positions));
+            return TypedResults.Ok(new MeInfo(
+                user.UserName, access.NameAr, access.NameEn, access.PreferredLanguage, user.App, user.Roles, user.OrgUnits, user.PrimaryOrgUnit, user.Positions,
+                access.Scope.Entities?.SingleOrDefault(), access.Scope.Apps?.Order(StringComparer.Ordinal).ToList()));
         }).WithName("GetMyProfile");
+
+        me.MapGet("/business-apps", async (AccessResolver resolver, AppsControlDbContext db, CancellationToken ct) =>
+        {
+            var scope = (await resolver.GetAsync(ct)).Scope;
+            var apps = await db.BusinessApps.AsNoTracking().Where(a => a.IsActive).OrderBy(a => a.DisplayOrder).ThenBy(a => a.Code).ToListAsync(ct);
+            return TypedResults.Ok(apps
+                .Where(a => scope.CanSee(a.EntityCode, a.Code))
+                .Select(a => new MyBusinessApp(a.Code, a.NameAr, a.NameEn, a.EntityCode, a.Icon, a.DisplayOrder))
+                .ToList());
+        }).WithName("GetMyBusinessApps");
 
         me.MapGet("/apps", async (AccessResolver resolver, MenuService menus, CancellationToken ct) =>
             TypedResults.Ok(await menus.GetAppsAsync(await resolver.GetAsync(ct), ct))).WithName("GetMyApps");

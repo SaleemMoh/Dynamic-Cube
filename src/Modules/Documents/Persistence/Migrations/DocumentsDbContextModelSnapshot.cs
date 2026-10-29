@@ -89,6 +89,11 @@ namespace DynamicCube.Modules.Documents.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("BusinessApp")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("business_app");
+
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -104,6 +109,11 @@ namespace DynamicCube.Modules.Documents.Persistence.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)")
                         .HasColumnName("created_by");
+
+                    b.Property<string>("EntityCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("entity_code");
 
                     b.Property<string>("Html")
                         .IsRequired()
@@ -182,6 +192,11 @@ namespace DynamicCube.Modules.Documents.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("amend_resets_validity");
 
+                    b.Property<string>("BusinessApp")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("business_app");
+
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -207,6 +222,11 @@ namespace DynamicCube.Modules.Documents.Persistence.Migrations
                         .HasMaxLength(4000)
                         .HasColumnType("character varying(4000)")
                         .HasColumnName("description_en");
+
+                    b.Property<string>("EntityCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("entity_code");
 
                     b.Property<string>("Fields")
                         .IsRequired()

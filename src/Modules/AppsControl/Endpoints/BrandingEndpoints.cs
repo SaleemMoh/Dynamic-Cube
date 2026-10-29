@@ -42,7 +42,7 @@ internal static partial class BrandingEndpoints
     {
         group.MapGet("/branding", async (HttpContext http, AppsControlDbContext db, CancellationToken ct) =>
         {
-            var entity = await db.Entities.AsNoTracking().FirstOrDefaultAsync(ct);
+            var entity = await db.Entities.AsNoTracking().FirstOrDefaultAsync(e => e.Code == GovernmentEntity.SingletonCode, ct);
             // Public and read-only: the sign-in pages (another origin) read it too.
             http.Response.Headers.AccessControlAllowOrigin = "*";
             return TypedResults.Ok(new BrandingInfo(
@@ -61,7 +61,7 @@ internal static partial class BrandingEndpoints
         // Anyone may load the images in use; other (e.g. not yet approved) uploads only for Apps Control administrators.
         group.MapGet("/branding/assets/{id:guid}", async (Guid id, HttpContext http, AppsControlDbContext db, AccessResolver resolver, CancellationToken ct) =>
         {
-            var entity = await db.Entities.AsNoTracking().FirstOrDefaultAsync(ct);
+            var entity = await db.Entities.AsNoTracking().FirstOrDefaultAsync(e => e.Code == GovernmentEntity.SingletonCode, ct);
             if (entity is null || !entity.AssetKeys().Any(k => string.Equals(k, id.ToString(), StringComparison.OrdinalIgnoreCase)))
             {
                 var access = await resolver.GetAsync(ct);

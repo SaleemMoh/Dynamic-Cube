@@ -100,8 +100,8 @@ Apps on top of the platform:
 **In scope**: everything in 1.4, the three apps, Saudi integrations via the Integration
 Manager, on-prem deployment tooling, configuration export/import between environments.
 
-**Out of scope for now**: multi-entity (multi-tenant) installations — one entity per
-installation; AI assistant / chatbot (integration point only); custom-code plugin SDK
+**Out of scope for now**: physically separate entities (one database serves every entity of an installation; see
+[ADR-0031](adr/0031-entities-business-apps-levels.md) for entities and business apps); AI assistant / chatbot (integration point only); custom-code plugin SDK
 (planned later as an escape hatch).
 
 ## 1.7 Reference service

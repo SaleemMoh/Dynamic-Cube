@@ -84,6 +84,8 @@ export interface DocumentQuery {
   type?: string | null;
   status?: DocumentStatus | null;
   holder?: string | null;
+  /** Only documents of the document types of this business app. */
+  app?: string | null;
   skip?: number;
   take?: number;
 }

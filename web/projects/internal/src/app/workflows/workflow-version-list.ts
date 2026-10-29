@@ -11,7 +11,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
-import { AppsControlApi, ConfigRow, LocalizePipe, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
+import { AppsControlApi, BusinessAppContext, ConfigRow, LocalizePipe, problemMessages, TranslatePipe } from '@dynamic-cube/shared';
 import { DraftsService } from '../apps-control/drafts.service';
 import { PrivilegesService } from '../apps-control/privileges.service';
 import { GraphDefinition, WorkflowGraph } from './workflow-graph';
@@ -250,7 +250,8 @@ export class WorkflowVersionList {
   protected readonly drafts = inject(DraftsService);
   private readonly privileges = inject(PrivilegesService);
   protected readonly columns = ['code', 'name', 'published', 'state', 'actions'];
-  protected readonly workflows = rxResource({ stream: () => this.api.list('wf.workflow') });
+  private readonly appContext = inject(BusinessAppContext);
+  protected readonly workflows = rxResource({ params: () => ({ app: this.appContext.current() }), stream: ({ params }) => this.api.list('wf.workflow', null, params.app) });
   private readonly versions = rxResource({ stream: () => this.api.list('wf.workflow-version') });
   private readonly allRows = computed(() => this.versions.value() ?? []);
   /** The chosen workflow's versions, or every version until one is chosen. */

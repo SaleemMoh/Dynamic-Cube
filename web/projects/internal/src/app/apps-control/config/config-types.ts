@@ -63,6 +63,11 @@ export interface ConfigType {
   rowActions?: ConfigRowAction[];
   /** A dialog that creates rows instead of the generic form (e.g. a user together with the sign-in account). */
   createDialog?: () => Promise<Type<unknown>>;
+  /**
+   * The row's level: `full` (default) asks for the entity and business app, `entity` for the entity only (business apps),
+   * `none` for rows of the whole installation (entities, channel apps, installation settings).
+   */
+  scope?: 'full' | 'entity' | 'none';
 }
 
 export interface ConfigSection {
@@ -70,6 +75,11 @@ export interface ConfigSection {
   title: LocalizedText;
   resource: string;
   types: ConfigType[];
+}
+
+/** The level a type's rows take: singletons and rows marked `none` belong to the whole installation. */
+export function scopeOf(type: ConfigType): 'full' | 'entity' | 'none' {
+  return type.scope ?? (typeof type.key === 'object' ? 'none' : 'full');
 }
 
 const t = (ar: string, en: string): LocalizedText => ({ ar, en });
@@ -110,8 +120,9 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
     types: [
       {
         entityType: 'apps.entity',
-        title: t('الجهة', 'Entity'),
-        key: { singleton: 'ENTITY' },
+        title: t('الجهات', 'Entities'),
+        key: 'code',
+        scope: 'none',
         columns: ['entityKind'],
         fields: [
           {
@@ -128,6 +139,7 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
         entityType: 'apps.installation',
         title: t('النظام', 'Installation'),
         key: { singleton: 'INSTALLATION' },
+        scope: 'none',
         columns: ['defaultLanguage', 'timeZone'],
         fields: [
           {
@@ -183,9 +195,23 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
         ],
       },
       {
-        entityType: 'apps.app',
-        title: t('التطبيقات', 'Apps'),
+        entityType: 'apps.business-app',
+        title: t('تطبيقات الأعمال', 'Business apps'),
         key: 'code',
+        scope: 'entity',
+        columns: ['displayOrder'],
+        fields: [
+          { code: 'icon', type: 'icon', label: t('الأيقونة', 'Icon') },
+          { code: 'descriptionAr', type: 'textarea', label: t('الوصف بالعربية', 'Arabic description') },
+          { code: 'descriptionEn', type: 'textarea', label: t('الوصف بالإنجليزية', 'English description') },
+          displayOrder,
+        ],
+      },
+      {
+        entityType: 'apps.app',
+        title: t('قنوات النظام', 'Channel apps'),
+        key: 'code',
+        scope: 'none',
         columns: ['appType'],
         fields: [
           {

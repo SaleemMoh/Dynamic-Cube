@@ -1,4 +1,5 @@
 using DynamicCube.Modules.AppsControl.Domain;
+using DynamicCube.Platform.Configuration;
 
 namespace DynamicCube.Modules.AppsControl.Access;
 
@@ -10,8 +11,12 @@ public sealed class AccessSnapshot(
     UserStatus status,
     string? preferredLanguage,
     IReadOnlyList<Guid> roleIds,
-    IReadOnlyDictionary<string, IReadOnlySet<string>> privileges)
+    IReadOnlyDictionary<string, IReadOnlySet<string>> privileges,
+    ConfigScope? scope = null)
 {
+    /// <summary>The entities and business apps whose configuration and data the user works with.</summary>
+    public ConfigScope Scope { get; } = scope ?? ConfigScope.Everything;
+
     public UserContext User { get; } = user;
 
     public string? NameAr { get; } = nameAr;
@@ -33,5 +38,5 @@ public sealed class AccessSnapshot(
         IsActive && Privileges.TryGetValue(resourceCode, out var actions) && actions.Contains(action);
 
     public static AccessSnapshot Anonymous(string app) =>
-        new(UserContext.Anonymous(app), null, null, UserStatus.Active, null, [], new Dictionary<string, IReadOnlySet<string>>());
+        new(UserContext.Anonymous(app), null, null, UserStatus.Active, null, [], new Dictionary<string, IReadOnlySet<string>>(), new ConfigScope(new HashSet<string>(), new HashSet<string>()));
 }

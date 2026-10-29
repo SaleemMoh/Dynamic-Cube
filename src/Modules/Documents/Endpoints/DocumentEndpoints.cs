@@ -17,8 +17,8 @@ internal static class DocumentEndpoints
     public static void MapInternal(RouteGroupBuilder group)
     {
         var registry = group.MapGroup("/documents").RequirePrivilege(DocumentResources.Registry, CatalogActions.View);
-        registry.MapGet("/", async (string? search, string? type, string? status, Guid? holder, int? skip, int? take, DocumentRegistry service, CancellationToken ct) =>
-            TypedResults.Ok(await service.SearchAsync(search, type, ParseStatus(status), holder, skip ?? 0, take ?? 50, ct))).WithName("SearchDocuments");
+        registry.MapGet("/", async (string? search, string? type, string? status, Guid? holder, string? app, int? skip, int? take, DocumentRegistry service, CancellationToken ct) =>
+            TypedResults.Ok(await service.SearchAsync(search, type, ParseStatus(status), holder, skip ?? 0, take ?? 50, ct, app))).WithName("SearchDocuments");
         registry.MapGet("/by-source/{sourceType}/{sourceId:guid}", async (string sourceType, Guid sourceId, DocumentRegistry service, CancellationToken ct) =>
             TypedResults.Ok(await service.BySourceAsync(sourceType, sourceId, ct))).WithName("GetDocumentsBySource");
         registry.MapGet("/{id:guid}", async (Guid id, DocumentRegistry service, CancellationToken ct) => TypedResults.Ok(await service.GetAsync(id, null, ct))).WithName("GetDocument");

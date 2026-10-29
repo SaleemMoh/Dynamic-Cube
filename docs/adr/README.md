@@ -35,3 +35,4 @@ Status values: Proposed · Accepted · Superseded.
 | [0028](0028-portal-dga-layout.md) | The portal follows the DGA layout of entity portals (title bands, tabs, cards, filter panels, service page anatomy); page feedback and service ratings are stored | Accepted |
 | [0029](0029-field-visits.md) | Field visits as a module: a workflow step that waits for the outcome, an offline-first field app with an outbox, external inspection bodies through the Integration Manager | Accepted |
 | [0030](0030-org-structure-routing.md) | Tasks routed through the organization structure: a unit fixed, chosen by a rule or taken from a previous actor; levels up, a position in the unit, sub-units, climbing when empty | Accepted |
+| [0031](0031-entities-business-apps-levels.md) | Several entities and business apps; every configuration row is system, entity or app level; staff work within their entity and apps; app filters on lists | Accepted |

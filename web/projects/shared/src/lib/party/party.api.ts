@@ -10,10 +10,12 @@ export const PARTY_API = '/api/party/v1';
 export class PartyApi {
   private readonly http = inject(HttpClient);
 
-  search(search: string | null, kind: PartyKind | null, skip = 0, take = 50): Observable<{ items: PartySummary[]; total: number }> {
+  /** `app`: only parties with a request for a service of that business app. */
+  search(search: string | null, kind: PartyKind | null, skip = 0, take = 50, app: string | null = null): Observable<{ items: PartySummary[]; total: number }> {
     let params = new HttpParams().set('skip', skip).set('take', take);
     if (search) params = params.set('search', search);
     if (kind) params = params.set('kind', kind);
+    if (app) params = params.set('app', app);
     return this.http.get<{ items: PartySummary[]; total: number }>(`${PARTY_API}/parties`, { params });
   }
 

@@ -25,6 +25,15 @@ public abstract class ConfigEntity : IAuditable, IHasAuditColumns
 
     public Ownership Owner { get; set; } = Ownership.Entity;
 
+    /// <summary>
+    /// The government entity the row belongs to; null for rows of the whole installation (system level). See
+    /// <see cref="ConfigScope"/>.
+    /// </summary>
+    public string? EntityCode { get; set; }
+
+    /// <summary>The business app the row belongs to (app level); null for entity and system rows.</summary>
+    public string? BusinessApp { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; }
 
     public string CreatedBy { get; set; } = string.Empty;

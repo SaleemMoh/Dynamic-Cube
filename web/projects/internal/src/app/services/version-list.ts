@@ -11,7 +11,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
-import { AppsControlApi, ConfigRow, LocalizePipe, ServicesApi, TranslatePipe, VersionDefinition, problemMessages } from '@dynamic-cube/shared';
+import { AppsControlApi, BusinessAppContext, ConfigRow, LocalizePipe, problemMessages, ServicesApi, TranslatePipe, VersionDefinition } from '@dynamic-cube/shared';
 import { firstValueFrom } from 'rxjs';
 import { DraftsService } from '../apps-control/drafts.service';
 import { PrivilegesService } from '../apps-control/privileges.service';
@@ -165,7 +165,8 @@ export class VersionList {
   protected readonly drafts = inject(DraftsService);
   private readonly privileges = inject(PrivilegesService);
   protected readonly columns = ['code', 'name', 'published', 'state', 'actions'];
-  protected readonly services = rxResource({ stream: () => this.api.list('svc.service') });
+  private readonly appContext = inject(BusinessAppContext);
+  protected readonly services = rxResource({ params: () => ({ app: this.appContext.current() }), stream: ({ params }) => this.api.list('svc.service', null, params.app) });
   private readonly versions = rxResource({ stream: () => this.api.list('svc.service-version') });
   protected readonly rows = computed(() => this.versions.value() ?? []);
   protected readonly service = signal<string | null>(null);

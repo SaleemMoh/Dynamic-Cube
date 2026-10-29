@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
   AccountCapabilities,
+  MyBusinessApp,
   AccountPage,
   AccountView,
   NewAccountRequest,
@@ -143,10 +144,16 @@ export class AppsControlApi {
     return this.http.get<EntityTypeInfo[]>(`${APPS_CONTROL_API}/admin/types`);
   }
 
-  list(entityType: string, parent?: string | null): Observable<ConfigRow[]> {
+  /** Rows of a configuration type; with `app`, those of that business app and of no app. */
+  list(entityType: string, parent?: string | null, app?: string | null): Observable<ConfigRow[]> {
     return this.http.get<ConfigRow[]>(`${APPS_CONTROL_API}/admin/${entityType}`, {
-      params: params({ parent }),
+      params: params({ parent, app }),
     });
+  }
+
+  /** The business apps the signed-in employee may work in. */
+  myBusinessApps(): Observable<MyBusinessApp[]> {
+    return this.http.get<MyBusinessApp[]>(`${APPS_CONTROL_API}/me/business-apps`);
   }
 
   /** Rows under each row of a type (values per class, users per role, menus per group), keyed by code. */

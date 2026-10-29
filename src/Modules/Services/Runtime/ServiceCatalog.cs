@@ -18,16 +18,26 @@ internal sealed class ServiceCatalog(ServicesDbContext context) : IServiceCatalo
     public async Task<IReadOnlyList<ServiceSummary>> ListAsync(CancellationToken cancellationToken) =>
         await LoadAsync(context.Services.OrderBy(s => s.Code), cancellationToken);
 
+    public async Task<IReadOnlyList<string>> ServicesOfAppAsync(string businessApp, CancellationToken cancellationToken) =>
+        await context.Services.AsNoTracking().Where(s => s.BusinessApp == businessApp).Select(s => s.Code).ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<Guid>> PartiesOfAppAsync(string businessApp, CancellationToken cancellationToken)
+    {
+        var services = context.Services.Where(s => s.BusinessApp == businessApp).Select(s => s.Code);
+        var requests = context.Requests.AsNoTracking().Where(r => services.Contains(r.ServiceCode));
+        return await requests.Select(r => r.SubmitterPartyId).Union(requests.Select(r => r.BeneficiaryPartyId)).ToListAsync(cancellationToken);
+    }
+
     private async Task<List<ServiceSummary>> LoadAsync(IQueryable<Domain.Service> query, CancellationToken cancellationToken)
     {
-        var services = await query.AsNoTracking().Select(s => new { s.Id, s.Code, s.NameAr, s.NameEn }).ToListAsync(cancellationToken);
+        var services = await query.AsNoTracking().Select(s => new { s.Id, s.Code, s.NameAr, s.NameEn, s.EntityCode, s.BusinessApp }).ToListAsync(cancellationToken);
         var ids = services.Select(s => s.Id).ToList();
         var latest = await context.Versions.AsNoTracking()
             .Where(v => ids.Contains(v.ServiceId))
             .GroupBy(v => v.ServiceId)
             .Select(g => g.OrderByDescending(v => v.Number).Select(v => new { v.ServiceId, v.Definition }).First())
             .ToListAsync(cancellationToken);
-        return [.. services.Select(s => new ServiceSummary(s.Code, s.NameAr, s.NameEn, Named(latest.FirstOrDefault(l => l.ServiceId == s.Id)?.Definition)))];
+        return [.. services.Select(s => new ServiceSummary(s.Code, s.NameAr, s.NameEn, Named(latest.FirstOrDefault(l => l.ServiceId == s.Id)?.Definition), s.EntityCode, s.BusinessApp))];
     }
 
     private static string? Named(string? definition) =>
@@ -55,7 +65,8 @@ internal sealed class ServiceWorkflowProvisioner(IServiceProvider services) : IC
             .Where(n => n.Workflow is not null)
             .ToList();
         var created = changeSet.Items.Where(i => i.EntityType == ServiceChangeTypes.Service && i.Operation == ChangeOperation.Create).Select(i => i.EntityCode).ToList();
-        var codes = created.Concat(named.Select(n => n.Service)).Distinct().ToList();
+        var changed = changeSet.Items.Where(i => i.EntityType == ServiceChangeTypes.Service && i.Operation != ChangeOperation.Delete).Select(i => i.EntityCode).ToList();
+        var codes = created.Concat(named.Select(n => n.Service)).Concat(changed).Distinct().ToList();
         if (codes.Count == 0)
         {
             return;
@@ -75,6 +86,15 @@ internal sealed class ServiceWorkflowProvisioner(IServiceProvider services) : IC
             if (found.TryGetValue(code, out var s))
             {
                 await workflows.EnsureAsync(s.Code, s.NameAr, s.NameEn, cancellationToken);
+            }
+        }
+
+        // A service's workflow belongs to the same entity and business app as the service.
+        foreach (var code in changed)
+        {
+            if (found.TryGetValue(code, out var s))
+            {
+                await workflows.ScopeAsync(s.Code, s.EntityCode, s.BusinessApp, cancellationToken);
             }
         }
     }

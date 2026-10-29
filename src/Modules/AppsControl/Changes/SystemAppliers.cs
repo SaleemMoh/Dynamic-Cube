@@ -126,16 +126,12 @@ internal sealed partial class EntityApplier(AppsControlDbContext db) : ConfigApp
 
     protected override IQueryable<GovernmentEntity> Query(AppsControlDbContext context) => context.Entities;
 
-    protected override void ValidateKey(string entityCode, ValidationErrors errors)
-    {
-        if (entityCode != GovernmentEntity.SingletonCode)
-        {
-            errors.Add("code", $"The entity code is always {GovernmentEntity.SingletonCode}.");
-        }
-    }
 
     protected override async Task ApplyAsync(GovernmentEntity entity, EntityPayload payload, RefResolver refs, ValidationErrors errors, GovernmentEntity? existing, CancellationToken cancellationToken)
     {
+        // Entities are rows of the whole installation.
+        entity.EntityCode = null;
+        entity.BusinessApp = null;
         await refs.DomainAsync(EntityKindClass, payload.EntityKind, "entityKind", errors, cancellationToken);
         errors.MaxLength("unifiedNumber", payload.UnifiedNumber, 50);
         errors.MaxLength("crNumber", payload.CrNumber, 50);
@@ -308,8 +304,82 @@ internal sealed partial class EntityApplier(AppsControlDbContext db) : ConfigApp
             Contact = entity.Contact,
         });
 
-    protected override Task BeforeDeleteAsync(AppsControlDbContext context, GovernmentEntity entity, CancellationToken cancellationToken) =>
-        throw new DynamicCube.Platform.ChangeSets.ChangeSetException("The entity cannot be deleted.");
+    protected override async Task BeforeDeleteAsync(AppsControlDbContext context, GovernmentEntity entity, CancellationToken cancellationToken)
+    {
+        if (entity.Code == GovernmentEntity.SingletonCode)
+        {
+            throw new DynamicCube.Platform.ChangeSets.ChangeSetException("The default entity cannot be deleted.");
+        }
+
+        if (await context.BusinessApps.AnyAsync(a => a.EntityCode == entity.Code, cancellationToken))
+        {
+            throw new DynamicCube.Platform.ChangeSets.ChangeSetException($"Entity {entity.Code} still has business apps.");
+        }
+    }
+}
+
+public sealed class BusinessAppPayload : ConfigPayload
+{
+    public string? Icon { get; set; }
+
+    public string? DescriptionAr { get; set; }
+
+    public string? DescriptionEn { get; set; }
+
+    public int DisplayOrder { get; set; }
+}
+
+/// <summary>Business apps: each belongs to an entity (its <c>entityCode</c>; the default entity when none is given).</summary>
+internal sealed class BusinessAppApplier(AppsControlDbContext db) : ConfigApplier<BusinessApplication, BusinessAppPayload>(db)
+{
+    public override string EntityType => AppsControlChangeTypes.BusinessApp;
+
+    public override string Area => AppsControlAreas.System;
+
+    public override string ResourceCode => AppsControlResources.Installation;
+
+    protected override System.Text.RegularExpressions.Regex CodePattern => ValidationErrors.IdentifierCode();
+
+    protected override IQueryable<BusinessApplication> Query(AppsControlDbContext context) => context.BusinessApps;
+
+    protected override IQueryable<BusinessApplication> ListQuery(AppsControlDbContext context, string? parent) =>
+        context.BusinessApps.OrderBy(a => a.DisplayOrder).ThenBy(a => a.Code);
+
+    protected override Task ApplyAsync(BusinessApplication entity, BusinessAppPayload payload, RefResolver refs, ValidationErrors errors, BusinessApplication? existing, CancellationToken cancellationToken)
+    {
+        if (payload.BusinessApp is not null)
+        {
+            errors.Add("businessApp", "A business app does not belong to another app.");
+        }
+
+        errors.MaxLength("icon", payload.Icon, 100);
+        errors.MaxLength("descriptionAr", payload.DescriptionAr, 2000);
+        errors.MaxLength("descriptionEn", payload.DescriptionEn, 2000);
+        entity.EntityCode ??= GovernmentEntity.SingletonCode;
+        entity.BusinessApp = null;
+        entity.Icon = payload.Icon;
+        entity.DescriptionAr = payload.DescriptionAr;
+        entity.DescriptionEn = payload.DescriptionEn;
+        entity.DisplayOrder = payload.DisplayOrder;
+        return Task.CompletedTask;
+    }
+
+    protected override Task<BusinessAppPayload> ToPayloadAsync(AppsControlDbContext context, BusinessApplication entity, CancellationToken cancellationToken) =>
+        Task.FromResult(new BusinessAppPayload
+        {
+            Icon = entity.Icon,
+            DescriptionAr = entity.DescriptionAr,
+            DescriptionEn = entity.DescriptionEn,
+            DisplayOrder = entity.DisplayOrder,
+        });
+
+    protected override async Task BeforeDeleteAsync(AppsControlDbContext context, BusinessApplication entity, CancellationToken cancellationToken)
+    {
+        if (await context.Roles.AnyAsync(r => r.BusinessApp == entity.Code, cancellationToken) || await context.Users.AnyAsync(u => u.BusinessApp == entity.Code, cancellationToken))
+        {
+            throw new DynamicCube.Platform.ChangeSets.ChangeSetException($"Roles or users still belong to business app {entity.Code}.");
+        }
+    }
 }
 
 public sealed class AppPayload : ConfigPayload

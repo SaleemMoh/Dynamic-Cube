@@ -34,9 +34,9 @@ internal static class PartyEndpoints
     /// <summary>Internal system: the registry for employees.</summary>
     public static void MapInternal(RouteGroupBuilder group)
     {
-        group.MapGet("/parties", async (string? search, PartyKind? kind, int? skip, int? take, PartyAdminService service, CancellationToken ct) =>
+        group.MapGet("/parties", async (string? search, PartyKind? kind, string? app, int? skip, int? take, PartyAdminService service, CancellationToken ct) =>
         {
-            var (items, total) = await service.SearchAsync(search, kind, skip ?? 0, take ?? 50, ct);
+            var (items, total) = await service.SearchAsync(search, kind, skip ?? 0, take ?? 50, ct, app);
             return TypedResults.Ok(new PartyPage(items, total));
         }).RequirePrivilege(PartyResources.Parties, CatalogActions.View).WithName("SearchParties");
 

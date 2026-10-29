@@ -10,16 +10,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { Router, RouterLink } from '@angular/router';
-import {
-  ESTABLISHMENT_IDENTIFIER_TYPES,
-  FormValue,
-  I18nService,
-  INDIVIDUAL_IDENTIFIER_TYPES,
-  LocalizePipe,
-  PartyApi,
-  PartyKind,
-  TranslatePipe,
-} from '@dynamic-cube/shared';
+import { BusinessAppContext, ESTABLISHMENT_IDENTIFIER_TYPES, FormValue, I18nService, INDIVIDUAL_IDENTIFIER_TYPES, LocalizePipe, PartyApi, PartyKind, TranslatePipe } from '@dynamic-cube/shared';
 import { debounceTime, firstValueFrom } from 'rxjs';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormDialog, FormDialogData } from '../common/form-dialog';
@@ -92,6 +83,7 @@ import { PrivilegesService } from '../apps-control/privileges.service';
 })
 export class PartyList {
   protected readonly privileges = inject(PrivilegesService);
+  private readonly appContext = inject(BusinessAppContext);
   private readonly api = inject(PartyApi);
   private readonly dialog = inject(MatDialog);
   private readonly i18n = inject(I18nService);
@@ -104,8 +96,8 @@ export class PartyList {
   protected readonly take = signal(50);
 
   protected readonly page = rxResource({
-    params: () => ({ search: this.debounced().trim() || null, kind: this.kind(), skip: this.skip(), take: this.take() }),
-    stream: ({ params }) => this.api.search(params.search, params.kind, params.skip, params.take),
+    params: () => ({ search: this.debounced().trim() || null, kind: this.kind(), app: this.appContext.current(), skip: this.skip(), take: this.take() }),
+    stream: ({ params }) => this.api.search(params.search, params.kind, params.skip, params.take, params.app),
   });
 
   protected paginate(event: PageEvent): void {

@@ -5,6 +5,7 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import {
   AppsControlApi,
+  BusinessAppContext,
   ConfigRow,
   DynamicForm,
   FormField,
@@ -18,7 +19,7 @@ import {
 } from '@dynamic-cube/shared';
 import { forkJoin, map, of } from 'rxjs';
 import { DraftsService } from '../drafts.service';
-import { ConfigField, ConfigType } from './config-types';
+import { ConfigField, ConfigType, scopeOf } from './config-types';
 import { emptyToNull, fromDate, fromJsonText, payloadOf, toDate, toJsonText, withCurrentValues } from './form-values';
 
 export interface ConfigEditorData {
@@ -71,6 +72,7 @@ export class ConfigEditor {
   private readonly http = inject(HttpClient);
   protected readonly drafts = inject(DraftsService);
   private readonly i18n = inject(I18nService);
+  private readonly appContext = inject(BusinessAppContext);
 
   protected readonly errors = signal<string[]>([]);
   protected readonly initial = this.initialValue();
@@ -78,7 +80,7 @@ export class ConfigEditor {
   /** Form schema, once option lists for reference fields are loaded. */
   protected readonly schema = rxResource({
     stream: () => {
-      const fields = this.data.type.fields;
+      const fields = [...this.data.type.fields, ...this.scopeFields()];
       const lookups = fields.filter((f) => f.ref || f.refDomains || f.optionsUrl);
       const coded = (rows: { code: string; nameAr: string; nameEn: string }[]) =>
         rows.map((r): FormOption => ({ value: r.code, label: { ar: `${r.nameAr} (${r.code})`, en: `${r.nameEn} (${r.code})` } }));
@@ -119,6 +121,13 @@ export class ConfigEditor {
     } catch (error) {
       this.errors.set([(error as Error).message]);
       return;
+    }
+
+    // The row's level; an empty string tells the server "none" (a missing one would keep the current level).
+    const scope = scopeOf(type);
+    if (scope !== 'none') {
+      payload['entityCode'] = (value['entityCode'] as string | null) || '';
+      if (scope === 'full') payload['businessApp'] = (value['businessApp'] as string | null) || '';
     }
 
     const code = this.entityCode(value);
@@ -175,6 +184,9 @@ export class ConfigEditor {
     if (row && this.data.type.key === 'appScoped' && row.code.includes('/')) {
       value['code'] = row.code.slice(row.code.indexOf('/') + 1);
     }
+    // A new row starts in the business app chosen in the header.
+    value['entityCode'] = row ? (row['entityCode'] ?? null) : null;
+    value['businessApp'] = row ? (row['businessApp'] ?? null) : this.appContext.current();
     for (const field of this.data.type.fields) {
       const current = row ? row[field.code] : (this.data.defaults?.[field.code] ?? field.defaultValue);
       switch (field.type) {
@@ -216,12 +228,41 @@ export class ConfigEditor {
       readonly: editing && ((type.key === 'appScoped' && f.code === 'appCode') || !!f.lockedOnEdit),
       options: withCurrentValues(options.get(f.code) ?? f.options, this.data.row?.[f.code]),
     }));
+    const level: FormField[] = this.scopeFields().map((f) => ({
+      code: f.code,
+      type: 'select',
+      label: f.label,
+      hint: f.hint,
+      options: withCurrentValues(options.get(f.code) ?? [], this.data.row?.[f.code]),
+    }));
     return {
       code: type.entityType,
       sections: [
         { code: 'general', title: { ar: 'البيانات الأساسية', en: 'General' }, fields: general },
         ...(details.length ? [{ code: 'details', title: { ar: 'التفاصيل', en: 'Details' }, fields: details }] : []),
+        ...(level.length ? [{ code: 'level', title: { ar: 'المستوى', en: 'Level' }, fields: level }] : []),
       ],
     };
+  }
+
+  /** The level fields of the type: the entity, and the business app (none for rows of the whole installation). */
+  private scopeFields(): ConfigField[] {
+    const scope = scopeOf(this.data.type);
+    if (scope === 'none') return [];
+    const entity: ConfigField = {
+      code: 'entityCode',
+      type: 'select',
+      label: { ar: 'الجهة', en: 'Entity' },
+      hint: { ar: 'فارغ: لكل الجهات (مستوى النظام)', en: 'Empty: every entity (system level)' },
+      ref: 'apps.entity',
+    };
+    const app: ConfigField = {
+      code: 'businessApp',
+      type: 'select',
+      label: { ar: 'تطبيق الأعمال', en: 'Business app' },
+      hint: { ar: 'فارغ: لكل تطبيقات الجهة. يُحدد معه الجهة تلقائيًا.', en: 'Empty: every app of the entity. Choosing one sets the entity.' },
+      ref: 'apps.business-app',
+    };
+    return scope === 'entity' ? [entity] : [entity, app];
   }
 }

@@ -80,4 +80,7 @@ public interface IServiceWorkflows
     /// definition. Runs in the caller's unit of work.
     /// </summary>
     Task AdoptAsync(string serviceCode, string nameAr, string nameEn, string workflowCode, CancellationToken cancellationToken);
+
+    /// <summary>Puts the service's workflow and its versions at the service's level (entity and business app); runs in the caller's unit of work.</summary>
+    Task ScopeAsync(string serviceCode, string? entityCode, string? businessApp, CancellationToken cancellationToken);
 }

@@ -28,6 +28,7 @@ export * from './lib/auth/auth-callback';
 export * from './lib/auth/user-menu';
 export * from './lib/auth/provide-auth';
 export * from './lib/apps-control/apps-control.models';
+export * from './lib/apps-control/business-app';
 export * from './lib/apps-control/apps-control.api';
 export * from './lib/apps-control/ui-texts';
 export * from './lib/apps-control/lov-source';

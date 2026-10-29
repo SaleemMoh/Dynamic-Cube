@@ -17,6 +17,8 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
 
     public DbSet<App> Apps => Set<App>();
 
+    public DbSet<BusinessApplication> BusinessApps => Set<BusinessApplication>();
+
     public DbSet<OrgUnitType> OrgUnitTypes => Set<OrgUnitType>();
 
     public DbSet<OrgUnit> OrgUnits => Set<OrgUnit>();
@@ -75,6 +77,12 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
         Config<Installation>(modelBuilder, "installation");
         Config<Holiday>(modelBuilder, "holiday");
         Config<ChangeArea>(modelBuilder, "change_area");
+        Config<BusinessApplication>(modelBuilder, "business_app", b =>
+        {
+            b.Property(e => e.Icon).HasMaxLength(100);
+            b.Property(e => e.DescriptionAr).HasMaxLength(2000);
+            b.Property(e => e.DescriptionEn).HasMaxLength(2000);
+        });
         Config<GovernmentEntity>(modelBuilder, "entity", b =>
         {
             b.Property(e => e.FooterLinks).HasColumnType("jsonb").HasConversion(JsonColumn.Converter<List<FooterLink>>(), JsonColumn.Comparer<List<FooterLink>>());

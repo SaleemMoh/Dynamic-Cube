@@ -49,6 +49,21 @@ internal sealed class ServiceWorkflows(WorkflowDbContext context, TimeProvider c
         await context.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task ScopeAsync(string serviceCode, string? entityCode, string? businessApp, CancellationToken cancellationToken)
+    {
+        var workflow = await context.Workflows.SingleOrDefaultAsync(w => w.ServiceCode == serviceCode, cancellationToken);
+        if (workflow is null || (workflow.EntityCode == entityCode && workflow.BusinessApp == businessApp))
+        {
+            return;
+        }
+
+        workflow.EntityCode = entityCode;
+        workflow.BusinessApp = businessApp;
+        await context.Versions.Where(v => v.WorkflowId == workflow.Id)
+            .ExecuteUpdateAsync(v => v.SetProperty(x => x.EntityCode, entityCode).SetProperty(x => x.BusinessApp, businessApp), cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
+    }
+
     public Task<bool> ExistsAsync(string workflowCode, CancellationToken cancellationToken) =>
         context.Workflows.AnyAsync(w => w.Code == workflowCode, cancellationToken);
 

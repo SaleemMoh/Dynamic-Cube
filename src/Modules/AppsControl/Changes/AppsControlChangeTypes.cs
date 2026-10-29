@@ -7,6 +7,7 @@ public static class AppsControlChangeTypes
     public const string Holiday = "apps.holiday";
     public const string Entity = "apps.entity";
     public const string App = "apps.app";
+    public const string BusinessApp = "apps.business-app";
     public const string OrgUnitType = "apps.org-unit-type";
     public const string OrgUnit = "apps.org-unit";
     public const string Position = "apps.position";

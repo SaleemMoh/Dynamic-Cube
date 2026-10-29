@@ -8,7 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { AppsControlApi, ConfigRow, I18nService, LocalizePipe, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
+import { AppsControlApi, BusinessAppContext, ConfigRow, I18nService, LocalizePipe, problemMessages, TranslatePipe } from '@dynamic-cube/shared';
 import { firstValueFrom } from 'rxjs';
 import { DraftsService } from '../../apps-control/drafts.service';
 import { PrivilegesService } from '../../apps-control/privileges.service';
@@ -69,7 +69,8 @@ export class DesignerPage {
 
   protected readonly types = NODE_TYPES.filter((t) => t !== 'START');
   protected readonly icons = NODE_ICONS;
-  protected readonly workflows = rxResource({ stream: () => this.api.list('wf.workflow') });
+  private readonly appContext = inject(BusinessAppContext);
+  protected readonly workflows = rxResource({ params: () => ({ app: this.appContext.current() }), stream: ({ params }) => this.api.list('wf.workflow', null, params.app) });
   private readonly versions = rxResource({ stream: () => this.api.list('wf.workflow-version') });
   protected readonly workflow = signal<string | null>(null);
   protected readonly base = signal<number | null>(null);

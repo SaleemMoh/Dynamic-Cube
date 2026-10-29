@@ -61,7 +61,15 @@ export class ServicesApi {
     return this.http.delete<void>(`${SERVICES_API}/requests/${id}`);
   }
 
-  searchRequests(query: { service?: string | null; status?: StatusCategory | null; search?: string | null; skip?: number; take?: number }): Observable<{ items: RequestSummary[]; total: number }> {
+  /** `app`: only requests for the services of that business app. */
+  searchRequests(query: {
+    service?: string | null;
+    status?: StatusCategory | null;
+    search?: string | null;
+    app?: string | null;
+    skip?: number;
+    take?: number;
+  }): Observable<{ items: RequestSummary[]; total: number }> {
     let params = new HttpParams();
     for (const [key, value] of Object.entries(query)) {
       if (value !== null && value !== undefined && value !== '') params = params.set(key, String(value));

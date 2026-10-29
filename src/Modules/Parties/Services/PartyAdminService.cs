@@ -3,7 +3,9 @@ using DynamicCube.Modules.Parties.Domain;
 using DynamicCube.Modules.Parties.Persistence;
 using DynamicCube.Platform.Parties;
 using DynamicCube.Platform.Security;
+using DynamicCube.Platform.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DynamicCube.Modules.Parties.Services;
 
@@ -61,11 +63,18 @@ public sealed record AddSanctionRequest(string TypeCode, string Reason, DateOnly
 public sealed record LiftSanctionRequest(string Reason);
 
 /// <summary>Employee-side registry operations: search, detail, manual registration and records.</summary>
-internal sealed class PartyAdminService(PartiesDbContext context, PartyDirectory directory, ProfileService profiles, ICurrentUser user, TimeProvider clock)
+internal sealed class PartyAdminService(PartiesDbContext context, PartyDirectory directory, ProfileService profiles, ICurrentUser user, IServiceProvider services, TimeProvider clock)
 {
-    public async Task<(IReadOnlyList<PartySummary> Items, int Total)> SearchAsync(string? search, PartyKind? kind, int skip, int take, CancellationToken cancellationToken)
+    /// <param name="app">Only parties with a request for a service of this business app.</param>
+    public async Task<(IReadOnlyList<PartySummary> Items, int Total)> SearchAsync(string? search, PartyKind? kind, int skip, int take, CancellationToken cancellationToken, string? app = null)
     {
         var query = context.Parties.AsNoTracking().Include(p => p.Identifiers).AsQueryable();
+        if (!string.IsNullOrWhiteSpace(app))
+        {
+            var ids = services.GetService<IServiceCatalog>() is { } catalog ? await catalog.PartiesOfAppAsync(app, cancellationToken) : [];
+            query = query.Where(p => ids.Contains(p.Id));
+        }
+
         if (kind is not null)
         {
             query = query.Where(p => p.Kind == kind);

@@ -58,6 +58,7 @@ public static class AppsControlModule
         AddApplier<HolidayApplier>(services);
         AddApplier<EntityApplier>(services);
         AddApplier<AppApplier>(services);
+        AddApplier<BusinessAppApplier>(services);
         AddApplier<OrgUnitTypeApplier>(services);
         AddApplier<OrgUnitApplier>(services);
         AddApplier<PositionApplier>(services);
@@ -83,6 +84,7 @@ public static class AppsControlModule
         services.AddScoped<AccessResolver>();
         services.AddScoped<IAccessChecker, AccessChecker>();
         services.AddScoped<IStaffDirectory, StaffDirectory>();
+        services.AddScoped<IConfigScopes, ConfigScopes>();
         services.AddScoped<IWorkingCalendarProvider, WorkingCalendarProvider>();
         services.AddScoped<MenuService>();
         services.AddScoped<GrantResolver>();

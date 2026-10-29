@@ -10,7 +10,24 @@ export interface MeInfo {
   orgUnits: string[];
   orgUnit: string | null;
   positions: string[];
+  /** The user's entity (null: every entity). */
+  entityCode?: string | null;
+  /** The business apps of the user's roles (null: every app). */
+  businessApps?: string[] | null;
 }
+
+/** A business app the user may work in (e.g. Classification, Permits). */
+export interface MyBusinessApp {
+  code: string;
+  nameAr: string;
+  nameEn: string;
+  entityCode: string | null;
+  icon: string | null;
+  displayOrder: number;
+}
+
+/** The level of a configuration row: the whole installation, one entity, or one business app. */
+export type ConfigLevel = 'SYSTEM' | 'ENTITY' | 'APP';
 
 export type MenuItemType =
   'GROUP' | 'SCREEN' | 'SERVICE' | 'REPORT' | 'DASHBOARD' | 'QUEUE' | 'URL';

@@ -10,7 +10,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router } from '@angular/router';
-import { I18nService, InboxBox, InboxCounts, TaskSummary, TranslatePipe, WorkflowApi, problemMessages } from '@dynamic-cube/shared';
+import { BusinessAppContext, I18nService, InboxBox, InboxCounts, problemMessages, TaskSummary, TranslatePipe, WorkflowApi } from '@dynamic-cube/shared';
 import { debounceTime, firstValueFrom } from 'rxjs';
 import { DelegationsDialog } from './delegations-dialog';
 import { TaskTable } from './task-table';
@@ -216,6 +216,7 @@ const BOXES: { box: InboxBox; count: keyof InboxCounts; icon: string }[] = [
 })
 export class Inbox {
   private readonly api = inject(WorkflowApi);
+  private readonly appContext = inject(BusinessAppContext);
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
@@ -233,10 +234,11 @@ export class Inbox {
     params: () => ({
       box: this.box(),
       search: this.debounced().trim() || null,
+      app: this.appContext.current(),
       skip: this.skip(),
       take: this.take(),
     }),
-    stream: ({ params }) => this.api.inbox(params.box, params.search, params.skip, params.take),
+    stream: ({ params }) => this.api.inbox(params.box, params.search, params.skip, params.take, params.app),
   });
 
   constructor() {

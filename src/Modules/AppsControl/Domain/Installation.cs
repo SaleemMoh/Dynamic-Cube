@@ -39,6 +39,7 @@ public sealed class Holiday : ConfigEntity
 /// <summary>The government entity (ministry, authority or company) that owns the installation.</summary>
 public sealed class GovernmentEntity : ConfigEntity
 {
+    /// <summary>The default entity: the one an installation starts with, whose branding the apps show.</summary>
     public const string SingletonCode = "ENTITY";
 
     /// <summary>Domain code of class <c>ENTITY_KIND</c>.</summary>
@@ -90,6 +91,22 @@ public sealed class App : ConfigEntity
     public AppType AppType { get; set; }
 
     public string? BaseUrl { get; set; }
+
+    public int DisplayOrder { get; set; }
+}
+
+/// <summary>
+/// A business app of an entity (e.g. Classification, Permits, Licensing): it owns services, workflows, document types,
+/// roles and users through their <see cref="ConfigEntity.BusinessApp"/>. Its entity is <see cref="ConfigEntity.EntityCode"/>.
+/// The channel apps (<see cref="App"/>: internal system, portal, field app) show the business apps a user may work in.
+/// </summary>
+public sealed class BusinessApplication : ConfigEntity
+{
+    public string? Icon { get; set; }
+
+    public string? DescriptionAr { get; set; }
+
+    public string? DescriptionEn { get; set; }
 
     public int DisplayOrder { get; set; }
 }

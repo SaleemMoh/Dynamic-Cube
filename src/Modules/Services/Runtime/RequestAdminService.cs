@@ -19,9 +19,16 @@ public sealed record PreviewRequest(string ServiceCode, VersionDefinition Defini
 /// <summary>Employee-side reads: requests with their timeline, and previews of definitions before they are published.</summary>
 internal sealed class RequestAdminService(ServicesDbContext context, ServiceCatalogCache cache, JsonLogicEvaluator evaluator, IServiceProvider services)
 {
-    public async Task<RequestPage> SearchAsync(string? service, StatusCategory? status, string? search, int skip, int take, CancellationToken cancellationToken)
+    /// <param name="app">Only requests for the services of this business app.</param>
+    public async Task<RequestPage> SearchAsync(string? service, StatusCategory? status, string? search, int skip, int take, CancellationToken cancellationToken, string? app = null)
     {
         var query = context.Requests.AsNoTracking().Where(r => r.StatusCategory != StatusCategory.Draft);
+        if (!string.IsNullOrWhiteSpace(app))
+        {
+            var services = context.Services.Where(s => s.BusinessApp == app).Select(s => s.Code);
+            query = query.Where(r => services.Contains(r.ServiceCode));
+        }
+
         if (!string.IsNullOrWhiteSpace(service))
         {
             query = query.Where(r => r.ServiceCode == service);

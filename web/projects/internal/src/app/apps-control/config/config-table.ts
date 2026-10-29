@@ -9,14 +9,14 @@ import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
-import { AppsControlApi, ConfigRow, I18nService, LocalizePipe, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
+import { AppsControlApi, BusinessAppContext, configLevel, ConfigRow, I18nService, LocalizePipe, problemMessages, TranslatePipe } from '@dynamic-cube/shared';
 import { firstValueFrom } from 'rxjs';
 import { JsonImport } from '../change-sets/json-import';
 import { ConfirmData, ConfirmDialog } from '../confirm-dialog';
 import { DraftsService } from '../drafts.service';
 import { PrivilegesService } from '../privileges.service';
 import { ConfigEditor, ConfigEditorData } from './config-editor';
-import { ConfigRowAction, ConfigType } from './config-types';
+import { ConfigRowAction, ConfigType, scopeOf } from './config-types';
 
 /** Published rows of one configuration type with new / edit / delete actions that go into a draft change set. */
 @Component({
@@ -78,6 +78,22 @@ import { ConfigRowAction, ConfigType } from './config-types';
       <ng-container matColumnDef="name">
         <th mat-header-cell *matHeaderCellDef>{{ 'config.name' | dcTranslate }}</th>
         <td mat-cell *matCellDef="let row">{{ { ar: row.nameAr, en: row.nameEn } | dcLocalize }}</td>
+      </ng-container>
+      <ng-container matColumnDef="level">
+        <th mat-header-cell *matHeaderCellDef>{{ 'config.level' | dcTranslate }}</th>
+        <td mat-cell *matCellDef="let row">
+          @switch (level(row)) {
+            @case ('APP') {
+              <span class="dc-level dc-level--app" [attr.data-level]="'APP'">{{ appContext.name(row.businessApp) | dcLocalize }}</span>
+            }
+            @case ('ENTITY') {
+              <span class="dc-level dc-level--entity" [attr.data-level]="'ENTITY'">{{ 'businessApp.level.ENTITY' | dcTranslate }} · {{ row.entityCode }}</span>
+            }
+            @default {
+              <span class="dc-level" [attr.data-level]="'SYSTEM'">{{ 'businessApp.level.SYSTEM' | dcTranslate }}</span>
+            }
+          }
+        </td>
       </ng-container>
       @for (column of type().columns ?? []; track column) {
         <ng-container [matColumnDef]="column">
@@ -149,6 +165,23 @@ import { ConfigRowAction, ConfigType } from './config-types';
     .dc-table__select {
       width: 40px;
     }
+    .dc-level {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      background: var(--dga-gray-100);
+      color: var(--dga-gray-700);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .dc-level--entity {
+      background: #eff8ff;
+      color: #175cd3;
+    }
+    .dc-level--app {
+      background: var(--dynamic-cube-gold-50);
+      color: var(--dynamic-cube-gold-700);
+    }
   `,
 })
 export class ConfigTable {
@@ -164,13 +197,27 @@ export class ConfigTable {
 
   protected readonly search = signal('');
   protected readonly errors = signal<string[]>([]);
-  private readonly list = rxResource({ params: () => this.type().entityType, stream: ({ params }) => this.api.list(params) });
+  protected readonly appContext = inject(BusinessAppContext);
+  /** Rows of the chosen business app and the shared ones (types without levels list every row). */
+  private readonly list = rxResource({
+    params: () => ({ type: this.type().entityType, app: scopeOf(this.type()) === 'none' ? null : this.appContext.current() }),
+    stream: ({ params }) => this.api.list(params.type, null, params.app),
+  });
 
   protected readonly singleton = computed(() => typeof this.type().key === 'object');
   protected readonly canCreate = computed(() => !this.singleton() && !this.type().noCreate && this.privileges.can(this.resource(), 'CREATE'));
   protected readonly canEdit = computed(() => this.privileges.can(this.resource(), 'EDIT'));
   protected readonly canDelete = computed(() => !this.singleton() && this.privileges.can(this.resource(), 'DELETE'));
-  protected readonly columns = computed(() => ['select', 'code', 'name', ...(this.type().columns ?? []), 'state', 'actions']);
+  protected readonly columns = computed(() => [
+    'select',
+    'code',
+    'name',
+    ...(scopeOf(this.type()) === 'none' ? [] : ['level']),
+    ...(this.type().columns ?? []),
+    'state',
+    'actions',
+  ]);
+  protected readonly level = configLevel;
   /** Rows ticked for export (by code); kept while searching. */
   protected readonly selected = signal(new Set<string>());
   protected readonly allSelected = computed(() => this.rows().length > 0 && this.rows().every((r) => this.selected().has(r.code)));

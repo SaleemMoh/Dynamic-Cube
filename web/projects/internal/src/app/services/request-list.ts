@@ -9,7 +9,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
-import { LocalizePipe, ServicesApi, StatusCategory, TranslatePipe } from '@dynamic-cube/shared';
+import { BusinessAppContext, LocalizePipe, ServicesApi, StatusCategory, TranslatePipe } from '@dynamic-cube/shared';
 import { debounceTime } from 'rxjs';
 
 /** Submitted requests (processing arrives with the workflow engine and Action Center). */
@@ -68,6 +68,7 @@ import { debounceTime } from 'rxjs';
 })
 export class RequestList {
   private readonly api = inject(ServicesApi);
+  private readonly appContext = inject(BusinessAppContext);
   protected readonly columns = ['number', 'service', 'beneficiary', 'status', 'submitted', 'fees'];
   protected readonly statuses: StatusCategory[] = ['SUBMITTED', 'IN_PROGRESS', 'PENDING_CUSTOMER', 'PENDING_EXTERNAL', 'APPROVED', 'REJECTED', 'CANCELLED', 'CLOSED'];
   protected readonly search = signal('');
@@ -76,7 +77,7 @@ export class RequestList {
   protected readonly skip = signal(0);
   protected readonly take = signal(50);
   protected readonly page = rxResource({
-    params: () => ({ search: this.debounced().trim() || null, status: this.status(), skip: this.skip(), take: this.take() }),
+    params: () => ({ search: this.debounced().trim() || null, status: this.status(), app: this.appContext.current(), skip: this.skip(), take: this.take() }),
     stream: ({ params }) => this.api.searchRequests(params),
   });
 

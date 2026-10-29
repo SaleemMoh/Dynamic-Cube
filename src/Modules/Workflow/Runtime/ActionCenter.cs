@@ -5,7 +5,9 @@ using DynamicCube.Modules.Workflow.Domain;
 using DynamicCube.Modules.Workflow.Persistence;
 using DynamicCube.Platform.Persistence;
 using DynamicCube.Platform.Security;
+using DynamicCube.Platform.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DynamicCube.Modules.Workflow.Runtime;
 
@@ -137,14 +139,22 @@ internal sealed class ActionCenter(
     IStaffDirectory staff,
     IAccessChecker access,
     IUnitOfWork unitOfWork,
+    IServiceProvider services,
     TimeProvider clock)
 {
     private readonly Dictionary<string, StaffMember?> _names = new(StringComparer.Ordinal);
 
-    public async Task<TaskPage> InboxAsync(InboxBox box, string? search, int skip, int take, CancellationToken cancellationToken)
+    /// <param name="app">Only tasks of requests for the services of this business app.</param>
+    public async Task<TaskPage> InboxAsync(InboxBox box, string? search, int skip, int take, CancellationToken cancellationToken, string? app = null)
     {
         var me = await MeAsync(cancellationToken);
         var query = Search(await BoxAsync(me, box, cancellationToken), search);
+        if (!string.IsNullOrWhiteSpace(app))
+        {
+            var codes = services.GetService<IServiceCatalog>() is { } catalog ? await catalog.ServicesOfAppAsync(app, cancellationToken) : [];
+            query = query.Where(t => t.ServiceCode != null && codes.Contains(t.ServiceCode));
+        }
+
         var total = await query.CountAsync(cancellationToken);
         var rows = await query.OrderBy(t => t.DueAt == null).ThenBy(t => t.DueAt).ThenBy(t => t.CreatedAt)
             .Skip(Math.Max(0, skip)).Take(Math.Clamp(take, 1, 200)).ToListAsync(cancellationToken);

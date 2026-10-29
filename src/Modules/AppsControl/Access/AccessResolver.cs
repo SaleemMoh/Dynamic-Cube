@@ -2,6 +2,7 @@ using System.Security.Claims;
 using System.Text.Json.Nodes;
 using DynamicCube.Modules.AppsControl.Domain;
 using DynamicCube.Modules.AppsControl.Persistence;
+using DynamicCube.Platform.Configuration;
 using DynamicCube.Platform.Security;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -77,9 +78,14 @@ public sealed partial class AccessResolver(
         var roles = await context.UserRoles.AsNoTracking()
             .Where(r => r.UserId == user.Id && r.Role!.IsActive && (r.Role.AppId == null || r.Role.AppId == app)
                 && (r.EffectiveFrom == null || r.EffectiveFrom <= today) && (r.EffectiveTo == null || r.EffectiveTo >= today))
-            .Select(r => new { r.RoleId, r.Role!.Code })
+            .Select(r => new { r.RoleId, r.Role!.Code, r.Role.BusinessApp })
             .ToListAsync(cancellationToken);
         var roleIds = roles.Select(r => r.RoleId).Distinct().ToList();
+
+        // The user's entity, and the business apps of their roles (every app when a role is not tied to one).
+        var scope = new ConfigScope(
+            user.EntityCode is { } entity ? new HashSet<string>(StringComparer.Ordinal) { entity } : null,
+            roles.Count > 0 && roles.All(r => r.BusinessApp is not null) ? roles.Select(r => r.BusinessApp!).ToHashSet(StringComparer.Ordinal) : null);
 
         var privilegeRows = await context.Privileges.AsNoTracking()
             .Where(p => roleIds.Contains(p.RoleId) && p.Resource!.IsActive)
@@ -124,7 +130,7 @@ public sealed partial class AccessResolver(
             primary is null ? [] : JsonNode.Parse(primary.Attributes) as JsonObject ?? [],
             subtree.Distinct().ToList());
 
-        return new AccessSnapshot(userContext, user.NameAr, user.NameEn, user.Status, user.PreferredLanguage, roleIds, privileges);
+        return new AccessSnapshot(userContext, user.NameAr, user.NameEn, user.Status, user.PreferredLanguage, roleIds, privileges, scope);
     }
 
     private async Task<UserAccount> ProvisionAsync(CancellationToken cancellationToken)

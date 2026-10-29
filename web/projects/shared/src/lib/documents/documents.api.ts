@@ -12,7 +12,7 @@ export class DocumentsApi {
 
   search(query: DocumentQuery): Observable<DocumentPage> {
     let params = new HttpParams().set('skip', query.skip ?? 0).set('take', query.take ?? 50);
-    for (const key of ['search', 'type', 'status', 'holder'] as const) {
+    for (const key of ['search', 'type', 'status', 'holder', 'app'] as const) {
       const value = query[key];
       if (value) params = params.set(key, value);
     }

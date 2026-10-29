@@ -10,10 +10,14 @@ export const WORKFLOW_API = '/api/workflow/v1';
 export class WorkflowApi {
   private readonly http = inject(HttpClient);
 
-  inbox(box: InboxBox, search: string | null, skip = 0, take = 50): Observable<TaskPage> {
+  /** `app`: only tasks of requests for the services of that business app. */
+  inbox(box: InboxBox, search: string | null, skip = 0, take = 50, app: string | null = null): Observable<TaskPage> {
     let params = new HttpParams().set('box', box).set('skip', skip).set('take', take);
     if (search) {
       params = params.set('search', search);
+    }
+    if (app) {
+      params = params.set('app', app);
     }
     return this.http.get<TaskPage>(`${WORKFLOW_API}/inbox`, { params });
   }

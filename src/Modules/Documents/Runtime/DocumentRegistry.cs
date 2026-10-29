@@ -90,9 +90,16 @@ internal sealed class DocumentRegistry(
     ICurrentUser user,
     TimeProvider clock)
 {
-    public async Task<DocumentPage> SearchAsync(string? search, string? type, DocumentStatus? status, Guid? holder, int skip, int take, CancellationToken cancellationToken)
+    /// <param name="app">Only documents of the document types of this business app.</param>
+    public async Task<DocumentPage> SearchAsync(string? search, string? type, DocumentStatus? status, Guid? holder, int skip, int take, CancellationToken cancellationToken, string? app = null)
     {
         var query = context.Documents.AsNoTracking();
+        if (!string.IsNullOrWhiteSpace(app))
+        {
+            var types = context.DocumentTypes.Where(t => t.BusinessApp == app).Select(t => t.Code);
+            query = query.Where(d => types.Contains(d.TypeCode));
+        }
+
         if (!string.IsNullOrWhiteSpace(search))
         {
             var term = $"%{search.Trim()}%";

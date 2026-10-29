@@ -231,7 +231,7 @@ internal static class AdminEndpoints
             return Results.Ok(new ExportedPackage(title, clock.GetUtcNow(), items));
         }).WithName("ExportConfiguration");
 
-        admin.MapGet("/{type}", async (string type, string? parent, IEnumerable<IConfigApplier> appliers, AccessResolver resolver, AppsControlDbContext db, CancellationToken ct) =>
+        admin.MapGet("/{type}", async (string type, string? parent, string? app, IEnumerable<IConfigApplier> appliers, AccessResolver resolver, AppsControlDbContext db, CancellationToken ct) =>
         {
             var applier = Find(appliers, type);
             if (applier is null)
@@ -241,7 +241,7 @@ internal static class AdminEndpoints
 
             var access = await resolver.GetAsync(ct);
             return access.Can(applier.ResourceCode, PrivilegeActions.View)
-                ? Results.Ok(await applier.ListAsync(parent, ct))
+                ? Results.Ok(await applier.ListAsync(parent, ct, string.IsNullOrWhiteSpace(app) ? null : app))
                 : Forbidden(applier.ResourceCode, PrivilegeActions.View);
         }).WithName("ListConfiguration");
 

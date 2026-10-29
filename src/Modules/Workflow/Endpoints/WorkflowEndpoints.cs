@@ -14,8 +14,8 @@ internal static class WorkflowEndpoints
     public static void Map(RouteGroupBuilder group)
     {
         var center = group.MapGroup(string.Empty).RequirePrivilege(WorkflowResources.ActionCenter, CatalogActions.View);
-        center.MapGet("/inbox", async (string? box, string? search, int? skip, int? take, ActionCenter service, CancellationToken ct) =>
-            TypedResults.Ok(await service.InboxAsync(Parse<InboxBox>(box, "box") ?? InboxBox.Mine, search, skip ?? 0, take ?? 50, ct))).WithName("GetInbox");
+        center.MapGet("/inbox", async (string? box, string? search, string? app, int? skip, int? take, ActionCenter service, CancellationToken ct) =>
+            TypedResults.Ok(await service.InboxAsync(Parse<InboxBox>(box, "box") ?? InboxBox.Mine, search, skip ?? 0, take ?? 50, ct, app))).WithName("GetInbox");
         center.MapGet("/inbox/counts", async (ActionCenter service, CancellationToken ct) => TypedResults.Ok(await service.CountsAsync(ct))).WithName("GetInboxCounts");
         center.MapGet("/tasks/{id:guid}", async (Guid id, ActionCenter service, CancellationToken ct) => TypedResults.Ok(await service.GetAsync(id, ct))).WithName("GetTask");
         center.MapGet("/tasks/{id:guid}/candidates", async (Guid id, ActionCenter service, CancellationToken ct) => TypedResults.Ok(await service.CandidatesAsync(id, ct))).WithName("GetTaskCandidates");

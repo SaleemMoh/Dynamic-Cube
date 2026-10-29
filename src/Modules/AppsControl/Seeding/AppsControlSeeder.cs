@@ -27,7 +27,7 @@ public sealed class AppsControlSeeder(
             context.Installations.Add(new Installation { Code = Installation.SingletonCode, NameAr = "ديناميك كيوب", NameEn = "Dynamic Cube" });
         }
 
-        if (!await context.Entities.AnyAsync(cancellationToken))
+        if (!await context.Entities.AnyAsync(e => e.Code == GovernmentEntity.SingletonCode, cancellationToken))
         {
             context.Entities.Add(new GovernmentEntity { Code = GovernmentEntity.SingletonCode, NameAr = "الجهة", NameEn = "Entity" });
         }

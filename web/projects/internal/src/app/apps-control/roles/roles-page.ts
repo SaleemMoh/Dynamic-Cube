@@ -5,7 +5,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Router } from '@angular/router';
-import { AppsControlApi, I18nService, LocalizePipe, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
+import { AppsControlApi, BusinessAppContext, I18nService, LocalizePipe, problemMessages, TranslatePipe } from '@dynamic-cube/shared';
 import { catchError, firstValueFrom, forkJoin, map, of } from 'rxjs';
 import { ConfirmData, ConfirmDialog } from '../confirm-dialog';
 import { DraftsService } from '../drafts.service';
@@ -124,7 +124,8 @@ export class RolesPage {
   protected readonly resource = RESOURCE;
 
   protected readonly errors = signal<string[]>([]);
-  private readonly roles = rxResource({ stream: () => this.api.list('apps.role') });
+  private readonly appContext = inject(BusinessAppContext);
+  private readonly roles = rxResource({ params: () => ({ app: this.appContext.current() }), stream: ({ params }) => this.api.list('apps.role', null, params.app) });
   private readonly counts = rxResource({ stream: () => this.api.counts('apps.role') });
   /** Resources, menus, menu groups and apps: the screen tree and the app choices. */
   protected readonly lists = rxResource({
@@ -135,6 +136,7 @@ export class RolesPage {
         groups: this.api.list('apps.menu-group').pipe(catchError(() => of([]))),
         apps: this.api.list('apps.app').pipe(catchError(() => of([]))),
         lovs: this.api.list('apps.lov').pipe(catchError(() => of([]))),
+        businessApps: this.api.list('apps.business-app').pipe(catchError(() => of([]))),
       }),
   });
   private readonly tree = computed(() =>
@@ -201,6 +203,8 @@ export class RolesPage {
       screens: this.tree(),
       apps: this.lists.value().apps,
       lovs: this.lists.value().lovs,
+      businessApps: this.lists.value().businessApps,
+      defaultBusinessApp: this.appContext.current(),
       menus: menuChoices(this.lists.value().menus, this.lists.value().groups),
       readonly: readonly || (role !== null && role.owner === 'SYSTEM'),
     };

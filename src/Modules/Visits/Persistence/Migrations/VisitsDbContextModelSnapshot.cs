@@ -364,6 +364,11 @@ namespace DynamicCube.Modules.Visits.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("BusinessApp")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("business_app");
+
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -393,6 +398,11 @@ namespace DynamicCube.Modules.Visits.Persistence.Migrations
                     b.Property<int>("DueDays")
                         .HasColumnType("integer")
                         .HasColumnName("due_days");
+
+                    b.Property<string>("EntityCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("entity_code");
 
                     b.Property<string>("External")
                         .HasColumnType("jsonb")
