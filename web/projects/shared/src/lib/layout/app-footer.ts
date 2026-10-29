@@ -34,9 +34,14 @@ import { LocalizePipe } from '../i18n/translate.pipe';
             }
           </nav>
         }
-        <div class="dc-footer__legal">
-          <p class="dc-footer__caption">{{ copyright() }}</p>
-          <p>{{ owner() }}</p>
+        <div class="dc-footer__bottom">
+          <div class="dc-footer__legal">
+            <p class="dc-footer__caption">{{ copyright() }}</p>
+            <p>{{ owner() }}</p>
+          </div>
+          @if (imageUrl(); as image) {
+            <img class="dc-footer__image" [src]="image" alt="" data-testid="footer-image" />
+          }
         </div>
       </div>
     </footer>
@@ -73,6 +78,18 @@ import { LocalizePipe } from '../i18n/translate.pipe';
       font-size: 14px;
       line-height: 20px;
     }
+    .dc-footer__bottom {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .dc-footer__image {
+      max-height: 56px;
+      max-width: 14rem;
+      object-fit: contain;
+    }
     .dc-footer__caption {
       font-weight: 600;
     }
@@ -81,6 +98,8 @@ import { LocalizePipe } from '../i18n/translate.pipe';
 export class AppFooter {
   readonly links = input<FooterLink[]>([]);
   readonly entityName = input<LocalizedText>({ ar: '', en: '' });
+  /** The entity's footer image (e.g. a Vision 2030 or DGA badge). */
+  readonly imageUrl = input<string | null | undefined>(null);
 
   protected readonly i18n = inject(I18nService);
   private readonly year = String(new Date().getFullYear());

@@ -30,8 +30,8 @@
   --shell-shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
   --shell-shadow-md: 0 4px 8px -2px rgba(16, 24, 40, 0.1), 0 2px 4px -2px rgba(16, 24, 40, 0.06);
   --shell-shadow-lg: 0 12px 16px -4px rgba(16, 24, 40, 0.08), 0 4px 6px -2px rgba(16, 24, 40, 0.03);
-  --shell-focus: 0 0 0 3px rgba(202, 159, 69, 0.35);
-  --shell-header-h: 64px;
+  --shell-focus: 0 0 0 3px color-mix(in srgb, var(--dynamic-cube-gold) 35%, transparent);
+  --shell-header-h: 56px;
 
   // Shared DGA variables re-pointed for this app.
   --dga-page: var(--dga-gray-50);
@@ -49,17 +49,29 @@
   --dc-nav-item-radius: var(--shell-radius);
   --dc-nav-hover-bg: var(--dga-gray-50);
   --dc-nav-group-color: var(--dga-gray-500);
+  --dc-nav-item-height: 38px;
+  --dc-nav-item-text-size: 14px;
+  --dc-nav-item-icon-size: 20px;
+  --dc-nav-group-text-size: 13px;
+  --dc-nav-group-margin: 10px 8px 2px;
 }
 
 html {
+  // Compact controls: 44px form fields and 36px buttons, so a working screen shows more at once.
+  @include mat.theme(
+    (
+      density: -2,
+    )
+  );
+
   @include mat.theme-overrides(
     (
-      primary: #ca9f45,
+      primary: var(--dynamic-cube-gold),
       on-primary: #ffffff,
-      primary-container: #faf7f0,
-      on-primary-container: #8a6a26,
-      secondary-container: #faf7f0,
-      on-secondary-container: #8a6a26,
+      primary-container: var(--dynamic-cube-gold-50),
+      on-primary-container: var(--dynamic-cube-gold-700),
+      secondary-container: var(--dynamic-cube-gold-50),
+      on-secondary-container: var(--dynamic-cube-gold-700),
       on-surface: #111927,
       on-surface-variant: #4d5761,
       outline: #9da4ae,
@@ -84,7 +96,7 @@ html {
       text-container-shape: 8px,
       text-label-text-size: 14px,
       text-label-text-weight: 600,
-      text-label-text-color: #8a6a26,
+      text-label-text-color: var(--dynamic-cube-gold-700),
       tonal-container-shape: 8px,
       tonal-label-text-size: 14px,
       protected-container-shape: 8px,
@@ -102,35 +114,39 @@ html {
       outlined-container-shape: 8px,
       outlined-outline-color: #d2d6db,
       outlined-hover-outline-color: #9da4ae,
-      outlined-focus-outline-color: #ca9f45,
+      outlined-focus-outline-color: var(--dynamic-cube-gold),
       outlined-focus-outline-width: 1px,
+      container-height: 40px,
+      container-vertical-padding: 8px,
+      container-text-size: 14px,
+      outlined-label-text-size: 14px,
     )
   );
 
   @include mat.checkbox-overrides(
     (
-      selected-icon-color: #ca9f45,
-      selected-hover-icon-color: #b48a35,
-      selected-focus-icon-color: #ca9f45,
-      selected-pressed-icon-color: #b48a35,
+      selected-icon-color: var(--dynamic-cube-gold),
+      selected-hover-icon-color: var(--dynamic-cube-gold-600),
+      selected-focus-icon-color: var(--dynamic-cube-gold),
+      selected-pressed-icon-color: var(--dynamic-cube-gold-600),
       unselected-icon-color: #9da4ae,
     )
   );
 
   @include mat.slide-toggle-overrides(
     (
-      selected-track-color: #ca9f45,
-      selected-hover-track-color: #b48a35,
-      selected-focus-track-color: #ca9f45,
-      selected-pressed-track-color: #b48a35,
+      selected-track-color: var(--dynamic-cube-gold),
+      selected-hover-track-color: var(--dynamic-cube-gold-600),
+      selected-focus-track-color: var(--dynamic-cube-gold),
+      selected-pressed-track-color: var(--dynamic-cube-gold-600),
     )
   );
 
   @include mat.tabs-overrides(
     (
-      active-indicator-color: #ca9f45,
-      active-hover-indicator-color: #ca9f45,
-      active-focus-indicator-color: #ca9f45,
+      active-indicator-color: var(--dynamic-cube-gold),
+      active-hover-indicator-color: var(--dynamic-cube-gold),
+      active-focus-indicator-color: var(--dynamic-cube-gold),
       active-label-text-color: #111927,
       active-hover-label-text-color: #111927,
       active-focus-label-text-color: #111927,
@@ -141,11 +157,11 @@ html {
 
   @include mat.table-overrides(
     (
-      header-container-height: 44px,
+      header-container-height: 40px,
       header-headline-color: #4d5761,
       header-headline-size: 13px,
       header-headline-weight: 600,
-      row-item-container-height: 48px,
+      row-item-container-height: 42px,
       row-item-label-text-color: #1f2a37,
       row-item-label-text-size: 14px,
       row-item-outline-color: #f3f4f6,
@@ -172,7 +188,7 @@ html {
 
   @include mat.list-overrides(
     (
-      active-indicator-color: #faf7f0,
+      active-indicator-color: var(--dynamic-cube-gold-50),
       active-indicator-shape: 8px,
       list-item-container-shape: 8px,
     )
@@ -187,8 +203,8 @@ html {
 
   @include mat.progress-bar-overrides(
     (
-      active-indicator-color: #ca9f45,
-      track-color: #f4ecd9,
+      active-indicator-color: var(--dynamic-cube-gold),
+      track-color: var(--dynamic-cube-gold-100),
     )
   );
 }
@@ -261,7 +277,7 @@ textarea:not(.mat-mdc-input-element):focus-visible,
 /* Dialog actions: a hairline above, at the end, primary last. */
 .mat-mdc-dialog-actions {
   justify-content: flex-end;
-  padding: 12px 24px;
+  padding: 10px 20px;
   border-top: 1px solid var(--dga-gray-200);
 }
 
@@ -269,13 +285,13 @@ textarea:not(.mat-mdc-input-element):focus-visible,
   justify-content: flex-end;
 }
 
-/* Page header: 28px title and a one-line subtitle, actions at the end. */
+/* Page header: 22px title and a one-line subtitle, actions at the end. */
 .dc-page__header {
-  margin-block-end: 16px;
+  margin-block-end: 12px;
 
   h1 {
     margin: 0;
-    font-size: 28px;
+    font-size: 22px;
     font-weight: 700;
     line-height: 1.3;
     color: var(--dga-gray-900);
@@ -283,9 +299,24 @@ textarea:not(.mat-mdc-input-element):focus-visible,
 
   p,
   .dc-muted {
-    margin: 4px 0 0;
-    font-size: 15px;
+    margin: 2px 0 0;
+    font-size: 13px;
     color: var(--dga-gray-500);
+  }
+}
+
+/* A page header with actions at the end (primary last). */
+.dc-page__header--actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+
+  > div:last-child:not(:first-child) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
   }
 }
 
@@ -293,9 +324,9 @@ textarea:not(.mat-mdc-input-element):focus-visible,
   color: var(--dga-gray-500);
 }
 
-/* Cards: white, gray-200 border, 12px radius, small shadow, 16 × 20 padding. */
+/* Cards: white, gray-200 border, 12px radius, small shadow, 14 × 16 padding. */
 .dc-card {
-  padding: 16px 20px;
+  padding: 14px 16px;
   border: 1px solid var(--dga-gray-200);
   border-radius: var(--shell-radius-lg);
   background: #ffffff;
@@ -304,7 +335,7 @@ textarea:not(.mat-mdc-input-element):focus-visible,
   h2,
   h3 {
     margin-block-start: 0;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 700;
   }
 }
@@ -412,7 +443,7 @@ textarea:not(.mat-mdc-input-element):focus-visible,
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 16px 20px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--dga-gray-200);
 
   h2 {
@@ -420,7 +451,7 @@ textarea:not(.mat-mdc-input-element):focus-visible,
     align-items: center;
     gap: 8px;
     margin: 0;
-    font-size: 20px;
+    font-size: 17px;
     font-weight: 700;
     color: var(--dga-gray-900);
   }
@@ -433,7 +464,7 @@ textarea:not(.mat-mdc-input-element):focus-visible,
 }
 
 .dc-panel__search {
-  padding: 12px 20px;
+  padding: 10px 16px;
   border-bottom: 1px solid var(--dga-gray-200);
 
   .mat-mdc-form-field {
@@ -443,7 +474,7 @@ textarea:not(.mat-mdc-input-element):focus-visible,
 }
 
 .dc-panel__body {
-  padding: 16px 20px;
+  padding: 14px 16px;
 }
 
 /* A table inside a panel takes the panel's frame. */
@@ -475,6 +506,46 @@ textarea:not(.mat-mdc-input-element):focus-visible,
     background: var(--dynamic-cube-gold-50);
     color: var(--dynamic-cube-gold-700);
   }
+}
+
+/* Filter bar above a list: search first (wider), then the filters, spaced evenly on a white bar; wraps on narrow screens. */
+.dc-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  margin-block: 0 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--dga-gray-200);
+  border-radius: var(--shell-radius-lg);
+  background: #ffffff;
+  box-shadow: var(--shell-shadow-sm);
+
+  > .mat-mdc-form-field {
+    flex: 0 1 13rem;
+    min-width: 10rem;
+  }
+
+  > .dc-toolbar__search {
+    flex: 1 1 18rem;
+    max-width: 28rem;
+  }
+
+  > .dc-toolbar__spacer {
+    flex: 1;
+  }
+}
+
+/* A table right under the filter bar keeps its own frame. */
+.dc-toolbar + .dc-table,
+.dc-toolbar + table {
+  margin-top: 0;
+}
+
+/* Paginators sit under their table on the page background, not on a white strip. */
+.mat-mdc-paginator {
+  --mat-paginator-container-background-color: transparent;
+  --mat-paginator-container-size: 48px;
 }
 
 /* Toasts: top-centre on the dark neutral. */

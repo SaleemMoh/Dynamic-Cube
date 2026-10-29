@@ -48,26 +48,39 @@ import { WorkflowCard } from './workflow-card';
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <a routerLink="/action-center" class="dc-link">{{ 'inbox.title' | dcTranslate }}</a>
+    <a routerLink="/action-center" class="dc-task__back">
+      <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">arrow_forward</mat-icon>
+      {{ 'ac.back' | dcTranslate }}
+    </a>
     @if (detail(); as d) {
-      <header class="dc-page__header">
-        <div>
-          <h1>
-            {{ { ar: d.task.nameAr, en: d.task.nameEn } | dcLocalize }} —
-            <span dir="ltr" data-testid="task-subject">{{ d.task.subjectNumber }}</span>
-          </h1>
-          <p class="dc-muted">
-            {{ { ar: d.task.titleAr, en: d.task.titleEn } | dcLocalize }} · {{ { ar: d.task.partyNameAr, en: d.task.partyNameEn } | dcLocalize }} ·
-            {{ 'tasks.assignee' | dcTranslate }}:
-            <strong data-testid="task-assignee">{{
-              d.task.assignee
-                ? ({ ar: d.task.assigneeNameAr ?? d.task.assignee, en: d.task.assigneeNameEn ?? d.task.assignee } | dcLocalize)
-                : ('tasks.unassigned' | dcTranslate)
-            }}</strong>
-            @if (d.onBehalfOf) {
-              ({{ 'workflow.onBehalfOf' | dcTranslate }} {{ d.onBehalfOf }})
-            }
-          </p>
+      <header class="dc-task__head">
+        <div class="dc-task__title">
+          <span class="dc-task__icon" aria-hidden="true"><mat-icon fontSet="material-symbols-outlined">assignment</mat-icon></span>
+          <div>
+            <h1>{{ { ar: d.task.nameAr, en: d.task.nameEn } | dcLocalize }}</h1>
+            <div class="dc-task__meta">
+              <span class="dc-task__chip mono" data-testid="task-subject">{{ d.task.subjectNumber }}</span>
+              <span class="dc-task__chip">
+                <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">design_services</mat-icon>
+                {{ { ar: d.task.titleAr, en: d.task.titleEn } | dcLocalize }}
+              </span>
+              <span class="dc-task__chip">
+                <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">apartment</mat-icon>
+                {{ { ar: d.task.partyNameAr, en: d.task.partyNameEn } | dcLocalize }}
+              </span>
+              <span class="dc-task__chip">
+                <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">person</mat-icon>
+                <strong data-testid="task-assignee">{{
+                  d.task.assignee
+                    ? ({ ar: d.task.assigneeNameAr ?? d.task.assignee, en: d.task.assigneeNameEn ?? d.task.assignee } | dcLocalize)
+                    : ('tasks.unassigned' | dcTranslate)
+                }}</strong>
+                @if (d.onBehalfOf) {
+                  ({{ 'workflow.onBehalfOf' | dcTranslate }} {{ d.onBehalfOf }})
+                }
+              </span>
+            </div>
+          </div>
         </div>
         @if (d.task.status === 'OPEN') {
           <dc-sla-chip [sla]="d.task.sla" [dueAt]="d.task.dueAt" />
@@ -159,16 +172,94 @@ import { WorkflowCard } from './workflow-card';
     }
   `,
   styles: `
+    .dc-task__back {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 8px;
+      color: var(--dga-gray-600);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .dc-task__back:hover {
+      color: var(--dynamic-cube-gold-700);
+    }
+    .dc-task__back mat-icon {
+      width: 18px;
+      height: 18px;
+      font-size: 18px;
+    }
+    :host-context([dir='ltr']) .dc-task__back mat-icon {
+      transform: scaleX(-1);
+    }
+    .dc-task__head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .dc-task__title {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      min-width: 0;
+    }
+    .dc-task__title h1 {
+      margin: 0 0 6px;
+      font-size: 22px;
+      line-height: 1.3;
+    }
+    .dc-task__icon {
+      display: grid;
+      place-items: center;
+      flex: none;
+      width: 44px;
+      height: 44px;
+      border-radius: var(--shell-radius);
+      background: var(--dynamic-cube-gold-50);
+      color: var(--dynamic-cube-gold-700);
+    }
+    .dc-task__meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .dc-task__chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      height: 26px;
+      padding: 0 10px;
+      border: 1px solid var(--dga-gray-200);
+      border-radius: 9999px;
+      background: #fff;
+      color: var(--dga-gray-700);
+      font-size: 13px;
+    }
+    .dc-task__chip mat-icon {
+      width: 16px;
+      height: 16px;
+      font-size: 16px;
+      color: var(--dga-gray-500);
+    }
+    /* What the employee may do now: a bar that stays in view while the request is read. */
     .dc-task-actions {
+      position: sticky;
+      top: 0;
+      z-index: 2;
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 1rem;
-      padding: 0.75rem;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding: 10px 12px;
       border: 1px solid var(--dga-gray-200);
-      border-radius: var(--shell-radius, 8px);
-      background: var(--dga-white, #fff);
+      border-radius: var(--shell-radius-lg);
+      background: #fff;
+      box-shadow: var(--shell-shadow-md);
     }
     .dc-task-actions__spacer {
       flex: 1;
@@ -186,7 +277,7 @@ import { WorkflowCard } from './workflow-card';
     }
     .dc-request-grid h2 {
       margin-top: 0;
-      font-size: 18px;
+      font-size: 16px;
     }
     .dc-request-side {
       display: grid;

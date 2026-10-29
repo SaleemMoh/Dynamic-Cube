@@ -9,7 +9,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { AppsControlApi, ConfigRow, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
+import { MatDialog } from '@angular/material/dialog';
+import { AppsControlApi, ConfigRow, TranslatePipe, pickIcon, problemMessages } from '@dynamic-cube/shared';
+import { firstValueFrom } from 'rxjs';
 import { DraftsService } from '../apps-control/drafts.service';
 import { HomeSetting, METRICS, Tile, homeProblems, normalizeHome } from './home-model';
 
@@ -37,6 +39,7 @@ import { HomeSetting, METRICS, Tile, homeProblems, normalizeHome } from './home-
 })
 export class HomeEditor {
   private readonly api = inject(AppsControlApi);
+  private readonly dialog = inject(MatDialog);
   protected readonly drafts = inject(DraftsService);
   protected readonly metrics = METRICS;
 
@@ -73,6 +76,11 @@ export class HomeEditor {
 
   protected tileKind(index: number, kind: 'metric' | 'value'): void {
     this.tile(index, kind === 'metric' ? { metric: 'SERVICES', value: undefined } : { metric: undefined, value: 0 });
+  }
+
+  protected async chooseIcon(index: number): Promise<void> {
+    const icon = await firstValueFrom(pickIcon(this.dialog, this.home().statistics[index]?.icon));
+    if (icon !== undefined) this.tile(index, { icon: icon || undefined });
   }
 
   protected addTile(): void {

@@ -75,6 +75,19 @@
       "name": "Internal API (token audience)",
       "enabled": true,
       "bearerOnly": true
+    },
+    {
+      "clientId": "dynamic-cube-accounts",
+      "name": "Dynamic Cube account management (Apps Control)",
+      "description": "Service account the internal API uses to create users, enable/disable them and set passwords. Development secret only.",
+      "enabled": true,
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "dev-accounts-secret",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "protocol": "openid-connect"
     }
   ],
   "users": [
@@ -197,7 +210,21 @@
           "temporary": false
         }
       ]
+    },
+    {
+      "username": "service-account-dynamic-cube-accounts",
+      "enabled": true,
+      "serviceAccountClientId": "dynamic-cube-accounts",
+      "clientRoles": {
+        "realm-management": [
+          "manage-users",
+          "view-users",
+          "query-users",
+          "view-realm",
+          "view-identity-providers"
+        ]
+      }
     }
   ],
-  "loginTheme": "dynamic-cube"
+  "loginTheme": "dynamic-cube-internal"
 }

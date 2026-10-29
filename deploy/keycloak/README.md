@@ -15,12 +15,34 @@ through the public clients `dynamic-cube-internal-web` (internal system on :4200
 The files in `realms/` are **development seeds**: they are imported by `docker compose` (or
 `kc.sh start-dev --import-realm`) and contain test users and a password-grant client.
 
-## Login theme
+## Login themes
 
-`themes/dynamic-cube` gives the login pages the DGA design (IBM Plex Sans Arabic, DGA greens, government bar).
-It extends Keycloak's `keycloak.v2` theme with a stylesheet and a small script only. Docker Compose mounts it;
-on servers, copy the folder into Keycloak's `themes/` directory. The realms select it with
-`"loginTheme": "dynamic-cube"`; for an existing realm set it in *Realm settings → Themes*.
+Both themes extend Keycloak's `keycloak.v2` theme with stylesheets and small scripts only. Docker Compose mounts them;
+on servers, copy both folders into Keycloak's `themes/` directory. For an existing realm, choose the theme in
+*Realm settings → Themes*.
+
+- `themes/dynamic-cube` gives the portal's sign-in pages the DGA design: IBM Plex Sans Arabic, DGA greens and the
+  government bar. The external realm uses it (`"loginTheme": "dynamic-cube"`).
+- `themes/dynamic-cube-internal` gives the internal system's sign-in pages the internal design: neutral gold, 8px
+  controls, a 12px card and an image panel, with no government bar. The internal realm uses it
+  (`"loginTheme": "dynamic-cube-internal"`).
+
+Both apply the entity's branding from Apps Control (logo, sign-in image, theme colour) with `js/branding.js`. The
+script reads `/api/apps-control/v1/branding` through the application that started the sign-in (its `redirect_uri`).
+
+## Account management
+
+The internal API creates employees' accounts, enables and disables them and sets passwords through Keycloak's admin
+API (see [ADR-0026](../../docs/adr/0026-look-accounts-json-import.md)). It signs in as the confidential client
+`dynamic-cube-accounts`, whose service account holds these realm-management roles: `manage-users`, `view-users`,
+`query-users`, `view-realm` and `view-identity-providers`.
+
+The development realm defines the client with the secret `dev-accounts-secret`. Per installation:
+
+- Generate a new secret and put it in the internal API's secret store as `Secrets__KEYCLOAK_ADMIN__clientSecret`.
+- Set `AppsControl__Identity__Provider=Keycloak` and `AppsControl__Identity__BaseUrl`.
+- When employees come from Active Directory, LDAP or Entra ID, also set `AppsControl__Identity__Mode=Federated`, so
+  Apps Control only enables, disables and signs out.
 
 ## Development users
 
@@ -43,7 +65,7 @@ curl -s -X POST http://localhost:8080/realms/dynamic-cube-internal/protocol/open
 
 Per customer installation:
 
-- **Remove** the test users and the `dynamic-cube-dev-tools` client.
+- **Remove** the test users and the `dynamic-cube-dev-tools` client; give `dynamic-cube-accounts` a new secret.
 - Set real redirect URIs / web origins on the SPA clients.
 - **Internal realm**: add LDAP / Active Directory user federation for employees.
 - **External realm**: add **Nafath** as identity provider and map the national ID to the `national_id`

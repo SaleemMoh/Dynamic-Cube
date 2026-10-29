@@ -2,6 +2,9 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
+  AccountCapabilities,
+  AccountView,
+  NewAccountRequest,
   ChangeOperation,
   ChangeSetDetail,
   PackageCheck,
@@ -68,6 +71,30 @@ export class AppsControlApi {
     const form = new FormData();
     form.append('file', file, file.name);
     return this.http.post<UploadedAsset>(`${APPS_CONTROL_API}/admin/branding/assets`, form);
+  }
+
+  accountCapabilities(): Observable<AccountCapabilities> {
+    return this.http.get<AccountCapabilities>(`${APPS_CONTROL_API}/admin/accounts/capabilities`);
+  }
+
+  account(userName: string): Observable<AccountView> {
+    return this.http.get<AccountView>(`${APPS_CONTROL_API}/admin/accounts/${encodeURIComponent(userName)}`);
+  }
+
+  createAccount(request: NewAccountRequest): Observable<AccountView> {
+    return this.http.post<AccountView>(`${APPS_CONTROL_API}/admin/accounts`, request);
+  }
+
+  setAccountEnabled(userName: string, enabled: boolean): Observable<void> {
+    return this.http.post<void>(`${APPS_CONTROL_API}/admin/accounts/${encodeURIComponent(userName)}/${enabled ? 'enable' : 'disable'}`, {});
+  }
+
+  setAccountPassword(userName: string, request: { temporaryPassword: string | null; sendEmail: boolean }): Observable<void> {
+    return this.http.post<void>(`${APPS_CONTROL_API}/admin/accounts/${encodeURIComponent(userName)}/password`, request);
+  }
+
+  signOutAccount(userName: string): Observable<void> {
+    return this.http.post<void>(`${APPS_CONTROL_API}/admin/accounts/${encodeURIComponent(userName)}/sign-out`, {});
   }
 
   uiTexts(app: string): Observable<UiTextItem[]> {

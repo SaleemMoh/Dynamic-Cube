@@ -53,6 +53,21 @@ public sealed class GovernmentEntity : ConfigEntity
 
     /// <summary>Links shown in the footer of every app.</summary>
     public List<FooterLink> FooterLinks { get; set; } = [];
+
+    /// <summary>Main colour of the internal system (<c>#RRGGBB</c>); its own gold when empty.</summary>
+    public string? InternalThemeColor { get; set; }
+
+    /// <summary>Main colour of the portal (<c>#RRGGBB</c>); the DGA green when empty.</summary>
+    public string? PortalThemeColor { get; set; }
+
+    /// <summary>Id of the <see cref="BrandingAsset"/> shown in the footer (e.g. a Vision 2030 or DGA badge).</summary>
+    public string? FooterImageKey { get; set; }
+
+    /// <summary>Id of the <see cref="BrandingAsset"/> shown beside the sign-in form.</summary>
+    public string? LoginImageKey { get; set; }
+
+    /// <summary>The uploaded images in use (anyone may load these).</summary>
+    public IEnumerable<string> AssetKeys() => new[] { LogoFileKey, FooterImageKey, LoginImageKey }.OfType<string>();
 }
 
 public enum AppType

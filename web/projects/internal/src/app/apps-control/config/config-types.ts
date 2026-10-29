@@ -35,6 +35,14 @@ export interface ConfigRowLink {
   testId: string;
 }
 
+/** A dialog opened from each row (it receives `ConfigEditorData` with the row), e.g. a user's sign-in account. */
+export interface ConfigRowAction {
+  icon: string;
+  label: LocalizedText;
+  testId: string;
+  dialog: () => Promise<Type<unknown>>;
+}
+
 export interface ConfigType {
   entityType: string;
   title: LocalizedText;
@@ -50,6 +58,9 @@ export interface ConfigType {
   /** Rows are created elsewhere (e.g. a service's workflow is created with the service); no *New* button. */
   noCreate?: boolean;
   rowLinks?: ConfigRowLink[];
+  rowActions?: ConfigRowAction[];
+  /** A dialog that creates rows instead of the generic form (e.g. a user together with the sign-in account). */
+  createDialog?: () => Promise<Type<unknown>>;
 }
 
 export interface ConfigSection {
@@ -256,6 +267,15 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
         title: t('المستخدمون', 'Users'),
         key: 'code',
         columns: ['status', 'email'],
+        createDialog: () => import('../users/new-user-dialog').then((m) => m.NewUserDialog),
+        rowActions: [
+          {
+            icon: 'manage_accounts',
+            label: t('حساب الدخول', 'Sign-in account'),
+            testId: 'account',
+            dialog: () => import('../users/account-dialog').then((m) => m.AccountDialog),
+          },
+        ],
         fields: [
           { code: 'email', type: 'text', label: t('البريد الإلكتروني', 'Email') },
           { code: 'mobile', type: 'text', label: t('الجوال', 'Mobile') },
@@ -423,7 +443,7 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
             label: t('المورد (صلاحية العرض)', 'Resource (view privilege)'),
             ref: 'apps.resource',
           },
-          { code: 'icon', type: 'text', label: t('الأيقونة', 'Icon') },
+          { code: 'icon', type: 'icon', label: t('الأيقونة', 'Icon') },
           displayOrder,
           { code: 'isVisible', type: 'checkbox', label: t('ظاهر', 'Visible'), defaultValue: true },
           {
@@ -446,7 +466,7 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
         fields: [
           { ...appRef, required: true },
           displayOrder,
-          { code: 'icon', type: 'text', label: t('الأيقونة', 'Icon') },
+          { code: 'icon', type: 'icon', label: t('الأيقونة', 'Icon') },
         ],
       },
     ],

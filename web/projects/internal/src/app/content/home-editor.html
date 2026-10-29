@@ -111,6 +111,9 @@
               <mat-label>{{ 'portalHome.icon' | dcTranslate }}</mat-label>
               <mat-icon matPrefix fontSet="material-symbols-outlined">{{ t.icon || 'insights' }}</mat-icon>
               <input matInput dir="ltr" [ngModel]="t.icon" (ngModelChange)="tile(i, { icon: $event || undefined })" />
+              <button matIconButton matSuffix type="button" (click)="chooseIcon(i)" [attr.aria-label]="'icons.title' | dcTranslate" [attr.data-testid]="'tile-icon-' + i">
+                <mat-icon fontSet="material-symbols-outlined">grid_view</mat-icon>
+              </button>
             </mat-form-field>
             <mat-form-field subscriptSizing="dynamic">
               <mat-label>{{ 'portalHome.labelAr' | dcTranslate }}</mat-label>

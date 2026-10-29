@@ -82,6 +82,22 @@ Request Manager…).
 `name_ar`, `name_en`, `email`, `mobile`, `national_id`, `status` (`ACTIVE` | `LOCKED` |
 `DISABLED`), `preferred_language`, `last_login_at`. Authentication stays in Keycloak.
 
+**Sign-in accounts** ([ADR-0026](adr/0026-look-accounts-json-import.md)) live in the identity provider, never in
+Apps Control.
+
+- With `AppsControl:Identity:Provider` = `Keycloak`, the Users screen maintains them through Keycloak's admin API.
+  Configure the service-account client `dynamic-cube-accounts`, with its secret in
+  `Secrets:KEYCLOAK_ADMIN:clientSecret`.
+- **New user** creates the account, with a temporary password or an emailed link, and drafts the user with its roles.
+- **Sign-in account**, on each user:
+  - Shows the account's source (local, or the directory / identity provider that owns it).
+  - **Activates or deactivates** the account. This acts at once on the account and the user's `status`, and ends the
+    user's sessions.
+  - Sets a password, or signs the user out everywhere.
+- With `Mode` = `Federated` (Active Directory, LDAP, Entra ID, Nafath), accounts are not created and passwords are not
+  set here. Users are linked to their accounts on first sign-in. Accounts linked to a federation or identity provider
+  keep their passwords there in either mode.
+
 **`user_assignment`** — `user_id`, `org_unit_id`, `position_id`, `is_primary`,
 `effective_from`, `effective_to`.
 

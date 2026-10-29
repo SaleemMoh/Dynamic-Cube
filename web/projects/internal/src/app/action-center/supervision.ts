@@ -31,8 +31,8 @@ import { TaskTable } from './task-table';
   template: `
     <header class="dc-page__header">
       <h1>{{ 'supervision.title' | dcTranslate }}</h1>
+      <p>{{ 'supervision.hint' | dcTranslate }}</p>
     </header>
-    <p class="dc-muted">{{ 'supervision.hint' | dcTranslate }}</p>
     <div class="dc-toolbar">
       <mat-form-field class="dc-toolbar__search" subscriptSizing="dynamic">
         <mat-icon matPrefix fontSet="material-symbols-outlined">search</mat-icon>

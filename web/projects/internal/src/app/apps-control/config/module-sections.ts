@@ -619,9 +619,8 @@ export const SERVICE_SECTIONS: ConfigSection[] = [
           },
           {
             code: 'icon',
-            type: 'text',
+            type: 'icon',
             label: t('الأيقونة', 'Icon'),
-            hint: t('اسم أيقونة Material Symbols', 'A Material Symbols icon name'),
           },
           number('displayOrder', t('الترتيب', 'Display order'), 0),
           {
@@ -691,9 +690,8 @@ export const SERVICE_SECTIONS: ConfigSection[] = [
           },
           {
             code: 'icon',
-            type: 'text',
+            type: 'icon',
             label: t('الأيقونة', 'Icon'),
-            hint: t('اسم أيقونة Material Symbols', 'A Material Symbols icon name'),
           },
           number('displayOrder', t('الترتيب', 'Display order'), 0),
         ],

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { rxResource, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,21 +9,23 @@ import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { MatTabsModule } from '@angular/material/tabs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { I18nService, InboxBox, InboxCounts, TaskSummary, TranslatePipe, WorkflowApi, problemMessages } from '@dynamic-cube/shared';
 import { debounceTime, firstValueFrom } from 'rxjs';
 import { DelegationsDialog } from './delegations-dialog';
 import { TaskTable } from './task-table';
 
-const BOXES: { box: InboxBox; count: keyof InboxCounts }[] = [
-  { box: 'MINE', count: 'mine' },
-  { box: 'QUEUE', count: 'queue' },
-  { box: 'DISTRIBUTE', count: 'distribute' },
-  { box: 'ESCALATED', count: 'escalated' },
+const BOXES: { box: InboxBox; count: keyof InboxCounts; icon: string }[] = [
+  { box: 'MINE', count: 'mine', icon: 'assignment_ind' },
+  { box: 'QUEUE', count: 'queue', icon: 'inbox' },
+  { box: 'DISTRIBUTE', count: 'distribute', icon: 'call_split' },
+  { box: 'ESCALATED', count: 'escalated', icon: 'running_with_errors' },
 ];
 
-/** The employee's Action Center: my tasks, the queue to claim from, tasks to distribute and escalations. */
+/**
+ * The employee's Action Center: four boxes (my tasks, the queue to claim from, tasks to distribute, escalations) shown
+ * as cards with their counts, then the chosen box's tasks.
+ */
 @Component({
   selector: 'dc-inbox',
   imports: [
@@ -34,32 +36,51 @@ const BOXES: { box: InboxBox; count: keyof InboxCounts }[] = [
     MatInputModule,
     MatPaginatorModule,
     MatProgressBarModule,
-    MatTabsModule,
     TaskTable,
     TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <header class="dc-page__header">
-      <h1>{{ 'inbox.title' | dcTranslate }}</h1>
-      <button matButton="outlined" (click)="openDelegations()" data-testid="delegations">
-        <mat-icon fontSet="material-symbols-outlined">event_busy</mat-icon>
-        {{ 'delegations.title' | dcTranslate }}
-      </button>
+    <header class="dc-page__header dc-ac__head">
+      <div>
+        <h1>{{ 'ac.title' | dcTranslate }}</h1>
+        <p>{{ 'ac.lead' | dcTranslate }}</p>
+      </div>
+      <div class="dc-ac__actions">
+        <button matButton="outlined" (click)="refresh()" data-testid="inbox-refresh">
+          <mat-icon fontSet="material-symbols-outlined">refresh</mat-icon>
+          {{ 'ac.refresh' | dcTranslate }}
+        </button>
+        <button matButton="outlined" (click)="openDelegations()" data-testid="delegations">
+          <mat-icon fontSet="material-symbols-outlined">event_busy</mat-icon>
+          {{ 'delegations.title' | dcTranslate }}
+        </button>
+      </div>
     </header>
-    <mat-tab-group [selectedIndex]="index()" (selectedIndexChange)="choose($event)" mat-stretch-tabs="false" animationDuration="0">
+
+    <div class="dc-ac__boxes" role="tablist" [attr.aria-label]="'ac.title' | dcTranslate">
       @for (b of boxes; track b.box) {
-        <mat-tab>
-          <ng-template mat-tab-label>
-            <span [attr.data-testid]="'box-' + b.box">{{ 'inbox.' + b.box | dcTranslate }}</span>
-            <span class="dc-count" [class.dc-count--alert]="b.box === 'ESCALATED' && countOf(b) > 0" [attr.data-testid]="'count-' + b.box">{{
-              countOf(b)
-            }}</span>
-          </ng-template>
-        </mat-tab>
+        <button
+          type="button"
+          role="tab"
+          class="dc-ac__box"
+          [class.dc-ac__box--active]="box() === b.box"
+          [class.dc-ac__box--alert]="b.box === 'ESCALATED' && countOf(b) > 0"
+          [attr.aria-selected]="box() === b.box"
+          (click)="choose($index)"
+          [attr.data-testid]="'box-' + b.box"
+        >
+          <span class="dc-ac__icon" aria-hidden="true"
+            ><mat-icon fontSet="material-symbols-outlined">{{ b.icon }}</mat-icon></span
+          >
+          <span class="dc-ac__boxtext">
+            <strong [attr.data-testid]="'count-' + b.box">{{ countOf(b) }}</strong>
+            <span>{{ 'inbox.' + b.box | dcTranslate }}</span>
+          </span>
+        </button>
       }
-    </mat-tab-group>
-    <p class="dc-muted dc-inbox__hint">{{ 'inbox.hint.' + box() | dcTranslate }}</p>
+    </div>
+
     <div class="dc-toolbar">
       <mat-form-field class="dc-toolbar__search" subscriptSizing="dynamic">
         <mat-icon matPrefix fontSet="material-symbols-outlined">search</mat-icon>
@@ -71,32 +92,125 @@ const BOXES: { box: InboxBox; count: keyof InboxCounts }[] = [
           data-testid="inbox-search"
         />
       </mat-form-field>
+      <span class="dc-toolbar__spacer"></span>
+      <span class="dc-muted dc-ac__hint">
+        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">info</mat-icon>
+        {{ 'inbox.hint.' + box() | dcTranslate }}
+      </span>
     </div>
     @if (page.isLoading()) {
       <mat-progress-bar mode="indeterminate" />
     }
-    <dc-task-table [tasks]="page.value()?.items ?? []" [claimable]="box() === 'QUEUE'" (claim)="claim($event)" />
-    <mat-paginator [length]="page.value()?.total ?? 0" [pageSize]="take()" [pageSizeOptions]="[25, 50, 100]" (page)="paginate($event)" />
+    <dc-task-table [tasks]="page.value()?.items ?? []" [claimable]="box() === 'QUEUE'" [emptyKey]="'ac.empty.' + box()" (claim)="claim($event)" />
+    @if ((page.value()?.total ?? 0) > take()) {
+      <mat-paginator [length]="page.value()?.total ?? 0" [pageSize]="take()" [pageSizeOptions]="[25, 50, 100]" (page)="paginate($event)" />
+    }
   `,
   styles: `
-    .dc-count {
-      display: inline-grid;
-      place-items: center;
-      min-width: 22px;
-      height: 22px;
-      margin-inline-start: 8px;
-      padding: 0 6px;
-      border-radius: 9999px;
-      background: var(--dga-gray-100);
-      font-size: 12px;
-      font-weight: 600;
+    .dc-ac__head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
     }
-    .dc-count--alert {
+    .dc-ac__actions {
+      display: flex;
+      gap: 8px;
+    }
+    .dc-ac__boxes {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .dc-ac__box {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border: 1px solid var(--dga-gray-200);
+      border-radius: var(--shell-radius-lg);
+      background: #fff;
+      box-shadow: var(--shell-shadow-sm);
+      font: inherit;
+      text-align: start;
+      cursor: pointer;
+      transition:
+        border-color 120ms ease,
+        box-shadow 120ms ease;
+    }
+    .dc-ac__box:hover {
+      border-color: var(--dga-gray-300);
+      box-shadow: var(--shell-shadow-md);
+    }
+    .dc-ac__box--active {
+      border-color: var(--dynamic-cube-gold);
+      background: var(--dynamic-cube-gold-50);
+    }
+    .dc-ac__box--active::before {
+      content: '';
+      position: absolute;
+      inset-block: 10px;
+      inset-inline-start: -1px;
+      width: 3px;
+      border-radius: 9999px;
+      background: var(--dynamic-cube-gold);
+    }
+    .dc-ac__icon {
+      display: grid;
+      place-items: center;
+      flex: none;
+      width: 40px;
+      height: 40px;
+      border-radius: var(--shell-radius);
+      background: var(--dynamic-cube-gold-50);
+      color: var(--dynamic-cube-gold-700);
+    }
+    .dc-ac__box--active .dc-ac__icon {
+      background: #fff;
+    }
+    .dc-ac__box--alert .dc-ac__icon {
       background: #fef3f2;
       color: #b42318;
     }
-    .dc-inbox__hint {
-      margin: 0.75rem 0 0;
+    .dc-ac__box--alert strong {
+      color: #b42318;
+    }
+    .dc-ac__boxtext {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+    }
+    .dc-ac__boxtext strong {
+      font-size: 22px;
+      line-height: 1.1;
+      color: var(--dga-gray-900);
+    }
+    .dc-ac__boxtext span {
+      overflow: hidden;
+      color: var(--dga-gray-600);
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .dc-ac__hint {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+    }
+    .dc-ac__hint mat-icon {
+      width: 18px;
+      height: 18px;
+      font-size: 18px;
+    }
+    @media (max-width: 900px) {
+      .dc-ac__boxes {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
     }
   `,
 })
@@ -108,7 +222,6 @@ export class Inbox {
   private readonly i18n = inject(I18nService);
   protected readonly boxes = BOXES;
   protected readonly box = signal<InboxBox>(sessionBox());
-  protected readonly index = computed(() => BOXES.findIndex((b) => b.box === this.box()));
   protected readonly search = signal('');
   private readonly debounced = toSignal(toObservable(this.search).pipe(debounceTime(300)), {
     initialValue: '',
@@ -163,6 +276,11 @@ export class Inbox {
       this.page.reload();
       this.counts.reload();
     }
+  }
+
+  protected refresh(): void {
+    this.page.reload();
+    this.counts.reload();
   }
 
   protected openDelegations(): void {

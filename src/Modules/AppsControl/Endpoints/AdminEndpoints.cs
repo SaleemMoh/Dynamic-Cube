@@ -67,6 +67,7 @@ internal static class AdminEndpoints
     {
         var admin = group.MapGroup("/admin").AddEndpointFilter(AppsControlFilters.Errors);
         BrandingEndpoints.MapAdmin(admin);
+        AccountEndpoints.Map(admin);
 
         admin.MapGet("/types", async (IEnumerable<IConfigApplier> appliers, AccessResolver resolver, IChangeApprovalPolicy policy, CancellationToken ct) =>
         {

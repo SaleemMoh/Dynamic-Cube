@@ -95,9 +95,21 @@ public sealed class EntityPayload : ConfigPayload
     public string? LogoFileKey { get; set; }
 
     public List<FooterLink> FooterLinks { get; set; } = [];
+
+    /// <summary>Main colour of the internal system, <c>#RRGGBB</c>.</summary>
+    public string? InternalThemeColor { get; set; }
+
+    /// <summary>Main colour of the portal, <c>#RRGGBB</c>.</summary>
+    public string? PortalThemeColor { get; set; }
+
+    /// <summary>Id of an uploaded branding asset shown in the footer.</summary>
+    public string? FooterImageKey { get; set; }
+
+    /// <summary>Id of an uploaded branding asset shown beside the sign-in form.</summary>
+    public string? LoginImageKey { get; set; }
 }
 
-internal sealed class EntityApplier(AppsControlDbContext db) : ConfigApplier<GovernmentEntity, EntityPayload>(db)
+internal sealed partial class EntityApplier(AppsControlDbContext db) : ConfigApplier<GovernmentEntity, EntityPayload>(db)
 {
     public const string EntityKindClass = "ENTITY_KIND";
 
@@ -126,13 +138,11 @@ internal sealed class EntityApplier(AppsControlDbContext db) : ConfigApplier<Gov
         entity.UnifiedNumber = payload.UnifiedNumber;
         entity.CrNumber = payload.CrNumber;
 
-        entity.LogoFileKey = string.IsNullOrWhiteSpace(payload.LogoFileKey) ? null : payload.LogoFileKey.Trim();
-        if (entity.LogoFileKey is not null
-            && (!Guid.TryParse(entity.LogoFileKey, out var assetId)
-                || !await refs.Context.BrandingAssets.AnyAsync(a => a.Id == assetId, cancellationToken)))
-        {
-            errors.Add("logoFileKey", "Upload the logo first; the key does not match an uploaded image.");
-        }
+        entity.LogoFileKey = await AssetAsync(refs, payload.LogoFileKey, "logoFileKey", errors, cancellationToken);
+        entity.FooterImageKey = await AssetAsync(refs, payload.FooterImageKey, "footerImageKey", errors, cancellationToken);
+        entity.LoginImageKey = await AssetAsync(refs, payload.LoginImageKey, "loginImageKey", errors, cancellationToken);
+        entity.InternalThemeColor = Color(payload.InternalThemeColor, "internalThemeColor", errors);
+        entity.PortalThemeColor = Color(payload.PortalThemeColor, "portalThemeColor", errors);
 
         if (payload.FooterLinks.Count > MaxFooterLinks)
         {
@@ -158,6 +168,42 @@ internal sealed class EntityApplier(AppsControlDbContext db) : ConfigApplier<Gov
 
     private const int MaxFooterLinks = 12;
 
+    /// <summary>An uploaded image's id, or null; reported when it matches no upload.</summary>
+    private static async Task<string?> AssetAsync(RefResolver refs, string? key, string field, ValidationErrors errors, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            return null;
+        }
+
+        key = key.Trim();
+        if (!Guid.TryParse(key, out var assetId) || !await refs.Context.BrandingAssets.AnyAsync(a => a.Id == assetId, cancellationToken))
+        {
+            errors.Add(field, "Upload the image first; the key does not match an uploaded image.");
+        }
+
+        return key;
+    }
+
+    private static string? Color(string? value, string field, ValidationErrors errors)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        value = value.Trim().ToLowerInvariant();
+        if (!HexColor().IsMatch(value))
+        {
+            errors.Add(field, "Use a colour like #ca9f45.");
+        }
+
+        return value;
+    }
+
+    [System.Text.RegularExpressions.GeneratedRegex("^#[0-9a-f]{6}$")]
+    private static partial System.Text.RegularExpressions.Regex HexColor();
+
     private static bool IsAllowedUrl(string? url)
     {
         if (string.IsNullOrWhiteSpace(url) || url.Length > 500)
@@ -182,6 +228,10 @@ internal sealed class EntityApplier(AppsControlDbContext db) : ConfigApplier<Gov
             CrNumber = entity.CrNumber,
             LogoFileKey = entity.LogoFileKey,
             FooterLinks = entity.FooterLinks,
+            InternalThemeColor = entity.InternalThemeColor,
+            PortalThemeColor = entity.PortalThemeColor,
+            FooterImageKey = entity.FooterImageKey,
+            LoginImageKey = entity.LoginImageKey,
         });
 
     protected override Task BeforeDeleteAsync(AppsControlDbContext context, GovernmentEntity entity, CancellationToken cancellationToken) =>

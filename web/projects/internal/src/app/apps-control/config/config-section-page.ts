@@ -13,8 +13,8 @@ import { ALL_CONFIG_SECTIONS } from './module-sections';
     @if (sectionDefinition(); as s) {
       <header class="dc-page__header">
         <h1>{{ s.title | dcLocalize }}</h1>
+        <p>{{ 'config.changeSetHint' | dcTranslate }}</p>
       </header>
-      <p class="dc-muted">{{ 'config.changeSetHint' | dcTranslate }}</p>
       @if (s.types.length === 1) {
         <dc-config-table [type]="s.types[0]" [resource]="s.resource" />
       } @else {

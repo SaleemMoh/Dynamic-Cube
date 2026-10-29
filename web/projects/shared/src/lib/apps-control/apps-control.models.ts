@@ -127,6 +127,12 @@ export interface BrandingInfo {
   nameEn: string;
   logoUrl: string | null;
   footerLinks: FooterLink[];
+  /** Main colour of the internal system (`#RRGGBB`), when chosen. */
+  internalThemeColor?: string | null;
+  /** Main colour of the portal (`#RRGGBB`), when chosen. */
+  portalThemeColor?: string | null;
+  footerImageUrl?: string | null;
+  loginImageUrl?: string | null;
 }
 
 export interface UploadedAsset {
@@ -183,4 +189,36 @@ export interface PackageCheck {
   isValid: boolean;
   errors: Record<string, string[]>;
   items: PackageItemCheck[];
+}
+
+/** What account management this installation offers (see `AppsControl:Identity`). */
+export interface AccountCapabilities {
+  provider: string;
+  mode: 'Managed' | 'Federated';
+  canCreate: boolean;
+  canSetPasswords: boolean;
+  canEnable: boolean;
+  federations: string[];
+}
+
+/** The sign-in account behind a user. `source` is `LOCAL` or the directory / identity provider that owns it. */
+export interface AccountView {
+  userName: string;
+  exists: boolean;
+  enabled: boolean;
+  source: string;
+  canSetPassword: boolean;
+  email: string | null;
+  emailVerified: boolean;
+  requiredActions: string[];
+  createdAt: string | null;
+}
+
+export interface NewAccountRequest {
+  userName: string;
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  temporaryPassword: string | null;
+  sendSetupEmail: boolean;
 }

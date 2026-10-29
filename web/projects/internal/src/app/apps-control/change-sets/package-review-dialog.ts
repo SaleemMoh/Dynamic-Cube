@@ -5,9 +5,12 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { Clipboard } from '@angular/cdk/clipboard';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { AppsControlApi, I18nService, LocalizePipe, PackageCheck, PackageItemCheck, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
 import { firstValueFrom } from 'rxjs';
 import { ALL_CONFIG_SECTIONS } from '../config/module-sections';
+import { problemLines } from './json-package';
 import { templateEntities, withoutHelp } from './package-template';
 
 export interface PackageReviewData {
@@ -66,6 +69,12 @@ export interface PackageReviewData {
               : ('packages.invalid' | dcTranslate).replace('{count}', '' + failing())
           }}
         </p>
+        @if (failing() || problems().length) {
+          <button matButton="outlined" type="button" class="dc-review__copy" (click)="copyProblems()" data-testid="package-copy-problems">
+            <mat-icon fontSet="material-symbols-outlined">content_copy</mat-icon>
+            {{ 'packages.copyProblems' | dcTranslate }} ({{ allProblems().length }})
+          </button>
+        }
         @if (failing()) {
           <mat-slide-toggle [checked]="onlyProblems()" (change)="onlyProblems.set($event.checked)">{{ 'packages.onlyProblems' | dcTranslate }}</mat-slide-toggle>
         }
@@ -146,6 +155,9 @@ export interface PackageReviewData {
       display: flex;
       flex-direction: column;
     }
+    .dc-review__copy {
+      margin-inline-end: 12px;
+    }
     .dc-review__ok,
     .dc-review__bad {
       display: flex;
@@ -209,6 +221,8 @@ export class PackageReviewDialog {
   private readonly ref = inject(MatDialogRef<PackageReviewDialog, number>);
   private readonly api = inject(AppsControlApi);
   private readonly i18n = inject(I18nService);
+  private readonly clipboard = inject(Clipboard);
+  private readonly snackBar = inject(MatSnackBar);
   private readonly titles = new Map(templateEntities(ALL_CONFIG_SECTIONS).map((e) => [e.entityType, e.title]));
   private readonly pkg = signal<unknown>(null);
 
@@ -232,6 +246,16 @@ export class PackageReviewDialog {
 
   constructor() {
     void this.run();
+  }
+
+  /** Every problem of the package and its items, one per line. */
+  protected readonly allProblems = computed(() => problemLines(this.problems(), this.check()?.items ?? []));
+
+  protected copyProblems(): void {
+    const text = [this.data.fileName, ...this.allProblems()].join('\n');
+    if (this.clipboard.copy(text)) {
+      this.snackBar.open(this.i18n.translate('packages.problemsCopied'), undefined, { duration: 3000 });
+    }
   }
 
   protected hasErrors(item: PackageItemCheck): boolean {

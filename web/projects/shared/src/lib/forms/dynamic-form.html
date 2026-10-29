@@ -50,6 +50,33 @@
                   <mat-error>{{ 'form.required' | dcTranslate }}</mat-error>
                 </mat-form-field>
               }
+              @case ('icon') {
+                <label class="dc-field-label" [for]="field.code">
+                  {{ field.label | dcLocalize }}
+                  @if (isRequired(field.code)) {
+                    <span class="dc-required" aria-hidden="true">*</span>
+                  }
+                </label>
+                <mat-form-field>
+                  <mat-icon matIconPrefix fontSet="material-symbols-outlined" class="dc-form__icon">{{ control(field.code).value || 'image' }}</mat-icon>
+                  <input matInput type="text" dir="ltr" [id]="field.code" [formControlName]="field.code" [required]="isRequired(field.code)" />
+                  <button
+                    matIconButton
+                    matIconSuffix
+                    type="button"
+                    [disabled]="control(field.code).disabled"
+                    (click)="chooseIcon(field.code)"
+                    [attr.aria-label]="'icons.title' | dcTranslate"
+                    [attr.data-testid]="'icon-pick-' + field.code"
+                  >
+                    <mat-icon fontSet="material-symbols-outlined">grid_view</mat-icon>
+                  </button>
+                  @if (field.hint) {
+                    <mat-hint>{{ field.hint | dcLocalize }}</mat-hint>
+                  }
+                  <mat-error>{{ 'form.required' | dcTranslate }}</mat-error>
+                </mat-form-field>
+              }
               @default {
                 <label class="dc-field-label" [for]="field.code">
                   {{ field.label | dcLocalize }}

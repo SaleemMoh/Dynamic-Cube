@@ -51,6 +51,7 @@ import { GovBar } from './gov-bar';
       <dc-app-footer
         [links]="allFooterLinks()"
         [entityName]="{ ar: branding().nameAr, en: branding().nameEn }"
+        [imageUrl]="branding().footerImageUrl"
       />
     </div>
   `,

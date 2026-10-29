@@ -1,4 +1,5 @@
 using DynamicCube.Modules.AppsControl.Access;
+using DynamicCube.Modules.AppsControl.Accounts;
 using DynamicCube.Modules.AppsControl.Changes;
 using DynamicCube.Modules.AppsControl.Endpoints;
 using DynamicCube.Modules.AppsControl.Lookups;
@@ -15,6 +16,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace DynamicCube.Modules.AppsControl;
 
@@ -87,6 +89,21 @@ public static class AppsControlModule
         services.AddScoped<ILovValidator, LovValidator>();
         services.AddScoped<DataScopeService>();
         services.AddScoped<AppsControlSeeder>();
+
+        // Sign-in accounts: maintained through the identity provider's admin API when one is configured.
+        services.Configure<IdentityOptions>(configuration.GetSection(IdentityOptions.SectionName));
+        services.AddHttpClient(KeycloakAccountDirectory.HttpClientName, client => client.Timeout = TimeSpan.FromSeconds(15));
+        services.TryAddSingleton(TimeProvider.System);
+        if (string.Equals(configuration[$"{IdentityOptions.SectionName}:Provider"], "Keycloak", StringComparison.OrdinalIgnoreCase))
+        {
+            services.AddScoped<IAccountDirectory, KeycloakAccountDirectory>();
+        }
+        else
+        {
+            services.AddScoped<IAccountDirectory, UnmanagedAccountDirectory>();
+        }
+
+        services.AddScoped<AccountService>();
         return services;
     }
 

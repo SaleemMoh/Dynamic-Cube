@@ -14,34 +14,51 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DynamicCube.Modules.AppsControl.Endpoints;
 
-public sealed record BrandingInfo(string NameAr, string NameEn, string? LogoUrl, IReadOnlyList<FooterLink> FooterLinks);
+public sealed record BrandingInfo(
+    string NameAr,
+    string NameEn,
+    string? LogoUrl,
+    IReadOnlyList<FooterLink> FooterLinks,
+    string? InternalThemeColor = null,
+    string? PortalThemeColor = null,
+    string? FooterImageUrl = null,
+    string? LoginImageUrl = null);
 
 public sealed record UploadedAsset(string Key, string Url);
 
-/// <summary>Entity name, logo and footer links for every app's shell; logo upload for administrators.</summary>
+/// <summary>
+/// Entity name, logo, footer links and image, colours and the sign-in image for every app's shell and the sign-in pages;
+/// image upload for administrators.
+/// </summary>
 internal static partial class BrandingEndpoints
 {
-    public const int MaxLogoBytes = 512 * 1024;
+    public const int MaxLogoBytes = 2 * 1024 * 1024;
 
     public static string AssetUrl(string key) => $"{AppsControlModule.ApiPrefix}/branding/assets/{key}";
 
     public static void MapPublic(RouteGroupBuilder group)
     {
-        group.MapGet("/branding", async (AppsControlDbContext db, CancellationToken ct) =>
+        group.MapGet("/branding", async (HttpContext http, AppsControlDbContext db, CancellationToken ct) =>
         {
             var entity = await db.Entities.AsNoTracking().FirstOrDefaultAsync(ct);
+            // Public and read-only: the sign-in pages (another origin) read it too.
+            http.Response.Headers.AccessControlAllowOrigin = "*";
             return TypedResults.Ok(new BrandingInfo(
                 entity?.NameAr ?? string.Empty,
                 entity?.NameEn ?? string.Empty,
                 entity?.LogoFileKey is { } key ? AssetUrl(key) : null,
-                entity?.FooterLinks ?? []));
+                entity?.FooterLinks ?? [],
+                entity?.InternalThemeColor,
+                entity?.PortalThemeColor,
+                entity?.FooterImageKey is { } footer ? AssetUrl(footer) : null,
+                entity?.LoginImageKey is { } login ? AssetUrl(login) : null));
         }).AllowAnonymous();
 
-        // Anyone may load the current logo; other (e.g. not yet approved) uploads only for Apps Control administrators.
+        // Anyone may load the images in use; other (e.g. not yet approved) uploads only for Apps Control administrators.
         group.MapGet("/branding/assets/{id:guid}", async (Guid id, HttpContext http, AppsControlDbContext db, AccessResolver resolver, CancellationToken ct) =>
         {
-            var current = await db.Entities.AsNoTracking().Select(e => e.LogoFileKey).FirstOrDefaultAsync(ct);
-            if (!string.Equals(current, id.ToString(), StringComparison.OrdinalIgnoreCase))
+            var entity = await db.Entities.AsNoTracking().FirstOrDefaultAsync(ct);
+            if (entity is null || !entity.AssetKeys().Any(k => string.Equals(k, id.ToString(), StringComparison.OrdinalIgnoreCase)))
             {
                 var access = await resolver.GetAsync(ct);
                 if (!access.Can(AppsControlResources.Installation, PrivilegeActions.View))

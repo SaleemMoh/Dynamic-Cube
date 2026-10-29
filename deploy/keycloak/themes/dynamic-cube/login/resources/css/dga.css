@@ -73,7 +73,19 @@ button {
 .pf-v5-c-login::before {
   content: '';
   align-self: stretch;
-  background: linear-gradient(160deg, var(--dga-green-700) 0%, var(--dga-green-950) 100%);
+  /* The entity's sign-in image (set by js/branding.js) over the brand gradient. */
+  background:
+    var(--dc-login-image, none) center / cover no-repeat,
+    linear-gradient(160deg, var(--dga-green-700) 0%, var(--dga-green-950) 100%);
+}
+
+/* The entity logo above the system name (inserted by js/branding.js). */
+.dc-login-logo {
+  display: block;
+  max-height: 64px;
+  max-width: 14rem;
+  margin: 0 auto 12px;
+  object-fit: contain;
 }
 
 .pf-v5-c-login__container {

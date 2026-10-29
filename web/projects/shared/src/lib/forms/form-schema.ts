@@ -27,7 +27,8 @@ export interface FormSection {
   fields: FormField[];
 }
 
-export type FormFieldType = 'text' | 'textarea' | 'number' | 'date' | 'select' | 'checkbox';
+/** `icon` is a Material Symbols name chosen from the icon picker (or typed). */
+export type FormFieldType = 'text' | 'textarea' | 'number' | 'date' | 'select' | 'checkbox' | 'icon';
 
 export interface FormField {
   code: string;

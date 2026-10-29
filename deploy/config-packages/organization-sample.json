@@ -1,0 +1,222 @@
+{
+  "title": "Sample organization structure",
+  "items": [
+    {
+      "entityType": "apps.org-unit-type",
+      "entityCode": "ENTITY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الجهة",
+        "nameEn": "Entity",
+        "displayOrder": 10,
+        "allowedParentTypes": []
+      }
+    },
+    {
+      "entityType": "apps.org-unit-type",
+      "entityCode": "SECTOR",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "قطاع",
+        "nameEn": "Sector",
+        "displayOrder": 20,
+        "allowedParentTypes": [
+          "ENTITY"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.org-unit-type",
+      "entityCode": "GENERAL_DEPT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إدارة عامة",
+        "nameEn": "General department",
+        "displayOrder": 30,
+        "allowedParentTypes": [
+          "ENTITY",
+          "SECTOR"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.org-unit-type",
+      "entityCode": "DEPT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إدارة",
+        "nameEn": "Department",
+        "displayOrder": 40,
+        "allowedParentTypes": [
+          "GENERAL_DEPT",
+          "SECTOR"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.org-unit-type",
+      "entityCode": "BRANCH",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "فرع",
+        "nameEn": "Branch",
+        "displayOrder": 50,
+        "allowedParentTypes": [
+          "ENTITY",
+          "SECTOR",
+          "GENERAL_DEPT"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.org-unit",
+      "entityCode": "HQ",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الجهة — المقر الرئيسي",
+        "nameEn": "Entity — headquarters",
+        "typeCode": "ENTITY",
+        "parentCode": null,
+        "attributes": {
+          "REGION": "RIYADH"
+        }
+      }
+    },
+    {
+      "entityType": "apps.org-unit",
+      "entityCode": "SEC_SERVICES",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "قطاع الخدمات",
+        "nameEn": "Services sector",
+        "typeCode": "SECTOR",
+        "parentCode": "HQ",
+        "attributes": {}
+      }
+    },
+    {
+      "entityType": "apps.org-unit",
+      "entityCode": "SEC_SUPPORT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "قطاع الخدمات المساندة",
+        "nameEn": "Support services sector",
+        "typeCode": "SECTOR",
+        "parentCode": "HQ",
+        "attributes": {}
+      }
+    },
+    {
+      "entityType": "apps.org-unit",
+      "entityCode": "GD_LICENSING",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإدارة العامة للتراخيص",
+        "nameEn": "Licensing general department",
+        "typeCode": "GENERAL_DEPT",
+        "parentCode": "SEC_SERVICES",
+        "attributes": {}
+      }
+    },
+    {
+      "entityType": "apps.org-unit",
+      "entityCode": "D_CLASSIFICATION",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إدارة التصنيف",
+        "nameEn": "Classification department",
+        "typeCode": "DEPT",
+        "parentCode": "GD_LICENSING",
+        "attributes": {}
+      }
+    },
+    {
+      "entityType": "apps.org-unit",
+      "entityCode": "D_PERMITS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إدارة التصاريح",
+        "nameEn": "Permits department",
+        "typeCode": "DEPT",
+        "parentCode": "GD_LICENSING",
+        "attributes": {}
+      }
+    },
+    {
+      "entityType": "apps.org-unit",
+      "entityCode": "GD_INSPECTION",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإدارة العامة للرقابة",
+        "nameEn": "Inspection general department",
+        "typeCode": "GENERAL_DEPT",
+        "parentCode": "SEC_SERVICES",
+        "attributes": {}
+      }
+    },
+    {
+      "entityType": "apps.org-unit",
+      "entityCode": "D_FIELD",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إدارة الرقابة الميدانية",
+        "nameEn": "Field inspection department",
+        "typeCode": "DEPT",
+        "parentCode": "GD_INSPECTION",
+        "attributes": {}
+      }
+    },
+    {
+      "entityType": "apps.org-unit",
+      "entityCode": "GD_IT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإدارة العامة لتقنية المعلومات",
+        "nameEn": "IT general department",
+        "typeCode": "GENERAL_DEPT",
+        "parentCode": "SEC_SUPPORT",
+        "attributes": {}
+      }
+    },
+    {
+      "entityType": "apps.org-unit",
+      "entityCode": "GD_FINANCE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإدارة العامة للمالية",
+        "nameEn": "Finance general department",
+        "typeCode": "GENERAL_DEPT",
+        "parentCode": "SEC_SUPPORT",
+        "attributes": {}
+      }
+    },
+    {
+      "entityType": "apps.org-unit",
+      "entityCode": "BR_JEDDAH",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "فرع جدة",
+        "nameEn": "Jeddah branch",
+        "typeCode": "BRANCH",
+        "parentCode": "HQ",
+        "attributes": {
+          "REGION": "MAKKAH"
+        }
+      }
+    },
+    {
+      "entityType": "apps.org-unit",
+      "entityCode": "BR_DAMMAM",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "فرع الدمام",
+        "nameEn": "Dammam branch",
+        "typeCode": "BRANCH",
+        "parentCode": "HQ",
+        "attributes": {
+          "REGION": "EASTERN"
+        }
+      }
+    }
+  ]
+}

@@ -21,6 +21,7 @@ import { PrivilegesService } from '../privileges.service';
 import { ClassEditor, ClassEditorData } from './class-editor';
 import { ClassRow, DomainRow } from './class-models';
 import { DomainEditor, DomainEditorData } from './domain-editor';
+import { JsonImportButton } from '../change-sets/json-import-button';
 
 const RESOURCE = 'apps-control.classes';
 
@@ -31,6 +32,7 @@ const RESOURCE = 'apps-control.classes';
 @Component({
   selector: 'dc-classes-page',
   imports: [
+    JsonImportButton,
     MatButtonModule,
     MatFormFieldModule,
     MatIconModule,
@@ -46,9 +48,12 @@ const RESOURCE = 'apps-control.classes';
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <header class="dc-page__header">
-      <h1>{{ 'classes.title' | dcTranslate }}</h1>
-      <p>{{ 'classes.hint' | dcTranslate }}</p>
+    <header class="dc-page__header dc-page__header--actions">
+      <div>
+        <h1>{{ 'classes.title' | dcTranslate }}</h1>
+        <p>{{ 'classes.hint' | dcTranslate }}</p>
+      </div>
+      <dc-json-import-button [title]="{ ar: 'التصنيفات والقيم', en: 'Classes & domains' }" [target]="{ entityType: 'apps.class', key: 'code' }" />
     </header>
     @if (errors().length) {
       <ul class="dc-errors" role="alert">

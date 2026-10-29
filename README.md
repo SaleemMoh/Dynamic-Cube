@@ -205,6 +205,14 @@ These are development values only; change them in `deploy/docker/.env` (see `.en
    **Notifications → Notification rules** opens the rule builder. Choose the event, an optional condition, who
    receives the message (the applicant, roles, employees, or the employee the event names) and the template's
    channels, and check the message preview on the event's sample facts.
+15. In **Apps Control → Branding**, set the internal system's or the portal's colour, upload a footer image and a
+   sign-in image, and add the change to a draft. Once `checker` approves it, the apps and the sign-in pages use them.
+   **Apps Control → Users → New** creates an employee's sign-in account and drafts the user with roles. The new
+   employee signs in with the temporary password and must choose a new one. The **Sign-in account** button on a user
+   activates or deactivates it at once, sets a password or signs the user out everywhere. Every configuration screen
+   offers **Import JSON** (rows or a whole package, reviewed before anything is saved, with *Copy all problems*) and
+   **Export JSON**. Import `deploy/config-packages/organization-sample.json` to see the organization structure as a
+   tree.
 
 The gateway credentials come from the secret store (`Secrets__MOMRAH_GATEWAY__clientId` / `__clientSecret`), never
 from the database; development values are in `appsettings.Development.json` and the compose file.

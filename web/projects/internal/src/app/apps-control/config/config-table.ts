@@ -10,11 +10,12 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
 import { AppsControlApi, ConfigRow, I18nService, LocalizePipe, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
 import { firstValueFrom } from 'rxjs';
+import { JsonImport } from '../change-sets/json-import';
 import { ConfirmData, ConfirmDialog } from '../confirm-dialog';
 import { DraftsService } from '../drafts.service';
 import { PrivilegesService } from '../privileges.service';
 import { ConfigEditor, ConfigEditorData } from './config-editor';
-import { ConfigType } from './config-types';
+import { ConfigRowAction, ConfigType } from './config-types';
 
 /** Published rows of one configuration type with new / edit / delete actions that go into a draft change set. */
 @Component({
@@ -27,6 +28,17 @@ import { ConfigType } from './config-types';
         <mat-icon matPrefix fontSet="material-symbols-outlined">search</mat-icon>
         <input matInput [placeholder]="'config.search' | dcTranslate" (input)="search.set($any($event.target).value)" />
       </mat-form-field>
+      <span class="dc-toolbar__spacer"></span>
+      <button matButton="outlined" type="button" (click)="exportJson()" [disabled]="!rows().length" [attr.data-testid]="'export-' + type().entityType">
+        <mat-icon fontSet="material-symbols-outlined">download</mat-icon>
+        {{ 'jsonImport.export' | dcTranslate }}
+      </button>
+      @if (canCreate() || canEdit()) {
+        <button matButton="outlined" type="button" (click)="importJson()" [attr.data-testid]="'import-' + type().entityType">
+          <mat-icon fontSet="material-symbols-outlined">upload</mat-icon>
+          {{ 'jsonImport.button' | dcTranslate }}
+        </button>
+      }
       @if (canCreate()) {
         <button matButton="filled" (click)="edit(null)" [attr.data-testid]="'new-' + type().entityType">
           <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
@@ -82,6 +94,18 @@ import { ConfigType } from './config-types';
               <mat-icon fontSet="material-symbols-outlined">{{ link.icon }}</mat-icon>
             </a>
           }
+          @for (action of type().rowActions ?? []; track action.testId) {
+            <button
+              matIconButton
+              type="button"
+              (click)="openAction(action, row)"
+              [matTooltip]="action.label | dcLocalize"
+              [attr.aria-label]="action.label | dcLocalize"
+              [attr.data-testid]="action.testId + '-' + row.code"
+            >
+              <mat-icon fontSet="material-symbols-outlined">{{ action.icon }}</mat-icon>
+            </button>
+          }
           @if (row.owner !== 'SYSTEM' && canEdit()) {
             <button matIconButton (click)="edit(row)" [attr.aria-label]="'config.edit' | dcTranslate" [attr.data-testid]="'edit-' + row.code">
               <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
@@ -102,16 +126,6 @@ import { ConfigType } from './config-types';
     }
   `,
   styles: `
-    .dc-toolbar {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      margin-block: 1rem;
-    }
-    .dc-toolbar__search {
-      flex: 1;
-      max-width: 24rem;
-    }
     .dc-code {
       font-family: monospace;
     }
@@ -126,6 +140,7 @@ export class ConfigTable {
   private readonly drafts = inject(DraftsService);
   private readonly privileges = inject(PrivilegesService);
   private readonly i18n = inject(I18nService);
+  private readonly jsonImport = inject(JsonImport);
 
   protected readonly search = signal('');
   protected readonly errors = signal<string[]>([]);
@@ -156,7 +171,25 @@ export class ConfigTable {
     return Array.isArray(value) ? value.map((v) => (typeof v === 'object' ? JSON.stringify(v) : String(v))).join('، ') : typeof value === 'object' ? JSON.stringify(value) : String(value);
   }
 
+  protected async openAction(action: ConfigRowAction, row: ConfigRow): Promise<void> {
+    const changed = await firstValueFrom(
+      this.dialog
+        .open<unknown, ConfigEditorData, boolean>(await action.dialog(), { data: { type: this.type(), row }, width: '44rem', maxWidth: '96vw', autoFocus: 'first-tabbable' })
+        .afterClosed(),
+    );
+    if (changed) this.list.reload();
+  }
+
   protected async edit(listed: ConfigRow | null): Promise<void> {
+    if (!listed && this.type().createDialog) {
+      const created = await firstValueFrom(
+        this.dialog
+          .open<unknown, ConfigEditorData, boolean>(await this.type().createDialog!(), { data: { type: this.type(), row: null }, width: '48rem', maxWidth: '96vw', autoFocus: 'first-tabbable' })
+          .afterClosed(),
+      );
+      if (created) this.list.reload();
+      return;
+    }
     this.errors.set([]);
     let row: ConfigRow | null;
     try {
@@ -176,6 +209,25 @@ export class ConfigTable {
         })
         .afterClosed(),
     );
+  }
+
+  /** Pastes or loads rows of this type (or a package) as JSON; they are reviewed, then drafted. */
+  protected async importJson(): Promise<void> {
+    const listed = this.list.hasValue() ? this.list.value() : [];
+    const example = listed[0] ?? { code: 'CODE', nameAr: '', nameEn: '', ...Object.fromEntries(this.type().fields.map((f) => [f.code, f.defaultValue ?? null])) };
+    if (await this.jsonImport.run({ title: this.type().title, target: { entityType: this.type().entityType, key: this.type().key }, example: [example] })) {
+      this.list.reload();
+    }
+  }
+
+  /** Downloads the rows shown as JSON, in the shape the import takes back. */
+  protected exportJson(): void {
+    const blob = new Blob([JSON.stringify(this.rows(), null, 2)], { type: 'application/json' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${this.type().entityType}-${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+    URL.revokeObjectURL(link.href);
   }
 
   protected async remove(row: ConfigRow): Promise<void> {

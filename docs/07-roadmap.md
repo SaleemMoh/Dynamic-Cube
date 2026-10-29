@@ -358,6 +358,23 @@ mode of the wizard, and choosing the preview's language independently of the app
 Still open from 3c: images and attachments in pages (they need a file runtime), categories edited from the Content
 Manager (they stay in Services), scheduled publishing, and server-side search across questions.
 
+**Improvements after 3c** ([ADR-0026](adr/0026-look-accounts-json-import.md)):
+
+- **Branding:** colours for the internal system and the portal, a footer image and a sign-in image, applied by every
+  app and by the sign-in pages.
+- **Internal sign-in page:** follows the internal design guide.
+- **Accounts:** employees' sign-in accounts are created, activated and deactivated, and given passwords from Apps
+  Control. When accounts come from Active Directory, LDAP, Entra ID or Nafath, only activation and sign-out are
+  offered.
+- **JSON import and export:** on every configuration screen and on the branding page, with "Copy all problems" in the
+  review.
+- **Other screens:**
+  - An icon picker for icon fields.
+  - The organization structure as a tree.
+  - A redesigned Action Center.
+  - A steadier side menu: one current item, and it no longer moves when a page opens.
+  - The Dashboard as the first entry, and denser screens.
+
 Scope of the slices:
 
 - **Workflow Designer** (canvas): drag nodes (human task, parallel split / join, gateway, decision, document,

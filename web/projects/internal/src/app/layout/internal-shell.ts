@@ -5,7 +5,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { BrandingService, I18nService, LanguageSwitcher, NotificationBell, TranslatePipe, UserMenu } from '@dynamic-cube/shared';
 import { NavState } from './nav-state';
 
-/** Internal system frame: a 64px sticky top bar (menu toggle, system name, language, signed-in user) over the page. */
+/**
+ * Internal system frame: the top bar (menu toggle, system name, language, signed-in user) over the workspace. The frame
+ * fills the window and the workspace scrolls inside it, so the top bar and the side navigation never move.
+ */
 @Component({
   selector: 'dc-internal-shell',
   imports: [BidiModule, MatButtonModule, MatIconModule, LanguageSwitcher, NotificationBell, TranslatePipe, UserMenu],
@@ -50,12 +53,14 @@ import { NavState } from './nav-state';
     .dc-ishell {
       display: flex;
       flex-direction: column;
-      min-height: 100vh;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
     }
     .dc-topbar {
-      position: sticky;
-      top: 0;
+      position: relative;
       z-index: 10;
+      flex: none;
       display: flex;
       align-items: center;
       gap: 8px;

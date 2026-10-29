@@ -619,14 +619,29 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("entity_kind");
 
+                    b.Property<string>("FooterImageKey")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("footer_image_key");
+
                     b.Property<string>("FooterLinks")
                         .IsRequired()
                         .HasColumnType("jsonb")
                         .HasColumnName("footer_links");
 
+                    b.Property<string>("InternalThemeColor")
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)")
+                        .HasColumnName("internal_theme_color");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
                         .HasColumnName("is_active");
+
+                    b.Property<string>("LoginImageKey")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("login_image_key");
 
                     b.Property<string>("LogoFileKey")
                         .HasColumnType("text")
@@ -649,6 +664,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)")
                         .HasColumnName("owner");
+
+                    b.Property<string>("PortalThemeColor")
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)")
+                        .HasColumnName("portal_theme_color");
 
                     b.Property<uint>("RowVersion")
                         .IsConcurrencyToken()

@@ -42,6 +42,7 @@ services:
     volumes:
       - ../keycloak/realms:/opt/keycloak/data/import:ro
       - ../keycloak/themes/dynamic-cube:/opt/keycloak/themes/dynamic-cube:ro
+      - ../keycloak/themes/dynamic-cube-internal:/opt/keycloak/themes/dynamic-cube-internal:ro
     ports:
       - "8080:8080"
 
@@ -75,6 +76,10 @@ services:
       AppsControl__BootstrapUsers__admin__0: SYSTEM_ADMIN
       AppsControl__BootstrapUsers__maker__0: CONFIG_MAKER
       AppsControl__BootstrapUsers__checker__0: CONFIG_CHECKER
+      # Employee accounts are created and maintained from Apps Control through Keycloak's admin API.
+      AppsControl__Identity__Provider: Keycloak
+      AppsControl__Identity__BaseUrl: http://keycloak:8080
+      Secrets__KEYCLOAK_ADMIN__clientSecret: dev-accounts-secret
     volumes:
       - files:/data/files
     depends_on:

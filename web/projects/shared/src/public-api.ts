@@ -11,6 +11,8 @@ export * from './lib/i18n/translate.pipe';
 export * from './lib/i18n/language-switcher';
 export * from './lib/forms/form-schema';
 export * from './lib/forms/dynamic-form';
+export * from './lib/forms/icons';
+export * from './lib/forms/icon-picker';
 export * from './lib/layout/app-shell';
 export * from './lib/layout/gov-bar';
 export * from './lib/layout/app-footer';

@@ -14,18 +14,22 @@ import { PrivilegesService } from '../privileges.service';
 import { PermissionCards } from './permission-cards';
 import { RoleEditor, RoleEditorData } from './role-editor';
 import { RoleRow, permissionsOf, roleScreens, screenTree } from './role-models';
+import { JsonImportButton } from '../change-sets/json-import-button';
 
 const RESOURCE = 'apps-control.roles';
 
 /** Roles on the start side (with how many users hold each); the chosen role's screens and permissions on the end side. */
 @Component({
   selector: 'dc-roles-page',
-  imports: [MatButtonModule, MatIconModule, MatProgressBarModule, MasterList, PermissionCards, LocalizePipe, TranslatePipe],
+  imports: [JsonImportButton, MatButtonModule, MatIconModule, MatProgressBarModule, MasterList, PermissionCards, LocalizePipe, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <header class="dc-page__header">
-      <h1>{{ 'roles.title' | dcTranslate }}</h1>
-      <p>{{ 'roles.hint' | dcTranslate }}</p>
+    <header class="dc-page__header dc-page__header--actions">
+      <div>
+        <h1>{{ 'roles.title' | dcTranslate }}</h1>
+        <p>{{ 'roles.hint' | dcTranslate }}</p>
+      </div>
+      <dc-json-import-button [title]="{ ar: 'الأدوار والصلاحيات', en: 'Roles & privileges' }" [target]="{ entityType: 'apps.role', key: 'code' }" />
     </header>
     @if (errors().length) {
       <ul class="dc-errors" role="alert">

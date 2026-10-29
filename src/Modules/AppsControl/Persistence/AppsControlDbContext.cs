@@ -74,7 +74,13 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
         Config<Holiday>(modelBuilder, "holiday");
         Config<ChangeArea>(modelBuilder, "change_area");
         Config<GovernmentEntity>(modelBuilder, "entity", b =>
-            b.Property(e => e.FooterLinks).HasColumnType("jsonb").HasConversion(JsonColumn.Converter<List<FooterLink>>(), JsonColumn.Comparer<List<FooterLink>>()));
+        {
+            b.Property(e => e.FooterLinks).HasColumnType("jsonb").HasConversion(JsonColumn.Converter<List<FooterLink>>(), JsonColumn.Comparer<List<FooterLink>>());
+            b.Property(e => e.InternalThemeColor).HasMaxLength(7);
+            b.Property(e => e.PortalThemeColor).HasMaxLength(7);
+            b.Property(e => e.FooterImageKey).HasMaxLength(100);
+            b.Property(e => e.LoginImageKey).HasMaxLength(100);
+        });
         modelBuilder.Entity<BrandingAsset>(b =>
         {
             b.ToTable("branding_asset", Schema);

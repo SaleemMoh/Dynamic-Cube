@@ -3,6 +3,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, ValidatorFn, Validators } 
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatDialog } from '@angular/material/dialog';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -13,6 +14,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { JsonValue, jsonLogic } from '../expressions/jsonlogic';
 import { LocalizePipe, TranslatePipe } from '../i18n/translate.pipe';
 import { FormField, FormOption, FormSchema, FormSection } from './form-schema';
+import { pickIcon } from './icon-picker';
 import { LOV_SOURCE } from './lov-source';
 
 export type FormValue = Record<string, unknown>;
@@ -66,6 +68,7 @@ export class DynamicForm {
   private readonly lovOptions = signal<Readonly<Record<string, FormOption[]>>>({});
   private readonly lovSource = inject(LOV_SOURCE, { optional: true });
   private readonly destroyRef = inject(DestroyRef);
+  private readonly dialog = inject(MatDialog);
   private readonly lovParents = new Map<string, string | null>();
 
   constructor() {
@@ -138,6 +141,18 @@ export class DynamicForm {
   protected showError(code: string): boolean {
     const control = this.control(code);
     return control.invalid && (control.touched || control.dirty);
+  }
+
+  /** Opens the icon picker for an icon field and puts the chosen name in it. */
+  protected chooseIcon(code: string): void {
+    const control = this.control(code);
+    const subscription = pickIcon(this.dialog, control.value as string | null).subscribe((icon) => {
+      if (icon !== undefined) {
+        control.setValue(icon || null);
+        control.markAsDirty();
+      }
+    });
+    this.destroyRef.onDestroy(() => subscription.unsubscribe());
   }
 
   protected cancel(): void {

@@ -1,0 +1,126 @@
+/* Internal system sign-in, following the internal design guide: Dynamic Cube gold marks the primary action and focus;
+   neutrals, type, 8px controls and the 12px card follow DGA. The brand colour can be replaced from Apps Control. */
+
+:root {
+  --dc-brand: #ca9f45;
+  --dc-brand-600: #b48a35;
+  --dc-brand-700: #8a6a26;
+  --dc-brand-50: #faf7f0;
+  --dc-gray-900: #111927;
+  --dc-gray-700: #384250;
+  --dc-gray-500: #6c737f;
+  --dc-gray-300: #d2d6db;
+  --dc-gray-200: #e5e7eb;
+  --dc-gray-50: #f9fafb;
+
+  --dga-green-700: var(--dc-brand);
+  --dga-green-800: var(--dc-brand-600);
+  --dga-green-950: var(--dc-brand-700);
+  --dga-text: var(--dc-gray-900);
+  --dga-border: var(--dc-gray-200);
+  --dga-input-border: var(--dc-gray-300);
+  --pf-v5-global--primary-color--100: var(--dc-brand);
+  --pf-v5-global--primary-color--200: var(--dc-brand-600);
+  --pf-v5-global--link--Color: var(--dc-brand-700);
+  --pf-v5-global--link--Color--hover: var(--dc-brand-600);
+}
+
+.login-pf body {
+  background: var(--dc-gray-50);
+}
+
+.pf-v5-c-login {
+  min-height: 100vh;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+}
+
+/* The image side: the entity's sign-in image, or a quiet neutral panel with a gold glow. */
+.pf-v5-c-login::before {
+  background:
+    linear-gradient(180deg, rgba(17, 25, 39, 0.05) 0%, rgba(17, 25, 39, 0.45) 100%),
+    var(--dc-login-image, none) center / cover no-repeat,
+    radial-gradient(120% 80% at 80% 10%, color-mix(in srgb, var(--dc-brand) 45%, transparent) 0%, transparent 60%),
+    linear-gradient(160deg, #1f2a37 0%, #111927 100%);
+}
+
+.pf-v5-c-login__container {
+  grid-template-columns: minmax(0, 26rem);
+}
+
+#kc-header,
+#kc-header-wrapper {
+  font-size: 20px;
+  line-height: 28px;
+  color: var(--dc-gray-900) !important;
+}
+
+#kc-header {
+  margin-bottom: 20px;
+}
+
+/* Card: white, gray border, 12px corners, small shadow, 24px padding. */
+.pf-v5-c-login__main {
+  padding: 28px 28px 20px;
+  border: 1px solid var(--dc-gray-200);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+}
+
+.pf-v5-c-login__main-header {
+  padding-bottom: 16px;
+}
+
+.pf-v5-c-title,
+#kc-page-title {
+  font-size: 20px;
+  line-height: 28px;
+}
+
+.pf-v5-c-form__label-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--dc-gray-700);
+}
+
+/* Inputs and buttons: 40px, 8px corners, the gold focus ring. */
+.pf-v5-c-form-control,
+.pf-v5-c-input-group__item .pf-v5-c-button.pf-m-control {
+  border-radius: 8px;
+}
+
+.pf-v5-c-form-control:focus-within {
+  border-color: var(--dc-brand);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--dc-brand) 35%, transparent);
+}
+
+.pf-v5-c-form-control > input,
+.pf-v5-c-form-control > select {
+  font-size: 14px;
+}
+
+.pf-v5-c-button {
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.pf-v5-c-button.pf-m-primary {
+  --pf-v5-c-button--m-primary--BackgroundColor: var(--dc-brand);
+  --pf-v5-c-button--m-primary--hover--BackgroundColor: var(--dc-brand-600);
+  --pf-v5-c-button--m-primary--focus--BackgroundColor: var(--dc-brand-600);
+  --pf-v5-c-button--m-primary--active--BackgroundColor: var(--dc-brand-700);
+  font-size: 14px;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--dc-brand) 35%, transparent);
+  border-radius: 8px;
+}
+
+.pf-v5-c-login__main-footer-band,
+#kc-registration-container {
+  border-top: 1px solid var(--dc-gray-200);
+}

@@ -19,6 +19,7 @@ import { DraftsService } from '../drafts.service';
 import { DetailsDialog, detailsOf } from '../master/details-dialog';
 import { MasterItem, MasterList } from '../master/master-list';
 import { PrivilegesService } from '../privileges.service';
+import { JsonImportButton } from '../change-sets/json-import-button';
 
 const RESOURCE = 'apps-control.menus';
 /** Pseudo group for menus that belong to no group. */
@@ -32,6 +33,7 @@ const GROUP: ConfigType = types.find((t) => t.entityType === 'apps.menu-group')!
 @Component({
   selector: 'dc-menus-page',
   imports: [
+    JsonImportButton,
     MatButtonModule,
     MatFormFieldModule,
     MatIconModule,
@@ -46,9 +48,12 @@ const GROUP: ConfigType = types.find((t) => t.entityType === 'apps.menu-group')!
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <header class="dc-page__header">
-      <h1>{{ 'menus.title' | dcTranslate }}</h1>
-      <p>{{ 'menus.hint' | dcTranslate }}</p>
+    <header class="dc-page__header dc-page__header--actions">
+      <div>
+        <h1>{{ 'menus.title' | dcTranslate }}</h1>
+        <p>{{ 'menus.hint' | dcTranslate }}</p>
+      </div>
+      <dc-json-import-button [title]="{ ar: 'القوائم', en: 'Menus' }" [target]="{ entityType: 'apps.menu-group', key: 'code' }" />
     </header>
     @if (errors().length) {
       <ul class="dc-errors" role="alert">
