@@ -239,6 +239,107 @@ public sealed class ApiTests(DatabaseFixture fixture) : IAsyncLifetime
         (await valid.Content.ReadFromJsonAsync<JsonElement>(ct)).GetProperty("isValid").GetBoolean().ShouldBeTrue();
     }
 
+    [Fact]
+    public async Task An_exported_package_checks_as_unchanged_shows_edits_and_upserts()
+    {
+        fixture.RequireConnectionString();
+        var ct = TestContext.Current.CancellationToken;
+        using var maker = Client("maker");
+        using var checker = Client("checker");
+        var provider = TestHost.Unique("EXP");
+        var connection = TestHost.Unique("EXC");
+        var created = await maker.PostAsJsonAsync("/api/apps-control/v1/change-sets/import", new
+        {
+            title = $"Export source {provider}",
+            items = new object[]
+            {
+                new { entityType = IntegrationChangeTypes.Provider, entityCode = provider, payload = new { nameAr = "جهة", nameEn = "Provider" } },
+                new { entityType = IntegrationChangeTypes.Connection, entityCode = connection, operation = "UPSERT", payload = new { nameAr = "اتصال", nameEn = "Connection", providerCode = provider, baseUrl = "https://example.test" } },
+            },
+        }, ct);
+        created.EnsureSuccessStatusCode();
+        await PublishAllAsync(maker, checker, await created.Content.ReadFromJsonAsync<JsonElement>(ct), ct);
+
+        var exported = await maker.PostAsJsonAsync("/api/apps-control/v1/admin/export", new
+        {
+            title = "Move",
+            types = new object[]
+            {
+                new { entityType = IntegrationChangeTypes.Provider, codes = new[] { provider } },
+                new { entityType = IntegrationChangeTypes.Connection, codes = new[] { connection } },
+            },
+        }, ct);
+        exported.EnsureSuccessStatusCode();
+        var package = await exported.Content.ReadFromJsonAsync<JsonElement>(ct);
+        var items = package.GetProperty("items").EnumerateArray().ToList();
+        items.Select(i => i.GetProperty("entityCode").GetString()).ShouldBe([provider, connection]);
+        items.ShouldAllBe(i => i.GetProperty("operation").GetString() == "UPSERT");
+        items[1].GetProperty("payload").TryGetProperty("owner", out _).ShouldBeFalse();
+
+        // Importing the export back changes nothing.
+        var same = await (await maker.PostAsJsonAsync("/api/apps-control/v1/change-sets/import/check", package, ct)).Content.ReadFromJsonAsync<JsonElement>(ct);
+        same.GetProperty("isValid").GetBoolean().ShouldBeTrue();
+        same.GetProperty("items").EnumerateArray().ShouldAllBe(i => i.GetProperty("unchanged").GetBoolean() && i.GetProperty("operation").GetString() == "UPDATE");
+
+        // An edit shows as a change, with the row as it is and as it would become.
+        var edited = new
+        {
+            title = "Edit",
+            items = new object[]
+            {
+                new { entityType = IntegrationChangeTypes.Connection, entityCode = connection, operation = "UPSERT", payload = new { nameAr = "اتصال", nameEn = "Renamed", providerCode = provider, baseUrl = "https://example.test" } },
+            },
+        };
+        var check = await (await maker.PostAsJsonAsync("/api/apps-control/v1/change-sets/import/check", edited, ct)).Content.ReadFromJsonAsync<JsonElement>(ct);
+        var item = check.GetProperty("items")[0];
+        item.GetProperty("unchanged").GetBoolean().ShouldBeFalse();
+        item.GetProperty("current").GetProperty("nameEn").GetString().ShouldBe("Connection");
+        item.GetProperty("incoming").GetProperty("nameEn").GetString().ShouldBe("Renamed");
+
+        var updated = await maker.PostAsJsonAsync("/api/apps-control/v1/change-sets/import", edited, ct);
+        updated.EnsureSuccessStatusCode();
+        var drafts = await updated.Content.ReadFromJsonAsync<JsonElement>(ct);
+        drafts[0].GetProperty("items")[0].GetProperty("operation").GetString().ShouldBe("UPDATE");
+        await PublishAllAsync(maker, checker, drafts, ct);
+        (await maker.GetFromJsonAsync<JsonElement>($"/api/apps-control/v1/admin/integ.connection/{connection}", ct)).GetProperty("nameEn").GetString().ShouldBe("Renamed");
+
+        // Importing the earlier export drafts only the row that differs now.
+        var back = await maker.PostAsJsonAsync("/api/apps-control/v1/change-sets/import", package, ct);
+        back.EnsureSuccessStatusCode();
+        var backItems = (await back.Content.ReadFromJsonAsync<JsonElement>(ct)).EnumerateArray().SelectMany(d => d.GetProperty("items").EnumerateArray()).ToList();
+        backItems.Select(i => i.GetProperty("entityCode").GetString()).ShouldBe([connection]);
+    }
+
+    [Fact]
+    public async Task Export_leaves_out_product_rows_and_checks_access()
+    {
+        fixture.RequireConnectionString();
+        var ct = TestContext.Current.CancellationToken;
+        using var maker = Client("maker");
+        using var stranger = Client("stranger");
+
+        var all = await maker.PostAsJsonAsync("/api/apps-control/v1/admin/export", new { types = new[] { new { entityType = "apps.app" } } }, ct);
+        var withSystem = await maker.PostAsJsonAsync("/api/apps-control/v1/admin/export", new { types = new[] { new { entityType = "apps.app" } }, includeSystem = true }, ct);
+        var forbidden = await stranger.PostAsJsonAsync("/api/apps-control/v1/admin/export", new { types = new[] { new { entityType = "apps.app" } } }, ct);
+        var unknown = await maker.PostAsJsonAsync("/api/apps-control/v1/admin/export", new { types = new[] { new { entityType = IntegrationChangeTypes.Provider, codes = new[] { "NOT_THERE" } } } }, ct);
+
+        var systemApps = (await withSystem.Content.ReadFromJsonAsync<JsonElement>(ct)).GetProperty("items").EnumerateArray().Select(i => i.GetProperty("entityCode").GetString()).ToList();
+        systemApps.ShouldContain("INTERNAL");
+        (await all.Content.ReadFromJsonAsync<JsonElement>(ct)).GetProperty("items").EnumerateArray().ShouldNotContain(i => i.GetProperty("entityCode").GetString() == "INTERNAL");
+        forbidden.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        unknown.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    private static async Task PublishAllAsync(HttpClient maker, HttpClient checker, JsonElement drafts, CancellationToken ct)
+    {
+        foreach (var draft in drafts.EnumerateArray())
+        {
+            var id = draft.GetProperty("changeSet").GetProperty("id").GetString();
+            (await maker.PostAsync(new Uri($"/api/apps-control/v1/change-sets/{id}/submit", UriKind.Relative), null, ct)).EnsureSuccessStatusCode();
+            (await checker.PostAsJsonAsync($"/api/apps-control/v1/change-sets/{id}/approve", new { comment = "ok" }, ct)).EnsureSuccessStatusCode();
+        }
+    }
+
     private static string RepositoryFile(string relative)
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

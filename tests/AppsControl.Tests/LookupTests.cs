@@ -2,6 +2,7 @@ using DynamicCube.Modules.AppsControl.Changes;
 using DynamicCube.Modules.AppsControl.Persistence;
 using DynamicCube.Modules.AppsControl.Tests.Infrastructure;
 using DynamicCube.Platform.ChangeSets;
+using DynamicCube.Platform.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
@@ -155,6 +156,27 @@ public sealed class LookupTests(AppsControlFixture fixture) : IAsyncLifetime
             DomainChange(cls, "A", "أ", "A", null, parent: "B", ChangeOperation.Update)));
 
         ex.Errors.Keys.ShouldContain("parentCode");
+    }
+
+    [Fact]
+    public async Task Export_lists_values_of_every_class_with_parents_first()
+    {
+        var cls = Harness.Unique("TREE");
+        await _harness.PublishAsync(
+            AppsControlAreas.Lookups,
+            new Change(AppsControlChangeTypes.Class, cls, ChangeOperation.Create, new { nameAr = "شجرة", nameEn = "Tree", isHierarchical = true }),
+            DomainChange(cls, "Z", "ي", "Z", null),
+            DomainChange(cls, "M", "م", "M", null, parent: "Z"),
+            DomainChange(cls, "A", "أ", "A", null, parent: "M"));
+
+        var codes = await _harness.AsAsync("admin", async sp =>
+        {
+            var applier = sp.GetServices<IConfigApplier>().Single(a => a.EntityType == AppsControlChangeTypes.Domain);
+            var rows = await applier.ExportAsync(CancellationToken.None);
+            return rows.Select(r => r.GetProperty("code").GetString()!).Where(c => c.StartsWith(cls + "/", StringComparison.Ordinal)).ToList();
+        });
+
+        codes.ShouldBe([$"{cls}/Z", $"{cls}/M", $"{cls}/A"]);
     }
 
     [Fact]

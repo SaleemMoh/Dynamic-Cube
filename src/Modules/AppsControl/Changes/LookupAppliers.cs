@@ -57,6 +57,8 @@ internal sealed class ClassApplier(AppsControlDbContext db) : ConfigApplier<Look
     protected override IQueryable<LookupClass> Query(AppsControlDbContext context) =>
         context.Classes.Include(c => c.ParentClass).Include(c => c.Attributes);
 
+    protected override Guid? ParentOf(LookupClass entity) => entity.ParentClassId;
+
     protected override async Task ApplyAsync(LookupClass entity, ClassPayload payload, RefResolver refs, ValidationErrors errors, LookupClass? existing, CancellationToken cancellationToken)
     {
         var viewName = ClassViewGenerator.ViewName(entity.Code);
@@ -283,6 +285,11 @@ internal sealed class DomainApplier(AppsControlDbContext db) : ConfigApplier<Dom
 
     protected override IQueryable<DomainValue> ListQuery(AppsControlDbContext context, string? parent) =>
         Query(context).Where(d => d.Class!.Code == parent).OrderBy(d => d.DisplayOrder).ThenBy(d => d.Code);
+
+    protected override IQueryable<DomainValue> ExportQuery(AppsControlDbContext context) =>
+        Query(context).OrderBy(d => d.Class!.Code).ThenBy(d => d.DisplayOrder).ThenBy(d => d.Code);
+
+    protected override Guid? ParentOf(DomainValue entity) => entity.ParentDomainId;
 
     protected override Task<DomainValue?> FindAsync(AppsControlDbContext context, string entityCode, CancellationToken cancellationToken) =>
         DomainKey.TryParse(entityCode, out var classCode, out var code)

@@ -26,6 +26,18 @@ public interface IConfigApplier
 
     /// <summary>One row as payload snapshot, or null.</summary>
     Task<JsonElement?> GetAsync(string entityCode, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Every row as payload snapshots, in an order a package can apply them: parents before their children and versions
+    /// in number order.
+    /// </summary>
+    Task<IReadOnlyList<JsonElement>> ExportAsync(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// A payload as this type reads it, shaped like a snapshot: unknown properties dropped and missing ones at their
+    /// defaults, so it compares with <see cref="GetAsync"/>. Null when the payload does not parse.
+    /// </summary>
+    JsonElement? Normalize(string entityCode, string payload);
 }
 
 /// <summary>
@@ -212,6 +224,37 @@ public abstract class ConfigApplier<TContext, TRefs, TEntity, TPayload>(TContext
         return entity is null ? null : JsonSerializer.SerializeToElement(await SnapshotAsync(context, entity, cancellationToken), ChangeJson.Options);
     }
 
+    public async Task<IReadOnlyList<JsonElement>> ExportAsync(CancellationToken cancellationToken)
+    {
+        var rows = await ExportQuery(context).AsNoTracking().ToListAsync(cancellationToken);
+        var result = new List<JsonElement>(rows.Count);
+        foreach (var row in ParentsFirst(rows))
+        {
+            result.Add(JsonSerializer.SerializeToElement(await SnapshotAsync(context, row, cancellationToken), ChangeJson.Options));
+        }
+
+        return result;
+    }
+
+    public JsonElement? Normalize(string entityCode, string payload)
+    {
+        try
+        {
+            var body = JsonSerializer.Deserialize<TPayload>(payload, ChangeJson.Options);
+            if (body is null)
+            {
+                return null;
+            }
+
+            body.Code = entityCode;
+            return JsonSerializer.SerializeToElement(body, ChangeJson.Options);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
     /// <summary>The reference resolver handed to <see cref="ApplyAsync(TEntity, TPayload, TRefs, ValidationErrors, TEntity, CancellationToken)"/>.</summary>
     protected abstract TRefs CreateRefs(TContext context, ChangeSet? draft);
 
@@ -220,6 +263,12 @@ public abstract class ConfigApplier<TContext, TRefs, TEntity, TPayload>(TContext
 
     protected virtual IQueryable<TEntity> ListQuery(TContext context, string? parent) =>
         Query(context).OrderBy(e => e.Code);
+
+    /// <summary>Rows in export order within the type; versions override this to go up by number.</summary>
+    protected virtual IQueryable<TEntity> ExportQuery(TContext context) => ListQuery(context, null);
+
+    /// <summary>The row of the same type this row hangs under, for types that form a tree.</summary>
+    protected virtual Guid? ParentOf(TEntity entity) => null;
 
     protected virtual Task<TEntity?> FindAsync(TContext context, string entityCode, CancellationToken cancellationToken) =>
         Query(context).SingleOrDefaultAsync(e => e.Code == entityCode, cancellationToken);
@@ -263,6 +312,39 @@ public abstract class ConfigApplier<TContext, TRefs, TEntity, TPayload>(TContext
         payload.IsActive = entity.IsActive;
         payload.Owner = entity.Owner;
         return payload;
+    }
+
+    /// <summary>Keeps the query order but moves every child after its parent.</summary>
+    private List<TEntity> ParentsFirst(List<TEntity> rows)
+    {
+        var byId = rows.ToDictionary(r => r.Id);
+        var placed = new HashSet<Guid>();
+        var ordered = new List<TEntity>(rows.Count);
+        void Place(TEntity row, int depth)
+        {
+            if (placed.Contains(row.Id))
+            {
+                return;
+            }
+
+            // A cycle cannot be stored, but stop rather than loop if one is.
+            if (depth < rows.Count && ParentOf(row) is { } parentId && byId.TryGetValue(parentId, out var parent))
+            {
+                Place(parent, depth + 1);
+            }
+
+            if (placed.Add(row.Id))
+            {
+                ordered.Add(row);
+            }
+        }
+
+        foreach (var row in rows)
+        {
+            Place(row, 0);
+        }
+
+        return ordered;
     }
 
     private static TPayload? Deserialize(string? payload, ValidationErrors errors)

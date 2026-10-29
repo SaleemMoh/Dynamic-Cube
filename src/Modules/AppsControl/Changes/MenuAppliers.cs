@@ -78,6 +78,8 @@ internal sealed class MenuApplier(AppsControlDbContext db) : ConfigApplier<Menu,
     protected override IQueryable<Menu> ListQuery(AppsControlDbContext context, string? parent) =>
         (parent is null ? Query(context) : Query(context).Where(m => m.App!.Code == parent)).OrderBy(m => m.App!.Code).ThenBy(m => m.DisplayOrder);
 
+    protected override Guid? ParentOf(Menu entity) => entity.ParentId;
+
     protected override async Task ApplyAsync(Menu entity, MenuPayload payload, RefResolver refs, ValidationErrors errors, Menu? existing, CancellationToken cancellationToken)
     {
         errors.Required("appCode", payload.AppCode);

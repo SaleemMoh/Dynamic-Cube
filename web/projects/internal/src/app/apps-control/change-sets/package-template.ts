@@ -183,7 +183,7 @@ export function buildTemplate(entities: TemplateEntity[]): object {
     _help: {
       _help: 'Explanations like this one are ignored on import; you may delete them.',
       title: 'Required. Becomes the title of the draft change sets the package creates (one per configuration area).',
-      items: 'Required. 1 to 500 changes, applied in order; an item may refer to rows created by earlier items.',
+      items: 'Required. 1 to 2000 changes, applied in order; an item may refer to rows created by earlier items. UPSERT creates or updates by whether the row exists.',
       'items[].entityType': 'Required. What the item changes (see each example item).',
       'items[].entityCode': 'Required. The key of the row (its format is explained in each item).',
       'items[].operation': 'Required. CREATE a new row, UPDATE an existing one (the payload replaces it), or DELETE it (no payload).',

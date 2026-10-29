@@ -102,6 +102,10 @@ internal sealed partial class RuleSetVersionApplier(DecisionsDbContext db, IEnum
     protected override IQueryable<RuleSetVersion> ListQuery(DecisionsDbContext context, string? parent) =>
         (parent is null ? Query(context) : Query(context).Where(v => v.RuleSet!.Code == parent)).OrderBy(v => v.RuleSet!.Code).ThenByDescending(v => v.Number);
 
+    // Oldest first: a package creates versions in number order.
+    protected override IQueryable<RuleSetVersion> ExportQuery(DecisionsDbContext context) =>
+        Query(context).OrderBy(v => v.RuleSet!.Code).ThenBy(v => v.Number);
+
     protected override async Task ApplyAsync(RuleSetVersion entity, RuleSetVersionPayload payload, ConfigRefs<DecisionsDbContext> refs, ValidationErrors errors, RuleSetVersion? existing, CancellationToken cancellationToken)
     {
         var (code, number) = Parse(entity.Code);

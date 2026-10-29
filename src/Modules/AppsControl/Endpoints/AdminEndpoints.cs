@@ -21,10 +21,20 @@ public sealed record AddChangeItemRequest(string EntityType, string EntityCode, 
 
 public sealed record ReviewRequest(string? Comment);
 
-/// <summary>A configuration package: changes of any modules, drafted as one change set per area.</summary>
-public sealed record ImportPackageRequest(string Title, List<AddChangeItemRequest> Items);
+/// <summary>
+/// One change of a package. <c>UPSERT</c>, or no operation, creates the row where it does not exist and updates it
+/// where it does, so an exported package imports into any environment.
+/// </summary>
+public sealed record PackageItemRequest(string? EntityType, string? EntityCode, string? Operation, JsonElement? Payload);
 
-/// <summary>One item of a package as the dry run found it: whether its row exists and what is wrong with it.</summary>
+/// <summary>A configuration package: changes of any modules, drafted as one change set per area.</summary>
+public sealed record ImportPackageRequest(string Title, List<PackageItemRequest> Items);
+
+/// <summary>
+/// One item of a package as the dry run found it: the operation it resolves to, whether its row exists, the row as it
+/// is (<see cref="Current"/>) and as the package would leave it (<see cref="Incoming"/>), and what is wrong with it.
+/// Updates that change nothing are <see cref="Unchanged"/> and skipped by the import.
+/// </summary>
 public sealed record PackageItemCheck(
     int Index,
     string? EntityType,
@@ -33,10 +43,27 @@ public sealed record PackageItemCheck(
     string? Area,
     bool Exists,
     JsonElement? Payload,
-    IReadOnlyDictionary<string, string[]> Errors);
+    IReadOnlyDictionary<string, string[]> Errors,
+    bool Unchanged = false,
+    JsonElement? Current = null,
+    JsonElement? Incoming = null);
 
 /// <summary>A package checked without saving anything: problems of the package itself and of each item.</summary>
 public sealed record PackageCheck(string? Title, bool IsValid, IReadOnlyDictionary<string, string[]> Errors, IReadOnlyList<PackageItemCheck> Items);
+
+/// <summary>Rows of one type to export: all of them, or the given codes.</summary>
+public sealed record ExportSelection(string EntityType, List<string>? Codes);
+
+/// <summary>
+/// What to export, in apply order: put types before the types that refer to them. Rows maintained by the product
+/// (owner SYSTEM) come with every installation and are left out unless asked for.
+/// </summary>
+public sealed record ExportRequest(string? Title, List<ExportSelection> Types, bool IncludeSystem = false);
+
+public sealed record ExportedItem(string EntityType, string EntityCode, string Operation, JsonElement Payload);
+
+/// <summary>An exported configuration package: importable as is, in this or another environment.</summary>
+public sealed record ExportedPackage(string Title, DateTimeOffset ExportedAt, IReadOnlyList<ExportedItem> Items);
 
 public sealed record ChangeSetSummary(
     Guid Id,
@@ -63,6 +90,11 @@ public sealed record ChangeSetDetail(ChangeSetSummary ChangeSet, IReadOnlyList<C
 /// <summary>Configuration reads and change-set workflow (internal host only). Every edit goes through a change set.</summary>
 internal static class AdminEndpoints
 {
+    /// <summary>Most items a package may carry, whether exported, checked or imported.</summary>
+    internal const int MaxPackageItems = 2000;
+
+    private static readonly string[] SnapshotOnly = ["code", "owner"];
+
     public static void Map(RouteGroupBuilder group)
     {
         var admin = group.MapGroup("/admin").AddEndpointFilter(AppsControlFilters.Errors);
@@ -114,6 +146,78 @@ internal static class AdminEndpoints
             };
             return counts is null ? Results.NotFound() : Results.Ok(counts);
         }).WithName("CountConfigurationChildren");
+
+        // Configuration packages out of an environment: rows as payloads keyed by code, ready to import elsewhere.
+        admin.MapPost("/export", async (ExportRequest request, IEnumerable<IConfigApplier> appliers, AccessResolver resolver, TimeProvider clock, CancellationToken ct) =>
+        {
+            if (request.Types is not { Count: > 0 })
+            {
+                return Results.ValidationProblem(new Dictionary<string, string[]> { ["types"] = ["Choose at least one type."] });
+            }
+
+            var access = await resolver.GetAsync(ct);
+            var items = new List<ExportedItem>();
+            var seen = new HashSet<(string, string)>();
+            var missing = new List<string>();
+            foreach (var selection in request.Types)
+            {
+                var applier = Find(appliers, selection.EntityType ?? string.Empty);
+                if (applier is null)
+                {
+                    return Results.ValidationProblem(new Dictionary<string, string[]> { ["types"] = [$"Unknown entity type '{selection.EntityType}'."] });
+                }
+
+                if (!access.Can(applier.ResourceCode, PrivilegeActions.View))
+                {
+                    return Forbidden(applier.ResourceCode, PrivilegeActions.View);
+                }
+
+                IEnumerable<JsonElement> rows;
+                if (selection.Codes is null)
+                {
+                    rows = (await applier.ExportAsync(ct)).Where(r => request.IncludeSystem || !IsSystem(r));
+                }
+                else
+                {
+                    var picked = new List<JsonElement>();
+                    foreach (var code in selection.Codes.Distinct(StringComparer.Ordinal))
+                    {
+                        if (await applier.GetAsync(code, ct) is { } row)
+                        {
+                            picked.Add(row);
+                        }
+                        else
+                        {
+                            missing.Add($"{applier.EntityType} {code}");
+                        }
+                    }
+
+                    rows = picked;
+                }
+
+                foreach (var row in rows)
+                {
+                    var code = row.TryGetProperty("code", out var c) ? c.GetString() ?? string.Empty : string.Empty;
+                    if (seen.Add((applier.EntityType, code)))
+                    {
+                        items.Add(new ExportedItem(applier.EntityType, code, "UPSERT", Without(row, SnapshotOnly)));
+                    }
+                }
+            }
+
+            if (missing.Count > 0)
+            {
+                return Results.ValidationProblem(new Dictionary<string, string[]> { ["codes"] = missing.Select(m => $"{m} does not exist.").ToArray() });
+            }
+
+            if (items.Count > MaxPackageItems)
+            {
+                return Results.ValidationProblem(new Dictionary<string, string[]> { ["types"] = [$"{items.Count} rows; a package carries at most {MaxPackageItems}. Export fewer types."] });
+            }
+
+            var title = string.IsNullOrWhiteSpace(request.Title) ? "Exported configuration" : request.Title.Trim();
+            return Results.Ok(new ExportedPackage(title, clock.GetUtcNow(), items));
+        }).WithName("ExportConfiguration");
 
         admin.MapGet("/{type}", async (string type, string? parent, IEnumerable<IConfigApplier> appliers, AccessResolver resolver, AppsControlDbContext db, CancellationToken ct) =>
         {
@@ -241,18 +345,31 @@ internal static class AdminEndpoints
         // Configuration packages (e.g. a ready-made connector set): drafted per area, then submitted and approved as usual.
         sets.MapPost("/import", async (ImportPackageRequest request, ChangeSetRouter router, AccessResolver resolver, AppsControlDbContext db, ICurrentUser user, CancellationToken ct) =>
         {
-            if (string.IsNullOrWhiteSpace(request.Title) || request.Items is not { Count: > 0 and <= 500 })
+            if (string.IsNullOrWhiteSpace(request.Title) || request.Items is not { Count: > 0 and <= MaxPackageItems })
             {
-                return Results.ValidationProblem(new Dictionary<string, string[]> { ["items"] = ["Give a title and 1 to 500 items."] });
+                return Results.ValidationProblem(new Dictionary<string, string[]> { ["items"] = [$"Give a title and 1 to {MaxPackageItems} items."] });
             }
 
             var prepared = new List<(IConfigApplier Applier, AddChangeItemRequest Item, string? Payload)>();
-            foreach (var item in request.Items)
+            foreach (var entry in request.Items)
             {
+                var code = entry.EntityCode?.Trim() ?? string.Empty;
+                var current = Find(router.Appliers, entry.EntityType ?? string.Empty) is { } target && code.Length > 0 ? await target.GetAsync(code, ct) : null;
+                if (!TryResolveOperation(entry.Operation, current is not null, out var operation))
+                {
+                    return Results.ValidationProblem(new Dictionary<string, string[]> { ["operation"] = [$"{entry.EntityType} {code}: use CREATE, UPDATE, DELETE or UPSERT."] });
+                }
+
+                var item = new AddChangeItemRequest(entry.EntityType ?? string.Empty, code, operation, entry.Payload);
                 var (applier, payload, problem) = await AuthorizeChangeAsync(item, router.Appliers, resolver, ct);
                 if (problem is not null)
                 {
                     return problem;
+                }
+
+                if (operation == ChangeOperation.Update && Unchanged(applier!, code, payload, current, out _))
+                {
+                    continue;
                 }
 
                 prepared.Add((applier!, item, payload));
@@ -447,9 +564,9 @@ internal static class AdminEndpoints
         }
 
         var items = package.TryGetProperty("items", out var i) && i.ValueKind == JsonValueKind.Array ? i.EnumerateArray().ToList() : null;
-        if (items is not { Count: > 0 and <= 500 })
+        if (items is not { Count: > 0 and <= MaxPackageItems })
         {
-            errors["items"] = ["Give 1 to 500 items."];
+            errors["items"] = [$"Give 1 to {MaxPackageItems} items."];
             items ??= [];
         }
 
@@ -457,7 +574,7 @@ internal static class AdminEndpoints
         await using (var work = await unitOfWork.BeginAsync(ct))
         {
             var drafts = new Dictionary<string, (IChangeSetWorkflow Workflow, Guid Id)>(StringComparer.Ordinal);
-            for (var index = 0; index < Math.Min(items.Count, 500); index++)
+            for (var index = 0; index < Math.Min(items.Count, MaxPackageItems); index++)
             {
                 results.Add(await CheckItemAsync(index, items[index], title ?? "check", drafts, router, resolver, ct));
             }
@@ -476,12 +593,14 @@ internal static class AdminEndpoints
         var entityCode = Text("entityCode")?.Trim();
         var operationText = Text("operation");
         JsonElement? payload = item.ValueKind == JsonValueKind.Object && item.TryGetProperty("payload", out var p) ? p.Clone() : null;
-        PackageItemCheck Result(string? area, bool exists, Dictionary<string, string[]> errors) =>
-            new(index, entityType, entityCode, operationText, area, exists, payload, errors);
+        JsonElement? current = null;
+        JsonElement? incoming = null;
+        PackageItemCheck Result(string? area, Dictionary<string, string[]> errors, bool unchanged = false) =>
+            new(index, entityType, entityCode, operationText, area, current is not null, payload, errors, unchanged, current, incoming);
 
         if (item.ValueKind != JsonValueKind.Object)
         {
-            return Result(null, false, new() { ["item"] = ["Each item is an object with entityType, entityCode, operation and payload."] });
+            return Result(null, new() { ["item"] = ["Each item is an object with entityType, entityCode, operation and payload."] });
         }
 
         var problems = new Dictionary<string, string[]>();
@@ -490,9 +609,19 @@ internal static class AdminEndpoints
             problems["entityCode"] = ["Required."];
         }
 
-        if (!Enum.TryParse<ChangeOperation>(operationText, ignoreCase: true, out var operation) || int.TryParse(operationText, out _))
+        var target = Find(router.Appliers, entityType ?? string.Empty);
+        if (target is not null && !string.IsNullOrEmpty(entityCode))
         {
-            problems["operation"] = ["Use CREATE, UPDATE or DELETE."];
+            current = await target.GetAsync(entityCode, ct);
+        }
+
+        if (TryResolveOperation(operationText, current is not null, out var operation))
+        {
+            operationText = operation.ToString().ToUpperInvariant();
+        }
+        else
+        {
+            problems["operation"] = ["Use CREATE, UPDATE, DELETE or UPSERT."];
         }
 
         var (applier, body, error) = await CheckChangeAccessAsync(entityType, operation, payload, router.Appliers, resolver, ct);
@@ -506,10 +635,16 @@ internal static class AdminEndpoints
             problems["payload"] = ["Required for CREATE and UPDATE."];
         }
 
-        var exists = applier is not null && !string.IsNullOrEmpty(entityCode) && await applier.GetAsync(entityCode, ct) is not null;
+        var unchanged = applier is not null && !string.IsNullOrEmpty(entityCode) && Unchanged(applier, entityCode, body, current, out incoming)
+            && operation == ChangeOperation.Update;
         if (problems.Count > 0 || applier is null)
         {
-            return Result(applier?.Area, exists, problems);
+            return Result(applier?.Area, problems);
+        }
+
+        if (unchanged)
+        {
+            return Result(applier.Area, problems, unchanged: true);
         }
 
         if (!drafts.TryGetValue(applier.Area, out var draft))
@@ -525,14 +660,52 @@ internal static class AdminEndpoints
         }
         catch (ChangeValidationException ex)
         {
-            return Result(applier.Area, exists, ex.Errors.ToDictionary(e => e.Key, e => e.Value.ToArray()));
+            return Result(applier.Area, ex.Errors.ToDictionary(e => e.Key, e => e.Value.ToArray()));
         }
         catch (ChangeSetException ex)
         {
-            return Result(applier.Area, exists, new() { ["item"] = [ex.Message] });
+            return Result(applier.Area, new() { ["item"] = [ex.Message] });
         }
 
-        return Result(applier.Area, exists, problems);
+        return Result(applier.Area, problems);
+    }
+
+    /// <summary>CREATE, UPDATE or DELETE as given; UPSERT, or no operation, by whether the row exists.</summary>
+    private static bool TryResolveOperation(string? text, bool exists, out ChangeOperation operation)
+    {
+        if (string.IsNullOrWhiteSpace(text) || string.Equals(text, "UPSERT", StringComparison.OrdinalIgnoreCase))
+        {
+            operation = exists ? ChangeOperation.Update : ChangeOperation.Create;
+            return true;
+        }
+
+        return Enum.TryParse(text, ignoreCase: true, out operation) && !int.TryParse(text, out _);
+    }
+
+    /// <summary>Whether an update would leave the row as it is: the payload, read as the type reads it, equals the row.</summary>
+    private static bool Unchanged(IConfigApplier applier, string entityCode, string? payload, JsonElement? current, out JsonElement? incoming)
+    {
+        incoming = payload is null ? null : applier.Normalize(entityCode, payload);
+        return incoming is { } next && current is { } now && JsonElement.DeepEquals(Without(next, SnapshotOnly), Without(now, SnapshotOnly));
+    }
+
+    private static bool IsSystem(JsonElement row) =>
+        row.TryGetProperty("owner", out var owner) && owner.ValueKind == JsonValueKind.String && owner.GetString() == "SYSTEM";
+
+    private static JsonElement Without(JsonElement row, string[] names)
+    {
+        if (row.ValueKind != JsonValueKind.Object || !names.Any(n => row.TryGetProperty(n, out _)))
+        {
+            return row;
+        }
+
+        var node = System.Text.Json.Nodes.JsonObject.Create(row)!;
+        foreach (var name in names)
+        {
+            node.Remove(name);
+        }
+
+        return JsonSerializer.SerializeToElement(node);
     }
 
     private static IConfigApplier? Find(IEnumerable<IConfigApplier> appliers, string type) =>

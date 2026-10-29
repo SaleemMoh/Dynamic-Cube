@@ -116,6 +116,10 @@ internal sealed partial class WorkflowVersionApplier(WorkflowDbContext db, JsonL
     protected override IQueryable<WorkflowVersion> ListQuery(WorkflowDbContext context, string? parent) =>
         (parent is null ? Query(context) : Query(context).Where(v => v.Workflow!.Code == parent)).OrderBy(v => v.Workflow!.Code).ThenByDescending(v => v.Number);
 
+    // Oldest first: a package creates versions in number order.
+    protected override IQueryable<WorkflowVersion> ExportQuery(WorkflowDbContext context) =>
+        Query(context).OrderBy(v => v.Workflow!.Code).ThenBy(v => v.Number);
+
     protected override async Task ApplyAsync(WorkflowVersion entity, WorkflowVersionPayload payload, ConfigRefs<WorkflowDbContext> refs, ValidationErrors errors, WorkflowVersion? existing, CancellationToken cancellationToken)
     {
         var (workflowCode, number) = Parse(entity.Code);

@@ -31,6 +31,8 @@ internal sealed class ResourceApplier(AppsControlDbContext db) : ConfigApplier<R
     protected override IQueryable<Resource> ListQuery(AppsControlDbContext context, string? parent) =>
         (parent is null ? Query(context) : Query(context).Where(r => r.App!.Code == parent)).OrderBy(r => r.Code);
 
+    protected override Guid? ParentOf(Resource entity) => entity.ParentId;
+
     protected override async Task ApplyAsync(Resource entity, ResourcePayload payload, RefResolver refs, ValidationErrors errors, Resource? existing, CancellationToken cancellationToken)
     {
         var appId = await refs.AppAsync(payload.AppCode, "appCode", errors, cancellationToken);

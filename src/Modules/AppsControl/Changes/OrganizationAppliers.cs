@@ -69,6 +69,8 @@ internal sealed class OrgUnitApplier(AppsControlDbContext db) : ConfigApplier<Or
     protected override IQueryable<OrgUnit> ListQuery(AppsControlDbContext context, string? parent) =>
         (parent is null ? Query(context) : Query(context).Where(u => u.Parent!.Code == parent)).OrderBy(u => u.Path);
 
+    protected override Guid? ParentOf(OrgUnit entity) => entity.ParentId;
+
     protected override async Task ApplyAsync(OrgUnit entity, OrgUnitPayload payload, RefResolver refs, ValidationErrors errors, OrgUnit? existing, CancellationToken cancellationToken)
     {
         var context = refs.Context;

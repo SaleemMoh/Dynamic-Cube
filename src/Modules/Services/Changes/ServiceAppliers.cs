@@ -344,6 +344,10 @@ internal sealed partial class ServiceVersionApplier(ServicesDbContext db, JsonLo
     protected override IQueryable<ServiceVersion> ListQuery(ServicesDbContext context, string? parent) =>
         (parent is null ? Query(context) : Query(context).Where(v => v.Service!.Code == parent)).OrderBy(v => v.Service!.Code).ThenByDescending(v => v.Number);
 
+    // Oldest first: a package creates versions in number order.
+    protected override IQueryable<ServiceVersion> ExportQuery(ServicesDbContext context) =>
+        Query(context).OrderBy(v => v.Service!.Code).ThenBy(v => v.Number);
+
     protected override async Task ApplyAsync(ServiceVersion entity, ServiceVersionPayload payload, ConfigRefs<ServicesDbContext> refs, ValidationErrors errors, ServiceVersion? existing, CancellationToken cancellationToken)
     {
         var (serviceCode, number) = Parse(entity.Code);
