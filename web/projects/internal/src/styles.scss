@@ -274,6 +274,16 @@ textarea:not(.mat-mdc-input-element):focus-visible,
     padding-block-end: 12px;
     border-bottom: 1px solid var(--dga-gray-200);
   }
+
+  /*
+   * Room between the content and the title / actions hairlines: Material drops the top padding under a title and the
+   * bottom one above actions, which glues the first fields (and their floating labels) to the lines.
+   */
+  --mat-dialog-with-actions-content-padding: 16px 24px;
+
+  .mat-mdc-dialog-surface .mat-mdc-dialog-title + .mat-mdc-dialog-content {
+    padding-top: 16px;
+  }
 }
 
 /* Dialog actions: a hairline above, at the end, primary last. */

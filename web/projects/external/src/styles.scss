@@ -261,6 +261,11 @@
   font-weight: 700;
 }
 
+/* Material drops the content's top padding under a title, which clips the first field's floating label. */
+.mat-mdc-dialog-container .mat-mdc-dialog-surface .mat-mdc-dialog-title + .mat-mdc-dialog-content {
+  padding-top: 8px;
+}
+
 /* Related services: a light green band across the page. */
 .dc-related {
   margin: 40px calc(50% - 50vw) 0;

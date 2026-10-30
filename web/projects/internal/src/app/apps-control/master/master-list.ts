@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, afterRenderEffect, computed, inject, input, output, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -195,4 +195,16 @@ export class MasterList {
     const term = this.search().trim().toLowerCase();
     return term ? this.items().filter((i) => `${i.code} ${i.title.ar} ${i.title.en}`.toLowerCase().includes(term)) : this.items();
   });
+
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  constructor() {
+    // The chosen row stays in sight when the list (re)loads, e.g. after opening a row far down the list.
+    afterRenderEffect(() => {
+      const code = this.selected();
+      if (!code || !this.filtered().some((i) => i.code === code)) return;
+      const row = this.host.nativeElement.querySelector<HTMLElement>(`[data-testid="master-item-${CSS.escape(code)}"]`);
+      row?.scrollIntoView({ block: 'nearest' });
+    });
+  }
 }

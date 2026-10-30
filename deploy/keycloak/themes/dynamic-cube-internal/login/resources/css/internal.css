@@ -93,6 +93,15 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--dc-brand) 35%, transparent);
 }
 
+.pf-v5-c-input-group:focus-within .pf-v5-c-button.pf-m-control {
+  border-color: var(--dc-brand);
+}
+
+/* The show/hide button keeps its own ring only when reached by keyboard. */
+.pf-v5-c-input-group__item .pf-v5-c-button.pf-m-control:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--dc-brand) 35%, transparent);
+}
+
 .pf-v5-c-form-control > input,
 .pf-v5-c-form-control > select {
   font-size: 14px;
@@ -118,6 +127,11 @@ select:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--dc-brand) 35%, transparent);
   border-radius: 8px;
+}
+
+.pf-v5-c-form-control > input:focus-visible,
+.pf-v5-c-form-control > select:focus-visible {
+  box-shadow: none;
 }
 
 .pf-v5-c-login__main-footer-band,

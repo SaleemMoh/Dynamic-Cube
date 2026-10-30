@@ -187,8 +187,40 @@ button {
 }
 
 .pf-v5-c-input-group__item .pf-v5-c-button.pf-m-control {
+  min-height: 40px;
   border: 1px solid var(--dga-input-border);
   border-radius: 4px;
+  background: #ffffff;
+  color: var(--dga-gray-600, #4d5761);
+}
+
+/* PatternFly's dark bottom line on control buttons is replaced by the plain border above. */
+.pf-v5-c-input-group__item .pf-v5-c-button.pf-m-control::after {
+  border: 0 !important;
+}
+
+/* The password field and its show/hide button read as one field: shared edge, outer corners only. */
+.pf-v5-c-input-group > .pf-v5-c-input-group__item:not(:last-child) .pf-v5-c-form-control {
+  border-start-end-radius: 0;
+  border-end-end-radius: 0;
+}
+
+.pf-v5-c-input-group > .pf-v5-c-input-group__item:last-child .pf-v5-c-button.pf-m-control {
+  margin-inline-start: -1px;
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+}
+
+.pf-v5-c-input-group:focus-within .pf-v5-c-button.pf-m-control {
+  border-color: var(--dga-green-700);
+}
+
+/* The ring goes on the field's frame only; the input inside it gets none of its own (no ring within a ring). */
+.pf-v5-c-form-control > input:focus,
+.pf-v5-c-form-control > input:focus-visible,
+.pf-v5-c-form-control > select:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 
 a:focus-visible,

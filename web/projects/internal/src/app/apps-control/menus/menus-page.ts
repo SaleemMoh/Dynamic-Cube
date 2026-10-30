@@ -131,7 +131,7 @@ export function buildMenuTree(groups: ConfigRow[], menus: ConfigRow[]): MenuTree
         }
       </ul>
     }
-    <section class="dc-panel" data-testid="menu-tree">
+    <section class="dc-panel dc-menu-panel" data-testid="menu-tree">
       <div class="dc-tree__toolbar">
         <mat-form-field subscriptSizing="dynamic" class="dc-tree__choice">
           <mat-label>{{ 'menus.tree' | dcTranslate }}</mat-label>
@@ -189,6 +189,10 @@ export function buildMenuTree(groups: ConfigRow[], menus: ConfigRow[]): MenuTree
         <mat-progress-bar mode="indeterminate" />
       }
       @if (nodes().length) {
+        <p class="dc-tree__legend dc-muted">
+          <mat-icon fontSet="material-symbols-outlined">lock</mat-icon
+          >{{ 'menus.lockedLegend' | dcTranslate }}
+        </p>
         <ul class="dc-tree" role="tree">
           @for (node of nodes(); track node.row.code; let i = $index) {
             <ng-container
@@ -255,6 +259,16 @@ export function buildMenuTree(groups: ConfigRow[], menus: ConfigRow[]): MenuTree
             <span class="dc-pill">{{
               (node.row.isActive ? 'menus.hidden' : 'config.inactive') | dcTranslate
             }}</span>
+          }
+          @if (lockReason(node); as reason) {
+            <mat-icon
+              fontSet="material-symbols-outlined"
+              class="dc-tree__lock"
+              [matTooltip]="reason | dcTranslate"
+              [attr.aria-label]="reason | dcTranslate"
+              [attr.data-testid]="'menu-locked-' + node.row.code"
+              >lock</mat-icon
+            >
           }
           <span class="dc-tree__actions">
             @if (privileges.can(resource, 'CREATE')) {
@@ -337,6 +351,23 @@ export function buildMenuTree(groups: ConfigRow[], menus: ConfigRow[]): MenuTree
     </ng-template>
   `,
   styles: `
+    .dc-menu-panel {
+      padding: 16px 20px 20px;
+    }
+    .dc-tree__legend {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin: 0 0 8px;
+      font-size: 13px;
+    }
+    .dc-tree__legend mat-icon,
+    .dc-tree__lock {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      color: var(--dga-gray-500);
+    }
     .dc-tree__toolbar {
       display: flex;
       flex-wrap: wrap;
@@ -357,7 +388,7 @@ export function buildMenuTree(groups: ConfigRow[], menus: ConfigRow[]): MenuTree
       list-style: none;
     }
     .dc-tree {
-      padding: 8px;
+      padding: 8px 12px;
       border-radius: var(--shell-radius);
       background: var(--dga-gray-50);
     }
@@ -509,6 +540,12 @@ export class MenusPage {
 
   protected editable(node: MenuTreeNode): boolean {
     return node.row.owner !== 'SYSTEM' && this.privileges.can(RESOURCE, 'EDIT');
+  }
+
+  /** Why a row cannot be changed here (a translation key), or null when it can. */
+  protected lockReason(node: MenuTreeNode): string | null {
+    if (node.row.owner === 'SYSTEM') return 'menus.lockedSystem';
+    return this.privileges.can(RESOURCE, 'EDIT') ? null : 'menus.lockedNoPrivilege';
   }
 
   /** Product rows keep their order; siblings can be reordered when none of them is the product's. */
