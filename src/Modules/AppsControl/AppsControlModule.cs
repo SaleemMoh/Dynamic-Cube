@@ -60,6 +60,8 @@ public static class AppsControlModule
         AddApplier<EntityApplier>(services);
         AddApplier<AppApplier>(services);
         AddApplier<BusinessAppApplier>(services);
+        AddApplier<CompanyApplier>(services);
+        AddApplier<BranchApplier>(services);
         AddApplier<OrgUnitTypeApplier>(services);
         AddApplier<OrgUnitApplier>(services);
         AddApplier<PositionApplier>(services);

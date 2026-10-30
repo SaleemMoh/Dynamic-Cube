@@ -14,6 +14,12 @@ internal sealed class RefResolver(AppsControlDbContext context, ChangeSet? draft
     public Task<Guid?> AppAsync(string? code, string field, ValidationErrors errors, CancellationToken ct) =>
         ResolveAsync(Context.Apps, AppsControlChangeTypes.App, code, field, errors, ct);
 
+    public Task<Guid?> CompanyAsync(string? code, string field, ValidationErrors errors, CancellationToken ct) =>
+        ResolveAsync(Context.Companies, AppsControlChangeTypes.Company, code, field, errors, ct);
+
+    public Task<Guid?> BranchAsync(string? code, string field, ValidationErrors errors, CancellationToken ct) =>
+        ResolveAsync(Context.Branches, AppsControlChangeTypes.Branch, code, field, errors, ct);
+
     public Task<Guid?> OrgUnitTypeAsync(string? code, string field, ValidationErrors errors, CancellationToken ct) =>
         ResolveAsync(Context.OrgUnitTypes, AppsControlChangeTypes.OrgUnitType, code, field, errors, ct);
 

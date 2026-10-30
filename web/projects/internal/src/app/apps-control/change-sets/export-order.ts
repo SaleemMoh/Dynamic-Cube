@@ -13,6 +13,7 @@ export interface RowRef {
 export const BASE_TYPE_ORDER: readonly string[] = [
   'apps.installation',
   'apps.entity',
+  'apps.company',
   'apps.app',
   'apps.org-unit-type',
   'apps.org-unit',
@@ -23,6 +24,7 @@ export const BASE_TYPE_ORDER: readonly string[] = [
   'apps.role',
   'apps.class',
   'apps.domain',
+  'apps.branch',
   'apps.data-object',
   'apps.lov',
   'apps.setting',

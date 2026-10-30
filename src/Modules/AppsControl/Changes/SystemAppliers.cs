@@ -313,7 +313,12 @@ internal sealed partial class EntityApplier(AppsControlDbContext db) : ConfigApp
 
         if (await context.BusinessApps.AnyAsync(a => a.EntityCode == entity.Code, cancellationToken))
         {
-            throw new DynamicCube.Platform.ChangeSets.ChangeSetException($"Entity {entity.Code} still has business apps.");
+            throw new DynamicCube.Platform.ChangeSets.ChangeSetException($"Organization {entity.Code} still has business apps.");
+        }
+
+        if (await context.Companies.AnyAsync(c => c.EntityCode == entity.Code, cancellationToken))
+        {
+            throw new DynamicCube.Platform.ChangeSets.ChangeSetException($"Organization {entity.Code} still has companies; delete them first.");
         }
     }
 }

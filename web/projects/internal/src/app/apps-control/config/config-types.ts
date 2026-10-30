@@ -120,12 +120,12 @@ const actions = ['VIEW', 'CREATE', 'EDIT', 'DELETE', 'APPROVE', 'EXPORT', 'PRINT
 export const CONFIG_SECTIONS: ConfigSection[] = [
   {
     path: 'installation',
-    title: t('النظام والجهة', 'Installation & entity'),
+    title: t('النظام والجهة', 'Installation & organization'),
     resource: 'apps-control.installation',
     types: [
       {
         entityType: 'apps.entity',
-        title: t('الجهات', 'Entities'),
+        title: t('الجهات', 'Organizations'),
         key: 'code',
         scope: 'none',
         columns: ['entityKind'],
@@ -133,11 +133,56 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
           {
             code: 'entityKind',
             type: 'select',
-            label: t('نوع الجهة', 'Entity kind'),
+            label: t('نوع الجهة', 'Organization kind'),
             refDomains: 'ENTITY_KIND',
           },
           { code: 'unifiedNumber', type: 'text', label: t('الرقم الموحد', 'Unified number') },
           { code: 'crNumber', type: 'text', label: t('السجل التجاري', 'CR number') },
+        ],
+      },
+      {
+        entityType: 'apps.company',
+        title: t('الشركات', 'Companies'),
+        key: 'code',
+        scope: 'entity',
+        columns: ['crNumber', 'displayOrder'],
+        fields: [
+          { code: 'crNumber', type: 'text', label: t('السجل التجاري', 'CR number') },
+          { code: 'unifiedNumber', type: 'text', label: t('الرقم الموحد', 'Unified number') },
+          { code: 'vatNumber', type: 'text', label: t('الرقم الضريبي', 'VAT number') },
+          displayOrder,
+        ],
+      },
+      {
+        entityType: 'apps.branch',
+        title: t('الفروع', 'Branches'),
+        key: 'code',
+        scope: 'none',
+        columns: ['companyCode', 'city', 'isDefault'],
+        fields: [
+          {
+            code: 'companyCode',
+            type: 'select',
+            label: t('الشركة', 'Company'),
+            ref: 'apps.company',
+            required: true,
+            lockedOnEdit: true,
+          },
+          {
+            code: 'orgUnitCode',
+            type: 'select',
+            label: t('الوحدة التنظيمية', 'Org unit'),
+            ref: 'apps.org-unit',
+            hint: t('الوحدة التي تُوجَّه إليها مهام طلبات الفرع', 'The unit that handles the branch’s requests'),
+          },
+          { code: 'regionCode', type: 'select', label: t('المنطقة', 'Region'), refDomains: 'REGION' },
+          { code: 'city', type: 'text', label: t('المدينة', 'City') },
+          {
+            code: 'isDefault',
+            type: 'checkbox',
+            label: t('الفرع الافتراضي للشركة', 'Company’s default branch'),
+          },
+          displayOrder,
         ],
       },
       {

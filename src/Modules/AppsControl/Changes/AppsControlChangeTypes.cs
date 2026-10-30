@@ -8,6 +8,8 @@ public static class AppsControlChangeTypes
     public const string Entity = "apps.entity";
     public const string App = "apps.app";
     public const string BusinessApp = "apps.business-app";
+    public const string Company = "apps.company";
+    public const string Branch = "apps.branch";
     public const string OrgUnitType = "apps.org-unit-type";
     public const string OrgUnit = "apps.org-unit";
     public const string Position = "apps.position";

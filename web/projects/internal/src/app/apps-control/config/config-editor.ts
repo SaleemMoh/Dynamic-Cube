@@ -283,8 +283,8 @@ export class ConfigEditor {
     const entity: ConfigField = {
       code: 'entityCode',
       type: 'select',
-      label: { ar: 'الجهة', en: 'Entity' },
-      hint: { ar: 'فارغ: لكل الجهات (مستوى النظام)', en: 'Empty: every entity (system level)' },
+      label: { ar: 'الجهة', en: 'Organization' },
+      hint: { ar: 'فارغ: لكل الجهات (مستوى النظام)', en: 'Empty: every organization (system level)' },
       ref: 'apps.entity',
     };
     const app: ConfigField = {

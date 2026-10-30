@@ -1,6 +1,8 @@
 # ADR-0036: Organizations, companies, branches and apps; one place for a user's access
 
-**Status:** Accepted (approved by the owner; implemented in small steps, each confirmed first). Replaces entities,
+**Status:** Accepted (approved by the owner; implemented in small steps, each confirmed first). Step 1 done: the
+entity is shown as the organization, with companies and branches (`apps.company`, `apps.branch`); the NHC demo data
+uses them. Replaces entities,
 business apps, channel apps and the System / Entity / App levels of [ADR-0031](0031-entities-business-apps-levels.md).
 
 ## Context

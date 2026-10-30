@@ -31,7 +31,10 @@ public sealed class AppsControlSeeder(
         if (!await context.Entities.AnyAsync(e => e.Code == GovernmentEntity.SingletonCode, cancellationToken))
         {
             context.Entities.Add(new GovernmentEntity { Code = GovernmentEntity.SingletonCode, NameAr = "الجهة", NameEn = "Entity" });
+            await context.SaveChangesAsync(cancellationToken);
         }
+
+        await SeedCompaniesAsync(cancellationToken);
 
         // Approval policy rows belong to the entity: added with the product default when missing, never overwritten.
         var areas = await context.ChangeAreas.Select(a => a.Code).ToListAsync(cancellationToken);
@@ -150,6 +153,51 @@ public sealed class AppsControlSeeder(
     /// The modules' classes: SYSTEM-owned with their attributes kept as the product defines them. Their starting values
     /// are added when missing and then belong to the entity (renamed, reordered or deactivated in change sets).
     /// </summary>
+    /// <summary>
+    /// Installations from before companies (ADR-0036) get, once, a company named after each organization with a head
+    /// office as its default branch, so they keep working as a single company and branch. Later companies are added in
+    /// Apps Control.
+    /// </summary>
+    private async Task SeedCompaniesAsync(CancellationToken cancellationToken)
+    {
+        if (await context.Companies.AnyAsync(cancellationToken))
+        {
+            return;
+        }
+
+        foreach (var organization in await context.Entities.ToListAsync(cancellationToken))
+        {
+            var single = organization.Code == GovernmentEntity.SingletonCode;
+            var company = single ? "MAIN" : $"{organization.Code}-MAIN";
+            var branch = single ? "HQ" : $"{organization.Code}-HQ";
+            if (await context.Companies.AnyAsync(c => c.Code == company, cancellationToken) || await context.Branches.AnyAsync(b => b.Code == branch, cancellationToken))
+            {
+                continue;
+            }
+
+            context.Companies.Add(new Company
+            {
+                Code = company,
+                NameAr = organization.NameAr,
+                NameEn = organization.NameEn,
+                EntityCode = organization.Code,
+                CrNumber = organization.CrNumber,
+                UnifiedNumber = organization.UnifiedNumber,
+            });
+            context.Branches.Add(new Branch
+            {
+                Code = branch,
+                NameAr = "المقر الرئيسي",
+                NameEn = "Head office",
+                EntityCode = organization.Code,
+                CompanyCode = company,
+                IsDefault = true,
+            });
+        }
+
+        await context.SaveChangesAsync(cancellationToken);
+    }
+
     private async Task SeedModuleClassesAsync(IReadOnlyList<CatalogClass> definitions, CancellationToken cancellationToken)
     {
         var classes = await UpsertAsync(context.Classes.Include(c => c.Attributes), definitions.Select(c => (c.Code, c.NameAr, c.NameEn, (Action<LookupClass>)(e =>

@@ -62,8 +62,17 @@ Unless stated otherwise every table has:
 **`app`** — `app_type` (`INTERNAL` | `EXTERNAL` | `FIELD` | `OTHER`), `base_url`,
 `display_order`. Examples: `INTERNAL`, `EXTERNAL`, `FIELD`.
 
-**`entity`** (one row) — the government entity: names, `entity_kind` (ministry / authority /
-company — a domain of class `ENTITY_KIND`), `unified_number`, `cr_number`, `logo_file_id`.
+**`entity`** — the organization (screens say *Organization*; ADR-0036): names, `entity_kind` (ministry / authority /
+company — a domain of class `ENTITY_KIND`), `unified_number`, `cr_number`, `logo_file_id`. One row (`ENTITY`) is the
+usual case.
+
+**`company`** (`apps.company`) — a legal entity of an organization (its `entity_code`): names, `cr_number`,
+`unified_number`, `vat_number`, `display_order`. A company with branches cannot be deleted.
+
+**`branch`** (`apps.branch`) — a business unit of a company: `company_code` (fixed once created; the branch takes the
+company's organization), `org_unit_code` (the unit that handles its requests), `region_code` (class `REGION`), `city`,
+`is_default` (one per company; setting it clears the others). Installations from before companies get, once, a
+company `MAIN` named after the organization with a default branch `HQ`.
 
 ## 4.5 Organization structure
 

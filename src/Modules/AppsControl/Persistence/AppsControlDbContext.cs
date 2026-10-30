@@ -19,6 +19,10 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
 
     public DbSet<BusinessApplication> BusinessApps => Set<BusinessApplication>();
 
+    public DbSet<Company> Companies => Set<Company>();
+
+    public DbSet<Branch> Branches => Set<Branch>();
+
     public DbSet<OrgUnitType> OrgUnitTypes => Set<OrgUnitType>();
 
     public DbSet<OrgUnit> OrgUnits => Set<OrgUnit>();
@@ -82,6 +86,20 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
             b.Property(e => e.Icon).HasMaxLength(100);
             b.Property(e => e.DescriptionAr).HasMaxLength(2000);
             b.Property(e => e.DescriptionEn).HasMaxLength(2000);
+        });
+        Config<Company>(modelBuilder, "company", b =>
+        {
+            b.Property(e => e.CrNumber).HasMaxLength(50);
+            b.Property(e => e.UnifiedNumber).HasMaxLength(50);
+            b.Property(e => e.VatNumber).HasMaxLength(50);
+        });
+        Config<Branch>(modelBuilder, "branch", b =>
+        {
+            b.Property(e => e.CompanyCode).HasMaxLength(100);
+            b.Property(e => e.OrgUnitCode).HasMaxLength(100);
+            b.Property(e => e.RegionCode).HasMaxLength(100);
+            b.Property(e => e.City).HasMaxLength(200);
+            b.HasIndex(e => e.CompanyCode);
         });
         Config<GovernmentEntity>(modelBuilder, "entity", b =>
         {
