@@ -1995,6 +1995,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnType("character varying(128)")
                         .HasColumnName("created_by");
 
+                    b.PrimitiveCollection<List<string>>("DefaultRoles")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("default_roles");
+
                     b.Property<DateOnly?>("EffectiveFrom")
                         .HasColumnType("date")
                         .HasColumnName("effective_from");
@@ -2912,11 +2917,57 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.ToTable("user_assignment", "apps");
                 });
 
+            modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.UserPrivilege", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.PrimitiveCollection<List<string>>("Actions")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("actions");
+
+                    b.Property<string>("CompanyCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("company_code");
+
+                    b.Property<Guid>("ResourceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("resource_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_user_privilege");
+
+                    b.HasIndex("ResourceId")
+                        .HasDatabaseName("ix_user_privilege_resource_id");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_user_privilege_user_id");
+
+                    b.ToTable("user_privilege", "apps");
+                });
+
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.UserRole", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
                         .HasColumnName("id");
+
+                    b.PrimitiveCollection<List<string>>("Branches")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("branches");
+
+                    b.Property<string>("CompanyCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("company_code");
 
                     b.Property<DateOnly?>("EffectiveFrom")
                         .HasColumnType("date")
@@ -3538,6 +3589,25 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.Navigation("Position");
                 });
 
+            modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.UserPrivilege", b =>
+                {
+                    b.HasOne("DynamicCube.Modules.AppsControl.Domain.Resource", "Resource")
+                        .WithMany()
+                        .HasForeignKey("ResourceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_privilege_resources_resource_id");
+
+                    b.HasOne("DynamicCube.Modules.AppsControl.Domain.UserAccount", null)
+                        .WithMany("Privileges")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_privilege_user_account_user_id");
+
+                    b.Navigation("Resource");
+                });
+
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.UserRole", b =>
                 {
                     b.HasOne("DynamicCube.Modules.AppsControl.Domain.OrgUnit", "OrgUnit")
@@ -3607,6 +3677,8 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.UserAccount", b =>
                 {
                     b.Navigation("Assignments");
+
+                    b.Navigation("Privileges");
 
                     b.Navigation("Roles");
                 });

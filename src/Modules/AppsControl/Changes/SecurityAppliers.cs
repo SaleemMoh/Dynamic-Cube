@@ -260,6 +260,11 @@ internal sealed class RoleApplier(AppsControlDbContext db, JsonLogicEvaluator ev
         {
             throw new DynamicCube.Platform.ChangeSets.ChangeSetException($"Role '{entity.Code}' is still assigned to users.");
         }
+
+        if (await context.OrgUnits.Where(u => u.DefaultRoles.Contains(entity.Code)).Select(u => u.Code).FirstOrDefaultAsync(cancellationToken) is { } unit)
+        {
+            throw new DynamicCube.Platform.ChangeSets.ChangeSetException($"Role '{entity.Code}' is a default role of department {unit}; remove it there first.");
+        }
     }
 
     private void ValidateRule(JsonNode rule, string field, ValidationErrors errors)
@@ -298,6 +303,23 @@ public sealed class UserRolePayload
     public DateOnly? EffectiveFrom { get; set; }
 
     public DateOnly? EffectiveTo { get; set; }
+
+    /// <summary>The company the role is held in; empty: every company.</summary>
+    public string? CompanyCode { get; set; }
+
+    /// <summary>Branches of that company; empty: all of them.</summary>
+    public List<string> Branches { get; set; } = [];
+}
+
+/// <summary>Actions on a screen given to one person.</summary>
+public sealed class UserPrivilegePayload
+{
+    /// <summary>The company; empty: every company.</summary>
+    public string? CompanyCode { get; set; }
+
+    public string ResourceCode { get; set; } = string.Empty;
+
+    public List<string> Actions { get; set; } = [];
 }
 
 /// <summary>An employee account. The entity code is the username; sign-in links the identity-provider subject.</summary>
@@ -316,6 +338,9 @@ public sealed class UserPayload : ConfigPayload
     public List<AssignmentPayload> Assignments { get; set; } = [];
 
     public List<UserRolePayload> Roles { get; set; } = [];
+
+    /// <summary>Screens and actions of this person alone (personal privileges), by company.</summary>
+    public List<UserPrivilegePayload> Privileges { get; set; } = [];
 }
 
 internal sealed class UserApplier(AppsControlDbContext db) : ConfigApplier<UserAccount, UserPayload>(db)
@@ -334,6 +359,7 @@ internal sealed class UserApplier(AppsControlDbContext db) : ConfigApplier<UserA
             .Include(u => u.Assignments).ThenInclude(a => a.Position)
             .Include(u => u.Roles).ThenInclude(r => r.Role)
             .Include(u => u.Roles).ThenInclude(r => r.OrgUnit)
+            .Include(u => u.Privileges).ThenInclude(p => p.Resource)
             .AsSplitQuery();
 
     /// <summary>A user is listed under the business app they belong to, or the apps of their roles.</summary>
@@ -389,7 +415,9 @@ internal sealed class UserApplier(AppsControlDbContext db) : ConfigApplier<UserA
             });
         }
 
-        ChildSync.RequireUnique(payload.Roles, r => (r.RoleCode, r.OrgUnitCode), "roles", errors);
+        ChildSync.RequireUnique(payload.Roles, r => (r.RoleCode, r.OrgUnitCode, Blank(r.CompanyCode)), "roles", errors);
+        var companies = await refs.Context.Companies.AsNoTracking().Select(c => c.Code).ToListAsync(cancellationToken);
+        var branches = await refs.Context.Branches.AsNoTracking().Select(b => new { b.Code, b.CompanyCode }).ToListAsync(cancellationToken);
         var roles = new List<UserRole>();
         foreach (var (r, i) in payload.Roles.Select((r, i) => (r, i)))
         {
@@ -400,6 +428,9 @@ internal sealed class UserApplier(AppsControlDbContext db) : ConfigApplier<UserA
 
             var roleId = await refs.RoleAsync(r.RoleCode, $"roles[{i}].roleCode", errors, cancellationToken);
             var orgUnitId = await refs.OrgUnitAsync(r.OrgUnitCode, $"roles[{i}].orgUnitCode", errors, cancellationToken);
+            var company = Blank(r.CompanyCode);
+            var roleBranches = r.Branches.Where(b => !string.IsNullOrWhiteSpace(b)).Select(b => b.Trim()).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToList();
+            CheckCompany(company, roleBranches, companies, branches.Select(b => (b.Code, b.CompanyCode)).ToList(), refs, $"roles[{i}]", errors);
             roles.Add(new UserRole
             {
                 UserId = entity.Id,
@@ -407,7 +438,36 @@ internal sealed class UserApplier(AppsControlDbContext db) : ConfigApplier<UserA
                 OrgUnitId = orgUnitId,
                 EffectiveFrom = r.EffectiveFrom,
                 EffectiveTo = r.EffectiveTo,
+                CompanyCode = company,
+                Branches = roleBranches,
             });
+        }
+
+        ChildSync.RequireUnique(payload.Privileges, p => (Blank(p.CompanyCode), p.ResourceCode), "privileges", errors);
+        var privileges = new List<UserPrivilege>();
+        foreach (var (p, i) in payload.Privileges.Select((p, i) => (p, i)))
+        {
+            var field = $"privileges[{i}]";
+            errors.Required(field + ".resourceCode", p.ResourceCode);
+            var resource = await refs.Context.Resources.AsNoTracking().Where(r => r.Code == p.ResourceCode).Select(r => new { r.Id, r.AvailableActions }).SingleOrDefaultAsync(cancellationToken);
+            if (resource is null && !string.IsNullOrWhiteSpace(p.ResourceCode))
+            {
+                errors.Add(field + ".resourceCode", $"'{p.ResourceCode}' is not a screen.");
+            }
+
+            var actions = p.Actions.Where(a => !string.IsNullOrWhiteSpace(a)).Select(a => a.Trim().ToUpperInvariant()).Distinct(StringComparer.Ordinal).ToList();
+            if (actions.Count == 0)
+            {
+                errors.Add(field + ".actions", "Choose at least one action.");
+            }
+            else if (resource is not null && actions.Except(resource.AvailableActions, StringComparer.Ordinal).ToList() is { Count: > 0 } unknown)
+            {
+                errors.Add(field + ".actions", $"{string.Join(", ", unknown)} is not an action of {p.ResourceCode}.");
+            }
+
+            var company = Blank(p.CompanyCode);
+            CheckCompany(company, [], companies, [], refs, field, errors);
+            privileges.Add(new UserPrivilege { UserId = entity.Id, CompanyCode = company, ResourceId = resource?.Id ?? Guid.Empty, Actions = actions });
         }
 
         if (errors.HasErrors || refs.IsValidating)
@@ -422,11 +482,13 @@ internal sealed class UserApplier(AppsControlDbContext db) : ConfigApplier<UserA
             to.EffectiveFrom = from.EffectiveFrom;
             to.EffectiveTo = from.EffectiveTo;
         });
-        ChildSync.Sync(entity.Roles, roles, r => (r.RoleId, r.OrgUnitId), (from, to) =>
+        ChildSync.Sync(entity.Roles, roles, r => (r.RoleId, r.OrgUnitId, r.CompanyCode), (from, to) =>
         {
             to.EffectiveFrom = from.EffectiveFrom;
             to.EffectiveTo = from.EffectiveTo;
+            to.Branches = from.Branches;
         });
+        ChildSync.Sync(entity.Privileges, privileges, p => (p.CompanyCode, p.ResourceId), (from, to) => to.Actions = from.Actions);
     }
 
     protected override Task<UserPayload> ToPayloadAsync(AppsControlDbContext context, UserAccount entity, CancellationToken cancellationToken) =>
@@ -456,7 +518,43 @@ internal sealed class UserApplier(AppsControlDbContext db) : ConfigApplier<UserA
                     OrgUnitCode = r.OrgUnit?.Code,
                     EffectiveFrom = r.EffectiveFrom,
                     EffectiveTo = r.EffectiveTo,
+                    CompanyCode = r.CompanyCode,
+                    Branches = r.Branches,
                 })
                 .ToList(),
+            Privileges = entity.Privileges
+                .OrderBy(p => p.CompanyCode).ThenBy(p => p.Resource?.Code)
+                .Select(p => new UserPrivilegePayload { CompanyCode = p.CompanyCode, ResourceCode = p.Resource?.Code ?? string.Empty, Actions = p.Actions })
+                .ToList(),
         });
+
+    private static string? Blank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    /// <summary>The company must exist (or be created in the same change set); branches need a company and must be its own.</summary>
+    private static void CheckCompany(string? company, List<string> branchCodes, List<string> companies, List<(string Code, string CompanyCode)> branches, RefResolver refs, string field, ValidationErrors errors)
+    {
+        if (company is not null && !companies.Contains(company) && !refs.IsPendingCreate(AppsControlChangeTypes.Company, company))
+        {
+            errors.Add(field + ".companyCode", $"Company '{company}' does not exist.");
+        }
+
+        if (branchCodes.Count > 0 && company is null)
+        {
+            errors.Add(field + ".branches", "Choose the company of the branches.");
+            return;
+        }
+
+        foreach (var code in branchCodes)
+        {
+            var branch = branches.FirstOrDefault(b => b.Code == code);
+            if (branch.Code is null && !refs.IsPendingCreate(AppsControlChangeTypes.Branch, code))
+            {
+                errors.Add(field + ".branches", $"Branch '{code}' does not exist.");
+            }
+            else if (branch.Code is not null && branch.CompanyCode != company)
+            {
+                errors.Add(field + ".branches", $"Branch {code} belongs to company {branch.CompanyCode}, not {company}.");
+            }
+        }
+    }
 }

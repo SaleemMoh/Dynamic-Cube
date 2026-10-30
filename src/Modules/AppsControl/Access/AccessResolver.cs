@@ -80,6 +80,13 @@ public sealed partial class AccessResolver(
                 && (r.EffectiveFrom == null || r.EffectiveFrom <= today) && (r.EffectiveTo == null || r.EffectiveTo >= today))
             .Select(r => new { r.RoleId, r.Role!.Code, r.Role.BusinessApp, r.Role.SharedApps })
             .ToListAsync(cancellationToken);
+
+        // Department default roles: those of the units the user is placed in today (ADR-0036).
+        var departmentCodes = await DepartmentRoles.OfUserAsync(context, user.Id, today, cancellationToken);
+        roles.AddRange(await context.Roles.AsNoTracking()
+            .Where(r => departmentCodes.Contains(r.Code) && r.IsActive && (r.AppId == null || r.AppId == app))
+            .Select(r => new { RoleId = r.Id, r.Code, r.BusinessApp, r.SharedApps })
+            .ToListAsync(cancellationToken));
         var roleIds = roles.Select(r => r.RoleId).Distinct().ToList();
 
         // The user's entity, and the business apps of their roles, shared ones included (every app when a role is not tied to one).
@@ -98,6 +105,12 @@ public sealed partial class AccessResolver(
             .Select(m => m.Menu!.Resource!.Code)
             .ToListAsync(cancellationToken);
         privilegeRows.AddRange(menuScreens.Select(code => new { Code = code, Actions = new List<string> { PrivilegeActions.View } }));
+
+        // Personal privileges: screens and actions given to this person alone.
+        privilegeRows.AddRange(await context.UserPrivileges.AsNoTracking()
+            .Where(p => p.UserId == user.Id && p.Resource!.IsActive)
+            .Select(p => new { p.Resource!.Code, p.Actions })
+            .ToListAsync(cancellationToken));
         var privileges = privilegeRows
             .GroupBy(p => p.Code, StringComparer.Ordinal)
             .ToDictionary(g => g.Key, g => (IReadOnlySet<string>)g.SelectMany(p => p.Actions).ToHashSet(StringComparer.Ordinal), StringComparer.Ordinal);

@@ -35,6 +35,8 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
 
     public DbSet<UserRole> UserRoles => Set<UserRole>();
 
+    public DbSet<UserPrivilege> UserPrivileges => Set<UserPrivilege>();
+
     public DbSet<Resource> Resources => Set<Resource>();
 
     public DbSet<Role> Roles => Set<Role>();
@@ -134,6 +136,7 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
             b.Property(e => e.Attributes).HasColumnType("jsonb");
             b.HasOne(e => e.OrgUnitType).WithMany().HasForeignKey(e => e.OrgUnitTypeId).OnDelete(DeleteBehavior.Restrict);
             b.HasOne(e => e.Parent).WithMany().HasForeignKey(e => e.ParentId).OnDelete(DeleteBehavior.Restrict);
+            b.Property(e => e.DefaultRoles).HasColumnType("text[]");
         });
         Config<Position>(modelBuilder, "position");
 
@@ -161,6 +164,16 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
             b.ToTable("user_role", Schema);
             b.HasOne(e => e.Role).WithMany().HasForeignKey(e => e.RoleId).OnDelete(DeleteBehavior.Restrict);
             b.HasOne(e => e.OrgUnit).WithMany().HasForeignKey(e => e.OrgUnitId).OnDelete(DeleteBehavior.Restrict);
+            b.Property(e => e.CompanyCode).HasMaxLength(100);
+            b.Property(e => e.Branches).HasColumnType("text[]");
+        });
+        modelBuilder.Entity<UserPrivilege>(b =>
+        {
+            b.ToTable("user_privilege", Schema);
+            b.HasOne<UserAccount>().WithMany(u => u.Privileges).HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+            b.HasOne(e => e.Resource).WithMany().HasForeignKey(e => e.ResourceId).OnDelete(DeleteBehavior.Restrict);
+            b.Property(e => e.CompanyCode).HasMaxLength(100);
+            b.Property(e => e.Actions).HasColumnType("text[]");
         });
 
         Config<Resource>(modelBuilder, "resource", b =>

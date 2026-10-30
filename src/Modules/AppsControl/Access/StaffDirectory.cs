@@ -29,8 +29,12 @@ internal sealed class StaffDirectory(AppsControlDbContext context, AccessResolve
         var users = Active();
         if (query.Role is { } role)
         {
+            // Held directly, or as a default role of a unit the user is placed in.
+            var roleActive = context.Roles.Any(r => r.Code == role && r.IsActive);
             users = users.Where(u => context.UserRoles.Any(r => r.UserId == u.Id && r.Role!.Code == role && r.Role.IsActive
-                && (r.EffectiveFrom == null || r.EffectiveFrom <= today) && (r.EffectiveTo == null || r.EffectiveTo >= today)));
+                    && (r.EffectiveFrom == null || r.EffectiveFrom <= today) && (r.EffectiveTo == null || r.EffectiveTo >= today))
+                || (roleActive && context.UserAssignments.Any(a => a.UserId == u.Id && a.OrgUnit!.IsActive && a.OrgUnit.DefaultRoles.Contains(role)
+                    && (a.EffectiveFrom == null || a.EffectiveFrom <= today) && (a.EffectiveTo == null || a.EffectiveTo >= today))));
         }
 
         if (query.OrgUnit is not null || query.Position is not null || query.OrgUnits is not null)
@@ -70,6 +74,9 @@ internal sealed class StaffDirectory(AppsControlDbContext context, AccessResolve
             .Where(r => ids.Contains(r.UserId) && r.Role!.IsActive && (r.EffectiveFrom == null || r.EffectiveFrom <= today) && (r.EffectiveTo == null || r.EffectiveTo >= today))
             .Select(r => new { r.UserId, r.Role!.Code })
             .ToListAsync(cancellationToken);
+        var departments = await DepartmentRoles.OfUsersAsync(context, ids, today, cancellationToken);
+        var activeRoles = departments.Count == 0 ? [] : await context.Roles.AsNoTracking().Where(r => r.IsActive).Select(r => r.Code).ToListAsync(cancellationToken);
+        roles.AddRange(departments.SelectMany(d => d.Value.Where(activeRoles.Contains).Select(code => new { UserId = d.Key, Code = code })));
         var assignments = await context.UserAssignments.AsNoTracking()
             .Where(a => ids.Contains(a.UserId) && (a.EffectiveFrom == null || a.EffectiveFrom <= today) && (a.EffectiveTo == null || a.EffectiveTo >= today))
             .OrderByDescending(a => a.IsPrimary)

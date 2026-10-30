@@ -32,6 +32,12 @@ public sealed class OrgUnit : ConfigEntity
 
     public DateOnly? EffectiveTo { get; set; }
 
+    /// <summary>
+    /// Codes of the roles given to the people placed in this unit (ADR-0036), and taken away when they leave it unless
+    /// given directly. When the unit (or one above it) serves a branch, they are held in that branch.
+    /// </summary>
+    public List<string> DefaultRoles { get; set; } = [];
+
     public static string PathLabel(Guid id) => id.ToString("N");
 }
 

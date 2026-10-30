@@ -53,6 +53,9 @@ public sealed class OrgUnitPayload : ConfigPayload
     public DateOnly? EffectiveFrom { get; set; }
 
     public DateOnly? EffectiveTo { get; set; }
+
+    /// <summary>Codes of the roles given to the people placed in the unit.</summary>
+    public List<string> DefaultRoles { get; set; } = [];
 }
 
 internal sealed class OrgUnitApplier(AppsControlDbContext db) : ConfigApplier<OrgUnit, OrgUnitPayload>(db)
@@ -81,6 +84,14 @@ internal sealed class OrgUnitApplier(AppsControlDbContext db) : ConfigApplier<Or
         {
             errors.Add("effectiveTo", "Must not be before the start date.");
         }
+
+        var defaultRoles = payload.DefaultRoles.Where(r => !string.IsNullOrWhiteSpace(r)).Select(r => r.Trim()).Distinct(StringComparer.Ordinal).ToList();
+        foreach (var role in defaultRoles)
+        {
+            await refs.RoleAsync(role, "defaultRoles", errors, cancellationToken);
+        }
+
+        entity.DefaultRoles = defaultRoles;
 
         if (errors.HasErrors || typeId is null)
         {
@@ -150,6 +161,7 @@ internal sealed class OrgUnitApplier(AppsControlDbContext db) : ConfigApplier<Or
             Attributes = JsonNode.Parse(entity.Attributes) as JsonObject,
             EffectiveFrom = entity.EffectiveFrom,
             EffectiveTo = entity.EffectiveTo,
+            DefaultRoles = entity.DefaultRoles,
         });
 
     protected override async Task BeforeDeleteAsync(AppsControlDbContext context, OrgUnit entity, CancellationToken cancellationToken)
