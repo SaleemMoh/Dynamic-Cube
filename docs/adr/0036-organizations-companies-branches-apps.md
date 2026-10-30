@@ -4,7 +4,10 @@
 entity is shown as the organization, with companies and branches (`apps.company`, `apps.branch`). Step 2 done: business
 apps are *Apps* (`apps.business-app` keeps its name in packages) with a kind, channels, companies and branches; the
 portal offers only the services of apps on the portal channel; the channel apps screen and the Resources menu are hidden.
-Default external roles and connected-app credentials come with connected apps (step 7). The NHC demo data uses all of it. Replaces entities,
+Menus are trees of any depth, edited as a tree per channel or per connected app (each connected app has its own tree;
+a Dynamic Cube app adds items to the channels it ticks). Default external roles and connected-app credentials come with
+connected apps (step 7). The NHC demo data uses all of it. Per-company values of a class (legacy *Company Lookups*:
+a class whose values each belong to a company or to all) are part of step 3. Replaces entities,
 business apps, channel apps and the System / Entity / App levels of [ADR-0031](0031-entities-business-apps-levels.md).
 
 ## Context

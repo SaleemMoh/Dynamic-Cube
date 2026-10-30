@@ -26,17 +26,23 @@ public sealed class MenuService(AppsControlDbContext context)
     {
         ArgumentNullException.ThrowIfNull(access);
 
-        var groups = await context.MenuGroups.AsNoTracking()
+        // A channel's menu: the platform's items and those of the apps the user works in.
+        var groups = (await context.MenuGroups.AsNoTracking()
             .Where(g => g.App!.Code == appCode && g.IsActive)
             .OrderBy(g => g.DisplayOrder).ThenBy(g => g.Code)
-            .ToListAsync(cancellationToken);
+            .ToListAsync(cancellationToken))
+            .Where(g => access.Scope.CanSee(null, g.BusinessApp, g.SharedApps))
+            .ToList();
         var items = await context.Menus.AsNoTracking()
             .Where(m => m.App!.Code == appCode && m.IsActive && m.IsVisible)
             .OrderBy(m => m.DisplayOrder).ThenBy(m => m.Code)
             .Select(m => new { Menu = m, ResourceCode = m.Resource != null ? m.Resource.Code : null })
             .ToListAsync(cancellationToken);
 
-        var visible = items.Where(i => i.ResourceCode is null || access.Can(i.ResourceCode, PrivilegeActions.View)).Select(i => i.Menu).ToList();
+        var visible = items
+            .Where(i => (i.ResourceCode is null || access.Can(i.ResourceCode, PrivilegeActions.View)) && access.Scope.CanSee(null, i.Menu.BusinessApp, i.Menu.SharedApps))
+            .Select(i => i.Menu)
+            .ToList();
 
         IReadOnlyList<MenuNode> Build(Guid? parentId, Guid? groupId) =>
             visible

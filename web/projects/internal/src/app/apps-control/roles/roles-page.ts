@@ -205,7 +205,7 @@ export class RolesPage {
       lovs: this.lists.value().lovs,
       businessApps: this.lists.value().businessApps,
       defaultBusinessApp: this.appContext.current(),
-      menus: menuChoices(this.lists.value().menus, this.lists.value().groups),
+      menus: menuChoices(this.lists.value().menus, this.lists.value().groups, this.lists.value().businessApps),
       readonly: readonly || (role !== null && role.owner === 'SYSTEM'),
     };
     const saved = await firstValueFrom(

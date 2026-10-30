@@ -551,7 +551,7 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
         key: 'code',
         columns: ['appCode', 'groupCode', 'target'],
         fields: [
-          { ...appRef, required: true },
+          { ...appRef, hint: t('فارغ لقوائم التطبيق المرتبط', 'Empty for a connected app’s menus') },
           {
             code: 'groupCode',
             type: 'select',
@@ -604,7 +604,11 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
         title: t('مجموعات القوائم', 'Menu groups'),
         key: 'code',
         columns: ['appCode'],
-        fields: [{ ...appRef, required: true }, displayOrder, { code: 'icon', type: 'icon', label: t('الأيقونة', 'Icon') }],
+        fields: [
+          { ...appRef, hint: t('فارغ لقوائم التطبيق المرتبط', 'Empty for a connected app’s menus') },
+          displayOrder,
+          { code: 'icon', type: 'icon', label: t('الأيقونة', 'Icon') },
+        ],
       },
     ],
   },

@@ -1,36 +1,101 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+  untracked,
+} from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router } from '@angular/router';
-import { AppsControlApi, ConfigRow, I18nService, LocalizePipe, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
-import { firstValueFrom } from 'rxjs';
+import {
+  AppsControlApi,
+  ConfigRow,
+  I18nService,
+  LocalizePipe,
+  TranslatePipe,
+  problemMessages,
+} from '@dynamic-cube/shared';
+import { catchError, firstValueFrom, forkJoin, of } from 'rxjs';
 import { ConfigEditor, ConfigEditorData } from '../config/config-editor';
 import { CONFIG_SECTIONS, ConfigType } from '../config/config-types';
 import { ConfirmData, ConfirmDialog } from '../confirm-dialog';
 import { DraftsService } from '../drafts.service';
 import { DetailsDialog, detailsOf } from '../master/details-dialog';
-import { MasterItem, MasterList } from '../master/master-list';
 import { PrivilegesService } from '../privileges.service';
 import { ExportButton } from '../change-sets/export-button';
 import { JsonImportButton } from '../change-sets/json-import-button';
 
 const RESOURCE = 'apps-control.menus';
-/** Pseudo group for menus that belong to no group. */
-const UNGROUPED = '_';
+const DEFAULT_TREE = 'INTERNAL';
 
 const types = CONFIG_SECTIONS.find((s) => s.path === 'menus')!.types;
 const MENU: ConfigType = types.find((t) => t.entityType === 'apps.menu')!;
 const GROUP: ConfigType = types.find((t) => t.entityType === 'apps.menu-group')!;
 
-/** Menu groups on the start side (with how many menus each holds); the chosen group's menus on the end side. */
+/** A node of the tree: a group (first level) or an item, with the items under it. */
+export interface MenuTreeNode {
+  row: ConfigRow;
+  group: boolean;
+  children: MenuTreeNode[];
+}
+
+/** A tree to edit: a channel's (the platform's screens and app items) or a connected app's. */
+interface TreeChoice {
+  code: string;
+  name: { ar: string; en: string };
+  connected: boolean;
+}
+
+const order = (r: ConfigRow) => Number(r['displayOrder'] ?? 0);
+const byOrder = (a: ConfigRow, b: ConfigRow) => order(a) - order(b) || a.code.localeCompare(b.code);
+
+/** Groups with their items, items under their parents at any depth; items without a group or parent come last. */
+export function buildMenuTree(groups: ConfigRow[], menus: ConfigRow[]): MenuTreeNode[] {
+  const codes = new Set(menus.map((m) => m.code));
+  const itemsUnder = (parent: string): MenuTreeNode[] =>
+    menus
+      .filter((m) => m['parentCode'] === parent)
+      .sort(byOrder)
+      .map((m) => ({ row: m, group: false, children: itemsUnder(m.code) }));
+  const tops = (group: string | null) =>
+    menus
+      .filter(
+        (m) =>
+          !(m['parentCode'] && codes.has(m['parentCode'] as string)) &&
+          ((m['groupCode'] as string | null) ?? null) === group,
+      )
+      .sort(byOrder)
+      .map((m) => ({ row: m, group: false, children: itemsUnder(m.code) }));
+  const known = new Set(groups.map((g) => g.code));
+  const loose = menus
+    .filter(
+      (m) =>
+        !(m['parentCode'] && codes.has(m['parentCode'] as string)) &&
+        (!m['groupCode'] || !known.has(m['groupCode'] as string)),
+    )
+    .sort(byOrder)
+    .map((m) => ({ row: m, group: false, children: itemsUnder(m.code) }));
+  return [
+    ...[...groups].sort(byOrder).map((g) => ({ row: g, group: true, children: tops(g.code) })),
+    ...loose,
+  ];
+}
+
+/**
+ * Menus as trees, like the side menu shows them: pick a channel (the platform's screens, with the items Dynamic Cube apps
+ * add) or a connected app (its own tree), then add groups, items under items at any depth, reorder and edit.
+ */
 @Component({
   selector: 'dc-menus-page',
   imports: [
@@ -39,12 +104,10 @@ const GROUP: ConfigType = types.find((t) => t.entityType === 'apps.menu-group')!
     MatButtonModule,
     MatFormFieldModule,
     MatIconModule,
-    MatInputModule,
     MatProgressBarModule,
-    MatSortModule,
-    MatTableModule,
+    MatSelectModule,
     MatTooltipModule,
-    MasterList,
+    NgTemplateOutlet,
     LocalizePipe,
     TranslatePipe,
   ],
@@ -56,7 +119,10 @@ const GROUP: ConfigType = types.find((t) => t.entityType === 'apps.menu-group')!
         <p>{{ 'menus.hint' | dcTranslate }}</p>
       </div>
       <dc-export-button entityType="apps.menu" [title]="{ ar: 'القوائم', en: 'Menus' }" />
-      <dc-json-import-button [title]="{ ar: 'القوائم', en: 'Menus' }" [target]="{ entityType: 'apps.menu-group', key: 'code' }" />
+      <dc-json-import-button
+        [title]="{ ar: 'القوائم', en: 'Menus' }"
+        [target]="{ entityType: 'apps.menu', key: 'code' }"
+      />
     </header>
     @if (errors().length) {
       <ul class="dc-errors" role="alert">
@@ -65,145 +131,280 @@ const GROUP: ConfigType = types.find((t) => t.entityType === 'apps.menu-group')!
         }
       </ul>
     }
-    <div class="dc-split">
-      <dc-master-list
-        testId="menu-groups"
-        [title]="{ ar: 'مجموعات القوائم', en: 'Menu groups' }"
-        [addLabel]="{ ar: 'إضافة مجموعة', en: 'Add group' }"
-        [items]="items()"
-        [selected]="selected()"
-        [canCreate]="privileges.can(resource, 'CREATE')"
-        (selectItem)="select($event)"
-        (view)="viewGroup($event)"
-        (edit)="editGroup($event)"
-        (remove)="remove(group, $event)"
-        (add)="editGroup(null)"
-      />
-
-      <section class="dc-panel" data-testid="menus-panel">
-        @if (selected(); as code) {
-          <header class="dc-panel__header">
-            <div>
-              <h2>
-                {{ selectedTitle() | dcLocalize }}
-                <span class="dc-count" data-testid="menus-count">{{ groupMenus().length }}</span>
-              </h2>
-              @if (code !== ungrouped) {
-                <span class="mono">{{ code }}</span>
+    <section class="dc-panel" data-testid="menu-tree">
+      <div class="dc-tree__toolbar">
+        <mat-form-field subscriptSizing="dynamic" class="dc-tree__choice">
+          <mat-label>{{ 'menus.tree' | dcTranslate }}</mat-label>
+          <mat-select
+            [value]="tree()"
+            (selectionChange)="choose($event.value)"
+            data-testid="menu-tree-choice"
+          >
+            <mat-optgroup [label]="'menus.channels' | dcTranslate">
+              @for (choice of channels(); track choice.code) {
+                <mat-option [value]="choice.code">{{ choice.name | dcLocalize }}</mat-option>
               }
-            </div>
+            </mat-optgroup>
+            @if (connectedApps().length) {
+              <mat-optgroup [label]="'menus.connectedApps' | dcTranslate">
+                @for (choice of connectedApps(); track choice.code) {
+                  <mat-option [value]="choice.code">{{ choice.name | dcLocalize }}</mat-option>
+                }
+              </mat-optgroup>
+            }
+          </mat-select>
+        </mat-form-field>
+        <span class="dc-spacer"></span>
+        <button
+          matButton="outlined"
+          type="button"
+          (click)="expandAll()"
+          data-testid="menu-expand-all"
+        >
+          <mat-icon fontSet="material-symbols-outlined">unfold_more</mat-icon
+          >{{ 'menus.expandAll' | dcTranslate }}
+        </button>
+        <button
+          matButton="outlined"
+          type="button"
+          (click)="collapseAll()"
+          data-testid="menu-collapse-all"
+        >
+          <mat-icon fontSet="material-symbols-outlined">unfold_less</mat-icon
+          >{{ 'menus.collapseAll' | dcTranslate }}
+        </button>
+        @if (privileges.can(resource, 'CREATE')) {
+          <button
+            matButton="filled"
+            type="button"
+            (click)="addGroup()"
+            data-testid="menu-add-group"
+          >
+            <mat-icon fontSet="material-symbols-outlined">create_new_folder</mat-icon
+            >{{ 'menus.addGroup' | dcTranslate }}
+          </button>
+        }
+      </div>
+      @if (data.isLoading()) {
+        <mat-progress-bar mode="indeterminate" />
+      }
+      @if (nodes().length) {
+        <ul class="dc-tree" role="tree">
+          @for (node of nodes(); track node.row.code; let i = $index) {
+            <ng-container
+              *ngTemplateOutlet="
+                branch;
+                context: { $implicit: node, siblings: nodes(), index: i, depth: 0 }
+              "
+            />
+          }
+        </ul>
+      } @else if (!data.isLoading()) {
+        <p class="dc-empty">{{ 'menus.noTree' | dcTranslate }}</p>
+      }
+    </section>
+
+    <ng-template #branch let-node let-siblings="siblings" let-index="index" let-depth="depth">
+      <li
+        role="treeitem"
+        aria-selected="false"
+        [attr.aria-expanded]="node.children.length ? isOpen(node) : null"
+      >
+        <div
+          class="dc-tree__row"
+          [style.padding-inline-start.px]="depth * 24"
+          [attr.data-testid]="'menu-node-' + node.row.code"
+        >
+          @if (node.children.length) {
+            <button
+              matIconButton
+              type="button"
+              class="dc-tree__toggle"
+              (click)="toggle(node)"
+              [attr.aria-label]="node.row.code"
+            >
+              <mat-icon fontSet="material-symbols-outlined">{{
+                isOpen(node) ? 'expand_more' : 'chevron_right'
+              }}</mat-icon>
+            </button>
+          } @else {
+            <span class="dc-tree__toggle"></span>
+          }
+          <mat-icon
+            fontSet="material-symbols-outlined"
+            class="dc-tree__icon"
+            [class.dc-tree__icon--folder]="isFolder(node)"
+            >{{
+              isFolder(node)
+                ? isOpen(node) && node.children.length
+                  ? 'folder_open'
+                  : 'folder'
+                : node.row['icon'] || 'description'
+            }}</mat-icon
+          >
+          <span class="mono dc-tree__code">{{ node.row.code }}</span>
+          <span class="dc-tree__name">{{
+            { ar: node.row.nameAr, en: node.row.nameEn } | dcLocalize
+          }}</span>
+          @if (node.row['businessApp'] && !current()?.connected) {
+            <span class="dc-pill" [matTooltip]="'roles.businessApp' | dcTranslate">{{
+              appName(node.row['businessApp']) | dcLocalize
+            }}</span>
+          }
+          @if (!node.row.isActive || node.row['isVisible'] === false) {
+            <span class="dc-pill">{{
+              (node.row.isActive ? 'menus.hidden' : 'config.inactive') | dcTranslate
+            }}</span>
+          }
+          <span class="dc-tree__actions">
             @if (privileges.can(resource, 'CREATE')) {
-              <button matButton="filled" (click)="editMenu(null)" data-testid="new-menu">
+              <button
+                matIconButton
+                type="button"
+                (click)="addUnder(node)"
+                [matTooltip]="'menus.addChild' | dcTranslate"
+                [attr.data-testid]="'menu-add-under-' + node.row.code"
+              >
                 <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
-                {{ 'menus.add' | dcTranslate }}
               </button>
             }
-          </header>
-          <div class="dc-panel__search">
-            <mat-form-field subscriptSizing="dynamic">
-              <mat-icon matPrefix fontSet="material-symbols-outlined">search</mat-icon>
-              <input
-                matInput
-                [placeholder]="'config.search' | dcTranslate"
-                [value]="search()"
-                (input)="search.set($any($event.target).value)"
-                data-testid="menus-search"
+            @if (editable(node)) {
+              <button
+                matIconButton
+                type="button"
+                (click)="move(siblings, index, -1)"
+                [disabled]="index === 0 || !canMove(siblings)"
+                [matTooltip]="'menus.moveUp' | dcTranslate"
+                [attr.data-testid]="'menu-up-' + node.row.code"
+              >
+                <mat-icon fontSet="material-symbols-outlined">arrow_upward</mat-icon>
+              </button>
+              <button
+                matIconButton
+                type="button"
+                (click)="move(siblings, index, 1)"
+                [disabled]="index === siblings.length - 1 || !canMove(siblings)"
+                [matTooltip]="'menus.moveDown' | dcTranslate"
+                [attr.data-testid]="'menu-down-' + node.row.code"
+              >
+                <mat-icon fontSet="material-symbols-outlined">arrow_downward</mat-icon>
+              </button>
+              <button
+                matIconButton
+                type="button"
+                (click)="edit(node)"
+                [matTooltip]="'config.edit' | dcTranslate"
+                [attr.data-testid]="'menu-edit-' + node.row.code"
+              >
+                <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
+              </button>
+              @if (privileges.can(resource, 'DELETE') && !node.children.length) {
+                <button
+                  matIconButton
+                  type="button"
+                  (click)="remove(node)"
+                  [matTooltip]="'config.delete' | dcTranslate"
+                  [attr.data-testid]="'menu-delete-' + node.row.code"
+                >
+                  <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
+                </button>
+              }
+            } @else {
+              <button
+                matIconButton
+                type="button"
+                (click)="view(node)"
+                [matTooltip]="'config.view' | dcTranslate"
+              >
+                <mat-icon fontSet="material-symbols-outlined">visibility</mat-icon>
+              </button>
+            }
+          </span>
+        </div>
+        @if (node.children.length && isOpen(node)) {
+          <ul role="group">
+            @for (child of node.children; track child.row.code; let i = $index) {
+              <ng-container
+                *ngTemplateOutlet="
+                  branch;
+                  context: { $implicit: child, siblings: node.children, index: i, depth: depth + 1 }
+                "
               />
-            </mat-form-field>
-          </div>
-          @if (lists.isLoading()) {
-            <mat-progress-bar mode="indeterminate" />
-          }
-          <div class="dc-scroll">
-            <table mat-table [dataSource]="dataSource" matSort class="dc-table" data-testid="menus-table">
-              <ng-container matColumnDef="icon">
-                <th mat-header-cell *matHeaderCellDef></th>
-                <td mat-cell *matCellDef="let row">
-                  @if (row.icon) {
-                    <mat-icon fontSet="material-symbols-outlined" class="dc-menu-icon">{{ row.icon }}</mat-icon>
-                  }
-                </td>
-              </ng-container>
-              <ng-container matColumnDef="name">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header="nameEn">{{ 'config.name' | dcTranslate }}</th>
-                <td mat-cell *matCellDef="let row">
-                  {{ { ar: row.nameAr, en: row.nameEn } | dcLocalize }}
-                  <span class="mono dc-muted dc-menu-code">{{ row.code }}</span>
-                </td>
-              </ng-container>
-              <ng-container matColumnDef="target">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'menus.target' | dcTranslate }}</th>
-                <td mat-cell *matCellDef="let row" class="mono dc-menu-target" [title]="row.target ?? ''">{{ row.target }}</td>
-              </ng-container>
-              <ng-container matColumnDef="displayOrder">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'menus.order' | dcTranslate }}</th>
-                <td mat-cell *matCellDef="let row">{{ row.displayOrder }}</td>
-              </ng-container>
-              <ng-container matColumnDef="isActive">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'config.status' | dcTranslate }}</th>
-                <td mat-cell *matCellDef="let row">
-                  <span class="dc-pill" [class.dc-pill--green]="row.isActive && row.isVisible">{{ state(row) | dcTranslate }}</span>
-                </td>
-              </ng-container>
-              <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef></th>
-                <td mat-cell *matCellDef="let row" class="dc-table__actions">
-                  <button matIconButton (click)="viewMenu(row)" [attr.aria-label]="'config.view' | dcTranslate" [attr.data-testid]="'view-menu-' + row.code">
-                    <mat-icon fontSet="material-symbols-outlined">visibility</mat-icon>
-                  </button>
-                  @if (row.owner !== 'SYSTEM' && privileges.can(resource, 'EDIT')) {
-                    <button matIconButton (click)="editMenu(row)" [attr.aria-label]="'config.edit' | dcTranslate" [attr.data-testid]="'edit-menu-' + row.code">
-                      <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
-                    </button>
-                  }
-                  @if (row.owner !== 'SYSTEM' && privileges.can(resource, 'DELETE')) {
-                    <button
-                      matIconButton
-                      (click)="remove(menu, row.code)"
-                      [attr.aria-label]="'config.delete' | dcTranslate"
-                      [attr.data-testid]="'delete-menu-' + row.code"
-                    >
-                      <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
-                    </button>
-                  }
-                </td>
-              </ng-container>
-              <tr mat-header-row *matHeaderRowDef="columns; sticky: true"></tr>
-              <tr mat-row *matRowDef="let row; columns: columns"></tr>
-              <tr class="mat-mdc-row" *matNoDataRow>
-                <td class="mat-mdc-cell dc-empty" [attr.colspan]="columns.length">{{ 'menus.none' | dcTranslate }}</td>
-              </tr>
-            </table>
-          </div>
-        } @else if (!lists.isLoading()) {
-          <p class="dc-empty dc-panel__body">{{ 'menus.pick' | dcTranslate }}</p>
+            }
+          </ul>
         }
-      </section>
-    </div>
+      </li>
+    </ng-template>
   `,
   styles: `
-    .dc-scroll {
-      max-height: calc(100vh - 320px);
-      min-height: 12rem;
-      overflow: auto;
+    .dc-tree__toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
     }
-    .dc-menu-icon {
+    .dc-tree__choice {
+      min-width: 18rem;
+    }
+    .dc-spacer {
+      flex: 1;
+    }
+    .dc-tree,
+    .dc-tree ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .dc-tree {
+      padding: 8px;
+      border-radius: var(--shell-radius);
+      background: var(--dga-gray-50);
+    }
+    .dc-tree__row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 36px;
+      border-radius: 6px;
+    }
+    .dc-tree__row:hover {
+      background: var(--dga-gray-100);
+    }
+    .dc-tree__toggle {
+      display: inline-flex;
+      width: 32px;
+      flex: none;
+    }
+    .dc-tree__icon {
       color: var(--dga-gray-500);
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
     }
-    .dc-menu-code {
-      display: block;
+    .dc-tree__icon--folder {
+      color: var(--dynamic-cube-gold-700);
+    }
+    .dc-tree__code {
+      color: var(--dga-gray-600);
       font-size: 12px;
     }
-    .dc-menu-target {
-      max-width: 16rem;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+    .dc-tree__name {
+      font-weight: 500;
+    }
+    .dc-tree__actions {
+      display: inline-flex;
+      margin-inline-start: auto;
+      opacity: 0.35;
+    }
+    .dc-tree__row:hover .dc-tree__actions,
+    .dc-tree__row:focus-within .dc-tree__actions {
+      opacity: 1;
     }
   `,
 })
 export class MenusPage {
-  /** Route parameter: the chosen group (the first one when absent). */
+  /** Route parameter: the tree (a channel or a connected app; the internal system when absent). */
   readonly code = input<string | undefined>(undefined);
 
   private readonly api = inject(AppsControlApi);
@@ -213,103 +414,171 @@ export class MenusPage {
   private readonly i18n = inject(I18nService);
   protected readonly privileges = inject(PrivilegesService);
   protected readonly resource = RESOURCE;
-  protected readonly menu = MENU;
-  protected readonly group = GROUP;
-  protected readonly ungrouped = UNGROUPED;
-  protected readonly columns = ['icon', 'name', 'target', 'displayOrder', 'isActive', 'actions'];
 
   protected readonly errors = signal<string[]>([]);
-  protected readonly search = signal('');
-  protected readonly lists = rxResource({ stream: () => this.api.list('apps.menu-group') });
-  private readonly menus = rxResource({ stream: () => this.api.list('apps.menu') });
-  private readonly groups = computed(() => (this.lists.hasValue() ? this.lists.value() : []));
-  private readonly menuRows = computed(() => (this.menus.hasValue() ? this.menus.value() : []));
+  protected readonly tree = computed(() => this.code() ?? DEFAULT_TREE);
+  protected readonly expanded = signal(new Set<string>());
 
-  protected readonly selected = computed(() => this.code() ?? this.groups()[0]?.code ?? null);
-  protected readonly groupMenus = computed(() => {
-    const code = this.selected();
-    return this.menuRows()
-      .filter((m) => (code === UNGROUPED ? !m['groupCode'] : m['groupCode'] === code))
-      .sort((a, b) => Number(a['displayOrder'] ?? 0) - Number(b['displayOrder'] ?? 0));
+  private readonly choices = rxResource({
+    stream: () =>
+      forkJoin({
+        channels: this.api.list('apps.app').pipe(catchError(() => of([]))),
+        apps: this.api.list('apps.business-app').pipe(catchError(() => of([]))),
+      }),
   });
-  protected readonly selectedTitle = computed(() => {
-    const group = this.groups().find((g) => g.code === this.selected());
-    return group ? { ar: group.nameAr, en: group.nameEn } : { ar: 'بدون مجموعة', en: 'Without a group' };
-  });
+  protected readonly channels = computed<TreeChoice[]>(() =>
+    (this.choices.value()?.channels ?? []).map((c) => ({
+      code: c.code,
+      name: { ar: c.nameAr, en: c.nameEn },
+      connected: false,
+    })),
+  );
+  protected readonly connectedApps = computed<TreeChoice[]>(() =>
+    (this.choices.value()?.apps ?? [])
+      .filter((a) => a['kind'] === 'CONNECTED')
+      .map((a) => ({ code: a.code, name: { ar: a.nameAr, en: a.nameEn }, connected: true })),
+  );
+  protected readonly current = computed(
+    () => [...this.channels(), ...this.connectedApps()].find((c) => c.code === this.tree()) ?? null,
+  );
 
-  protected readonly items = computed<MasterItem[]>(() => {
-    const canEdit = this.privileges.can(RESOURCE, 'EDIT');
-    const canDelete = this.privileges.can(RESOURCE, 'DELETE');
-    const count = (code: string) => this.menuRows().filter((m) => m['groupCode'] === code).length;
-    const badge = (n: number): MasterItem['badge'] =>
-      n
-        ? { label: `${n} ${this.i18n.translate(n === 1 ? 'menus.itemWord' : 'menus.itemsWord')}`, tone: 'green' }
-        : { label: this.i18n.translate('menus.empty'), tone: 'gray' };
-    const items: MasterItem[] = this.groups().map((g) => {
-      const n = count(g.code);
-      const system = g.owner === 'SYSTEM';
-      return {
-        code: g.code,
-        title: { ar: g.nameAr, en: g.nameEn },
-        badge: badge(n),
-        locked: system,
-        canEdit: !system && canEdit,
-        canDelete: !system && canDelete && n === 0,
-        deleteBlockedReason: !system && canDelete && n > 0 ? this.i18n.translate('menus.deleteHasItems') : undefined,
-      };
-    });
-    const loose = this.menuRows().filter((m) => !m['groupCode']).length;
-    return loose
-      ? [...items, { code: UNGROUPED, title: { ar: 'بدون مجموعة', en: 'Without a group' }, badge: badge(loose), canEdit: false, canDelete: false }]
-      : items;
+  protected readonly data = rxResource({
+    params: () => this.tree(),
+    stream: ({ params }) =>
+      forkJoin({
+        groups: this.api.list('apps.menu-group', params),
+        menus: this.api.list('apps.menu', params),
+      }),
   });
-
-  protected readonly dataSource = new MatTableDataSource<ConfigRow>([]);
-  private readonly sort = viewChild(MatSort);
+  protected readonly nodes = computed(() =>
+    this.data.hasValue() ? buildMenuTree(this.data.value().groups, this.data.value().menus) : [],
+  );
 
   constructor() {
-    this.dataSource.filterPredicate = (row, term) => `${row.code} ${row.nameAr} ${row.nameEn} ${row['target'] ?? ''}`.toLowerCase().includes(term);
-    effect(() => (this.dataSource.data = this.groupMenus()));
-    effect(() => (this.dataSource.filter = this.search().trim().toLowerCase()));
+    // Each tree opens with its groups expanded, as in the side menu.
+    let shown: string | null = null;
     effect(() => {
-      const sort = this.sort();
-      if (sort) this.dataSource.sort = sort;
+      const nodes = this.nodes();
+      const tree = this.tree();
+      if (!this.data.hasValue() || shown === tree) return;
+      shown = tree;
+      untracked(() =>
+        this.expanded.set(new Set(nodes.filter((n) => n.group).map((n) => n.row.code))),
+      );
     });
   }
 
-  protected select(code: string): void {
-    this.search.set('');
+  protected isOpen(node: MenuTreeNode): boolean {
+    return this.expanded().has(node.row.code);
+  }
+
+  protected isFolder(node: MenuTreeNode): boolean {
+    return node.group || node.row['itemType'] === 'GROUP';
+  }
+
+  protected toggle(node: MenuTreeNode): void {
+    const next = new Set(this.expanded());
+    if (next.has(node.row.code)) next.delete(node.row.code);
+    else next.add(node.row.code);
+    this.expanded.set(next);
+  }
+
+  protected expandAll(): void {
+    const all = new Set<string>();
+    const walk = (nodes: MenuTreeNode[]) =>
+      nodes.forEach((n) => {
+        if (n.children.length) all.add(n.row.code);
+        walk(n.children);
+      });
+    walk(this.nodes());
+    this.expanded.set(all);
+  }
+
+  protected collapseAll(): void {
+    this.expanded.set(new Set());
+  }
+
+  protected choose(code: string): void {
     void this.router.navigate(['/apps-control/menus', code]);
   }
 
-  protected state(row: ConfigRow): string {
-    return !row.isActive ? 'config.inactive' : row['isVisible'] === false ? 'menus.hidden' : 'config.active';
+  protected appName(code: unknown): { ar: string; en: string } {
+    const app = (this.choices.value()?.apps ?? []).find((a) => a.code === code);
+    return app ? { ar: app.nameAr, en: app.nameEn } : { ar: String(code), en: String(code) };
   }
 
-  protected viewGroup(code: string): void {
-    const row = this.groups().find((g) => g.code === code);
-    if (row) this.dialog.open(DetailsDialog, { data: detailsOf(GROUP, row), width: '40rem', maxWidth: '95vw' });
-    else if (code === UNGROUPED) this.select(code);
+  protected editable(node: MenuTreeNode): boolean {
+    return node.row.owner !== 'SYSTEM' && this.privileges.can(RESOURCE, 'EDIT');
   }
 
-  protected viewMenu(row: ConfigRow): void {
-    this.dialog.open(DetailsDialog, { data: detailsOf(MENU, row), width: '40rem', maxWidth: '95vw' });
+  /** Product rows keep their order; siblings can be reordered when none of them is the product's. */
+  protected canMove(siblings: MenuTreeNode[]): boolean {
+    return siblings.every((s) => s.row.owner !== 'SYSTEM');
   }
 
-  protected async editGroup(code: string | null): Promise<void> {
-    const row = code ? await this.full(GROUP, code) : null;
-    if (code && !row) return;
-    await this.edit(GROUP, row);
+  protected view(node: MenuTreeNode): void {
+    this.dialog.open(DetailsDialog, {
+      data: detailsOf(node.group ? GROUP : MENU, node.row),
+      width: '40rem',
+      maxWidth: '95vw',
+    });
   }
 
-  protected async editMenu(row: ConfigRow | null): Promise<void> {
-    const group = this.groups().find((g) => g.code === this.selected());
-    const full = row ? await this.full(MENU, row.code) : null;
-    if (row && !full) return;
-    await this.edit(MENU, full, group ? { groupCode: group.code, appCode: group['appCode'] } : undefined);
+  protected addGroup(): void {
+    const next =
+      Math.max(
+        0,
+        ...this.nodes()
+          .filter((n) => n.group)
+          .map((n) => order(n.row)),
+      ) + 10;
+    void this.open(GROUP, null, { ...this.treeDefaults(), displayOrder: next });
   }
 
-  protected async remove(type: ConfigType, code: string): Promise<void> {
+  protected addUnder(node: MenuTreeNode): void {
+    const next = Math.max(0, ...node.children.map((c) => order(c.row))) + 10;
+    const placement = node.group
+      ? { groupCode: node.row.code }
+      : { parentCode: node.row.code, groupCode: (node.row['groupCode'] as string | null) ?? null };
+    void this.open(MENU, null, {
+      ...this.treeDefaults(),
+      ...placement,
+      itemType: 'SCREEN',
+      displayOrder: next,
+    });
+  }
+
+  protected async edit(node: MenuTreeNode): Promise<void> {
+    const type = node.group ? GROUP : MENU;
+    const full = await this.full(type, node.row.code);
+    if (full) await this.open(type, full);
+  }
+
+  /** Swaps an item with its neighbour; the siblings are numbered 10, 20, 30… so the order is unambiguous. */
+  protected async move(siblings: MenuTreeNode[], index: number, step: number): Promise<void> {
+    const ordered = [...siblings];
+    [ordered[index], ordered[index + step]] = [ordered[index + step], ordered[index]];
+    this.errors.set([]);
+    try {
+      for (const [i, node] of ordered.entries()) {
+        const wanted = (i + 1) * 10;
+        if (order(node.row) === wanted) continue;
+        const type = node.group ? GROUP : MENU;
+        const full = await this.full(type, node.row.code);
+        if (!full) return;
+        await this.drafts.addChange(type.entityType, node.row.code, 'UPDATE', {
+          ...full,
+          displayOrder: wanted,
+        });
+      }
+      this.data.reload();
+    } catch (error) {
+      this.errors.set(problemMessages(error));
+    }
+  }
+
+  protected async remove(node: MenuTreeNode): Promise<void> {
+    const code = node.row.code;
     const confirmed = await firstValueFrom(
       this.dialog
         .open<ConfirmDialog, ConfirmData, string>(ConfirmDialog, {
@@ -325,11 +594,19 @@ export class MenusPage {
     if (confirmed === undefined) return;
     this.errors.set([]);
     try {
-      await this.drafts.addChange(type.entityType, code, 'DELETE', null);
-      this.reload();
+      await this.drafts.addChange((node.group ? GROUP : MENU).entityType, code, 'DELETE', null);
+      this.data.reload();
     } catch (error) {
       this.errors.set(problemMessages(error));
     }
+  }
+
+  /** A new row's place: the channel, or for a connected app no channel and the app itself. */
+  private treeDefaults(): Record<string, unknown> {
+    const tree = this.current();
+    return tree?.connected
+      ? { appCode: null, businessApps: [tree.code] }
+      : { appCode: this.tree() };
   }
 
   private async full(type: ConfigType, code: string): Promise<ConfigRow | null> {
@@ -341,7 +618,11 @@ export class MenusPage {
     }
   }
 
-  private async edit(type: ConfigType, row: ConfigRow | null, defaults?: Record<string, unknown>): Promise<void> {
+  private async open(
+    type: ConfigType,
+    row: ConfigRow | null,
+    defaults?: Record<string, unknown>,
+  ): Promise<void> {
     const saved = await firstValueFrom(
       this.dialog
         .open<ConfigEditor, ConfigEditorData, boolean>(ConfigEditor, {
@@ -352,11 +633,6 @@ export class MenusPage {
         })
         .afterClosed(),
     );
-    if (saved) this.reload();
-  }
-
-  private reload(): void {
-    this.lists.reload();
-    this.menus.reload();
+    if (saved) this.data.reload();
   }
 }

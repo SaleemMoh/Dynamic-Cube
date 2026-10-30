@@ -1711,7 +1711,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<Guid>("AppId")
+                    b.Property<Guid?>("AppId")
                         .HasColumnType("uuid")
                         .HasColumnName("app_id");
 
@@ -1855,7 +1855,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<Guid>("AppId")
+                    b.Property<Guid?>("AppId")
                         .HasColumnType("uuid")
                         .HasColumnName("app_id");
 
@@ -3347,7 +3347,6 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("AppId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
                         .HasConstraintName("fk_menu_app_app_id");
 
                     b.HasOne("DynamicCube.Modules.AppsControl.Domain.MenuGroup", "MenuGroup")
@@ -3383,7 +3382,6 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("AppId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
                         .HasConstraintName("fk_menu_group_app_app_id");
 
                     b.Navigation("App");

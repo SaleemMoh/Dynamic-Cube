@@ -211,11 +211,10 @@ export class ConfigEditor {
     // A new row starts in the business app chosen in the header.
     value['entityCode'] = row ? (row['entityCode'] ?? null) : null;
     const current = this.appContext.current();
+    const preset = this.data.defaults?.['businessApps'] as string[] | undefined;
     value['businessApps'] = row
       ? ((row['businessApps'] as string[] | undefined) ?? (row['businessApp'] ? [row['businessApp'] as string] : []))
-      : current
-        ? [current]
-        : [];
+      : (preset ?? (current ? [current] : []));
     for (const field of this.data.type.fields) {
       const current = row ? row[field.code] : (this.data.defaults?.[field.code] ?? field.defaultValue);
       switch (field.type) {

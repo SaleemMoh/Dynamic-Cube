@@ -188,8 +188,11 @@ export function screenLists(screen: ScreenNode, lovs: ConfigRow[], grants: Grant
   return [...lists.values()];
 }
 
-/** Menu items by group (groups in display order, items without a group last), for the role's menu choice. */
-export function menuChoices(menus: ConfigRow[], groups: ConfigRow[]): MenuChoiceGroup[] {
+/**
+ * Menu items by group (groups in display order, items without a group last), for the role's menu choice. Groups of a
+ * connected app's own tree carry the app's name.
+ */
+export function menuChoices(menus: ConfigRow[], groups: ConfigRow[], apps: ConfigRow[] = []): MenuChoiceGroup[] {
   const order = (r: ConfigRow) => Number(r['displayOrder'] ?? 0);
   const sorted = [...groups].sort((a, b) => order(a) - order(b) || a.code.localeCompare(b.code));
   const item = (m: ConfigRow) => ({ code: m.code, name: { ar: m.nameAr, en: m.nameEn } as LocalizedText, app: (m['appCode'] as string | null) ?? null });
@@ -198,7 +201,11 @@ export function menuChoices(menus: ConfigRow[], groups: ConfigRow[]): MenuChoice
       .filter((m) => ((m['groupCode'] as string | null) ?? null) === group && m['itemType'] !== 'GROUP')
       .sort((a, b) => order(a) - order(b) || a.code.localeCompare(b.code))
       .map(item);
-  const result = sorted.map((g) => ({ code: g.code, name: { ar: g.nameAr, en: g.nameEn } as LocalizedText, items: items(g.code) }));
+  const title = (g: ConfigRow): LocalizedText => {
+    const app = !g['appCode'] && g['businessApp'] ? apps.find((a) => a.code === g['businessApp']) : undefined;
+    return app ? { ar: `${app.nameAr} — ${g.nameAr}`, en: `${app.nameEn} — ${g.nameEn}` } : { ar: g.nameAr, en: g.nameEn };
+  };
+  const result = sorted.map((g) => ({ code: g.code, name: title(g), items: items(g.code) }));
   const known = new Set(groups.map((g) => g.code));
   const orphans = menus.filter((m) => m['groupCode'] && !known.has(m['groupCode'] as string) && m['itemType'] !== 'GROUP').map(item);
   const loose = [...items(null), ...orphans];

@@ -167,14 +167,26 @@ deleted item leaves the roles it was assigned to.
 
 ## 4.7 Menus
 
-**`menu_group`** — `app_id`, `display_order`, `icon`.
+Menus are trees (ADR-0036): **groups** form the first level and **items** go under groups or under other items, at any
+depth (e.g. `M010-000-000` → `M010-010-000` → `M010-010-010`). Each tree belongs to:
 
-**`menu`** — `app_id`, `menu_group_id`, `parent_id`, `item_type` (`SCREEN` | `SERVICE` |
-`REPORT` | `DASHBOARD` | `QUEUE` | `URL`), `target` (route / service code / report code /
-queue code / URL), `resource_id`, `short_desc_ar`, `short_desc_en`, `desc_ar`, `desc_en`,
-`icon` (icon name or SVG), `display_order`, `is_visible`.
+- **a channel** (`app_id`: internal system, portal, field app) — the platform's screens, plus items a Dynamic Cube app
+  adds (`business_app` set; only on channels the app ticks); or
+- **a connected app** (`business_app` of a connected app, `app_id` empty) — the app's own tree (e.g. HRVault), served
+  to it with the user's privileges (connected apps, step 7).
 
-A user's menu = items whose resource the user holds `VIEW` on, for the requested app.
+A group or item's parent must be in the same tree, and an item cannot be placed under itself or its own items.
+
+**`menu_group`** — `app_id` (channel, or empty), `business_app`, `display_order`, `icon`.
+
+**`menu`** — `app_id` (channel, or empty), `business_app`, `menu_group_id`, `parent_id`, `item_type` (`GROUP` |
+`SCREEN` | `SERVICE` | `REPORT` | `DASHBOARD` | `QUEUE` | `URL`), `target` (route / service code / report code / queue
+code / URL), `resource_id`, `desc_ar`, `desc_en`, `icon` (icon name or SVG), `display_order`, `is_visible`.
+
+A user's side menu = the channel's items whose resource the user holds `VIEW` on (or that have none), without the items
+of apps outside the user's apps. **Apps Control → Menus** shows one tree at a time (a channel or a connected app), with
+expand/collapse all, *add group*, *add an item under it*, move up/down (siblings renumbered 10, 20, 30…), edit and
+delete; the product's own rows are read-only. Roles pick items from every tree (step 3 brings the per-app role tree).
 
 ## 4.8 Class / Domain
 

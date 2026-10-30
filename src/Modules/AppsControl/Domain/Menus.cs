@@ -11,9 +11,14 @@ public enum MenuItemType
     Url,
 }
 
+/// <summary>
+/// A top-level folder of a menu tree. A tree is a channel's (<see cref="AppId"/>: the platform's screens, where Dynamic
+/// Cube apps may add their own items) or a connected app's (its <see cref="ConfigEntity.BusinessApp"/>, no channel).
+/// </summary>
 public sealed class MenuGroup : ConfigEntity
 {
-    public Guid AppId { get; set; }
+    /// <summary>The channel; null for a connected app's menus.</summary>
+    public Guid? AppId { get; set; }
 
     public App? App { get; set; }
 
@@ -25,7 +30,8 @@ public sealed class MenuGroup : ConfigEntity
 /// <summary>Menu item. Shown to users holding <c>VIEW</c> on <see cref="Resource"/> (items without a resource are visible to all).</summary>
 public sealed class Menu : ConfigEntity
 {
-    public Guid AppId { get; set; }
+    /// <summary>The channel; null for a connected app's menus.</summary>
+    public Guid? AppId { get; set; }
 
     public App? App { get; set; }
 
