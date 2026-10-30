@@ -903,6 +903,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("code");
 
+                    b.PrimitiveCollection<List<string>>("Companies")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("companies");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -1449,6 +1454,10 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)")
                         .HasColumnName("updated_by");
+
+                    b.Property<bool>("ValuesPerCompany")
+                        .HasColumnType("boolean")
+                        .HasColumnName("values_per_company");
 
                     b.HasKey("Id")
                         .HasName("pk_class");

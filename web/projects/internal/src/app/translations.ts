@@ -242,6 +242,8 @@ export const APP_TRANSLATIONS: TranslationDictionary = {
     'classes.descriptionAr': 'الوصف بالعربية',
     'classes.descriptionEn': 'الوصف بالإنجليزية',
     'classes.hierarchical': 'قيم هرمية داخل التصنيف',
+    'classes.valuesPerCompany': 'قيم حسب الشركة (لكل قيمة شركاتها)',
+    'classes.companies': 'الشركات',
     'classes.attributesHint':
       'كل خاصية تظهر حقلاً في نموذج القيم وعموداً في العرض التقريري للتصنيف.',
     'classes.dataType': 'النوع',
@@ -514,6 +516,8 @@ export const APP_TRANSLATIONS: TranslationDictionary = {
     'classes.descriptionAr': 'Description (Arabic)',
     'classes.descriptionEn': 'Description (English)',
     'classes.hierarchical': 'Values form a hierarchy within the class',
+    'classes.valuesPerCompany': 'Values per company (each value names its companies)',
+    'classes.companies': 'Companies',
     'classes.attributesHint':
       'Each attribute becomes a field of the value form and a column of the class reporting view.',
     'classes.dataType': 'Type',

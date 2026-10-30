@@ -240,6 +240,7 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
         Config<DomainValue>(modelBuilder, "domain", b =>
         {
             b.HasIndex(e => new { e.ClassId, e.Code }).IsUnique();
+            b.Property(e => e.Companies).HasColumnType("text[]");
             b.Property(e => e.Attributes).HasColumnType("jsonb");
             b.HasIndex(e => e.Attributes).HasMethod("gin");
             b.HasOne(e => e.Class).WithMany().HasForeignKey(e => e.ClassId).OnDelete(DeleteBehavior.Restrict);

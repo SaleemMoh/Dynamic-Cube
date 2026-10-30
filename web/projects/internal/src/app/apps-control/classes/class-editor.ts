@@ -88,6 +88,7 @@ export class ClassEditor {
     descriptionEn: new FormControl<string | null>(null),
     parentClassCode: new FormControl<string | null>(null),
     isHierarchical: new FormControl(false, { nonNullable: true }),
+    valuesPerCompany: new FormControl(false, { nonNullable: true }),
     isActive: new FormControl(true, { nonNullable: true }),
     attributes: new FormArray<AttributeForm>([]),
     settings: new FormArray<SettingForm>([]),
@@ -104,6 +105,7 @@ export class ClassEditor {
         descriptionEn: cls.descriptionEn,
         parentClassCode: cls.parentClassCode,
         isHierarchical: cls.isHierarchical,
+        valuesPerCompany: cls.valuesPerCompany ?? false,
         isActive: cls.isActive,
       });
       cls.attributes.forEach((a) => this.addAttribute(a));
@@ -176,6 +178,7 @@ export class ClassEditor {
       parentClassCode: value.parentClassCode,
       isHierarchical: value.isHierarchical,
       allowMultiAssign: this.data.cls?.allowMultiAssign ?? false,
+      valuesPerCompany: value.valuesPerCompany,
       attributes: value.attributes.map((a, index) => ({
         ...a,
         refClassCode: a.dataType === 'DOMAIN_REF' ? a.refClassCode : null,

@@ -40,6 +40,9 @@ public sealed class LookupClass : ConfigEntity
 
     public bool AllowMultiAssign { get; set; }
 
+    /// <summary>Values may be limited to some companies (the legacy company lookups); otherwise every value serves all of them.</summary>
+    public bool ValuesPerCompany { get; set; }
+
     public List<AttributeDefinition> Attributes { get; } = [];
 
     /// <summary>Settings of the class itself (legacy class flex values), e.g. what a value of an attribute means.</summary>
@@ -119,6 +122,9 @@ public sealed class DomainValue : ConfigEntity
     public DateOnly? EffectiveFrom { get; set; }
 
     public DateOnly? EffectiveTo { get; set; }
+
+    /// <summary>Companies the value serves when its class has values per company; empty: every company.</summary>
+    public List<string> Companies { get; set; } = [];
 
     public List<DomainExternalCode> ExternalCodes { get; } = [];
 }

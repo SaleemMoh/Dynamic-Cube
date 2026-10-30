@@ -104,13 +104,26 @@ export class DomainEditor {
           map((page) => page.items.map((i): FormOption => ({ value: i.value, label: { ar: i.labelAr, en: i.labelEn } }))),
           catchError(() => of<FormOption[]>([])),
         );
+      const companies = cls.valuesPerCompany
+        ? this.api.list('apps.company').pipe(
+            map((rows) => rows.map((r): FormOption => ({ value: r.code, label: { ar: r.nameAr, en: r.nameEn } }))),
+            catchError(() => of<FormOption[]>([])),
+          )
+        : of<FormOption[]>([]);
       return forkJoin({
+        companies,
         parents: parentClass ? toOptions(parentClass) : of<FormOption[]>([]),
         refs: refClasses.length ? forkJoin(refClasses.map(toOptions)) : of<FormOption[][]>([]),
         lovs: refLovs.length ? forkJoin(refLovs.map(lovOptions)) : of<FormOption[][]>([]),
       }).pipe(
-        map(({ parents, refs, lovs }) =>
-          this.buildSchema(parentClass, parents, new Map(refClasses.map((c, i) => [c, refs[i]])), new Map(refLovs.map((c, i) => [c, lovs[i]]))),
+        map(({ companies, parents, refs, lovs }) =>
+          this.buildSchema(
+            parentClass,
+            parents,
+            new Map(refClasses.map((c, i) => [c, refs[i]])),
+            new Map(refLovs.map((c, i) => [c, lovs[i]])),
+            companies,
+          ),
         ),
       );
     },
@@ -144,6 +157,7 @@ export class DomainEditor {
       isDefault: value['isDefault'] ?? false,
       effectiveFrom: fromDate(value['effectiveFrom']),
       effectiveTo: fromDate(value['effectiveTo']),
+      companies: this.data.cls.valuesPerCompany ? ((value['companies'] as string[] | null) ?? []) : [],
       attributes,
       externalCodes: (this.data.row?.['externalCodes'] as unknown[] | undefined) ?? [],
     };
@@ -192,6 +206,7 @@ export class DomainEditor {
       isDefault: row?.isDefault ?? false,
       effectiveFrom: toDate(row?.effectiveFrom),
       effectiveTo: toDate(row?.effectiveTo),
+      companies: row?.companies ?? [],
     };
     for (const attribute of this.data.cls.attributes) {
       const current = row?.attributes?.[attribute.code];
@@ -210,7 +225,13 @@ export class DomainEditor {
     return value;
   }
 
-  private buildSchema(parentClass: string | null, parents: FormOption[], refs: Map<string, FormOption[]>, lovs: Map<string, FormOption[]>): FormSchema {
+  private buildSchema(
+    parentClass: string | null,
+    parents: FormOption[],
+    refs: Map<string, FormOption[]>,
+    lovs: Map<string, FormOption[]>,
+    companies: FormOption[],
+  ): FormSchema {
     const editing = this.data.row !== null;
     const attributeField = (a: AttributeDefinition): FormField => ({
       code: ATTRIBUTE_PREFIX + a.code,
@@ -237,6 +258,17 @@ export class DomainEditor {
       { code: 'nameAr', type: 'text', label: { ar: 'الاسم بالعربية', en: 'Arabic name' }, required: true },
       { code: 'nameEn', type: 'text', label: { ar: 'الاسم بالإنجليزية', en: 'English name' }, required: true },
       ...(parentClass ? [{ code: 'parentCode', type: 'select', label: { ar: 'القيمة الأعلى', en: 'Parent value' }, options: parents } satisfies FormField] : []),
+      ...(this.data.cls.valuesPerCompany
+        ? [
+            {
+              code: 'companies',
+              type: 'select',
+              multiple: true,
+              label: { ar: 'الشركات (فارغ: كل الشركات)', en: 'Companies (empty: every company)' },
+              options: companies,
+            } satisfies FormField,
+          ]
+        : []),
       { code: 'displayOrder', type: 'number', label: { ar: 'الترتيب', en: 'Display order' } },
       { code: 'effectiveFrom', type: 'date', label: { ar: 'يسري من', en: 'Effective from' } },
       { code: 'effectiveTo', type: 'date', label: { ar: 'يسري حتى', en: 'Effective to' } },

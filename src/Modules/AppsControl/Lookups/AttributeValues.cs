@@ -14,7 +14,7 @@ internal static class AttributeValues
     public static IReadOnlySet<string> ReservedCodes { get; } = new HashSet<string>(StringComparer.Ordinal)
     {
         "ID", "CODE", "CLASS_CODE", "NAME_AR", "NAME_EN", "DETAILS_AR", "DETAILS_EN", "PARENT_CODE",
-        "DISPLAY_ORDER", "IS_DEFAULT", "IS_ACTIVE", "EFFECTIVE_FROM", "EFFECTIVE_TO",
+        "DISPLAY_ORDER", "IS_DEFAULT", "IS_ACTIVE", "EFFECTIVE_FROM", "EFFECTIVE_TO", "COMPANIES",
     };
 
     /// <param name="inList">Whether a value belongs to a list of values (fields of type list of values); not checked when null.</param>

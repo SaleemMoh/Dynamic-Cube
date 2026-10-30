@@ -51,7 +51,7 @@ internal sealed class ClassViewGenerator : IChangeSetPublishHook<AppsControlDbCo
     {
         var sql = new StringBuilder();
         sql.Append("CREATE VIEW apps.").Append(Quote(ViewName(cls.Code))).Append(" AS SELECT d.id, d.code, c.code AS class_code, d.name_ar, d.name_en, ")
-            .Append("d.details_ar, d.details_en, p.code AS parent_code, d.display_order, d.is_default, d.is_active, d.effective_from, d.effective_to");
+            .Append("d.details_ar, d.details_en, p.code AS parent_code, d.display_order, d.is_default, d.is_active, d.effective_from, d.effective_to, d.companies");
         foreach (var attribute in cls.Attributes.Where(a => a.IsReportable).OrderBy(a => a.DisplayOrder).ThenBy(a => a.Code))
         {
             var key = Literal(attribute.Code);

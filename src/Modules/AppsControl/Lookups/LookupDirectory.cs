@@ -51,7 +51,8 @@ internal sealed class LookupDirectory(AppsControlDbContext context, TimeProvider
             JsonNode.Parse(d.Attributes) as JsonObject ?? [],
             [.. d.ExternalCodes.Select(x => new LookupExternalCode(x.ProviderCode, x.ExternalCode, x.Direction.ToString().ToUpperInvariant()))],
             d.EntityCode,
-            d.BusinessApp)).ToList();
+            d.BusinessApp,
+            d.Companies)).ToList();
         _classes[classCode] = values;
         return values;
     }

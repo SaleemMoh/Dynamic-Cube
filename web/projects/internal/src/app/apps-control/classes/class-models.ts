@@ -25,6 +25,8 @@ export interface ClassRow extends ConfigRow {
   parentClassCode: string | null;
   isHierarchical: boolean;
   allowMultiAssign: boolean;
+  /** Values may be limited to some companies. */
+  valuesPerCompany?: boolean;
   attributes: AttributeDefinition[];
   /** Named values stored on the class itself. */
   settings?: ClassSetting[];
@@ -47,6 +49,8 @@ export interface DomainRow extends ConfigRow {
   attributes: Record<string, unknown>;
   effectiveFrom: string | null;
   effectiveTo: string | null;
+  /** Companies the value serves (classes with values per company); empty: every company. */
+  companies?: string[];
 }
 
 export const DATA_TYPES: AttributeDataType[] = ['TEXT', 'TEXTAREA', 'NUMBER', 'DATE', 'BOOL', 'DOMAIN_REF', 'LOV_REF', 'JSON'];

@@ -132,6 +132,16 @@ const RESOURCE = 'apps-control.classes';
                   <td mat-cell *matCellDef="let row">{{ attributeValue(row, attribute.code) }}</td>
                 </ng-container>
               }
+              <ng-container matColumnDef="companies">
+                <th mat-header-cell *matHeaderCellDef>{{ 'classes.companies' | dcTranslate }}</th>
+                <td mat-cell *matCellDef="let row" class="mono">
+                  @if (row.companies?.length) {
+                    {{ row.companies.join(', ') }}
+                  } @else {
+                    <span class="dc-muted">{{ 'access.allCompanies' | dcTranslate }}</span>
+                  }
+                </td>
+              </ng-container>
               <ng-container matColumnDef="isActive">
                 <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'config.status' | dcTranslate }}</th>
                 <td mat-cell *matCellDef="let row">
@@ -225,7 +235,15 @@ export class ClassesPage {
   });
   protected readonly values = computed(() => (this.valuesResource.hasValue() ? (this.valuesResource.value() as DomainRow[]) : []));
   protected readonly shownAttributes = computed(() => (this.cls()?.attributes ?? []).slice(0, 3));
-  protected readonly columns = computed(() => ['code', 'nameAr', 'nameEn', ...this.shownAttributes().map((a) => 'attr:' + a.code), 'isActive', 'actions']);
+  protected readonly columns = computed(() => [
+    'code',
+    'nameAr',
+    'nameEn',
+    ...(this.cls()?.valuesPerCompany ? ['companies'] : []),
+    ...this.shownAttributes().map((a) => 'attr:' + a.code),
+    'isActive',
+    'actions',
+  ]);
   protected readonly canAddValue = computed(() => this.cls()?.owner !== 'SYSTEM' && this.privileges.can(RESOURCE, 'CREATE'));
 
   protected readonly items = computed<MasterItem[]>(() => {
@@ -313,6 +331,9 @@ export class ClassesPage {
         { label: { ar: 'فعال', en: 'Active' }, value: displayValue(row.isActive) },
         { label: { ar: 'يسري من', en: 'Effective from' }, value: row.effectiveFrom ?? '', ltr: true },
         { label: { ar: 'يسري حتى', en: 'Effective to' }, value: row.effectiveTo ?? '', ltr: true },
+        ...(cls?.valuesPerCompany
+          ? [{ label: { ar: 'الشركات', en: 'Companies' }, value: row.companies?.length ? row.companies.join(', ') : this.i18n.translate('access.allCompanies'), ltr: true }]
+          : []),
         ...(cls?.attributes ?? []).map((a) => ({ label: { ar: a.nameAr, en: a.nameEn }, value: displayValue(row.attributes?.[a.code]) })),
       ],
     };

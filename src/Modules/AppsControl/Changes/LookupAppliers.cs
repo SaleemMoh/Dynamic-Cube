@@ -49,6 +49,9 @@ public sealed class ClassPayload : ConfigPayload
 
     public bool AllowMultiAssign { get; set; }
 
+    /// <summary>Values may be limited to some companies.</summary>
+    public bool ValuesPerCompany { get; set; }
+
     public List<AttributeDefinitionPayload> Attributes { get; set; } = [];
 
     /// <summary>Settings of the class itself (named values).</summary>
@@ -86,6 +89,18 @@ internal sealed class ClassApplier(AppsControlDbContext db) : ConfigApplier<Look
         entity.DescriptionEn = payload.DescriptionEn;
         entity.IsHierarchical = payload.IsHierarchical;
         entity.AllowMultiAssign = payload.AllowMultiAssign;
+        if (existing is { ValuesPerCompany: true } && !payload.ValuesPerCompany)
+        {
+            var limited = await refs.Context.Domains.AsNoTracking()
+                .Where(d => d.ClassId == existing.Id && d.Companies.Count > 0)
+                .OrderBy(d => d.Code).Select(d => d.Code).Take(5).ToListAsync(cancellationToken);
+            if (limited.Count > 0)
+            {
+                errors.Add("valuesPerCompany", $"Values {string.Join(", ", limited)} are limited to companies; open them to every company first.");
+            }
+        }
+
+        entity.ValuesPerCompany = payload.ValuesPerCompany;
         if (payload.ParentClassCode == entity.Code)
         {
             errors.Add("parentClassCode", "Use 'isHierarchical' for parents within the same class.");
@@ -214,6 +229,7 @@ internal sealed class ClassApplier(AppsControlDbContext db) : ConfigApplier<Look
             ParentClassCode = entity.ParentClass?.Code,
             IsHierarchical = entity.IsHierarchical,
             AllowMultiAssign = entity.AllowMultiAssign,
+            ValuesPerCompany = entity.ValuesPerCompany,
             Attributes = entity.Attributes
                 .OrderBy(a => a.DisplayOrder).ThenBy(a => a.Code)
                 .Select(a => new AttributeDefinitionPayload
@@ -314,6 +330,9 @@ public sealed class DomainPayload : ConfigPayload
 
     public DateOnly? EffectiveTo { get; set; }
 
+    /// <summary>Companies the value serves (only for classes with values per company); empty: every company.</summary>
+    public List<string> Companies { get; set; } = [];
+
     public List<ExternalCodePayload> ExternalCodes { get; set; } = [];
 }
 
@@ -391,6 +410,20 @@ internal sealed class DomainApplier(AppsControlDbContext db, IEnumerable<IDomain
             errors.Add("effectiveTo", "Must not be before the start date.");
         }
 
+        entity.Companies = [.. payload.Companies.Where(c => !string.IsNullOrWhiteSpace(c)).Select(c => c.Trim()).Distinct(StringComparer.Ordinal)];
+        if (entity.Companies.Count > 0 && !cls.ValuesPerCompany)
+        {
+            errors.Add("companies", $"Class {cls.Code} does not have values per company.");
+        }
+        else if (entity.Companies.Count > 0)
+        {
+            var known = await context.Companies.AsNoTracking().Where(c => entity.Companies.Contains(c.Code)).Select(c => c.Code).ToListAsync(cancellationToken);
+            foreach (var code in entity.Companies.Where(c => !known.Contains(c) && !refs.IsPendingCreate(AppsControlChangeTypes.Company, c)))
+            {
+                errors.Add("companies", $"Company '{code}' does not exist.");
+            }
+        }
+
         // Parent value: from the parent class when the class has one, otherwise from the same (hierarchical) class.
         entity.ParentDomainId = null;
         if (!string.IsNullOrWhiteSpace(payload.ParentCode))
@@ -449,8 +482,10 @@ internal sealed class DomainApplier(AppsControlDbContext db, IEnumerable<IDomain
 
         if (payload.IsDefault)
         {
-            // Only one default value per class.
-            await context.Domains.Where(d => d.ClassId == cls.Id && d.Id != entity.Id && d.IsDefault)
+            // Only one default value per class, or per company: values serving one of the same companies stop being the default.
+            var companies = entity.Companies;
+            await context.Domains.Where(d => d.ClassId == cls.Id && d.Id != entity.Id && d.IsDefault
+                    && (companies.Count == 0 || d.Companies.Count == 0 || d.Companies.Any(c => companies.Contains(c))))
                 .ExecuteUpdateAsync(s => s.SetProperty(d => d.IsDefault, false), cancellationToken);
         }
     }
@@ -467,6 +502,7 @@ internal sealed class DomainApplier(AppsControlDbContext db, IEnumerable<IDomain
             Attributes = JsonNode.Parse(entity.Attributes) as JsonObject,
             EffectiveFrom = entity.EffectiveFrom,
             EffectiveTo = entity.EffectiveTo,
+            Companies = entity.Companies,
             ExternalCodes = entity.ExternalCodes
                 .OrderBy(x => x.ProviderCode)
                 .Select(x => new ExternalCodePayload { ProviderCode = x.ProviderCode, ExternalCode = x.ExternalCode, Direction = x.Direction })

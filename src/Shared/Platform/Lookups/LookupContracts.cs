@@ -50,8 +50,12 @@ public sealed record LookupValue(
     JsonObject Attributes,
     IReadOnlyList<LookupExternalCode> ExternalCodes,
     string? EntityCode = null,
-    string? BusinessApp = null)
+    string? BusinessApp = null,
+    IReadOnlyList<string>? Companies = null)
 {
+    /// <summary>Whether the value serves a company (values not limited to companies serve all of them).</summary>
+    public bool Serves(string company) => Companies is not { Count: > 0 } || Companies.Contains(company, StringComparer.Ordinal);
+
     public string? Text(string attribute) => Attributes[attribute] is JsonValue v && v.TryGetValue<string>(out var s) ? s : null;
 
     public bool Flag(string attribute) => Attributes[attribute] is JsonValue v && v.TryGetValue<bool>(out var b) && b;

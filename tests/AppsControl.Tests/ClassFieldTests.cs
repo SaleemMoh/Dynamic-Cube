@@ -76,4 +76,35 @@ public sealed class ClassFieldTests(AppsControlFixture fixture) : IAsyncLifetime
         (await Problems(new { code = "L", nameAr = "ق", nameEn = "L", dataType = "LOV_REF" })).ShouldContain("attributes[0].refLovCode");
         (await Problems(new { code = "L", nameAr = "ق", nameEn = "L", dataType = "LOV_REF", refLovCode = Harness.Unique("NONE") })).ShouldContain("attributes[0].refLovCode");
     }
+
+    [Fact]
+    public async Task A_class_with_values_per_company_limits_values_to_companies()
+    {
+        var (main, sub, cls) = (Harness.Unique("CO"), Harness.Unique("CO"), Harness.Unique("BANKS"));
+        await _harness.PublishAsync(AppsControlAreas.System,
+            new Change(AppsControlChangeTypes.Company, main, ChangeOperation.Create, new { nameAr = "شركة", nameEn = "Main" }),
+            new Change(AppsControlChangeTypes.Company, sub, ChangeOperation.Create, new { nameAr = "شركة", nameEn = "Subsidiary" }));
+        await _harness.PublishAsync(AppsControlAreas.Lookups,
+            new Change(AppsControlChangeTypes.Class, cls, ChangeOperation.Create, new { nameAr = "بنوك", nameEn = "Banks", valuesPerCompany = true, attributes = Array.Empty<object>() }));
+        Change Bank(string code, string[] companies, bool isDefault = false) =>
+            new(AppsControlChangeTypes.Domain, $"{cls}/{code}", ChangeOperation.Create, new { nameAr = "بنك", nameEn = code, companies, isDefault });
+        await _harness.PublishAsync(AppsControlAreas.Lookups,
+            Bank("SHARED", [], isDefault: true), Bank("MAIN_ONLY", [main], isDefault: true), Bank("SUB_ONLY", [sub], isDefault: true));
+
+        var values = await _harness.AsAsync("admin", sp => sp.GetRequiredService<ILookupDirectory>().ValuesAsync(cls, CancellationToken.None));
+        values.Where(v => v.Serves(main)).Select(v => v.Code).ShouldBe(["MAIN_ONLY", "SHARED"], ignoreOrder: true);
+        values.Where(v => v.Serves(sub)).Select(v => v.Code).ShouldBe(["SHARED", "SUB_ONLY"], ignoreOrder: true);
+        values.Where(v => v.IsDefault).Select(v => v.Code).ShouldBe(["MAIN_ONLY", "SUB_ONLY"], ignoreOrder: true, "one default per company");
+
+        (await Should.ThrowAsync<ChangeValidationException>(() => _harness.DraftAsync(AppsControlAreas.Lookups, Bank("NOWHERE", [Harness.Unique("NONE")]))))
+            .Errors.Keys.ShouldContain("companies");
+        (await Should.ThrowAsync<ChangeValidationException>(() => _harness.DraftAsync(AppsControlAreas.Lookups,
+            new Change(AppsControlChangeTypes.Class, cls, ChangeOperation.Update, new { nameAr = "بنوك", nameEn = "Banks", valuesPerCompany = false, attributes = Array.Empty<object>() }))))
+            .Errors.Keys.ShouldContain("valuesPerCompany", "values limited to a company must be opened first");
+        var plain = Harness.Unique("PLAIN");
+        await _harness.PublishAsync(AppsControlAreas.Lookups, Class(plain, []));
+        (await Should.ThrowAsync<ChangeValidationException>(() => _harness.DraftAsync(AppsControlAreas.Lookups,
+            new Change(AppsControlChangeTypes.Domain, $"{plain}/X", ChangeOperation.Create, new { nameAr = "س", nameEn = "X", companies = new[] { main } }))))
+            .Errors.Keys.ShouldContain("companies", "the class does not have values per company");
+    }
 }
