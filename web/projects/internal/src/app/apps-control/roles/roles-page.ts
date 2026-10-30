@@ -4,6 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router } from '@angular/router';
 import { AppsControlApi, BusinessAppContext, I18nService, LocalizePipe, problemMessages, TranslatePipe } from '@dynamic-cube/shared';
 import { catchError, firstValueFrom, forkJoin, map, of } from 'rxjs';
@@ -22,7 +23,7 @@ const RESOURCE = 'apps-control.roles';
 /** Roles on the start side (with how many users hold each); the chosen role's screens and permissions on the end side. */
 @Component({
   selector: 'dc-roles-page',
-  imports: [ExportButton, JsonImportButton, MatButtonModule, MatIconModule, MatProgressBarModule, MasterList, PermissionCards, LocalizePipe, TranslatePipe],
+  imports: [ExportButton, JsonImportButton, MatButtonModule, MatIconModule, MatProgressBarModule, MatTooltipModule, MasterList, PermissionCards, LocalizePipe, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header class="dc-page__header dc-page__header--actions">
@@ -68,6 +69,12 @@ const RESOURCE = 'apps-control.roles';
             <div class="dc-role-state">
               @if (r.appCode) {
                 <span class="dc-pill">{{ r.appCode }}</span>
+              }
+              @if (r.overrides?.length) {
+                <span class="dc-pill dc-pill--gold" data-testid="role-differs" [matTooltip]="'roles.companyHint' | dcTranslate">
+                  {{ 'roles.differsIn' | dcTranslate }}
+                  <span dir="ltr">{{ overrideCodes(r) }}</span>
+                </span>
               }
               <span class="dc-pill" [class.dc-pill--green]="r.isActive">{{ (r.isActive ? 'config.active' : 'config.inactive') | dcTranslate }}</span>
               @if (canEdit(r)) {
@@ -137,6 +144,7 @@ export class RolesPage {
         apps: this.api.list('apps.app').pipe(catchError(() => of([]))),
         lovs: this.api.list('apps.lov').pipe(catchError(() => of([]))),
         businessApps: this.api.list('apps.business-app').pipe(catchError(() => of([]))),
+        companies: this.api.list('apps.company').pipe(catchError(() => of([]))),
       }),
   });
   private readonly tree = computed(() =>
@@ -170,6 +178,7 @@ export class RolesPage {
         badge: users
           ? { label: `${users} ${this.i18n.translate(users === 1 ? 'roles.userWord' : 'roles.usersWord')}`, tone: 'green' }
           : { label: this.i18n.translate('roles.noUsers'), tone: 'gray' },
+        note: this.differsNote(r as RoleRow),
         locked: system,
         canEdit: !system && canEdit,
         canDelete: !system && canDelete && users === 0,
@@ -177,6 +186,16 @@ export class RolesPage {
       } satisfies MasterItem;
     });
   });
+
+  /** "Differs in N companies" for a role with company overrides (ADR-0036). */
+  private differsNote(role: RoleRow): string | undefined {
+    const count = role.overrides?.length ?? 0;
+    return count ? `${this.i18n.translate('roles.differsIn')} ${count} ${this.i18n.translate(count === 1 ? 'roles.companyWord' : 'roles.companiesWord')}` : undefined;
+  }
+
+  protected overrideCodes(role: RoleRow): string {
+    return (role.overrides ?? []).map((o) => o.companyCode).join(', ');
+  }
 
   protected select(code: string): void {
     void this.router.navigate(['/apps-control/roles', code]);
@@ -206,6 +225,7 @@ export class RolesPage {
       businessApps: this.lists.value().businessApps,
       defaultBusinessApp: this.appContext.current(),
       menus: menuChoices(this.lists.value().menus, this.lists.value().groups, this.lists.value().businessApps),
+      companies: this.lists.value().companies,
       readonly: readonly || (role !== null && role.owner === 'SYSTEM'),
     };
     const saved = await firstValueFrom(

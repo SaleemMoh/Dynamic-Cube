@@ -13,7 +13,19 @@ import { ConfigRow, I18nService, LocalizePipe, StructuredInput, StructuredShape,
 import { DraftsService } from '../drafts.service';
 import { PermissionCards } from './permission-cards';
 import { RoleMenus } from './role-menus';
-import { GrantRow, MenuChoiceGroup, Permissions, RoleRow, ScreenNode, permissionsOf, privilegesOf, roleScreens, screenCodes, splitGrants } from './role-models';
+import {
+  GrantRow,
+  MenuChoiceGroup,
+  Permissions,
+  PrivilegeRow,
+  RoleRow,
+  ScreenNode,
+  permissionsOf,
+  privilegesOf,
+  roleScreens,
+  screenCodes,
+  splitGrants,
+} from './role-models';
 import { ScreenData } from './screen-data';
 import { SubmitButton } from '../submit-button';
 
@@ -29,7 +41,20 @@ export interface RoleEditorData {
   /** Lists of values (with the screens they are bound to). */
   lovs: ConfigRow[];
   menus: MenuChoiceGroup[];
+  /** Companies the role can differ in (the selector shows with two or more). */
+  companies?: ConfigRow[];
   readonly?: boolean;
+}
+
+/** What the role contains in one place (all companies, or one company's override). */
+interface Contents {
+  permissions: Permissions;
+  selected: string[];
+  screenGrants: GrantRow[];
+  otherGrants: GrantRow[];
+  menus: string[];
+  /** As stored (their field rules are kept). */
+  privileges: PrivilegeRow[];
 }
 
 const CODE = /^[A-Za-z][A-Za-z0-9_-]{0,99}$/;
@@ -134,9 +159,47 @@ const CODE = /^[A-Za-z][A-Za-z0-9_-]{0,99}$/;
         </div>
       </form>
 
+      @if ((data.companies?.length ?? 0) > 1) {
+        <div class="dc-role-company" data-testid="role-company-bar">
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>{{ 'roles.company' | dcTranslate }}</mat-label>
+            <mat-select [value]="company()" (selectionChange)="chooseCompany($event.value)" data-testid="role-company">
+              <mat-option [value]="null">{{ 'access.allCompanies' | dcTranslate }}</mat-option>
+              @for (c of data.companies ?? []; track c.code) {
+                <mat-option [value]="c.code">
+                  {{ { ar: c.nameAr, en: c.nameEn } | dcLocalize }}
+                  @if (overrides().includes(c.code)) {
+                    — {{ 'roles.differs' | dcTranslate }}
+                  }
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          @if (company(); as c) {
+            @if (overrides().includes(c)) {
+              <span class="dc-pill dc-pill--gold" data-testid="role-override-on">{{ 'roles.overrideOn' | dcTranslate }}</span>
+              @if (!data.readonly) {
+                <button matButton type="button" (click)="dropOverride()" data-testid="role-drop-override">{{ 'roles.dropOverride' | dcTranslate }}</button>
+              }
+            } @else {
+              <span class="dc-muted">{{ 'roles.sameAsAll' | dcTranslate }}</span>
+              @if (!data.readonly) {
+                <button matButton="outlined" type="button" (click)="customize()" data-testid="role-customize">
+                  <mat-icon fontSet="material-symbols-outlined">tune</mat-icon>
+                  {{ 'roles.customize' | dcTranslate }}
+                </button>
+              }
+            }
+          } @else if (overrides().length) {
+            <span class="dc-muted">{{ 'roles.differsIn' | dcTranslate }} {{ overrideNames() }}</span>
+          }
+          <p class="dc-muted dc-role-company__hint">{{ 'roles.companyHint' | dcTranslate }}</p>
+        </div>
+      }
+
       <h3 class="dc-step"><span>1</span> {{ 'roles.selectPrivileges' | dcTranslate }}</h3>
-      <div class="dc-picker" [class.dc-picker--readonly]="data.readonly">
-        @if (!data.readonly) {
+      <div class="dc-picker" [class.dc-picker--readonly]="contentReadonly()">
+        @if (!contentReadonly()) {
           <section class="dc-picker__list" data-testid="available-screens">
             <header>{{ 'roles.availableScreens' | dcTranslate }}</header>
             <div class="dc-picker__search">
@@ -234,9 +297,9 @@ const CODE = /^[A-Za-z][A-Za-z0-9_-]{0,99}$/;
                 tabindex="0"
                 [attr.aria-selected]="pickedChosen().has(screen.code)"
                 [class.dc-picked]="pickedChosen().has(screen.code)"
-                (click)="!data.readonly && toggle(pickedChosen, screen.code)"
-                (keydown.enter)="!data.readonly && toggle(pickedChosen, screen.code)"
-                (dblclick)="!data.readonly && remove([screen.code])"
+                (click)="!contentReadonly() && toggle(pickedChosen, screen.code)"
+                (keydown.enter)="!contentReadonly() && toggle(pickedChosen, screen.code)"
+                (dblclick)="!contentReadonly() && remove([screen.code])"
                 [attr.data-testid]="'chosen-' + screen.code"
               >
                 <strong>{{ screen.name | dcLocalize }}</strong>
@@ -253,7 +316,7 @@ const CODE = /^[A-Za-z][A-Za-z0-9_-]{0,99}$/;
       <dc-permission-cards
         [screens]="selectedScreens()"
         [permissions]="permissions()"
-        [readonly]="!!data.readonly"
+        [readonly]="contentReadonly()"
         (toggled)="grant($event)"
         (removed)="remove([$event])"
       />
@@ -264,13 +327,13 @@ const CODE = /^[A-Za-z][A-Za-z0-9_-]{0,99}$/;
         [screens]="selectedScreens()"
         [lovs]="data.lovs"
         [grants]="screenGrants()"
-        [readonly]="!!data.readonly"
+        [readonly]="contentReadonly()"
         (grantsChange)="screenGrants.set($event)"
       />
 
       <h3 class="dc-step"><span>4</span> {{ 'roles.menus.title' | dcTranslate }}</h3>
       <p class="dc-muted dc-step__hint">{{ 'roles.menus.hint' | dcTranslate }}</p>
-      <dc-role-menus [groups]="data.menus" [selected]="menus()" [readonly]="!!data.readonly" (selectedChange)="menus.set($event)" />
+      <dc-role-menus [groups]="data.menus" [selected]="menus()" [readonly]="contentReadonly()" (selectedChange)="menus.set($event)" />
 
       <mat-expansion-panel class="dc-grants">
         <mat-expansion-panel-header>
@@ -289,6 +352,25 @@ const CODE = /^[A-Za-z][A-Za-z0-9_-]{0,99}$/;
     </mat-dialog-actions>
   `,
   styles: `
+    .dc-role-company {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 12px;
+      margin: 16px 0 0;
+      padding: 12px 14px;
+      border: 1px solid var(--dga-gray-200);
+      border-radius: 10px;
+      background: var(--dga-gray-50);
+    }
+    .dc-role-company mat-form-field {
+      min-width: 16rem;
+    }
+    .dc-role-company__hint {
+      flex-basis: 100%;
+      margin: 0;
+      font-size: 13px;
+    }
     .dc-role-fields {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -513,6 +595,21 @@ export class RoleEditor {
   };
   protected readonly menus = signal<string[]>(this.data.role?.menus ?? []);
 
+  /** Whose contents are shown: all companies (null) or one company (its override, or the role as it is). */
+  protected readonly company = signal<string | null>(null);
+  protected readonly overrides = signal<string[]>((this.data.role?.overrides ?? []).map((o) => o.companyCode));
+  private readonly sets = new Map<string | null, Contents>();
+  /** A company without an override shows the role as it is, read-only, until it is customized. */
+  protected readonly contentReadonly = computed(() => !!this.data.readonly || (this.company() !== null && !this.overrides().includes(this.company()!)));
+  protected readonly overrideNames = computed(() =>
+    this.overrides()
+      .map((code) => {
+        const c = (this.data.companies ?? []).find((x) => x.code === code);
+        return c ? this.i18n.localize({ ar: c.nameAr, en: c.nameEn }) : code;
+      })
+      .join('، '),
+  );
+
   constructor() {
     if (this.data.role) {
       this.form.controls.code.disable();
@@ -521,6 +618,78 @@ export class RoleEditor {
       this.form.disable();
       this.grants.disable();
     }
+    this.sets.set(null, this.contentsOf(this.data.role?.privileges ?? [], this.data.role?.grants ?? [], this.data.role?.menus ?? []));
+    for (const o of this.data.role?.overrides ?? []) {
+      this.sets.set(o.companyCode, this.contentsOf(o.privileges ?? [], o.grants ?? [], o.menus ?? []));
+    }
+  }
+
+  private contentsOf(privileges: PrivilegeRow[], grants: GrantRow[], menus: string[]): Contents {
+    const permissions = permissionsOf(privileges);
+    const selected = roleScreens(this.data.screens, permissions);
+    const split = splitGrants(
+      grants,
+      selected.flatMap((c) => (this.byCode.get(c) ? screenCodes(this.byCode.get(c)!) : [c])),
+    );
+    return { permissions, selected, screenGrants: split.onScreens, otherGrants: split.others, menus: [...menus], privileges };
+  }
+
+  /** Keeps what is on screen for the place shown (when it can be edited there). */
+  private stash(): void {
+    if (this.contentReadonly() && this.company() !== null) return;
+    const current = this.sets.get(this.company());
+    this.sets.set(this.company(), {
+      permissions: this.permissions(),
+      selected: this.selected(),
+      screenGrants: this.screenGrants(),
+      otherGrants: this.grants.value ?? [],
+      menus: this.menus(),
+      privileges: current?.privileges ?? [],
+    });
+  }
+
+  private show(contents: Contents): void {
+    this.permissions.set(structuredClone(contents.permissions));
+    this.selected.set([...contents.selected]);
+    this.screenGrants.set(structuredClone(contents.screenGrants));
+    this.grants.setValue(structuredClone(contents.otherGrants));
+    this.menus.set([...contents.menus]);
+    this.pickedAvailable.set(new Set());
+    this.pickedChosen.set(new Set());
+    if (this.contentReadonly()) this.grants.disable();
+    else this.grants.enable();
+  }
+
+  protected chooseCompany(code: string | null): void {
+    this.stash();
+    this.company.set(code);
+    this.show(this.sets.get(code) ?? this.sets.get(null)!);
+  }
+
+  /** Starts this company's own version of the role from the role as it is. */
+  protected customize(): void {
+    const code = this.company();
+    if (!code) return;
+    this.sets.set(code, structuredClone({ ...this.sets.get(null)!, privileges: this.sets.get(null)!.privileges }));
+    this.overrides.update((o) => [...o, code]);
+    this.show(this.sets.get(code)!);
+  }
+
+  /** The company gets the role as it is again. */
+  protected dropOverride(): void {
+    const code = this.company();
+    if (!code) return;
+    this.sets.delete(code);
+    this.overrides.update((o) => o.filter((c) => c !== code));
+    this.show(this.sets.get(null)!);
+  }
+
+  private payloadOf(contents: Contents): { privileges: PrivilegeRow[]; grants: GrantRow[]; menus: string[] } {
+    return {
+      privileges: privilegesOf(contents.permissions, contents.privileges),
+      grants: [...contents.otherGrants, ...contents.screenGrants],
+      menus: contents.menus,
+    };
   }
 
   protected codes(screens: ScreenNode[]): string[] {
@@ -597,7 +766,8 @@ export class RoleEditor {
       this.errors.set([this.i18n.translate('roles.fillRequired')]);
       return;
     }
-    const grants: GrantRow[] = [...(this.grants.value ?? []), ...this.screenGrants()];
+    this.stash();
+    const own = this.payloadOf(this.sets.get(null)!);
     const value = this.form.getRawValue();
     const payload = {
       nameAr: value.nameAr.trim(),
@@ -608,9 +778,11 @@ export class RoleEditor {
       businessApps: value.businessApps,
       entityCode: value.businessApps.length ? null : ((this.data.role?.['entityCode'] as string | null) ?? ''),
       referenceCode: value.referenceCode?.trim() || null,
-      privileges: privilegesOf(this.permissions(), this.data.role?.privileges ?? []),
-      grants,
-      menus: this.menus(),
+      ...own,
+      // Companies where the role differs, each with its own contents.
+      overrides: this.overrides()
+        .filter((code) => this.sets.has(code))
+        .map((code) => ({ companyCode: code, ...this.payloadOf(this.sets.get(code)!) })),
     };
     try {
       await this.drafts.addChange('apps.role', value.code.trim(), this.data.role ? 'UPDATE' : 'CREATE', payload, { submit });

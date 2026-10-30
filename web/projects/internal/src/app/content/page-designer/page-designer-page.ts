@@ -43,6 +43,8 @@ import {
 } from '@dynamic-cube/shared';
 import { catchError, firstValueFrom, of } from 'rxjs';
 import { FullWindow } from '../../common/full-window';
+import { PRINT_TRANSLATIONS } from '../../documents/print-designer/print-translations';
+import { PAGE_DESIGNER_TRANSLATIONS } from './page-designer-translations';
 import { payloadOf } from '../../apps-control/config/form-values';
 import { DraftsService } from '../../apps-control/drafts.service';
 import { PrivilegesService } from '../../apps-control/privileges.service';
@@ -1114,6 +1116,9 @@ export class PageDesignerPage {
   });
 
   constructor() {
+    this.i18n.register(PAGE_DESIGNER_TRANSLATIONS);
+    // Shared wording (image address, duplicate).
+    this.i18n.register(PRINT_TRANSLATIONS);
     effect(() => {
       const code = this.page();
       untracked(() => {

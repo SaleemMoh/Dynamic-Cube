@@ -12,6 +12,8 @@ export interface MasterItem {
   title: LocalizedText;
   /** Pill under the code, e.g. "13 values" or "Not used". */
   badge?: { label: string; tone: 'green' | 'gray' | 'gold' };
+  /** A second pill, e.g. "Differs in 1 company". */
+  note?: string;
   /** System rows are shown but not changed. */
   locked?: boolean;
   canEdit: boolean;
@@ -70,6 +72,9 @@ export interface MasterItem {
               <span class="mono dc-master__code">{{ item.code }}</span>
               @if (item.badge; as badge) {
                 <span class="dc-pill" [class.dc-pill--green]="badge.tone === 'green'" [class.dc-pill--gold]="badge.tone === 'gold'">{{ badge.label }}</span>
+              }
+              @if (item.note) {
+                <span class="dc-pill dc-pill--gold" [attr.data-testid]="'master-note-' + item.code">{{ item.note }}</span>
               }
             </div>
             <div class="dc-master__actions">

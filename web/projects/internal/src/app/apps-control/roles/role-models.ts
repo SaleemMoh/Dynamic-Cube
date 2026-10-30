@@ -26,6 +26,16 @@ export interface RoleRow extends ConfigRow {
   grants: GrantRow[];
   /** Menu item codes the role shows. */
   menus?: string[];
+  /** Companies where the role differs, with what it contains there (ADR-0036). */
+  overrides?: RoleOverrideRow[];
+}
+
+/** A role as it is in one company. */
+export interface RoleOverrideRow {
+  companyCode: string;
+  privileges: PrivilegeRow[];
+  grants: GrantRow[];
+  menus: string[];
 }
 
 /** A list (LOV) used on a screen: on the screen itself or on one of its sub-resources. */

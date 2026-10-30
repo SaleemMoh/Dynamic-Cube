@@ -11,12 +11,13 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { DocumentsApi, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
+import { DocumentsApi, I18nService, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
 import { catchError, debounceTime, firstValueFrom, switchMap } from 'rxjs';
 import { DraftsService } from '../apps-control/drafts.service';
 import { ConfigEditorData } from '../apps-control/config/config-editor';
 import { SubmitButton } from '../apps-control/submit-button';
 import { PrintDesigner } from './print-designer/print-designer';
+import { PRINT_TRANSLATIONS } from './print-designer/print-translations';
 import { PrintDesign, readDesign, starterDesign, toHtml } from './print-designer/print-model';
 
 const STARTER = `<html dir="rtl" lang="ar">
@@ -338,6 +339,7 @@ export class DocumentTemplateEditor {
   }));
 
   constructor() {
+    inject(I18nService).register(PRINT_TRANSLATIONS);
     // In the designer, the HTML (and page) follow the layout.
     effect(() => {
       if (this.mode() !== 'design') return;
