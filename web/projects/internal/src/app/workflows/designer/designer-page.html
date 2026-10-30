@@ -83,6 +83,16 @@
       }
     </div>
     <span class="dc-designer__grow"></span>
+    <button
+      matIconButton
+      type="button"
+      (click)="fullWindow.toggle()"
+      [matTooltip]="(fullWindow.on() ? 'designer.exitFullWindow' : 'designer.fullWindow') | dcTranslate"
+      [attr.aria-pressed]="fullWindow.on()"
+      data-testid="designer-full-window"
+    >
+      <mat-icon fontSet="material-symbols-outlined">{{ fullWindow.on() ? 'close_fullscreen' : 'open_in_full' }}</mat-icon>
+    </button>
     <span class="dc-designer__status" [class.dc-designer__status--bad]="errorsOnly().length > 0" data-testid="designer-status">
       <mat-icon fontSet="material-symbols-outlined">{{ errorsOnly().length ? 'error' : 'check_circle' }}</mat-icon>
       {{ errorsOnly().length ? errorsOnly().length + ' ' + ('designer.problems' | dcTranslate) : ('designer.noProblems' | dcTranslate) }}

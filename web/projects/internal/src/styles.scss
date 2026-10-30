@@ -572,3 +572,27 @@ textarea:not(.mat-mdc-input-element):focus-visible,
     font-size: 22px;
   }
 }
+
+/* A designer in full-window mode covers the side menu and header (overlays such as select panels stay above it). */
+.dc-full-window {
+  position: fixed !important;
+  inset: 0;
+  z-index: 900;
+  height: 100vh !important;
+  min-height: 0 !important;
+  padding: 12px 16px;
+  background: var(--dga-gray-50);
+  overflow: auto;
+}
+
+body.dc-full-window-open {
+  overflow: hidden;
+
+  /* The side navigation's container and content are stacking contexts (z-index 1); lift them so the designer covers all. */
+  .mat-drawer-container,
+  .mat-drawer-content,
+  .mat-sidenav-content {
+    z-index: auto;
+    transform: none;
+  }
+}

@@ -65,6 +65,16 @@
       }
     </div>
     <span class="dc-builder__grow"></span>
+    <button
+      matIconButton
+      type="button"
+      (click)="fullWindow.toggle()"
+      [matTooltip]="(fullWindow.on() ? 'designer.exitFullWindow' : 'designer.fullWindow') | dcTranslate"
+      [attr.aria-pressed]="fullWindow.on()"
+      data-testid="builder-full-window"
+    >
+      <mat-icon fontSet="material-symbols-outlined">{{ fullWindow.on() ? 'close_fullscreen' : 'open_in_full' }}</mat-icon>
+    </button>
     <span class="dc-builder__status" [class.dc-builder__status--bad]="problems().length > 0" data-testid="builder-status">
       <mat-icon fontSet="material-symbols-outlined">{{ problems().length ? 'error' : 'check_circle' }}</mat-icon>
       {{ problems().length ? problems().length + ' ' + ('designer.problems' | dcTranslate) : ('designer.noProblems' | dcTranslate) }}

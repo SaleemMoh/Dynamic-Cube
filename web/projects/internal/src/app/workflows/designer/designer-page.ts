@@ -10,6 +10,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { AppsControlApi, BusinessAppContext, ConfigRow, I18nService, LocalizePipe, problemMessages, TranslatePipe } from '@dynamic-cube/shared';
 import { firstValueFrom } from 'rxjs';
+import { FullWindow } from '../../common/full-window';
 import { DraftsService } from '../../apps-control/drafts.service';
 import { PrivilegesService } from '../../apps-control/privileges.service';
 import { DesignerCanvas, PALETTE_MIME } from './designer-canvas';
@@ -50,12 +51,14 @@ const STARTER: WorkflowDraft = {
     DesignerTestRun,
   ],
   providers: [DesignerStore, DesignerReferences],
+  hostDirectives: [FullWindow],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './designer-page.html',
   styleUrl: './designer-page.scss',
 })
 export class DesignerPage {
   private readonly api = inject(AppsControlApi);
+  protected readonly fullWindow = inject(FullWindow);
   protected readonly drafts = inject(DraftsService);
   private readonly privileges = inject(PrivilegesService);
   protected readonly i18n = inject(I18nService);
