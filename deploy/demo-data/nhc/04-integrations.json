@@ -1,0 +1,297 @@
+{
+  "title": "NHC — integrations (Ministry of Commerce, SADAD)",
+  "items": [
+    {
+      "entityType": "integ.provider",
+      "entityCode": "MCI",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "وزارة التجارة",
+        "nameEn": "Ministry of Commerce",
+        "descriptionAr": "خدمات السجل التجاري عبر بوابة الوزارة",
+        "descriptionEn": "Commercial registration services through the MoMRAH gateway"
+      }
+    },
+    {
+      "entityType": "integ.connection",
+      "entityCode": "MOMRAH_GATEWAY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "بوابة التكامل الحكومي",
+        "nameEn": "Government integration gateway",
+        "providerCode": "MCI",
+        "baseUrl": "${GATEWAY_URL}",
+        "authType": "OAUTH2_CLIENT_CREDENTIALS",
+        "secretName": "MOMRAH_GATEWAY",
+        "tokenUrl": "/oauth/v1/token",
+        "timeoutSeconds": 30,
+        "retryCount": 2,
+        "circuitBreakerFailures": 5,
+        "circuitBreakerSeconds": 60,
+        "headers": []
+      }
+    },
+    {
+      "entityType": "integ.envelope-profile",
+      "entityCode": "MOMRAH",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "استجابة بوابة الوزارة",
+        "nameEn": "MoMRAH gateway envelope",
+        "statusCodePath": "statusDetails.code",
+        "statusMessagePath": "statusDetails.message",
+        "successStatusCodes": [
+          "200"
+        ],
+        "businessCodePath": "data.responseCode",
+        "businessMessagePath": "data.responseMessage",
+        "successBusinessCodes": [
+          "1"
+        ],
+        "resultPath": "data.result",
+        "responseCodes": []
+      }
+    },
+    {
+      "entityType": "integ.operation",
+      "entityCode": "MCI_CR_BY_ID_NUMBER",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "السجلات التجارية بدلالة رقم الهوية",
+        "nameEn": "Commercial registrations by ID number",
+        "connectionCode": "MOMRAH_GATEWAY",
+        "envelopeProfileCode": "MOMRAH",
+        "method": "GET",
+        "pathTemplate": "/v1/MCI-DIP/cr-information-id-number/{idNumber}",
+        "parameters": [
+          {
+            "name": "idNumber",
+            "location": "PATH",
+            "isRequired": true,
+            "isMasked": true,
+            "sampleValue": "1000000001"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "crNumbers",
+            "path": "Licenses[*].Commercial_NO"
+          },
+          {
+            "name": "crNames",
+            "path": "Licenses[*].Commercial_Name"
+          }
+        ],
+        "responseCodes": [
+          {
+            "code": "001-000001",
+            "outcome": "NOT_FOUND",
+            "messageAr": "لا توجد سجلات تجارية مطابقة.",
+            "messageEn": "No matching commercial registration was found."
+          },
+          {
+            "code": "001-000003",
+            "outcome": "BUSINESS_ERROR",
+            "messageAr": "يوجد سجل تجاري منتهي الصلاحية.",
+            "messageEn": "At least one commercial registration has expired."
+          },
+          {
+            "code": "001-000004",
+            "outcome": "BUSINESS_ERROR",
+            "messageAr": "يوجد سجل تجاري موقوف.",
+            "messageEn": "At least one commercial registration is suspended."
+          },
+          {
+            "code": "001-000006",
+            "outcome": "TECHNICAL_ERROR",
+            "messageAr": "الجهة غير مصرح لها بالخدمة لدى وزارة التجارة.",
+            "messageEn": "The entity is not authorized for this Ministry of Commerce service."
+          },
+          {
+            "code": "001-000007",
+            "outcome": "BUSINESS_ERROR",
+            "messageAr": "نوع الهوية غير صحيح.",
+            "messageEn": "The ID type is not valid."
+          },
+          {
+            "code": "001-000008",
+            "outcome": "BUSINESS_ERROR",
+            "messageAr": "رقم الهوية غير صحيح.",
+            "messageEn": "The ID number is not valid."
+          }
+        ],
+        "maskFields": [],
+        "cacheSeconds": 0,
+        "isIdempotent": true
+      }
+    },
+    {
+      "entityType": "integ.operation",
+      "entityCode": "MCI_CR_INFO",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "بيانات السجل التجاري",
+        "nameEn": "Commercial registration information",
+        "connectionCode": "MOMRAH_GATEWAY",
+        "envelopeProfileCode": "MOMRAH",
+        "method": "GET",
+        "pathTemplate": "/v1/MCI-DIP/CR-Information/{crNumber}",
+        "parameters": [
+          {
+            "name": "crNumber",
+            "location": "PATH",
+            "isRequired": true,
+            "isMasked": false,
+            "sampleValue": "1010000001"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "crName",
+            "path": "crName"
+          },
+          {
+            "name": "unifiedNumber",
+            "path": "crEntityNumber"
+          },
+          {
+            "name": "status",
+            "path": "status.name"
+          },
+          {
+            "name": "expiryDate",
+            "path": "expiryDate"
+          },
+          {
+            "name": "city",
+            "path": "location.name"
+          },
+          {
+            "name": "capital",
+            "path": "capital"
+          },
+          {
+            "name": "activities",
+            "path": "activities[*].name"
+          }
+        ],
+        "responseCodes": [
+          {
+            "code": "001-000001",
+            "outcome": "NOT_FOUND",
+            "messageAr": "لا توجد سجلات تجارية مطابقة.",
+            "messageEn": "No matching commercial registration was found."
+          },
+          {
+            "code": "001-000003",
+            "outcome": "BUSINESS_ERROR",
+            "messageAr": "يوجد سجل تجاري منتهي الصلاحية.",
+            "messageEn": "At least one commercial registration has expired."
+          },
+          {
+            "code": "001-000004",
+            "outcome": "BUSINESS_ERROR",
+            "messageAr": "يوجد سجل تجاري موقوف.",
+            "messageEn": "At least one commercial registration is suspended."
+          },
+          {
+            "code": "001-000006",
+            "outcome": "TECHNICAL_ERROR",
+            "messageAr": "الجهة غير مصرح لها بالخدمة لدى وزارة التجارة.",
+            "messageEn": "The entity is not authorized for this Ministry of Commerce service."
+          },
+          {
+            "code": "001-000007",
+            "outcome": "BUSINESS_ERROR",
+            "messageAr": "نوع الهوية غير صحيح.",
+            "messageEn": "The ID type is not valid."
+          },
+          {
+            "code": "001-000008",
+            "outcome": "BUSINESS_ERROR",
+            "messageAr": "رقم الهوية غير صحيح.",
+            "messageEn": "The ID number is not valid."
+          }
+        ],
+        "maskFields": [],
+        "cacheSeconds": 3600,
+        "isIdempotent": true
+      }
+    },
+    {
+      "entityType": "integ.operation",
+      "entityCode": "SADAD_CREATE_BILL",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إنشاء فاتورة سداد",
+        "nameEn": "Create a SADAD bill",
+        "connectionCode": "MOMRAH_GATEWAY",
+        "envelopeProfileCode": "MOMRAH",
+        "descriptionAr": "يسجّل فاتورة لدى سداد ويعيد رقم الفاتورة الذي يسدد به المستفيد.",
+        "descriptionEn": "Registers a bill with SADAD and returns the number the payer pays with.",
+        "method": "POST",
+        "pathTemplate": "/v1/SADAD/bills",
+        "isIdempotent": false,
+        "parameters": [
+          {
+            "name": "billNumber",
+            "location": "BODY",
+            "isRequired": true,
+            "isMasked": false,
+            "sampleValue": "BILL-2026-000001"
+          },
+          {
+            "name": "amount",
+            "location": "BODY",
+            "isRequired": true,
+            "isMasked": false,
+            "sampleValue": "5000.00"
+          },
+          {
+            "name": "dueDate",
+            "location": "BODY",
+            "isRequired": true,
+            "isMasked": false,
+            "sampleValue": "2026-11-07"
+          },
+          {
+            "name": "payerId",
+            "location": "BODY",
+            "isRequired": true,
+            "isMasked": false
+          },
+          {
+            "name": "payerName",
+            "location": "BODY",
+            "isRequired": true,
+            "isMasked": true
+          },
+          {
+            "name": "description",
+            "location": "BODY",
+            "isRequired": true,
+            "isMasked": false
+          }
+        ],
+        "outputs": [
+          {
+            "name": "billNumber",
+            "path": "sadadNumber"
+          },
+          {
+            "name": "billerCode",
+            "path": "billerCode"
+          }
+        ],
+        "responseCodes": [
+          {
+            "code": "002-000001",
+            "outcome": "BUSINESS_ERROR",
+            "messageAr": "مبلغ الفاتورة غير صحيح.",
+            "messageEn": "The bill amount is not valid."
+          }
+        ]
+      }
+    }
+  ]
+}

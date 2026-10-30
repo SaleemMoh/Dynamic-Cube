@@ -1,0 +1,77 @@
+{
+  "title": "NHC — classification certificate",
+  "items": [
+    {
+      "entityType": "doc.template",
+      "entityCode": "CLS_CERTIFICATE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "شهادة التصنيف",
+        "nameEn": "Classification certificate",
+        "html": "<html dir=\"rtl\" lang=\"ar\">\n<head>\n<style>\n  @page { margin: 0; }\n  body { font-family: 'IBM Plex Sans Arabic'; margin: 0; color: #161616; }\n  .frame { margin: 1.2cm; padding: 1cm 1.2cm; border: 2px solid #0f5c4d; border-radius: 12px; min-height: 25cm; position: relative; }\n  .top { display: flex; justify-content: space-between; align-items: flex-start; }\n  .title { text-align: start; }\n  .title h1 { margin: 0; font-size: 28px; color: #0b3d33; }\n  .title p { margin: 4px 0 0; color: #384250; font-size: 15px; }\n  .number { margin-top: 10px; font-size: 14px; color: #6c737f; }\n  .number b { color: #161616; font-size: 16px; direction: ltr; unicode-bidi: embed; }\n  .qr { text-align: center; font-size: 10px; color: #6c737f; }\n  .holder { margin: 28px 0 18px; padding: 14px 18px; background: #eef6f3; border-radius: 8px; }\n  .holder h2 { margin: 0 0 6px; font-size: 22px; }\n  .holder p { margin: 2px 0; color: #384250; }\n  table { width: 100%; border-collapse: collapse; margin-top: 8px; }\n  th { background: #0f5c4d; color: #ffffff; font-weight: 600; }\n  th, td { padding: 9px 12px; border: 1px solid #d2d6db; text-align: start; }\n  td.grade { text-align: center; font-weight: 700; font-size: 18px; color: #0b3d33; width: 22%; }\n  .dates { display: flex; gap: 24px; margin-top: 22px; }\n  .dates div { flex: 1; padding: 10px 14px; border: 1px solid #d2d6db; border-radius: 8px; }\n  .dates span { display: block; color: #6c737f; font-size: 13px; }\n  .dates b { font-size: 16px; }\n  .foot { position: absolute; bottom: 1cm; inset-inline: 1.2cm; font-size: 11px; color: #6c737f; border-top: 1px solid #e5e7eb; padding-top: 8px; }\n</style>\n</head>\n<body>\n<div class=\"frame\">\n  <div class=\"top\">\n    <div class=\"title\">\n      <h1>{{ document.typeNameAr }}</h1>\n      <p>{{ document.typeNameEn }}</p>\n      <div class=\"number\">رقم الشهادة <b>{{ document.number }}</b>{% if document.version > 1 %} — الإصدار {{ document.version }}{% endif %}</div>\n    </div>\n    <div class=\"qr\"><img src=\"{{ qr }}\" width=\"120\" alt=\"QR\"><br>امسح للتحقق</div>\n  </div>\n  <div class=\"holder\">\n    <h2>{{ holder.nameAr }}</h2>\n    <p>{{ holder.nameEn }}</p>\n    <p>السجل التجاري: {{ holder.identifiers.CR_NUMBER }} — المدينة: {{ data.city }} — فئة الحجم: {{ data.sizeClass }}</p>\n  </div>\n  <table>\n    <tr><th>المجال</th><th>Domain</th><th>الدرجة</th></tr>\n    {% for line in lines %}\n    <tr><td>{{ line.sectorNameAr }}</td><td dir=\"ltr\">{{ line.sectorNameEn }}</td><td class=\"grade\">{{ line.grade }}</td></tr>\n    {% endfor %}\n  </table>\n  <div class=\"dates\">\n    <div><span>تاريخ الإصدار</span><b>{{ document.issuedOn }}</b></div>\n    <div><span>تاريخ الانتهاء</span><b>{{ document.expiresOn }}</b></div>\n  </div>\n  <div class=\"foot\">هذه الشهادة صادرة إلكترونياً ولا تحتاج إلى ختم. للتحقق من صحتها وسريانها: <span dir=\"ltr\">{{ verifyUrl }}</span></div>\n</div>\n</body>\n</html>\n",
+        "pageSize": "A4",
+        "landscape": false
+      }
+    },
+    {
+      "entityType": "doc.document-type",
+      "entityCode": "CLS_CERTIFICATE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "شهادة تصنيف المقاولين والمكاتب الهندسية",
+        "nameEn": "Contractors & engineering offices classification certificate",
+        "descriptionAr": "شهادة واحدة لكل منشأة تضم مجالات التصنيف ودرجة كل مجال؛ التجديد والتعديل يحتفظان بالرقم ويضيفان إصداراً.",
+        "descriptionEn": "One certificate per establishment listing its domains and grades; renewals and changes keep the number and add a version.",
+        "numberPrefix": "NHC",
+        "validityMonths": 36,
+        "onePerHolder": true,
+        "amendResetsValidity": false,
+        "templateCode": "CLS_CERTIFICATE",
+        "alertDaysBefore": [
+          90,
+          15
+        ],
+        "fields": [
+          {
+            "code": "sizeClass",
+            "nameAr": "فئة الحجم",
+            "nameEn": "Size class",
+            "isPublic": true
+          },
+          {
+            "code": "city",
+            "nameAr": "المدينة",
+            "nameEn": "City",
+            "isPublic": true
+          },
+          {
+            "code": "requestNumber",
+            "nameAr": "رقم الطلب",
+            "nameEn": "Request number",
+            "isPublic": false
+          }
+        ],
+        "lineFields": [
+          {
+            "code": "sectorNameAr",
+            "nameAr": "المجال",
+            "nameEn": "Domain (Arabic)",
+            "isPublic": true
+          },
+          {
+            "code": "sectorNameEn",
+            "nameAr": "المجال بالإنجليزية",
+            "nameEn": "Domain",
+            "isPublic": true
+          },
+          {
+            "code": "grade",
+            "nameAr": "الدرجة",
+            "nameEn": "Grade",
+            "isPublic": true
+          }
+        ]
+      }
+    }
+  ]
+}

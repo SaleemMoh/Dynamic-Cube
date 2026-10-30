@@ -121,6 +121,11 @@ public sealed class TestHost : IAsyncDisposable
         return id;
     }
 
+    /// <summary>Loads configuration packages as the Migrator loads demo data: the maker drafts, the checker publishes.</summary>
+    public Task LoadAsync(IReadOnlyList<ConfigPackage> packages) =>
+        new PackageLoader(_services.GetRequiredService<IServiceScopeFactory>(), Microsoft.Extensions.Logging.Abstractions.NullLogger<PackageLoader>.Instance)
+            .LoadAsync(packages, name => _user.Name = name == PackageLoader.Checker ? "checker" : "maker", CancellationToken.None);
+
     /// <summary>The notification events raised for a subject (still in the outbox: tests run no worker).</summary>
     public Task<List<CommunicationEvent>> RaisedAsync(Guid subjectId) =>
         AsAsync("admin", async sp =>

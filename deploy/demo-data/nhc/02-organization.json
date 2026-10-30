@@ -1,0 +1,263 @@
+{
+  "title": "NHC — organization structure",
+  "items": [
+    {
+      "entityType": "apps.org-unit-type",
+      "entityCode": "COMPANY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "شركة",
+        "nameEn": "Company",
+        "displayOrder": 1,
+        "allowedParentTypes": []
+      }
+    },
+    {
+      "entityType": "apps.org-unit-type",
+      "entityCode": "SECTOR",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "قطاع",
+        "nameEn": "Sector",
+        "displayOrder": 2,
+        "allowedParentTypes": [
+          "COMPANY"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.org-unit-type",
+      "entityCode": "DEPARTMENT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إدارة",
+        "nameEn": "Department",
+        "displayOrder": 3,
+        "allowedParentTypes": [
+          "COMPANY",
+          "SECTOR"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.org-unit-type",
+      "entityCode": "BRANCH_OFFICE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إدارة فرع",
+        "nameEn": "Branch office",
+        "displayOrder": 4,
+        "allowedParentTypes": [
+          "SECTOR"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.org-unit",
+      "entityCode": "NHCI",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "شركة إن إتش سي للابتكار",
+        "nameEn": "NHC Innovation",
+        "typeCode": "COMPANY",
+        "parentCode": null,
+        "attributes": {}
+      }
+    },
+    {
+      "entityType": "apps.org-unit",
+      "entityCode": "GM_OFFICE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مكتب المدير العام",
+        "nameEn": "General manager office",
+        "typeCode": "DEPARTMENT",
+        "parentCode": "NHCI",
+        "attributes": {}
+      }
+    },
+    {
+      "entityType": "apps.org-unit",
+      "entityCode": "CLS_SECTOR",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "قطاع التصنيف",
+        "nameEn": "Classification sector",
+        "typeCode": "SECTOR",
+        "parentCode": "NHCI",
+        "attributes": {}
+      }
+    },
+    {
+      "entityType": "apps.org-unit",
+      "entityCode": "REQ_RUH",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إدارة طلبات فرع الرياض",
+        "nameEn": "Riyadh branch requests",
+        "typeCode": "BRANCH_OFFICE",
+        "parentCode": "CLS_SECTOR",
+        "attributes": {}
+      }
+    },
+    {
+      "entityType": "apps.org-unit",
+      "entityCode": "REQ_JED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إدارة طلبات فرع جدة",
+        "nameEn": "Jeddah branch requests",
+        "typeCode": "BRANCH_OFFICE",
+        "parentCode": "CLS_SECTOR",
+        "attributes": {}
+      }
+    },
+    {
+      "entityType": "apps.org-unit",
+      "entityCode": "REQ_DMM",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إدارة طلبات فرع الدمام",
+        "nameEn": "Dammam branch requests",
+        "typeCode": "BRANCH_OFFICE",
+        "parentCode": "CLS_SECTOR",
+        "attributes": {}
+      }
+    },
+    {
+      "entityType": "apps.org-unit",
+      "entityCode": "EVAL_GOV",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إدارة تقييم الحوكمة",
+        "nameEn": "Governance evaluation",
+        "typeCode": "DEPARTMENT",
+        "parentCode": "CLS_SECTOR",
+        "attributes": {}
+      }
+    },
+    {
+      "entityType": "apps.org-unit",
+      "entityCode": "EVAL_PRJ",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إدارة تقييم المشاريع والخبرات",
+        "nameEn": "Projects & experience evaluation",
+        "typeCode": "DEPARTMENT",
+        "parentCode": "CLS_SECTOR",
+        "attributes": {}
+      }
+    },
+    {
+      "entityType": "apps.org-unit",
+      "entityCode": "EVAL_FIN",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إدارة التقييم المالي",
+        "nameEn": "Financial evaluation",
+        "typeCode": "DEPARTMENT",
+        "parentCode": "CLS_SECTOR",
+        "attributes": {}
+      }
+    },
+    {
+      "entityType": "apps.org-unit",
+      "entityCode": "AUDIT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إدارة التدقيق",
+        "nameEn": "Audit",
+        "typeCode": "DEPARTMENT",
+        "parentCode": "CLS_SECTOR",
+        "attributes": {}
+      }
+    },
+    {
+      "entityType": "apps.org-unit",
+      "entityCode": "CUSTOMER_CARE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إدارة تجربة العملاء",
+        "nameEn": "Customer experience",
+        "typeCode": "DEPARTMENT",
+        "parentCode": "NHCI",
+        "attributes": {}
+      }
+    },
+    {
+      "entityType": "apps.org-unit",
+      "entityCode": "IT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إدارة تقنية المعلومات",
+        "nameEn": "Information technology",
+        "typeCode": "DEPARTMENT",
+        "parentCode": "NHCI",
+        "attributes": {}
+      }
+    },
+    {
+      "entityType": "apps.position",
+      "entityCode": "GENERAL_MANAGER",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المدير العام",
+        "nameEn": "General manager"
+      }
+    },
+    {
+      "entityType": "apps.position",
+      "entityCode": "REQUESTS_MANAGER",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مدير طلبات الفرع",
+        "nameEn": "Branch requests manager"
+      }
+    },
+    {
+      "entityType": "apps.position",
+      "entityCode": "ANALYST",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "محلل",
+        "nameEn": "Analyst"
+      }
+    },
+    {
+      "entityType": "apps.position",
+      "entityCode": "AUDITOR",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مدقق",
+        "nameEn": "Auditor"
+      }
+    },
+    {
+      "entityType": "apps.position",
+      "entityCode": "AUDIT_MANAGER",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مدير التدقيق",
+        "nameEn": "Audit manager"
+      }
+    },
+    {
+      "entityType": "apps.position",
+      "entityCode": "CARE_AGENT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "أخصائي تجربة العملاء",
+        "nameEn": "Customer experience specialist"
+      }
+    },
+    {
+      "entityType": "apps.position",
+      "entityCode": "SYSTEM_ADMIN",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مسؤول النظام",
+        "nameEn": "System administrator"
+      }
+    }
+  ]
+}

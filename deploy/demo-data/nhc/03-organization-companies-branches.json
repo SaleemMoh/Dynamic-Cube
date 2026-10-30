@@ -1,0 +1,167 @@
+{
+  "title": "NHC — organization, company and branches",
+  "items": [
+    {
+      "entityType": "apps.entity",
+      "entityCode": "ENTITY",
+      "operation": "UPDATE",
+      "payload": {
+        "nameAr": "الشركة الوطنية للإسكان",
+        "nameEn": "National Housing Company (NHC)",
+        "entityKind": "COMPANY",
+        "footerLinks": [
+          {
+            "labelAr": "عن خدمة التصنيف",
+            "labelEn": "About classification",
+            "url": "/pages/ABOUT"
+          },
+          {
+            "labelAr": "الأسئلة الشائعة",
+            "labelEn": "FAQs",
+            "url": "/faq"
+          },
+          {
+            "labelAr": "التحقق من شهادة",
+            "labelEn": "Verify a certificate",
+            "url": "/verify"
+          }
+        ],
+        "contact": {
+          "phone": "199040",
+          "email": "classification@nhci.example",
+          "addressAr": "الرياض، المملكة العربية السعودية",
+          "addressEn": "Riyadh, Saudi Arabia",
+          "mapUrl": null,
+          "social": [
+            {
+              "network": "X",
+              "url": "https://x.com/"
+            },
+            {
+              "network": "LINKEDIN",
+              "url": "https://www.linkedin.com/"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "entityType": "apps.company",
+      "entityCode": "MAIN",
+      "operation": "UPSERT",
+      "payload": {
+        "nameAr": "شركة إن إتش سي للابتكار",
+        "nameEn": "NHC Innovation",
+        "crNumber": "1010999001",
+        "unifiedNumber": "7000999001",
+        "vatNumber": "300099900100003",
+        "displayOrder": 1
+      }
+    },
+    {
+      "entityType": "apps.branch",
+      "entityCode": "HQ",
+      "operation": "UPSERT",
+      "payload": {
+        "nameAr": "فرع الرياض (المقر الرئيسي)",
+        "nameEn": "Riyadh branch (head office)",
+        "companyCode": "MAIN",
+        "orgUnitCode": "REQ_RUH",
+        "regionCode": "RIYADH",
+        "city": "الرياض",
+        "isDefault": true,
+        "displayOrder": 1
+      }
+    },
+    {
+      "entityType": "apps.branch",
+      "entityCode": "JED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "فرع جدة",
+        "nameEn": "Jeddah branch",
+        "companyCode": "MAIN",
+        "orgUnitCode": "REQ_JED",
+        "regionCode": "MAKKAH",
+        "city": "جدة",
+        "displayOrder": 2
+      }
+    },
+    {
+      "entityType": "apps.branch",
+      "entityCode": "DMM",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "فرع الدمام",
+        "nameEn": "Dammam branch",
+        "companyCode": "MAIN",
+        "orgUnitCode": "REQ_DMM",
+        "regionCode": "EASTERN",
+        "city": "الدمام",
+        "displayOrder": 3
+      }
+    },
+    {
+      "entityType": "apps.installation",
+      "entityCode": "INSTALLATION",
+      "operation": "UPDATE",
+      "payload": {
+        "nameAr": "منصة تصنيف المقاولين والمكاتب الهندسية",
+        "nameEn": "Contractors & engineering offices classification platform",
+        "systemType": "DEMO",
+        "copyright": "© 2026 شركة إن إتش سي للابتكار — NHC Innovation",
+        "defaultLanguage": "ar",
+        "timeZone": "Asia/Riyadh",
+        "weekendDays": [
+          5,
+          6
+        ],
+        "calendarDisplay": "BOTH"
+      }
+    },
+    {
+      "entityType": "apps.holiday",
+      "entityCode": "FOUNDING_DAY_2027",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "يوم التأسيس",
+        "nameEn": "Founding Day",
+        "fromDate": "2027-02-22",
+        "toDate": null
+      }
+    },
+    {
+      "entityType": "apps.holiday",
+      "entityCode": "EID_AL_FITR_2027",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إجازة عيد الفطر (تقريبي)",
+        "nameEn": "Eid al-Fitr holiday (approximate)",
+        "fromDate": "2027-03-09",
+        "toDate": "2027-03-13"
+      }
+    },
+    {
+      "entityType": "apps.holiday",
+      "entityCode": "EID_AL_ADHA_2027",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إجازة عيد الأضحى (تقريبي)",
+        "nameEn": "Eid al-Adha holiday (approximate)",
+        "fromDate": "2027-05-15",
+        "toDate": "2027-05-19"
+      }
+    },
+    {
+      "entityType": "apps.holiday",
+      "entityCode": "NATIONAL_DAY_2027",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "اليوم الوطني",
+        "nameEn": "National Day",
+        "fromDate": "2027-09-23",
+        "toDate": null
+      }
+    }
+  ]
+}

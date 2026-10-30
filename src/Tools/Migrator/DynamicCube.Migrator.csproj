@@ -22,6 +22,8 @@
 
   <ItemGroup>
     <None Update="appsettings*.json" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Demo data packages (DemoData:Name), published with the migrator. -->
+    <None Include="..\..\..\deploy\demo-data\**\*.json" Link="demo-data\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

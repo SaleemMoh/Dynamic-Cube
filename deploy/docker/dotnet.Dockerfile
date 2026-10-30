@@ -7,6 +7,8 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 COPY global.json Directory.Build.props Directory.Packages.props .editorconfig ./
 COPY src/ src/
+# Demo data packages, published with the migrator.
+COPY deploy/demo-data/ deploy/demo-data/
 ARG PROJECT
 RUN dotnet restore "$PROJECT"
 RUN dotnet publish "$PROJECT" -c Release -o /app --no-restore /p:UseAppHost=false

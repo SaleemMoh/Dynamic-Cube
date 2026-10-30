@@ -1,0 +1,1506 @@
+{
+  "title": "NHC — processing workflows",
+  "items": [
+    {
+      "entityType": "wf.workflow",
+      "entityCode": "CLS_NEW",
+      "operation": "UPDATE",
+      "payload": {
+        "nameAr": "معالجة طلبات إصدار شهادة التصنيف",
+        "nameEn": "New certificate processing",
+        "descriptionAr": "مدير طلبات الفرع يراجع ويوزع؛ المسار السريع يسدد الفاتورة؛ ثلاث تقييمات متوازية (الحوكمة، المشاريع والخبرات، المالي) كل منها بمحلل ومدقق؛ احتساب الدرجات؛ اعتماد المدير العام؛ إصدار الشهادة.",
+        "descriptionEn": "The branch requests manager reviews and assigns; the fast track pays its invoice; three parallel evaluations (governance, projects & experience, financial), each with an analyst and an auditor; grading; the general manager approves; the certificate is issued.",
+        "serviceCode": "CLS_NEW"
+      }
+    },
+    {
+      "entityType": "wf.workflow-version",
+      "entityCode": "CLS_NEW/2",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 2",
+        "nameEn": "Version 2",
+        "definition": {
+          "nodes": [
+            {
+              "code": "START",
+              "type": "START",
+              "nameAr": "تقديم الطلب",
+              "nameEn": "Submitted",
+              "next": "DISTRIBUTE",
+              "layout": {
+                "x": 340,
+                "y": 80
+              }
+            },
+            {
+              "code": "DISTRIBUTE",
+              "type": "HUMAN_TASK",
+              "nameAr": "مراجعة الطلب وتوزيعه على المحللين",
+              "nameEn": "Review and assign analysts",
+              "assignment": {
+                "target": "ROLE",
+                "role": "CLS_REQUEST_MANAGER",
+                "mode": "QUEUE"
+              },
+              "actions": [
+                {
+                  "code": "DISTRIBUTE",
+                  "kind": "COMPLETE",
+                  "nameAr": "إحالة للتقييم",
+                  "nameEn": "Send for evaluation",
+                  "to": "TRACK"
+                },
+                {
+                  "code": "RETURN",
+                  "kind": "RETURN",
+                  "nameAr": "طلب بيانات إضافية من مقدم الطلب",
+                  "nameEn": "Ask the applicant for additional data"
+                },
+                {
+                  "code": "REJECT",
+                  "kind": "REJECT",
+                  "nameAr": "رفض الطلب",
+                  "nameEn": "Reject the request",
+                  "to": "REJECTED"
+                }
+              ],
+              "sla": {
+                "byLevel": {
+                  "NORMAL": 3,
+                  "FAST": 1
+                }
+              },
+              "layout": {
+                "x": 340,
+                "y": 190
+              }
+            },
+            {
+              "code": "TRACK",
+              "type": "GATEWAY",
+              "nameAr": "المسار السريع؟",
+              "nameEn": "Fast track?",
+              "routes": [
+                {
+                  "when": {
+                    "==": [
+                      {
+                        "var": "level"
+                      },
+                      "FAST"
+                    ]
+                  },
+                  "to": "PAY"
+                }
+              ],
+              "default": "SPLIT",
+              "layout": {
+                "x": 340,
+                "y": 300
+              }
+            },
+            {
+              "code": "PAY",
+              "type": "PAYMENT",
+              "nameAr": "فاتورة المسار السريع وسدادها",
+              "nameEn": "Fast track invoice and payment",
+              "provider": "SADAD",
+              "displayStatus": "AWAITING_PAYMENT",
+              "next": "SPLIT",
+              "expired": "UNPAID",
+              "layout": {
+                "x": 340,
+                "y": 410
+              }
+            },
+            {
+              "code": "SPLIT",
+              "type": "PARALLEL_SPLIT",
+              "nameAr": "التقييم المتوازي",
+              "nameEn": "Parallel evaluation",
+              "branches": [
+                "GOV_ANALYSIS",
+                "PROJECTS_ANALYSIS",
+                "FIN_ANALYSIS"
+              ],
+              "layout": {
+                "x": 340,
+                "y": 520
+              }
+            },
+            {
+              "code": "GOV_ANALYSIS",
+              "type": "HUMAN_TASK",
+              "nameAr": "تحليل الحوكمة",
+              "nameEn": "Governance analysis",
+              "assignment": {
+                "target": "PREVIOUS_ACTOR",
+                "step": "GOV_ANALYSIS",
+                "role": "CLS_GOV_ANALYST",
+                "mode": "DISTRIBUTE",
+                "distributorRole": "CLS_REQUEST_MANAGER"
+              },
+              "sla": {
+                "byLevel": {
+                  "NORMAL": 30,
+                  "FAST": 2
+                },
+                "escalateToRole": "CLS_REQUEST_MANAGER"
+              },
+              "actions": [
+                {
+                  "code": "SEND_TO_AUDIT",
+                  "kind": "COMPLETE",
+                  "nameAr": "رفع للتدقيق",
+                  "nameEn": "Send for audit",
+                  "to": "GOV_AUDIT"
+                },
+                {
+                  "code": "RETURN",
+                  "kind": "RETURN",
+                  "nameAr": "طلب بيانات إضافية من مقدم الطلب",
+                  "nameEn": "Ask the applicant for additional data"
+                }
+              ],
+              "layout": {
+                "x": 80,
+                "y": 630
+              }
+            },
+            {
+              "code": "GOV_AUDIT",
+              "type": "HUMAN_TASK",
+              "nameAr": "تدقيق الحوكمة",
+              "nameEn": "Governance audit",
+              "excludeActorsOf": [
+                "GOV_ANALYSIS"
+              ],
+              "assignment": {
+                "target": "ROLE",
+                "role": "CLS_GOV_AUDITOR",
+                "mode": "QUEUE"
+              },
+              "sla": {
+                "byLevel": {
+                  "NORMAL": 10,
+                  "FAST": 1
+                },
+                "escalateToRole": "CLS_REQUEST_MANAGER"
+              },
+              "actions": [
+                {
+                  "code": "CONFIRM",
+                  "kind": "COMPLETE",
+                  "nameAr": "اعتماد التحليل",
+                  "nameEn": "Confirm the analysis",
+                  "to": "JOIN"
+                },
+                {
+                  "code": "BACK_TO_ANALYST",
+                  "kind": "COMPLETE",
+                  "nameAr": "إعادة للمحلل",
+                  "nameEn": "Back to the analyst",
+                  "commentRequired": true,
+                  "to": "GOV_ANALYSIS"
+                }
+              ],
+              "layout": {
+                "x": 80,
+                "y": 740
+              }
+            },
+            {
+              "code": "PROJECTS_ANALYSIS",
+              "type": "HUMAN_TASK",
+              "nameAr": "تحليل المشاريع والخبرات",
+              "nameEn": "Projects & experience analysis",
+              "assignment": {
+                "target": "PREVIOUS_ACTOR",
+                "step": "PROJECTS_ANALYSIS",
+                "role": "CLS_PROJECTS_ANALYST",
+                "mode": "DISTRIBUTE",
+                "distributorRole": "CLS_REQUEST_MANAGER"
+              },
+              "sla": {
+                "byLevel": {
+                  "NORMAL": 30,
+                  "FAST": 2
+                },
+                "escalateToRole": "CLS_REQUEST_MANAGER"
+              },
+              "actions": [
+                {
+                  "code": "SEND_TO_AUDIT",
+                  "kind": "COMPLETE",
+                  "nameAr": "رفع للتدقيق",
+                  "nameEn": "Send for audit",
+                  "to": "PROJECTS_AUDIT"
+                },
+                {
+                  "code": "RETURN",
+                  "kind": "RETURN",
+                  "nameAr": "طلب بيانات إضافية من مقدم الطلب",
+                  "nameEn": "Ask the applicant for additional data"
+                }
+              ],
+              "layout": {
+                "x": 340,
+                "y": 630
+              }
+            },
+            {
+              "code": "PROJECTS_AUDIT",
+              "type": "HUMAN_TASK",
+              "nameAr": "تدقيق المشاريع",
+              "nameEn": "Projects audit",
+              "excludeActorsOf": [
+                "PROJECTS_ANALYSIS"
+              ],
+              "assignment": {
+                "target": "ROLE",
+                "role": "CLS_PROJECTS_AUDITOR",
+                "mode": "QUEUE"
+              },
+              "sla": {
+                "byLevel": {
+                  "NORMAL": 10,
+                  "FAST": 1
+                },
+                "escalateToRole": "CLS_REQUEST_MANAGER"
+              },
+              "actions": [
+                {
+                  "code": "CONFIRM",
+                  "kind": "COMPLETE",
+                  "nameAr": "اعتماد التحليل",
+                  "nameEn": "Confirm the analysis",
+                  "to": "JOIN"
+                },
+                {
+                  "code": "BACK_TO_ANALYST",
+                  "kind": "COMPLETE",
+                  "nameAr": "إعادة للمحلل",
+                  "nameEn": "Back to the analyst",
+                  "commentRequired": true,
+                  "to": "PROJECTS_ANALYSIS"
+                }
+              ],
+              "layout": {
+                "x": 340,
+                "y": 740
+              }
+            },
+            {
+              "code": "FIN_ANALYSIS",
+              "type": "HUMAN_TASK",
+              "nameAr": "التقييم المالي",
+              "nameEn": "Financial evaluation",
+              "assignment": {
+                "target": "PREVIOUS_ACTOR",
+                "step": "FIN_ANALYSIS",
+                "role": "CLS_FIN_ANALYST",
+                "mode": "DISTRIBUTE",
+                "distributorRole": "CLS_REQUEST_MANAGER"
+              },
+              "sla": {
+                "byLevel": {
+                  "NORMAL": 30,
+                  "FAST": 2
+                },
+                "escalateToRole": "CLS_REQUEST_MANAGER"
+              },
+              "actions": [
+                {
+                  "code": "SEND_TO_AUDIT",
+                  "kind": "COMPLETE",
+                  "nameAr": "رفع للتدقيق",
+                  "nameEn": "Send for audit",
+                  "to": "FIN_AUDIT"
+                },
+                {
+                  "code": "RETURN",
+                  "kind": "RETURN",
+                  "nameAr": "طلب بيانات إضافية من مقدم الطلب",
+                  "nameEn": "Ask the applicant for additional data"
+                }
+              ],
+              "layout": {
+                "x": 600,
+                "y": 630
+              }
+            },
+            {
+              "code": "FIN_AUDIT",
+              "type": "HUMAN_TASK",
+              "nameAr": "مراجعة مدير التدقيق",
+              "nameEn": "Audit manager review",
+              "excludeActorsOf": [
+                "FIN_ANALYSIS"
+              ],
+              "assignment": {
+                "target": "ROLE",
+                "role": "CLS_AUDIT_MANAGER",
+                "mode": "QUEUE"
+              },
+              "sla": {
+                "byLevel": {
+                  "NORMAL": 10,
+                  "FAST": 1
+                },
+                "escalateToRole": "CLS_REQUEST_MANAGER"
+              },
+              "actions": [
+                {
+                  "code": "CONFIRM",
+                  "kind": "COMPLETE",
+                  "nameAr": "اعتماد التحليل",
+                  "nameEn": "Confirm the analysis",
+                  "to": "JOIN"
+                },
+                {
+                  "code": "BACK_TO_ANALYST",
+                  "kind": "COMPLETE",
+                  "nameAr": "إعادة للمحلل",
+                  "nameEn": "Back to the analyst",
+                  "commentRequired": true,
+                  "to": "FIN_ANALYSIS"
+                }
+              ],
+              "layout": {
+                "x": 600,
+                "y": 740
+              }
+            },
+            {
+              "code": "JOIN",
+              "type": "JOIN",
+              "nameAr": "اكتمال التقييم",
+              "nameEn": "Evaluation complete",
+              "mode": "ALL",
+              "next": "GRADE",
+              "layout": {
+                "x": 340,
+                "y": 850
+              }
+            },
+            {
+              "code": "GRADE",
+              "type": "DECISION",
+              "nameAr": "احتساب الدرجات",
+              "nameEn": "Grade calculation",
+              "ruleSet": "CLS_GRADING",
+              "result": "grading",
+              "input": {
+                "sectors": {
+                  "var": "data.CLS_DOMAINS"
+                },
+                "employees": {
+                  "var": "data.CLS_EMPLOYEES"
+                },
+                "saudis": {
+                  "var": "data.CLS_SAUDI_EMPLOYEES"
+                },
+                "engineers": {
+                  "var": "data.CLS_ENGINEERS"
+                },
+                "technicians": {
+                  "var": "data.CLS_TECHNICIANS"
+                },
+                "dgaCategory": {
+                  "var": "data.CLS_DGA_CATEGORY"
+                },
+                "projectsValue": {
+                  "var": "data.CLS_PROJECTS_VALUE"
+                },
+                "largestProject": {
+                  "var": "data.CLS_LARGEST_PROJECT"
+                },
+                "creditRating": {
+                  "var": "data.CLS_CREDIT_RATING"
+                },
+                "withdrawn": {
+                  "==": [
+                    {
+                      "var": "data.CLS_WITHDRAWN"
+                    },
+                    "YES"
+                  ]
+                },
+                "violations": {
+                  "var": "data.CLS_VIOLATIONS"
+                },
+                "g1": {
+                  "==": [
+                    {
+                      "var": "data.CLS_GOV_G1"
+                    },
+                    "YES"
+                  ]
+                },
+                "g2": {
+                  "in": [
+                    {
+                      "var": "data.CLS_GOV_G2"
+                    },
+                    [
+                      "MONTHLY",
+                      "QUARTERLY"
+                    ]
+                  ]
+                },
+                "g3": {
+                  "==": [
+                    {
+                      "var": "data.CLS_GOV_G3"
+                    },
+                    "YES"
+                  ]
+                },
+                "g4": {
+                  "==": [
+                    {
+                      "var": "data.CLS_GOV_G4"
+                    },
+                    "YES"
+                  ]
+                },
+                "g5": {
+                  "==": [
+                    {
+                      "var": "data.CLS_GOV_G5"
+                    },
+                    "YES"
+                  ]
+                },
+                "g6": {
+                  "in": [
+                    {
+                      "var": "data.CLS_GOV_G6"
+                    },
+                    [
+                      "MONTHLY",
+                      "QUARTERLY"
+                    ]
+                  ]
+                },
+                "g7": {
+                  "==": [
+                    {
+                      "var": "data.CLS_GOV_G7"
+                    },
+                    "YES"
+                  ]
+                },
+                "g8": {
+                  "==": [
+                    {
+                      "var": "data.CLS_GOV_G8"
+                    },
+                    "YES"
+                  ]
+                },
+                "g9": {
+                  "==": [
+                    {
+                      "var": "data.CLS_GOV_G9"
+                    },
+                    "YES"
+                  ]
+                },
+                "g10": {
+                  "==": [
+                    {
+                      "var": "data.CLS_GOV_G10"
+                    },
+                    "YES"
+                  ]
+                },
+                "g11": {
+                  "==": [
+                    {
+                      "var": "data.CLS_GOV_G11"
+                    },
+                    "YES"
+                  ]
+                }
+              },
+              "next": "GM_APPROVAL",
+              "layout": {
+                "x": 340,
+                "y": 960
+              }
+            },
+            {
+              "code": "GM_APPROVAL",
+              "type": "HUMAN_TASK",
+              "nameAr": "اعتماد المدير العام",
+              "nameEn": "General manager approval",
+              "assignment": {
+                "target": "ROLE",
+                "role": "CLS_GENERAL_MANAGER",
+                "mode": "QUEUE"
+              },
+              "actions": [
+                {
+                  "code": "APPROVE",
+                  "kind": "APPROVE",
+                  "nameAr": "اعتماد التصنيف",
+                  "nameEn": "Approve the classification",
+                  "commentToApplicant": true,
+                  "to": "CLASSIFIED"
+                },
+                {
+                  "code": "REJECT",
+                  "kind": "REJECT",
+                  "nameAr": "رفض الطلب",
+                  "nameEn": "Reject the request",
+                  "to": "REJECTED"
+                },
+                {
+                  "code": "RETURN",
+                  "kind": "RETURN",
+                  "nameAr": "طلب بيانات إضافية من مقدم الطلب",
+                  "nameEn": "Ask the applicant for additional data"
+                }
+              ],
+              "sla": {
+                "byLevel": {
+                  "NORMAL": 5,
+                  "FAST": 1
+                }
+              },
+              "displayStatus": "PENDING_APPROVAL",
+              "layout": {
+                "x": 340,
+                "y": 1070
+              }
+            },
+            {
+              "code": "CLASSIFIED",
+              "type": "GATEWAY",
+              "nameAr": "هل صُنّف مجال؟",
+              "nameEn": "Any domain classified?",
+              "routes": [
+                {
+                  "when": {
+                    "var": "decisions.grading.eligible"
+                  },
+                  "to": "CERTIFICATE"
+                }
+              ],
+              "default": "NOT_CLASSIFIED",
+              "layout": {
+                "x": 340,
+                "y": 1180
+              }
+            },
+            {
+              "code": "CERTIFICATE",
+              "type": "DOCUMENT",
+              "nameAr": "إصدار شهادة التصنيف",
+              "nameEn": "Issue the classification certificate",
+              "documentType": "CLS_CERTIFICATE",
+              "data": {
+                "sizeClass": {
+                  "var": "decisions.grading.sizeClassNameAr"
+                },
+                "city": {
+                  "var": "data.CLS_CR_CITY"
+                },
+                "requestNumber": {
+                  "var": "number"
+                }
+              },
+              "lines": {
+                "source": {
+                  "filter": [
+                    {
+                      "var": "decisions.grading.items"
+                    },
+                    {
+                      "var": "classified"
+                    }
+                  ]
+                },
+                "as": "line",
+                "fields": {
+                  "sectorNameAr": {
+                    "var": "line.sectorNameAr"
+                  },
+                  "sectorNameEn": {
+                    "var": "line.sectorNameEn"
+                  },
+                  "grade": {
+                    "var": "line.grade"
+                  }
+                }
+              },
+              "reason": "اعتماد طلب التصنيف",
+              "next": "APPROVED",
+              "layout": {
+                "x": 340,
+                "y": 1290
+              }
+            },
+            {
+              "code": "APPROVED",
+              "type": "END",
+              "nameAr": "معتمد",
+              "nameEn": "Approved",
+              "outcome": "APPROVED",
+              "layout": {
+                "x": 340,
+                "y": 1400
+              }
+            },
+            {
+              "code": "REJECTED",
+              "type": "END",
+              "nameAr": "مرفوض",
+              "nameEn": "Rejected",
+              "outcome": "REJECTED",
+              "layout": {
+                "x": 600,
+                "y": 1510
+              }
+            },
+            {
+              "code": "NOT_CLASSIFIED",
+              "type": "END",
+              "nameAr": "لم يُصنّف أي مجال",
+              "nameEn": "No domain classified",
+              "outcome": "REJECTED",
+              "layout": {
+                "x": 600,
+                "y": 1620
+              }
+            },
+            {
+              "code": "UNPAID",
+              "type": "END",
+              "nameAr": "إغلاق لعدم السداد",
+              "nameEn": "Closed: not paid",
+              "outcome": "CLOSED",
+              "displayStatus": "CLOSED_UNPAID",
+              "layout": {
+                "x": 600,
+                "y": 1730
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "entityType": "wf.workflow",
+      "entityCode": "CLS_CHANGE",
+      "operation": "UPDATE",
+      "payload": {
+        "nameAr": "معالجة طلبات تعديل الشهادة",
+        "nameEn": "Certificate change processing",
+        "descriptionAr": "نفس تقييم الإصدار، ثم تعديل الشهادة نفسها بالمجالات والدرجات الجديدة مع بقاء تاريخ الانتهاء.",
+        "descriptionEn": "The same evaluation as a new certificate, then the same certificate is amended with the new domains and grades; the expiry stays.",
+        "serviceCode": "CLS_CHANGE"
+      }
+    },
+    {
+      "entityType": "wf.workflow-version",
+      "entityCode": "CLS_CHANGE/2",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 2",
+        "nameEn": "Version 2",
+        "definition": {
+          "nodes": [
+            {
+              "code": "START",
+              "type": "START",
+              "nameAr": "تقديم الطلب",
+              "nameEn": "Submitted",
+              "next": "DISTRIBUTE",
+              "layout": {
+                "x": 340,
+                "y": 80
+              }
+            },
+            {
+              "code": "DISTRIBUTE",
+              "type": "HUMAN_TASK",
+              "nameAr": "مراجعة الطلب وتوزيعه على المحللين",
+              "nameEn": "Review and assign analysts",
+              "assignment": {
+                "target": "ROLE",
+                "role": "CLS_REQUEST_MANAGER",
+                "mode": "QUEUE"
+              },
+              "actions": [
+                {
+                  "code": "DISTRIBUTE",
+                  "kind": "COMPLETE",
+                  "nameAr": "إحالة للتقييم",
+                  "nameEn": "Send for evaluation",
+                  "to": "TRACK"
+                },
+                {
+                  "code": "RETURN",
+                  "kind": "RETURN",
+                  "nameAr": "طلب بيانات إضافية من مقدم الطلب",
+                  "nameEn": "Ask the applicant for additional data"
+                },
+                {
+                  "code": "REJECT",
+                  "kind": "REJECT",
+                  "nameAr": "رفض الطلب",
+                  "nameEn": "Reject the request",
+                  "to": "REJECTED"
+                }
+              ],
+              "sla": {
+                "byLevel": {
+                  "NORMAL": 3,
+                  "FAST": 1
+                }
+              },
+              "layout": {
+                "x": 340,
+                "y": 190
+              }
+            },
+            {
+              "code": "TRACK",
+              "type": "GATEWAY",
+              "nameAr": "المسار السريع؟",
+              "nameEn": "Fast track?",
+              "routes": [
+                {
+                  "when": {
+                    "==": [
+                      {
+                        "var": "level"
+                      },
+                      "FAST"
+                    ]
+                  },
+                  "to": "PAY"
+                }
+              ],
+              "default": "SPLIT",
+              "layout": {
+                "x": 340,
+                "y": 300
+              }
+            },
+            {
+              "code": "PAY",
+              "type": "PAYMENT",
+              "nameAr": "فاتورة المسار السريع وسدادها",
+              "nameEn": "Fast track invoice and payment",
+              "provider": "SADAD",
+              "displayStatus": "AWAITING_PAYMENT",
+              "next": "SPLIT",
+              "expired": "UNPAID",
+              "layout": {
+                "x": 340,
+                "y": 410
+              }
+            },
+            {
+              "code": "SPLIT",
+              "type": "PARALLEL_SPLIT",
+              "nameAr": "التقييم المتوازي",
+              "nameEn": "Parallel evaluation",
+              "branches": [
+                "GOV_ANALYSIS",
+                "PROJECTS_ANALYSIS",
+                "FIN_ANALYSIS"
+              ],
+              "layout": {
+                "x": 340,
+                "y": 520
+              }
+            },
+            {
+              "code": "GOV_ANALYSIS",
+              "type": "HUMAN_TASK",
+              "nameAr": "تحليل الحوكمة",
+              "nameEn": "Governance analysis",
+              "assignment": {
+                "target": "PREVIOUS_ACTOR",
+                "step": "GOV_ANALYSIS",
+                "role": "CLS_GOV_ANALYST",
+                "mode": "DISTRIBUTE",
+                "distributorRole": "CLS_REQUEST_MANAGER"
+              },
+              "sla": {
+                "byLevel": {
+                  "NORMAL": 30,
+                  "FAST": 2
+                },
+                "escalateToRole": "CLS_REQUEST_MANAGER"
+              },
+              "actions": [
+                {
+                  "code": "SEND_TO_AUDIT",
+                  "kind": "COMPLETE",
+                  "nameAr": "رفع للتدقيق",
+                  "nameEn": "Send for audit",
+                  "to": "GOV_AUDIT"
+                },
+                {
+                  "code": "RETURN",
+                  "kind": "RETURN",
+                  "nameAr": "طلب بيانات إضافية من مقدم الطلب",
+                  "nameEn": "Ask the applicant for additional data"
+                }
+              ],
+              "layout": {
+                "x": 80,
+                "y": 630
+              }
+            },
+            {
+              "code": "GOV_AUDIT",
+              "type": "HUMAN_TASK",
+              "nameAr": "تدقيق الحوكمة",
+              "nameEn": "Governance audit",
+              "excludeActorsOf": [
+                "GOV_ANALYSIS"
+              ],
+              "assignment": {
+                "target": "ROLE",
+                "role": "CLS_GOV_AUDITOR",
+                "mode": "QUEUE"
+              },
+              "sla": {
+                "byLevel": {
+                  "NORMAL": 10,
+                  "FAST": 1
+                },
+                "escalateToRole": "CLS_REQUEST_MANAGER"
+              },
+              "actions": [
+                {
+                  "code": "CONFIRM",
+                  "kind": "COMPLETE",
+                  "nameAr": "اعتماد التحليل",
+                  "nameEn": "Confirm the analysis",
+                  "to": "JOIN"
+                },
+                {
+                  "code": "BACK_TO_ANALYST",
+                  "kind": "COMPLETE",
+                  "nameAr": "إعادة للمحلل",
+                  "nameEn": "Back to the analyst",
+                  "commentRequired": true,
+                  "to": "GOV_ANALYSIS"
+                }
+              ],
+              "layout": {
+                "x": 80,
+                "y": 740
+              }
+            },
+            {
+              "code": "PROJECTS_ANALYSIS",
+              "type": "HUMAN_TASK",
+              "nameAr": "تحليل المشاريع والخبرات",
+              "nameEn": "Projects & experience analysis",
+              "assignment": {
+                "target": "PREVIOUS_ACTOR",
+                "step": "PROJECTS_ANALYSIS",
+                "role": "CLS_PROJECTS_ANALYST",
+                "mode": "DISTRIBUTE",
+                "distributorRole": "CLS_REQUEST_MANAGER"
+              },
+              "sla": {
+                "byLevel": {
+                  "NORMAL": 30,
+                  "FAST": 2
+                },
+                "escalateToRole": "CLS_REQUEST_MANAGER"
+              },
+              "actions": [
+                {
+                  "code": "SEND_TO_AUDIT",
+                  "kind": "COMPLETE",
+                  "nameAr": "رفع للتدقيق",
+                  "nameEn": "Send for audit",
+                  "to": "PROJECTS_AUDIT"
+                },
+                {
+                  "code": "RETURN",
+                  "kind": "RETURN",
+                  "nameAr": "طلب بيانات إضافية من مقدم الطلب",
+                  "nameEn": "Ask the applicant for additional data"
+                }
+              ],
+              "layout": {
+                "x": 340,
+                "y": 630
+              }
+            },
+            {
+              "code": "PROJECTS_AUDIT",
+              "type": "HUMAN_TASK",
+              "nameAr": "تدقيق المشاريع",
+              "nameEn": "Projects audit",
+              "excludeActorsOf": [
+                "PROJECTS_ANALYSIS"
+              ],
+              "assignment": {
+                "target": "ROLE",
+                "role": "CLS_PROJECTS_AUDITOR",
+                "mode": "QUEUE"
+              },
+              "sla": {
+                "byLevel": {
+                  "NORMAL": 10,
+                  "FAST": 1
+                },
+                "escalateToRole": "CLS_REQUEST_MANAGER"
+              },
+              "actions": [
+                {
+                  "code": "CONFIRM",
+                  "kind": "COMPLETE",
+                  "nameAr": "اعتماد التحليل",
+                  "nameEn": "Confirm the analysis",
+                  "to": "JOIN"
+                },
+                {
+                  "code": "BACK_TO_ANALYST",
+                  "kind": "COMPLETE",
+                  "nameAr": "إعادة للمحلل",
+                  "nameEn": "Back to the analyst",
+                  "commentRequired": true,
+                  "to": "PROJECTS_ANALYSIS"
+                }
+              ],
+              "layout": {
+                "x": 340,
+                "y": 740
+              }
+            },
+            {
+              "code": "FIN_ANALYSIS",
+              "type": "HUMAN_TASK",
+              "nameAr": "التقييم المالي",
+              "nameEn": "Financial evaluation",
+              "assignment": {
+                "target": "PREVIOUS_ACTOR",
+                "step": "FIN_ANALYSIS",
+                "role": "CLS_FIN_ANALYST",
+                "mode": "DISTRIBUTE",
+                "distributorRole": "CLS_REQUEST_MANAGER"
+              },
+              "sla": {
+                "byLevel": {
+                  "NORMAL": 30,
+                  "FAST": 2
+                },
+                "escalateToRole": "CLS_REQUEST_MANAGER"
+              },
+              "actions": [
+                {
+                  "code": "SEND_TO_AUDIT",
+                  "kind": "COMPLETE",
+                  "nameAr": "رفع للتدقيق",
+                  "nameEn": "Send for audit",
+                  "to": "FIN_AUDIT"
+                },
+                {
+                  "code": "RETURN",
+                  "kind": "RETURN",
+                  "nameAr": "طلب بيانات إضافية من مقدم الطلب",
+                  "nameEn": "Ask the applicant for additional data"
+                }
+              ],
+              "layout": {
+                "x": 600,
+                "y": 630
+              }
+            },
+            {
+              "code": "FIN_AUDIT",
+              "type": "HUMAN_TASK",
+              "nameAr": "مراجعة مدير التدقيق",
+              "nameEn": "Audit manager review",
+              "excludeActorsOf": [
+                "FIN_ANALYSIS"
+              ],
+              "assignment": {
+                "target": "ROLE",
+                "role": "CLS_AUDIT_MANAGER",
+                "mode": "QUEUE"
+              },
+              "sla": {
+                "byLevel": {
+                  "NORMAL": 10,
+                  "FAST": 1
+                },
+                "escalateToRole": "CLS_REQUEST_MANAGER"
+              },
+              "actions": [
+                {
+                  "code": "CONFIRM",
+                  "kind": "COMPLETE",
+                  "nameAr": "اعتماد التحليل",
+                  "nameEn": "Confirm the analysis",
+                  "to": "JOIN"
+                },
+                {
+                  "code": "BACK_TO_ANALYST",
+                  "kind": "COMPLETE",
+                  "nameAr": "إعادة للمحلل",
+                  "nameEn": "Back to the analyst",
+                  "commentRequired": true,
+                  "to": "FIN_ANALYSIS"
+                }
+              ],
+              "layout": {
+                "x": 600,
+                "y": 740
+              }
+            },
+            {
+              "code": "JOIN",
+              "type": "JOIN",
+              "nameAr": "اكتمال التقييم",
+              "nameEn": "Evaluation complete",
+              "mode": "ALL",
+              "next": "GRADE",
+              "layout": {
+                "x": 340,
+                "y": 850
+              }
+            },
+            {
+              "code": "GRADE",
+              "type": "DECISION",
+              "nameAr": "احتساب الدرجات",
+              "nameEn": "Grade calculation",
+              "ruleSet": "CLS_GRADING",
+              "result": "grading",
+              "input": {
+                "sectors": {
+                  "var": "data.CLS_DOMAINS"
+                },
+                "employees": {
+                  "var": "data.CLS_EMPLOYEES"
+                },
+                "saudis": {
+                  "var": "data.CLS_SAUDI_EMPLOYEES"
+                },
+                "engineers": {
+                  "var": "data.CLS_ENGINEERS"
+                },
+                "technicians": {
+                  "var": "data.CLS_TECHNICIANS"
+                },
+                "dgaCategory": {
+                  "var": "data.CLS_DGA_CATEGORY"
+                },
+                "projectsValue": {
+                  "var": "data.CLS_PROJECTS_VALUE"
+                },
+                "largestProject": {
+                  "var": "data.CLS_LARGEST_PROJECT"
+                },
+                "creditRating": {
+                  "var": "data.CLS_CREDIT_RATING"
+                },
+                "withdrawn": {
+                  "==": [
+                    {
+                      "var": "data.CLS_WITHDRAWN"
+                    },
+                    "YES"
+                  ]
+                },
+                "violations": {
+                  "var": "data.CLS_VIOLATIONS"
+                },
+                "g1": {
+                  "==": [
+                    {
+                      "var": "data.CLS_GOV_G1"
+                    },
+                    "YES"
+                  ]
+                },
+                "g2": {
+                  "in": [
+                    {
+                      "var": "data.CLS_GOV_G2"
+                    },
+                    [
+                      "MONTHLY",
+                      "QUARTERLY"
+                    ]
+                  ]
+                },
+                "g3": {
+                  "==": [
+                    {
+                      "var": "data.CLS_GOV_G3"
+                    },
+                    "YES"
+                  ]
+                },
+                "g4": {
+                  "==": [
+                    {
+                      "var": "data.CLS_GOV_G4"
+                    },
+                    "YES"
+                  ]
+                },
+                "g5": {
+                  "==": [
+                    {
+                      "var": "data.CLS_GOV_G5"
+                    },
+                    "YES"
+                  ]
+                },
+                "g6": {
+                  "in": [
+                    {
+                      "var": "data.CLS_GOV_G6"
+                    },
+                    [
+                      "MONTHLY",
+                      "QUARTERLY"
+                    ]
+                  ]
+                },
+                "g7": {
+                  "==": [
+                    {
+                      "var": "data.CLS_GOV_G7"
+                    },
+                    "YES"
+                  ]
+                },
+                "g8": {
+                  "==": [
+                    {
+                      "var": "data.CLS_GOV_G8"
+                    },
+                    "YES"
+                  ]
+                },
+                "g9": {
+                  "==": [
+                    {
+                      "var": "data.CLS_GOV_G9"
+                    },
+                    "YES"
+                  ]
+                },
+                "g10": {
+                  "==": [
+                    {
+                      "var": "data.CLS_GOV_G10"
+                    },
+                    "YES"
+                  ]
+                },
+                "g11": {
+                  "==": [
+                    {
+                      "var": "data.CLS_GOV_G11"
+                    },
+                    "YES"
+                  ]
+                }
+              },
+              "next": "GM_APPROVAL",
+              "layout": {
+                "x": 340,
+                "y": 960
+              }
+            },
+            {
+              "code": "GM_APPROVAL",
+              "type": "HUMAN_TASK",
+              "nameAr": "اعتماد المدير العام",
+              "nameEn": "General manager approval",
+              "assignment": {
+                "target": "ROLE",
+                "role": "CLS_GENERAL_MANAGER",
+                "mode": "QUEUE"
+              },
+              "actions": [
+                {
+                  "code": "APPROVE",
+                  "kind": "APPROVE",
+                  "nameAr": "اعتماد التصنيف",
+                  "nameEn": "Approve the classification",
+                  "commentToApplicant": true,
+                  "to": "CLASSIFIED"
+                },
+                {
+                  "code": "REJECT",
+                  "kind": "REJECT",
+                  "nameAr": "رفض الطلب",
+                  "nameEn": "Reject the request",
+                  "to": "REJECTED"
+                },
+                {
+                  "code": "RETURN",
+                  "kind": "RETURN",
+                  "nameAr": "طلب بيانات إضافية من مقدم الطلب",
+                  "nameEn": "Ask the applicant for additional data"
+                }
+              ],
+              "sla": {
+                "byLevel": {
+                  "NORMAL": 5,
+                  "FAST": 1
+                }
+              },
+              "displayStatus": "PENDING_APPROVAL",
+              "layout": {
+                "x": 340,
+                "y": 1070
+              }
+            },
+            {
+              "code": "CLASSIFIED",
+              "type": "GATEWAY",
+              "nameAr": "هل صُنّف مجال؟",
+              "nameEn": "Any domain classified?",
+              "routes": [
+                {
+                  "when": {
+                    "var": "decisions.grading.eligible"
+                  },
+                  "to": "CERTIFICATE"
+                }
+              ],
+              "default": "NOT_CLASSIFIED",
+              "layout": {
+                "x": 340,
+                "y": 1180
+              }
+            },
+            {
+              "code": "CERTIFICATE",
+              "type": "DOCUMENT",
+              "nameAr": "تعديل شهادة التصنيف",
+              "nameEn": "Amend the classification certificate",
+              "documentType": "CLS_CERTIFICATE",
+              "target": "SOURCE",
+              "validity": "KEEP",
+              "data": {
+                "sizeClass": {
+                  "var": "decisions.grading.sizeClassNameAr"
+                },
+                "requestNumber": {
+                  "var": "number"
+                }
+              },
+              "lines": {
+                "source": {
+                  "filter": [
+                    {
+                      "var": "decisions.grading.items"
+                    },
+                    {
+                      "var": "classified"
+                    }
+                  ]
+                },
+                "as": "line",
+                "fields": {
+                  "sectorNameAr": {
+                    "var": "line.sectorNameAr"
+                  },
+                  "sectorNameEn": {
+                    "var": "line.sectorNameEn"
+                  },
+                  "grade": {
+                    "var": "line.grade"
+                  }
+                }
+              },
+              "reason": "تعديل مجالات أو درجات التصنيف",
+              "next": "APPROVED",
+              "layout": {
+                "x": 340,
+                "y": 1290
+              }
+            },
+            {
+              "code": "APPROVED",
+              "type": "END",
+              "nameAr": "معتمد",
+              "nameEn": "Approved",
+              "outcome": "APPROVED",
+              "layout": {
+                "x": 340,
+                "y": 1400
+              }
+            },
+            {
+              "code": "REJECTED",
+              "type": "END",
+              "nameAr": "مرفوض",
+              "nameEn": "Rejected",
+              "outcome": "REJECTED",
+              "layout": {
+                "x": 600,
+                "y": 1510
+              }
+            },
+            {
+              "code": "NOT_CLASSIFIED",
+              "type": "END",
+              "nameAr": "لم يُصنّف أي مجال",
+              "nameEn": "No domain classified",
+              "outcome": "REJECTED",
+              "layout": {
+                "x": 600,
+                "y": 1620
+              }
+            },
+            {
+              "code": "UNPAID",
+              "type": "END",
+              "nameAr": "إغلاق لعدم السداد",
+              "nameEn": "Closed: not paid",
+              "outcome": "CLOSED",
+              "displayStatus": "CLOSED_UNPAID",
+              "layout": {
+                "x": 600,
+                "y": 1730
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "entityType": "wf.workflow",
+      "entityCode": "CLS_RENEW",
+      "operation": "UPDATE",
+      "payload": {
+        "nameAr": "معالجة طلبات التجديد",
+        "nameEn": "Renewal processing",
+        "descriptionAr": "مراجعة مدير طلبات الفرع ثم تجديد الشهادة لمدة صلاحية جديدة.",
+        "descriptionEn": "The branch requests manager reviews, then the certificate is renewed for a new validity.",
+        "serviceCode": "CLS_RENEW"
+      }
+    },
+    {
+      "entityType": "wf.workflow-version",
+      "entityCode": "CLS_RENEW/2",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 2",
+        "nameEn": "Version 2",
+        "definition": {
+          "nodes": [
+            {
+              "code": "START",
+              "type": "START",
+              "nameAr": "تقديم الطلب",
+              "nameEn": "Submitted",
+              "next": "REVIEW",
+              "layout": {
+                "x": 340,
+                "y": 80
+              }
+            },
+            {
+              "code": "REVIEW",
+              "type": "HUMAN_TASK",
+              "nameAr": "مراجعة طلب التجديد",
+              "nameEn": "Review the renewal",
+              "assignment": {
+                "target": "ROLE",
+                "role": "CLS_REQUEST_MANAGER",
+                "mode": "QUEUE"
+              },
+              "actions": [
+                {
+                  "code": "APPROVE",
+                  "kind": "COMPLETE",
+                  "nameAr": "اعتماد التجديد",
+                  "nameEn": "Approve the renewal",
+                  "to": "RENEW"
+                },
+                {
+                  "code": "RETURN",
+                  "kind": "RETURN",
+                  "nameAr": "طلب بيانات إضافية من مقدم الطلب",
+                  "nameEn": "Ask the applicant for additional data"
+                },
+                {
+                  "code": "REJECT",
+                  "kind": "REJECT",
+                  "nameAr": "رفض الطلب",
+                  "nameEn": "Reject the request",
+                  "to": "REJECTED"
+                }
+              ],
+              "sla": {
+                "byLevel": {
+                  "NORMAL": 5
+                }
+              },
+              "layout": {
+                "x": 340,
+                "y": 190
+              }
+            },
+            {
+              "code": "RENEW",
+              "type": "DOCUMENT",
+              "nameAr": "تجديد الشهادة",
+              "nameEn": "Renew the certificate",
+              "documentType": "CLS_CERTIFICATE",
+              "target": "SOURCE",
+              "validity": "RENEW",
+              "data": {
+                "requestNumber": {
+                  "var": "number"
+                }
+              },
+              "reason": "تجديد شهادة التصنيف",
+              "next": "APPROVED",
+              "layout": {
+                "x": 340,
+                "y": 300
+              }
+            },
+            {
+              "code": "APPROVED",
+              "type": "END",
+              "nameAr": "اكتمال الطلب",
+              "nameEn": "Completed",
+              "outcome": "APPROVED",
+              "layout": {
+                "x": 340,
+                "y": 410
+              }
+            },
+            {
+              "code": "REJECTED",
+              "type": "END",
+              "nameAr": "مرفوض",
+              "nameEn": "Rejected",
+              "outcome": "REJECTED",
+              "layout": {
+                "x": 600,
+                "y": 520
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,530 @@
+{
+  "title": "NHC — notifications",
+  "items": [
+    {
+      "entityType": "com.template",
+      "entityCode": "CLS_REQUEST_RETURNED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "طلب التصنيف: نواقص",
+        "nameEn": "Classification request: information needed",
+        "inAppTitleAr": "طلبكم {{ request.number }} بحاجة إلى استكمال",
+        "inAppTitleEn": "Your request {{ request.number }} needs more information",
+        "inAppBodyAr": "أُعيد طلب {{ request.serviceNameAr }} رقم {{ request.number }} لاستكمال المستندات والبيانات المطلوبة: {{ request.comment }}",
+        "inAppBodyEn": "Request {{ request.number }} ({{ request.serviceNameEn }}) was returned for the documents and information needed: {{ request.comment }}",
+        "link": "/requests/{{ request.id }}",
+        "emailSubjectAr": "طلبكم {{ request.number }} بحاجة إلى استكمال",
+        "emailSubjectEn": "Your request {{ request.number }} needs more information",
+        "emailBodyAr": "<p>{{ recipient.name }}،</p><p>أُعيد طلب {{ request.serviceNameAr }} رقم {{ request.number }} لاستكمال المستندات والبيانات المطلوبة: {{ request.comment }}</p><p>منصة الخدمات الإلكترونية</p>",
+        "emailBodyEn": "<p>Dear {{ recipient.name }},</p><p>Request {{ request.number }} ({{ request.serviceNameEn }}) was returned for the documents and information needed: {{ request.comment }}</p><p>e-Services platform</p>",
+        "smsAr": "طلبكم {{ request.number }} بحاجة لاستكمال نواقص. يرجى الدخول إلى البوابة.",
+        "smsEn": "Request {{ request.number }} needs more information. Please sign in to the portal."
+      }
+    },
+    {
+      "entityType": "com.template",
+      "entityCode": "CLS_REQUEST_REJECTED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "طلب التصنيف: رفض",
+        "nameEn": "Classification request: rejected",
+        "inAppTitleAr": "تعذر قبول طلبكم {{ request.number }}",
+        "inAppTitleEn": "Request {{ request.number }} was not accepted",
+        "inAppBodyAr": "نعتذر عن قبول طلب {{ request.serviceNameAr }} رقم {{ request.number }}. {{ request.comment }} يمكنكم الاستفادة من خدمة الاستشارات لتحسين جاهزية المنشأة قبل التقديم مجدداً.",
+        "inAppBodyEn": "Request {{ request.number }} ({{ request.serviceNameEn }}) was not accepted. {{ request.comment }} Our advisory service can help the establishment prepare before applying again.",
+        "link": "/requests/{{ request.id }}",
+        "emailSubjectAr": "تعذر قبول طلبكم {{ request.number }}",
+        "emailSubjectEn": "Request {{ request.number }} was not accepted",
+        "emailBodyAr": "<p>{{ recipient.name }}،</p><p>نعتذر عن قبول طلب {{ request.serviceNameAr }} رقم {{ request.number }}. {{ request.comment }} يمكنكم الاستفادة من خدمة الاستشارات لتحسين جاهزية المنشأة قبل التقديم مجدداً.</p><p>منصة الخدمات الإلكترونية</p>",
+        "emailBodyEn": "<p>Dear {{ recipient.name }},</p><p>Request {{ request.number }} ({{ request.serviceNameEn }}) was not accepted. {{ request.comment }} Our advisory service can help the establishment prepare before applying again.</p><p>e-Services platform</p>",
+        "smsAr": "تعذر قبول طلبكم {{ request.number }}. التفاصيل في البوابة.",
+        "smsEn": "Request {{ request.number }} was not accepted. Details are on the portal."
+      }
+    },
+    {
+      "entityType": "com.template",
+      "entityCode": "CLS_REQUEST_APPROVED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "طلب التصنيف: اكتمال",
+        "nameEn": "Classification request: completed",
+        "inAppTitleAr": "اكتمل طلبكم {{ request.number }}",
+        "inAppTitleEn": "Request {{ request.number }} is complete",
+        "inAppBodyAr": "اكتمل طلب {{ request.serviceNameAr }} رقم {{ request.number }} بالموافقة.",
+        "inAppBodyEn": "Request {{ request.number }} ({{ request.serviceNameEn }}) was approved.",
+        "link": "/requests/{{ request.id }}",
+        "emailSubjectAr": "اكتمل طلبكم {{ request.number }}",
+        "emailSubjectEn": "Request {{ request.number }} is complete",
+        "emailBodyAr": "<p>{{ recipient.name }}،</p><p>اكتمل طلب {{ request.serviceNameAr }} رقم {{ request.number }} بالموافقة.</p><p>منصة الخدمات الإلكترونية</p>",
+        "emailBodyEn": "<p>Dear {{ recipient.name }},</p><p>Request {{ request.number }} ({{ request.serviceNameEn }}) was approved.</p><p>e-Services platform</p>"
+      }
+    },
+    {
+      "entityType": "com.template",
+      "entityCode": "CLS_CERTIFICATE_ISSUED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "شهادة التصنيف: إصدار",
+        "nameEn": "Classification certificate: issued",
+        "inAppTitleAr": "صدرت شهادة التصنيف {{ document.number }}",
+        "inAppTitleEn": "Classification certificate {{ document.number }} issued",
+        "inAppBodyAr": "صدرت {{ document.typeNameAr }} رقم {{ document.number }}، سارية حتى {{ document.expiresOn }}. يمكنكم تنزيلها من البوابة والتحقق منها عبر {{ document.verifyUrl }}",
+        "inAppBodyEn": "{{ document.typeNameEn }} {{ document.number }} was issued, valid until {{ document.expiresOn }}. Download it from the portal; anyone can verify it at {{ document.verifyUrl }}",
+        "link": "/documents/{{ document.id }}",
+        "emailSubjectAr": "صدرت شهادة التصنيف {{ document.number }}",
+        "emailSubjectEn": "Classification certificate {{ document.number }} issued",
+        "emailBodyAr": "<p>{{ recipient.name }}،</p><p>صدرت {{ document.typeNameAr }} رقم {{ document.number }}، سارية حتى {{ document.expiresOn }}. يمكنكم تنزيلها من البوابة والتحقق منها عبر {{ document.verifyUrl }}</p><p>منصة الخدمات الإلكترونية</p>",
+        "emailBodyEn": "<p>Dear {{ recipient.name }},</p><p>{{ document.typeNameEn }} {{ document.number }} was issued, valid until {{ document.expiresOn }}. Download it from the portal; anyone can verify it at {{ document.verifyUrl }}</p><p>e-Services platform</p>",
+        "smsAr": "صدرت شهادة التصنيف {{ document.number }} سارية حتى {{ document.expiresOn }}.",
+        "smsEn": "Classification certificate {{ document.number }} issued, valid until {{ document.expiresOn }}."
+      }
+    },
+    {
+      "entityType": "com.template",
+      "entityCode": "CLS_RENEWAL_AVAILABLE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "شهادة التصنيف: إتاحة التجديد",
+        "nameEn": "Classification certificate: renewal open",
+        "inAppTitleAr": "يمكنكم تجديد شهادة التصنيف {{ document.number }}",
+        "inAppTitleEn": "You can renew certificate {{ document.number }}",
+        "inAppBodyAr": "تنتهي شهادة التصنيف {{ document.number }} في {{ document.expiresOn }} (بعد {{ document.daysLeft }} يوماً). خدمة التجديد متاحة الآن.",
+        "inAppBodyEn": "Certificate {{ document.number }} expires on {{ document.expiresOn }} (in {{ document.daysLeft }} days). Renewal is now open.",
+        "link": "/documents/{{ document.id }}",
+        "emailSubjectAr": "يمكنكم تجديد شهادة التصنيف {{ document.number }}",
+        "emailSubjectEn": "You can renew certificate {{ document.number }}",
+        "emailBodyAr": "<p>{{ recipient.name }}،</p><p>تنتهي شهادة التصنيف {{ document.number }} في {{ document.expiresOn }} (بعد {{ document.daysLeft }} يوماً). خدمة التجديد متاحة الآن.</p><p>منصة الخدمات الإلكترونية</p>",
+        "emailBodyEn": "<p>Dear {{ recipient.name }},</p><p>Certificate {{ document.number }} expires on {{ document.expiresOn }} (in {{ document.daysLeft }} days). Renewal is now open.</p><p>e-Services platform</p>",
+        "smsAr": "شهادة التصنيف {{ document.number }} تنتهي في {{ document.expiresOn }}. التجديد متاح الآن.",
+        "smsEn": "Certificate {{ document.number }} expires on {{ document.expiresOn }}. Renewal is open."
+      }
+    },
+    {
+      "entityType": "com.template",
+      "entityCode": "CLS_EXTENSION_AVAILABLE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "شهادة التصنيف: إتاحة التمديد",
+        "nameEn": "Classification certificate: extension open",
+        "inAppTitleAr": "تنتهي شهادة التصنيف {{ document.number }} خلال {{ document.daysLeft }} يوماً",
+        "inAppTitleEn": "Certificate {{ document.number }} expires in {{ document.daysLeft }} days",
+        "inAppBodyAr": "تنتهي شهادة التصنيف {{ document.number }} في {{ document.expiresOn }}. خدمة التمديد متاحة حتى 90 يوماً بعد الانتهاء.",
+        "inAppBodyEn": "Certificate {{ document.number }} expires on {{ document.expiresOn }}. Extension is available until 90 days after expiry.",
+        "link": "/documents/{{ document.id }}",
+        "emailSubjectAr": "تنتهي شهادة التصنيف {{ document.number }} خلال {{ document.daysLeft }} يوماً",
+        "emailSubjectEn": "Certificate {{ document.number }} expires in {{ document.daysLeft }} days",
+        "emailBodyAr": "<p>{{ recipient.name }}،</p><p>تنتهي شهادة التصنيف {{ document.number }} في {{ document.expiresOn }}. خدمة التمديد متاحة حتى 90 يوماً بعد الانتهاء.</p><p>منصة الخدمات الإلكترونية</p>",
+        "emailBodyEn": "<p>Dear {{ recipient.name }},</p><p>Certificate {{ document.number }} expires on {{ document.expiresOn }}. Extension is available until 90 days after expiry.</p><p>e-Services platform</p>",
+        "smsAr": "شهادة التصنيف {{ document.number }} تنتهي خلال {{ document.daysLeft }} يوماً. التمديد متاح.",
+        "smsEn": "Certificate {{ document.number }} expires in {{ document.daysLeft }} days. Extension is available."
+      }
+    },
+    {
+      "entityType": "com.template",
+      "entityCode": "CLS_CERTIFICATE_EXPIRED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "شهادة التصنيف: انتهاء",
+        "nameEn": "Classification certificate: expired",
+        "inAppTitleAr": "انتهت شهادة التصنيف {{ document.number }}",
+        "inAppTitleEn": "Certificate {{ document.number }} has expired",
+        "inAppBodyAr": "انتهت صلاحية شهادة التصنيف {{ document.number }}. يمكنكم طلب التمديد خلال 90 يوماً من الانتهاء، وبعدها يلزم طلب تصنيف جديد.",
+        "inAppBodyEn": "Certificate {{ document.number }} has expired. An extension can be requested within 90 days of expiry; after that a new classification request is needed.",
+        "link": "/documents/{{ document.id }}",
+        "emailSubjectAr": "انتهت شهادة التصنيف {{ document.number }}",
+        "emailSubjectEn": "Certificate {{ document.number }} has expired",
+        "emailBodyAr": "<p>{{ recipient.name }}،</p><p>انتهت صلاحية شهادة التصنيف {{ document.number }}. يمكنكم طلب التمديد خلال 90 يوماً من الانتهاء، وبعدها يلزم طلب تصنيف جديد.</p><p>منصة الخدمات الإلكترونية</p>",
+        "emailBodyEn": "<p>Dear {{ recipient.name }},</p><p>Certificate {{ document.number }} has expired. An extension can be requested within 90 days of expiry; after that a new classification request is needed.</p><p>e-Services platform</p>",
+        "smsAr": "انتهت شهادة التصنيف {{ document.number }}.",
+        "smsEn": "Certificate {{ document.number }} has expired."
+      }
+    },
+    {
+      "entityType": "com.template",
+      "entityCode": "CLS_TASK_ASSIGNED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مهمة مسندة",
+        "nameEn": "Task assigned",
+        "inAppTitleAr": "أُسندت إليك مهمة: {{ task.nameAr }}",
+        "inAppTitleEn": "Task assigned to you: {{ task.nameEn }}",
+        "inAppBodyAr": "{{ task.titleAr }} — {{ subject.number }} — {{ task.partyNameAr }}",
+        "inAppBodyEn": "{{ task.titleEn }} — {{ subject.number }} — {{ task.partyNameEn }}",
+        "link": "/action-center/tasks/{{ task.id }}"
+      }
+    },
+    {
+      "entityType": "com.template",
+      "entityCode": "CLS_TASK_OVERDUE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مهمة متأخرة",
+        "nameEn": "Task overdue",
+        "inAppTitleAr": "تجاوزت المهمة موعدها: {{ task.nameAr }}",
+        "inAppTitleEn": "Task overdue: {{ task.nameEn }}",
+        "inAppBodyAr": "{{ task.titleAr }} — {{ subject.number }} — المسند إليه: {{ task.assignee }}",
+        "inAppBodyEn": "{{ task.titleEn }} — {{ subject.number }} — assigned to: {{ task.assignee }}",
+        "link": "/action-center/tasks/{{ task.id }}"
+      }
+    },
+    {
+      "entityType": "com.rule",
+      "entityCode": "CLS_REQUEST_RETURNED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إبلاغ المنشأة بالنواقص",
+        "nameEn": "Tell the establishment what is missing",
+        "eventCode": "REQUEST_RETURNED",
+        "templateCode": "CLS_REQUEST_RETURNED",
+        "condition": {
+          "==": [
+            {
+              "substr": [
+                {
+                  "var": "request.service"
+                },
+                0,
+                14
+              ]
+            },
+            "CLASSIFICATION"
+          ]
+        },
+        "channels": [
+          "IN_APP",
+          "EMAIL",
+          "SMS"
+        ],
+        "recipients": [
+          {
+            "kind": "PARTY"
+          }
+        ],
+        "language": "AR"
+      }
+    },
+    {
+      "entityType": "com.rule",
+      "entityCode": "CLS_REQUEST_REJECTED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إبلاغ المنشأة بالرفض وعرض الاستشارات",
+        "nameEn": "Tell the establishment of the rejection, offer advice",
+        "eventCode": "REQUEST_REJECTED",
+        "templateCode": "CLS_REQUEST_REJECTED",
+        "condition": {
+          "==": [
+            {
+              "substr": [
+                {
+                  "var": "request.service"
+                },
+                0,
+                14
+              ]
+            },
+            "CLASSIFICATION"
+          ]
+        },
+        "channels": [
+          "IN_APP",
+          "EMAIL",
+          "SMS"
+        ],
+        "recipients": [
+          {
+            "kind": "PARTY"
+          }
+        ],
+        "language": "AR"
+      }
+    },
+    {
+      "entityType": "com.rule",
+      "entityCode": "CLS_REQUEST_APPROVED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إبلاغ المنشأة باكتمال الطلب",
+        "nameEn": "Tell the establishment the request is complete",
+        "eventCode": "REQUEST_APPROVED",
+        "templateCode": "CLS_REQUEST_APPROVED",
+        "condition": {
+          "==": [
+            {
+              "substr": [
+                {
+                  "var": "request.service"
+                },
+                0,
+                14
+              ]
+            },
+            "CLASSIFICATION"
+          ]
+        },
+        "channels": [
+          "IN_APP"
+        ],
+        "recipients": [
+          {
+            "kind": "PARTY"
+          }
+        ],
+        "language": "AR"
+      }
+    },
+    {
+      "entityType": "com.rule",
+      "entityCode": "CLS_CERTIFICATE_ISSUED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إبلاغ المنشأة بإصدار الشهادة",
+        "nameEn": "Tell the holder the certificate was issued",
+        "eventCode": "DOCUMENT_ISSUED",
+        "templateCode": "CLS_CERTIFICATE_ISSUED",
+        "condition": {
+          "==": [
+            {
+              "var": "document.type"
+            },
+            "CLS_CERTIFICATE"
+          ]
+        },
+        "channels": [
+          "IN_APP",
+          "EMAIL",
+          "SMS"
+        ],
+        "recipients": [
+          {
+            "kind": "PARTY"
+          }
+        ],
+        "language": "AR"
+      }
+    },
+    {
+      "entityType": "com.rule",
+      "entityCode": "CLS_CERTIFICATE_AMENDED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إبلاغ المنشأة بتعديل الشهادة",
+        "nameEn": "Tell the holder the certificate was amended",
+        "eventCode": "DOCUMENT_AMENDED",
+        "templateCode": "CLS_CERTIFICATE_ISSUED",
+        "condition": {
+          "==": [
+            {
+              "var": "document.type"
+            },
+            "CLS_CERTIFICATE"
+          ]
+        },
+        "channels": [
+          "IN_APP",
+          "EMAIL"
+        ],
+        "recipients": [
+          {
+            "kind": "PARTY"
+          }
+        ],
+        "language": "AR"
+      }
+    },
+    {
+      "entityType": "com.rule",
+      "entityCode": "CLS_RENEWAL_AVAILABLE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إتاحة التجديد قبل 90 يوماً",
+        "nameEn": "Renewal open, 90 days before expiry",
+        "eventCode": "DOCUMENT_EXPIRING",
+        "templateCode": "CLS_RENEWAL_AVAILABLE",
+        "condition": {
+          "and": [
+            {
+              "==": [
+                {
+                  "var": "document.type"
+                },
+                "CLS_CERTIFICATE"
+              ]
+            },
+            {
+              "==": [
+                {
+                  "var": "document.alertDays"
+                },
+                90
+              ]
+            }
+          ]
+        },
+        "channels": [
+          "IN_APP",
+          "EMAIL",
+          "SMS"
+        ],
+        "recipients": [
+          {
+            "kind": "PARTY"
+          }
+        ],
+        "language": "AR"
+      }
+    },
+    {
+      "entityType": "com.rule",
+      "entityCode": "CLS_EXTENSION_AVAILABLE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إتاحة التمديد قبل 15 يوماً",
+        "nameEn": "Extension open, 15 days before expiry",
+        "eventCode": "DOCUMENT_EXPIRING",
+        "templateCode": "CLS_EXTENSION_AVAILABLE",
+        "condition": {
+          "and": [
+            {
+              "==": [
+                {
+                  "var": "document.type"
+                },
+                "CLS_CERTIFICATE"
+              ]
+            },
+            {
+              "==": [
+                {
+                  "var": "document.alertDays"
+                },
+                15
+              ]
+            }
+          ]
+        },
+        "channels": [
+          "IN_APP",
+          "EMAIL",
+          "SMS"
+        ],
+        "recipients": [
+          {
+            "kind": "PARTY"
+          }
+        ],
+        "language": "AR"
+      }
+    },
+    {
+      "entityType": "com.rule",
+      "entityCode": "CLS_CERTIFICATE_EXPIRED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إبلاغ المنشأة بانتهاء الشهادة",
+        "nameEn": "Tell the holder the certificate expired",
+        "eventCode": "DOCUMENT_EXPIRED",
+        "templateCode": "CLS_CERTIFICATE_EXPIRED",
+        "condition": {
+          "==": [
+            {
+              "var": "document.type"
+            },
+            "CLS_CERTIFICATE"
+          ]
+        },
+        "channels": [
+          "IN_APP",
+          "EMAIL",
+          "SMS"
+        ],
+        "recipients": [
+          {
+            "kind": "PARTY"
+          }
+        ],
+        "language": "AR"
+      }
+    },
+    {
+      "entityType": "com.rule",
+      "entityCode": "CLS_TASK_ASSIGNED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إبلاغ الموظف بالمهمة المسندة",
+        "nameEn": "Tell the employee about an assigned task",
+        "eventCode": "TASK_ASSIGNED",
+        "templateCode": "CLS_TASK_ASSIGNED",
+        "condition": {
+          "==": [
+            {
+              "substr": [
+                {
+                  "var": "task.service"
+                },
+                0,
+                14
+              ]
+            },
+            "CLASSIFICATION"
+          ]
+        },
+        "channels": [
+          "IN_APP"
+        ],
+        "recipients": [
+          {
+            "kind": "USER",
+            "value": {
+              "var": "task.assignee"
+            }
+          }
+        ],
+        "language": "AR"
+      }
+    },
+    {
+      "entityType": "com.rule",
+      "entityCode": "CLS_TASK_OVERDUE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إبلاغ التصعيد بالمهام المتأخرة",
+        "nameEn": "Tell the escalation role about overdue tasks",
+        "eventCode": "TASK_SLA_BREACHED",
+        "templateCode": "CLS_TASK_OVERDUE",
+        "condition": {
+          "==": [
+            {
+              "substr": [
+                {
+                  "var": "task.service"
+                },
+                0,
+                14
+              ]
+            },
+            "CLASSIFICATION"
+          ]
+        },
+        "channels": [
+          "IN_APP"
+        ],
+        "recipients": [
+          {
+            "kind": "ROLE",
+            "value": {
+              "var": "task.escalatedToRole"
+            }
+          },
+          {
+            "kind": "USER",
+            "value": {
+              "var": "task.assignee"
+            }
+          }
+        ],
+        "language": "AR"
+      }
+    }
+  ]
+}

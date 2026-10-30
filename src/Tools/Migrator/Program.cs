@@ -22,9 +22,11 @@ using DynamicCube.Modules.Visits;
 using DynamicCube.Modules.Visits.Persistence;
 using DynamicCube.Modules.Workflow;
 using DynamicCube.Modules.Workflow.Persistence;
+using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Persistence;
 using DynamicCube.Platform.Security;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -33,7 +35,9 @@ using Microsoft.Extensions.Logging;
 // Run as a Kubernetes Job / init step, or manually during N-tier upgrades. Exit code 0 = success.
 var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings { Args = args, ContentRootPath = AppContext.BaseDirectory });
 builder.AddDynamicCubeDefaults("MIGRATOR");
-builder.Services.AddSingleton<ICurrentUser>(new SystemUser("MIGRATOR"));
+var identity = new LoaderUser();
+builder.Services.AddSingleton<ICurrentUser>(identity);
+builder.Services.AddSingleton<PackageLoader>();
 builder.Services.AddAppsControl(builder.Configuration, managesUsers: false);
 builder.Services.AddIntegration(builder.Configuration);
 builder.Services.AddParties(builder.Configuration);
@@ -85,6 +89,32 @@ try
     }
 
     logger.LogInformation("All migrations applied");
+
+    // Demo data (DemoData:Name, e.g. "nhc"): loaded once, into an installation that does not have it yet.
+    if (builder.Configuration["DemoData:Name"] is { Length: > 0 } demo && !string.Equals(demo, "none", StringComparison.OrdinalIgnoreCase))
+    {
+        var folder = Path.Combine(builder.Configuration["DemoData:Root"] ?? Path.Combine(AppContext.BaseDirectory, "demo-data"), demo);
+        if (!Directory.Exists(folder))
+        {
+            throw new DirectoryNotFoundException($"Demo data '{demo}' was not found in {folder}.");
+        }
+
+        var loader = host.Services.GetRequiredService<PackageLoader>();
+        var variables = builder.Configuration.GetSection("DemoData:Variables").GetChildren().ToDictionary(v => v.Key, v => v.Value ?? string.Empty);
+        var packages = PackageLoader.ReadFolder(folder, variables);
+        if (await loader.IsLoadedAsync(packages, identity.ActAs, CancellationToken.None))
+        {
+            MigratorLog.DemoLoaded(logger, demo, 0);
+        }
+        else
+        {
+            await loader.LoadAsync(packages, identity.ActAs, CancellationToken.None);
+            MigratorLog.DemoLoaded(logger, demo, packages.Count);
+        }
+
+        identity.ActAs(null);
+    }
+
     return 0;
 }
 #pragma warning disable CA1031 // Report any failure through the exit code.
@@ -105,8 +135,28 @@ static async Task MigrateAsync<TContext>(IServiceProvider services, ILogger logg
     await context.Database.MigrateAsync();
 }
 
+/// <summary>The migrator's identity: the system, or a loader identity while demo data goes through maker and checker.</summary>
+internal sealed class LoaderUser : ICurrentUser
+{
+    private string? _name;
+
+    public string UserId => _name ?? SystemUser.Id;
+
+    public string? UserName => UserId;
+
+    /// <summary>Not a signed-in person: configuration scopes do not narrow what it may change.</summary>
+    public bool IsAuthenticated => false;
+
+    public string AppCode => "MIGRATOR";
+
+    public void ActAs(string? name) => _name = name;
+}
+
 internal static partial class MigratorLog
 {
     [LoggerMessage(Level = LogLevel.Information, Message = "{Context}: {Count} pending migration(s)")]
     public static partial void PendingMigrations(ILogger logger, string context, int count);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Demo data {Demo}: {Count} package(s) loaded (0: it was loaded before)")]
+    public static partial void DemoLoaded(ILogger logger, string demo, int count);
 }

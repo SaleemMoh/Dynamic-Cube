@@ -73,6 +73,7 @@ web/                   Angular workspace: internal, external, field apps + share
 deploy/docker          Dockerfiles, Nginx template, docker-compose.yml
 deploy/keycloak        Realm definitions (internal + external) for development
 deploy/config-packages Ready-made configuration to import as change sets (e.g. the MCI connectors)
+deploy/demo-data       Demo sets the Migrator loads into a new installation (NHC classification)
 deploy/sample-data     Sample configuration of reference projects (e.g. the radiation registry's lookups, roles, facilities)
 docs/                  Architecture, domain model, ADRs
 ```
@@ -100,11 +101,16 @@ docker compose -f deploy/docker/docker-compose.yml up --build
 
 Gotenberg (PDF printing) runs with the rest; add `--profile full` to also start ClamAV (upload scanning).
 
+**Demo data.** A new installation starts with the NHC Innovation classification demo (organization, company and
+branches, staff, three services, workflows, grading rules, certificate, notifications, portal content) — see
+[deploy/demo-data](deploy/demo-data/README.md) for what it holds, the sign-in accounts and how to start again
+(`docker compose … down -v`, then `up -d --build`). Set `DEMO_DATA=none` for an empty system.
+
 ### Accounts and connections (development)
 
 | What | Where | Sign-in |
 |---|---|---|
-| Internal system | http://localhost:4200 | `admin` (all Apps Control rights), `maker` (drafts changes), `checker` (approves); classification staff `manager`, `analyst1`, `analyst2`, `auditor1`, `director` (roles from the workflow package) — password `Dev@12345` |
+| Internal system | http://localhost:4200 | `admin` (all Apps Control rights), `maker` (drafts changes), `checker` (approves); NHC demo staff such as `ruh.manager`, `gov.analyst1`, `gov.auditor`, `nhc.gm` ([full list](deploy/demo-data/README.md)) — password `Dev@12345` |
 | E-services portal | http://localhost:4201 | `1000000001`, `2000000002` (applicants) — password `Dev@12345`; browsing needs no sign-in |
 | Field app | http://localhost:4202 | Same accounts as the internal system |
 | Keycloak admin console | http://localhost:8080/admin | `admin` / `admin` (`KEYCLOAK_ADMIN_PASSWORD`) |
@@ -123,6 +129,10 @@ visit forms, offline sync and inspection reports arrive with visits in Phase 3.
 These are development values only; change them in `deploy/docker/.env` (see `.env.example`) for anything else.
 
 ### Trying the integrations and acting contexts
+
+These steps build the older sample configuration by hand in an empty system (`DEMO_DATA=none`); with the NHC demo,
+everything they import is already there in its NHC form. The staff they name (`manager`, `analyst1`, `analyst2`,
+`auditor1`, `director`, `inspector1`, `supervisor`) are no longer created in Keycloak; add them in its admin console first.
 
 1. Sign in to the internal system as `maker`, open **Apps Control → Change sets → Import package** and choose
    `deploy/config-packages/momrah-mci.json`. Submit the two drafts it creates; sign in as `checker` and approve them.

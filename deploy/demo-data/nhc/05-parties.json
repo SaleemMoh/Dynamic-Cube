@@ -1,0 +1,155 @@
+{
+  "title": "NHC — establishments from the commercial registry",
+  "items": [
+    {
+      "entityType": "party.context-source",
+      "entityCode": "MCI_CRS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "السجلات التجارية من وزارة التجارة",
+        "nameEn": "Commercial registrations (MCI)",
+        "operationCode": "MCI_CR_BY_ID_NUMBER",
+        "inputParameter": "idNumber",
+        "itemsPath": "Licenses",
+        "principalKind": "ESTABLISHMENT",
+        "principalIdentifierType": "CR_NUMBER",
+        "identifierPath": "Commercial_NO",
+        "nameArPath": "Commercial_Name",
+        "relationCodePath": "RelationTypeInfo.Id",
+        "relationProvider": "MCI",
+        "statusPath": "Status",
+        "activeStatuses": [
+          "Active"
+        ],
+        "refreshMinutes": 60,
+        "displayOrder": 10
+      }
+    },
+    {
+      "entityType": "party.profile-field",
+      "entityCode": "CR_STATUS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "حالة السجل التجاري",
+        "nameEn": "CR status",
+        "partyKind": "ESTABLISHMENT",
+        "dataType": "TEXT",
+        "operationCode": "MCI_CR_INFO",
+        "outputName": "status",
+        "inputs": [
+          {
+            "parameter": "crNumber",
+            "identifierType": "CR_NUMBER"
+          }
+        ],
+        "refreshHours": 24
+      }
+    },
+    {
+      "entityType": "party.profile-field",
+      "entityCode": "CR_EXPIRY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تاريخ انتهاء السجل (هجري)",
+        "nameEn": "CR expiry (Hijri)",
+        "partyKind": "ESTABLISHMENT",
+        "dataType": "TEXT",
+        "operationCode": "MCI_CR_INFO",
+        "outputName": "expiryDate",
+        "inputs": [
+          {
+            "parameter": "crNumber",
+            "identifierType": "CR_NUMBER"
+          }
+        ],
+        "refreshHours": 24
+      }
+    },
+    {
+      "entityType": "party.profile-field",
+      "entityCode": "CR_CITY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مدينة السجل",
+        "nameEn": "CR city",
+        "partyKind": "ESTABLISHMENT",
+        "dataType": "TEXT",
+        "operationCode": "MCI_CR_INFO",
+        "outputName": "city",
+        "inputs": [
+          {
+            "parameter": "crNumber",
+            "identifierType": "CR_NUMBER"
+          }
+        ],
+        "refreshHours": 24
+      }
+    },
+    {
+      "entityType": "party.profile-field",
+      "entityCode": "CR_CAPITAL",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "رأس المال",
+        "nameEn": "Capital",
+        "partyKind": "ESTABLISHMENT",
+        "dataType": "NUMBER",
+        "operationCode": "MCI_CR_INFO",
+        "outputName": "capital",
+        "inputs": [
+          {
+            "parameter": "crNumber",
+            "identifierType": "CR_NUMBER"
+          }
+        ],
+        "refreshHours": 24
+      }
+    },
+    {
+      "entityType": "party.profile-field",
+      "entityCode": "CR_ACTIVITIES",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الأنشطة",
+        "nameEn": "Activities",
+        "partyKind": "ESTABLISHMENT",
+        "dataType": "JSON",
+        "operationCode": "MCI_CR_INFO",
+        "outputName": "activities",
+        "inputs": [
+          {
+            "parameter": "crNumber",
+            "identifierType": "CR_NUMBER"
+          }
+        ],
+        "refreshHours": 24
+      }
+    },
+    {
+      "entityType": "party.profile-field",
+      "entityCode": "EMAIL",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "البريد الإلكتروني",
+        "nameEn": "Email",
+        "partyKind": "ESTABLISHMENT",
+        "dataType": "TEXT",
+        "displayOrder": 90,
+        "refreshHours": 24
+      }
+    },
+    {
+      "entityType": "party.profile-field",
+      "entityCode": "MOBILE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "رقم الجوال",
+        "nameEn": "Mobile",
+        "partyKind": "ESTABLISHMENT",
+        "dataType": "TEXT",
+        "displayOrder": 90,
+        "refreshHours": 24
+      }
+    }
+  ]
+}

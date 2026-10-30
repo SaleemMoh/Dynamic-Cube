@@ -1,0 +1,160 @@
+{
+  "title": "NHC — lists of values",
+  "items": [
+    {
+      "entityType": "apps.class",
+      "entityCode": "REGION",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المناطق الإدارية",
+        "nameEn": "Administrative regions",
+        "descriptionAr": "مناطق المملكة الثلاث عشرة؛ تُستخدم لمواقع الفروع",
+        "descriptionEn": "The 13 regions of the Kingdom; used for branch locations",
+        "attributes": []
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "REGION/RIYADH",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "منطقة الرياض",
+        "nameEn": "Riyadh",
+        "classCode": "REGION",
+        "displayOrder": 1
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "REGION/MAKKAH",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "منطقة مكة المكرمة",
+        "nameEn": "Makkah",
+        "classCode": "REGION",
+        "displayOrder": 2
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "REGION/EASTERN",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المنطقة الشرقية",
+        "nameEn": "Eastern Province",
+        "classCode": "REGION",
+        "displayOrder": 3
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "REGION/MADINAH",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "منطقة المدينة المنورة",
+        "nameEn": "Madinah",
+        "classCode": "REGION",
+        "displayOrder": 4
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "REGION/QASSIM",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "منطقة القصيم",
+        "nameEn": "Qassim",
+        "classCode": "REGION",
+        "displayOrder": 5
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "REGION/ASIR",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "منطقة عسير",
+        "nameEn": "Asir",
+        "classCode": "REGION",
+        "displayOrder": 6
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "REGION/TABUK",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "منطقة تبوك",
+        "nameEn": "Tabuk",
+        "classCode": "REGION",
+        "displayOrder": 7
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "REGION/HAIL",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "منطقة حائل",
+        "nameEn": "Hail",
+        "classCode": "REGION",
+        "displayOrder": 8
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "REGION/NORTHERN",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "منطقة الحدود الشمالية",
+        "nameEn": "Northern Borders",
+        "classCode": "REGION",
+        "displayOrder": 9
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "REGION/JAZAN",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "منطقة جازان",
+        "nameEn": "Jazan",
+        "classCode": "REGION",
+        "displayOrder": 10
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "REGION/NAJRAN",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "منطقة نجران",
+        "nameEn": "Najran",
+        "classCode": "REGION",
+        "displayOrder": 11
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "REGION/JOUF",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "منطقة الجوف",
+        "nameEn": "Al-Jouf",
+        "classCode": "REGION",
+        "displayOrder": 12
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "REGION/BAHA",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "منطقة الباحة",
+        "nameEn": "Al-Baha",
+        "classCode": "REGION",
+        "displayOrder": 13
+      }
+    }
+  ]
+}

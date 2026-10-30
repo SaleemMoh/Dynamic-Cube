@@ -1,0 +1,172 @@
+{
+  "title": "NHC — SADAD payments of the fast track",
+  "items": [
+    {
+      "entityType": "pay.provider",
+      "entityCode": "SADAD",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "سداد",
+        "nameEn": "SADAD",
+        "createOperation": "SADAD_CREATE_BILL",
+        "billNumberOutput": "billNumber",
+        "billerCode": "901",
+        "dueDays": 7,
+        "payUrlTemplate": "${GATEWAY_PUBLIC_URL}/sadad/pay/{billNumber}",
+        "instructionsAr": "ادفع من تطبيق مصرفك أو أجهزة الصراف عبر خدمة سداد: اختر الجهة برمز المفوتر 901 ثم أدخل رقم الفاتورة.",
+        "instructionsEn": "Pay from your bank's app or ATM through SADAD: choose biller code 901, then enter the bill number.",
+        "callbackSecret": "SADAD_CALLBACK",
+        "callback": {
+          "billNumber": "sadadNumber",
+          "status": "status",
+          "paidValue": "PAID",
+          "amount": "amount",
+          "reference": "paymentReference",
+          "paidAt": "paidAt"
+        },
+        "isDefault": true
+      }
+    },
+    {
+      "entityType": "com.template",
+      "entityCode": "PAY_BILL_ISSUED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "فاتورة سداد جديدة",
+        "nameEn": "New bill to pay",
+        "inAppTitleAr": "صدرت فاتورة سداد للطلب {{ bill.subjectNumber }}",
+        "inAppTitleEn": "A bill was issued for request {{ bill.subjectNumber }}",
+        "inAppBodyAr": "المبلغ {{ bill.total }} ريال. رقم فاتورة سداد {{ bill.providerBillNumber }} (رمز المفوتر {{ bill.billerCode }})، آخر موعد {{ bill.dueOn }}.",
+        "inAppBodyEn": "Amount {{ bill.total }} SAR. SADAD bill number {{ bill.providerBillNumber }} (biller code {{ bill.billerCode }}), due on {{ bill.dueOn }}.",
+        "link": "/requests/{{ bill.subjectId }}",
+        "emailSubjectAr": "صدرت فاتورة سداد للطلب {{ bill.subjectNumber }}",
+        "emailSubjectEn": "A bill was issued for request {{ bill.subjectNumber }}",
+        "emailBodyAr": "<p>{{ recipient.name }}،</p><p>المبلغ {{ bill.total }} ريال. رقم فاتورة سداد {{ bill.providerBillNumber }} (رمز المفوتر {{ bill.billerCode }})، آخر موعد {{ bill.dueOn }}.</p>{% if bill.payUrl %}<p><a href=\"{{ bill.payUrl }}\">ادفع الآن</a></p>{% endif %}<p>منصة الخدمات الإلكترونية</p>",
+        "emailBodyEn": "<p>Dear {{ recipient.name }},</p><p>Amount {{ bill.total }} SAR. SADAD bill number {{ bill.providerBillNumber }} (biller code {{ bill.billerCode }}), due on {{ bill.dueOn }}.</p>{% if bill.payUrl %}<p><a href=\"{{ bill.payUrl }}\">Pay now</a></p>{% endif %}<p>e-Services platform</p>"
+      }
+    },
+    {
+      "entityType": "com.template",
+      "entityCode": "PAY_BILL_PAID",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تم سداد الفاتورة",
+        "nameEn": "Bill paid",
+        "inAppTitleAr": "تم سداد فاتورة الطلب {{ bill.subjectNumber }}",
+        "inAppTitleEn": "The bill of request {{ bill.subjectNumber }} was paid",
+        "inAppBodyAr": "استلمنا {{ bill.total }} ريال (مرجع {{ bill.paymentReference }}) وتستكمل معالجة طلبكم.",
+        "inAppBodyEn": "We received {{ bill.total }} SAR (reference {{ bill.paymentReference }}); your request continues.",
+        "link": "/requests/{{ bill.subjectId }}",
+        "emailSubjectAr": "تم سداد فاتورة الطلب {{ bill.subjectNumber }}",
+        "emailSubjectEn": "The bill of request {{ bill.subjectNumber }} was paid",
+        "emailBodyAr": "<p>{{ recipient.name }}،</p><p>استلمنا {{ bill.total }} ريال (مرجع {{ bill.paymentReference }}) وتستكمل معالجة طلبكم.</p>{% if bill.payUrl %}<p><a href=\"{{ bill.payUrl }}\">ادفع الآن</a></p>{% endif %}<p>منصة الخدمات الإلكترونية</p>",
+        "emailBodyEn": "<p>Dear {{ recipient.name }},</p><p>We received {{ bill.total }} SAR (reference {{ bill.paymentReference }}); your request continues.</p>{% if bill.payUrl %}<p><a href=\"{{ bill.payUrl }}\">Pay now</a></p>{% endif %}<p>e-Services platform</p>"
+      }
+    },
+    {
+      "entityType": "com.template",
+      "entityCode": "PAY_BILL_EXPIRED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "انتهاء مهلة السداد",
+        "nameEn": "Bill expired",
+        "inAppTitleAr": "انتهت مهلة سداد فاتورة الطلب {{ bill.subjectNumber }}",
+        "inAppTitleEn": "The bill of request {{ bill.subjectNumber }} expired",
+        "inAppBodyAr": "لم تُسدد الفاتورة {{ bill.providerBillNumber }} قبل {{ bill.dueOn }}، فأُغلق الطلب. يمكنكم التقدم بطلب جديد.",
+        "inAppBodyEn": "Bill {{ bill.providerBillNumber }} was not paid by {{ bill.dueOn }}, so the request was closed. You may apply again.",
+        "link": "/requests/{{ bill.subjectId }}",
+        "emailSubjectAr": "انتهت مهلة سداد فاتورة الطلب {{ bill.subjectNumber }}",
+        "emailSubjectEn": "The bill of request {{ bill.subjectNumber }} expired",
+        "emailBodyAr": "<p>{{ recipient.name }}،</p><p>لم تُسدد الفاتورة {{ bill.providerBillNumber }} قبل {{ bill.dueOn }}، فأُغلق الطلب. يمكنكم التقدم بطلب جديد.</p>{% if bill.payUrl %}<p><a href=\"{{ bill.payUrl }}\">ادفع الآن</a></p>{% endif %}<p>منصة الخدمات الإلكترونية</p>",
+        "emailBodyEn": "<p>Dear {{ recipient.name }},</p><p>Bill {{ bill.providerBillNumber }} was not paid by {{ bill.dueOn }}, so the request was closed. You may apply again.</p>{% if bill.payUrl %}<p><a href=\"{{ bill.payUrl }}\">Pay now</a></p>{% endif %}<p>e-Services platform</p>"
+      }
+    },
+    {
+      "entityType": "com.rule",
+      "entityCode": "PAY_BILL_ISSUED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إبلاغ الدافع: فاتورة سداد جديدة",
+        "nameEn": "Tell the payer: New bill to pay",
+        "eventCode": "BILL_ISSUED",
+        "templateCode": "PAY_BILL_ISSUED",
+        "condition": {
+          "==": [
+            {
+              "var": "bill.subjectType"
+            },
+            "SERVICE_REQUEST"
+          ]
+        },
+        "channels": [
+          "IN_APP",
+          "EMAIL"
+        ],
+        "recipients": [
+          {
+            "kind": "PARTY"
+          }
+        ],
+        "language": "AR"
+      }
+    },
+    {
+      "entityType": "com.rule",
+      "entityCode": "PAY_BILL_PAID",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إبلاغ الدافع: تم سداد الفاتورة",
+        "nameEn": "Tell the payer: Bill paid",
+        "eventCode": "BILL_PAID",
+        "templateCode": "PAY_BILL_PAID",
+        "condition": {
+          "==": [
+            {
+              "var": "bill.subjectType"
+            },
+            "SERVICE_REQUEST"
+          ]
+        },
+        "channels": [
+          "IN_APP",
+          "EMAIL"
+        ],
+        "recipients": [
+          {
+            "kind": "PARTY"
+          }
+        ],
+        "language": "AR"
+      }
+    },
+    {
+      "entityType": "com.rule",
+      "entityCode": "PAY_BILL_EXPIRED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إبلاغ الدافع: انتهاء مهلة السداد",
+        "nameEn": "Tell the payer: Bill expired",
+        "eventCode": "BILL_EXPIRED",
+        "templateCode": "PAY_BILL_EXPIRED",
+        "condition": {
+          "==": [
+            {
+              "var": "bill.subjectType"
+            },
+            "SERVICE_REQUEST"
+          ]
+        },
+        "channels": [
+          "IN_APP",
+          "EMAIL"
+        ],
+        "recipients": [
+          {
+            "kind": "PARTY"
+          }
+        ],
+        "language": "AR"
+      }
+    }
+  ]
+}

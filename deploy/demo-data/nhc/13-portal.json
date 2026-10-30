@@ -1,0 +1,245 @@
+{
+  "title": "NHC — portal home, pages and FAQs",
+  "items": [
+    {
+      "entityType": "apps.setting",
+      "entityCode": "PORTAL_HOME",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الصفحة الرئيسية للبوابة",
+        "nameEn": "Portal home page",
+        "dataType": "JSON",
+        "isPublic": true,
+        "description": "Hero banner, statistics tiles and help links of the e-services portal home page.",
+        "value": {
+          "heroTitleAr": "منصة تصنيف المقاولين والمكاتب الهندسية",
+          "heroTitleEn": "Contractors & engineering offices classification",
+          "heroTextAr": "قدّم طلب التصنيف في المجالات التسعة، وتابع حالته خطوة بخطوة، واستلم شهادتك إلكترونياً.",
+          "heroTextEn": "Apply for classification in the nine domains, follow every step, and receive your certificate online.",
+          "bannerUrl": null,
+          "statistics": [
+            {
+              "metric": "SERVICES",
+              "icon": "apps",
+              "labelAr": "خدمة إلكترونية",
+              "labelEn": "E-services"
+            },
+            {
+              "metric": "REQUESTS",
+              "icon": "send",
+              "labelAr": "طلب مقدم",
+              "labelEn": "Requests submitted"
+            },
+            {
+              "metric": "IN_PROGRESS",
+              "icon": "pending_actions",
+              "labelAr": "طلب قيد المعالجة",
+              "labelEn": "Requests in progress"
+            },
+            {
+              "metric": "COMPLETED",
+              "icon": "task_alt",
+              "labelAr": "طلب مكتمل",
+              "labelEn": "Requests completed"
+            }
+          ],
+          "help": {
+            "phone": "199040",
+            "email": "classification@nhci.example",
+            "contactUrl": null,
+            "accessibilityUrl": null
+          }
+        }
+      }
+    },
+    {
+      "entityType": "cms.page",
+      "entityCode": "ABOUT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "عن خدمة التصنيف",
+        "nameEn": "About classification",
+        "bodyAr": "<p>تُقدّم شركة إن إتش سي للابتكار خدمة تصنيف المقاولين والمكاتب والشركات الهندسية نيابة عن وزارة البلديات والإسكان، وفق الدليل الاسترشادي للتصنيف.</p><p>تُقيّم المنشأة في أربعة محاور لكل مجال: الفني، والأداء (المشاريع والخبرات)، والحوكمة، والمالي (التصنيف الائتماني). الدرجة النهائية لكل مجال هي أدنى درجات المحاور.</p><h3>المجالات التسعة</h3><ul><li>التشييد والبناء</li><li>التشغيل والصيانة والخدمات</li><li>التطوير العقاري</li><li>الاتصالات وتقنية المعلومات</li><li>الأمن السيبراني</li><li>التغذية والإعاشة</li><li>المعارض والمؤتمرات</li><li>المساحة والمعلومات الجيومكانية</li><li>المكاتب والشركات الهندسية</li></ul><h3>المسارات</h3><ul><li><b>المسار العادي:</b> بدون رسوم، حتى 60 يوم عمل.</li><li><b>المسار السريع (NHC):</b> برسوم، خلال 5 أيام عمل من السداد واكتمال البيانات.</li></ul>",
+        "bodyEn": "<p>NHC Innovation provides the classification of contractors and engineering offices and companies on behalf of the Ministry of Municipalities and Housing, following the classification guide.</p><p>Each domain is evaluated on four axes: technical, performance (projects and experience), governance and financial (credit rating). The final grade of a domain is its lowest axis.</p><h3>The nine domains</h3><ul><li>Construction & building</li><li>Operation, maintenance & services</li><li>Real estate development</li><li>Information & communication technology</li><li>Cybersecurity</li><li>Catering & subsistence</li><li>Exhibitions & conferences</li><li>Surveying & geospatial</li><li>Engineering offices & companies</li></ul><h3>Tracks</h3><ul><li><b>Normal track:</b> free, up to 60 working days.</li><li><b>Fast track (NHC):</b> paid, within 5 working days of payment and complete data.</li></ul>",
+        "showInFooter": true,
+        "order": 1
+      }
+    },
+    {
+      "entityType": "cms.page",
+      "entityCode": "TERMS_OF_USE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "شروط الاستخدام",
+        "nameEn": "Terms of use",
+        "bodyAr": "## القبول\n\nباستخدامك البوابة فإنك توافق على هذه الشروط.\n\n## صحة البيانات\n\n1. يتحمل مقدم الطلب مسؤولية صحة البيانات والمستندات المرفقة.\n2. يحق للجهة رفض الطلب أو إلغاء الوثيقة إذا ثبت عدم صحة البيانات.\n\n## الاستخدام المقبول\n\nيُمنع استخدام البوابة لأي غرض مخالف للأنظمة، أو محاولة الوصول إلى بيانات الآخرين.",
+        "bodyEn": "## Acceptance\n\nBy using the portal you accept these terms.\n\n## Accurate information\n\n1. The applicant is responsible for the accuracy of the data and attached documents.\n2. The entity may reject the request or cancel the document if the data proves inaccurate.\n\n## Acceptable use\n\nThe portal may not be used for any unlawful purpose, nor to try to reach other people's data.",
+        "showInFooter": true,
+        "order": 20
+      }
+    },
+    {
+      "entityType": "cms.page",
+      "entityCode": "PRIVACY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "سياسة الخصوصية",
+        "nameEn": "Privacy policy",
+        "bodyAr": "## البيانات التي نجمعها\n\nنجمع البيانات اللازمة لتقديم الخدمة فقط: بيانات الهوية من **النفاذ الوطني الموحد**، وبيانات المنشأة من الجهات المختصة، وما تدخله في نماذج الطلبات.\n\n## كيف نستخدمها\n\n- لمعالجة طلباتك وإصدار وثائقك\n- لإرسال التنبيهات المتعلقة بطلباتك\n\nلا نشارك بياناتك إلا وفق الأنظمة المعمول بها في المملكة العربية السعودية.",
+        "bodyEn": "## Data we collect\n\nWe collect only what the service needs: identity data from the **National Single Sign-On**, establishment data from the competent authorities, and what you enter in request forms.\n\n## How we use it\n\n- To process your requests and issue your documents\n- To send notifications about your requests\n\nWe share your data only as the laws of the Kingdom of Saudi Arabia allow.",
+        "showInFooter": true,
+        "order": 30
+      }
+    },
+    {
+      "entityType": "cms.faq",
+      "entityCode": "FAQ_REQUIREMENTS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "ما المستندات المطلوبة لطلب التصنيف؟",
+        "nameEn": "Which documents does a classification request need?",
+        "answerAr": "السجل التجاري (يُجلب آلياً)، والقوائم المالية المدققة في منصة قوائم، وتقرير التصنيف الائتماني، وسجل المشاريع من منصة اعتماد، وإثبات لكل إجابة «نعم» في أسئلة الحوكمة، ورخصة سكن جماعي أو عقد إيجار لمجالات التشييد والتشغيل والتطوير العقاري. القائمة كاملة في صفحة الخدمة.",
+        "answerEn": "The commercial registration (fetched automatically), audited statements on Qawaem, a credit rating report, the project record from Etimad, a proof for each \"Yes\" in the governance questions, and a collective housing licence or lease for construction, O&M and real estate. The full list is on the service page.",
+        "topicAr": "المتطلبات",
+        "topicEn": "Requirements",
+        "serviceCode": "CLS_NEW",
+        "order": 1
+      }
+    },
+    {
+      "entityType": "cms.faq",
+      "entityCode": "FAQ_TRACKS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "ما الفرق بين المسار العادي والسريع؟",
+        "nameEn": "What is the difference between the normal and the fast track?",
+        "answerAr": "المسار العادي بدون رسوم ويُنجز خلال 60 يوم عمل. المسار السريع برسوم حسب الإيرادات السنوية ويُنجز خلال 5 أيام عمل من سداد الفاتورة واكتمال البيانات.",
+        "answerEn": "The normal track is free and completes within 60 working days. The fast track has a fee by annual revenue and completes within 5 working days of paying the invoice with complete data.",
+        "topicAr": "المسارات",
+        "topicEn": "Tracks",
+        "serviceCode": "CLS_NEW",
+        "order": 2
+      }
+    },
+    {
+      "entityType": "cms.faq",
+      "entityCode": "FAQ_STATUS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "كيف أتابع حالة طلبي؟",
+        "nameEn": "How do I follow my request?",
+        "answerAr": "من «طلباتي» تظهر حالة الطلب والخطوة الحالية وتاريخ كل إجراء، وتصلك رسالة بريد ورسالة نصية وتنبيه في المنصة عند كل تغيير.",
+        "answerEn": "My requests shows the status, the current step and the date of every action; an email, an SMS and a notification on the platform arrive at every change.",
+        "topicAr": "متابعة الطلب",
+        "topicEn": "Following a request",
+        "serviceCode": null,
+        "order": 3
+      }
+    },
+    {
+      "entityType": "cms.faq",
+      "entityCode": "FAQ_RETURNED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "أُعيد طلبي لاستكمال البيانات، ماذا أفعل؟",
+        "nameEn": "My request was returned for more data — what now?",
+        "answerAr": "افتح الطلب من «طلباتي»: يظهر سبب الإعادة كما كتبه الموظف. عدّل البيانات أو أرفق المطلوب ثم أعد التقديم؛ يعود الطلب إلى نفس الموظف دون انتظار جديد.",
+        "answerEn": "Open the request from My requests: the reason is shown as the employee wrote it. Correct the data or attach what is needed and resubmit; it goes back to the same employee without a new wait.",
+        "topicAr": "متابعة الطلب",
+        "topicEn": "Following a request",
+        "serviceCode": null,
+        "order": 4
+      }
+    },
+    {
+      "entityType": "cms.faq",
+      "entityCode": "FAQ_REJECTION",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "لماذا رُفض طلبي؟",
+        "nameEn": "Why was my request rejected?",
+        "answerAr": "يظهر سبب الرفض في تفاصيل الطلب وفي الإشعار المرسل. الأسباب الشائعة: سجل تجاري غير نشط، أو نقص إثباتات الحوكمة، أو عدم تحقق الحد الأدنى للمحور المالي.",
+        "answerEn": "The reason is shown in the request details and in the notification. Common reasons: an inactive CR, missing governance proofs, or not meeting the financial minimum.",
+        "topicAr": "متابعة الطلب",
+        "topicEn": "Following a request",
+        "serviceCode": null,
+        "order": 5
+      }
+    },
+    {
+      "entityType": "cms.faq",
+      "entityCode": "FAQ_DATA_UPDATE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "حدّثت بيانات السجل التجاري ولم تظهر، لماذا؟",
+        "nameEn": "I updated my CR data but it does not show — why?",
+        "answerAr": "تُحدَّث بيانات السجل من وزارة التجارة مرة كل 24 ساعة. بعد التحديث لدى الوزارة سجّل الخروج والدخول من جديد أو انتظر التحديث التالي.",
+        "answerEn": "CR data is refreshed from the Ministry of Commerce every 24 hours. After updating at the ministry, sign out and in again or wait for the next refresh.",
+        "topicAr": "بيانات المنشأة",
+        "topicEn": "Establishment data",
+        "serviceCode": null,
+        "order": 6
+      }
+    },
+    {
+      "entityType": "cms.faq",
+      "entityCode": "FAQ_GRADES",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "كيف تُحسب درجة التصنيف؟",
+        "nameEn": "How is the grade calculated?",
+        "answerAr": "لكل مجال أربع درجات: فنية (الكوادر)، وأداء (القيمة التراكمية للمشاريع خلال 10 سنوات وأكبر مشروع)، وحوكمة (11 سؤالاً من 100 نقطة)، ومالية (التصنيف الائتماني). الدرجة النهائية أدناها، وتنخفض درجة في حال وجود مشاريع حكومية مسحوبة أو 70 مخالفة فأكثر.",
+        "answerEn": "Each domain has four grades: technical (staff), performance (10-year cumulative value and largest project), governance (11 questions, 100 points) and financial (credit rating). The final grade is the lowest; it drops one grade for withdrawn government projects or 70+ violations.",
+        "topicAr": "التقييم",
+        "topicEn": "Evaluation",
+        "serviceCode": "CLS_NEW",
+        "order": 7
+      }
+    },
+    {
+      "entityType": "cms.faq",
+      "entityCode": "FAQ_PAY_SADAD",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "كيف أسدد فاتورة المسار السريع؟",
+        "nameEn": "How do I pay the fast-track invoice?",
+        "answerAr": "بعد مراجعة الطلب تصدر فاتورة سداد برقم يظهر في الطلب وفي الإشعار؛ ادفعها من تطبيق مصرفك عبر خدمة سداد خلال 7 أيام، وإلا يُغلق الطلب.",
+        "answerEn": "After the review a SADAD bill is issued; its number is in the request and the notification. Pay it from your bank app within 7 days, or the request closes.",
+        "topicAr": "السداد",
+        "topicEn": "Payment",
+        "serviceCode": "CLS_NEW",
+        "order": 8
+      }
+    },
+    {
+      "entityType": "cms.faq",
+      "entityCode": "FAQ_VERIFY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "كيف تتحقق جهة من شهادتي؟",
+        "nameEn": "How can an entity verify my certificate?",
+        "answerAr": "كل شهادة تحمل رمز QR ورقماً؛ صفحة «التحقق من شهادة» تعرض حالتها ومجالاتها ودرجاتها وتاريخ انتهائها.",
+        "answerEn": "Each certificate carries a QR code and a number; the Verify page shows its status, domains, grades and expiry.",
+        "topicAr": "الشهادة",
+        "topicEn": "Certificate",
+        "serviceCode": null,
+        "order": 9
+      }
+    },
+    {
+      "entityType": "cms.faq",
+      "entityCode": "FAQ_RENEW",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "متى أجدد الشهادة؟ ومتى أعدّلها؟",
+        "nameEn": "When do I renew, and when do I change the certificate?",
+        "answerAr": "التجديد خلال 90 يوماً قبل الانتهاء وحتى 90 يوماً بعده بنفس المجالات والدرجات. لرفع درجة أو إضافة مجال أو حذفه استخدم خدمة «تعديل شهادة تصنيف».",
+        "answerEn": "Renew within 90 days before and up to 90 days after the expiry with the same domains and grades. To upgrade, add or remove a domain use \"Change a classification certificate\".",
+        "topicAr": "الشهادة",
+        "topicEn": "Certificate",
+        "serviceCode": "CLS_RENEW",
+        "order": 10
+      }
+    }
+  ]
+}

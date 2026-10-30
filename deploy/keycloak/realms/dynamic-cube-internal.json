@@ -140,13 +140,13 @@
       ]
     },
     {
-      "id": "b776419f-fcb9-5230-a479-b9a6adf762a3",
-      "username": "manager",
+      "id": "25e32426-e18e-5291-916f-510653d07e49",
+      "username": "ruh.manager",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "Request",
-      "lastName": "Manager",
-      "email": "manager@dynamic-cube.local",
+      "firstName": "Riyadh requests manager",
+      "lastName": "NHC",
+      "email": "ruh.manager@nhci.example",
       "credentials": [
         {
           "type": "password",
@@ -156,13 +156,13 @@
       ]
     },
     {
-      "id": "75adf51c-e9d7-5263-af18-8ef11b315f54",
-      "username": "analyst1",
+      "id": "042283cf-f69d-5aef-9356-63bc3ceedf6b",
+      "username": "jed.manager",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "First",
-      "lastName": "Analyst",
-      "email": "analyst1@dynamic-cube.local",
+      "firstName": "Jeddah requests manager",
+      "lastName": "NHC",
+      "email": "jed.manager@nhci.example",
       "credentials": [
         {
           "type": "password",
@@ -172,13 +172,13 @@
       ]
     },
     {
-      "id": "9977c4e7-ff80-5134-8ae7-b4c24aa49b47",
-      "username": "analyst2",
+      "id": "8e580db6-9f4a-5d06-8f00-69c48ead9f60",
+      "username": "dmm.manager",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "Second",
-      "lastName": "Analyst",
-      "email": "analyst2@dynamic-cube.local",
+      "firstName": "Dammam requests manager",
+      "lastName": "NHC",
+      "email": "dmm.manager@nhci.example",
       "credentials": [
         {
           "type": "password",
@@ -188,13 +188,13 @@
       ]
     },
     {
-      "id": "09cc9fb1-8ab1-5758-ac12-919cdeeed345",
-      "username": "auditor1",
+      "id": "43bb977b-23ab-52e4-9cab-7fef2640c08b",
+      "username": "gov.analyst1",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "Classification",
-      "lastName": "Auditor",
-      "email": "auditor1@dynamic-cube.local",
+      "firstName": "Governance analyst",
+      "lastName": "1",
+      "email": "gov.analyst1@nhci.example",
       "credentials": [
         {
           "type": "password",
@@ -204,13 +204,13 @@
       ]
     },
     {
-      "id": "6245f333-6518-5495-b419-3fc70e1456c0",
-      "username": "director",
+      "id": "3cc14001-82eb-5783-8809-2b59708a8e8f",
+      "username": "gov.analyst2",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "General",
-      "lastName": "Manager",
-      "email": "director@dynamic-cube.local",
+      "firstName": "Governance analyst",
+      "lastName": "2",
+      "email": "gov.analyst2@nhci.example",
       "credentials": [
         {
           "type": "password",
@@ -220,13 +220,13 @@
       ]
     },
     {
-      "id": "f360643a-616f-5b0e-8190-68b0e2a2a82f",
-      "username": "inspector1",
+      "id": "0cc514b9-9f5b-5a6a-848e-98ad5458bed0",
+      "username": "gov.auditor",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "Field",
-      "lastName": "Inspector",
-      "email": "inspector1@dynamic-cube.local",
+      "firstName": "Governance auditor",
+      "lastName": "NHC",
+      "email": "gov.auditor@nhci.example",
       "credentials": [
         {
           "type": "password",
@@ -236,13 +236,125 @@
       ]
     },
     {
-      "id": "7b500e7d-d70d-58af-bdfd-88fddad3f79d",
-      "username": "supervisor",
+      "id": "7e26344a-5464-5b37-8dd3-3ddd3bfd2ceb",
+      "username": "prj.analyst1",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "Visits",
-      "lastName": "Supervisor",
-      "email": "supervisor@dynamic-cube.local",
+      "firstName": "Projects analyst",
+      "lastName": "1",
+      "email": "prj.analyst1@nhci.example",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Dev@12345",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "id": "90c0be13-8366-5168-99ea-2d116f3aee3a",
+      "username": "prj.analyst2",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Projects analyst",
+      "lastName": "2",
+      "email": "prj.analyst2@nhci.example",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Dev@12345",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "id": "0315521f-3ba8-5e79-ace0-cc67b1190219",
+      "username": "prj.auditor",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Projects auditor",
+      "lastName": "NHC",
+      "email": "prj.auditor@nhci.example",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Dev@12345",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "id": "372059b6-b232-5008-ba4e-6839bd3c9d3c",
+      "username": "fin.analyst1",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Financial analyst",
+      "lastName": "1",
+      "email": "fin.analyst1@nhci.example",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Dev@12345",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "id": "b92d3c7e-b355-5f90-84c9-b0ac9698a45c",
+      "username": "fin.analyst2",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Financial analyst",
+      "lastName": "2",
+      "email": "fin.analyst2@nhci.example",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Dev@12345",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "id": "9fb87f8b-0c59-5a1a-9bd0-90966dd67062",
+      "username": "audit.manager",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Audit manager",
+      "lastName": "NHC",
+      "email": "audit.manager@nhci.example",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Dev@12345",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "id": "e4deb7c4-57bd-59ab-8211-bfd00f5a2685",
+      "username": "nhc.gm",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "General manager",
+      "lastName": "NHC",
+      "email": "nhc.gm@nhci.example",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Dev@12345",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "id": "b92098c2-ae4e-5fbb-968a-be6a69e5a384",
+      "username": "care.agent",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Customer experience specialist",
+      "lastName": "NHC",
+      "email": "care.agent@nhci.example",
       "credentials": [
         {
           "type": "password",

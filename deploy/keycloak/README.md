@@ -61,8 +61,7 @@ Password for all: `Dev@12345`
 | Realm | Username | Notes |
 |---|---|---|
 | internal | `admin`, `maker`, `checker` | Receive `SYSTEM_ADMIN`, `CONFIG_MAKER`, `CONFIG_CHECKER` on first sign-in (`AppsControl:BootstrapUsers` in development) |
-| internal | `manager`, `analyst1`, `analyst2`, `auditor1`, `director` | Classification staff; their roles come from the `classification-workflow.json` package (see `deploy/config-packages`) |
-| internal | `inspector1`, `supervisor` | Field inspector (field app) and visits supervisor; their roles come from the `site-visits.json` package |
+| internal | `ruh.manager`, `jed.manager`, `dmm.manager`, `gov.analyst1`, `gov.analyst2`, `gov.auditor`, `prj.analyst1`, `prj.analyst2`, `prj.auditor`, `fin.analyst1`, `fin.analyst2`, `audit.manager`, `nhc.gm`, `care.agent` | NHC classification staff; their roles and units come from the demo data (`deploy/demo-data/nhc`) |
 | external | `1000000001`, `2000000002` | Applicants; `national_id` attribute mapped into tokens. More are created from *Apps Control → Portal accounts* |
 
 The development Keycloak keeps no data: every fresh start re-imports both realms. Apps Control links each account to

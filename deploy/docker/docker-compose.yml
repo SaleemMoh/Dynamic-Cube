@@ -57,6 +57,11 @@ services:
         ASSEMBLY: DynamicCube.Migrator.dll
     environment:
       <<: *dotnet-env
+      # Demo data loaded once into an empty installation (deploy/demo-data/<name>); "none" for an empty system.
+      DemoData__Name: ${DEMO_DATA:-nhc}
+      # Containers reach the mock gateway by its service name; browsers on localhost.
+      DemoData__Variables__GATEWAY_URL: http://mock-gateway:8080
+      DemoData__Variables__GATEWAY_PUBLIC_URL: http://localhost:5090
     depends_on:
       postgres:
         condition: service_healthy

@@ -1,0 +1,2016 @@
+{
+  "title": "NHC — classification grading rules",
+  "items": [
+    {
+      "entityType": "dec.rule-set",
+      "entityCode": "CLS_GRADING",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "احتساب درجات التصنيف",
+        "nameEn": "Classification grading",
+        "engine": "RULES",
+        "isPublic": false,
+        "descriptionAr": "وفق الدليل الاسترشادي (أبريل 2026): لكل مجال درجة فنية وأداء وحوكمة ومالية؛ الدرجة النهائية أسوأها، وتُخفّض درجة لكل من: مشاريع حكومية مسحوبة، أو 70 مخالفة فأكثر.",
+        "descriptionEn": "Per the guide (April 2026): per domain a technical, performance, governance and financial grade; the final grade is the worst, lowered one grade for withdrawn government projects or 70+ violations."
+      }
+    },
+    {
+      "entityType": "dec.rule-set-version",
+      "entityCode": "CLS_GRADING/1",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 1 — دليل أبريل 2026",
+        "nameEn": "Version 1 — April 2026 guide",
+        "configuration": {
+          "variables": [
+            {
+              "code": "employees",
+              "rule": {
+                "+": [
+                  {
+                    "var": "input.employees"
+                  },
+                  0
+                ]
+              }
+            },
+            {
+              "code": "sizeClass",
+              "rule": {
+                "if": [
+                  {
+                    "<=": [
+                      {
+                        "var": "vars.employees"
+                      },
+                      5
+                    ]
+                  },
+                  "MICRO",
+                  {
+                    "<=": [
+                      {
+                        "var": "vars.employees"
+                      },
+                      49
+                    ]
+                  },
+                  "SMALL",
+                  {
+                    "<=": [
+                      {
+                        "var": "vars.employees"
+                      },
+                      499
+                    ]
+                  },
+                  "MEDIUM",
+                  "LARGE"
+                ]
+              }
+            },
+            {
+              "code": "engineersPct",
+              "rule": {
+                "if": [
+                  {
+                    ">": [
+                      {
+                        "var": "vars.employees"
+                      },
+                      0
+                    ]
+                  },
+                  {
+                    "*": [
+                      100,
+                      {
+                        "/": [
+                          {
+                            "var": "input.engineers"
+                          },
+                          {
+                            "var": "vars.employees"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  0
+                ]
+              }
+            },
+            {
+              "code": "techniciansPct",
+              "rule": {
+                "if": [
+                  {
+                    ">": [
+                      {
+                        "var": "vars.employees"
+                      },
+                      0
+                    ]
+                  },
+                  {
+                    "*": [
+                      100,
+                      {
+                        "/": [
+                          {
+                            "var": "input.technicians"
+                          },
+                          {
+                            "var": "vars.employees"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  0
+                ]
+              }
+            },
+            {
+              "code": "saudisPct",
+              "rule": {
+                "if": [
+                  {
+                    ">": [
+                      {
+                        "var": "vars.employees"
+                      },
+                      0
+                    ]
+                  },
+                  {
+                    "*": [
+                      100,
+                      {
+                        "/": [
+                          {
+                            "var": "input.saudis"
+                          },
+                          {
+                            "var": "vars.employees"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  0
+                ]
+              }
+            },
+            {
+              "code": "technicalPoints",
+              "rule": {
+                "+": [
+                  {
+                    "if": [
+                      {
+                        ">=": [
+                          {
+                            "var": "vars.engineersPct"
+                          },
+                          20
+                        ]
+                      },
+                      30,
+                      {
+                        ">=": [
+                          {
+                            "var": "vars.engineersPct"
+                          },
+                          10
+                        ]
+                      },
+                      20,
+                      {
+                        ">=": [
+                          {
+                            "var": "vars.engineersPct"
+                          },
+                          5
+                        ]
+                      },
+                      10,
+                      0
+                    ]
+                  },
+                  {
+                    "if": [
+                      {
+                        ">=": [
+                          {
+                            "var": "vars.techniciansPct"
+                          },
+                          30
+                        ]
+                      },
+                      30,
+                      {
+                        ">=": [
+                          {
+                            "var": "vars.techniciansPct"
+                          },
+                          15
+                        ]
+                      },
+                      20,
+                      {
+                        ">=": [
+                          {
+                            "var": "vars.techniciansPct"
+                          },
+                          5
+                        ]
+                      },
+                      10,
+                      0
+                    ]
+                  },
+                  {
+                    "if": [
+                      {
+                        ">=": [
+                          {
+                            "var": "vars.saudisPct"
+                          },
+                          50
+                        ]
+                      },
+                      20,
+                      {
+                        ">=": [
+                          {
+                            "var": "vars.saudisPct"
+                          },
+                          30
+                        ]
+                      },
+                      10,
+                      {
+                        ">=": [
+                          {
+                            "var": "vars.saudisPct"
+                          },
+                          10
+                        ]
+                      },
+                      5,
+                      0
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "code": "technicalGrade",
+              "rule": {
+                "if": [
+                  {
+                    ">=": [
+                      {
+                        "var": "vars.technicalPoints"
+                      },
+                      70
+                    ]
+                  },
+                  1,
+                  {
+                    ">=": [
+                      {
+                        "var": "vars.technicalPoints"
+                      },
+                      50
+                    ]
+                  },
+                  2,
+                  {
+                    ">=": [
+                      {
+                        "var": "vars.technicalPoints"
+                      },
+                      40
+                    ]
+                  },
+                  3,
+                  {
+                    ">=": [
+                      {
+                        "var": "vars.technicalPoints"
+                      },
+                      30
+                    ]
+                  },
+                  4,
+                  {
+                    ">=": [
+                      {
+                        "var": "vars.technicalPoints"
+                      },
+                      20
+                    ]
+                  },
+                  5,
+                  6
+                ]
+              }
+            },
+            {
+              "code": "governancePoints",
+              "rule": {
+                "+": [
+                  {
+                    "if": [
+                      {
+                        "var": "input.g1"
+                      },
+                      10,
+                      0
+                    ]
+                  },
+                  {
+                    "if": [
+                      {
+                        "var": "input.g2"
+                      },
+                      5,
+                      0
+                    ]
+                  },
+                  {
+                    "if": [
+                      {
+                        "var": "input.g3"
+                      },
+                      10,
+                      0
+                    ]
+                  },
+                  {
+                    "if": [
+                      {
+                        "var": "input.g4"
+                      },
+                      15,
+                      0
+                    ]
+                  },
+                  {
+                    "if": [
+                      {
+                        "var": "input.g5"
+                      },
+                      5,
+                      0
+                    ]
+                  },
+                  {
+                    "if": [
+                      {
+                        "var": "input.g6"
+                      },
+                      5,
+                      0
+                    ]
+                  },
+                  {
+                    "if": [
+                      {
+                        "var": "input.g7"
+                      },
+                      10,
+                      0
+                    ]
+                  },
+                  {
+                    "if": [
+                      {
+                        "var": "input.g8"
+                      },
+                      10,
+                      0
+                    ]
+                  },
+                  {
+                    "if": [
+                      {
+                        "var": "input.g9"
+                      },
+                      10,
+                      0
+                    ]
+                  },
+                  {
+                    "if": [
+                      {
+                        "var": "input.g10"
+                      },
+                      10,
+                      0
+                    ]
+                  },
+                  {
+                    "if": [
+                      {
+                        "var": "input.g11"
+                      },
+                      10,
+                      0
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "code": "creditRank",
+              "rule": {
+                "if": [
+                  {
+                    "var": "input.creditRating"
+                  },
+                  {
+                    "if": [
+                      {
+                        "==": [
+                          {
+                            "var": "input.creditRating"
+                          },
+                          "AAA"
+                        ]
+                      },
+                      1,
+                      {
+                        "==": [
+                          {
+                            "var": "input.creditRating"
+                          },
+                          "AA+"
+                        ]
+                      },
+                      2,
+                      {
+                        "==": [
+                          {
+                            "var": "input.creditRating"
+                          },
+                          "AA"
+                        ]
+                      },
+                      3,
+                      {
+                        "==": [
+                          {
+                            "var": "input.creditRating"
+                          },
+                          "AA-"
+                        ]
+                      },
+                      4,
+                      {
+                        "==": [
+                          {
+                            "var": "input.creditRating"
+                          },
+                          "A+"
+                        ]
+                      },
+                      5,
+                      {
+                        "==": [
+                          {
+                            "var": "input.creditRating"
+                          },
+                          "A"
+                        ]
+                      },
+                      6,
+                      {
+                        "==": [
+                          {
+                            "var": "input.creditRating"
+                          },
+                          "A-"
+                        ]
+                      },
+                      7,
+                      {
+                        "==": [
+                          {
+                            "var": "input.creditRating"
+                          },
+                          "BBB+"
+                        ]
+                      },
+                      8,
+                      {
+                        "==": [
+                          {
+                            "var": "input.creditRating"
+                          },
+                          "BBB"
+                        ]
+                      },
+                      9,
+                      {
+                        "==": [
+                          {
+                            "var": "input.creditRating"
+                          },
+                          "BBB-"
+                        ]
+                      },
+                      10,
+                      {
+                        "==": [
+                          {
+                            "var": "input.creditRating"
+                          },
+                          "BB+"
+                        ]
+                      },
+                      11,
+                      {
+                        "==": [
+                          {
+                            "var": "input.creditRating"
+                          },
+                          "BB"
+                        ]
+                      },
+                      12,
+                      {
+                        "==": [
+                          {
+                            "var": "input.creditRating"
+                          },
+                          "BB-"
+                        ]
+                      },
+                      13,
+                      {
+                        "==": [
+                          {
+                            "var": "input.creditRating"
+                          },
+                          "B+"
+                        ]
+                      },
+                      14,
+                      {
+                        "==": [
+                          {
+                            "var": "input.creditRating"
+                          },
+                          "B"
+                        ]
+                      },
+                      15,
+                      {
+                        "==": [
+                          {
+                            "var": "input.creditRating"
+                          },
+                          "B-"
+                        ]
+                      },
+                      16,
+                      {
+                        "==": [
+                          {
+                            "var": "input.creditRating"
+                          },
+                          "CCC+"
+                        ]
+                      },
+                      17,
+                      {
+                        "==": [
+                          {
+                            "var": "input.creditRating"
+                          },
+                          "CCC"
+                        ]
+                      },
+                      18,
+                      {
+                        "==": [
+                          {
+                            "var": "input.creditRating"
+                          },
+                          "CCC-"
+                        ]
+                      },
+                      19,
+                      {
+                        "==": [
+                          {
+                            "var": "input.creditRating"
+                          },
+                          "CC"
+                        ]
+                      },
+                      20,
+                      {
+                        "==": [
+                          {
+                            "var": "input.creditRating"
+                          },
+                          "C"
+                        ]
+                      },
+                      21,
+                      {
+                        "==": [
+                          {
+                            "var": "input.creditRating"
+                          },
+                          "D"
+                        ]
+                      },
+                      22,
+                      99
+                    ]
+                  },
+                  99
+                ]
+              }
+            },
+            {
+              "code": "demotions",
+              "rule": {
+                "+": [
+                  {
+                    "if": [
+                      {
+                        "var": "input.withdrawn"
+                      },
+                      1,
+                      0
+                    ]
+                  },
+                  {
+                    "if": [
+                      {
+                        ">=": [
+                          {
+                            "+": [
+                              {
+                                "var": "input.violations"
+                              },
+                              0
+                            ]
+                          },
+                          70
+                        ]
+                      },
+                      1,
+                      0
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "items": {
+            "source": {
+              "var": "input.sectors"
+            },
+            "as": "sector",
+            "variables": [
+              {
+                "code": "technical",
+                "rule": {
+                  "if": [
+                    {
+                      "==": [
+                        {
+                          "var": "sector"
+                        },
+                        "ICT"
+                      ]
+                    },
+                    {
+                      "if": [
+                        {
+                          "==": [
+                            {
+                              "var": "input.dgaCategory"
+                            },
+                            "PLATINUM"
+                          ]
+                        },
+                        1,
+                        {
+                          "==": [
+                            {
+                              "var": "input.dgaCategory"
+                            },
+                            "GOLD"
+                          ]
+                        },
+                        2,
+                        {
+                          "==": [
+                            {
+                              "var": "input.dgaCategory"
+                            },
+                            "SILVER"
+                          ]
+                        },
+                        3,
+                        {
+                          "==": [
+                            {
+                              "var": "input.dgaCategory"
+                            },
+                            "BEGINNER"
+                          ]
+                        },
+                        4,
+                        6
+                      ]
+                    },
+                    {
+                      "var": "vars.technicalGrade"
+                    }
+                  ]
+                }
+              },
+              {
+                "code": "cumulative",
+                "rule": {
+                  "if": [
+                    {
+                      ">=": [
+                        {
+                          "var": "input.projectsValue"
+                        },
+                        {
+                          "if": [
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CON",
+                                  "OM",
+                                  "RE"
+                                ]
+                              ]
+                            },
+                            160,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "ICT"
+                                ]
+                              ]
+                            },
+                            100,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "FD",
+                                  "EX"
+                                ]
+                              ]
+                            },
+                            60,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "SV"
+                                ]
+                              ]
+                            },
+                            15,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CYB"
+                                ]
+                              ]
+                            },
+                            30,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "ENG"
+                                ]
+                              ]
+                            },
+                            40,
+                            1000000000000.0
+                          ]
+                        }
+                      ]
+                    },
+                    1,
+                    {
+                      ">=": [
+                        {
+                          "var": "input.projectsValue"
+                        },
+                        {
+                          "if": [
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CON",
+                                  "OM",
+                                  "RE"
+                                ]
+                              ]
+                            },
+                            90,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "ICT"
+                                ]
+                              ]
+                            },
+                            70,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "FD",
+                                  "EX"
+                                ]
+                              ]
+                            },
+                            40,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "SV"
+                                ]
+                              ]
+                            },
+                            10,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CYB"
+                                ]
+                              ]
+                            },
+                            20,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "ENG"
+                                ]
+                              ]
+                            },
+                            30,
+                            1000000000000.0
+                          ]
+                        }
+                      ]
+                    },
+                    2,
+                    {
+                      ">=": [
+                        {
+                          "var": "input.projectsValue"
+                        },
+                        {
+                          "if": [
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CON",
+                                  "OM",
+                                  "RE"
+                                ]
+                              ]
+                            },
+                            50,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "ICT"
+                                ]
+                              ]
+                            },
+                            50,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "FD",
+                                  "EX"
+                                ]
+                              ]
+                            },
+                            30,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "SV"
+                                ]
+                              ]
+                            },
+                            5,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CYB"
+                                ]
+                              ]
+                            },
+                            15,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "ENG"
+                                ]
+                              ]
+                            },
+                            20,
+                            1000000000000.0
+                          ]
+                        }
+                      ]
+                    },
+                    3,
+                    {
+                      ">=": [
+                        {
+                          "var": "input.projectsValue"
+                        },
+                        {
+                          "if": [
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CON",
+                                  "OM",
+                                  "RE"
+                                ]
+                              ]
+                            },
+                            30,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "ICT"
+                                ]
+                              ]
+                            },
+                            30,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "FD",
+                                  "EX"
+                                ]
+                              ]
+                            },
+                            20,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "SV"
+                                ]
+                              ]
+                            },
+                            2.5,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CYB"
+                                ]
+                              ]
+                            },
+                            10,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "ENG"
+                                ]
+                              ]
+                            },
+                            10,
+                            1000000000000.0
+                          ]
+                        }
+                      ]
+                    },
+                    4,
+                    5
+                  ]
+                }
+              },
+              {
+                "code": "largest",
+                "rule": {
+                  "if": [
+                    {
+                      ">=": [
+                        {
+                          "var": "input.largestProject"
+                        },
+                        {
+                          "if": [
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CON",
+                                  "OM",
+                                  "RE"
+                                ]
+                              ]
+                            },
+                            70,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "ICT",
+                                  "FD",
+                                  "EX"
+                                ]
+                              ]
+                            },
+                            35,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "SV"
+                                ]
+                              ]
+                            },
+                            6,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CYB"
+                                ]
+                              ]
+                            },
+                            15,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "ENG"
+                                ]
+                              ]
+                            },
+                            10,
+                            1000000000000.0
+                          ]
+                        }
+                      ]
+                    },
+                    1,
+                    {
+                      ">=": [
+                        {
+                          "var": "input.largestProject"
+                        },
+                        {
+                          "if": [
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CON",
+                                  "OM",
+                                  "RE"
+                                ]
+                              ]
+                            },
+                            22,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "ICT",
+                                  "FD",
+                                  "EX"
+                                ]
+                              ]
+                            },
+                            22,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "SV"
+                                ]
+                              ]
+                            },
+                            4,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CYB"
+                                ]
+                              ]
+                            },
+                            10,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "ENG"
+                                ]
+                              ]
+                            },
+                            8,
+                            1000000000000.0
+                          ]
+                        }
+                      ]
+                    },
+                    2,
+                    {
+                      ">=": [
+                        {
+                          "var": "input.largestProject"
+                        },
+                        {
+                          "if": [
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CON",
+                                  "OM",
+                                  "RE"
+                                ]
+                              ]
+                            },
+                            14,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "ICT",
+                                  "FD",
+                                  "EX"
+                                ]
+                              ]
+                            },
+                            14,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "SV"
+                                ]
+                              ]
+                            },
+                            2,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CYB"
+                                ]
+                              ]
+                            },
+                            5,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "ENG"
+                                ]
+                              ]
+                            },
+                            5,
+                            1000000000000.0
+                          ]
+                        }
+                      ]
+                    },
+                    3,
+                    {
+                      ">=": [
+                        {
+                          "var": "input.largestProject"
+                        },
+                        {
+                          "if": [
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CON",
+                                  "OM",
+                                  "RE"
+                                ]
+                              ]
+                            },
+                            8,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "ICT",
+                                  "FD",
+                                  "EX"
+                                ]
+                              ]
+                            },
+                            8,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "SV"
+                                ]
+                              ]
+                            },
+                            1,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "CYB"
+                                ]
+                              ]
+                            },
+                            2.5,
+                            {
+                              "in": [
+                                {
+                                  "var": "sector"
+                                },
+                                [
+                                  "ENG"
+                                ]
+                              ]
+                            },
+                            2.5,
+                            1000000000000.0
+                          ]
+                        }
+                      ]
+                    },
+                    4,
+                    5
+                  ]
+                }
+              },
+              {
+                "code": "performance",
+                "rule": {
+                  "min": [
+                    {
+                      "var": "vars.cumulative"
+                    },
+                    {
+                      "var": "vars.largest"
+                    }
+                  ]
+                }
+              },
+              {
+                "code": "governance",
+                "rule": {
+                  "if": [
+                    {
+                      "==": [
+                        {
+                          "var": "sector"
+                        },
+                        "ENG"
+                      ]
+                    },
+                    {
+                      "if": [
+                        {
+                          ">=": [
+                            {
+                              "var": "vars.governancePoints"
+                            },
+                            50
+                          ]
+                        },
+                        1,
+                        {
+                          ">=": [
+                            {
+                              "var": "vars.governancePoints"
+                            },
+                            40
+                          ]
+                        },
+                        2,
+                        {
+                          ">=": [
+                            {
+                              "var": "vars.governancePoints"
+                            },
+                            30
+                          ]
+                        },
+                        3,
+                        {
+                          ">=": [
+                            {
+                              "var": "vars.governancePoints"
+                            },
+                            20
+                          ]
+                        },
+                        4,
+                        5
+                      ]
+                    },
+                    {
+                      "if": [
+                        {
+                          ">=": [
+                            {
+                              "var": "vars.governancePoints"
+                            },
+                            85
+                          ]
+                        },
+                        1,
+                        {
+                          ">=": [
+                            {
+                              "var": "vars.governancePoints"
+                            },
+                            75
+                          ]
+                        },
+                        2,
+                        {
+                          ">=": [
+                            {
+                              "var": "vars.governancePoints"
+                            },
+                            60
+                          ]
+                        },
+                        3,
+                        {
+                          ">=": [
+                            {
+                              "var": "vars.governancePoints"
+                            },
+                            50
+                          ]
+                        },
+                        4,
+                        5
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "code": "financial",
+                "rule": {
+                  "if": [
+                    {
+                      "==": [
+                        {
+                          "var": "sector"
+                        },
+                        "ENG"
+                      ]
+                    },
+                    {
+                      "if": [
+                        {
+                          "<=": [
+                            {
+                              "var": "vars.creditRank"
+                            },
+                            10
+                          ]
+                        },
+                        1,
+                        {
+                          "<=": [
+                            {
+                              "var": "vars.creditRank"
+                            },
+                            12
+                          ]
+                        },
+                        2,
+                        {
+                          "<=": [
+                            {
+                              "var": "vars.creditRank"
+                            },
+                            14
+                          ]
+                        },
+                        3,
+                        {
+                          "<=": [
+                            {
+                              "var": "vars.creditRank"
+                            },
+                            16
+                          ]
+                        },
+                        4,
+                        {
+                          "<=": [
+                            {
+                              "var": "vars.creditRank"
+                            },
+                            19
+                          ]
+                        },
+                        5,
+                        6
+                      ]
+                    },
+                    {
+                      "if": [
+                        {
+                          "<=": [
+                            {
+                              "var": "vars.creditRank"
+                            },
+                            8
+                          ]
+                        },
+                        1,
+                        {
+                          "<=": [
+                            {
+                              "var": "vars.creditRank"
+                            },
+                            10
+                          ]
+                        },
+                        2,
+                        {
+                          "<=": [
+                            {
+                              "var": "vars.creditRank"
+                            },
+                            13
+                          ]
+                        },
+                        3,
+                        {
+                          "<=": [
+                            {
+                              "var": "vars.creditRank"
+                            },
+                            15
+                          ]
+                        },
+                        4,
+                        {
+                          "<=": [
+                            {
+                              "var": "vars.creditRank"
+                            },
+                            17
+                          ]
+                        },
+                        5,
+                        6
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "code": "grade",
+                "rule": {
+                  "if": [
+                    {
+                      ">=": [
+                        {
+                          "max": [
+                            {
+                              "var": "vars.technical"
+                            },
+                            {
+                              "var": "vars.performance"
+                            },
+                            {
+                              "var": "vars.governance"
+                            },
+                            {
+                              "var": "vars.financial"
+                            }
+                          ]
+                        },
+                        6
+                      ]
+                    },
+                    6,
+                    {
+                      "min": [
+                        5,
+                        {
+                          "+": [
+                            {
+                              "max": [
+                                {
+                                  "var": "vars.technical"
+                                },
+                                {
+                                  "var": "vars.performance"
+                                },
+                                {
+                                  "var": "vars.governance"
+                                },
+                                {
+                                  "var": "vars.financial"
+                                }
+                              ]
+                            },
+                            {
+                              "var": "vars.demotions"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ],
+            "output": {
+              "sector": {
+                "var": "sector"
+              },
+              "sectorNameAr": {
+                "if": [
+                  {
+                    "==": [
+                      {
+                        "var": "sector"
+                      },
+                      "CON"
+                    ]
+                  },
+                  "التشييد والبناء",
+                  {
+                    "==": [
+                      {
+                        "var": "sector"
+                      },
+                      "OM"
+                    ]
+                  },
+                  "التشغيل والصيانة والخدمات",
+                  {
+                    "==": [
+                      {
+                        "var": "sector"
+                      },
+                      "RE"
+                    ]
+                  },
+                  "التطوير العقاري",
+                  {
+                    "==": [
+                      {
+                        "var": "sector"
+                      },
+                      "ICT"
+                    ]
+                  },
+                  "الاتصالات وتقنية المعلومات",
+                  {
+                    "==": [
+                      {
+                        "var": "sector"
+                      },
+                      "CYB"
+                    ]
+                  },
+                  "الأمن السيبراني",
+                  {
+                    "==": [
+                      {
+                        "var": "sector"
+                      },
+                      "FD"
+                    ]
+                  },
+                  "التغذية والإعاشة",
+                  {
+                    "==": [
+                      {
+                        "var": "sector"
+                      },
+                      "EX"
+                    ]
+                  },
+                  "المعارض والمؤتمرات",
+                  {
+                    "==": [
+                      {
+                        "var": "sector"
+                      },
+                      "SV"
+                    ]
+                  },
+                  "المساحة والمعلومات الجيومكانية",
+                  {
+                    "==": [
+                      {
+                        "var": "sector"
+                      },
+                      "ENG"
+                    ]
+                  },
+                  "المكاتب والشركات الهندسية",
+                  {
+                    "var": "sector"
+                  }
+                ]
+              },
+              "sectorNameEn": {
+                "if": [
+                  {
+                    "==": [
+                      {
+                        "var": "sector"
+                      },
+                      "CON"
+                    ]
+                  },
+                  "Construction & building",
+                  {
+                    "==": [
+                      {
+                        "var": "sector"
+                      },
+                      "OM"
+                    ]
+                  },
+                  "Operation, maintenance & services",
+                  {
+                    "==": [
+                      {
+                        "var": "sector"
+                      },
+                      "RE"
+                    ]
+                  },
+                  "Real estate development",
+                  {
+                    "==": [
+                      {
+                        "var": "sector"
+                      },
+                      "ICT"
+                    ]
+                  },
+                  "Information & communication technology",
+                  {
+                    "==": [
+                      {
+                        "var": "sector"
+                      },
+                      "CYB"
+                    ]
+                  },
+                  "Cybersecurity",
+                  {
+                    "==": [
+                      {
+                        "var": "sector"
+                      },
+                      "FD"
+                    ]
+                  },
+                  "Catering & subsistence",
+                  {
+                    "==": [
+                      {
+                        "var": "sector"
+                      },
+                      "EX"
+                    ]
+                  },
+                  "Exhibitions & conferences",
+                  {
+                    "==": [
+                      {
+                        "var": "sector"
+                      },
+                      "SV"
+                    ]
+                  },
+                  "Surveying & geospatial",
+                  {
+                    "==": [
+                      {
+                        "var": "sector"
+                      },
+                      "ENG"
+                    ]
+                  },
+                  "Engineering offices & companies",
+                  {
+                    "var": "sector"
+                  }
+                ]
+              },
+              "technical": {
+                "var": "vars.technical"
+              },
+              "performance": {
+                "var": "vars.performance"
+              },
+              "governance": {
+                "var": "vars.governance"
+              },
+              "grade": {
+                "var": "vars.grade"
+              },
+              "classified": {
+                "<=": [
+                  {
+                    "var": "vars.grade"
+                  },
+                  5
+                ]
+              },
+              "financial": {
+                "var": "vars.financial"
+              }
+            }
+          },
+          "output": {
+            "sizeClass": {
+              "var": "vars.sizeClass"
+            },
+            "sizeClassNameAr": {
+              "if": [
+                {
+                  "==": [
+                    {
+                      "var": "vars.sizeClass"
+                    },
+                    "MICRO"
+                  ]
+                },
+                "متناهية الصغر",
+                {
+                  "==": [
+                    {
+                      "var": "vars.sizeClass"
+                    },
+                    "SMALL"
+                  ]
+                },
+                "صغيرة",
+                {
+                  "==": [
+                    {
+                      "var": "vars.sizeClass"
+                    },
+                    "MEDIUM"
+                  ]
+                },
+                "متوسطة",
+                "كبيرة"
+              ]
+            },
+            "sizeClassNameEn": {
+              "if": [
+                {
+                  "==": [
+                    {
+                      "var": "vars.sizeClass"
+                    },
+                    "MICRO"
+                  ]
+                },
+                "Micro",
+                {
+                  "==": [
+                    {
+                      "var": "vars.sizeClass"
+                    },
+                    "SMALL"
+                  ]
+                },
+                "Small",
+                {
+                  "==": [
+                    {
+                      "var": "vars.sizeClass"
+                    },
+                    "MEDIUM"
+                  ]
+                },
+                "Medium",
+                "Large"
+              ]
+            },
+            "technicalPoints": {
+              "var": "vars.technicalPoints"
+            },
+            "governancePoints": {
+              "var": "vars.governancePoints"
+            },
+            "classifiedCount": {
+              "reduce": [
+                {
+                  "var": "items"
+                },
+                {
+                  "+": [
+                    {
+                      "var": "accumulator"
+                    },
+                    {
+                      "if": [
+                        {
+                          "var": "current.classified"
+                        },
+                        1,
+                        0
+                      ]
+                    }
+                  ]
+                },
+                0
+              ]
+            },
+            "eligible": {
+              "some": [
+                {
+                  "var": "items"
+                },
+                {
+                  "var": "classified"
+                }
+              ]
+            },
+            "bestGrade": {
+              "reduce": [
+                {
+                  "var": "items"
+                },
+                {
+                  "if": [
+                    {
+                      "and": [
+                        {
+                          "var": "current.classified"
+                        },
+                        {
+                          "<": [
+                            {
+                              "var": "current.grade"
+                            },
+                            {
+                              "var": "accumulator"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "var": "current.grade"
+                    },
+                    {
+                      "var": "accumulator"
+                    }
+                  ]
+                },
+                6
+              ]
+            },
+            "creditRank": {
+              "var": "vars.creditRank"
+            },
+            "demotions": {
+              "var": "vars.demotions"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

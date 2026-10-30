@@ -1,0 +1,3392 @@
+{
+  "title": "NHC — classification services",
+  "items": [
+    {
+      "entityType": "svc.category",
+      "entityCode": "CLASSIFICATION",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تصنيف المقاولين والمكاتب الهندسية",
+        "nameEn": "Contractors & engineering offices classification",
+        "descriptionAr": "إصدار شهادات التصنيف وتجديدها وتعديلها للمجالات التسعة",
+        "descriptionEn": "Issuing, renewing and changing classification certificates for the nine domains",
+        "icon": "workspace_premium",
+        "displayOrder": 10
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_CR_NUMBER",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "رقم السجل التجاري",
+        "nameEn": "CR number",
+        "type": "TEXT",
+        "prefill": "party.identifiers.CR_NUMBER",
+        "validation": {
+          "pattern": "^[0-9]{10}$"
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_CR_CITY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المدينة",
+        "nameEn": "City",
+        "type": "TEXT",
+        "prefill": "party.profile.CR_CITY",
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_CR_STATUS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "حالة التسجيل",
+        "nameEn": "Registration status",
+        "type": "TEXT",
+        "prefill": "party.profile.CR_STATUS",
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_HAS_LICENSE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "هل لدى المنشأة رخصة تجارية (بلدية)؟",
+        "nameEn": "Does the establishment have a commercial (municipal) licence?",
+        "type": "SELECT",
+        "options": [
+          {
+            "value": "YES",
+            "labelAr": "نعم",
+            "labelEn": "Yes"
+          },
+          {
+            "value": "NO",
+            "labelAr": "لا",
+            "labelEn": "No"
+          }
+        ],
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_LICENSE_NUMBER",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "رقم الرخصة التجارية",
+        "nameEn": "Commercial licence number",
+        "type": "TEXT",
+        "validation": {
+          "pattern": "^[0-9]{6,15}$"
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_IS_BRANCH",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "هل المنشأة فرع من شركة رئيسية؟",
+        "nameEn": "Is the establishment a branch of a parent company?",
+        "type": "SELECT",
+        "options": [
+          {
+            "value": "YES",
+            "labelAr": "نعم",
+            "labelEn": "Yes"
+          },
+          {
+            "value": "NO",
+            "labelAr": "لا",
+            "labelEn": "No"
+          }
+        ],
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_PARENT_LICENSE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "رقم الرخصة التجارية للشركة الرئيسية",
+        "nameEn": "Parent company licence number",
+        "type": "TEXT",
+        "validation": {
+          "pattern": "^[0-9]{6,15}$"
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_ATTACHMENTS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مرفقات المنشأة",
+        "nameEn": "Establishment attachments",
+        "type": "FILE",
+        "multiple": true,
+        "hintAr": "اختياري: أي مستندات داعمة للطلب",
+        "hintEn": "Optional: any supporting documents",
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_DOMAINS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مجالات التصنيف المطلوبة",
+        "nameEn": "Classification domains",
+        "type": "SELECT",
+        "options": [
+          {
+            "value": "CON",
+            "labelAr": "التشييد والبناء",
+            "labelEn": "Construction & building"
+          },
+          {
+            "value": "OM",
+            "labelAr": "التشغيل والصيانة والخدمات",
+            "labelEn": "Operation, maintenance & services"
+          },
+          {
+            "value": "RE",
+            "labelAr": "التطوير العقاري",
+            "labelEn": "Real estate development"
+          },
+          {
+            "value": "ICT",
+            "labelAr": "الاتصالات وتقنية المعلومات",
+            "labelEn": "Information & communication technology"
+          },
+          {
+            "value": "CYB",
+            "labelAr": "الأمن السيبراني",
+            "labelEn": "Cybersecurity"
+          },
+          {
+            "value": "FD",
+            "labelAr": "التغذية والإعاشة",
+            "labelEn": "Catering & subsistence"
+          },
+          {
+            "value": "EX",
+            "labelAr": "المعارض والمؤتمرات",
+            "labelEn": "Exhibitions & conferences"
+          },
+          {
+            "value": "SV",
+            "labelAr": "المساحة والمعلومات الجيومكانية",
+            "labelEn": "Surveying & geospatial"
+          },
+          {
+            "value": "ENG",
+            "labelAr": "المكاتب والشركات الهندسية",
+            "labelEn": "Engineering offices & companies"
+          }
+        ],
+        "multiple": true,
+        "hintAr": "يمكن اختيار أكثر من مجال في طلب واحد",
+        "hintEn": "You can choose several domains in one request",
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_PRIMARY_DOMAIN",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المجال الرئيسي",
+        "nameEn": "Primary domain",
+        "type": "SELECT",
+        "options": [
+          {
+            "value": "CON",
+            "labelAr": "التشييد والبناء",
+            "labelEn": "Construction & building"
+          },
+          {
+            "value": "OM",
+            "labelAr": "التشغيل والصيانة والخدمات",
+            "labelEn": "Operation, maintenance & services"
+          },
+          {
+            "value": "RE",
+            "labelAr": "التطوير العقاري",
+            "labelEn": "Real estate development"
+          },
+          {
+            "value": "ICT",
+            "labelAr": "الاتصالات وتقنية المعلومات",
+            "labelEn": "Information & communication technology"
+          },
+          {
+            "value": "CYB",
+            "labelAr": "الأمن السيبراني",
+            "labelEn": "Cybersecurity"
+          },
+          {
+            "value": "FD",
+            "labelAr": "التغذية والإعاشة",
+            "labelEn": "Catering & subsistence"
+          },
+          {
+            "value": "EX",
+            "labelAr": "المعارض والمؤتمرات",
+            "labelEn": "Exhibitions & conferences"
+          },
+          {
+            "value": "SV",
+            "labelAr": "المساحة والمعلومات الجيومكانية",
+            "labelEn": "Surveying & geospatial"
+          },
+          {
+            "value": "ENG",
+            "labelAr": "المكاتب والشركات الهندسية",
+            "labelEn": "Engineering offices & companies"
+          }
+        ],
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_HAS_HOUSING_LICENSE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "هل لدى المنشأة رخصة سكن جماعي؟",
+        "nameEn": "Does the establishment have a collective housing licence?",
+        "type": "SELECT",
+        "options": [
+          {
+            "value": "YES",
+            "labelAr": "نعم",
+            "labelEn": "Yes"
+          },
+          {
+            "value": "NO",
+            "labelAr": "لا",
+            "labelEn": "No"
+          }
+        ],
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_HOUSING_LICENSE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "رقم رخصة السكن الجماعي",
+        "nameEn": "Collective housing licence number",
+        "type": "TEXT",
+        "validation": {
+          "pattern": "^[0-9]{6,15}$"
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_HAS_HOUSING_LEASE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "هل لدى المنشأة عقد إيجار من صاحب سكن جماعي مرخص؟",
+        "nameEn": "Does the establishment lease from a licensed collective housing owner?",
+        "type": "SELECT",
+        "options": [
+          {
+            "value": "YES",
+            "labelAr": "نعم",
+            "labelEn": "Yes"
+          },
+          {
+            "value": "NO",
+            "labelAr": "لا",
+            "labelEn": "No"
+          }
+        ],
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_HOUSING_LEASE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "عقود الإيجار",
+        "nameEn": "Lease contracts",
+        "type": "FILE",
+        "multiple": true,
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_EMPLOYEES",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إجمالي عدد الموظفين",
+        "nameEn": "Total employees",
+        "type": "NUMBER",
+        "hintAr": "من التأمينات الاجتماعية",
+        "hintEn": "As registered with GOSI",
+        "validation": {
+          "min": 1,
+          "max": 1000000
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_SAUDI_EMPLOYEES",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "عدد الموظفين السعوديين",
+        "nameEn": "Saudi employees",
+        "type": "NUMBER",
+        "validation": {
+          "min": 0,
+          "max": 1000000
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_ENGINEERS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "عدد المهندسين المعتمدين",
+        "nameEn": "Accredited engineers",
+        "type": "NUMBER",
+        "hintAr": "المعتمدون لدى الهيئة السعودية للمهندسين",
+        "hintEn": "Accredited by the Saudi Council of Engineers",
+        "validation": {
+          "min": 0,
+          "max": 1000000
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_TECHNICIANS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "عدد الفنيين",
+        "nameEn": "Technicians",
+        "type": "NUMBER",
+        "validation": {
+          "min": 0,
+          "max": 1000000
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_DGA_CATEGORY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "فئة التصنيف لدى هيئة الحكومة الرقمية",
+        "nameEn": "DGA classification category",
+        "type": "SELECT",
+        "options": [
+          {
+            "value": "PLATINUM",
+            "labelAr": "بلاتيني",
+            "labelEn": "Platinum"
+          },
+          {
+            "value": "GOLD",
+            "labelAr": "ذهبي",
+            "labelEn": "Gold"
+          },
+          {
+            "value": "SILVER",
+            "labelAr": "فضي",
+            "labelEn": "Silver"
+          },
+          {
+            "value": "BEGINNER",
+            "labelAr": "ناشئ",
+            "labelEn": "Beginner"
+          }
+        ],
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_SCE_LICENSE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "رقم ترخيص الهيئة السعودية للمهندسين",
+        "nameEn": "Saudi Council of Engineers licence number",
+        "type": "TEXT",
+        "validation": {
+          "maxLength": 30
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_PROJECTS_COUNT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "عدد المشاريع المنجزة خلال آخر 10 سنوات",
+        "nameEn": "Projects completed in the last 10 years",
+        "type": "NUMBER",
+        "validation": {
+          "min": 0,
+          "max": 100000
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_PROJECTS_VALUE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "القيمة التراكمية للمشاريع (مليون ريال)",
+        "nameEn": "Cumulative project value (SAR million)",
+        "type": "NUMBER",
+        "hintAr": "المشاريع المنجزة خلال آخر 10 سنوات وفق قواعد احتساب المشاريع",
+        "hintEn": "Projects of the last 10 years, counted by the project rules",
+        "validation": {
+          "min": 0
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_LARGEST_PROJECT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "قيمة أكبر مشروع (مليون ريال)",
+        "nameEn": "Largest project (SAR million)",
+        "type": "NUMBER",
+        "validation": {
+          "min": 0
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_PROJECT_RECORD",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "سجل المشاريع وشهادات الإنجاز",
+        "nameEn": "Project record and completion certificates",
+        "type": "FILE",
+        "multiple": true,
+        "hintAr": "كشف المشاريع من منصة اعتماد وشهادات الإنجاز",
+        "hintEn": "Projects statement from Etimad and completion certificates",
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_GOV_G1",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "هل يوجد للمنشأة مجلس إدارة؟",
+        "nameEn": "Does the establishment have a board of directors?",
+        "type": "SELECT",
+        "options": [
+          {
+            "value": "YES",
+            "labelAr": "نعم",
+            "labelEn": "Yes"
+          },
+          {
+            "value": "NO",
+            "labelAr": "لا",
+            "labelEn": "No"
+          }
+        ],
+        "hintAr": "10 نقاط",
+        "hintEn": "10 points",
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_GOV_G1_PROOF",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إثبات: قرار تشكيل المجلس متضمناً الأسماء والصفة",
+        "nameEn": "Proof: Board formation resolution with names and roles",
+        "type": "FILE",
+        "multiple": true,
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_GOV_G2",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "كم مرة يجتمع مجلس الإدارة وفريق الإدارة لمراجعة العمليات واتخاذ القرارات؟",
+        "nameEn": "How often do the board and management meet to review operations?",
+        "type": "SELECT",
+        "options": [
+          {
+            "value": "MONTHLY",
+            "labelAr": "شهرياً أو أكثر",
+            "labelEn": "Monthly or more"
+          },
+          {
+            "value": "QUARTERLY",
+            "labelAr": "ربع سنوي",
+            "labelEn": "Quarterly"
+          },
+          {
+            "value": "YEARLY",
+            "labelAr": "سنوياً أو أقل",
+            "labelEn": "Yearly or less"
+          },
+          {
+            "value": "NONE",
+            "labelAr": "لا يجتمع",
+            "labelEn": "Does not meet"
+          }
+        ],
+        "hintAr": "5 نقاط",
+        "hintEn": "5 points",
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_GOV_G2_PROOF",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إثبات: نسخة مجمعة من محاضر آخر اجتماعين إلى ثلاثة",
+        "nameEn": "Proof: Minutes of the last two or three meetings",
+        "type": "FILE",
+        "multiple": true,
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_GOV_G3",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "هل يوجد نظام لتخطيط موارد المؤسسة (ERP)؟",
+        "nameEn": "Is there an ERP system?",
+        "type": "SELECT",
+        "options": [
+          {
+            "value": "YES",
+            "labelAr": "نعم",
+            "labelEn": "Yes"
+          },
+          {
+            "value": "NO",
+            "labelAr": "لا",
+            "labelEn": "No"
+          }
+        ],
+        "hintAr": "10 نقاط",
+        "hintEn": "10 points",
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_GOV_G3_PROOF",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إثبات: عقد أو رخصة النظام",
+        "nameEn": "Proof: Contract or licence of the system",
+        "type": "FILE",
+        "multiple": true,
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_GOV_G4",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "هل يوجد نظام لإدارة المشاريع؟",
+        "nameEn": "Is there a project management system?",
+        "type": "SELECT",
+        "options": [
+          {
+            "value": "YES",
+            "labelAr": "نعم",
+            "labelEn": "Yes"
+          },
+          {
+            "value": "NO",
+            "labelAr": "لا",
+            "labelEn": "No"
+          }
+        ],
+        "hintAr": "15 نقاط",
+        "hintEn": "15 points",
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_GOV_G4_PROOF",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إثبات: عقود أو رخص النظام وإثبات استخدامه",
+        "nameEn": "Proof: Contracts or licences and proof of use",
+        "type": "FILE",
+        "multiple": true,
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_GOV_G5",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "هل شكّلت المنشأة لجاناً لمجلس الإدارة؟",
+        "nameEn": "Has the establishment formed board committees?",
+        "type": "SELECT",
+        "options": [
+          {
+            "value": "YES",
+            "labelAr": "نعم",
+            "labelEn": "Yes"
+          },
+          {
+            "value": "NO",
+            "labelAr": "لا",
+            "labelEn": "No"
+          }
+        ],
+        "hintAr": "5 نقاط",
+        "hintEn": "5 points",
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_GOV_G5_PROOF",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إثبات: قائمة اللجان وأعضائها",
+        "nameEn": "Proof: List of committees and members",
+        "type": "FILE",
+        "multiple": true,
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_GOV_G6",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "كم مرة تجتمع لجان مجلس الإدارة؟",
+        "nameEn": "How often do the board committees meet?",
+        "type": "SELECT",
+        "options": [
+          {
+            "value": "MONTHLY",
+            "labelAr": "شهرياً أو أكثر",
+            "labelEn": "Monthly or more"
+          },
+          {
+            "value": "QUARTERLY",
+            "labelAr": "ربع سنوي",
+            "labelEn": "Quarterly"
+          },
+          {
+            "value": "YEARLY",
+            "labelAr": "سنوياً أو أقل",
+            "labelEn": "Yearly or less"
+          },
+          {
+            "value": "NONE",
+            "labelAr": "لا يجتمع",
+            "labelEn": "Does not meet"
+          }
+        ],
+        "hintAr": "5 نقاط",
+        "hintEn": "5 points",
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_GOV_G6_PROOF",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إثبات: وتيرة الاجتماعات ومحاضرها",
+        "nameEn": "Proof: Meeting frequency and minutes",
+        "type": "FILE",
+        "multiple": true,
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_GOV_G7",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "هل يوجد هيكل تنظيمي مع مصفوفة صلاحيات واضحة (حتى المستوى الثاني)؟",
+        "nameEn": "Is there an organization chart with a clear authority matrix (to the second level)?",
+        "type": "SELECT",
+        "options": [
+          {
+            "value": "YES",
+            "labelAr": "نعم",
+            "labelEn": "Yes"
+          },
+          {
+            "value": "NO",
+            "labelAr": "لا",
+            "labelEn": "No"
+          }
+        ],
+        "hintAr": "10 نقاط",
+        "hintEn": "10 points",
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_GOV_G7_PROOF",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إثبات: الهيكل التنظيمي ومصفوفة الصلاحيات",
+        "nameEn": "Proof: Organization chart and authority matrix",
+        "type": "FILE",
+        "multiple": true,
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_GOV_G8",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "هل للمنشأة مساهمات في برامج المسؤولية الاجتماعية؟",
+        "nameEn": "Does the establishment contribute to social responsibility programmes?",
+        "type": "SELECT",
+        "options": [
+          {
+            "value": "YES",
+            "labelAr": "نعم",
+            "labelEn": "Yes"
+          },
+          {
+            "value": "NO",
+            "labelAr": "لا",
+            "labelEn": "No"
+          }
+        ],
+        "hintAr": "10 نقاط",
+        "hintEn": "10 points",
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_GOV_G8_PROOF",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إثبات: الشهادة",
+        "nameEn": "Proof: The certificate",
+        "type": "FILE",
+        "multiple": true,
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_GOV_G9",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "هل لدى المنشأة شهادات ISO أو شهادة سلامة وصحة معتمدة دولياً؟",
+        "nameEn": "Does the establishment hold ISO or internationally recognised health & safety certificates?",
+        "type": "SELECT",
+        "options": [
+          {
+            "value": "YES",
+            "labelAr": "نعم",
+            "labelEn": "Yes"
+          },
+          {
+            "value": "NO",
+            "labelAr": "لا",
+            "labelEn": "No"
+          }
+        ],
+        "hintAr": "10 نقاط",
+        "hintEn": "10 points",
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_GOV_G9_PROOF",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إثبات: الشهادة",
+        "nameEn": "Proof: The certificate",
+        "type": "FILE",
+        "multiple": true,
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_GOV_G10",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "هل حصلت المنشأة على شهادة المحتوى المحلي؟",
+        "nameEn": "Does the establishment hold a local content certificate?",
+        "type": "SELECT",
+        "options": [
+          {
+            "value": "YES",
+            "labelAr": "نعم",
+            "labelEn": "Yes"
+          },
+          {
+            "value": "NO",
+            "labelAr": "لا",
+            "labelEn": "No"
+          }
+        ],
+        "hintAr": "10 نقاط",
+        "hintEn": "10 points",
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_GOV_G10_PROOF",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إثبات: شهادة المحتوى المحلي",
+        "nameEn": "Proof: The local content certificate",
+        "type": "FILE",
+        "multiple": true,
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_GOV_G11",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "هل يوجد لدى المنشأة إدارة مخاطر؟",
+        "nameEn": "Does the establishment have risk management?",
+        "type": "SELECT",
+        "options": [
+          {
+            "value": "YES",
+            "labelAr": "نعم",
+            "labelEn": "Yes"
+          },
+          {
+            "value": "NO",
+            "labelAr": "لا",
+            "labelEn": "No"
+          }
+        ],
+        "hintAr": "10 نقاط",
+        "hintEn": "10 points",
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_GOV_G11_PROOF",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إثبات: سياسة إدارة المخاطر وقرار تشكيل الإدارة",
+        "nameEn": "Proof: Risk management policy and formation resolution",
+        "type": "FILE",
+        "multiple": true,
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_ANNUAL_REVENUE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإيرادات السنوية (ريال)",
+        "nameEn": "Annual revenue (SAR)",
+        "type": "NUMBER",
+        "hintAr": "من القوائم المالية المدققة لآخر سنة (منصة قوائم)",
+        "hintEn": "From the audited statements of the last year (Qawaem)",
+        "validation": {
+          "min": 0
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_FINANCIAL_YEAR_END",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تاريخ نهاية آخر سنة مالية",
+        "nameEn": "End of the last financial year",
+        "type": "DATE",
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_CREDIT_RATING",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "التصنيف الائتماني",
+        "nameEn": "Credit rating",
+        "type": "SELECT",
+        "options": [
+          {
+            "value": "AAA",
+            "labelAr": "AAA",
+            "labelEn": "AAA"
+          },
+          {
+            "value": "AA+",
+            "labelAr": "AA+",
+            "labelEn": "AA+"
+          },
+          {
+            "value": "AA",
+            "labelAr": "AA",
+            "labelEn": "AA"
+          },
+          {
+            "value": "AA-",
+            "labelAr": "AA-",
+            "labelEn": "AA-"
+          },
+          {
+            "value": "A+",
+            "labelAr": "A+",
+            "labelEn": "A+"
+          },
+          {
+            "value": "A",
+            "labelAr": "A",
+            "labelEn": "A"
+          },
+          {
+            "value": "A-",
+            "labelAr": "A-",
+            "labelEn": "A-"
+          },
+          {
+            "value": "BBB+",
+            "labelAr": "BBB+",
+            "labelEn": "BBB+"
+          },
+          {
+            "value": "BBB",
+            "labelAr": "BBB",
+            "labelEn": "BBB"
+          },
+          {
+            "value": "BBB-",
+            "labelAr": "BBB-",
+            "labelEn": "BBB-"
+          },
+          {
+            "value": "BB+",
+            "labelAr": "BB+",
+            "labelEn": "BB+"
+          },
+          {
+            "value": "BB",
+            "labelAr": "BB",
+            "labelEn": "BB"
+          },
+          {
+            "value": "BB-",
+            "labelAr": "BB-",
+            "labelEn": "BB-"
+          },
+          {
+            "value": "B+",
+            "labelAr": "B+",
+            "labelEn": "B+"
+          },
+          {
+            "value": "B",
+            "labelAr": "B",
+            "labelEn": "B"
+          },
+          {
+            "value": "B-",
+            "labelAr": "B-",
+            "labelEn": "B-"
+          },
+          {
+            "value": "CCC+",
+            "labelAr": "CCC+",
+            "labelEn": "CCC+"
+          },
+          {
+            "value": "CCC",
+            "labelAr": "CCC",
+            "labelEn": "CCC"
+          },
+          {
+            "value": "CCC-",
+            "labelAr": "CCC-",
+            "labelEn": "CCC-"
+          },
+          {
+            "value": "CC",
+            "labelAr": "CC",
+            "labelEn": "CC"
+          },
+          {
+            "value": "C",
+            "labelAr": "C",
+            "labelEn": "C"
+          },
+          {
+            "value": "D",
+            "labelAr": "D",
+            "labelEn": "D"
+          }
+        ],
+        "hintAr": "من تقرير شركة تصنيف ائتماني معتمدة",
+        "hintEn": "From the report of an accredited credit rating company",
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_CREDIT_REPORT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تقرير التصنيف الائتماني",
+        "nameEn": "Credit rating report",
+        "type": "FILE",
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_WITHDRAWN",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "هل توجد مشاريع حكومية مسحوبة لأسباب تعود للمنشأة خلال آخر ثلاث سنوات من جهتين مختلفتين أو أكثر بعد اكتساب قرار السحب الصفة النهائية؟",
+        "nameEn": "Were government projects withdrawn for reasons attributable to the establishment in the last three years by two or more entities, after the decision became final?",
+        "type": "SELECT",
+        "options": [
+          {
+            "value": "YES",
+            "labelAr": "نعم",
+            "labelEn": "Yes"
+          },
+          {
+            "value": "NO",
+            "labelAr": "لا",
+            "labelEn": "No"
+          }
+        ],
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_CERT_NUMBER",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "رقم شهادة التصنيف",
+        "nameEn": "Classification certificate number",
+        "type": "TEXT",
+        "prefill": "document.number"
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_CERT_EXPIRY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تاريخ انتهاء الشهادة",
+        "nameEn": "Certificate expiry date",
+        "type": "DATE",
+        "prefill": "document.expiresOn"
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "CLS_CHANGE_TYPE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "نوع التعديل",
+        "nameEn": "Change",
+        "type": "SELECT",
+        "options": [
+          {
+            "value": "UPGRADE",
+            "labelAr": "رفع درجة",
+            "labelEn": "Upgrade a grade"
+          },
+          {
+            "value": "ADD",
+            "labelAr": "إضافة مجال",
+            "labelEn": "Add a domain"
+          },
+          {
+            "value": "REMOVE",
+            "labelAr": "حذف مجال",
+            "labelEn": "Remove a domain"
+          }
+        ],
+        "multiple": true,
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.service",
+      "entityCode": "CLS_NEW",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إصدار شهادة تصنيف",
+        "nameEn": "New classification certificate",
+        "descriptionAr": "تقييم المنشأة فنياً ومالياً وفي الأداء والحوكمة لتصنيفها في مجال أو أكثر بدرجة لكل مجال.",
+        "descriptionEn": "Technical, financial, performance and governance evaluation placing the establishment in one or more domains, with a grade per domain.",
+        "archetype": "ISSUANCE",
+        "categoryCode": "CLASSIFICATION",
+        "icon": "workspace_premium",
+        "displayOrder": 10,
+        "partyKinds": [
+          "ESTABLISHMENT"
+        ],
+        "isListed": true,
+        "draftsAllowed": true,
+        "draftExpiryDays": 30,
+        "onNewVersion": "CONTINUE",
+        "numberPrefix": "CLS"
+      }
+    },
+    {
+      "entityType": "svc.service",
+      "entityCode": "CLS_RENEW",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تجديد شهادة تصنيف",
+        "nameEn": "Renew a classification certificate",
+        "descriptionAr": "تجديد الشهادة بنفس المجالات والدرجات لمدة صلاحية جديدة.",
+        "descriptionEn": "Renew the certificate with the same domains and grades for a new validity period.",
+        "archetype": "AMENDMENT",
+        "categoryCode": "CLASSIFICATION",
+        "icon": "autorenew",
+        "displayOrder": 20,
+        "partyKinds": [
+          "ESTABLISHMENT"
+        ],
+        "isListed": true,
+        "draftsAllowed": true,
+        "draftExpiryDays": 30,
+        "onNewVersion": "CONTINUE",
+        "numberPrefix": "CLR",
+        "documentType": "CLS_CERTIFICATE"
+      }
+    },
+    {
+      "entityType": "svc.service",
+      "entityCode": "CLS_CHANGE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تعديل شهادة تصنيف",
+        "nameEn": "Change a classification certificate",
+        "descriptionAr": "رفع درجة مجال أو إضافة مجال أو حذفه مع إعادة التقييم.",
+        "descriptionEn": "Upgrade a domain, add or remove a domain, with a new evaluation.",
+        "archetype": "AMENDMENT",
+        "categoryCode": "CLASSIFICATION",
+        "icon": "published_with_changes",
+        "displayOrder": 30,
+        "partyKinds": [
+          "ESTABLISHMENT"
+        ],
+        "isListed": true,
+        "draftsAllowed": true,
+        "draftExpiryDays": 30,
+        "onNewVersion": "CONTINUE",
+        "numberPrefix": "CLC",
+        "documentType": "CLS_CERTIFICATE"
+      }
+    },
+    {
+      "entityType": "svc.service-version",
+      "entityCode": "CLS_NEW/1",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 1",
+        "nameEn": "Version 1",
+        "definition": {
+          "levels": [
+            {
+              "code": "NORMAL",
+              "nameAr": "المسار العادي",
+              "nameEn": "Normal track",
+              "descriptionAr": "بدون رسوم — حتى 60 يوم عمل",
+              "descriptionEn": "Free of charge — up to 60 working days",
+              "slaWorkingDays": 60
+            },
+            {
+              "code": "FAST",
+              "nameAr": "المسار السريع (NHC)",
+              "nameEn": "Fast track (NHC)",
+              "descriptionAr": "برسوم — خلال 5 أيام عمل من السداد واكتمال البيانات",
+              "descriptionEn": "Paid — within 5 working days of payment and complete data",
+              "slaWorkingDays": 5
+            }
+          ],
+          "steps": [
+            {
+              "code": "LEVEL",
+              "type": "LEVEL",
+              "titleAr": "مسار الخدمة",
+              "titleEn": "Service track",
+              "sections": []
+            },
+            {
+              "code": "ESTABLISHMENT",
+              "type": "FORM",
+              "titleAr": "بيانات المنشأة",
+              "titleEn": "Establishment",
+              "sections": [
+                {
+                  "code": "ESTABLISHMENT",
+                  "titleAr": "بيانات المنشأة",
+                  "titleEn": "Establishment",
+                  "questions": [
+                    {
+                      "code": "CLS_CR_NUMBER",
+                      "required": true,
+                      "readonly": true
+                    },
+                    {
+                      "code": "CLS_CR_CITY",
+                      "required": false,
+                      "readonly": true
+                    },
+                    {
+                      "code": "CLS_CR_STATUS",
+                      "required": false,
+                      "readonly": true
+                    }
+                  ],
+                  "columns": 3
+                },
+                {
+                  "code": "LICENCES",
+                  "titleAr": "الرخصة التجارية",
+                  "titleEn": "Commercial licence",
+                  "questions": [
+                    {
+                      "code": "CLS_HAS_LICENSE",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_LICENSE_NUMBER",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_HAS_LICENSE"
+                          },
+                          "YES"
+                        ]
+                      },
+                      "visibleWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_HAS_LICENSE"
+                          },
+                          "YES"
+                        ]
+                      }
+                    },
+                    {
+                      "code": "CLS_IS_BRANCH",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_PARENT_LICENSE",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_IS_BRANCH"
+                          },
+                          "YES"
+                        ]
+                      },
+                      "visibleWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_IS_BRANCH"
+                          },
+                          "YES"
+                        ]
+                      }
+                    },
+                    {
+                      "code": "CLS_ATTACHMENTS",
+                      "required": false,
+                      "readonly": false
+                    }
+                  ],
+                  "columns": 2
+                }
+              ]
+            },
+            {
+              "code": "DOMAINS",
+              "type": "FORM",
+              "titleAr": "مجالات التصنيف",
+              "titleEn": "Domains",
+              "sections": [
+                {
+                  "code": "DOMAINS",
+                  "titleAr": "مجالات التصنيف",
+                  "titleEn": "Classification domains",
+                  "questions": [
+                    {
+                      "code": "CLS_DOMAINS",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_PRIMARY_DOMAIN",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ]
+                },
+                {
+                  "code": "HOUSING",
+                  "titleAr": "السكن الجماعي للعمال",
+                  "titleEn": "Collective labour housing",
+                  "questions": [
+                    {
+                      "code": "CLS_HAS_HOUSING_LICENSE",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_HOUSING_LICENSE",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_HAS_HOUSING_LICENSE"
+                          },
+                          "YES"
+                        ]
+                      },
+                      "visibleWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_HAS_HOUSING_LICENSE"
+                          },
+                          "YES"
+                        ]
+                      }
+                    },
+                    {
+                      "code": "CLS_HAS_HOUSING_LEASE",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_HAS_HOUSING_LICENSE"
+                          },
+                          "NO"
+                        ]
+                      },
+                      "visibleWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_HAS_HOUSING_LICENSE"
+                          },
+                          "NO"
+                        ]
+                      }
+                    },
+                    {
+                      "code": "CLS_HOUSING_LEASE",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_HAS_HOUSING_LEASE"
+                          },
+                          "YES"
+                        ]
+                      },
+                      "visibleWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_HAS_HOUSING_LEASE"
+                          },
+                          "YES"
+                        ]
+                      }
+                    }
+                  ],
+                  "visibleWhen": {
+                    "or": [
+                      {
+                        "in": [
+                          "CON",
+                          {
+                            "var": "CLS_DOMAINS"
+                          }
+                        ]
+                      },
+                      {
+                        "in": [
+                          "OM",
+                          {
+                            "var": "CLS_DOMAINS"
+                          }
+                        ]
+                      },
+                      {
+                        "in": [
+                          "RE",
+                          {
+                            "var": "CLS_DOMAINS"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "columns": 2
+                }
+              ]
+            },
+            {
+              "code": "TECHNICAL",
+              "type": "FORM",
+              "titleAr": "التقييم الفني",
+              "titleEn": "Technical evaluation",
+              "sections": [
+                {
+                  "code": "STAFF",
+                  "titleAr": "الموظفون",
+                  "titleEn": "Staff",
+                  "questions": [
+                    {
+                      "code": "CLS_EMPLOYEES",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_SAUDI_EMPLOYEES",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ],
+                  "columns": 2
+                },
+                {
+                  "code": "ENGINEERING",
+                  "titleAr": "الكوادر الهندسية والفنية",
+                  "titleEn": "Engineers & technicians",
+                  "questions": [
+                    {
+                      "code": "CLS_ENGINEERS",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_TECHNICIANS",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ],
+                  "visibleWhen": {
+                    "or": [
+                      {
+                        "in": [
+                          "CON",
+                          {
+                            "var": "CLS_DOMAINS"
+                          }
+                        ]
+                      },
+                      {
+                        "in": [
+                          "OM",
+                          {
+                            "var": "CLS_DOMAINS"
+                          }
+                        ]
+                      },
+                      {
+                        "in": [
+                          "SV",
+                          {
+                            "var": "CLS_DOMAINS"
+                          }
+                        ]
+                      },
+                      {
+                        "in": [
+                          "ENG",
+                          {
+                            "var": "CLS_DOMAINS"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "columns": 2
+                },
+                {
+                  "code": "ICT",
+                  "titleAr": "الاتصالات وتقنية المعلومات",
+                  "titleEn": "ICT",
+                  "questions": [
+                    {
+                      "code": "CLS_DGA_CATEGORY",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ],
+                  "visibleWhen": {
+                    "in": [
+                      "ICT",
+                      {
+                        "var": "CLS_DOMAINS"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "code": "ENG",
+                  "titleAr": "المكاتب الهندسية",
+                  "titleEn": "Engineering offices",
+                  "questions": [
+                    {
+                      "code": "CLS_SCE_LICENSE",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ],
+                  "visibleWhen": {
+                    "in": [
+                      "ENG",
+                      {
+                        "var": "CLS_DOMAINS"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "code": "PROJECTS",
+              "type": "FORM",
+              "titleAr": "المشاريع والخبرات",
+              "titleEn": "Projects & experience",
+              "sections": [
+                {
+                  "code": "PROJECTS",
+                  "titleAr": "المشاريع والخبرات",
+                  "titleEn": "Projects & experience",
+                  "questions": [
+                    {
+                      "code": "CLS_PROJECTS_COUNT",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_PROJECTS_VALUE",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_LARGEST_PROJECT",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_PROJECT_RECORD",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ],
+                  "columns": 3
+                }
+              ]
+            },
+            {
+              "code": "GOVERNANCE",
+              "type": "FORM",
+              "titleAr": "الحوكمة",
+              "titleEn": "Governance",
+              "sections": [
+                {
+                  "code": "GOVERNANCE",
+                  "titleAr": "الحوكمة (100 نقطة)",
+                  "titleEn": "Governance (100 points)",
+                  "questions": [
+                    {
+                      "code": "CLS_GOV_G1",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_GOV_G1_PROOF",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G1"
+                          },
+                          "YES"
+                        ]
+                      },
+                      "visibleWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G1"
+                          },
+                          "YES"
+                        ]
+                      }
+                    },
+                    {
+                      "code": "CLS_GOV_G2",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_GOV_G2_PROOF",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "in": [
+                          {
+                            "var": "CLS_GOV_G2"
+                          },
+                          [
+                            "MONTHLY",
+                            "QUARTERLY"
+                          ]
+                        ]
+                      },
+                      "visibleWhen": {
+                        "in": [
+                          {
+                            "var": "CLS_GOV_G2"
+                          },
+                          [
+                            "MONTHLY",
+                            "QUARTERLY"
+                          ]
+                        ]
+                      }
+                    },
+                    {
+                      "code": "CLS_GOV_G3",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_GOV_G3_PROOF",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G3"
+                          },
+                          "YES"
+                        ]
+                      },
+                      "visibleWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G3"
+                          },
+                          "YES"
+                        ]
+                      }
+                    },
+                    {
+                      "code": "CLS_GOV_G4",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_GOV_G4_PROOF",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G4"
+                          },
+                          "YES"
+                        ]
+                      },
+                      "visibleWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G4"
+                          },
+                          "YES"
+                        ]
+                      }
+                    },
+                    {
+                      "code": "CLS_GOV_G5",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_GOV_G5_PROOF",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G5"
+                          },
+                          "YES"
+                        ]
+                      },
+                      "visibleWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G5"
+                          },
+                          "YES"
+                        ]
+                      }
+                    },
+                    {
+                      "code": "CLS_GOV_G6",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_GOV_G6_PROOF",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "in": [
+                          {
+                            "var": "CLS_GOV_G6"
+                          },
+                          [
+                            "MONTHLY",
+                            "QUARTERLY"
+                          ]
+                        ]
+                      },
+                      "visibleWhen": {
+                        "in": [
+                          {
+                            "var": "CLS_GOV_G6"
+                          },
+                          [
+                            "MONTHLY",
+                            "QUARTERLY"
+                          ]
+                        ]
+                      }
+                    },
+                    {
+                      "code": "CLS_GOV_G7",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_GOV_G7_PROOF",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G7"
+                          },
+                          "YES"
+                        ]
+                      },
+                      "visibleWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G7"
+                          },
+                          "YES"
+                        ]
+                      }
+                    },
+                    {
+                      "code": "CLS_GOV_G8",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_GOV_G8_PROOF",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G8"
+                          },
+                          "YES"
+                        ]
+                      },
+                      "visibleWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G8"
+                          },
+                          "YES"
+                        ]
+                      }
+                    },
+                    {
+                      "code": "CLS_GOV_G9",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_GOV_G9_PROOF",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G9"
+                          },
+                          "YES"
+                        ]
+                      },
+                      "visibleWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G9"
+                          },
+                          "YES"
+                        ]
+                      }
+                    },
+                    {
+                      "code": "CLS_GOV_G10",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_GOV_G10_PROOF",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G10"
+                          },
+                          "YES"
+                        ]
+                      },
+                      "visibleWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G10"
+                          },
+                          "YES"
+                        ]
+                      }
+                    },
+                    {
+                      "code": "CLS_GOV_G11",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_GOV_G11_PROOF",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G11"
+                          },
+                          "YES"
+                        ]
+                      },
+                      "visibleWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G11"
+                          },
+                          "YES"
+                        ]
+                      }
+                    }
+                  ],
+                  "columns": 2
+                }
+              ]
+            },
+            {
+              "code": "FINANCIAL",
+              "type": "FORM",
+              "titleAr": "التقييم المالي والائتماني",
+              "titleEn": "Financial & credit",
+              "sections": [
+                {
+                  "code": "FINANCIAL",
+                  "titleAr": "البيانات المالية والائتمانية",
+                  "titleEn": "Financial & credit",
+                  "questions": [
+                    {
+                      "code": "CLS_ANNUAL_REVENUE",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_FINANCIAL_YEAR_END",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_CREDIT_RATING",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_CREDIT_REPORT",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ],
+                  "columns": 2
+                }
+              ]
+            },
+            {
+              "code": "PLEDGE",
+              "type": "FORM",
+              "titleAr": "التعهدات",
+              "titleEn": "Undertakings",
+              "sections": [
+                {
+                  "code": "PLEDGE",
+                  "titleAr": "التعهدات",
+                  "titleEn": "Undertakings",
+                  "questions": [
+                    {
+                      "code": "CLS_WITHDRAWN",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "FEES",
+              "type": "FEES",
+              "titleAr": "الرسوم",
+              "titleEn": "Fees",
+              "sections": []
+            },
+            {
+              "code": "REVIEW",
+              "type": "REVIEW",
+              "titleAr": "مراجعة الطلب",
+              "titleEn": "Review",
+              "sections": []
+            },
+            {
+              "code": "DECLARATION",
+              "type": "DECLARATION",
+              "titleAr": "الإقرار والتعهد",
+              "titleEn": "Declaration",
+              "sections": [],
+              "textAr": "بصفتي مقدّم الطلب والممثّل النظامي للمنشأة، أُقرّ وأتعهد بما يلي:\n1. صحة البيانات: أن جميع البيانات والمعلومات المُدخلة في طلب التصنيف صحيحة وكاملة وتعكس الواقع بدقة، وتتحمّل المنشأة المسؤولية النظامية في حال ثبوت خلاف ذلك، مع حق الوزارة في تطبيق أحكام نظام تصنيف المقاولين ولائحته التنفيذية وفق جدول العقوبات.\n2. الموافقة على الإفصاح: أوافق على تزويد وزارة البلديات والإسكان بأي معلومات تطلبها، وأفوّضها بجمع المستندات وحفظها والاطّلاع على المعلومات الفنية والمالية المتعلقة بالطلب.\n3. تبادل المعلومات: أوافق على تبادل المعلومات والبيانات ذات العلاقة مع الجهات الرسمية المختصة وفق الإجراءات النظامية.\n4. تعهد بصحة البيانات: في حال ثبوت معلومات مغلوطة يحق للوزارة تطبيق ما ورد في جدول العقوبات دون إخلال بأي عقوبة أشد.\n5. أُقرّ بقبولي ما يتضمنه الإقرار أعلاه، وإكمال تقديم الطلب بناءً عليه.",
+              "textEn": "As the applicant and the legal representative of the establishment, I acknowledge and undertake the following:\n1. Data accuracy: all data entered are true, complete and accurate; the establishment bears the legal responsibility otherwise, and the Ministry may apply the Contractors Classification System and its regulations as stated in the penalties table.\n2. Consent to disclosure: I agree to provide the Ministry of Municipalities and Housing with any information it requests and authorise it to collect and keep documents and view the technical and financial information of the request.\n3. Information exchange: I consent to exchanging relevant information with the competent official authorities under the applicable procedures.\n4. Undertaking: if incorrect information is proven, the Ministry may apply the penalties table without prejudice to harsher penalties.\n5. I accept the above and agree to complete the submission accordingly."
+            }
+          ],
+          "eligibility": [
+            {
+              "code": "CR_ACTIVE",
+              "rule": {
+                "==": [
+                  {
+                    "var": "party.profile.CR_STATUS"
+                  },
+                  "نشط"
+                ]
+              },
+              "messageAr": "يجب أن يكون السجل التجاري نشطاً لدى وزارة التجارة.",
+              "messageEn": "The commercial registration must be active at the Ministry of Commerce."
+            }
+          ],
+          "validations": [
+            {
+              "code": "PRIMARY_IN_DOMAINS",
+              "step": "DOMAINS",
+              "rule": {
+                "in": [
+                  {
+                    "var": "data.CLS_PRIMARY_DOMAIN"
+                  },
+                  {
+                    "var": "data.CLS_DOMAINS"
+                  }
+                ]
+              },
+              "messageAr": "يجب أن يكون المجال الرئيسي من المجالات المختارة.",
+              "messageEn": "The primary domain must be one of the chosen domains."
+            },
+            {
+              "code": "HOUSING_PROOF",
+              "step": "DOMAINS",
+              "rule": {
+                "or": [
+                  {
+                    "and": [
+                      {
+                        "!": {
+                          "in": [
+                            "CON",
+                            {
+                              "var": "data.CLS_DOMAINS"
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "!": {
+                          "in": [
+                            "OM",
+                            {
+                              "var": "data.CLS_DOMAINS"
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "!": {
+                          "in": [
+                            "RE",
+                            {
+                              "var": "data.CLS_DOMAINS"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "==": [
+                      {
+                        "var": "data.CLS_HAS_HOUSING_LICENSE"
+                      },
+                      "YES"
+                    ]
+                  },
+                  {
+                    "==": [
+                      {
+                        "var": "data.CLS_HAS_HOUSING_LEASE"
+                      },
+                      "YES"
+                    ]
+                  }
+                ]
+              },
+              "messageAr": "مجالات التشييد والتشغيل والتطوير العقاري تتطلب رخصة سكن جماعي أو عقد إيجار من سكن جماعي مرخص.",
+              "messageEn": "Construction, O&M and real estate need a collective housing licence or a lease from a licensed collective housing."
+            },
+            {
+              "code": "SAUDIS_WITHIN_TOTAL",
+              "step": "TECHNICAL",
+              "rule": {
+                "<=": [
+                  {
+                    "var": "data.CLS_SAUDI_EMPLOYEES"
+                  },
+                  {
+                    "var": "data.CLS_EMPLOYEES"
+                  }
+                ]
+              },
+              "messageAr": "عدد الموظفين السعوديين لا يمكن أن يتجاوز إجمالي الموظفين.",
+              "messageEn": "Saudi employees cannot exceed total employees."
+            },
+            {
+              "code": "LARGEST_WITHIN_TOTAL",
+              "step": "PROJECTS",
+              "rule": {
+                "<=": [
+                  {
+                    "var": "data.CLS_LARGEST_PROJECT"
+                  },
+                  {
+                    "var": "data.CLS_PROJECTS_VALUE"
+                  }
+                ]
+              },
+              "messageAr": "قيمة أكبر مشروع لا يمكن أن تتجاوز القيمة التراكمية للمشاريع.",
+              "messageEn": "The largest project cannot exceed the cumulative value."
+            }
+          ],
+          "fees": [
+            {
+              "code": "FAST_FEE",
+              "nameAr": "رسوم المسار السريع",
+              "nameEn": "Fast track fee",
+              "levels": [
+                "FAST"
+              ],
+              "bracket": {
+                "of": {
+                  "var": "data.CLS_ANNUAL_REVENUE"
+                },
+                "rows": [
+                  {
+                    "from": 0,
+                    "to": 10000000,
+                    "amount": 5000
+                  },
+                  {
+                    "from": 10000000,
+                    "to": 50000000,
+                    "amount": 10000
+                  },
+                  {
+                    "from": 50000000,
+                    "to": 200000000,
+                    "amount": 20000
+                  },
+                  {
+                    "from": 200000000,
+                    "amount": 30000
+                  }
+                ]
+              },
+              "vatRate": 0.15,
+              "vatIncluded": true
+            }
+          ],
+          "card": {
+            "audienceAr": "المقاولون والمكاتب والشركات الهندسية في المجالات التسعة",
+            "audienceEn": "Contractors and engineering offices and companies in the nine domains",
+            "steps": [
+              {
+                "textAr": "الدخول عبر النفاذ الوطني واختيار المنشأة",
+                "textEn": "Sign in with Nafath and choose the establishment"
+              },
+              {
+                "textAr": "اختيار المسار: العادي (مجاناً، حتى 60 يوماً) أو السريع (برسوم، 5 أيام)",
+                "textEn": "Choose the track: normal (free, up to 60 days) or fast (paid, 5 days)"
+              },
+              {
+                "textAr": "اختيار المجالات وتعبئة البيانات الفنية والمشاريع والحوكمة والبيانات المالية",
+                "textEn": "Choose the domains and fill in the technical, projects, governance and financial data"
+              },
+              {
+                "textAr": "مراجعة الطلب والإقرار ثم التقديم",
+                "textEn": "Review, accept the declaration and submit"
+              },
+              {
+                "textAr": "متابعة حالة الطلب والإشعارات واستلام شهادة التصنيف",
+                "textEn": "Follow the status and notifications, and receive the certificate"
+              }
+            ],
+            "termsAr": "أن يكون السجل التجاري (أو ترخيص الهيئة السعودية للمهندسين للمكاتب الهندسية) سارياً ويشمل أنشطة المجالات المطلوبة.\nأن تكون القوائم المالية المدققة لآخر سنة مالية مرفوعة في منصة قوائم، وأن يتوفر تقرير تصنيف ائتماني من شركة معتمدة.\nرخصة سكن جماعي أو عقد إيجار من سكن جماعي مرخص لمجالات التشييد والبناء والتشغيل والصيانة والتطوير العقاري.\nألا تكون على المنشأة عقوبة سارية تمنع التقديم.\nتُعد البيانات المقدمة إقراراً من المنشأة بصحتها، ويحق للجهة التحقق منها.",
+            "termsEn": "The commercial registration (or the Saudi Council of Engineers licence of engineering offices) is valid and covers the activities of the requested domains.\nThe audited statements of the last financial year are on Qawaem, and a credit rating report from an accredited company is available.\nA collective housing licence, or a lease from a licensed collective housing, for construction, operation & maintenance and real estate development.\nThe establishment has no sanction in force that bans applications.\nThe data submitted is the establishment's declaration of its accuracy; it may be verified.",
+            "requiredDocuments": [
+              {
+                "nameAr": "السجل التجاري",
+                "nameEn": "Commercial registration",
+                "noteAr": "يُجلب تلقائياً من وزارة التجارة",
+                "noteEn": "Fetched automatically from the Ministry of Commerce"
+              },
+              {
+                "nameAr": "القوائم المالية المدققة لآخر سنة مالية",
+                "nameEn": "Audited statements of the last financial year",
+                "noteAr": "من منصة قوائم",
+                "noteEn": "From Qawaem"
+              },
+              {
+                "nameAr": "تقرير التصنيف الائتماني",
+                "nameEn": "Credit rating report",
+                "noteAr": "من شركة تصنيف معتمدة أو سمة",
+                "noteEn": "From an accredited rating company or SIMAH"
+              },
+              {
+                "nameAr": "سجل المشاريع وشهادات الإنجاز",
+                "nameEn": "Project record and completion certificates",
+                "noteAr": "كشف منصة اعتماد",
+                "noteEn": "Etimad statement"
+              },
+              {
+                "nameAr": "إثباتات الحوكمة",
+                "nameEn": "Governance proofs",
+                "noteAr": "لكل إجابة «نعم» في أسئلة الحوكمة",
+                "noteEn": "For each \"Yes\" in the governance questions"
+              },
+              {
+                "nameAr": "رخصة السكن الجماعي أو عقد الإيجار",
+                "nameEn": "Collective housing licence or lease",
+                "noteAr": "لمجالات التشييد والتشغيل والتطوير العقاري",
+                "noteEn": "For construction, O&M and real estate"
+              }
+            ],
+            "channels": [
+              "PORTAL"
+            ],
+            "phone": "199040",
+            "email": "classification@nhci.example"
+          }
+        }
+      }
+    },
+    {
+      "entityType": "svc.service-version",
+      "entityCode": "CLS_RENEW/1",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 1",
+        "nameEn": "Version 1",
+        "definition": {
+          "levels": [
+            {
+              "code": "NORMAL",
+              "nameAr": "عادي",
+              "nameEn": "Normal",
+              "slaWorkingDays": 5
+            }
+          ],
+          "steps": [
+            {
+              "code": "CERTIFICATE",
+              "type": "FORM",
+              "titleAr": "الشهادة",
+              "titleEn": "Certificate",
+              "sections": [
+                {
+                  "code": "CERT",
+                  "titleAr": "شهادة التصنيف",
+                  "titleEn": "Classification certificate",
+                  "questions": [
+                    {
+                      "code": "CLS_CERT_NUMBER",
+                      "required": true,
+                      "readonly": true
+                    },
+                    {
+                      "code": "CLS_CERT_EXPIRY",
+                      "required": false,
+                      "readonly": true
+                    }
+                  ],
+                  "columns": 2
+                },
+                {
+                  "code": "FINANCIAL",
+                  "titleAr": "تحديث البيانات المالية",
+                  "titleEn": "Updated financial data",
+                  "questions": [
+                    {
+                      "code": "CLS_ANNUAL_REVENUE",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_FINANCIAL_YEAR_END",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_CREDIT_RATING",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_CREDIT_REPORT",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ],
+                  "columns": 2
+                }
+              ]
+            },
+            {
+              "code": "REVIEW",
+              "type": "REVIEW",
+              "titleAr": "مراجعة الطلب",
+              "titleEn": "Review",
+              "sections": []
+            },
+            {
+              "code": "DECLARATION",
+              "type": "DECLARATION",
+              "titleAr": "الإقرار",
+              "titleEn": "Declaration",
+              "sections": [],
+              "textAr": "بصفتي مقدّم الطلب والممثّل النظامي للمنشأة، أُقرّ وأتعهد بما يلي:\n1. صحة البيانات: أن جميع البيانات والمعلومات المُدخلة في طلب التصنيف صحيحة وكاملة وتعكس الواقع بدقة، وتتحمّل المنشأة المسؤولية النظامية في حال ثبوت خلاف ذلك، مع حق الوزارة في تطبيق أحكام نظام تصنيف المقاولين ولائحته التنفيذية وفق جدول العقوبات.\n2. الموافقة على الإفصاح: أوافق على تزويد وزارة البلديات والإسكان بأي معلومات تطلبها، وأفوّضها بجمع المستندات وحفظها والاطّلاع على المعلومات الفنية والمالية المتعلقة بالطلب.\n3. تبادل المعلومات: أوافق على تبادل المعلومات والبيانات ذات العلاقة مع الجهات الرسمية المختصة وفق الإجراءات النظامية.\n4. تعهد بصحة البيانات: في حال ثبوت معلومات مغلوطة يحق للوزارة تطبيق ما ورد في جدول العقوبات دون إخلال بأي عقوبة أشد.\n5. أُقرّ بقبولي ما يتضمنه الإقرار أعلاه، وإكمال تقديم الطلب بناءً عليه.",
+              "textEn": "As the applicant and the legal representative of the establishment, I acknowledge and undertake the following:\n1. Data accuracy: all data entered are true, complete and accurate; the establishment bears the legal responsibility otherwise, and the Ministry may apply the Contractors Classification System and its regulations as stated in the penalties table.\n2. Consent to disclosure: I agree to provide the Ministry of Municipalities and Housing with any information it requests and authorise it to collect and keep documents and view the technical and financial information of the request.\n3. Information exchange: I consent to exchanging relevant information with the competent official authorities under the applicable procedures.\n4. Undertaking: if incorrect information is proven, the Ministry may apply the penalties table without prejudice to harsher penalties.\n5. I accept the above and agree to complete the submission accordingly."
+            }
+          ],
+          "eligibility": [],
+          "validations": [],
+          "fees": [],
+          "availability": {
+            "statuses": [
+              "ACTIVE",
+              "EXPIRED"
+            ],
+            "from": {
+              "of": "EXPIRES",
+              "days": -90
+            },
+            "to": {
+              "of": "EXPIRES",
+              "days": 90
+            }
+          },
+          "card": {
+            "audienceAr": "المنشآت الحاصلة على شهادة تصنيف",
+            "audienceEn": "Establishments holding a classification certificate",
+            "steps": [
+              {
+                "textAr": "اختيار الشهادة من «مستنداتي» أو من صفحة الخدمة",
+                "textEn": "Choose the certificate from My documents or the service page"
+              },
+              {
+                "textAr": "تحديث البيانات المالية وتقرير التصنيف الائتماني",
+                "textEn": "Update the financial data and credit report"
+              },
+              {
+                "textAr": "التقديم ومراجعة مدير طلبات الفرع",
+                "textEn": "Submit; the branch requests manager reviews it"
+              },
+              {
+                "textAr": "تجديد الشهادة نفسها برقمها لمدة صلاحية جديدة",
+                "textEn": "The same certificate, with its number, gets a new validity"
+              }
+            ],
+            "termsAr": "يُقدّم التجديد خلال 90 يوماً قبل انتهاء الشهادة وحتى 90 يوماً بعده، بنفس المجالات والدرجات.\nلتغيير المجالات أو الدرجات استخدم خدمة «تعديل شهادة التصنيف».",
+            "termsEn": "Renew within 90 days before and up to 90 days after the expiry, with the same domains and grades.\nTo change domains or grades use \"Change a classification certificate\".",
+            "requiredDocuments": [
+              {
+                "nameAr": "شهادة التصنيف",
+                "nameEn": "The classification certificate",
+                "noteAr": "تُختار من وثائق المنشأة",
+                "noteEn": "Chosen from the establishment's documents"
+              },
+              {
+                "nameAr": "تقرير التصنيف الائتماني",
+                "nameEn": "Credit rating report",
+                "noteAr": "من شركة تصنيف معتمدة أو سمة",
+                "noteEn": "From an accredited rating company or SIMAH"
+              }
+            ],
+            "channels": [
+              "PORTAL"
+            ],
+            "phone": "199040",
+            "email": "classification@nhci.example"
+          }
+        }
+      }
+    },
+    {
+      "entityType": "svc.service-version",
+      "entityCode": "CLS_CHANGE/1",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 1",
+        "nameEn": "Version 1",
+        "definition": {
+          "levels": [
+            {
+              "code": "NORMAL",
+              "nameAr": "المسار العادي",
+              "nameEn": "Normal track",
+              "descriptionAr": "بدون رسوم — حتى 60 يوم عمل",
+              "descriptionEn": "Free of charge — up to 60 working days",
+              "slaWorkingDays": 60
+            },
+            {
+              "code": "FAST",
+              "nameAr": "المسار السريع (NHC)",
+              "nameEn": "Fast track (NHC)",
+              "descriptionAr": "برسوم — خلال 5 أيام عمل من السداد واكتمال البيانات",
+              "descriptionEn": "Paid — within 5 working days of payment and complete data",
+              "slaWorkingDays": 5
+            }
+          ],
+          "steps": [
+            {
+              "code": "LEVEL",
+              "type": "LEVEL",
+              "titleAr": "مسار الخدمة",
+              "titleEn": "Service track",
+              "sections": []
+            },
+            {
+              "code": "CERTIFICATE",
+              "type": "FORM",
+              "titleAr": "الشهادة والتعديل المطلوب",
+              "titleEn": "Certificate and change",
+              "sections": [
+                {
+                  "code": "CERT",
+                  "titleAr": "شهادة التصنيف",
+                  "titleEn": "Classification certificate",
+                  "questions": [
+                    {
+                      "code": "CLS_CERT_NUMBER",
+                      "required": true,
+                      "readonly": true
+                    },
+                    {
+                      "code": "CLS_CERT_EXPIRY",
+                      "required": false,
+                      "readonly": true
+                    }
+                  ],
+                  "columns": 2
+                },
+                {
+                  "code": "CHANGE",
+                  "titleAr": "التعديل",
+                  "titleEn": "Change",
+                  "questions": [
+                    {
+                      "code": "CLS_CHANGE_TYPE",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ]
+                },
+                {
+                  "code": "DOMAINS",
+                  "titleAr": "مجالات التصنيف",
+                  "titleEn": "Classification domains",
+                  "questions": [
+                    {
+                      "code": "CLS_DOMAINS",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_PRIMARY_DOMAIN",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ]
+                },
+                {
+                  "code": "HOUSING",
+                  "titleAr": "السكن الجماعي للعمال",
+                  "titleEn": "Collective labour housing",
+                  "questions": [
+                    {
+                      "code": "CLS_HAS_HOUSING_LICENSE",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_HOUSING_LICENSE",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_HAS_HOUSING_LICENSE"
+                          },
+                          "YES"
+                        ]
+                      },
+                      "visibleWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_HAS_HOUSING_LICENSE"
+                          },
+                          "YES"
+                        ]
+                      }
+                    },
+                    {
+                      "code": "CLS_HAS_HOUSING_LEASE",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_HAS_HOUSING_LICENSE"
+                          },
+                          "NO"
+                        ]
+                      },
+                      "visibleWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_HAS_HOUSING_LICENSE"
+                          },
+                          "NO"
+                        ]
+                      }
+                    },
+                    {
+                      "code": "CLS_HOUSING_LEASE",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_HAS_HOUSING_LEASE"
+                          },
+                          "YES"
+                        ]
+                      },
+                      "visibleWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_HAS_HOUSING_LEASE"
+                          },
+                          "YES"
+                        ]
+                      }
+                    }
+                  ],
+                  "visibleWhen": {
+                    "or": [
+                      {
+                        "in": [
+                          "CON",
+                          {
+                            "var": "CLS_DOMAINS"
+                          }
+                        ]
+                      },
+                      {
+                        "in": [
+                          "OM",
+                          {
+                            "var": "CLS_DOMAINS"
+                          }
+                        ]
+                      },
+                      {
+                        "in": [
+                          "RE",
+                          {
+                            "var": "CLS_DOMAINS"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "columns": 2
+                }
+              ]
+            },
+            {
+              "code": "TECHNICAL",
+              "type": "FORM",
+              "titleAr": "التقييم الفني",
+              "titleEn": "Technical evaluation",
+              "sections": [
+                {
+                  "code": "STAFF",
+                  "titleAr": "الموظفون",
+                  "titleEn": "Staff",
+                  "questions": [
+                    {
+                      "code": "CLS_EMPLOYEES",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_SAUDI_EMPLOYEES",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ],
+                  "columns": 2
+                },
+                {
+                  "code": "ENGINEERING",
+                  "titleAr": "الكوادر الهندسية والفنية",
+                  "titleEn": "Engineers & technicians",
+                  "questions": [
+                    {
+                      "code": "CLS_ENGINEERS",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_TECHNICIANS",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ],
+                  "visibleWhen": {
+                    "or": [
+                      {
+                        "in": [
+                          "CON",
+                          {
+                            "var": "CLS_DOMAINS"
+                          }
+                        ]
+                      },
+                      {
+                        "in": [
+                          "OM",
+                          {
+                            "var": "CLS_DOMAINS"
+                          }
+                        ]
+                      },
+                      {
+                        "in": [
+                          "SV",
+                          {
+                            "var": "CLS_DOMAINS"
+                          }
+                        ]
+                      },
+                      {
+                        "in": [
+                          "ENG",
+                          {
+                            "var": "CLS_DOMAINS"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "columns": 2
+                },
+                {
+                  "code": "ICT",
+                  "titleAr": "الاتصالات وتقنية المعلومات",
+                  "titleEn": "ICT",
+                  "questions": [
+                    {
+                      "code": "CLS_DGA_CATEGORY",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ],
+                  "visibleWhen": {
+                    "in": [
+                      "ICT",
+                      {
+                        "var": "CLS_DOMAINS"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "code": "ENG",
+                  "titleAr": "المكاتب الهندسية",
+                  "titleEn": "Engineering offices",
+                  "questions": [
+                    {
+                      "code": "CLS_SCE_LICENSE",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ],
+                  "visibleWhen": {
+                    "in": [
+                      "ENG",
+                      {
+                        "var": "CLS_DOMAINS"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "code": "PROJECTS",
+              "type": "FORM",
+              "titleAr": "المشاريع والخبرات",
+              "titleEn": "Projects & experience",
+              "sections": [
+                {
+                  "code": "PROJECTS",
+                  "titleAr": "المشاريع والخبرات",
+                  "titleEn": "Projects & experience",
+                  "questions": [
+                    {
+                      "code": "CLS_PROJECTS_COUNT",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_PROJECTS_VALUE",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_LARGEST_PROJECT",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_PROJECT_RECORD",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ],
+                  "columns": 3
+                }
+              ]
+            },
+            {
+              "code": "GOVERNANCE",
+              "type": "FORM",
+              "titleAr": "الحوكمة",
+              "titleEn": "Governance",
+              "sections": [
+                {
+                  "code": "GOVERNANCE",
+                  "titleAr": "الحوكمة (100 نقطة)",
+                  "titleEn": "Governance (100 points)",
+                  "questions": [
+                    {
+                      "code": "CLS_GOV_G1",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_GOV_G1_PROOF",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G1"
+                          },
+                          "YES"
+                        ]
+                      },
+                      "visibleWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G1"
+                          },
+                          "YES"
+                        ]
+                      }
+                    },
+                    {
+                      "code": "CLS_GOV_G2",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_GOV_G2_PROOF",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "in": [
+                          {
+                            "var": "CLS_GOV_G2"
+                          },
+                          [
+                            "MONTHLY",
+                            "QUARTERLY"
+                          ]
+                        ]
+                      },
+                      "visibleWhen": {
+                        "in": [
+                          {
+                            "var": "CLS_GOV_G2"
+                          },
+                          [
+                            "MONTHLY",
+                            "QUARTERLY"
+                          ]
+                        ]
+                      }
+                    },
+                    {
+                      "code": "CLS_GOV_G3",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_GOV_G3_PROOF",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G3"
+                          },
+                          "YES"
+                        ]
+                      },
+                      "visibleWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G3"
+                          },
+                          "YES"
+                        ]
+                      }
+                    },
+                    {
+                      "code": "CLS_GOV_G4",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_GOV_G4_PROOF",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G4"
+                          },
+                          "YES"
+                        ]
+                      },
+                      "visibleWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G4"
+                          },
+                          "YES"
+                        ]
+                      }
+                    },
+                    {
+                      "code": "CLS_GOV_G5",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_GOV_G5_PROOF",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G5"
+                          },
+                          "YES"
+                        ]
+                      },
+                      "visibleWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G5"
+                          },
+                          "YES"
+                        ]
+                      }
+                    },
+                    {
+                      "code": "CLS_GOV_G6",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_GOV_G6_PROOF",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "in": [
+                          {
+                            "var": "CLS_GOV_G6"
+                          },
+                          [
+                            "MONTHLY",
+                            "QUARTERLY"
+                          ]
+                        ]
+                      },
+                      "visibleWhen": {
+                        "in": [
+                          {
+                            "var": "CLS_GOV_G6"
+                          },
+                          [
+                            "MONTHLY",
+                            "QUARTERLY"
+                          ]
+                        ]
+                      }
+                    },
+                    {
+                      "code": "CLS_GOV_G7",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_GOV_G7_PROOF",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G7"
+                          },
+                          "YES"
+                        ]
+                      },
+                      "visibleWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G7"
+                          },
+                          "YES"
+                        ]
+                      }
+                    },
+                    {
+                      "code": "CLS_GOV_G8",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_GOV_G8_PROOF",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G8"
+                          },
+                          "YES"
+                        ]
+                      },
+                      "visibleWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G8"
+                          },
+                          "YES"
+                        ]
+                      }
+                    },
+                    {
+                      "code": "CLS_GOV_G9",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_GOV_G9_PROOF",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G9"
+                          },
+                          "YES"
+                        ]
+                      },
+                      "visibleWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G9"
+                          },
+                          "YES"
+                        ]
+                      }
+                    },
+                    {
+                      "code": "CLS_GOV_G10",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_GOV_G10_PROOF",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G10"
+                          },
+                          "YES"
+                        ]
+                      },
+                      "visibleWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G10"
+                          },
+                          "YES"
+                        ]
+                      }
+                    },
+                    {
+                      "code": "CLS_GOV_G11",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_GOV_G11_PROOF",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G11"
+                          },
+                          "YES"
+                        ]
+                      },
+                      "visibleWhen": {
+                        "==": [
+                          {
+                            "var": "CLS_GOV_G11"
+                          },
+                          "YES"
+                        ]
+                      }
+                    }
+                  ],
+                  "columns": 2
+                }
+              ]
+            },
+            {
+              "code": "FINANCIAL",
+              "type": "FORM",
+              "titleAr": "التقييم المالي والائتماني",
+              "titleEn": "Financial & credit",
+              "sections": [
+                {
+                  "code": "FINANCIAL",
+                  "titleAr": "البيانات المالية والائتمانية",
+                  "titleEn": "Financial & credit",
+                  "questions": [
+                    {
+                      "code": "CLS_ANNUAL_REVENUE",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_FINANCIAL_YEAR_END",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_CREDIT_RATING",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_CREDIT_REPORT",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ],
+                  "columns": 2
+                }
+              ]
+            },
+            {
+              "code": "PLEDGE",
+              "type": "FORM",
+              "titleAr": "التعهدات",
+              "titleEn": "Undertakings",
+              "sections": [
+                {
+                  "code": "PLEDGE",
+                  "titleAr": "التعهدات",
+                  "titleEn": "Undertakings",
+                  "questions": [
+                    {
+                      "code": "CLS_WITHDRAWN",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "FEES",
+              "type": "FEES",
+              "titleAr": "الرسوم",
+              "titleEn": "Fees",
+              "sections": []
+            },
+            {
+              "code": "REVIEW",
+              "type": "REVIEW",
+              "titleAr": "مراجعة الطلب",
+              "titleEn": "Review",
+              "sections": []
+            },
+            {
+              "code": "DECLARATION",
+              "type": "DECLARATION",
+              "titleAr": "الإقرار والتعهد",
+              "titleEn": "Declaration",
+              "sections": [],
+              "textAr": "بصفتي مقدّم الطلب والممثّل النظامي للمنشأة، أُقرّ وأتعهد بما يلي:\n1. صحة البيانات: أن جميع البيانات والمعلومات المُدخلة في طلب التصنيف صحيحة وكاملة وتعكس الواقع بدقة، وتتحمّل المنشأة المسؤولية النظامية في حال ثبوت خلاف ذلك، مع حق الوزارة في تطبيق أحكام نظام تصنيف المقاولين ولائحته التنفيذية وفق جدول العقوبات.\n2. الموافقة على الإفصاح: أوافق على تزويد وزارة البلديات والإسكان بأي معلومات تطلبها، وأفوّضها بجمع المستندات وحفظها والاطّلاع على المعلومات الفنية والمالية المتعلقة بالطلب.\n3. تبادل المعلومات: أوافق على تبادل المعلومات والبيانات ذات العلاقة مع الجهات الرسمية المختصة وفق الإجراءات النظامية.\n4. تعهد بصحة البيانات: في حال ثبوت معلومات مغلوطة يحق للوزارة تطبيق ما ورد في جدول العقوبات دون إخلال بأي عقوبة أشد.\n5. أُقرّ بقبولي ما يتضمنه الإقرار أعلاه، وإكمال تقديم الطلب بناءً عليه.",
+              "textEn": "As the applicant and the legal representative of the establishment, I acknowledge and undertake the following:\n1. Data accuracy: all data entered are true, complete and accurate; the establishment bears the legal responsibility otherwise, and the Ministry may apply the Contractors Classification System and its regulations as stated in the penalties table.\n2. Consent to disclosure: I agree to provide the Ministry of Municipalities and Housing with any information it requests and authorise it to collect and keep documents and view the technical and financial information of the request.\n3. Information exchange: I consent to exchanging relevant information with the competent official authorities under the applicable procedures.\n4. Undertaking: if incorrect information is proven, the Ministry may apply the penalties table without prejudice to harsher penalties.\n5. I accept the above and agree to complete the submission accordingly."
+            }
+          ],
+          "eligibility": [],
+          "validations": [
+            {
+              "code": "PRIMARY_IN_DOMAINS",
+              "step": "CERTIFICATE",
+              "rule": {
+                "in": [
+                  {
+                    "var": "data.CLS_PRIMARY_DOMAIN"
+                  },
+                  {
+                    "var": "data.CLS_DOMAINS"
+                  }
+                ]
+              },
+              "messageAr": "يجب أن يكون المجال الرئيسي من المجالات المختارة.",
+              "messageEn": "The primary domain must be one of the chosen domains."
+            },
+            {
+              "code": "HOUSING_PROOF",
+              "step": "CERTIFICATE",
+              "rule": {
+                "or": [
+                  {
+                    "and": [
+                      {
+                        "!": {
+                          "in": [
+                            "CON",
+                            {
+                              "var": "data.CLS_DOMAINS"
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "!": {
+                          "in": [
+                            "OM",
+                            {
+                              "var": "data.CLS_DOMAINS"
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "!": {
+                          "in": [
+                            "RE",
+                            {
+                              "var": "data.CLS_DOMAINS"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "==": [
+                      {
+                        "var": "data.CLS_HAS_HOUSING_LICENSE"
+                      },
+                      "YES"
+                    ]
+                  },
+                  {
+                    "==": [
+                      {
+                        "var": "data.CLS_HAS_HOUSING_LEASE"
+                      },
+                      "YES"
+                    ]
+                  }
+                ]
+              },
+              "messageAr": "مجالات التشييد والتشغيل والتطوير العقاري تتطلب رخصة سكن جماعي أو عقد إيجار من سكن جماعي مرخص.",
+              "messageEn": "Construction, O&M and real estate need a collective housing licence or a lease from a licensed collective housing."
+            },
+            {
+              "code": "SAUDIS_WITHIN_TOTAL",
+              "step": "TECHNICAL",
+              "rule": {
+                "<=": [
+                  {
+                    "var": "data.CLS_SAUDI_EMPLOYEES"
+                  },
+                  {
+                    "var": "data.CLS_EMPLOYEES"
+                  }
+                ]
+              },
+              "messageAr": "عدد الموظفين السعوديين لا يمكن أن يتجاوز إجمالي الموظفين.",
+              "messageEn": "Saudi employees cannot exceed total employees."
+            },
+            {
+              "code": "LARGEST_WITHIN_TOTAL",
+              "step": "PROJECTS",
+              "rule": {
+                "<=": [
+                  {
+                    "var": "data.CLS_LARGEST_PROJECT"
+                  },
+                  {
+                    "var": "data.CLS_PROJECTS_VALUE"
+                  }
+                ]
+              },
+              "messageAr": "قيمة أكبر مشروع لا يمكن أن تتجاوز القيمة التراكمية للمشاريع.",
+              "messageEn": "The largest project cannot exceed the cumulative value."
+            }
+          ],
+          "fees": [
+            {
+              "code": "FAST_FEE",
+              "nameAr": "رسوم المسار السريع",
+              "nameEn": "Fast track fee",
+              "levels": [
+                "FAST"
+              ],
+              "bracket": {
+                "of": {
+                  "var": "data.CLS_ANNUAL_REVENUE"
+                },
+                "rows": [
+                  {
+                    "from": 0,
+                    "to": 10000000,
+                    "amount": 5000
+                  },
+                  {
+                    "from": 10000000,
+                    "to": 50000000,
+                    "amount": 10000
+                  },
+                  {
+                    "from": 50000000,
+                    "to": 200000000,
+                    "amount": 20000
+                  },
+                  {
+                    "from": 200000000,
+                    "amount": 30000
+                  }
+                ]
+              },
+              "vatRate": 0.15,
+              "vatIncluded": true
+            }
+          ],
+          "availability": {
+            "statuses": [
+              "ACTIVE"
+            ]
+          },
+          "card": {
+            "audienceAr": "المنشآت الحاصلة على شهادة تصنيف سارية",
+            "audienceEn": "Establishments holding a valid classification certificate",
+            "steps": [
+              {
+                "textAr": "اختيار الشهادة ونوع التعديل: رفع درجة أو إضافة مجال أو حذف مجال",
+                "textEn": "Choose the certificate and the change: upgrade, add or remove a domain"
+              },
+              {
+                "textAr": "اختيار المجالات بعد التعديل وتحديث البيانات",
+                "textEn": "Choose the domains after the change and update the data"
+              },
+              {
+                "textAr": "التقييم والتدقيق ثم اعتماد المدير العام",
+                "textEn": "Evaluation and audit, then the general manager's approval"
+              },
+              {
+                "textAr": "تعديل الشهادة نفسها برقمها وإصدار نسخة جديدة منها",
+                "textEn": "The same certificate is amended and a new version issued"
+              }
+            ],
+            "termsAr": "يبقى تاريخ انتهاء الشهادة كما هو.\nأن يكون السجل التجاري (أو ترخيص الهيئة السعودية للمهندسين للمكاتب الهندسية) سارياً ويشمل أنشطة المجالات المطلوبة.\nأن تكون القوائم المالية المدققة لآخر سنة مالية مرفوعة في منصة قوائم، وأن يتوفر تقرير تصنيف ائتماني من شركة معتمدة.\nرخصة سكن جماعي أو عقد إيجار من سكن جماعي مرخص لمجالات التشييد والبناء والتشغيل والصيانة والتطوير العقاري.\nألا تكون على المنشأة عقوبة سارية تمنع التقديم.\nتُعد البيانات المقدمة إقراراً من المنشأة بصحتها، ويحق للجهة التحقق منها.",
+            "termsEn": "The expiry date stays the same.\nThe commercial registration (or the Saudi Council of Engineers licence of engineering offices) is valid and covers the activities of the requested domains.\nThe audited statements of the last financial year are on Qawaem, and a credit rating report from an accredited company is available.\nA collective housing licence, or a lease from a licensed collective housing, for construction, operation & maintenance and real estate development.\nThe establishment has no sanction in force that bans applications.\nThe data submitted is the establishment's declaration of its accuracy; it may be verified.",
+            "requiredDocuments": [
+              {
+                "nameAr": "السجل التجاري",
+                "nameEn": "Commercial registration",
+                "noteAr": "يُجلب تلقائياً من وزارة التجارة",
+                "noteEn": "Fetched automatically from the Ministry of Commerce"
+              },
+              {
+                "nameAr": "القوائم المالية المدققة لآخر سنة مالية",
+                "nameEn": "Audited statements of the last financial year",
+                "noteAr": "من منصة قوائم",
+                "noteEn": "From Qawaem"
+              },
+              {
+                "nameAr": "تقرير التصنيف الائتماني",
+                "nameEn": "Credit rating report",
+                "noteAr": "من شركة تصنيف معتمدة أو سمة",
+                "noteEn": "From an accredited rating company or SIMAH"
+              },
+              {
+                "nameAr": "سجل المشاريع وشهادات الإنجاز",
+                "nameEn": "Project record and completion certificates",
+                "noteAr": "كشف منصة اعتماد",
+                "noteEn": "Etimad statement"
+              },
+              {
+                "nameAr": "إثباتات الحوكمة",
+                "nameEn": "Governance proofs",
+                "noteAr": "لكل إجابة «نعم» في أسئلة الحوكمة",
+                "noteEn": "For each \"Yes\" in the governance questions"
+              },
+              {
+                "nameAr": "رخصة السكن الجماعي أو عقد الإيجار",
+                "nameEn": "Collective housing licence or lease",
+                "noteAr": "لمجالات التشييد والتشغيل والتطوير العقاري",
+                "noteEn": "For construction, O&M and real estate"
+              }
+            ],
+            "channels": [
+              "PORTAL"
+            ],
+            "phone": "199040",
+            "email": "classification@nhci.example"
+          }
+        }
+      }
+    }
+  ]
+}

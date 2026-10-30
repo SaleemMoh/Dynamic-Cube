@@ -1,0 +1,557 @@
+{
+  "title": "NHC — roles and staff",
+  "items": [
+    {
+      "entityType": "apps.role",
+      "entityCode": "CLS_REQUEST_MANAGER",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مدير طلبات الفرع",
+        "nameEn": "Branch requests manager",
+        "appCode": "INTERNAL",
+        "privileges": [
+          {
+            "resourceCode": "action-center",
+            "actions": [
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "services.requests",
+            "actions": [
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "action-center.supervision",
+            "actions": [
+              "VIEW",
+              "EDIT"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.role",
+      "entityCode": "CLS_GOV_ANALYST",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "محلل الحوكمة",
+        "nameEn": "Governance analyst",
+        "appCode": "INTERNAL",
+        "privileges": [
+          {
+            "resourceCode": "action-center",
+            "actions": [
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "services.requests",
+            "actions": [
+              "VIEW"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.role",
+      "entityCode": "CLS_GOV_AUDITOR",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مدقق الحوكمة",
+        "nameEn": "Governance auditor",
+        "appCode": "INTERNAL",
+        "privileges": [
+          {
+            "resourceCode": "action-center",
+            "actions": [
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "services.requests",
+            "actions": [
+              "VIEW"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.role",
+      "entityCode": "CLS_PROJECTS_ANALYST",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "محلل المشاريع والخبرات",
+        "nameEn": "Projects & experience analyst",
+        "appCode": "INTERNAL",
+        "privileges": [
+          {
+            "resourceCode": "action-center",
+            "actions": [
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "services.requests",
+            "actions": [
+              "VIEW"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.role",
+      "entityCode": "CLS_PROJECTS_AUDITOR",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مدقق المشاريع",
+        "nameEn": "Projects auditor",
+        "appCode": "INTERNAL",
+        "privileges": [
+          {
+            "resourceCode": "action-center",
+            "actions": [
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "services.requests",
+            "actions": [
+              "VIEW"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.role",
+      "entityCode": "CLS_FIN_ANALYST",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "محلل التقييم المالي",
+        "nameEn": "Financial evaluation analyst",
+        "appCode": "INTERNAL",
+        "privileges": [
+          {
+            "resourceCode": "action-center",
+            "actions": [
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "services.requests",
+            "actions": [
+              "VIEW"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.role",
+      "entityCode": "CLS_AUDIT_MANAGER",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مدير التدقيق",
+        "nameEn": "Audit manager",
+        "appCode": "INTERNAL",
+        "privileges": [
+          {
+            "resourceCode": "action-center",
+            "actions": [
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "services.requests",
+            "actions": [
+              "VIEW"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.role",
+      "entityCode": "CLS_GENERAL_MANAGER",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المدير العام",
+        "nameEn": "General manager",
+        "appCode": "INTERNAL",
+        "privileges": [
+          {
+            "resourceCode": "action-center",
+            "actions": [
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "services.requests",
+            "actions": [
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "action-center.supervision",
+            "actions": [
+              "VIEW",
+              "EDIT"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.role",
+      "entityCode": "CLS_CUSTOMER_CARE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تجربة العملاء",
+        "nameEn": "Customer experience",
+        "appCode": "INTERNAL",
+        "privileges": [
+          {
+            "resourceCode": "services.requests",
+            "actions": [
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "documents.registry",
+            "actions": [
+              "VIEW"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.user",
+      "entityCode": "ruh.manager",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مدير طلبات فرع الرياض",
+        "nameEn": "Riyadh requests manager",
+        "email": "ruh.manager@nhci.example",
+        "status": "ACTIVE",
+        "assignments": [
+          {
+            "orgUnitCode": "REQ_RUH",
+            "positionCode": "REQUESTS_MANAGER",
+            "isPrimary": true
+          }
+        ],
+        "roles": [
+          {
+            "roleCode": "CLS_REQUEST_MANAGER"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.user",
+      "entityCode": "jed.manager",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مدير طلبات فرع جدة",
+        "nameEn": "Jeddah requests manager",
+        "email": "jed.manager@nhci.example",
+        "status": "ACTIVE",
+        "assignments": [
+          {
+            "orgUnitCode": "REQ_JED",
+            "positionCode": "REQUESTS_MANAGER",
+            "isPrimary": true
+          }
+        ],
+        "roles": [
+          {
+            "roleCode": "CLS_REQUEST_MANAGER"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.user",
+      "entityCode": "dmm.manager",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مدير طلبات فرع الدمام",
+        "nameEn": "Dammam requests manager",
+        "email": "dmm.manager@nhci.example",
+        "status": "ACTIVE",
+        "assignments": [
+          {
+            "orgUnitCode": "REQ_DMM",
+            "positionCode": "REQUESTS_MANAGER",
+            "isPrimary": true
+          }
+        ],
+        "roles": [
+          {
+            "roleCode": "CLS_REQUEST_MANAGER"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.user",
+      "entityCode": "gov.analyst1",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "محلل الحوكمة 1",
+        "nameEn": "Governance analyst 1",
+        "email": "gov.analyst1@nhci.example",
+        "status": "ACTIVE",
+        "assignments": [
+          {
+            "orgUnitCode": "EVAL_GOV",
+            "positionCode": "ANALYST",
+            "isPrimary": true
+          }
+        ],
+        "roles": [
+          {
+            "roleCode": "CLS_GOV_ANALYST"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.user",
+      "entityCode": "gov.analyst2",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "محلل الحوكمة 2",
+        "nameEn": "Governance analyst 2",
+        "email": "gov.analyst2@nhci.example",
+        "status": "ACTIVE",
+        "assignments": [
+          {
+            "orgUnitCode": "EVAL_GOV",
+            "positionCode": "ANALYST",
+            "isPrimary": true
+          }
+        ],
+        "roles": [
+          {
+            "roleCode": "CLS_GOV_ANALYST"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.user",
+      "entityCode": "gov.auditor",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مدقق الحوكمة",
+        "nameEn": "Governance auditor",
+        "email": "gov.auditor@nhci.example",
+        "status": "ACTIVE",
+        "assignments": [
+          {
+            "orgUnitCode": "AUDIT",
+            "positionCode": "AUDITOR",
+            "isPrimary": true
+          }
+        ],
+        "roles": [
+          {
+            "roleCode": "CLS_GOV_AUDITOR"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.user",
+      "entityCode": "prj.analyst1",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "محلل المشاريع 1",
+        "nameEn": "Projects analyst 1",
+        "email": "prj.analyst1@nhci.example",
+        "status": "ACTIVE",
+        "assignments": [
+          {
+            "orgUnitCode": "EVAL_PRJ",
+            "positionCode": "ANALYST",
+            "isPrimary": true
+          }
+        ],
+        "roles": [
+          {
+            "roleCode": "CLS_PROJECTS_ANALYST"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.user",
+      "entityCode": "prj.analyst2",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "محلل المشاريع 2",
+        "nameEn": "Projects analyst 2",
+        "email": "prj.analyst2@nhci.example",
+        "status": "ACTIVE",
+        "assignments": [
+          {
+            "orgUnitCode": "EVAL_PRJ",
+            "positionCode": "ANALYST",
+            "isPrimary": true
+          }
+        ],
+        "roles": [
+          {
+            "roleCode": "CLS_PROJECTS_ANALYST"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.user",
+      "entityCode": "prj.auditor",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مدقق المشاريع",
+        "nameEn": "Projects auditor",
+        "email": "prj.auditor@nhci.example",
+        "status": "ACTIVE",
+        "assignments": [
+          {
+            "orgUnitCode": "AUDIT",
+            "positionCode": "AUDITOR",
+            "isPrimary": true
+          }
+        ],
+        "roles": [
+          {
+            "roleCode": "CLS_PROJECTS_AUDITOR"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.user",
+      "entityCode": "fin.analyst1",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "محلل التقييم المالي 1",
+        "nameEn": "Financial analyst 1",
+        "email": "fin.analyst1@nhci.example",
+        "status": "ACTIVE",
+        "assignments": [
+          {
+            "orgUnitCode": "EVAL_FIN",
+            "positionCode": "ANALYST",
+            "isPrimary": true
+          }
+        ],
+        "roles": [
+          {
+            "roleCode": "CLS_FIN_ANALYST"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.user",
+      "entityCode": "fin.analyst2",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "محلل التقييم المالي 2",
+        "nameEn": "Financial analyst 2",
+        "email": "fin.analyst2@nhci.example",
+        "status": "ACTIVE",
+        "assignments": [
+          {
+            "orgUnitCode": "EVAL_FIN",
+            "positionCode": "ANALYST",
+            "isPrimary": true
+          }
+        ],
+        "roles": [
+          {
+            "roleCode": "CLS_FIN_ANALYST"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.user",
+      "entityCode": "audit.manager",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مدير التدقيق",
+        "nameEn": "Audit manager",
+        "email": "audit.manager@nhci.example",
+        "status": "ACTIVE",
+        "assignments": [
+          {
+            "orgUnitCode": "AUDIT",
+            "positionCode": "AUDIT_MANAGER",
+            "isPrimary": true
+          }
+        ],
+        "roles": [
+          {
+            "roleCode": "CLS_AUDIT_MANAGER"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.user",
+      "entityCode": "nhc.gm",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المدير العام",
+        "nameEn": "General manager",
+        "email": "nhc.gm@nhci.example",
+        "status": "ACTIVE",
+        "assignments": [
+          {
+            "orgUnitCode": "GM_OFFICE",
+            "positionCode": "GENERAL_MANAGER",
+            "isPrimary": true
+          }
+        ],
+        "roles": [
+          {
+            "roleCode": "CLS_GENERAL_MANAGER"
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.user",
+      "entityCode": "care.agent",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "أخصائي تجربة العملاء",
+        "nameEn": "Customer experience specialist",
+        "email": "care.agent@nhci.example",
+        "status": "ACTIVE",
+        "assignments": [
+          {
+            "orgUnitCode": "CUSTOMER_CARE",
+            "positionCode": "CARE_AGENT",
+            "isPrimary": true
+          }
+        ],
+        "roles": [
+          {
+            "roleCode": "CLS_CUSTOMER_CARE"
+          }
+        ]
+      }
+    }
+  ]
+}
