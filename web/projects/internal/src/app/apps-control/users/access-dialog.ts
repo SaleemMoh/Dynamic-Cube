@@ -165,12 +165,14 @@ export function departmentRoles(
         <h3>{{ 'access.roles' | dcTranslate }}</h3>
         <p class="dc-muted">{{ 'access.rolesHint' | dcTranslate }}</p>
         <div class="dc-access" data-testid="access-rows">
-          <div class="dc-access__head">
-            <span>{{ 'access.company' | dcTranslate }}</span>
-            <span>{{ 'access.branches' | dcTranslate }}</span>
-            <span>{{ 'access.roleList' | dcTranslate }}</span>
-            <span></span>
-          </div>
+          @if (rows().length) {
+            <div class="dc-access__head">
+              <span>{{ 'access.company' | dcTranslate }}</span>
+              <span>{{ 'access.branches' | dcTranslate }}</span>
+              <span>{{ 'access.roleList' | dcTranslate }}</span>
+              <span></span>
+            </div>
+          }
           @for (row of rows(); track $index; let i = $index) {
             <div class="dc-access__row" [attr.data-testid]="'access-row-' + i">
               <mat-form-field subscriptSizing="dynamic">

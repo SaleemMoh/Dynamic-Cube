@@ -19,7 +19,7 @@ Built from the customer journey study (V05), the classification rules workbook (
 | 05-parties | Establishments at sign-in from the CR registry; CR status, city, expiry, capital, activities; email and mobile | Party registry |
 | 06-certificate-type | One certificate per establishment with a line per domain and grade (36 months) | Documents → Types |
 | 07-services | Category and 3 services: **new**, **renew**, **change** (upgrade, add or remove a domain); 54 questions from the fields file (licences, 9 domains, collective housing, staff, projects, governance G1–G11 with proofs, financial and credit, undertakings) | Services, portal |
-| 08-people | 9 roles and 14 staff (below) | Apps Control → Roles, Users |
+| 08-people | 9 roles, default roles of five departments and 14 staff (below) | Apps Control → Roles, Org units, Users (Access) |
 | 09-grading-rules | The guide's rules: size class, technical, performance (10-year cumulative and largest project per domain group), governance (100 points), financial (credit rating cut-offs), worst axis, one grade lower for withdrawn government projects or 70+ violations | Decisions → Rule sets |
 | 10-payments | SADAD bills of the fast track | Payments |
 | 11-workflows | New and change: branch manager review → *fast track: invoice and payment* → three parallel analyst/auditor evaluations → grading → general manager → certificate. Renew: branch manager review → renewal | Workflows |
@@ -43,7 +43,13 @@ Violations come from Eyfaa, which is not connected yet, so the demotion for viol
 | Configuration | `admin`, `maker`, `checker` | Apps Control |
 | Applicants (portal) | `1000000001`, `2000000002` | Act for the establishments the CR registry (mock gateway) reports |
 
-Staff are fictional and named by their job.
+Staff are fictional and named by their job. How they get their access (open *Access* on a user):
+
+- **By company and branch:** each branch requests manager holds *Branch requests manager* in company *NHC Innovation*,
+  only in their own branch; auditors and the audit manager hold their roles in the company.
+- **From the department:** the governance, projects and financial evaluation departments, the general manager office
+  and customer experience carry default roles, so their staff have no roles of their own.
+- **Personal:** the audit manager can also open *Task supervision*.
 
 ### Start again with the demo
 

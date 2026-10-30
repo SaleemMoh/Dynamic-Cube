@@ -1,5 +1,5 @@
 {
-  "title": "NHC — roles and staff",
+  "title": "NHC — roles, department roles and staff",
   "items": [
     {
       "entityType": "apps.role",
@@ -241,6 +241,81 @@
       }
     },
     {
+      "entityType": "apps.org-unit",
+      "entityCode": "GM_OFFICE",
+      "operation": "UPDATE",
+      "payload": {
+        "nameAr": "مكتب المدير العام",
+        "nameEn": "General manager office",
+        "typeCode": "DEPARTMENT",
+        "parentCode": "NHCI",
+        "attributes": {},
+        "defaultRoles": [
+          "CLS_GENERAL_MANAGER"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.org-unit",
+      "entityCode": "EVAL_GOV",
+      "operation": "UPDATE",
+      "payload": {
+        "nameAr": "إدارة تقييم الحوكمة",
+        "nameEn": "Governance evaluation",
+        "typeCode": "DEPARTMENT",
+        "parentCode": "CLS_SECTOR",
+        "attributes": {},
+        "defaultRoles": [
+          "CLS_GOV_ANALYST"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.org-unit",
+      "entityCode": "EVAL_PRJ",
+      "operation": "UPDATE",
+      "payload": {
+        "nameAr": "إدارة تقييم المشاريع والخبرات",
+        "nameEn": "Projects & experience evaluation",
+        "typeCode": "DEPARTMENT",
+        "parentCode": "CLS_SECTOR",
+        "attributes": {},
+        "defaultRoles": [
+          "CLS_PROJECTS_ANALYST"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.org-unit",
+      "entityCode": "EVAL_FIN",
+      "operation": "UPDATE",
+      "payload": {
+        "nameAr": "إدارة التقييم المالي",
+        "nameEn": "Financial evaluation",
+        "typeCode": "DEPARTMENT",
+        "parentCode": "CLS_SECTOR",
+        "attributes": {},
+        "defaultRoles": [
+          "CLS_FIN_ANALYST"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.org-unit",
+      "entityCode": "CUSTOMER_CARE",
+      "operation": "UPDATE",
+      "payload": {
+        "nameAr": "إدارة تجربة العملاء",
+        "nameEn": "Customer experience",
+        "typeCode": "DEPARTMENT",
+        "parentCode": "NHCI",
+        "attributes": {},
+        "defaultRoles": [
+          "CLS_CUSTOMER_CARE"
+        ]
+      }
+    },
+    {
       "entityType": "apps.user",
       "entityCode": "ruh.manager",
       "operation": "CREATE",
@@ -258,9 +333,14 @@
         ],
         "roles": [
           {
-            "roleCode": "CLS_REQUEST_MANAGER"
+            "roleCode": "CLS_REQUEST_MANAGER",
+            "companyCode": "MAIN",
+            "branches": [
+              "HQ"
+            ]
           }
-        ]
+        ],
+        "privileges": []
       }
     },
     {
@@ -281,9 +361,14 @@
         ],
         "roles": [
           {
-            "roleCode": "CLS_REQUEST_MANAGER"
+            "roleCode": "CLS_REQUEST_MANAGER",
+            "companyCode": "MAIN",
+            "branches": [
+              "JED"
+            ]
           }
-        ]
+        ],
+        "privileges": []
       }
     },
     {
@@ -304,9 +389,14 @@
         ],
         "roles": [
           {
-            "roleCode": "CLS_REQUEST_MANAGER"
+            "roleCode": "CLS_REQUEST_MANAGER",
+            "companyCode": "MAIN",
+            "branches": [
+              "DMM"
+            ]
           }
-        ]
+        ],
+        "privileges": []
       }
     },
     {
@@ -325,11 +415,8 @@
             "isPrimary": true
           }
         ],
-        "roles": [
-          {
-            "roleCode": "CLS_GOV_ANALYST"
-          }
-        ]
+        "roles": [],
+        "privileges": []
       }
     },
     {
@@ -348,11 +435,8 @@
             "isPrimary": true
           }
         ],
-        "roles": [
-          {
-            "roleCode": "CLS_GOV_ANALYST"
-          }
-        ]
+        "roles": [],
+        "privileges": []
       }
     },
     {
@@ -373,9 +457,12 @@
         ],
         "roles": [
           {
-            "roleCode": "CLS_GOV_AUDITOR"
+            "roleCode": "CLS_GOV_AUDITOR",
+            "companyCode": "MAIN",
+            "branches": []
           }
-        ]
+        ],
+        "privileges": []
       }
     },
     {
@@ -394,11 +481,8 @@
             "isPrimary": true
           }
         ],
-        "roles": [
-          {
-            "roleCode": "CLS_PROJECTS_ANALYST"
-          }
-        ]
+        "roles": [],
+        "privileges": []
       }
     },
     {
@@ -417,11 +501,8 @@
             "isPrimary": true
           }
         ],
-        "roles": [
-          {
-            "roleCode": "CLS_PROJECTS_ANALYST"
-          }
-        ]
+        "roles": [],
+        "privileges": []
       }
     },
     {
@@ -442,9 +523,12 @@
         ],
         "roles": [
           {
-            "roleCode": "CLS_PROJECTS_AUDITOR"
+            "roleCode": "CLS_PROJECTS_AUDITOR",
+            "companyCode": "MAIN",
+            "branches": []
           }
-        ]
+        ],
+        "privileges": []
       }
     },
     {
@@ -463,11 +547,8 @@
             "isPrimary": true
           }
         ],
-        "roles": [
-          {
-            "roleCode": "CLS_FIN_ANALYST"
-          }
-        ]
+        "roles": [],
+        "privileges": []
       }
     },
     {
@@ -486,11 +567,8 @@
             "isPrimary": true
           }
         ],
-        "roles": [
-          {
-            "roleCode": "CLS_FIN_ANALYST"
-          }
-        ]
+        "roles": [],
+        "privileges": []
       }
     },
     {
@@ -511,7 +589,18 @@
         ],
         "roles": [
           {
-            "roleCode": "CLS_AUDIT_MANAGER"
+            "roleCode": "CLS_AUDIT_MANAGER",
+            "companyCode": "MAIN",
+            "branches": []
+          }
+        ],
+        "privileges": [
+          {
+            "companyCode": "MAIN",
+            "resourceCode": "action-center.supervision",
+            "actions": [
+              "VIEW"
+            ]
           }
         ]
       }
@@ -532,11 +621,8 @@
             "isPrimary": true
           }
         ],
-        "roles": [
-          {
-            "roleCode": "CLS_GENERAL_MANAGER"
-          }
-        ]
+        "roles": [],
+        "privileges": []
       }
     },
     {
@@ -555,11 +641,8 @@
             "isPrimary": true
           }
         ],
-        "roles": [
-          {
-            "roleCode": "CLS_CUSTOMER_CARE"
-          }
-        ]
+        "roles": [],
+        "privileges": []
       }
     }
   ]

@@ -90,7 +90,8 @@ company `MAIN` named after the organization with a default branch `HQ`.
 Section, Branch, Region, Committee…): `display_order`, `allowed_parent_type_ids` (uuid[]).
 
 **`org_unit`** — `org_unit_type_id`, `parent_id`, `path` (ltree, for subtree queries),
-`attributes` (jsonb: region, amanah, cost center…), `effective_from`, `effective_to`.
+`attributes` (jsonb: region, amanah, cost center…), `effective_from`, `effective_to`, `default_roles` (text[]: role
+codes everyone placed in the unit holds while placed there; a role that is a unit's default cannot be deleted).
 
 **`position`** — generic positions used in routing (Manager, Analyst, Auditor, Inspector,
 Request Manager…).
@@ -150,7 +151,25 @@ in the portal realm, configured by `AppsControl:PortalIdentity` (realm `dynamic-
 **`role`** — `app_id` (null = cross-app), `reference_code`.
 
 **`user_role`** — `user_id`, `role_id`, `org_unit_id` (optional: role held *within* a unit,
-e.g. "Analyst in Riyadh branch"), `effective_from`, `effective_to`.
+e.g. "Analyst in Riyadh branch"), `company_code` (empty: every company), `branches` (text[], branches of that company;
+empty: all of them), `effective_from`, `effective_to`. A role is held once per company (and unit).
+
+**`user_privilege`** — `user_id`, `company_code` (empty: every company), `resource_id`, `actions` (text[], within the
+screen's available actions): screens and actions given to one person besides their roles.
+
+**Access dialog** (*Users → Access*, [ADR-0036](adr/0036-organizations-companies-branches-apps.md)) shows a person's
+access in one place:
+
+- **Roles by company:** one row per company (or *All companies*) and branches, with the roles held there.
+- **From department:** read-only; the default roles of the units the person is placed in today, and the branch each
+  unit serves (the branch linked to it or to a unit above it). They are changed on the unit.
+- **Personal privileges:** a company, a screen and its actions.
+
+**Add or remove roles** (Users list, after ticking rows) adds or removes roles in a company and branches for every
+ticked user. A review first lists, per person, the roles added or removed and those left as they were (already held
+when adding, not held when removing); nothing a person already has is replaced. Each person becomes one update in the
+draft change set. Company and branch limits are stored now and applied once the workspace switcher (current company)
+and branch filtering come (ADR-0036 steps 5 and 6).
 
 **`resource`** — anything securable: `app_id`, `resource_type` (`SCREEN` | `API` | `REPORT` |
 `SERVICE` | `WORKFLOW_ACTION` | `FIELD`), `parent_id`, `available_actions` (text[]).
@@ -202,9 +221,10 @@ types are classes, edited on their module's screens or here. See [ADR-0032](adr/
 | `parent_class_id` | Reference class (e.g. `CITY` → `REGION`) |
 | `is_hierarchical` | Values may have a parent value within the same class |
 | `allow_multi_assign` | |
+| `values_per_company` | Values may be limited to companies (legacy *Company Lookups*); it cannot be turned off while values are limited |
 | `settings` | jsonb list of named values of the class itself (`code`, names, `value`) — the legacy class flex values; modules read them through `ILookupDirectory.SettingsAsync` |
 
-Values per company (legacy *Company Lookups*) come with ADR-0036 step 3. A legacy *virtual* class (values from an LOV) is
+A legacy *virtual* class (values from an LOV) is
 a field of type `LOV_REF` here: the field takes its options from the list of values directly.
 
 **`class_attribute`** — typed attribute definitions (replaces Flex Values / Dates / Numbers and
@@ -228,9 +248,10 @@ Domain Value / Date / Number Parameters).
 | `class_id`, `code` | `code` is the stable value used by forms, rules, reports |
 | `parent_domain_id` | Value-level parent (city → region) |
 | `name_ar`, `name_en`, `details_ar`, `details_en` | |
-| `display_order`, `is_default` | |
+| `display_order`, `is_default` | One default per class, or per company when values are per company |
 | `attributes` | jsonb, validated against `class_attribute` |
 | `effective_from`, `effective_to`, `is_active` | |
+| `companies` | text[]: the companies the value serves when the class has values per company; empty: every company. Modules read it as `LookupValue.Companies` / `Serves(company)`; it is a column of the generated view |
 
 Indexes: unique (`class_id`, `code`); GIN on `attributes`.
 

@@ -6,8 +6,11 @@ apps are *Apps* (`apps.business-app` keeps its name in packages) with a kind, ch
 portal offers only the services of apps on the portal channel; the channel apps screen and the Resources menu are hidden.
 Menus are trees of any depth, edited as a tree per channel or per connected app (each connected app has its own tree;
 a Dynamic Cube app adds items to the channels it ticks). Default external roles and connected-app credentials come with
-connected apps (step 7). The NHC demo data uses all of it. Per-company values of a class (legacy *Company Lookups*:
-a class whose values each belong to a company or to all) are part of step 3. Replaces entities,
+connected apps (step 7). Step 3 done: one Access dialog per user with roles by company and branches, roles received
+from departments (org units carry default roles) and personal privileges; roles can be added to or removed from many
+users at once after a review that leaves what they already hold alone; a class may have values per company (legacy
+*Company Lookups*: each value serves some companies or all). Company and branch limits are stored now and applied from
+steps 5 and 6. The NHC demo data uses all of it. Replaces entities,
 business apps, channel apps and the System / Entity / App levels of [ADR-0031](0031-entities-business-apps-levels.md).
 
 ## Context
