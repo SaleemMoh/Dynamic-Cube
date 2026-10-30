@@ -1,19 +1,23 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { DocumentsApi, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
 import { catchError, debounceTime, firstValueFrom, switchMap } from 'rxjs';
 import { DraftsService } from '../apps-control/drafts.service';
 import { ConfigEditorData } from '../apps-control/config/config-editor';
 import { SubmitButton } from '../apps-control/submit-button';
+import { PrintDesigner } from './print-designer/print-designer';
+import { PrintDesign, readDesign, starterDesign, toHtml } from './print-designer/print-model';
 
 const STARTER = `<html dir="rtl" lang="ar">
 <head>
@@ -51,22 +55,84 @@ const SAMPLE_LINES = [
     SubmitButton,
     FormsModule,
     MatButtonModule,
+    MatButtonToggleModule,
     MatCheckboxModule,
     MatDialogModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
     MatSelectModule,
+    MatTooltipModule,
+    PrintDesigner,
     TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <h2 mat-dialog-title>
-      {{ 'docTemplates.editor' | dcTranslate }}
-      @if (data.row) {
-        <span dir="ltr">{{ data.row.code }}</span>
-      }
+    <h2 mat-dialog-title class="dc-tpl__title">
+      <span>
+        {{ 'docTemplates.editor' | dcTranslate }}
+        @if (data.row) {
+          <span dir="ltr">{{ data.row.code }}</span>
+        }
+      </span>
+      <span class="dc-tpl__grow"></span>
+      <mat-button-toggle-group [value]="mode()" (change)="setMode($event.value)" data-testid="tpl-mode">
+        <mat-button-toggle value="design" data-testid="tpl-mode-design">
+          <mat-icon fontSet="material-symbols-outlined">dashboard_customize</mat-icon>
+          {{ 'print.modeDesign' | dcTranslate }}
+        </mat-button-toggle>
+        <mat-button-toggle value="html" data-testid="tpl-mode-html">
+          <mat-icon fontSet="material-symbols-outlined">code</mat-icon>
+          HTML
+        </mat-button-toggle>
+      </mat-button-toggle-group>
+      <button matIconButton type="button" (click)="toggleMax()" [matTooltip]="(maximized() ? 'designer.exitFullWindow' : 'designer.fullWindow') | dcTranslate" data-testid="tpl-max">
+        <mat-icon fontSet="material-symbols-outlined">{{ maximized() ? 'close_fullscreen' : 'open_in_full' }}</mat-icon>
+      </button>
     </h2>
+    @if (mode() === 'design') {
+      <mat-dialog-content class="dc-tpl-design">
+        <div class="dc-tpl__row">
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>{{ 'config.code' | dcTranslate }}</mat-label>
+            <input matInput dir="ltr" [ngModel]="code()" (ngModelChange)="code.set($event)" [readonly]="!!data.row" required data-testid="tpl-code" />
+          </mat-form-field>
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>{{ 'config.nameAr' | dcTranslate }}</mat-label>
+            <input matInput [ngModel]="nameAr()" (ngModelChange)="nameAr.set($event)" required data-testid="tpl-name-ar" />
+          </mat-form-field>
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>{{ 'config.nameEn' | dcTranslate }}</mat-label>
+            <input matInput dir="ltr" [ngModel]="nameEn()" (ngModelChange)="nameEn.set($event)" required data-testid="tpl-name-en" />
+          </mat-form-field>
+          <mat-checkbox [ngModel]="active()" (ngModelChange)="active.set($event)">{{ 'config.active' | dcTranslate }}</mat-checkbox>
+          <mat-button-toggle-group [value]="designView()" (change)="designView.set($event.value)" data-testid="tpl-design-view">
+            <mat-button-toggle value="layout">{{ 'print.layout' | dcTranslate }}</mat-button-toggle>
+            <mat-button-toggle value="preview" data-testid="tpl-design-preview">{{ 'docTemplates.preview' | dcTranslate }}</mat-button-toggle>
+          </mat-button-toggle-group>
+        </div>
+        @if (fromHtml()) {
+          <p class="dc-tpl__note" role="status">{{ 'print.replacesHtml' | dcTranslate }}</p>
+        }
+        @if (designView() === 'layout') {
+          <dc-print-designer class="dc-tpl__designer" [(design)]="design" />
+        } @else {
+          <div class="dc-tpl__preview dc-tpl__preview--full">
+            <div class="dc-tpl__preview-bar">
+              <span>{{ 'docTemplates.preview' | dcTranslate }}</span>
+              <button matButton type="button" (click)="pdf()" data-testid="tpl-pdf">
+                <mat-icon fontSet="material-symbols-outlined">picture_as_pdf</mat-icon>
+                {{ 'docTemplates.pdf' | dcTranslate }}
+              </button>
+            </div>
+            @if (previewError()) {
+              <p class="dc-errors" role="alert" dir="ltr">{{ previewError() }}</p>
+            }
+            <iframe class="dc-tpl__frame" sandbox="" [srcdoc]="preview()" [title]="'docTemplates.preview' | dcTranslate" data-testid="tpl-preview"></iframe>
+          </div>
+        }
+      </mat-dialog-content>
+    } @else {
     <mat-dialog-content class="dc-tpl">
       <div class="dc-tpl__form">
         <div class="dc-tpl__row">
@@ -128,6 +194,7 @@ const SAMPLE_LINES = [
         <iframe class="dc-tpl__frame" sandbox="" [srcdoc]="preview()" [title]="'docTemplates.preview' | dcTranslate" data-testid="tpl-preview"></iframe>
       </div>
     </mat-dialog-content>
+    }
     <mat-dialog-actions>
       @if (errors().length) {
         <ul class="dc-errors" role="alert">
@@ -144,6 +211,39 @@ const SAMPLE_LINES = [
     </mat-dialog-actions>
   `,
   styles: `
+    .dc-tpl__title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .dc-tpl__grow {
+      flex: 1;
+    }
+    .dc-tpl-design {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      height: 74vh;
+      max-height: none;
+    }
+    :host-context(.dc-dialog-max) .dc-tpl-design {
+      height: calc(100vh - 150px);
+    }
+    .dc-tpl__designer {
+      flex: 1;
+      min-height: 0;
+    }
+    .dc-tpl__note {
+      margin: 0;
+      padding: 6px 10px;
+      border-radius: 6px;
+      background: var(--dynamic-cube-gold-50);
+      color: var(--dynamic-cube-gold-700);
+      font-size: 13px;
+    }
+    .dc-tpl__preview--full {
+      flex: 1;
+    }
     .dc-tpl {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -214,6 +314,14 @@ export class DocumentTemplateEditor {
   protected readonly pageSize = signal((this.data.row?.['pageSize'] as string) ?? 'A4');
   protected readonly landscape = signal((this.data.row?.['landscape'] as boolean) ?? false);
   protected readonly html = signal((this.data.row?.['html'] as string) ?? STARTER);
+  /** Designed in the visual designer (the HTML is generated) or written as HTML. */
+  private readonly stored = readDesign(this.data.row?.['design']);
+  protected readonly mode = signal<'design' | 'html'>(this.data.row && !this.stored ? 'html' : 'design');
+  protected readonly design = signal<PrintDesign>(this.stored ?? starterDesign());
+  protected readonly designView = signal<'layout' | 'preview'>('layout');
+  /** The template was written as HTML and is being redesigned: saving replaces that HTML. */
+  protected readonly fromHtml = signal(false);
+  protected readonly maximized = signal(false);
   protected readonly sampleData = signal(JSON.stringify(SAMPLE_DATA, null, 2));
   protected readonly sampleLines = signal(JSON.stringify(SAMPLE_LINES, null, 2));
   protected readonly preview = signal<SafeHtml>('');
@@ -230,6 +338,14 @@ export class DocumentTemplateEditor {
   }));
 
   constructor() {
+    // In the designer, the HTML (and page) follow the layout.
+    effect(() => {
+      if (this.mode() !== 'design') return;
+      const design = this.design();
+      this.html.set(toHtml(design));
+      this.pageSize.set(design.pageSize);
+      this.landscape.set(design.landscape);
+    });
     toObservable(this.request)
       .pipe(
         debounceTime(500),
@@ -252,6 +368,23 @@ export class DocumentTemplateEditor {
       });
   }
 
+  protected setMode(mode: 'design' | 'html'): void {
+    if (mode === 'design' && this.mode() === 'html' && !this.stored) this.fromHtml.set(true);
+    this.mode.set(mode);
+  }
+
+  protected toggleMax(): void {
+    const max = !this.maximized();
+    this.maximized.set(max);
+    if (max) {
+      this.ref.updateSize('100vw', '100vh');
+      this.ref.addPanelClass('dc-dialog-max');
+    } else {
+      this.ref.updateSize('96rem', '');
+      this.ref.removePanelClass('dc-dialog-max');
+    }
+  }
+
   protected async pdf(): Promise<void> {
     try {
       const blob = await firstValueFrom(this.api.preview({ ...this.request(), format: 'pdf' }));
@@ -271,6 +404,8 @@ export class DocumentTemplateEditor {
         html: this.html(),
         pageSize: this.pageSize(),
         landscape: this.landscape(),
+        // Kept to reopen the layout in the designer; hand-written HTML has none.
+        design: this.mode() === 'design' ? this.design() : null,
       }, { submit });
       this.ref.close(true);
     } catch (error) {

@@ -111,6 +111,10 @@ namespace DynamicCube.Modules.Documents.Persistence.Migrations
                         .HasColumnType("character varying(128)")
                         .HasColumnName("created_by");
 
+                    b.Property<string>("Design")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("design");
+
                     b.Property<string>("EntityCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")

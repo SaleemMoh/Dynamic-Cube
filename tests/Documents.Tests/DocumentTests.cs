@@ -17,6 +17,29 @@ namespace DynamicCube.Modules.Documents.Tests;
 public sealed class DocumentTests(DatabaseFixture fixture)
 {
     [Fact]
+    public async Task A_designed_template_keeps_its_layout_beside_the_generated_html()
+    {
+        await using var host = new DocumentHost(fixture);
+        var code = DocumentHost.Unique("TPL");
+        var design = new { version = 1, pageSize = "A5", landscape = true, direction = "rtl", elements = new[] { new { id = "title", kind = "field", field = "document.number", x = 10, y = 10, w = 100, h = 10 } } };
+        await host.Host.PublishAsync(DocumentChangeTypes.Area, new Change(DocumentChangeTypes.Template, code, ChangeOperation.Create, new
+        {
+            nameAr = "قالب مصمم",
+            nameEn = "Designed template",
+            html = "<html><body><div style=\"left:10mm\">{{ document.number }}</div></body></html>",
+            pageSize = "A5",
+            landscape = true,
+            design,
+        }));
+
+        var row = await host.Host.AsAsync("admin", sp => sp.GetServices<DynamicCube.Platform.Configuration.IConfigApplier>()
+            .Single(a => a.EntityType == DocumentChangeTypes.Template).GetAsync(code, CancellationToken.None));
+        var stored = System.Text.Json.JsonSerializer.SerializeToElement(row).GetProperty("design");
+        stored.GetProperty("pageSize").GetString().ShouldBe("A5");
+        stored.GetProperty("elements")[0].GetProperty("field").GetString().ShouldBe("document.number");
+    }
+
+    [Fact]
     public async Task Templates_must_parse_and_types_need_a_known_template()
     {
         await using var host = new DocumentHost(fixture);

@@ -28,6 +28,7 @@ public sealed class DocumentsDbContext(DbContextOptions<DocumentsDbContext> opti
         {
             b.Property(e => e.Html).IsRequired();
             b.Property(e => e.PageSize).HasMaxLength(10).IsRequired();
+            b.Property(e => e.Design).HasColumnType("jsonb");
         });
         modelBuilder.ConfigTable<DocumentType>(Schema, "document_type", b =>
         {

@@ -341,7 +341,7 @@ registered beside it.
 | **Statuses** | Active · Expired · Suspended · Revoked/Cancelled · Superseded |
 | **Status actions** | Suspend, release, downgrade, cancel — from workflows or sanction processes |
 | **Verification** | QR code → public verify endpoint on the external system |
-| **Rendering** | HTML template (Liquid) → PDF via Gotenberg; bilingual, RTL |
+| **Rendering** | HTML template (Liquid) → PDF via Gotenberg; bilingual, RTL. Templates are laid out in the visual designer (text, document fields, the lines table, images, the QR code, lines and boxes placed on the page in millimetres; the HTML is generated and the layout is kept in `design` to reopen it) or written as HTML |
 
 **Amendment numbering** is configurable per document type: same number + new version
 (default) or new number; validity reset or kept.

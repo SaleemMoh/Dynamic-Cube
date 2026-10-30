@@ -53,6 +53,12 @@ public sealed class DocumentTemplate : ConfigEntity
 {
     public string Html { get; set; } = string.Empty;
 
+    /// <summary>
+    /// The layout as the visual designer keeps it (JSON: page and placed elements), when the template was designed there;
+    /// <see cref="Html"/> is generated from it and is what is printed. Empty for templates written as HTML.
+    /// </summary>
+    public string? Design { get; set; }
+
     public string PageSize { get; set; } = "A4";
 
     public bool Landscape { get; set; }

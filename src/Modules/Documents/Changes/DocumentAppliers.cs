@@ -31,6 +31,9 @@ public sealed class DocumentTemplatePayload : ConfigPayload
     public string? PageSize { get; set; }
 
     public bool Landscape { get; set; }
+
+    /// <summary>The visual designer's layout the HTML was generated from (kept to reopen it there); none for hand-written HTML.</summary>
+    public System.Text.Json.Nodes.JsonObject? Design { get; set; }
 }
 
 internal sealed class DocumentTemplateApplier(DocumentsDbContext db) : DocumentApplierBase<DocumentTemplate, DocumentTemplatePayload>(db)
@@ -59,11 +62,19 @@ internal sealed class DocumentTemplateApplier(DocumentsDbContext db) : DocumentA
         entity.Html = payload.Html ?? string.Empty;
         entity.PageSize = size;
         entity.Landscape = payload.Landscape;
+        entity.Design = payload.Design?.ToJsonString();
+        errors.MaxLength("design", entity.Design, 2_000_000);
         return Task.CompletedTask;
     }
 
     protected override Task<DocumentTemplatePayload> ToPayloadAsync(DocumentsDbContext context, DocumentTemplate entity, CancellationToken cancellationToken) =>
-        Task.FromResult(new DocumentTemplatePayload { Html = entity.Html, PageSize = entity.PageSize, Landscape = entity.Landscape });
+        Task.FromResult(new DocumentTemplatePayload
+        {
+            Html = entity.Html,
+            PageSize = entity.PageSize,
+            Landscape = entity.Landscape,
+            Design = entity.Design is null ? null : System.Text.Json.Nodes.JsonNode.Parse(entity.Design) as System.Text.Json.Nodes.JsonObject,
+        });
 
     protected override async Task BeforeDeleteAsync(DocumentsDbContext context, DocumentTemplate entity, CancellationToken cancellationToken)
     {
