@@ -66,6 +66,9 @@ public interface ILookupDirectory
     Task<IReadOnlyList<LookupValue>> ValuesAsync(string classCode, CancellationToken cancellationToken, bool includeInactive = false);
 
     Task<LookupValue?> FindAsync(string classCode, string code, CancellationToken cancellationToken);
+
+    /// <summary>The settings stored on a class (code → value); empty for a class without settings.</summary>
+    Task<IReadOnlyDictionary<string, string?>> SettingsAsync(string classCode, CancellationToken cancellationToken);
 }
 
 /// <summary>

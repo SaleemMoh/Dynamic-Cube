@@ -154,6 +154,10 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("display_order");
 
+                    b.Property<bool>("IsMultiple")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_multiple");
+
                     b.Property<bool>("IsReportable")
                         .HasColumnType("boolean")
                         .HasColumnName("is_reportable");
@@ -178,6 +182,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("ref_class_code");
+
+                    b.Property<string>("RefLovCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("ref_lov_code");
 
                     b.Property<string>("Validation")
                         .HasColumnType("jsonb")
@@ -1421,6 +1430,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
+
+                    b.Property<string>("Settings")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("settings");
 
                     b.PrimitiveCollection<List<string>>("SharedApps")
                         .IsRequired()

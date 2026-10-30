@@ -199,11 +199,13 @@ types are classes, edited on their module's screens or here. See [ADR-0032](adr/
 | Column | Notes |
 |---|---|
 | `code` | e.g. `SECTOR`, `REGION`, `AMANAH`, `REQUEST_STATUS` |
-| `class_type` | `SYSTEM_LOOKUP` / `COMPANY_LOOKUP` (maps to `owner`) |
 | `parent_class_id` | Reference class (e.g. `CITY` → `REGION`) |
 | `is_hierarchical` | Values may have a parent value within the same class |
 | `allow_multi_assign` | |
-| `source_lov_id` | Virtual class backed by an LOV |
+| `settings` | jsonb list of named values of the class itself (`code`, names, `value`) — the legacy class flex values; modules read them through `ILookupDirectory.SettingsAsync` |
+
+Values per company (legacy *Company Lookups*) come with ADR-0036 step 3. A legacy *virtual* class (values from an LOV) is
+a field of type `LOV_REF` here: the field takes its options from the list of values directly.
 
 **`class_attribute`** — typed attribute definitions (replaces Flex Values / Dates / Numbers and
 Domain Value / Date / Number Parameters).
@@ -211,9 +213,11 @@ Domain Value / Date / Number Parameters).
 | Column | Notes |
 |---|---|
 | `class_id`, `code`, `name_ar`, `name_en` | |
-| `data_type` | `TEXT` · `NUMBER` · `DATE` · `BOOL` · `DOMAIN_REF` · `JSON` |
-| `ref_class_id` | When `DOMAIN_REF` |
-| `attribute_group` | `ATTRIBUTE` / `PARAMETER` (keeps the existing tab grouping) |
+| `data_type` | `TEXT` · `TEXTAREA` (several lines) · `NUMBER` · `DATE` · `BOOL` · `DOMAIN_REF` · `LOV_REF` · `JSON` |
+| `ref_class_code` | When `DOMAIN_REF`: the class whose values are the options |
+| `ref_lov_code` | When `LOV_REF`: the list of values whose values are the options (checked when a value is saved) |
+| `is_multiple` | `DOMAIN_REF` and `LOV_REF` only: the field takes several codes (a JSON list; a jsonb column in the view) |
+| `attribute_group` | `ATTRIBUTE` / `PARAMETER` |
 | `is_required`, `validation` (jsonb), `display_order` | |
 | `is_reportable` | Included as a column in the generated view |
 
@@ -229,6 +233,9 @@ Domain Value / Date / Number Parameters).
 | `effective_from`, `effective_to`, `is_active` | |
 
 Indexes: unique (`class_id`, `code`); GIN on `attributes`.
+
+The value form is generated from the class: *General*, then one tab per kind of field (texts, choices, numbers, dates)
+and *Parameters*, like the legacy Flex Values / Dates / Numbers tabs but with any number of named, typed fields.
 
 **`domain_external_code`** — `domain_id`, `provider_code` (integration provider, e.g. `MCI`),
 `external_code`, `direction` (`IN` | `OUT` | `BOTH`). Translates provider lookups (e.g. MCI

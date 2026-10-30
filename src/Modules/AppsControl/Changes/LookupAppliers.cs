@@ -1,9 +1,12 @@
 using System.Text.Json.Nodes;
+using DynamicCube.Modules.AppsControl.Access;
 using DynamicCube.Modules.AppsControl.Domain;
 using DynamicCube.Modules.AppsControl.Lookups;
+using DynamicCube.Modules.AppsControl.Lovs;
 using DynamicCube.Modules.AppsControl.Persistence;
 using DynamicCube.Platform.Lookups;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DynamicCube.Modules.AppsControl.Changes;
 
@@ -18,6 +21,10 @@ public sealed class AttributeDefinitionPayload
     public AttributeDataType DataType { get; set; }
 
     public string? RefClassCode { get; set; }
+
+    public string? RefLovCode { get; set; }
+
+    public bool IsMultiple { get; set; }
 
     public AttributeGroup AttributeGroup { get; set; }
 
@@ -43,6 +50,9 @@ public sealed class ClassPayload : ConfigPayload
     public bool AllowMultiAssign { get; set; }
 
     public List<AttributeDefinitionPayload> Attributes { get; set; } = [];
+
+    /// <summary>Settings of the class itself (named values).</summary>
+    public List<ClassSetting> Settings { get; set; } = [];
 }
 
 internal sealed class ClassApplier(AppsControlDbContext db) : ConfigApplier<LookupClass, ClassPayload>(db)
@@ -111,6 +121,16 @@ internal sealed class ClassApplier(AppsControlDbContext db) : ConfigApplier<Look
                     await refs.ClassAsync(a.RefClassCode, field + ".refClassCode", errors, cancellationToken);
                 }
             }
+            else if (a.DataType == AttributeDataType.LovRef)
+            {
+                errors.Required(field + ".refLovCode", a.RefLovCode);
+                await refs.LovAsync(a.RefLovCode, field + ".refLovCode", errors, cancellationToken);
+            }
+
+            if (a.IsMultiple && a.DataType is not (AttributeDataType.DomainRef or AttributeDataType.LovRef))
+            {
+                errors.Add(field + ".isMultiple", "Only fields taking values of a class or of a list of values can take several.");
+            }
 
             definitions.Add(new AttributeDefinition
             {
@@ -120,6 +140,8 @@ internal sealed class ClassApplier(AppsControlDbContext db) : ConfigApplier<Look
                 NameEn = a.NameEn,
                 DataType = a.DataType,
                 RefClassCode = a.DataType == AttributeDataType.DomainRef ? a.RefClassCode : null,
+                RefLovCode = a.DataType == AttributeDataType.LovRef ? a.RefLovCode : null,
+                IsMultiple = a.IsMultiple && (a.DataType is AttributeDataType.DomainRef or AttributeDataType.LovRef),
                 AttributeGroup = a.AttributeGroup,
                 IsRequired = a.IsRequired,
                 Validation = a.Validation is { Count: > 0 } ? a.Validation.ToJsonString() : null,
@@ -127,6 +149,23 @@ internal sealed class ClassApplier(AppsControlDbContext db) : ConfigApplier<Look
                 IsReportable = a.IsReportable,
             });
         }
+
+        ChildSync.RequireUnique(payload.Settings, c => c.Code, "settings", errors);
+        foreach (var (setting, i) in payload.Settings.Select((c, i) => (c, i)))
+        {
+            errors.Code($"settings[{i}].code", setting.Code, ValidationErrors.IdentifierCode());
+            errors.Required($"settings[{i}].nameAr", setting.NameAr);
+            errors.Required($"settings[{i}].nameEn", setting.NameEn);
+            errors.MaxLength($"settings[{i}].value", setting.Value, 4000);
+        }
+
+        entity.Settings = [.. payload.Settings.Select(c => new ClassSetting
+        {
+            Code = c.Code?.Trim() ?? string.Empty,
+            NameAr = c.NameAr?.Trim() ?? string.Empty,
+            NameEn = c.NameEn?.Trim() ?? string.Empty,
+            Value = string.IsNullOrWhiteSpace(c.Value) ? null : c.Value,
+        })];
 
         if (errors.HasErrors)
         {
@@ -157,6 +196,8 @@ internal sealed class ClassApplier(AppsControlDbContext db) : ConfigApplier<Look
             to.NameEn = from.NameEn;
             to.DataType = from.DataType;
             to.RefClassCode = from.RefClassCode;
+            to.RefLovCode = from.RefLovCode;
+            to.IsMultiple = from.IsMultiple;
             to.AttributeGroup = from.AttributeGroup;
             to.IsRequired = from.IsRequired;
             to.Validation = from.Validation;
@@ -182,6 +223,8 @@ internal sealed class ClassApplier(AppsControlDbContext db) : ConfigApplier<Look
                     NameEn = a.NameEn,
                     DataType = a.DataType,
                     RefClassCode = a.RefClassCode,
+                    RefLovCode = a.RefLovCode,
+                    IsMultiple = a.IsMultiple,
                     AttributeGroup = a.AttributeGroup,
                     IsRequired = a.IsRequired,
                     Validation = JsonNodeExtensions.ParseOrNull(a.Validation) as JsonObject,
@@ -189,6 +232,7 @@ internal sealed class ClassApplier(AppsControlDbContext db) : ConfigApplier<Look
                     IsReportable = a.IsReportable,
                 })
                 .ToList(),
+            Settings = entity.Settings,
         });
 
     protected override async Task BeforeDeleteAsync(AppsControlDbContext context, LookupClass entity, CancellationToken cancellationToken)
@@ -205,8 +249,8 @@ internal sealed class ClassApplier(AppsControlDbContext db) : ConfigApplier<Look
         var before = existing.Attributes.ToDictionary(a => a.Code, StringComparer.Ordinal);
         var changed = definitions
             .Where(d => !before.TryGetValue(d.Code, out var old)
-                || old.DataType != d.DataType || old.RefClassCode != d.RefClassCode
-                || old.IsRequired != d.IsRequired || old.Validation != d.Validation)
+                || old.DataType != d.DataType || old.RefClassCode != d.RefClassCode || old.RefLovCode != d.RefLovCode
+                || old.IsMultiple != d.IsMultiple || old.IsRequired != d.IsRequired || old.Validation != d.Validation)
             .ToList();
         if (changed.Count == 0)
         {
@@ -273,7 +317,7 @@ public sealed class DomainPayload : ConfigPayload
     public List<ExternalCodePayload> ExternalCodes { get; set; } = [];
 }
 
-internal sealed class DomainApplier(AppsControlDbContext db, IEnumerable<IDomainRules> rules) : ConfigApplier<DomainValue, DomainPayload>(db)
+internal sealed class DomainApplier(AppsControlDbContext db, IEnumerable<IDomainRules> rules, IServiceProvider services) : ConfigApplier<DomainValue, DomainPayload>(db)
 {
     public override string EntityType => AppsControlChangeTypes.Domain;
 
@@ -377,7 +421,7 @@ internal sealed class DomainApplier(AppsControlDbContext db, IEnumerable<IDomain
         }
 
         var attributes = payload.Attributes ?? [];
-        await AttributeValues.ValidateAsync(cls.Attributes, attributes, refs, errors, "attributes.", cancellationToken);
+        await AttributeValues.ValidateAsync(cls.Attributes, attributes, refs, errors, "attributes.", cancellationToken, InListAsync);
         foreach (var rule in rules.Where(r => r.ClassCode == cls.Code))
         {
             await rule.ValidateAsync(entity.Code, attributes, errors, cancellationToken);
@@ -460,5 +504,20 @@ internal sealed class DomainApplier(AppsControlDbContext db, IEnumerable<IDomain
         }
 
         return false;
+    }
+
+    /// <summary>Whether a value is in a list of values (every value of it, whatever the grants of whoever makes the change).</summary>
+    private async Task<bool> InListAsync(string lovCode, string value, CancellationToken cancellationToken)
+    {
+        var access = await services.GetRequiredService<AccessResolver>().GetAsync(cancellationToken);
+        try
+        {
+            var page = await services.GetRequiredService<LovService>().GetValuesAsync(lovCode, access, new LovQuery(null, value, 1, 1000), false, cancellationToken, unrestricted: true);
+            return page.Items.Any(i => string.Equals(i.Value, value, StringComparison.Ordinal));
+        }
+        catch (LovNotFoundException)
+        {
+            return false;
+        }
     }
 }

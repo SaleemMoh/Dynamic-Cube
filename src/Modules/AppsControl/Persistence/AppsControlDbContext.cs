@@ -211,6 +211,7 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
         {
             b.HasOne(e => e.ParentClass).WithMany().HasForeignKey(e => e.ParentClassId).OnDelete(DeleteBehavior.Restrict);
             b.HasMany(e => e.Attributes).WithOne().HasForeignKey(a => a.ClassId).OnDelete(DeleteBehavior.Cascade);
+            b.Property(e => e.Settings).HasColumnType("jsonb").HasConversion(JsonColumn.Converter<List<ClassSetting>>(), JsonColumn.Comparer<List<ClassSetting>>());
         });
         modelBuilder.Entity<AttributeDefinition>(b =>
         {
@@ -220,6 +221,7 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
             b.Property(e => e.NameAr).HasMaxLength(500);
             b.Property(e => e.NameEn).HasMaxLength(500);
             b.Property(e => e.RefClassCode).HasMaxLength(100);
+            b.Property(e => e.RefLovCode).HasMaxLength(100);
             b.Property(e => e.Validation).HasColumnType("jsonb");
         });
         Config<DomainValue>(modelBuilder, "domain", b =>

@@ -55,7 +55,7 @@ internal sealed class ClassViewGenerator : IChangeSetPublishHook<AppsControlDbCo
         foreach (var attribute in cls.Attributes.Where(a => a.IsReportable).OrderBy(a => a.DisplayOrder).ThenBy(a => a.Code))
         {
             var key = Literal(attribute.Code);
-            var expression = attribute.DataType switch
+            var expression = attribute.IsMultiple ? $"d.attributes->{key}" : attribute.DataType switch
             {
                 AttributeDataType.Number => $"(d.attributes->>{key})::numeric",
                 AttributeDataType.Date => $"(d.attributes->>{key})::date",

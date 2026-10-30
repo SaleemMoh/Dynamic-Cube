@@ -17,13 +17,15 @@ internal static class AttributeValues
         "DISPLAY_ORDER", "IS_DEFAULT", "IS_ACTIVE", "EFFECTIVE_FROM", "EFFECTIVE_TO",
     };
 
+    /// <param name="inList">Whether a value belongs to a list of values (fields of type list of values); not checked when null.</param>
     public static async Task ValidateAsync(
         IReadOnlyCollection<AttributeDefinition> definitions,
         JsonObject values,
         RefResolver refs,
         ValidationErrors errors,
         string fieldPrefix,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Func<string, string, CancellationToken, Task<bool>>? inList = null)
     {
         var byCode = definitions.ToDictionary(d => d.Code, StringComparer.Ordinal);
         foreach (var (key, _) in values)
@@ -38,7 +40,7 @@ internal static class AttributeValues
         {
             var field = fieldPrefix + definition.Code;
             values.TryGetPropertyValue(definition.Code, out var value);
-            if (value is null || (value is JsonValue v && v.GetValueKind() == JsonValueKind.String && string.IsNullOrEmpty(v.GetValue<string>())))
+            if (value is null || (value is JsonValue v && v.GetValueKind() == JsonValueKind.String && string.IsNullOrEmpty(v.GetValue<string>())) || value is JsonArray { Count: 0 })
             {
                 if (definition.IsRequired)
                 {
@@ -55,19 +57,48 @@ internal static class AttributeValues
             }
             else if (definition.DataType == AttributeDataType.DomainRef && definition.RefClassCode is not null)
             {
-                await refs.DomainAsync(definition.RefClassCode, value.GetValue<string>(), field, errors, cancellationToken);
+                foreach (var code in Codes(value))
+                {
+                    await refs.DomainAsync(definition.RefClassCode, code, field, errors, cancellationToken);
+                }
+            }
+            else if (definition.DataType == AttributeDataType.LovRef && definition.RefLovCode is not null && inList is not null)
+            {
+                foreach (var code in Codes(value))
+                {
+                    if (!await inList(definition.RefLovCode, code, cancellationToken))
+                    {
+                        errors.Add(field, $"'{code}' is not a value of list {definition.RefLovCode}.");
+                    }
+                }
             }
         }
     }
+
+    /// <summary>The code, or the codes of a field taking several.</summary>
+    private static IEnumerable<string> Codes(JsonNode value) =>
+        value is JsonArray array ? array.Select(i => i!.GetValue<string>()) : [value.GetValue<string>()];
 
     private static string? Check(AttributeDefinition definition, JsonNode value)
     {
         var rules = string.IsNullOrWhiteSpace(definition.Validation) ? null : JsonNode.Parse(definition.Validation) as JsonObject;
         var kind = value.GetValueKind();
+        if (definition.DataType is AttributeDataType.DomainRef or AttributeDataType.LovRef)
+        {
+            if (definition.IsMultiple)
+            {
+                return value is JsonArray items && items.All(i => i is JsonValue item && item.GetValueKind() == JsonValueKind.String && item.GetValue<string>().Length > 0)
+                    ? (items.Select(i => i!.GetValue<string>()).Distinct(StringComparer.Ordinal).Count() == items.Count ? null : "Each value once.")
+                    : "Expected a list of codes.";
+            }
+
+            return kind == JsonValueKind.String ? null : "Expected a code.";
+        }
+
         switch (definition.DataType)
         {
             case AttributeDataType.Text:
-            case AttributeDataType.DomainRef:
+            case AttributeDataType.Textarea:
                 if (kind != JsonValueKind.String)
                 {
                     return "Expected text.";

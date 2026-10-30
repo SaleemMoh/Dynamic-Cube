@@ -164,6 +164,26 @@
               </mat-form-field>
             </div>
           }
+          @if (attribute.controls.dataType.value === 'LOV_REF') {
+            <div class="dc-field">
+              <label class="dc-field-label" [for]="'attr-refLovCode-' + i">{{
+                'classes.refLov' | dcTranslate
+              }}</label>
+              <mat-form-field>
+                <mat-select
+                  [id]="'attr-refLovCode-' + i"
+                  formControlName="refLovCode"
+                  data-testid="attribute-ref-lov"
+                >
+                  @for (l of lovs(); track l.code) {
+                    <mat-option [value]="l.code"
+                      >{{ { ar: l.nameAr, en: l.nameEn } | dcLocalize }} ({{ l.code }})</mat-option
+                    >
+                  }
+                </mat-select>
+              </mat-form-field>
+            </div>
+          }
           <div class="dc-field">
             <label class="dc-field-label" [for]="'attr-attributeGroup-' + i">{{
               'classes.group' | dcTranslate
@@ -179,6 +199,11 @@
               </mat-select>
             </mat-form-field>
           </div>
+          @if (multiTypes.includes(attribute.controls.dataType.value)) {
+            <mat-checkbox formControlName="isMultiple" data-testid="attribute-multiple">{{
+              'classes.multiple' | dcTranslate
+            }}</mat-checkbox>
+          }
           <mat-checkbox formControlName="isRequired" data-testid="attribute-required">{{
             'classes.required' | dcTranslate
           }}</mat-checkbox>
@@ -203,6 +228,76 @@
         <button matButton type="button" (click)="addAttribute()" data-testid="add-attribute">
           <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
           {{ 'classes.addAttribute' | dcTranslate }}
+        </button>
+      </div>
+    }
+
+    <h3>{{ 'classes.settings' | dcTranslate }}</h3>
+    <p class="dc-muted">{{ 'classes.settingsHint' | dcTranslate }}</p>
+    <div formArrayName="settings" class="dc-attributes">
+      @for (setting of settings.controls; track setting; let i = $index) {
+        <div class="dc-attribute" [formGroupName]="i" [attr.data-setting]="i">
+          <div class="dc-field">
+            <label class="dc-field-label" [for]="'set-code-' + i">{{
+              'config.code' | dcTranslate
+            }}</label>
+            <mat-form-field>
+              <input
+                matInput
+                [id]="'set-code-' + i"
+                formControlName="code"
+                dir="ltr"
+                data-testid="setting-code"
+              />
+            </mat-form-field>
+          </div>
+          <div class="dc-field">
+            <label class="dc-field-label" [for]="'set-nameAr-' + i">{{
+              'config.nameAr' | dcTranslate
+            }}</label>
+            <mat-form-field>
+              <input matInput [id]="'set-nameAr-' + i" formControlName="nameAr" />
+            </mat-form-field>
+          </div>
+          <div class="dc-field">
+            <label class="dc-field-label" [for]="'set-nameEn-' + i">{{
+              'config.nameEn' | dcTranslate
+            }}</label>
+            <mat-form-field>
+              <input matInput [id]="'set-nameEn-' + i" formControlName="nameEn" />
+            </mat-form-field>
+          </div>
+          <div class="dc-field">
+            <label class="dc-field-label" [for]="'set-value-' + i">{{
+              'classes.settingValue' | dcTranslate
+            }}</label>
+            <mat-form-field>
+              <input
+                matInput
+                [id]="'set-value-' + i"
+                formControlName="value"
+                data-testid="setting-value"
+              />
+            </mat-form-field>
+          </div>
+          @if (canEdit()) {
+            <button
+              matIconButton
+              type="button"
+              (click)="removeSetting(i)"
+              [attr.aria-label]="'config.delete' | dcTranslate"
+            >
+              <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
+            </button>
+          }
+        </div>
+      }
+    </div>
+    @if (canEdit()) {
+      <div class="dc-actions">
+        <button matButton type="button" (click)="addSetting()" data-testid="add-setting">
+          <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+          {{ 'classes.addSetting' | dcTranslate }}
         </button>
       </div>
     }

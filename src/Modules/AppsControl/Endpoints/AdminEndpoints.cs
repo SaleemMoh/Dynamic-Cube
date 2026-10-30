@@ -113,6 +113,15 @@ internal static class AdminEndpoints
             .RequirePrivilege(AppsControlResources.Roles, PrivilegeActions.View)
             .WithName("GetLovValuesForGrants");
 
+        // Every value of a list, for the fields of class values that take their options from it.
+        admin.MapGet("/lovs/{code}/options", async (string code, string? q, AccessResolver resolver, LovService lovs, CancellationToken ct) =>
+            {
+                var access = await resolver.GetAsync(ct);
+                return TypedResults.Ok(await lovs.GetValuesAsync(code, access, new LovQuery(null, q, 1, 0, null), false, ct, unrestricted: true));
+            })
+            .RequirePrivilege(AppsControlResources.Classes, PrivilegeActions.View)
+            .WithName("GetLovOptionsForClassValues");
+
         admin.MapGet("/types", async (IEnumerable<IConfigApplier> appliers, AccessResolver resolver, IChangeApprovalPolicy policy, CancellationToken ct) =>
         {
             var access = await resolver.GetAsync(ct);

@@ -15,7 +15,7 @@ import {
   TranslatePipe,
   problemMessages,
 } from '@dynamic-cube/shared';
-import { forkJoin, map, of } from 'rxjs';
+import { catchError, forkJoin, map, of } from 'rxjs';
 import { fromDate, fromJsonText, toDate, toJsonText } from '../config/form-values';
 import { DraftsService } from '../drafts.service';
 import { AttributeDefinition, AttributeDataType, ClassRow, DomainRow } from './class-models';
@@ -29,12 +29,22 @@ const ATTRIBUTE_PREFIX = 'attr__';
 
 const FIELD_TYPES: Record<AttributeDataType, FormFieldType> = {
   TEXT: 'text',
+  TEXTAREA: 'textarea',
   NUMBER: 'number',
   DATE: 'date',
   BOOL: 'checkbox',
   DOMAIN_REF: 'select',
+  LOV_REF: 'select',
   JSON: 'textarea',
 };
+
+/** Tabs of the value form: the fields grouped by kind (as the legacy flex values, dates and numbers), parameters apart. */
+const KINDS: { code: string; title: { ar: string; en: string }; types: AttributeDataType[] }[] = [
+  { code: 'texts', title: { ar: 'النصوص', en: 'Texts' }, types: ['TEXT', 'TEXTAREA', 'JSON'] },
+  { code: 'choices', title: { ar: 'الاختيارات', en: 'Choices' }, types: ['DOMAIN_REF', 'LOV_REF', 'BOOL'] },
+  { code: 'numbers', title: { ar: 'الأرقام', en: 'Numbers' }, types: ['NUMBER'] },
+  { code: 'dates', title: { ar: 'التواريخ', en: 'Dates' }, types: ['DATE'] },
+];
 
 /**
  * Edits a lookup value. The form is generated from the class's attribute definitions, so adding an attribute to a
@@ -86,12 +96,23 @@ export class DomainEditor {
       const cls = this.data.cls;
       const parentClass = cls.parentClassCode ?? (cls.isHierarchical ? cls.code : null);
       const refClasses = [...new Set(cls.attributes.filter((a) => a.dataType === 'DOMAIN_REF' && a.refClassCode).map((a) => a.refClassCode!))];
+      const refLovs = [...new Set(cls.attributes.filter((a) => a.dataType === 'LOV_REF' && a.refLovCode).map((a) => a.refLovCode!))];
       const toOptions = (code: string) =>
         this.api.classDomains(code).pipe(map((rows) => rows.map((r): FormOption => ({ value: r.code, label: { ar: r.nameAr, en: r.nameEn } }))));
+      const lovOptions = (code: string) =>
+        this.api.lovOptions(code).pipe(
+          map((page) => page.items.map((i): FormOption => ({ value: i.value, label: { ar: i.labelAr, en: i.labelEn } }))),
+          catchError(() => of<FormOption[]>([])),
+        );
       return forkJoin({
         parents: parentClass ? toOptions(parentClass) : of<FormOption[]>([]),
         refs: refClasses.length ? forkJoin(refClasses.map(toOptions)) : of<FormOption[][]>([]),
-      }).pipe(map(({ parents, refs }) => this.buildSchema(parentClass, parents, new Map(refClasses.map((c, i) => [c, refs[i]])))));
+        lovs: refLovs.length ? forkJoin(refLovs.map(lovOptions)) : of<FormOption[][]>([]),
+      }).pipe(
+        map(({ parents, refs, lovs }) =>
+          this.buildSchema(parentClass, parents, new Map(refClasses.map((c, i) => [c, refs[i]])), new Map(refLovs.map((c, i) => [c, lovs[i]]))),
+        ),
+      );
     },
   });
 
@@ -135,6 +156,10 @@ export class DomainEditor {
   }
 
   private convert(attribute: AttributeDefinition, raw: unknown): unknown {
+    if (attribute.isMultiple) {
+      const codes = Array.isArray(raw) ? raw.filter((c) => typeof c === 'string' && c.length > 0) : [];
+      return codes.length ? codes : null;
+    }
     switch (attribute.dataType) {
       case 'DATE':
         return fromDate(raw);
@@ -170,24 +195,42 @@ export class DomainEditor {
     };
     for (const attribute of this.data.cls.attributes) {
       const current = row?.attributes?.[attribute.code];
-      value[ATTRIBUTE_PREFIX + attribute.code] =
-        attribute.dataType === 'DATE' ? toDate(current) : attribute.dataType === 'JSON' ? toJsonText(current) : attribute.dataType === 'BOOL' ? current === true : (current ?? null);
+      value[ATTRIBUTE_PREFIX + attribute.code] = attribute.isMultiple
+        ? Array.isArray(current)
+          ? current
+          : []
+        : attribute.dataType === 'DATE'
+          ? toDate(current)
+          : attribute.dataType === 'JSON'
+            ? toJsonText(current)
+            : attribute.dataType === 'BOOL'
+              ? current === true
+              : (current ?? null);
     }
     return value;
   }
 
-  private buildSchema(parentClass: string | null, parents: FormOption[], refs: Map<string, FormOption[]>): FormSchema {
+  private buildSchema(parentClass: string | null, parents: FormOption[], refs: Map<string, FormOption[]>, lovs: Map<string, FormOption[]>): FormSchema {
     const editing = this.data.row !== null;
     const attributeField = (a: AttributeDefinition): FormField => ({
       code: ATTRIBUTE_PREFIX + a.code,
       type: FIELD_TYPES[a.dataType],
       label: { ar: a.nameAr, en: a.nameEn },
       required: a.isRequired && a.dataType !== 'BOOL',
-      options: a.dataType === 'DOMAIN_REF' ? (refs.get(a.refClassCode ?? '') ?? []) : undefined,
+      multiple: a.isMultiple || undefined,
+      options:
+        a.dataType === 'DOMAIN_REF'
+          ? (refs.get(a.refClassCode ?? '') ?? [])
+          : a.dataType === 'LOV_REF'
+            ? (lovs.get(a.refLovCode ?? '') ?? [])
+            : undefined,
     });
     const ordered = [...this.data.cls.attributes].sort((x, y) => x.displayOrder - y.displayOrder || x.code.localeCompare(y.code));
-    const attributes = ordered.filter((a) => a.attributeGroup !== 'PARAMETER').map(attributeField);
+    const attributes = ordered.filter((a) => a.attributeGroup !== 'PARAMETER');
     const parameters = ordered.filter((a) => a.attributeGroup === 'PARAMETER').map(attributeField);
+    const kinds = KINDS.map((k) => ({ code: k.code, title: k.title, fields: attributes.filter((a) => k.types.includes(a.dataType)).map(attributeField) })).filter(
+      (k) => k.fields.length,
+    );
 
     const general: FormField[] = [
       { code: 'code', type: 'text', label: { ar: 'الرمز', en: 'Code' }, required: true, readonly: editing },
@@ -202,13 +245,12 @@ export class DomainEditor {
       { code: 'detailsAr', type: 'textarea', label: { ar: 'التفاصيل بالعربية', en: 'Details (Arabic)' } },
       { code: 'detailsEn', type: 'textarea', label: { ar: 'التفاصيل بالإنجليزية', en: 'Details (English)' } },
     ];
-    return {
-      code: 'domain-' + this.data.cls.code,
-      sections: [
-        { code: 'general', title: { ar: 'البيانات الأساسية', en: 'General' }, fields: general },
-        ...(attributes.length ? [{ code: 'attributes', title: { ar: 'الخصائص', en: 'Attributes' }, fields: attributes }] : []),
-        ...(parameters.length ? [{ code: 'parameters', title: { ar: 'المعاملات', en: 'Parameters' }, fields: parameters }] : []),
-      ],
-    };
+    const sections = [
+      { code: 'general', title: { ar: 'البيانات الأساسية', en: 'General' }, fields: general },
+      ...kinds,
+      ...(parameters.length ? [{ code: 'parameters', title: { ar: 'المعاملات', en: 'Parameters' }, fields: parameters }] : []),
+    ];
+    // The general data alone stays one form; with fields, each kind gets its tab.
+    return { code: 'domain-' + this.data.cls.code, display: sections.length > 1 ? 'tabs' : 'stacked', sections };
   }
 }

@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -7,10 +8,11 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { ConfigRow, LocalizePipe, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
+import { AppsControlApi, ConfigRow, LocalizePipe, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
+import { catchError, of } from 'rxjs';
 import { DraftsService } from '../drafts.service';
 import { PrivilegesService } from '../privileges.service';
-import { AttributeDefinition, ClassRow, DATA_TYPES } from './class-models';
+import { AttributeDefinition, ClassRow, ClassSetting, DATA_TYPES, MULTI_TYPES } from './class-models';
 
 type AttributeForm = FormGroup<{
   code: FormControl<string>;
@@ -18,9 +20,18 @@ type AttributeForm = FormGroup<{
   nameEn: FormControl<string>;
   dataType: FormControl<string>;
   refClassCode: FormControl<string | null>;
+  refLovCode: FormControl<string | null>;
+  isMultiple: FormControl<boolean>;
   attributeGroup: FormControl<string>;
   isRequired: FormControl<boolean>;
   isReportable: FormControl<boolean>;
+}>;
+
+type SettingForm = FormGroup<{
+  code: FormControl<string>;
+  nameAr: FormControl<string>;
+  nameEn: FormControl<string>;
+  value: FormControl<string | null>;
 }>;
 
 export interface ClassEditorData {
@@ -60,6 +71,9 @@ export class ClassEditor {
   private readonly privileges = inject(PrivilegesService);
 
   protected readonly dataTypes = DATA_TYPES;
+  protected readonly multiTypes: string[] = MULTI_TYPES;
+  /** Lists of values a field can take its options from. */
+  protected readonly lovs = toSignal(inject(AppsControlApi).list('apps.lov').pipe(catchError(() => of([] as ConfigRow[]))), { initialValue: [] as ConfigRow[] });
   protected readonly errors = signal<string[]>([]);
   protected readonly isNew = computed(() => this.data.cls === null);
   protected readonly isSystem = computed(() => this.data.cls?.owner === 'SYSTEM');
@@ -76,6 +90,7 @@ export class ClassEditor {
     isHierarchical: new FormControl(false, { nonNullable: true }),
     isActive: new FormControl(true, { nonNullable: true }),
     attributes: new FormArray<AttributeForm>([]),
+    settings: new FormArray<SettingForm>([]),
   });
 
   constructor() {
@@ -92,6 +107,7 @@ export class ClassEditor {
         isActive: cls.isActive,
       });
       cls.attributes.forEach((a) => this.addAttribute(a));
+      (cls.settings ?? []).forEach((c) => this.addSetting(c));
       this.form.controls.code.disable();
     }
     if (!this.canEdit()) {
@@ -111,6 +127,8 @@ export class ClassEditor {
         nameEn: new FormControl(a?.nameEn ?? '', { nonNullable: true, validators: Validators.required }),
         dataType: new FormControl<string>(a?.dataType ?? 'TEXT', { nonNullable: true }),
         refClassCode: new FormControl<string | null>(a?.refClassCode ?? null),
+        refLovCode: new FormControl<string | null>(a?.refLovCode ?? null),
+        isMultiple: new FormControl(a?.isMultiple ?? false, { nonNullable: true }),
         attributeGroup: new FormControl<string>(a?.attributeGroup ?? 'ATTRIBUTE', { nonNullable: true }),
         isRequired: new FormControl(a?.isRequired ?? false, { nonNullable: true }),
         isReportable: new FormControl(a?.isReportable ?? true, { nonNullable: true }),
@@ -120,6 +138,25 @@ export class ClassEditor {
 
   protected removeAttribute(index: number): void {
     this.attributes.removeAt(index);
+  }
+
+  protected get settings(): FormArray<SettingForm> {
+    return this.form.controls.settings;
+  }
+
+  protected addSetting(c?: ClassSetting): void {
+    this.settings.push(
+      new FormGroup({
+        code: new FormControl(c?.code ?? '', { nonNullable: true, validators: [Validators.required, Validators.pattern(CODE)] }),
+        nameAr: new FormControl(c?.nameAr ?? '', { nonNullable: true, validators: Validators.required }),
+        nameEn: new FormControl(c?.nameEn ?? '', { nonNullable: true, validators: Validators.required }),
+        value: new FormControl<string | null>(c?.value ?? null),
+      }),
+    );
+  }
+
+  protected removeSetting(index: number): void {
+    this.settings.removeAt(index);
   }
 
   protected async saveClass(): Promise<void> {
@@ -142,9 +179,12 @@ export class ClassEditor {
       attributes: value.attributes.map((a, index) => ({
         ...a,
         refClassCode: a.dataType === 'DOMAIN_REF' ? a.refClassCode : null,
+        refLovCode: a.dataType === 'LOV_REF' ? a.refLovCode : null,
+        isMultiple: MULTI_TYPES.includes(a.dataType as never) && a.isMultiple,
         validation: existing.get(a.code)?.validation ?? null,
         displayOrder: (index + 1) * 10,
       })),
+      settings: value.settings.map((c) => ({ ...c, value: c.value || null })),
     };
     try {
       await this.drafts.addChange('apps.class', value.code, this.isNew() ? 'CREATE' : 'UPDATE', payload);

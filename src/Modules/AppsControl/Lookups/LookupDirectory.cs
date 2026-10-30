@@ -20,6 +20,10 @@ internal sealed class LookupDirectory(AppsControlDbContext context, TimeProvider
     public async Task<LookupValue?> FindAsync(string classCode, string code, CancellationToken cancellationToken) =>
         (await LoadAsync(classCode, cancellationToken)).FirstOrDefault(v => v.Code == code);
 
+    public async Task<IReadOnlyDictionary<string, string?>> SettingsAsync(string classCode, CancellationToken cancellationToken) =>
+        (await context.Classes.AsNoTracking().Where(c => c.Code == classCode).Select(c => c.Settings).SingleOrDefaultAsync(cancellationToken) ?? [])
+            .ToDictionary(s => s.Code, s => s.Value, StringComparer.Ordinal);
+
     private async Task<IReadOnlyList<LookupValue>> LoadAsync(string classCode, CancellationToken cancellationToken)
     {
         if (_classes.TryGetValue(classCode, out var cached))

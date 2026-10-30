@@ -61,6 +61,11 @@ export class AppsControlApi {
   }
 
   /** Every value of a list, whatever the signed-in administrator's own grants (to choose values a role may see). */
+  /** Every value of a list, for fields of class values that take their options from it. */
+  lovOptions(code: string): Observable<LovPage> {
+    return this.http.get<LovPage>(`${APPS_CONTROL_API}/admin/lovs/${encodeURIComponent(code)}/options`);
+  }
+
   lovValuesForGrants(code: string, search?: string | null): Observable<LovPage> {
     return this.http.get<LovPage>(`${APPS_CONTROL_API}/admin/lovs/${encodeURIComponent(code)}/values`, { params: params({ q: search }) });
   }

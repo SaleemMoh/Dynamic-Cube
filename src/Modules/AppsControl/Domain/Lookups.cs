@@ -10,6 +10,12 @@ public enum AttributeDataType
     Bool,
     DomainRef,
     Json,
+
+    /// <summary>Text over several lines.</summary>
+    Textarea,
+
+    /// <summary>A value (or several) of a list of values (<see cref="AttributeDefinition.RefLovCode"/>).</summary>
+    LovRef,
 }
 
 public enum AttributeGroup
@@ -35,6 +41,21 @@ public sealed class LookupClass : ConfigEntity
     public bool AllowMultiAssign { get; set; }
 
     public List<AttributeDefinition> Attributes { get; } = [];
+
+    /// <summary>Settings of the class itself (legacy class flex values), e.g. what a value of an attribute means.</summary>
+    public List<ClassSetting> Settings { get; set; } = [];
+}
+
+/// <summary>A named value stored on a class.</summary>
+public sealed class ClassSetting
+{
+    public string Code { get; set; } = string.Empty;
+
+    public string NameAr { get; set; } = string.Empty;
+
+    public string NameEn { get; set; } = string.Empty;
+
+    public string? Value { get; set; }
 }
 
 /// <summary>Typed attribute definition of a class; values live in <see cref="Domain.Attributes"/>.</summary>
@@ -54,6 +75,12 @@ public sealed class AttributeDefinition : IAuditable
 
     /// <summary>Code of the referenced class when <see cref="DataType"/> is <see cref="AttributeDataType.DomainRef"/>.</summary>
     public string? RefClassCode { get; set; }
+
+    /// <summary>Code of the list of values when <see cref="DataType"/> is <see cref="AttributeDataType.LovRef"/>.</summary>
+    public string? RefLovCode { get; set; }
+
+    /// <summary>Several values (a list of codes) for <see cref="AttributeDataType.DomainRef"/> and <see cref="AttributeDataType.LovRef"/>.</summary>
+    public bool IsMultiple { get; set; }
 
     public AttributeGroup AttributeGroup { get; set; }
 
