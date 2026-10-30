@@ -14,7 +14,7 @@ Built from the customer journey study (V05), the classification rules workbook (
 |---|---|---|
 | 01-lists | 13 administrative regions | Apps Control → Classes |
 | 02-organization | NHC Innovation: general manager office, classification sector (Riyadh, Jeddah, Dammam requests; governance, projects and financial evaluation; audit), customer experience, IT; 7 positions | Apps Control → Organization structure |
-| 03-organization-companies-branches | Organization *National Housing Company (NHC)*, company *NHC Innovation*, branches Riyadh (default), Jeddah, Dammam, each served by its requests office; calendar and 2027 holidays | Apps Control → Installation & organization |
+| 03-organization-companies-branches | Organization *National Housing Company (NHC)*, company *NHC Innovation*, branches Riyadh (default), Jeddah, Dammam, each served by its requests office; the app *Classification platform* (internal system and portal) that owns the services, certificate, rules and roles; calendar and 2027 holidays | Apps Control → Installation & organization |
 | 04-integrations | Ministry of Commerce (CRs of a person, CR details) and SADAD through the gateway | Integration Manager |
 | 05-parties | Establishments at sign-in from the CR registry; CR status, city, expiry, capital, activities; email and mobile | Party registry |
 | 06-certificate-type | One certificate per establishment with a line per domain and grade (36 months) | Documents → Types |

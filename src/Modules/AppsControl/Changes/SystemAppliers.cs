@@ -313,7 +313,7 @@ internal sealed partial class EntityApplier(AppsControlDbContext db) : ConfigApp
 
         if (await context.BusinessApps.AnyAsync(a => a.EntityCode == entity.Code, cancellationToken))
         {
-            throw new DynamicCube.Platform.ChangeSets.ChangeSetException($"Organization {entity.Code} still has business apps.");
+            throw new DynamicCube.Platform.ChangeSets.ChangeSetException($"Organization {entity.Code} still has apps.");
         }
 
         if (await context.Companies.AnyAsync(c => c.EntityCode == entity.Code, cancellationToken))
@@ -332,9 +332,29 @@ public sealed class BusinessAppPayload : ConfigPayload
     public string? DescriptionEn { get; set; }
 
     public int DisplayOrder { get; set; }
+
+    public AppKind Kind { get; set; } = AppKind.DynamicCube;
+
+    /// <summary>
+    /// Channels of a Dynamic Cube app: <c>INTERNAL</c>, <c>EXTERNAL</c> (portal), <c>FIELD</c>. Not given: the internal
+    /// system and the portal, as for apps from before channels.
+    /// </summary>
+    public List<string>? Channels { get; set; }
+
+    /// <summary>Companies the app is enabled for; empty: every company of its organization.</summary>
+    public List<string> Companies { get; set; } = [];
+
+    /// <summary>Branches the app is enabled for; empty: every branch of those companies.</summary>
+    public List<string> Branches { get; set; } = [];
+
+    public string? BaseUrl { get; set; }
 }
 
-/// <summary>Business apps: each belongs to an entity (its <c>entityCode</c>; the default entity when none is given).</summary>
+/// <summary>
+/// Apps (ADR-0036; the change type keeps its earlier name): each belongs to an organization (its <c>entityCode</c>; the
+/// default one when none is given), is a Dynamic Cube app on some channels or a connected app, and is enabled for some
+/// companies and branches of its organization.
+/// </summary>
 internal sealed class BusinessAppApplier(AppsControlDbContext db) : ConfigApplier<BusinessApplication, BusinessAppPayload>(db)
 {
     public override string EntityType => AppsControlChangeTypes.BusinessApp;
@@ -350,23 +370,76 @@ internal sealed class BusinessAppApplier(AppsControlDbContext db) : ConfigApplie
     protected override IQueryable<BusinessApplication> ListQuery(AppsControlDbContext context, string? parent) =>
         context.BusinessApps.OrderBy(a => a.DisplayOrder).ThenBy(a => a.Code);
 
-    protected override Task ApplyAsync(BusinessApplication entity, BusinessAppPayload payload, RefResolver refs, ValidationErrors errors, BusinessApplication? existing, CancellationToken cancellationToken)
+    protected override async Task ApplyAsync(BusinessApplication entity, BusinessAppPayload payload, RefResolver refs, ValidationErrors errors, BusinessApplication? existing, CancellationToken cancellationToken)
     {
         if (payload.BusinessApp is not null)
         {
-            errors.Add("businessApp", "A business app does not belong to another app.");
+            errors.Add("businessApp", "An app does not belong to another app.");
         }
 
         errors.MaxLength("icon", payload.Icon, 100);
         errors.MaxLength("descriptionAr", payload.DescriptionAr, 2000);
         errors.MaxLength("descriptionEn", payload.DescriptionEn, 2000);
+        errors.MaxLength("baseUrl", payload.BaseUrl, 500);
         entity.EntityCode ??= GovernmentEntity.SingletonCode;
         entity.BusinessApp = null;
         entity.Icon = payload.Icon;
         entity.DescriptionAr = payload.DescriptionAr;
         entity.DescriptionEn = payload.DescriptionEn;
         entity.DisplayOrder = payload.DisplayOrder;
-        return Task.CompletedTask;
+        entity.Kind = payload.Kind;
+
+        var channels = Codes((IEnumerable<string>?)payload.Channels ?? (payload.Kind == AppKind.DynamicCube ? DefaultChannels : []));
+        if (payload.Kind == AppKind.DynamicCube)
+        {
+            if (channels.Count == 0)
+            {
+                errors.Add("channels", "Tick where the app appears: the internal system, the portal or the field app.");
+            }
+
+            foreach (var channel in channels.Where(c => !Channels.Contains(c)))
+            {
+                errors.Add("channels", $"'{channel}' is not a channel; use {string.Join(", ", Channels)}.");
+            }
+        }
+        else if (channels.Count > 0)
+        {
+            errors.Add("channels", "A connected app runs on its own screens and has no channels.");
+        }
+
+        entity.Channels = payload.Kind == AppKind.DynamicCube ? channels : [];
+        entity.BaseUrl = payload.Kind == AppKind.Connected && !string.IsNullOrWhiteSpace(payload.BaseUrl) ? payload.BaseUrl.Trim() : null;
+
+        // Companies of the app's organization, and branches of those companies.
+        entity.Companies = Codes(payload.Companies);
+        var companies = await refs.Context.Companies.AsNoTracking().Where(c => entity.Companies.Contains(c.Code)).Select(c => new { c.Code, c.EntityCode }).ToListAsync(cancellationToken);
+        foreach (var code in entity.Companies)
+        {
+            var company = companies.FirstOrDefault(c => c.Code == code);
+            if (company is null && !refs.IsPendingCreate(AppsControlChangeTypes.Company, code))
+            {
+                errors.Add("companies", $"Company '{code}' does not exist.");
+            }
+            else if (company is not null && company.EntityCode != entity.EntityCode)
+            {
+                errors.Add("companies", $"Company {code} belongs to organization {company.EntityCode}, not {entity.EntityCode}.");
+            }
+        }
+
+        entity.Branches = Codes(payload.Branches);
+        var branches = await refs.Context.Branches.AsNoTracking().Where(b => entity.Branches.Contains(b.Code)).Select(b => new { b.Code, b.CompanyCode, b.EntityCode }).ToListAsync(cancellationToken);
+        foreach (var code in entity.Branches)
+        {
+            var branch = branches.FirstOrDefault(b => b.Code == code);
+            if (branch is null && !refs.IsPendingCreate(AppsControlChangeTypes.Branch, code))
+            {
+                errors.Add("branches", $"Branch '{code}' does not exist.");
+            }
+            else if (branch is not null && (entity.Companies.Count > 0 ? !entity.Companies.Contains(branch.CompanyCode) : branch.EntityCode != entity.EntityCode))
+            {
+                errors.Add("branches", $"Branch {code} belongs to company {branch.CompanyCode}, which the app is not enabled for.");
+            }
+        }
     }
 
     protected override Task<BusinessAppPayload> ToPayloadAsync(AppsControlDbContext context, BusinessApplication entity, CancellationToken cancellationToken) =>
@@ -376,14 +449,27 @@ internal sealed class BusinessAppApplier(AppsControlDbContext db) : ConfigApplie
             DescriptionAr = entity.DescriptionAr,
             DescriptionEn = entity.DescriptionEn,
             DisplayOrder = entity.DisplayOrder,
+            Kind = entity.Kind,
+            Channels = entity.Channels,
+            Companies = entity.Companies,
+            Branches = entity.Branches,
+            BaseUrl = entity.BaseUrl,
         });
+
+    /// <summary>The product channels an app can appear on (codes of the seeded <see cref="App"/> rows).</summary>
+    internal static readonly string[] Channels = ["INTERNAL", "EXTERNAL", "FIELD"];
+
+    private static readonly string[] DefaultChannels = ["INTERNAL", "EXTERNAL"];
+
+    private static List<string> Codes(IEnumerable<string>? codes) =>
+        [.. (codes ?? []).Where(c => !string.IsNullOrWhiteSpace(c)).Select(c => c.Trim()).Distinct(StringComparer.Ordinal)];
 
     protected override async Task BeforeDeleteAsync(AppsControlDbContext context, BusinessApplication entity, CancellationToken cancellationToken)
     {
         if (await context.Roles.AnyAsync(r => r.BusinessApp == entity.Code || r.SharedApps.Contains(entity.Code), cancellationToken)
             || await context.Users.AnyAsync(u => u.BusinessApp == entity.Code || u.SharedApps.Contains(entity.Code), cancellationToken))
         {
-            throw new DynamicCube.Platform.ChangeSets.ChangeSetException($"Roles or users still belong to business app {entity.Code}.");
+            throw new DynamicCube.Platform.ChangeSets.ChangeSetException($"Roles or users still belong to app {entity.Code}.");
         }
     }
 }

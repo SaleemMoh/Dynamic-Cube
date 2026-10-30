@@ -86,6 +86,10 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
             b.Property(e => e.Icon).HasMaxLength(100);
             b.Property(e => e.DescriptionAr).HasMaxLength(2000);
             b.Property(e => e.DescriptionEn).HasMaxLength(2000);
+            b.Property(e => e.BaseUrl).HasMaxLength(500);
+            b.Property(e => e.Channels).HasColumnType("text[]");
+            b.Property(e => e.Companies).HasColumnType("text[]");
+            b.Property(e => e.Branches).HasColumnType("text[]");
         });
         Config<Company>(modelBuilder, "company", b =>
         {

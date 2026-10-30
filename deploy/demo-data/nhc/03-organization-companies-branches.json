@@ -102,6 +102,27 @@
       }
     },
     {
+      "entityType": "apps.business-app",
+      "entityCode": "CLASSIFICATION",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "منصة التصنيف",
+        "nameEn": "Classification platform",
+        "kind": "DYNAMIC_CUBE",
+        "channels": [
+          "INTERNAL",
+          "EXTERNAL"
+        ],
+        "companies": [
+          "MAIN"
+        ],
+        "icon": "workspace_premium",
+        "displayOrder": 1,
+        "descriptionAr": "تصنيف المقاولين والمكاتب الهندسية: الخدمات في البوابة، ومعالجة الطلبات في النظام الداخلي.",
+        "descriptionEn": "Contractors and engineering offices classification: services on the portal, processing in the internal system."
+      }
+    },
+    {
       "entityType": "apps.installation",
       "entityCode": "INSTALLATION",
       "operation": "UPDATE",

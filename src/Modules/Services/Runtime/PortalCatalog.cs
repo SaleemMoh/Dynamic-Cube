@@ -60,7 +60,7 @@ public sealed record ServiceCard(
 public sealed record PortalStatistics(int Services, int Requests, int InProgress, int Completed);
 
 /// <summary>The public side of the catalog: categories, listed services and their cards, and statistics. Needs no sign-in.</summary>
-public sealed class PortalCatalogService(ServicesDbContext context, ServiceCatalogCache cache, IServiceProvider providers)
+public sealed class PortalCatalogService(ServicesDbContext context, ServiceCatalogCache cache, PortalChannel portal, IServiceProvider providers)
 {
     public async Task<PortalCatalog> CatalogAsync(CancellationToken cancellationToken)
     {
@@ -187,7 +187,10 @@ public sealed class PortalCatalogService(ServicesDbContext context, ServiceCatal
                 .Select(c => new PortalCategory(c.Code, c.NameAr, c.NameEn, c.Text("DESCRIPTION_AR"), c.Text("DESCRIPTION_EN"), c.Text("ICON")))]
             : [];
 
-    /// <summary>Active services with a published version: the listed ones, or the one named <paramref name="code"/> listed or not.</summary>
+    /// <summary>
+    /// Active services with a published version that the portal offers: the listed ones, or the one named
+    /// <paramref name="code"/> listed or not.
+    /// </summary>
     private async Task<List<(Service Service, Guid VersionId, DateTimeOffset? PublishedAt)>> ListedAsync(string? code, CancellationToken cancellationToken)
     {
         var rows = await context.Services.AsNoTracking()
@@ -202,8 +205,8 @@ public sealed class PortalCatalogService(ServicesDbContext context, ServiceCatal
                     .FirstOrDefault(),
             })
             .ToListAsync(cancellationToken);
-        return [.. rows
-            .Where(r => r.Version is not null)
+        var offered = await portal.OfferedAsync(rows.Where(r => r.Version is not null), r => r.Service, cancellationToken);
+        return [.. offered
             .OrderBy(r => r.Service.DisplayOrder).ThenBy(r => r.Service.Code)
             .Select(r => (r.Service, r.Version!.Id, r.Version.PublishedAt))];
     }

@@ -39,6 +39,7 @@ internal sealed class RequestService(
     ICurrentUser user,
     IServiceProvider services,
     IFileStorage storage,
+    PortalChannel portal,
     TimeProvider clock)
 {
     private static readonly StatusCategory[] OpenStatuses = [StatusCategory.Draft, StatusCategory.Submitted, StatusCategory.InProgress, StatusCategory.PendingCustomer, StatusCategory.PendingExternal, StatusCategory.PendingPayment];
@@ -91,7 +92,7 @@ internal sealed class RequestService(
             .OrderBy(s => s.DisplayOrder).ThenBy(s => s.Code).ToListAsync(cancellationToken);
         foreach (var service in candidates.Where(s => acting.Covers(s.Code)))
         {
-            if (await CurrentVersionIdAsync(service.Id, cancellationToken) is not { } versionId)
+            if (!await portal.OffersAsync(service, cancellationToken) || await CurrentVersionIdAsync(service.Id, cancellationToken) is not { } versionId)
             {
                 continue;
             }
@@ -568,13 +569,20 @@ internal sealed class RequestService(
                 VersionId = context.Versions.Where(v => v.ServiceId == s.Id && v.IsActive && !v.IsRetired && v.Resolved != null).OrderByDescending(v => v.Number).Select(v => (Guid?)v.Id).FirstOrDefault(),
             })
             .ToListAsync(cancellationToken);
-        return [.. rows.Where(r => r.VersionId is not null).OrderBy(r => r.Service.DisplayOrder).ThenBy(r => r.Service.Code).Select(r => (r.Service, r.VersionId!.Value))];
+        var offered = await portal.OfferedAsync(rows.Where(r => r.VersionId is not null), r => r.Service, cancellationToken);
+        return [.. offered.OrderBy(r => r.Service.DisplayOrder).ThenBy(r => r.Service.Code).Select(r => (r.Service, r.VersionId!.Value))];
     }
 
     private async Task<(Service Service, Guid VersionId)> CurrentAsync(string code, CancellationToken cancellationToken)
     {
         var service = await context.Services.AsNoTracking().SingleOrDefaultAsync(s => s.Code == code && s.IsActive, cancellationToken)
             ?? throw new RequestNotFoundException($"Service '{code}' does not exist.");
+        if (!await portal.OffersAsync(service, cancellationToken))
+        {
+            // The service's apps are not on the portal (ADR-0036): to applicants it does not exist.
+            throw new RequestNotFoundException($"Service '{code}' does not exist.");
+        }
+
         var version = await CurrentVersionIdAsync(service.Id, cancellationToken) ?? throw new RequestNotFoundException($"Service '{code}' has no published version.");
         return (service, version);
     }

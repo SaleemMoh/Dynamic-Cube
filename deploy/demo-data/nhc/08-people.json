@@ -9,6 +9,7 @@
         "nameAr": "مدير طلبات الفرع",
         "nameEn": "Branch requests manager",
         "appCode": "INTERNAL",
+        "businessApp": "CLASSIFICATION",
         "privileges": [
           {
             "resourceCode": "action-center",
@@ -40,6 +41,7 @@
         "nameAr": "محلل الحوكمة",
         "nameEn": "Governance analyst",
         "appCode": "INTERNAL",
+        "businessApp": "CLASSIFICATION",
         "privileges": [
           {
             "resourceCode": "action-center",
@@ -64,6 +66,7 @@
         "nameAr": "مدقق الحوكمة",
         "nameEn": "Governance auditor",
         "appCode": "INTERNAL",
+        "businessApp": "CLASSIFICATION",
         "privileges": [
           {
             "resourceCode": "action-center",
@@ -88,6 +91,7 @@
         "nameAr": "محلل المشاريع والخبرات",
         "nameEn": "Projects & experience analyst",
         "appCode": "INTERNAL",
+        "businessApp": "CLASSIFICATION",
         "privileges": [
           {
             "resourceCode": "action-center",
@@ -112,6 +116,7 @@
         "nameAr": "مدقق المشاريع",
         "nameEn": "Projects auditor",
         "appCode": "INTERNAL",
+        "businessApp": "CLASSIFICATION",
         "privileges": [
           {
             "resourceCode": "action-center",
@@ -136,6 +141,7 @@
         "nameAr": "محلل التقييم المالي",
         "nameEn": "Financial evaluation analyst",
         "appCode": "INTERNAL",
+        "businessApp": "CLASSIFICATION",
         "privileges": [
           {
             "resourceCode": "action-center",
@@ -160,6 +166,7 @@
         "nameAr": "مدير التدقيق",
         "nameEn": "Audit manager",
         "appCode": "INTERNAL",
+        "businessApp": "CLASSIFICATION",
         "privileges": [
           {
             "resourceCode": "action-center",
@@ -184,6 +191,7 @@
         "nameAr": "المدير العام",
         "nameEn": "General manager",
         "appCode": "INTERNAL",
+        "businessApp": "CLASSIFICATION",
         "privileges": [
           {
             "resourceCode": "action-center",
@@ -215,6 +223,7 @@
         "nameAr": "تجربة العملاء",
         "nameEn": "Customer experience",
         "appCode": "INTERNAL",
+        "businessApp": "CLASSIFICATION",
         "privileges": [
           {
             "resourceCode": "services.requests",

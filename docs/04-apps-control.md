@@ -59,8 +59,18 @@ Unless stated otherwise every table has:
 **`installation`** (one row) — `system_type`, `copyright`, `default_language`, `timezone`,
 `weekend_days`, `calendar_display` (Hijri/Gregorian/both), `logo_file_id`, `default_file_folder`.
 
-**`app`** — `app_type` (`INTERNAL` | `EXTERNAL` | `FIELD` | `OTHER`), `base_url`,
-`display_order`. Examples: `INTERNAL`, `EXTERNAL`, `FIELD`.
+**`app`** — the product channels (`INTERNAL` internal system, `EXTERNAL` portal, `FIELD` field app): fixed rows the
+product seeds, to which screens (resources), roles and menus belong. Not edited in the screens; shown as *Channel*.
+
+**`business_app`** (`apps.business-app`, shown as *Apps*; ADR-0036) — an app of an organization: `kind`
+(`DYNAMIC_CUBE` | `CONNECTED`), `channels` (a Dynamic Cube app ticks at least one; a connected app has none),
+`companies` and `branches` it is enabled for (empty: all of the organization / of those companies; checked against the
+organization), `base_url` of a connected app, icon, descriptions, order. Rows (services, workflows, document types,
+roles…) belong to an app through their `business_app`. The portal offers a service only when it has no app or one of its
+apps ticks `EXTERNAL`. Existing apps became Dynamic Cube apps on `INTERNAL` and `EXTERNAL` for every company.
+
+**`resource`** register — filled by the product with its own screens and APIs; roles and menus use it. Its menu is
+hidden.
 
 **`entity`** — the organization (screens say *Organization*; ADR-0036): names, `entity_kind` (ministry / authority /
 company — a domain of class `ENTITY_KIND`), `unified_number`, `cr_number`, `logo_file_id`. One row (`ENTITY`) is the

@@ -369,16 +369,36 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("BaseUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("base_url");
+
+                    b.PrimitiveCollection<List<string>>("Branches")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("branches");
+
                     b.Property<string>("BusinessApp")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("business_app");
+
+                    b.PrimitiveCollection<List<string>>("Channels")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("channels");
 
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("code");
+
+                    b.PrimitiveCollection<List<string>>("Companies")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("companies");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -417,6 +437,12 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
                         .HasColumnName("is_active");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("kind");
 
                     b.Property<string>("NameAr")
                         .IsRequired()

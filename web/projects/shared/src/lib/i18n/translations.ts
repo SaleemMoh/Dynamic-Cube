@@ -352,7 +352,7 @@ export const SHARED_TRANSLATIONS: TranslationDictionary = {
     'icons.title': 'Choose an icon',
     'businessApp.all': 'All apps',
     'businessApp.level.SYSTEM': 'System',
-    'businessApp.level.ENTITY': 'Entity',
+    'businessApp.level.ENTITY': 'Organization',
     'businessApp.level.APP': 'App',
     'dualList.available': 'Available',
     'dualList.chosen': 'Chosen',

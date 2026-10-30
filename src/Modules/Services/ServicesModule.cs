@@ -50,6 +50,7 @@ public static class ServicesModule
         services.AddScoped<IWorkflowSubject, RequestSubject>();
         services.AddScoped<RequestAdminService>();
         services.AddScoped<PortalCatalogService>();
+        services.AddScoped<PortalChannel>();
         services.AddCommunicationEvents(RequestNotifications.Types);
         return services;
     }

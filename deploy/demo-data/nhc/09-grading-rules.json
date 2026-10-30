@@ -11,7 +11,8 @@
         "engine": "RULES",
         "isPublic": false,
         "descriptionAr": "وفق الدليل الاسترشادي (أبريل 2026): لكل مجال درجة فنية وأداء وحوكمة ومالية؛ الدرجة النهائية أسوأها، وتُخفّض درجة لكل من: مشاريع حكومية مسحوبة، أو 70 مخالفة فأكثر.",
-        "descriptionEn": "Per the guide (April 2026): per domain a technical, performance, governance and financial grade; the final grade is the worst, lowered one grade for withdrawn government projects or 70+ violations."
+        "descriptionEn": "Per the guide (April 2026): per domain a technical, performance, governance and financial grade; the final grade is the worst, lowered one grade for withdrawn government projects or 70+ violations.",
+        "businessApp": "CLASSIFICATION"
       }
     },
     {

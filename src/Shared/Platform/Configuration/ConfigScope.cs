@@ -53,4 +53,10 @@ public interface IConfigScopes
     /// </summary>
     Task<(string? EntityCode, string? BusinessApp)> ResolveAsync(
         string? entityCode, string? businessApp, ValidationErrors errors, CancellationToken cancellationToken, ChangeSets.ChangeSet? draft = null);
+
+    /// <summary>
+    /// Codes of the active apps that appear on a product channel (<c>INTERNAL</c>, <c>EXTERNAL</c> for the portal,
+    /// <c>FIELD</c>): Dynamic Cube apps that tick it (ADR-0036).
+    /// </summary>
+    Task<IReadOnlySet<string>> AppsOnChannelAsync(string channel, CancellationToken cancellationToken);
 }

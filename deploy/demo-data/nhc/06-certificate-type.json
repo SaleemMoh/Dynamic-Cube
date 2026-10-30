@@ -70,7 +70,8 @@
             "nameEn": "Grade",
             "isPublic": true
           }
-        ]
+        ],
+        "businessApp": "CLASSIFICATION"
       }
     }
   ]

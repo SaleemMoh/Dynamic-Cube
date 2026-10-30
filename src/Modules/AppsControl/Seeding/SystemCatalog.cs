@@ -57,9 +57,10 @@ internal static class SystemCatalog
 
     /// <summary>
     /// Menus the product no longer offers; the seeder hides them where earlier versions created them. Settings only held
-    /// the portal home page, which is edited under Portal content.
+    /// the portal home page, which is edited under Portal content. Resources is the register the product fills with its
+    /// own screens and APIs; roles and menus use it without anyone opening it.
     /// </summary>
-    public static readonly IReadOnlyList<string> RetiredMenus = ["apps-control.settings"];
+    public static readonly IReadOnlyList<string> RetiredMenus = ["apps-control.settings", "apps-control.resources"];
 
     private static readonly CatalogMenu[] Menus =
     [
@@ -71,9 +72,8 @@ internal static class SystemCatalog
         new("apps-control.portal-accounts", "حسابات البوابة", "Portal accounts", "/apps-control/portal-accounts", AppsControlResources.PortalAccounts, "badge", 55),
         new("apps-control.roles", "الأدوار والصلاحيات", "Roles & privileges", "/apps-control/roles", AppsControlResources.Roles, "admin_panel_settings", 60),
         new("apps-control.menus", "القوائم", "Menus", "/apps-control/menus", AppsControlResources.Menus, "menu", 70),
-        new("apps-control.resources", "الموارد", "Resources", "/apps-control/resources", AppsControlResources.Resources, "lock", 80),
         new("apps-control.ui-texts", "نصوص الواجهة", "UI texts", "/apps-control/ui-texts", AppsControlResources.UiTexts, "translate", 100),
-        new("apps-control.installation", "النظام والجهة", "Installation & entity", "/apps-control/installation", AppsControlResources.Installation, "domain", 110),
+        new("apps-control.installation", "النظام والجهة", "Installation & organization", "/apps-control/installation", AppsControlResources.Installation, "domain", 110),
         new("apps-control.branding", "الهوية والشعار", "Branding", "/apps-control/branding", AppsControlResources.Installation, "palette", 115),
         new("apps-control.approval-policy", "سياسة الاعتماد", "Approval policy", "/apps-control/approval-policy", AppsControlResources.ApprovalPolicy, "rule", 120),
     ];

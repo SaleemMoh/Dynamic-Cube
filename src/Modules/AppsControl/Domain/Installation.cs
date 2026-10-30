@@ -85,7 +85,10 @@ public enum AppType
     Other,
 }
 
-/// <summary>An application served by Apps Control (internal system, external portal, field app, …).</summary>
+/// <summary>
+/// A product channel (the internal system <c>INTERNAL</c>, the portal <c>EXTERNAL</c>, the field app <c>FIELD</c>):
+/// fixed rows the product seeds, where Dynamic Cube apps appear and to which screens, roles and menus belong.
+/// </summary>
 public sealed class App : ConfigEntity
 {
     public AppType AppType { get; set; }
@@ -95,10 +98,20 @@ public sealed class App : ConfigEntity
     public int DisplayOrder { get; set; }
 }
 
+public enum AppKind
+{
+    /// <summary>Built with the platform: services, portal, branding; data in the platform database.</summary>
+    DynamicCube,
+
+    /// <summary>An outside application that uses the platform as its provider (sign-in, users, roles, workflow…).</summary>
+    Connected,
+}
+
 /// <summary>
-/// A business app of an entity (e.g. Classification, Permits, Licensing): it owns services, workflows, document types,
-/// roles and users through their <see cref="ConfigEntity.BusinessApp"/>. Its entity is <see cref="ConfigEntity.EntityCode"/>.
-/// The channel apps (<see cref="App"/>: internal system, portal, field app) show the business apps a user may work in.
+/// An app of an organization (ADR-0036; called a business app before): e.g. Classification, Permits, Licensing. It owns
+/// services, workflows, document types, roles and users through their <see cref="ConfigEntity.BusinessApp"/>; its
+/// organization is <see cref="ConfigEntity.EntityCode"/>. A Dynamic Cube app appears on the channels it ticks (the
+/// internal system, the portal, the field app: the codes of <see cref="App"/>); a connected app runs on its own screens.
 /// </summary>
 public sealed class BusinessApplication : ConfigEntity
 {
@@ -109,4 +122,20 @@ public sealed class BusinessApplication : ConfigEntity
     public string? DescriptionEn { get; set; }
 
     public int DisplayOrder { get; set; }
+
+    public AppKind Kind { get; set; } = AppKind.DynamicCube;
+
+    /// <summary>Channel codes (<c>INTERNAL</c>, <c>EXTERNAL</c>, <c>FIELD</c>) of a Dynamic Cube app; empty for a connected app.</summary>
+    public List<string> Channels { get; set; } = [];
+
+    /// <summary>Companies of the organization the app is enabled for; empty: all of them.</summary>
+    public List<string> Companies { get; set; } = [];
+
+    /// <summary>Branches of those companies the app is enabled for; empty: all of them.</summary>
+    public List<string> Branches { get; set; } = [];
+
+    /// <summary>Address of a connected app.</summary>
+    public string? BaseUrl { get; set; }
+
+    public bool OnChannel(string channel) => Kind == AppKind.DynamicCube && Channels.Contains(channel);
 }

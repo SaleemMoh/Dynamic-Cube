@@ -291,10 +291,10 @@ export class ConfigEditor {
       code: 'businessApps',
       type: 'select',
       multiple: true,
-      label: { ar: 'تطبيقات الأعمال', en: 'Business apps' },
+      label: { ar: 'التطبيقات', en: 'Apps' },
       hint: {
         ar: 'فارغ: لكل تطبيقات الجهة. يمكن اختيار أكثر من تطبيق لنفس الجهة؛ يُحدد معه الجهة تلقائيًا.',
-        en: 'Empty: every app of the entity. Several apps of one entity may share a row; choosing sets the entity.',
+        en: 'Empty: every app of the organization. Several apps of one organization may share a row; choosing sets the organization.',
       },
       ref: 'apps.business-app',
     };

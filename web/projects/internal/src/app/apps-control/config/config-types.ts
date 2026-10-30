@@ -92,10 +92,11 @@ export function scopeOf(type: ConfigType): 'full' | 'entity' | 'none' {
 const t = (ar: string, en: string): LocalizedText => ({ ar, en });
 const opt = (value: string, ar: string, en: string): FormOption => ({ value, label: t(ar, en) });
 
+/** The product channel a row belongs to (internal system, portal, field app). */
 const appRef: ConfigField = {
   code: 'appCode',
   type: 'select',
-  label: t('التطبيق', 'App'),
+  label: t('القناة', 'Channel'),
   ref: 'apps.app',
 };
 const displayOrder: ConfigField = {
@@ -255,37 +256,66 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
       },
       {
         entityType: 'apps.business-app',
-        title: t('تطبيقات الأعمال', 'Business apps'),
+        title: t('التطبيقات', 'Apps'),
         key: 'code',
         scope: 'entity',
-        columns: ['displayOrder'],
+        columns: ['kind', 'channels', 'displayOrder'],
         fields: [
+          {
+            code: 'kind',
+            type: 'select',
+            label: t('نوع التطبيق', 'Kind'),
+            options: [
+              opt('DYNAMIC_CUBE', 'تطبيق ديناميك كيوب', 'Dynamic Cube app'),
+              opt('CONNECTED', 'تطبيق مرتبط', 'Connected app'),
+            ],
+            hint: t(
+              'تطبيق ديناميك كيوب: خدماته وشاشاته من المنصة. التطبيق المرتبط: نظام خارجي له قاعدة بياناته ويستخدم المنصة لتسجيل الدخول والمستخدمين والأدوار',
+              'Dynamic Cube app: services and screens from the platform. Connected app: an outside system with its own database using the platform for sign-in, users and roles',
+            ),
+            required: true,
+            defaultValue: 'DYNAMIC_CUBE',
+          },
+          {
+            code: 'channels',
+            type: 'select',
+            multiple: true,
+            label: t('يظهر في', 'Appears on'),
+            options: [
+              opt('INTERNAL', 'النظام الداخلي', 'Internal system'),
+              opt('EXTERNAL', 'البوابة الإلكترونية', 'Portal'),
+              opt('FIELD', 'التطبيق الميداني', 'Field app'),
+            ],
+            hint: t('خدمات التطبيق تظهر في البوابة فقط إذا اخترت البوابة', 'The app’s services show on the portal only when the portal is ticked'),
+            visibleWhen: { '==': [{ var: 'kind' }, 'DYNAMIC_CUBE'] },
+            requiredWhen: { '==': [{ var: 'kind' }, 'DYNAMIC_CUBE'] },
+            defaultValue: ['INTERNAL', 'EXTERNAL'],
+          },
+          {
+            code: 'companies',
+            type: 'select',
+            multiple: true,
+            label: t('الشركات', 'Companies'),
+            ref: 'apps.company',
+            hint: t('فارغ: كل شركات الجهة', 'Empty: every company of the organization'),
+          },
+          {
+            code: 'branches',
+            type: 'select',
+            multiple: true,
+            label: t('الفروع', 'Branches'),
+            ref: 'apps.branch',
+            hint: t('فارغ: كل فروع الشركات المختارة', 'Empty: every branch of the chosen companies'),
+          },
+          {
+            code: 'baseUrl',
+            type: 'text',
+            label: t('رابط التطبيق', 'App address'),
+            visibleWhen: { '==': [{ var: 'kind' }, 'CONNECTED'] },
+          },
           { code: 'icon', type: 'icon', label: t('الأيقونة', 'Icon') },
           { code: 'descriptionAr', type: 'textarea', label: t('الوصف بالعربية', 'Arabic description') },
           { code: 'descriptionEn', type: 'textarea', label: t('الوصف بالإنجليزية', 'English description') },
-          displayOrder,
-        ],
-      },
-      {
-        entityType: 'apps.app',
-        title: t('قنوات النظام', 'Channel apps'),
-        key: 'code',
-        scope: 'none',
-        columns: ['appType'],
-        fields: [
-          {
-            code: 'appType',
-            type: 'select',
-            label: t('النوع', 'Type'),
-            options: [
-              opt('INTERNAL', 'داخلي', 'Internal'),
-              opt('EXTERNAL', 'خارجي', 'External'),
-              opt('FIELD', 'ميداني', 'Field'),
-              opt('OTHER', 'أخرى', 'Other'),
-            ],
-            required: true,
-          },
-          { code: 'baseUrl', type: 'text', label: t('الرابط', 'Base URL') },
           displayOrder,
         ],
       },

@@ -170,7 +170,7 @@ public abstract class ConfigApplier<TContext, TRefs, TEntity, TPayload>(TContext
         var scope = await ScopeAsync(context, cancellationToken);
         if (existing is not null && !scope.CanChange(existing.EntityCode, existing.BusinessApp, existing.SharedApps))
         {
-            errors.Add("code", $"'{entityCode}' belongs to an entity or business app outside yours.");
+            errors.Add("code", $"'{entityCode}' belongs to an organization or app outside yours.");
         }
 
         errors.ThrowIfAny();
@@ -190,8 +190,8 @@ public abstract class ConfigApplier<TContext, TRefs, TEntity, TPayload>(TContext
             errors.Add(
                 probe.BusinessApp is null ? "entityCode" : "businessApp",
                 scope.Apps is not null && probe.BusinessApp is null
-                    ? "Choose one of your business apps for this row."
-                    : "Choose one of your entities and business apps for this row.");
+                    ? "Choose one of your apps for this row."
+                    : "Choose one of your organizations and apps for this row.");
         }
 
         errors.ThrowIfAny();
@@ -392,7 +392,7 @@ public abstract class ConfigApplier<TContext, TRefs, TEntity, TPayload>(TContext
                 var (sharedEntity, _) = await scopes.ResolveAsync(entity.EntityCode, shared, errors, cancellationToken, refs.Draft);
                 if (!errors.HasErrors && sharedEntity != entity.EntityCode)
                 {
-                    errors.Add("businessApps", $"Business app '{shared}' belongs to another entity.");
+                    errors.Add("businessApps", $"App '{shared}' belongs to another organization.");
                 }
             }
         }

@@ -37,7 +37,7 @@ internal sealed class ConfigScopes(AppsControlDbContext context, AccessResolver 
         if (entityCode is not null && Pending(draft, AppsControlChangeTypes.Entity, entityCode) is null
             && !await context.Entities.AnyAsync(e => e.Code == entityCode, cancellationToken))
         {
-            errors.Add("entityCode", $"There is no entity '{entityCode}'.");
+            errors.Add("entityCode", $"There is no organization '{entityCode}'.");
         }
 
         if (businessApp is null)
@@ -56,7 +56,7 @@ internal sealed class ConfigScopes(AppsControlDbContext context, AccessResolver 
             var app = await context.BusinessApps.Where(a => a.Code == businessApp).Select(a => new { a.EntityCode }).SingleOrDefaultAsync(cancellationToken);
             if (app is null)
             {
-                errors.Add("businessApp", $"There is no business app '{businessApp}'.");
+                errors.Add("businessApp", $"There is no app '{businessApp}'.");
                 return (entityCode, businessApp);
             }
 
@@ -65,11 +65,17 @@ internal sealed class ConfigScopes(AppsControlDbContext context, AccessResolver 
 
         if (entityCode is not null && appEntity is not null && appEntity != entityCode)
         {
-            errors.Add("businessApp", $"Business app '{businessApp}' belongs to entity {appEntity}, not {entityCode}.");
+            errors.Add("businessApp", $"App '{businessApp}' belongs to organization {appEntity}, not {entityCode}.");
         }
 
         return (entityCode ?? appEntity, businessApp);
     }
+
+    public async Task<IReadOnlySet<string>> AppsOnChannelAsync(string channel, CancellationToken cancellationToken) =>
+        (await context.BusinessApps.AsNoTracking()
+            .Where(a => a.IsActive && a.Kind == AppKind.DynamicCube && a.Channels.Contains(channel))
+            .Select(a => a.Code)
+            .ToListAsync(cancellationToken)).ToHashSet(StringComparer.Ordinal);
 
     /// <summary>The payload of a row created earlier in the draft, or null.</summary>
     private static string? Pending(ChangeSet? draft, string entityType, string code) =>

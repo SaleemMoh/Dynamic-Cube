@@ -50,6 +50,41 @@ public sealed class CompanyTests(AppsControlFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task An_app_is_a_dynamic_cube_app_on_channels_or_a_connected_app_enabled_for_companies_of_its_organization()
+    {
+        var (organization, company, branch) = (Harness.Unique("ORG"), Harness.Unique("CO"), Harness.Unique("BR"));
+        await _harness.PublishAsync(
+            AppsControlAreas.System,
+            new Change(AppsControlChangeTypes.Entity, organization, ChangeOperation.Create, new { nameAr = "جهة", nameEn = "Group" }),
+            Company(company, organization),
+            Branch(branch, company));
+        Change App(string code, object payload) => new(AppsControlChangeTypes.BusinessApp, code, ChangeOperation.Create, payload);
+        async Task<IEnumerable<string>> Problems(object payload) =>
+            (await Should.ThrowAsync<ChangeValidationException>(() => _harness.DraftAsync(AppsControlAreas.System, App(Harness.Unique("APP"), payload)))).Errors.Keys;
+
+        (await Problems(new { nameAr = "ت", nameEn = "A", kind = "DYNAMIC_CUBE", channels = Array.Empty<string>() })).ShouldContain("channels");
+        (await Problems(new { nameAr = "ت", nameEn = "A", kind = "DYNAMIC_CUBE", channels = new[] { "MOBILE" } })).ShouldContain("channels");
+        (await Problems(new { nameAr = "ت", nameEn = "A", kind = "CONNECTED", channels = new[] { "INTERNAL" } })).ShouldContain("channels");
+        (await Problems(new { nameAr = "ت", nameEn = "A", kind = "DYNAMIC_CUBE", channels = new[] { "INTERNAL" }, companies = new[] { company } }))
+            .ShouldContain("companies", "the company belongs to another organization than the default one");
+
+        var app = Harness.Unique("APP");
+        await _harness.PublishAsync(AppsControlAreas.System, App(app, new
+        {
+            nameAr = "ت",
+            nameEn = "A",
+            entityCode = organization,
+            kind = "DYNAMIC_CUBE",
+            channels = new[] { "INTERNAL", "EXTERNAL" },
+            companies = new[] { company },
+            branches = new[] { branch },
+        }));
+        var row = (await ListAsync(AppsControlChangeTypes.BusinessApp)).Single(a => a.GetProperty("code").GetString() == app);
+        row.GetProperty("channels").EnumerateArray().Select(c => c.GetString()).ShouldBe(["INTERNAL", "EXTERNAL"]);
+        row.GetProperty("companies").EnumerateArray().Single().GetString().ShouldBe(company);
+    }
+
+    [Fact]
     public async Task A_branch_needs_an_existing_company_and_a_company_with_branches_cannot_be_deleted()
     {
         var (company, branch) = (Harness.Unique("CO"), Harness.Unique("BR"));
