@@ -64,7 +64,8 @@ internal sealed class RequestService(
         var acting = await actingParty.GetAsync(cancellationToken);
         var (service, versionId) = await CurrentAsync(code, cancellationToken);
         var version = await cache.GetAsync(context, versionId, cancellationToken);
-        var facts = await FactsAsync(acting, refresh: false, cancellationToken);
+        // Eligibility is shown here, so profile data that is due (e.g. never fetched for this establishment) is fetched first.
+        var facts = await FactsAsync(acting, refresh: true, cancellationToken);
         var options = await OptionsAsync(service, version, await HeldDocumentsAsync(service, acting, cancellationToken), cancellationToken);
         var document = await ChosenAsync(options, cancellationToken);
         var ruleContext = Context(facts, acting, Prefill(version, facts, acting, document), null, document);
