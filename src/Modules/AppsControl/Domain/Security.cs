@@ -57,6 +57,12 @@ public sealed class Role : ConfigEntity
 
     /// <summary>Menu items the role shows; each gives the role VIEW on the screen the item opens.</summary>
     public List<RoleMenu> Menus { get; } = [];
+
+    /// <summary>
+    /// Companies where the role differs (ADR-0036): there its privileges, menus and data permissions are the rows of that
+    /// company (<see cref="Privilege.CompanyCode"/>…) instead of the role's own (rows without a company).
+    /// </summary>
+    public List<string> OverrideCompanies { get; set; } = [];
 }
 
 /// <summary>A menu item assigned to a role.</summary>
@@ -69,6 +75,9 @@ public sealed class RoleMenu : IAuditable
     public Guid MenuId { get; set; }
 
     public Menu? Menu { get; set; }
+
+    /// <summary>The company whose override this row belongs to; empty: the role's own menus.</summary>
+    public string? CompanyCode { get; set; }
 }
 
 /// <summary>Actions a role may perform on a resource, with optional per-field rules.</summary>
@@ -86,4 +95,7 @@ public sealed class Privilege : IAuditable
 
     /// <summary>JSON object: field code → <c>HIDDEN</c> | <c>READONLY</c>.</summary>
     public string? FieldRules { get; set; }
+
+    /// <summary>The company whose override this row belongs to; empty: the role's own privileges.</summary>
+    public string? CompanyCode { get; set; }
 }

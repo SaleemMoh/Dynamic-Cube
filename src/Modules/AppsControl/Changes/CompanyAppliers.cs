@@ -64,6 +64,11 @@ internal sealed class CompanyApplier(AppsControlDbContext db) : ConfigApplier<Co
         {
             throw new ChangeSetException($"Company {entity.Code} still has branches; delete or move them first.");
         }
+
+        if (await context.Roles.Where(r => r.OverrideCompanies.Contains(entity.Code)).Select(r => r.Code).FirstOrDefaultAsync(cancellationToken) is { } role)
+        {
+            throw new ChangeSetException($"Role {role} differs in company {entity.Code}; remove that override first.");
+        }
     }
 
     internal static string? Blank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();

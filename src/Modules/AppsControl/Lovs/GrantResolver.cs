@@ -19,12 +19,17 @@ public sealed class GrantResolver(AppsControlDbContext context, JsonLogicEvaluat
         ArgumentNullException.ThrowIfNull(lov);
         ArgumentNullException.ThrowIfNull(access);
 
+        // Each held role's own grants, or those of the company where it is held and differs (ADR-0036).
+        var companies = access.RoleSources.Select(s => s.CompanyCode).OfType<string>().Distinct().ToList();
         var grants = access.RoleIds.Count == 0
             ? []
-            : await context.LovGrants.AsNoTracking()
-                .Where(g => g.LovId == lov.Id && access.RoleIds.Contains(g.RoleId) && (g.ResourceId == null || g.Resource!.Code == resourceCode))
-                .Select(g => new { g.RoleId, g.GrantType, g.GrantedValues, g.Rule, g.DefaultValue, IsOverride = g.ResourceId != null })
-                .ToListAsync(cancellationToken);
+            : (await context.LovGrants.AsNoTracking()
+                .Where(g => g.LovId == lov.Id && access.RoleIds.Contains(g.RoleId) && (g.ResourceId == null || g.Resource!.Code == resourceCode)
+                    && (g.CompanyCode == null || companies.Contains(g.CompanyCode)))
+                .Select(g => new { g.RoleId, g.CompanyCode, g.GrantType, g.GrantedValues, g.Rule, g.DefaultValue, IsOverride = g.ResourceId != null })
+                .ToListAsync(cancellationToken))
+                .Where(g => access.RoleSources.Contains(new RoleSource(g.RoleId, g.CompanyCode)))
+                .ToList();
 
         if (grants.Count == 0)
         {
@@ -35,7 +40,7 @@ public sealed class GrantResolver(AppsControlDbContext context, JsonLogicEvaluat
         var values = new HashSet<string>(StringComparer.Ordinal);
         string? defaultValue = null;
         var userJson = access.User.ToJson();
-        foreach (var grant in grants.GroupBy(g => g.RoleId).Select(g => g.OrderByDescending(x => x.IsOverride).First()))
+        foreach (var grant in grants.GroupBy(g => (g.RoleId, g.CompanyCode)).Select(g => g.OrderByDescending(x => x.IsOverride).First()))
         {
             defaultValue ??= grant.DefaultValue;
             switch (grant.GrantType)

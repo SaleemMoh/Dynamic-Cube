@@ -78,32 +78,46 @@ public sealed partial class AccessResolver(
         var roles = await context.UserRoles.AsNoTracking()
             .Where(r => r.UserId == user.Id && r.Role!.IsActive && (r.Role.AppId == null || r.Role.AppId == app)
                 && (r.EffectiveFrom == null || r.EffectiveFrom <= today) && (r.EffectiveTo == null || r.EffectiveTo >= today))
-            .Select(r => new { r.RoleId, r.Role!.Code, r.Role.BusinessApp, r.Role.SharedApps })
+            .Select(r => new { r.RoleId, r.Role!.Code, r.Role.BusinessApp, r.Role.SharedApps, r.CompanyCode, r.Role.OverrideCompanies })
             .ToListAsync(cancellationToken);
 
         // Department default roles: those of the units the user is placed in today (ADR-0036).
         var departmentCodes = await DepartmentRoles.OfUserAsync(context, user.Id, today, cancellationToken);
         roles.AddRange(await context.Roles.AsNoTracking()
             .Where(r => departmentCodes.Contains(r.Code) && r.IsActive && (r.AppId == null || r.AppId == app))
-            .Select(r => new { RoleId = r.Id, r.Code, r.BusinessApp, r.SharedApps })
+            .Select(r => new { RoleId = r.Id, r.Code, r.BusinessApp, r.SharedApps, CompanyCode = (string?)null, r.OverrideCompanies })
             .ToListAsync(cancellationToken));
         var roleIds = roles.Select(r => r.RoleId).Distinct().ToList();
+
+        // A role held in a company where it differs contributes that company's override; otherwise its own contents.
+        // (Held in every company it uses its own contents until a current company is chosen, ADR-0036 step 5.)
+        var sources = roles
+            .Select(r => new RoleSource(r.RoleId, r.CompanyCode is { } company && r.OverrideCompanies.Contains(company) ? company : null))
+            .Distinct()
+            .ToList();
+        var overrideCompanies = sources.Select(s => s.CompanyCode).OfType<string>().Distinct().ToList();
 
         // The user's entity, and the business apps of their roles, shared ones included (every app when a role is not tied to one).
         var scope = new ConfigScope(
             user.EntityCode is { } entity ? new HashSet<string>(StringComparer.Ordinal) { entity } : null,
             roles.Count > 0 && roles.All(r => r.BusinessApp is not null) ? roles.SelectMany(r => r.SharedApps.Prepend(r.BusinessApp!)).ToHashSet(StringComparer.Ordinal) : null);
 
-        var privilegeRows = await context.Privileges.AsNoTracking()
-            .Where(p => roleIds.Contains(p.RoleId) && p.Resource!.IsActive)
-            .Select(p => new { p.Resource!.Code, p.Actions })
-            .ToListAsync(cancellationToken);
+        var privilegeRows = (await context.Privileges.AsNoTracking()
+            .Where(p => roleIds.Contains(p.RoleId) && p.Resource!.IsActive && (p.CompanyCode == null || overrideCompanies.Contains(p.CompanyCode)))
+            .Select(p => new { p.RoleId, p.CompanyCode, p.Resource!.Code, p.Actions })
+            .ToListAsync(cancellationToken))
+            .Where(p => sources.Contains(new RoleSource(p.RoleId, p.CompanyCode)))
+            .Select(p => new { p.Code, p.Actions })
+            .ToList();
 
         // A menu item assigned to a role opens its screen for the role.
-        var menuScreens = await context.RoleMenus.AsNoTracking()
-            .Where(m => roleIds.Contains(m.RoleId) && m.Menu!.IsActive && m.Menu.Resource != null && m.Menu.Resource.IsActive)
-            .Select(m => m.Menu!.Resource!.Code)
-            .ToListAsync(cancellationToken);
+        var menuScreens = (await context.RoleMenus.AsNoTracking()
+            .Where(m => roleIds.Contains(m.RoleId) && m.Menu!.IsActive && m.Menu.Resource != null && m.Menu.Resource.IsActive
+                && (m.CompanyCode == null || overrideCompanies.Contains(m.CompanyCode)))
+            .Select(m => new { m.RoleId, m.CompanyCode, m.Menu!.Resource!.Code })
+            .ToListAsync(cancellationToken))
+            .Where(m => sources.Contains(new RoleSource(m.RoleId, m.CompanyCode)))
+            .Select(m => m.Code);
         privilegeRows.AddRange(menuScreens.Select(code => new { Code = code, Actions = new List<string> { PrivilegeActions.View } }));
 
         // Personal privileges: screens and actions given to this person alone.
@@ -143,7 +157,7 @@ public sealed partial class AccessResolver(
             primary is null ? [] : JsonNode.Parse(primary.Attributes) as JsonObject ?? [],
             subtree.Distinct().ToList());
 
-        return new AccessSnapshot(userContext, user.NameAr, user.NameEn, user.Status, user.PreferredLanguage, roleIds, privileges, scope);
+        return new AccessSnapshot(userContext, user.NameAr, user.NameEn, user.Status, user.PreferredLanguage, roleIds, privileges, scope, sources);
     }
 
     private async Task<UserAccount> ProvisionAsync(CancellationToken cancellationToken)

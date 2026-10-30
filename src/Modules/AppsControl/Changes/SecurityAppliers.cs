@@ -107,6 +107,28 @@ public sealed class RolePayload : ConfigPayload
 
     /// <summary>Codes of the menu items the role shows (each opens its screen for the role).</summary>
     public List<string> Menus { get; set; } = [];
+
+    /// <summary>
+    /// Companies where the role differs (ADR-0036): holders of the role in that company get these privileges, menus and
+    /// data permissions instead of the role's own.
+    /// </summary>
+    public List<RoleOverridePayload> Overrides { get; set; } = [];
+}
+
+/// <summary>What a role contains: privileges, data permissions and menu items.</summary>
+public class RoleContentsPayload
+{
+    public List<PrivilegePayload> Privileges { get; set; } = [];
+
+    public List<GrantPayload> Grants { get; set; } = [];
+
+    public List<string> Menus { get; set; } = [];
+}
+
+/// <summary>A role as it is in one company.</summary>
+public sealed class RoleOverridePayload : RoleContentsPayload
+{
+    public string CompanyCode { get; set; } = string.Empty;
 }
 
 internal sealed class RoleApplier(AppsControlDbContext db, JsonLogicEvaluator evaluator) : ConfigApplier<Role, RolePayload>(db)
@@ -136,11 +158,71 @@ internal sealed class RoleApplier(AppsControlDbContext db, JsonLogicEvaluator ev
         entity.AppId = await refs.AppAsync(payload.AppCode, "appCode", errors, cancellationToken);
         entity.ReferenceCode = payload.ReferenceCode;
 
-        ChildSync.RequireUnique(payload.Privileges, p => p.ResourceCode, "privileges", errors);
-        var privileges = new List<Privilege>();
-        foreach (var (p, i) in payload.Privileges.Select((p, i) => (p, i)))
+        // The role's own contents, then those of each company where it differs (ADR-0036).
+        var (privileges, grants, menus) = await ContentsAsync(entity, payload.Privileges, payload.Grants, payload.Menus, null, string.Empty, refs, errors, cancellationToken);
+        ChildSync.RequireUnique(payload.Overrides, o => CompanyApplier.Blank(o.CompanyCode), "overrides", errors);
+        var companies = await refs.Context.Companies.AsNoTracking().Select(c => c.Code).ToListAsync(cancellationToken);
+        var overrideCompanies = new List<string>();
+        foreach (var (o, i) in payload.Overrides.Select((o, i) => (o, i)))
         {
-            var field = $"privileges[{i}]";
+            var field = $"overrides[{i}].";
+            var company = CompanyApplier.Blank(o.CompanyCode);
+            if (company is null)
+            {
+                errors.Add(field + "companyCode", "Name the company the role differs in.");
+                continue;
+            }
+
+            if (!companies.Contains(company) && !refs.IsPendingCreate(AppsControlChangeTypes.Company, company))
+            {
+                errors.Add(field + "companyCode", $"Company '{company}' does not exist.");
+            }
+
+            overrideCompanies.Add(company);
+            var (p, g, m) = await ContentsAsync(entity, o.Privileges, o.Grants, o.Menus, company, field, refs, errors, cancellationToken);
+            privileges.AddRange(p);
+            grants.AddRange(g);
+            menus.AddRange(m);
+        }
+
+        entity.OverrideCompanies = overrideCompanies;
+        if (errors.HasErrors || refs.IsValidating)
+        {
+            return;
+        }
+
+        ChildSync.Sync(entity.Menus, menus, m => (m.MenuId, m.CompanyCode), (_, _) => { });
+        ChildSync.Sync(entity.Privileges, privileges, p => (p.ResourceId, p.CompanyCode), (from, to) =>
+        {
+            to.Actions = from.Actions;
+            to.FieldRules = from.FieldRules;
+        });
+        ChildSync.Sync(entity.Grants, grants, g => (g.LovId, g.ResourceId, g.CompanyCode), (from, to) =>
+        {
+            to.GrantType = from.GrantType;
+            to.GrantedValues = from.GrantedValues;
+            to.Rule = from.Rule;
+            to.DefaultValue = from.DefaultValue;
+        });
+    }
+
+    /// <summary>Validates and builds privileges, data permissions and menus (the role's own, or a company's override).</summary>
+    private async Task<(List<Privilege> Privileges, List<LovGrant> Grants, List<RoleMenu> Menus)> ContentsAsync(
+        Role entity,
+        List<PrivilegePayload> privilegePayloads,
+        List<GrantPayload> grantPayloads,
+        List<string> menuCodes,
+        string? company,
+        string prefix,
+        RefResolver refs,
+        ValidationErrors errors,
+        CancellationToken cancellationToken)
+    {
+        ChildSync.RequireUnique(privilegePayloads, p => p.ResourceCode, prefix + "privileges", errors);
+        var privileges = new List<Privilege>();
+        foreach (var (p, i) in privilegePayloads.Select((p, i) => (p, i)))
+        {
+            var field = $"{prefix}privileges[{i}]";
             var resourceId = await refs.ResourceAsync(p.ResourceCode, field + ".resourceCode", errors, cancellationToken);
             var actions = p.Actions.Select(a => a.Trim().ToUpperInvariant()).Distinct().ToList();
             if (resourceId is { } rid && rid != Guid.Empty)
@@ -163,14 +245,15 @@ internal sealed class RoleApplier(AppsControlDbContext db, JsonLogicEvaluator ev
                 ResourceId = resourceId ?? Guid.Empty,
                 Actions = actions,
                 FieldRules = p.FieldRules is { Count: > 0 } ? System.Text.Json.JsonSerializer.Serialize(p.FieldRules) : null,
+                CompanyCode = company,
             });
         }
 
-        ChildSync.RequireUnique(payload.Grants, g => (g.LovCode, g.ResourceCode), "grants", errors);
+        ChildSync.RequireUnique(grantPayloads, g => (g.LovCode, g.ResourceCode), prefix + "grants", errors);
         var grants = new List<LovGrant>();
-        foreach (var (g, i) in payload.Grants.Select((g, i) => (g, i)))
+        foreach (var (g, i) in grantPayloads.Select((g, i) => (g, i)))
         {
-            var field = $"grants[{i}]";
+            var field = $"{prefix}grants[{i}]";
             var lovId = await refs.LovAsync(g.LovCode, field + ".lovCode", errors, cancellationToken);
             var resourceId = await refs.ResourceAsync(g.ResourceCode, field + ".resourceCode", errors, cancellationToken);
             switch (g.GrantType)
@@ -195,42 +278,26 @@ internal sealed class RoleApplier(AppsControlDbContext db, JsonLogicEvaluator ev
                 GrantedValues = g.GrantType == GrantType.Values ? g.GrantedValues.Distinct().ToList() : [],
                 Rule = g.GrantType == GrantType.Rule ? g.Rule?.ToJsonString() : null,
                 DefaultValue = g.DefaultValue,
+                CompanyCode = company,
             });
         }
 
-        ChildSync.RequireUnique(payload.Menus, m => m, "menus", errors);
+        ChildSync.RequireUnique(menuCodes, m => m, prefix + "menus", errors);
         var menus = new List<RoleMenu>();
-        foreach (var (code, i) in payload.Menus.Select((m, i) => (m, i)))
+        foreach (var (code, i) in menuCodes.Select((m, i) => (m, i)))
         {
-            menus.Add(new RoleMenu { RoleId = entity.Id, MenuId = await refs.MenuAsync(code, $"menus[{i}]", errors, cancellationToken) ?? Guid.Empty });
+            menus.Add(new RoleMenu { RoleId = entity.Id, MenuId = await refs.MenuAsync(code, $"{prefix}menus[{i}]", errors, cancellationToken) ?? Guid.Empty, CompanyCode = company });
         }
 
-        if (errors.HasErrors || refs.IsValidating)
-        {
-            return;
-        }
-
-        ChildSync.Sync(entity.Menus, menus, m => m.MenuId, (_, _) => { });
-        ChildSync.Sync(entity.Privileges, privileges, p => p.ResourceId, (from, to) =>
-        {
-            to.Actions = from.Actions;
-            to.FieldRules = from.FieldRules;
-        });
-        ChildSync.Sync(entity.Grants, grants, g => (g.LovId, g.ResourceId), (from, to) =>
-        {
-            to.GrantType = from.GrantType;
-            to.GrantedValues = from.GrantedValues;
-            to.Rule = from.Rule;
-            to.DefaultValue = from.DefaultValue;
-        });
+        return (privileges, grants, menus);
     }
 
-    protected override Task<RolePayload> ToPayloadAsync(AppsControlDbContext context, Role entity, CancellationToken cancellationToken) =>
-        Task.FromResult(new RolePayload
+    protected override Task<RolePayload> ToPayloadAsync(AppsControlDbContext context, Role entity, CancellationToken cancellationToken)
+    {
+        RoleContentsPayload Of(string? company) => new()
         {
-            AppCode = entity.App?.Code,
-            ReferenceCode = entity.ReferenceCode,
             Privileges = entity.Privileges
+                .Where(p => p.CompanyCode == company)
                 .OrderBy(p => p.Resource?.Code)
                 .Select(p => new PrivilegePayload
                 {
@@ -239,8 +306,9 @@ internal sealed class RoleApplier(AppsControlDbContext db, JsonLogicEvaluator ev
                     FieldRules = p.FieldRules is null ? null : System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(p.FieldRules),
                 })
                 .ToList(),
-            Menus = [.. entity.Menus.Select(m => m.Menu?.Code ?? string.Empty).Order(StringComparer.Ordinal)],
+            Menus = [.. entity.Menus.Where(m => m.CompanyCode == company).Select(m => m.Menu?.Code ?? string.Empty).Order(StringComparer.Ordinal)],
             Grants = entity.Grants
+                .Where(g => g.CompanyCode == company)
                 .OrderBy(g => g.Lov?.Code).ThenBy(g => g.Resource?.Code)
                 .Select(g => new GrantPayload
                 {
@@ -252,7 +320,23 @@ internal sealed class RoleApplier(AppsControlDbContext db, JsonLogicEvaluator ev
                     DefaultValue = g.DefaultValue,
                 })
                 .ToList(),
+        };
+
+        var own = Of(null);
+        return Task.FromResult(new RolePayload
+        {
+            AppCode = entity.App?.Code,
+            ReferenceCode = entity.ReferenceCode,
+            Privileges = own.Privileges,
+            Menus = own.Menus,
+            Grants = own.Grants,
+            Overrides = [.. entity.OverrideCompanies.Order(StringComparer.Ordinal).Select(company =>
+            {
+                var contents = Of(company);
+                return new RoleOverridePayload { CompanyCode = company, Privileges = contents.Privileges, Menus = contents.Menus, Grants = contents.Grants };
+            })],
         });
+    }
 
     protected override async Task BeforeDeleteAsync(AppsControlDbContext context, Role entity, CancellationToken cancellationToken)
     {

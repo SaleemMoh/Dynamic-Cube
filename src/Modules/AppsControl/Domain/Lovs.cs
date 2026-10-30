@@ -171,4 +171,7 @@ public sealed class LovGrant : IAuditable
     public string? Rule { get; set; }
 
     public string? DefaultValue { get; set; }
+
+    /// <summary>The company whose role override this grant belongs to; empty: the role's own grant.</summary>
+    public string? CompanyCode { get; set; }
 }

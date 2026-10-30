@@ -1787,6 +1787,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("CompanyCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("company_code");
+
                     b.Property<string>("DefaultValue")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
@@ -1828,11 +1833,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.HasIndex("ResourceId")
                         .HasDatabaseName("ix_lov_grant_resource_id");
 
-                    b.HasIndex("RoleId", "LovId", "ResourceId")
+                    b.HasIndex("RoleId", "LovId", "ResourceId", "CompanyCode")
                         .IsUnique()
-                        .HasDatabaseName("ix_lov_grant_role_id_lov_id_resource_id");
+                        .HasDatabaseName("ix_lov_grant_role_id_lov_id_resource_id_company_code");
 
-                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("RoleId", "LovId", "ResourceId"), false);
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("RoleId", "LovId", "ResourceId", "CompanyCode"), false);
 
                     b.ToTable("lov_grant", "apps");
                 });
@@ -2395,6 +2400,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnType("text[]")
                         .HasColumnName("actions");
 
+                    b.Property<string>("CompanyCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("company_code");
+
                     b.Property<string>("FieldRules")
                         .HasColumnType("jsonb")
                         .HasColumnName("field_rules");
@@ -2413,9 +2423,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.HasIndex("ResourceId")
                         .HasDatabaseName("ix_privilege_resource_id");
 
-                    b.HasIndex("RoleId", "ResourceId")
+                    b.HasIndex("RoleId", "ResourceId", "CompanyCode")
                         .IsUnique()
-                        .HasDatabaseName("ix_privilege_role_id_resource_id");
+                        .HasDatabaseName("ix_privilege_role_id_resource_id_company_code");
+
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("RoleId", "ResourceId", "CompanyCode"), false);
 
                     b.ToTable("privilege", "apps");
                 });
@@ -2581,6 +2593,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnType("character varying(500)")
                         .HasColumnName("name_en");
 
+                    b.PrimitiveCollection<List<string>>("OverrideCompanies")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("override_companies");
+
                     b.Property<string>("Owner")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -2631,6 +2648,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("CompanyCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("company_code");
+
                     b.Property<Guid>("MenuId")
                         .HasColumnType("uuid")
                         .HasColumnName("menu_id");
@@ -2645,9 +2667,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.HasIndex("MenuId")
                         .HasDatabaseName("ix_role_menu_menu_id");
 
-                    b.HasIndex("RoleId", "MenuId")
+                    b.HasIndex("RoleId", "MenuId", "CompanyCode")
                         .IsUnique()
-                        .HasDatabaseName("ix_role_menu_role_id_menu_id");
+                        .HasDatabaseName("ix_role_menu_role_id_menu_id_company_code");
+
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("RoleId", "MenuId", "CompanyCode"), false);
 
                     b.ToTable("role_menu", "apps");
                 });

@@ -74,7 +74,7 @@ public sealed class AppsControlSeeder(
             foreach (var resource in definitions)
             {
                 var actions = SystemCatalog.ActionsOf(code, resource);
-                var privilege = role.Privileges.SingleOrDefault(p => p.ResourceId == resources[resource.Code].Id);
+                var privilege = role.Privileges.SingleOrDefault(p => p.ResourceId == resources[resource.Code].Id && p.CompanyCode == null);
                 if (actions.Count == 0)
                 {
                     if (privilege is not null)

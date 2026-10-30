@@ -9,8 +9,11 @@ a Dynamic Cube app adds items to the channels it ticks). Default external roles 
 connected apps (step 7). Step 3 done: one Access dialog per user with roles by company and branches, roles received
 from departments (org units carry default roles) and personal privileges; roles can be added to or removed from many
 users at once after a review that leaves what they already hold alone; a class may have values per company (legacy
-*Company Lookups*: each value serves some companies or all). Company and branch limits are stored now and applied from
-steps 5 and 6. The NHC demo data uses all of it. Replaces entities,
+*Company Lookups*: each value serves some companies or all). Step 4 done: a role may differ in a company (the role
+editor's company selector, shown with two or more companies; *Customize* starts the company's version from the role,
+which then has its own screens, actions, data permissions and menus there; the role is marked "differs in"); people
+holding the role in that company get that version. Company and branch limits are stored now and applied from steps 5
+and 6 (a role held in every company uses its own contents until a current company is chosen in step 5). The NHC demo data uses all of it. Replaces entities,
 business apps, channel apps and the System / Entity / App levels of [ADR-0031](0031-entities-business-apps-levels.md).
 
 ## Context

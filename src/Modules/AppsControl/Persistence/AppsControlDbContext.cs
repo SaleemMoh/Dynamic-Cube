@@ -198,11 +198,13 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
             b.HasMany(e => e.Privileges).WithOne().HasForeignKey(p => p.RoleId).OnDelete(DeleteBehavior.Cascade);
             b.HasMany(e => e.Grants).WithOne().HasForeignKey(g => g.RoleId).OnDelete(DeleteBehavior.Cascade);
             b.HasMany(e => e.Menus).WithOne().HasForeignKey(m => m.RoleId).OnDelete(DeleteBehavior.Cascade);
+            b.Property(e => e.OverrideCompanies).HasColumnType("text[]");
         });
         modelBuilder.Entity<RoleMenu>(b =>
         {
             b.ToTable("role_menu", Schema);
-            b.HasIndex(e => new { e.RoleId, e.MenuId }).IsUnique();
+            b.Property(e => e.CompanyCode).HasMaxLength(100);
+            b.HasIndex(e => new { e.RoleId, e.MenuId, e.CompanyCode }).IsUnique().AreNullsDistinct(false);
 
             // A deleted menu item simply leaves the roles it was assigned to.
             b.HasOne(e => e.Menu).WithMany().HasForeignKey(e => e.MenuId).OnDelete(DeleteBehavior.Cascade);
@@ -210,7 +212,8 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
         modelBuilder.Entity<Privilege>(b =>
         {
             b.ToTable("privilege", Schema);
-            b.HasIndex(e => new { e.RoleId, e.ResourceId }).IsUnique();
+            b.Property(e => e.CompanyCode).HasMaxLength(100);
+            b.HasIndex(e => new { e.RoleId, e.ResourceId, e.CompanyCode }).IsUnique().AreNullsDistinct(false);
             b.Property(e => e.FieldRules).HasColumnType("jsonb");
             b.HasOne(e => e.Resource).WithMany().HasForeignKey(e => e.ResourceId).OnDelete(DeleteBehavior.Restrict);
         });
@@ -301,7 +304,8 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
         modelBuilder.Entity<LovGrant>(b =>
         {
             b.ToTable("lov_grant", Schema);
-            b.HasIndex(e => new { e.RoleId, e.LovId, e.ResourceId }).IsUnique().AreNullsDistinct(false);
+            b.Property(e => e.CompanyCode).HasMaxLength(100);
+            b.HasIndex(e => new { e.RoleId, e.LovId, e.ResourceId, e.CompanyCode }).IsUnique().AreNullsDistinct(false);
             b.Property(e => e.Rule).HasColumnType("jsonb");
             b.Property(e => e.DefaultValue).HasMaxLength(200);
             b.HasOne(e => e.Lov).WithMany().HasForeignKey(e => e.LovId).OnDelete(DeleteBehavior.Cascade);

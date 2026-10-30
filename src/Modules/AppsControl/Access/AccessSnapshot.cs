@@ -12,8 +12,15 @@ public sealed class AccessSnapshot(
     string? preferredLanguage,
     IReadOnlyList<Guid> roleIds,
     IReadOnlyDictionary<string, IReadOnlySet<string>> privileges,
-    ConfigScope? scope = null)
+    ConfigScope? scope = null,
+    IReadOnlyList<RoleSource>? roleSources = null)
 {
+    /// <summary>
+    /// Whose contents each held role contributes: the role's own (no company) or a company's override (ADR-0036), e.g.
+    /// for the data permissions of lists of values.
+    /// </summary>
+    public IReadOnlyList<RoleSource> RoleSources { get; } = roleSources ?? [.. roleIds.Select(id => new RoleSource(id, null))];
+
     /// <summary>The entities and business apps whose configuration and data the user works with.</summary>
     public ConfigScope Scope { get; } = scope ?? ConfigScope.Everything;
 
@@ -40,3 +47,6 @@ public sealed class AccessSnapshot(
     public static AccessSnapshot Anonymous(string app) =>
         new(UserContext.Anonymous(app), null, null, UserStatus.Active, null, [], new Dictionary<string, IReadOnlySet<string>>(), new ConfigScope(new HashSet<string>(), new HashSet<string>()));
 }
+
+/// <summary>A role the user holds and the company whose override of it applies (none: the role's own contents).</summary>
+public sealed record RoleSource(Guid RoleId, string? CompanyCode);

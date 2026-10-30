@@ -184,7 +184,17 @@ and branch filtering come (ADR-0036 steps 5 and 6).
 Screens, services and reports register themselves as resources.
 
 **`privilege`** — `role_id`, `resource_id`, `actions` (text[] ⊆ `VIEW`, `CREATE`, `EDIT`,
-`DELETE`, `APPROVE`, `EXPORT`, `PRINT`), `field_rules` (jsonb: field → `HIDDEN` | `READONLY`).
+`DELETE`, `APPROVE`, `EXPORT`, `PRINT`), `field_rules` (jsonb: field → `HIDDEN` | `READONLY`), `company_code`.
+
+**Role company overrides** ([ADR-0036](adr/0036-organizations-companies-branches-apps.md) step 4) — a role means the same
+in every company; rarely it differs in one. `role.override_companies` lists those companies, and `privilege`,
+`role_menu` and `lov_grant` rows with that `company_code` are the role's contents there (rows without a company are the
+role's own). In the role editor (with two or more companies) a company selector shows *All companies* by default;
+choosing a company shows the role as it is there, *Customize* starts the company's version from the role's own, and
+*Drop this company's version* removes it. Saved in the role payload as `overrides: [{ companyCode, privileges, grants,
+menus }]`. Access: a role held in a company where it differs contributes that version (screens, actions, menus and
+list-of-values grants); held in every company it contributes its own contents until a current company is chosen (step
+5). A company that a role differs in cannot be deleted.
 
 **`role_menu`** — `role_id`, `menu_id`: the menu items a role shows. An assigned item gives the role `VIEW` on the
 screen it opens, so a role can be built from the menu alone; items whose screen the role may view show anyway. A
