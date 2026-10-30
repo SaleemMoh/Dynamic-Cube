@@ -17,7 +17,7 @@ import { ConfirmData, ConfirmDialog } from '../confirm-dialog';
 import { DraftsService } from '../drafts.service';
 import { PrivilegesService } from '../privileges.service';
 import { ConfigEditor, ConfigEditorData } from './config-editor';
-import { ConfigRowAction, ConfigType, scopeOf } from './config-types';
+import { ConfigBulkAction, ConfigBulkData, ConfigRowAction, ConfigType, scopeOf } from './config-types';
 
 /** Published rows of one configuration type with new / edit / delete actions that go into a draft change set. */
 @Component({
@@ -34,6 +34,24 @@ import { ConfigRowAction, ConfigType, scopeOf } from './config-types';
         <input matInput [placeholder]="'config.search' | dcTranslate" (input)="search.set($any($event.target).value)" />
       </mat-form-field>
       <span class="dc-toolbar__spacer"></span>
+      @if (canEdit()) {
+        @for (action of type().bulkActions ?? []; track action.testId) {
+          <button
+            matButton="outlined"
+            type="button"
+            (click)="openBulk(action)"
+            [disabled]="!selected().size"
+            [matTooltip]="selected().size ? '' : ('config.tickRows' | dcTranslate)"
+            [attr.data-testid]="action.testId"
+          >
+            <mat-icon fontSet="material-symbols-outlined">{{ action.icon }}</mat-icon>
+            {{ action.label | dcLocalize }}
+            @if (selected().size) {
+              ({{ selected().size }})
+            }
+          </button>
+        }
+      }
       <button matButton="outlined" type="button" (click)="exportPackage()" [disabled]="!rows().length" [attr.data-testid]="'export-' + type().entityType">
         <mat-icon fontSet="material-symbols-outlined">download</mat-icon>
         {{ 'export.button' | dcTranslate }}
@@ -257,10 +275,28 @@ export class ConfigTable {
   protected async openAction(action: ConfigRowAction, row: ConfigRow): Promise<void> {
     const changed = await firstValueFrom(
       this.dialog
-        .open<unknown, ConfigEditorData, boolean>(await action.dialog(), { data: { type: this.type(), row }, width: '44rem', maxWidth: '96vw', autoFocus: 'first-tabbable' })
+        .open<unknown, ConfigEditorData, boolean>(await action.dialog(), {
+          data: { type: this.type(), row },
+          width: action.width ?? '44rem',
+          maxWidth: '96vw',
+          autoFocus: 'first-tabbable',
+        })
         .afterClosed(),
     );
     if (changed) this.list.reload();
+  }
+
+  protected async openBulk(action: ConfigBulkAction): Promise<void> {
+    const rows = this.rows().filter((r) => this.selected().has(r.code));
+    const changed = await firstValueFrom(
+      this.dialog
+        .open<unknown, ConfigBulkData, boolean>(await action.dialog(), { data: { type: this.type(), rows }, width: '44rem', maxWidth: '96vw', autoFocus: 'first-tabbable' })
+        .afterClosed(),
+    );
+    if (changed) {
+      this.selected.set(new Set());
+      this.list.reload();
+    }
   }
 
   protected async edit(listed: ConfigRow | null): Promise<void> {

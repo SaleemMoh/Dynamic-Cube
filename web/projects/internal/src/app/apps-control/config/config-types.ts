@@ -48,6 +48,22 @@ export interface ConfigRowAction {
   label: LocalizedText;
   testId: string;
   dialog: () => Promise<Type<unknown>>;
+  /** Dialog width (default 44rem). */
+  width?: string;
+}
+
+/** What a bulk dialog receives: the type and the ticked rows. */
+export interface ConfigBulkData {
+  type: ConfigType;
+  rows: Record<string, unknown>[];
+}
+
+/** A dialog acting on the ticked rows (it receives `ConfigBulkData`), e.g. adding roles to several users. */
+export interface ConfigBulkAction {
+  icon: string;
+  label: LocalizedText;
+  testId: string;
+  dialog: () => Promise<Type<unknown>>;
 }
 
 export interface ConfigType {
@@ -66,6 +82,8 @@ export interface ConfigType {
   noCreate?: boolean;
   rowLinks?: ConfigRowLink[];
   rowActions?: ConfigRowAction[];
+  /** Actions on the ticked rows, shown above the table. */
+  bulkActions?: ConfigBulkAction[];
   /** A dialog that creates rows instead of the generic form (e.g. a user together with the sign-in account). */
   createDialog?: () => Promise<Type<unknown>>;
   /** A component shown above the table that explains how the screen works on this installation (e.g. where accounts come from). */
@@ -346,6 +364,14 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
             ref: 'apps.org-unit',
           },
           {
+            code: 'defaultRoles',
+            type: 'select',
+            multiple: true,
+            label: t('أدوار تلقائية لمن في الوحدة', 'Default roles of people in this unit'),
+            ref: 'apps.role',
+            defaultValue: [],
+          },
+          {
             code: 'attributes',
             type: 'json',
             label: t('خصائص (المنطقة، الأمانة…)', 'Attributes (region, amanah…)'),
@@ -389,10 +415,25 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
         intro: () => import('../users/identity-notice').then((m) => m.IdentityNotice),
         rowActions: [
           {
+            icon: 'key',
+            label: t('الصلاحيات حسب الشركة', 'Access'),
+            testId: 'access',
+            width: '60rem',
+            dialog: () => import('../users/access-dialog').then((m) => m.AccessDialog),
+          },
+          {
             icon: 'manage_accounts',
             label: t('حساب الدخول', 'Sign-in account'),
             testId: 'account',
             dialog: () => import('../users/account-dialog').then((m) => m.AccountDialog),
+          },
+        ],
+        bulkActions: [
+          {
+            icon: 'group_add',
+            label: t('إضافة أو إزالة أدوار', 'Add or remove roles'),
+            testId: 'bulk-roles',
+            dialog: () => import('../users/bulk-roles-dialog').then((m) => m.BulkRolesDialog),
           },
         ],
         fields: [
@@ -412,15 +453,6 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
             type: 'select',
             label: t('اللغة', 'Language'),
             options: [opt('ar', 'العربية', 'Arabic'), opt('en', 'الإنجليزية', 'English')],
-          },
-          {
-            code: 'roles',
-            type: 'refList',
-            multiple: true,
-            itemKey: 'roleCode',
-            label: t('الأدوار', 'Roles'),
-            ref: 'apps.role',
-            picker: 'dual',
           },
           {
             code: 'assignments',
