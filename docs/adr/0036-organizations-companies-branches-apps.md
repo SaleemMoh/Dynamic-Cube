@@ -1,7 +1,7 @@
 # ADR-0036: Organizations, companies, branches and apps; one place for a user's access
 
-**Status:** Proposed — for the owner's approval before implementation. Replaces entities, business apps, channel apps
-and the System / Entity / App levels of [ADR-0031](0031-entities-business-apps-levels.md) once accepted.
+**Status:** Accepted (approved by the owner; implemented in small steps, each confirmed first). Replaces entities,
+business apps, channel apps and the System / Entity / App levels of [ADR-0031](0031-entities-business-apps-levels.md).
 
 ## Context
 The existing Apps Control (the one being replaced) works with *instances*: one company group plus one product, each with
@@ -30,6 +30,14 @@ Organization  (a client or group: eSpire Group, ADEC, a ministry)
 | **Dynamic Cube app** | Built with the platform: services from the Service Builder, portal, branding | In the platform database, tagged with organization, company and branch |
 | **Connected app** (LedgerVault, DocVault, HRVault, PMS…) | An outside application using the platform as its provider | In its own database |
 
+**Channels.** A Dynamic Cube app ticks where it appears: the *internal system* (employees in the browser), the *portal*
+(external users) and the *field app* (inspectors on tablets and phones). One app may use several channels (Sejil: internal
+system and portal), so it is never split into "internal" and "external" apps. Connected apps run on their own screens and
+use no channel.
+
+**Default external role.** Each app may name a role given to external users on their first sign-in (e.g. through
+Nafath), so they get that app's permissions without staff action.
+
 A connected app uses, as it needs: sign-in (single sign-on), users, roles, menus and branches (Apps Control), the
 Action Center, workflow (cases started by the app), parties, notifications (email, SMS, in-app) and branding. It is
 registered with API credentials (client id and secret in the secret store) and its menu tree. The internal system, the
@@ -53,6 +61,8 @@ app. Database connections are server configuration, never typed into screens.
   list, so no per-person roles.
 - Bulk assignment adds or removes roles for many users; it never overwrites silently.
 - Employees still have their placement in the organization structure (unit and position) for task routing.
+- **Department default roles:** an organization unit may carry default roles, given to people placed in it (and taken
+  away when they leave it, unless also given directly); they stay visible and editable on the person's Access tab.
 
 ### After sign-in: workspace switcher
 Only when a user has more than one company or app: companies grouped by organization, apps as tiles, the last choice
@@ -62,6 +72,19 @@ remembered, switching from the header without signing out. Inactive combinations
 Configuration (services, workflows, document types, lists of values…) belongs to an organization and optionally to some
 apps; a few settings may be set per company (e.g. holidays, fees) where a module allows it. Work data is filtered by
 company and branch.
+
+## Example: NRRC
+- **Structure:** organization NRRC, one company (NRRC) and one branch (Riyadh); both levels are hidden.
+- **Apps:** *Sejil* (Dynamic Cube app; channels internal system and portal), *Inspection System* (Dynamic Cube app;
+  channels field app and internal system), *RSO* (connected app with its own database, using Apps Control lists of
+  values, roles, permissions and internal and external users).
+- **Departments** (Licensing, Workers, Field Inspection, Marketing, Financial) are organization units for routing tasks;
+  roles decide the screens: Licensing officer (Sejil, Inspection), Workers officer (Sejil), Inspector (Inspection),
+  Marketing and Financial officers (RSO), each department carrying its default roles.
+- **Employees** sign in once and use the three apps with the same account.
+- **External users** sign in with Nafath, one identity for both portals: Sejil's legal representatives act for the
+  facilities reported by Aman at sign-in (facility links in the party registry); RSO's individuals act for themselves.
+  Each app's default external role gives them its permissions.
 
 ## What disappears
 Instances, instance and company user grants, Ref Instance, DB type / name / connection fields, business apps, the channel
