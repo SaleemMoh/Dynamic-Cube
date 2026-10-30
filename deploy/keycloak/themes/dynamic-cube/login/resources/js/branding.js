@@ -40,7 +40,7 @@
   }
 
   function apply(origin, branding) {
-    var color = internal ? branding.internalThemeColor : branding.portalThemeColor;
+    var color = branding.themeColor || (internal ? branding.internalThemeColor : branding.portalThemeColor);
     if (color && HEX.test(color)) applyColor(color);
     if (branding.loginImageUrl) {
       document.documentElement.style.setProperty('--dc-login-image', 'url("' + origin + branding.loginImageUrl + '")');
@@ -54,12 +54,23 @@
       logo.alt = (lang === 'en' ? branding.nameEn : branding.nameAr) || '';
       header.insertBefore(logo, header.firstChild);
     }
+    // The channel's own title (when it has one) replaces the built-in one.
+    var lang2 = (document.documentElement.lang || 'ar').slice(0, 2);
+    var title = lang2 === 'en' ? branding.titleEn || branding.titleAr : branding.titleAr || branding.titleEn;
+    var heading = document.getElementById('kc-header-wrapper');
+    if (title && heading) {
+      for (var i = 0; i < heading.childNodes.length; i++) {
+        var node = heading.childNodes[i];
+        if (node.nodeType === 3 && node.textContent.trim()) node.textContent = title;
+      }
+    }
   }
 
   document.addEventListener('DOMContentLoaded', function () {
     var origin = appOrigin();
     if (!origin || !window.fetch) return;
-    fetch(origin + '/api/apps-control/v1/branding', { credentials: 'omit' })
+    // The internal system's sign-in shows the internal system's look, the portal's the portal's.
+    fetch(origin + '/api/apps-control/v1/branding?channel=' + (internal ? 'INTERNAL' : 'EXTERNAL'), { credentials: 'omit' })
       .then(function (response) {
         return response.ok ? response.json() : null;
       })

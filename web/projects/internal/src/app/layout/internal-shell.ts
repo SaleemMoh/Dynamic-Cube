@@ -1,5 +1,5 @@
 import { BidiModule } from '@angular/cdk/bidi';
-import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { BrandingService, BusinessAppSelector, I18nService, LanguageSwitcher, NotificationBell, TranslatePipe, UserMenu } from '@dynamic-cube/shared';
@@ -35,7 +35,7 @@ import { NavState } from './nav-state';
               <mat-icon fontSet="material-symbols-outlined">deployed_code</mat-icon>
             </span>
           }
-          <span class="dc-topbar__title">{{ title() }}</span>
+          <span class="dc-topbar__title">{{ shownTitle() }}</span>
         </a>
         <span class="dc-topbar__spacer"></span>
         <div class="dc-topbar__actions">
@@ -136,6 +136,11 @@ import { NavState } from './nav-state';
 })
 export class InternalShell {
   readonly title = input.required<string>();
+  /** The channel's or chosen app's own title when it has one, else the app's built-in title. */
+  protected readonly shownTitle = computed(() => {
+    const b = this.branding();
+    return (b.titleAr || b.titleEn ? this.i18n.localize({ ar: b.titleAr ?? b.titleEn ?? '', en: b.titleEn ?? b.titleAr ?? '' }) : '') || this.title();
+  });
   protected readonly i18n = inject(I18nService);
   protected readonly nav = inject(NavState);
   protected readonly branding = inject(BrandingService).branding;

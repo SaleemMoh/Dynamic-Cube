@@ -237,7 +237,7 @@ internal sealed partial class EntityApplier(AppsControlDbContext db) : ConfigApp
     private static partial System.Text.RegularExpressions.Regex EmailAddress();
 
     /// <summary>An uploaded image's id, or null; reported when it matches no upload.</summary>
-    private static async Task<string?> AssetAsync(RefResolver refs, string? key, string field, ValidationErrors errors, CancellationToken cancellationToken)
+    internal static async Task<string?> AssetAsync(RefResolver refs, string? key, string field, ValidationErrors errors, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(key))
         {
@@ -253,7 +253,7 @@ internal sealed partial class EntityApplier(AppsControlDbContext db) : ConfigApp
         return key;
     }
 
-    private static string? Color(string? value, string field, ValidationErrors errors)
+    internal static string? Color(string? value, string field, ValidationErrors errors)
     {
         if (string.IsNullOrWhiteSpace(value))
         {

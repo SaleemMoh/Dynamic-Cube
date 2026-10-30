@@ -77,8 +77,12 @@ export class AppsControlApi {
     );
   }
 
-  branding(): Observable<BrandingInfo> {
-    return this.http.get<BrandingInfo>(`${APPS_CONTROL_API}/branding`);
+  /** The look of a channel (and an app on it): what they leave empty comes from the organization. */
+  branding(channel?: string | null, app?: string | null): Observable<BrandingInfo> {
+    let params = new HttpParams();
+    if (channel) params = params.set('channel', channel);
+    if (app) params = params.set('app', app);
+    return this.http.get<BrandingInfo>(`${APPS_CONTROL_API}/branding`, { params });
   }
 
   /** Uploads an image (logo); it becomes visible to everyone once a change set referencing it is published. */

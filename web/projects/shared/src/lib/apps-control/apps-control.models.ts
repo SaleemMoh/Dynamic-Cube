@@ -153,6 +153,11 @@ export interface BrandingInfo {
   /** Behind the titles of the portal's pages. */
   portalHeroImageUrl?: string | null;
   contact?: EntityContact | null;
+  /** Main colour of the requested channel (and app). */
+  themeColor?: string | null;
+  /** Title of the channel or app when it has its own look (else the app's built-in title). */
+  titleAr?: string | null;
+  titleEn?: string | null;
 }
 
 /** How the public reaches the entity. */

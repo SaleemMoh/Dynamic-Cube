@@ -27,6 +27,29 @@ public sealed class BrandingAsset : IHasAuditColumns
     public string? UpdatedBy { get; set; }
 }
 
+/// <summary>
+/// The look of one channel (the internal system <c>INTERNAL</c>, the portal <c>EXTERNAL</c>, the field app <c>FIELD</c>)
+/// or one app (its code): <see cref="ConfigEntity.Code"/> names it and <see cref="ConfigEntity.NameAr"/> /
+/// <see cref="ConfigEntity.NameEn"/> are the title shown in its header and on its sign-in page. Anything left empty comes
+/// from the channel (for an app) and then from the organization.
+/// </summary>
+public sealed class AppBranding : ConfigEntity
+{
+    /// <summary>Main colour (<c>#RRGGBB</c>).</summary>
+    public string? ThemeColor { get; set; }
+
+    /// <summary>Ids of <see cref="BrandingAsset"/>s: the logo, the footer image, the sign-in image and the page banner.</summary>
+    public string? LogoFileKey { get; set; }
+
+    public string? FooterImageKey { get; set; }
+
+    public string? LoginImageKey { get; set; }
+
+    public string? HeroImageKey { get; set; }
+
+    public IEnumerable<string> AssetKeys() => new[] { LogoFileKey, FooterImageKey, LoginImageKey, HeroImageKey }.OfType<string>();
+}
+
 /// <summary>How the public reaches the entity: shown beside the portal's forms and on service pages.</summary>
 public sealed class EntityContact
 {

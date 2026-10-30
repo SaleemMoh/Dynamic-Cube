@@ -58,6 +58,7 @@ public static class AppsControlModule
         AddApplier<InstallationApplier>(services);
         AddApplier<HolidayApplier>(services);
         AddApplier<EntityApplier>(services);
+        AddApplier<AppBrandingApplier>(services);
         AddApplier<AppApplier>(services);
         AddApplier<BusinessAppApplier>(services);
         AddApplier<CompanyApplier>(services);

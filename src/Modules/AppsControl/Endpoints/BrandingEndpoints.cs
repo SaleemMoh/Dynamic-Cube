@@ -24,45 +24,72 @@ public sealed record BrandingInfo(
     string? FooterImageUrl = null,
     string? LoginImageUrl = null,
     string? PortalHeroImageUrl = null,
-    EntityContact? Contact = null);
+    EntityContact? Contact = null,
+    string? ThemeColor = null,
+    string? TitleAr = null,
+    string? TitleEn = null);
 
 public sealed record UploadedAsset(string Key, string Url);
 
 /// <summary>
 /// Entity name, logo, footer links and image, colours and the sign-in image for every app's shell and the sign-in pages;
-/// image upload for administrators.
+/// image upload for administrators. Each channel and app may have its own look (<see cref="AppBranding"/>): what an app
+/// leaves empty comes from the channel, and what the channel leaves empty from the organization.
 /// </summary>
 internal static partial class BrandingEndpoints
 {
     public const int MaxLogoBytes = 2 * 1024 * 1024;
 
+    private const string InternalChannel = "INTERNAL";
+    private const string PortalChannel = "EXTERNAL";
+
     public static string AssetUrl(string key) => $"{AppsControlModule.ApiPrefix}/branding/assets/{key}";
 
     public static void MapPublic(RouteGroupBuilder group)
     {
-        group.MapGet("/branding", async (HttpContext http, AppsControlDbContext db, CancellationToken ct) =>
+        group.MapGet("/branding", async (string? channel, string? app, HttpContext http, AppsControlDbContext db, CancellationToken ct) =>
         {
             var entity = await db.Entities.AsNoTracking().FirstOrDefaultAsync(e => e.Code == GovernmentEntity.SingletonCode, ct);
+            channel = string.IsNullOrWhiteSpace(channel) ? null : channel.Trim().ToUpperInvariant();
+            app = string.IsNullOrWhiteSpace(app) ? null : app.Trim();
+            var codes = new[] { InternalChannel, PortalChannel, channel, app }.OfType<string>().ToList();
+            var rows = await db.AppBrandings.AsNoTracking().Where(b => b.IsActive && codes.Contains(b.Code)).ToListAsync(ct);
+            AppBranding? Of(string? code) => code is null ? null : rows.FirstOrDefault(r => r.Code == code);
+            var own = Of(app);
+            var looks = new[] { own, Of(channel) };
+            string? Pick(Func<AppBranding, string?> field, string? fallback) =>
+                looks.OfType<AppBranding>().Select(field).FirstOrDefault(v => !string.IsNullOrEmpty(v)) ?? fallback;
+            string? Url(string? key) => key is null ? null : AssetUrl(key);
+
+            var internalColor = new[] { own, Of(InternalChannel) }.OfType<AppBranding>().Select(b => b.ThemeColor).FirstOrDefault(v => v is not null) ?? entity?.InternalThemeColor;
+            var portalColor = new[] { own, Of(PortalChannel) }.OfType<AppBranding>().Select(b => b.ThemeColor).FirstOrDefault(v => v is not null) ?? entity?.PortalThemeColor;
+            var title = looks.OfType<AppBranding>().FirstOrDefault();
+
             // Public and read-only: the sign-in pages (another origin) read it too.
             http.Response.Headers.AccessControlAllowOrigin = "*";
             return TypedResults.Ok(new BrandingInfo(
                 entity?.NameAr ?? string.Empty,
                 entity?.NameEn ?? string.Empty,
-                entity?.LogoFileKey is { } key ? AssetUrl(key) : null,
+                Url(Pick(b => b.LogoFileKey, entity?.LogoFileKey)),
                 entity?.FooterLinks ?? [],
-                entity?.InternalThemeColor,
-                entity?.PortalThemeColor,
-                entity?.FooterImageKey is { } footer ? AssetUrl(footer) : null,
-                entity?.LoginImageKey is { } login ? AssetUrl(login) : null,
-                entity?.PortalHeroImageKey is { } hero ? AssetUrl(hero) : null,
-                entity?.Contact ?? new EntityContact()));
+                internalColor,
+                portalColor,
+                Url(Pick(b => b.FooterImageKey, entity?.FooterImageKey)),
+                Url(Pick(b => b.LoginImageKey, entity?.LoginImageKey)),
+                Url(Pick(b => b.HeroImageKey, entity?.PortalHeroImageKey)),
+                entity?.Contact ?? new EntityContact(),
+                channel == PortalChannel ? portalColor : internalColor,
+                title?.NameAr,
+                title?.NameEn));
         }).AllowAnonymous();
 
         // Anyone may load the images in use; other (e.g. not yet approved) uploads only for Apps Control administrators.
         group.MapGet("/branding/assets/{id:guid}", async (Guid id, HttpContext http, AppsControlDbContext db, AccessResolver resolver, CancellationToken ct) =>
         {
             var entity = await db.Entities.AsNoTracking().FirstOrDefaultAsync(e => e.Code == GovernmentEntity.SingletonCode, ct);
-            if (entity is null || !entity.AssetKeys().Any(k => string.Equals(k, id.ToString(), StringComparison.OrdinalIgnoreCase)))
+            var looks = await db.AppBrandings.AsNoTracking().Where(b => b.IsActive).ToListAsync(ct);
+            var inUse = (entity?.AssetKeys() ?? []).Concat(looks.SelectMany(b => b.AssetKeys()));
+            if (!inUse.Any(k => string.Equals(k, id.ToString(), StringComparison.OrdinalIgnoreCase)))
             {
                 var access = await resolver.GetAsync(ct);
                 if (!access.Can(AppsControlResources.Installation, PrivilegeActions.View))

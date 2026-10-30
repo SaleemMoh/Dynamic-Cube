@@ -51,13 +51,22 @@ Staff are fictional and named by their job. How they get their access (open *Acc
   and customer experience carry default roles, so their staff have no roles of their own.
 - **Personal:** the audit manager can also open *Task supervision*.
 
+### Update without losing data
+
+`docker compose -f deploy/docker/docker-compose.yml up -d --build` rebuilds and restarts; the database migrates on
+start and keeps everything (branding, uploads, users, requests). The demo is loaded only into an empty database.
+
 ### Start again with the demo
 
 ```bash
-# Docker: removes every container and the database volume, then starts and loads the demo
+# Docker: removes every container AND the database volume (all data, including uploaded branding images),
+# then starts and loads the demo
 docker compose -f deploy/docker/docker-compose.yml down -v
 docker compose -f deploy/docker/docker-compose.yml up -d --build
 ```
+
+Use this only to wipe everything. Export what you want to keep first (e.g. the branding JSON from *Apps Control →
+Branding*; uploaded images are kept in the database and are lost with the volume).
 
 Local development: drop and create the `dynamic_cube` database, then run the Migrator with the demo:
 `DemoData__Name=nhc dotnet run --project src/Tools/Migrator`. Keycloak imports its realm only when it starts without

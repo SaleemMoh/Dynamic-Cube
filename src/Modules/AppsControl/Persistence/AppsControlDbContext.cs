@@ -15,6 +15,8 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
 
     public DbSet<GovernmentEntity> Entities => Set<GovernmentEntity>();
 
+    public DbSet<AppBranding> AppBrandings => Set<AppBranding>();
+
     public DbSet<App> Apps => Set<App>();
 
     public DbSet<BusinessApplication> BusinessApps => Set<BusinessApplication>();
@@ -106,6 +108,14 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
             b.Property(e => e.RegionCode).HasMaxLength(100);
             b.Property(e => e.City).HasMaxLength(200);
             b.HasIndex(e => e.CompanyCode);
+        });
+        Config<AppBranding>(modelBuilder, "app_branding", b =>
+        {
+            b.Property(e => e.ThemeColor).HasMaxLength(7);
+            b.Property(e => e.LogoFileKey).HasMaxLength(100);
+            b.Property(e => e.FooterImageKey).HasMaxLength(100);
+            b.Property(e => e.LoginImageKey).HasMaxLength(100);
+            b.Property(e => e.HeroImageKey).HasMaxLength(100);
         });
         Config<GovernmentEntity>(modelBuilder, "entity", b =>
         {

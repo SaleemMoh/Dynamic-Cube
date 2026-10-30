@@ -74,7 +74,15 @@ hidden.
 
 **`entity`** — the organization (screens say *Organization*; ADR-0036): names, `entity_kind` (ministry / authority /
 company — a domain of class `ENTITY_KIND`), `unified_number`, `cr_number`, `logo_file_id`. One row (`ENTITY`) is the
-usual case.
+usual case. Its branding (logo, colours, images, contact, footer links) is the default look of every app.
+
+**`app_branding`** (`apps.app-branding`) — the own look of a channel (`INTERNAL`, `EXTERNAL`, `FIELD`) or of an app built
+with the platform (its code; connected apps have their own screens): names = the title shown in its header and on its
+sign-in page, `theme_color`, `logo_file_key`, `footer_image_key`, `login_image_key`, `hero_image_key`. What an app leaves
+empty comes from the channel, and what the channel leaves empty from the organization. `GET /branding?channel=&app=`
+returns the result: the internal system and field app ask for the app the user picks in the header (and reload when it
+changes); the portal for the app given once as `?app=CODE` in a link to it (remembered for the visit); the sign-in pages
+for their channel. *Apps Control → Branding* edits the organization or, after choosing it, a channel or app.
 
 **`company`** (`apps.company`) — a legal entity of an organization (its `entity_code`): names, `cr_number`,
 `unified_number`, `vat_number`, `display_order`. A company with branches cannot be deleted.

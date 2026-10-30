@@ -14,6 +14,7 @@ import {
   EntityContact,
   FooterLink,
   I18nService,
+  LocalizePipe,
   SocialLink,
   TranslatePipe,
   problemMessages,
@@ -21,6 +22,7 @@ import {
 } from '@dynamic-cube/shared';
 import { firstValueFrom } from 'rxjs';
 import { ExportButton } from '../change-sets/export-button';
+import { AppBrandingEditor, BrandingTarget } from './app-branding';
 import { JsonImportButton } from '../change-sets/json-import-button';
 import { payloadOf } from '../config/form-values';
 import { DraftsService } from '../drafts.service';
@@ -69,6 +71,7 @@ const PRESETS = ['#ca9f45', '#1b8354', '#136f40', '#0e7490', '#1d4ed8', '#4338ca
     SubmitButton,
     AuthImageSrc,
     FormsModule,
+    AppBrandingEditor,
     ExportButton,
     JsonImportButton,
     ReactiveFormsModule,
@@ -78,6 +81,7 @@ const PRESETS = ['#ca9f45', '#1b8354', '#136f40', '#0e7490', '#1d4ed8', '#4338ca
     MatInputModule,
     MatSelectModule,
     MatTooltipModule,
+    LocalizePipe,
     TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -88,6 +92,7 @@ const PRESETS = ['#ca9f45', '#1b8354', '#136f40', '#0e7490', '#1d4ed8', '#4338ca
         <p>{{ 'branding.hint' | dcTranslate }}</p>
       </div>
       <div>
+        @if (target() === organization) {
         <dc-export-button entityType="apps.entity" [title]="{ ar: 'الهوية والشعار', en: 'Branding' }" />
         @if (canEdit()) {
           <dc-json-import-button
@@ -103,8 +108,30 @@ const PRESETS = ['#ca9f45', '#1b8354', '#136f40', '#0e7490', '#1d4ed8', '#4338ca
             {{ drafts.saveLabel('apps.entity') | dcTranslate }}
           </button>
         }
+        }
       </div>
     </header>
+    <section class="dc-card dc-targets" data-testid="branding-targets">
+      <mat-form-field subscriptSizing="dynamic" class="dc-targets__pick">
+        <mat-label>{{ 'branding.target' | dcTranslate }}</mat-label>
+        <mat-select [value]="target()" (selectionChange)="target.set($event.value)" data-testid="branding-target">
+          <mat-option [value]="organization">{{ 'branding.organization' | dcTranslate }}</mat-option>
+          <mat-optgroup [label]="'menus.channels' | dcTranslate">
+            @for (t of channelTargets(); track t.code) {
+              <mat-option [value]="t.code">{{ t.name | dcLocalize }}</mat-option>
+            }
+          </mat-optgroup>
+          @if (appTargets().length) {
+            <mat-optgroup [label]="'branding.apps' | dcTranslate">
+              @for (t of appTargets(); track t.code) {
+                <mat-option [value]="t.code">{{ t.name | dcLocalize }}</mat-option>
+              }
+            </mat-optgroup>
+          }
+        </mat-select>
+      </mat-form-field>
+      <p class="dc-muted">{{ 'branding.targetHint' | dcTranslate }}</p>
+    </section>
     @if (errors().length) {
       <ul class="dc-errors" role="alert">
         @for (error of errors(); track $index) {
@@ -113,6 +140,9 @@ const PRESETS = ['#ca9f45', '#1b8354', '#136f40', '#0e7490', '#1d4ed8', '#4338ca
       </ul>
     }
 
+    @if (target() !== organization && currentTarget(); as t) {
+      <dc-app-branding [target]="t" [canEdit]="canEdit()" />
+    } @else {
     <section class="dc-card">
       <h2>{{ 'branding.colors' | dcTranslate }}</h2>
       <p class="dc-muted">{{ 'branding.colorsHint' | dcTranslate }}</p>
@@ -290,12 +320,26 @@ const PRESETS = ['#ca9f45', '#1b8354', '#136f40', '#0e7490', '#1d4ed8', '#4338ca
         </button>
       }
     </section>
+    }
   `,
   styles: `
     :host {
       display: flex;
       flex-direction: column;
       gap: 12px;
+    }
+    .dc-targets {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 16px;
+    }
+    .dc-targets__pick {
+      min-width: 18rem;
+    }
+    .dc-targets p {
+      flex: 1 1 20rem;
+      margin: 0;
     }
     .dc-card > p.dc-muted {
       margin: -6px 0 12px;
@@ -474,6 +518,21 @@ export class BrandingPage {
   protected readonly colors = signal<Record<ThemeField, string | null>>({ internalThemeColor: null, portalThemeColor: null });
   protected readonly links = new FormArray<LinkForm>([]);
   protected readonly canEdit = computed(() => this.privileges.can(RESOURCE, 'EDIT'));
+
+  /** Whose look is edited: the organization (the default of every app) or a channel or app with its own. */
+  protected readonly organization = 'ORGANIZATION';
+  protected readonly target = signal(this.organization);
+  private readonly channelRows = rxResource({ stream: () => this.api.list('apps.app') });
+  private readonly appRows = rxResource({ stream: () => this.api.list('apps.business-app') });
+  protected readonly channelTargets = computed<BrandingTarget[]>(() =>
+    (this.channelRows.value() ?? []).map((r) => ({ code: r.code, name: { ar: r.nameAr, en: r.nameEn }, channel: true })),
+  );
+  protected readonly appTargets = computed<BrandingTarget[]>(() =>
+    (this.appRows.value() ?? [])
+      .filter((r) => r['kind'] !== 'CONNECTED')
+      .map((r) => ({ code: r.code, name: { ar: r.nameAr, en: r.nameEn }, channel: false })),
+  );
+  protected readonly currentTarget = computed(() => [...this.channelTargets(), ...this.appTargets()].find((t) => t.code === this.target()) ?? null);
 
   protected readonly entity = rxResource({ stream: () => this.api.get('apps.entity', 'ENTITY') });
   /** The entity as it is, offered as the example of the JSON to import. */

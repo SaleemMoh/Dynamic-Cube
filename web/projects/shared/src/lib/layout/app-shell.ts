@@ -33,7 +33,7 @@ import { GovBar } from './gov-bar';
                 <mat-icon fontSet="material-symbols-outlined">deployed_code</mat-icon>
               </span>
             }
-            <span class="dc-shell__title">{{ title() }}</span>
+            <span class="dc-shell__title">{{ shownTitle() }}</span>
           </a>
           <nav class="dc-shell__nav">
             <ng-content select="[dcShellNav]" />
@@ -185,6 +185,11 @@ import { GovBar } from './gov-bar';
 })
 export class AppShell {
   readonly title = input.required<string>();
+  /** The channel's or chosen app's own title when it has one, else the app's built-in title. */
+  protected readonly shownTitle = computed(() => {
+    const b = this.branding();
+    return (b.titleAr || b.titleEn ? this.i18n.localize({ ar: b.titleAr ?? b.titleEn ?? '', en: b.titleEn ?? b.titleAr ?? '' }) : '') || this.title();
+  });
   /** Full-width content without padding (for layouts with their own side navigation). */
   readonly fluid = input(false);
   /** Links the application adds after the branding's footer links (e.g. the portal's pages); they replace a branding link of the same name. */

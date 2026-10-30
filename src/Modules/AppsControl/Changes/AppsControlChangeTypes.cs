@@ -6,6 +6,7 @@ public static class AppsControlChangeTypes
     public const string Installation = "apps.installation";
     public const string Holiday = "apps.holiday";
     public const string Entity = "apps.entity";
+    public const string AppBranding = "apps.app-branding";
     public const string App = "apps.app";
     public const string BusinessApp = "apps.business-app";
     public const string Company = "apps.company";
