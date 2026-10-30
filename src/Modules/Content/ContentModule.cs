@@ -31,6 +31,7 @@ public static class ContentModule
         services.AddSystemCatalog(ContentCatalog.Contribution);
 
         AddApplier<ContentPageApplier>(services);
+        AddApplier<ContentPageVersionApplier>(services);
         AddApplier<FaqApplier>(services);
         services.AddScoped<ContentService>();
         services.AddScoped<FeedbackService>();

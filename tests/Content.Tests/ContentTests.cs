@@ -56,6 +56,58 @@ public sealed class ContentTests(DatabaseFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_designed_page_shows_its_published_version_and_versions_never_change()
+    {
+        fixture.RequireConnectionString();
+        var ct = TestContext.Current.CancellationToken;
+        await using var host = new TestHost(fixture.RequireConnectionString());
+        var code = TestHost.Unique("ABOUT");
+        object Design(string title) => new
+        {
+            version = 1,
+            sections = new[]
+            {
+                new
+                {
+                    id = "s1",
+                    layout = "1-1",
+                    background = "light",
+                    columns = new object[]
+                    {
+                        new object[] { new { id = "h1", kind = "heading", level = 1, textAr = title, textEn = title } },
+                        new object[] { new { id = "b1", kind = "button", labelAr = "الخدمات", labelEn = "Services", url = "/services" } },
+                    },
+                },
+            },
+        };
+        Change Version(int n, object design) => new(ContentChangeTypes.PageVersion, $"{code}/{n}", ChangeOperation.Create, new { nameAr = $"الإصدار {n}", nameEn = $"Version {n}", design });
+        Change Page(int? published) => new(ContentChangeTypes.Page, code, published is null ? ChangeOperation.Create : ChangeOperation.Update, new { nameAr = "عن المنصة", nameEn = "About", publishedVersion = published });
+
+        // A page made in the designer: no Markdown body, and its first version published in the same change set.
+        await host.PublishAsync(ContentChangeTypes.Area, Page(null) with { Payload = new { nameAr = "عن المنصة", nameEn = "About", bodyAr = "نص", bodyEn = "Text" } });
+        await host.PublishAsync(ContentChangeTypes.Area, Version(1, Design("الأول")), Page(1));
+        await host.PublishAsync(ContentChangeTypes.Area, Version(2, Design("الثاني")));
+
+        using var client = _factory.CreateClient();
+        var slug = code.ToLowerInvariant().Replace('_', '-');
+        var shown = await client.GetFromJsonAsync<System.Text.Json.JsonElement>($"/api/content/v1/pages/{slug}", ct);
+        shown.GetProperty("design").GetProperty("sections")[0].GetProperty("columns")[0][0].GetProperty("textAr").GetString().ShouldBe("الأول", "version 2 is not published yet");
+
+        await host.PublishAsync(ContentChangeTypes.Area, Page(2));
+        shown = await client.GetFromJsonAsync<System.Text.Json.JsonElement>($"/api/content/v1/pages/{slug}", ct);
+        shown.GetProperty("design").GetProperty("sections")[0].GetProperty("columns")[0][0].GetProperty("textAr").GetString().ShouldBe("الثاني");
+
+        async Task<IEnumerable<string>> Problems(params Change[] changes) =>
+            (await Should.ThrowAsync<ChangeValidationException>(() => host.PublishAsync(ContentChangeTypes.Area, changes))).Errors.Keys;
+        (await Problems(Version(4, Design("x")))).ShouldContain("code", "versions take the next number");
+        (await Problems(new Change(ContentChangeTypes.PageVersion, $"{code}/1", ChangeOperation.Update, new { nameAr = "س", nameEn = "X", design = Design("changed") }))).ShouldContain("design");
+        (await Problems(Page(9))).ShouldContain("publishedVersion");
+        var unsafeLink = new { version = 1, sections = new[] { new { layout = "1", columns = new object[] { new object[] { new { kind = "button", url = "javascript:alert(1)" } } } } } };
+        (await Problems(Version(3, unsafeLink))).ShouldContain("design.sections[0].columns[0][0].url");
+        await Should.ThrowAsync<ChangeSetException>(() => host.PublishAsync(ContentChangeTypes.Area, new Change(ContentChangeTypes.PageVersion, $"{code}/2", ChangeOperation.Delete, null)));
+    }
+
+    [Fact]
     public async Task Questions_are_grouped_by_topic_and_filtered_by_service()
     {
         fixture.RequireConnectionString();

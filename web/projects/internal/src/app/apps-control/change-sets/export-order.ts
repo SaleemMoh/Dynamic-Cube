@@ -54,7 +54,9 @@ export const BASE_TYPE_ORDER: readonly string[] = [
   'wf.workflow-version',
   'svc.service-version',
   'cms.page',
+  'cms.page-version',
   'cms.faq',
+  'apps.app-branding',
 ];
 
 /** Types whose rows hang under a row of another type, listed by that parent's code. */
@@ -63,6 +65,7 @@ export const CHILD_TYPES: Readonly<Record<string, string>> = {
   'svc.service': 'svc.service-version',
   'wf.workflow': 'wf.workflow-version',
   'dec.rule-set': 'dec.rule-set-version',
+  'cms.page': 'cms.page-version',
 };
 
 /** The parent type of a child type (values of a class, versions of a service, workflow or rule set). */

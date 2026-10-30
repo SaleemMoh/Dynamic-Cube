@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using DynamicCube.Modules.Content.Domain;
 using DynamicCube.Modules.Content.Persistence;
 using DynamicCube.Platform.ChangeSets;
+using Microsoft.EntityFrameworkCore;
 
 namespace DynamicCube.Modules.Content.Changes;
 
@@ -14,6 +15,9 @@ public sealed class ContentPagePayload : ConfigPayload
     public bool ShowInFooter { get; set; }
 
     public int Order { get; set; }
+
+    /// <summary>The version of the designed layout shown on the portal; none: the Markdown body.</summary>
+    public int? PublishedVersion { get; set; }
 }
 
 public sealed class FaqPayload : ConfigPayload
@@ -63,10 +67,25 @@ internal sealed class ContentPageApplier(ContentDbContext db)
 
     protected override IQueryable<ContentPage> Query(ContentDbContext context) => context.Pages;
 
-    protected override Task ApplyAsync(ContentPage entity, ContentPagePayload payload, ConfigRefs<ContentDbContext> refs, ValidationErrors errors, ContentPage? existing, CancellationToken cancellationToken)
+    protected override async Task ApplyAsync(ContentPage entity, ContentPagePayload payload, ConfigRefs<ContentDbContext> refs, ValidationErrors errors, ContentPage? existing, CancellationToken cancellationToken)
     {
-        errors.Required("bodyAr", payload.BodyAr);
-        errors.Required("bodyEn", payload.BodyEn);
+        // A designed page shows its published version; the Markdown body is then optional.
+        if (payload.PublishedVersion is { } version)
+        {
+            var key = $"{entity.Code}/{version}";
+            var exists = await refs.Context.PageVersions.AnyAsync(v => v.Page!.Code == entity.Code && v.Number == version, cancellationToken);
+            if (!exists && !refs.IsPendingCreate(ContentChangeTypes.PageVersion, key))
+            {
+                errors.Add("publishedVersion", $"Version {key} does not exist.");
+            }
+        }
+        else
+        {
+            errors.Required("bodyAr", payload.BodyAr);
+            errors.Required("bodyEn", payload.BodyEn);
+        }
+
+        entity.PublishedVersion = payload.PublishedVersion;
         errors.MaxLength("bodyAr", payload.BodyAr, ContentLimits.Body);
         errors.MaxLength("bodyEn", payload.BodyEn, ContentLimits.Body);
         ContentLimits.Order(errors, payload.Order);
@@ -75,11 +94,17 @@ internal sealed class ContentPageApplier(ContentDbContext db)
         entity.BodyEn = payload.BodyEn?.Trim() ?? string.Empty;
         entity.ShowInFooter = payload.ShowInFooter;
         entity.Order = payload.Order;
-        return Task.CompletedTask;
     }
 
     protected override Task<ContentPagePayload> ToPayloadAsync(ContentDbContext context, ContentPage entity, CancellationToken cancellationToken) =>
-        Task.FromResult(new ContentPagePayload { BodyAr = entity.BodyAr, BodyEn = entity.BodyEn, ShowInFooter = entity.ShowInFooter, Order = entity.Order });
+        Task.FromResult(new ContentPagePayload
+        {
+            BodyAr = entity.BodyAr,
+            BodyEn = entity.BodyEn,
+            ShowInFooter = entity.ShowInFooter,
+            Order = entity.Order,
+            PublishedVersion = entity.PublishedVersion,
+        });
 }
 
 internal sealed class FaqApplier(ContentDbContext db)

@@ -5,6 +5,8 @@ public static class ContentChangeTypes
 {
     public const string Page = "cms.page";
 
+    public const string PageVersion = "cms.page-version";
+
     public const string Faq = "cms.faq";
 
     public const string Area = "cms.content";

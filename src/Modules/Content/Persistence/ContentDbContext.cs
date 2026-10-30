@@ -10,6 +10,8 @@ public sealed class ContentDbContext(DbContextOptions<ContentDbContext> options)
 
     public DbSet<ContentPage> Pages => Set<ContentPage>();
 
+    public DbSet<ContentPageVersion> PageVersions => Set<ContentPageVersion>();
+
     public DbSet<Faq> Faqs => Set<Faq>();
 
     public DbSet<PageFeedback> Feedback => Set<PageFeedback>();
@@ -24,6 +26,12 @@ public sealed class ContentDbContext(DbContextOptions<ContentDbContext> options)
         {
             b.Property(e => e.BodyAr).IsRequired();
             b.Property(e => e.BodyEn).IsRequired();
+        });
+        modelBuilder.ConfigTable<ContentPageVersion>(Schema, "page_version", b =>
+        {
+            b.Property(e => e.Design).HasColumnType("jsonb").IsRequired();
+            b.HasOne(e => e.Page).WithMany().HasForeignKey(e => e.PageId).OnDelete(DeleteBehavior.Cascade);
+            b.HasIndex(e => new { e.PageId, e.Number }).IsUnique();
         });
         modelBuilder.ConfigTable<Faq>(Schema, "faq", b =>
         {

@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { PageDesign } from './page-design';
 
 export const CONTENT_API = '/api/content/v1';
 
@@ -19,6 +20,8 @@ export interface PageView {
   bodyAr: string;
   bodyEn: string;
   updatedAt: string;
+  /** The published version of the page's designed layout; none: the Markdown body is shown. */
+  design?: PageDesign | null;
 }
 
 export interface FaqView {

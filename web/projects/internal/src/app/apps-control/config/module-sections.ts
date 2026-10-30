@@ -1218,6 +1218,14 @@ export const CONTENT_SECTIONS: ConfigSection[] = [
         columns: ['showInFooter', 'order'],
         nameLabels: { ar: t('العنوان بالعربية', 'Title (Arabic)'), en: t('العنوان بالإنجليزية', 'Title (English)') },
         editor: contentEditor,
+        rowLinks: [
+          {
+            icon: 'dashboard_customize',
+            label: t('تصميم الصفحة (السحب والإفلات، الإصدارات والنشر)', 'Design the page (drag and drop, versions, publishing)'),
+            route: (row) => ({ commands: ['/content/pages/designer'], queryParams: { page: String(row['code']) } }),
+            testId: 'design-page',
+          },
+        ],
         fields: [
           { code: 'bodyAr', type: 'textarea', label: t('المحتوى بالعربية (Markdown)', 'Content in Arabic (Markdown)'), required: true },
           { code: 'bodyEn', type: 'textarea', label: t('المحتوى بالإنجليزية (Markdown)', 'Content in English (Markdown)'), required: true },

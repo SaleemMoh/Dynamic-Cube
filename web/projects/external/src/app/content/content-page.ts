@@ -1,14 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { ContentApi, I18nService, LocalizePipe, MarkdownView, TranslatePipe } from '@dynamic-cube/shared';
+import { ContentApi, I18nService, LocalizePipe, MarkdownView, PageBlocksView, TranslatePipe, readPageDesign } from '@dynamic-cube/shared';
 import { PageFeedback } from '../portal/page-feedback';
 import { PageHero } from '../portal/page-hero';
 
 /** A portal page (terms of use, privacy, about) written in the Content Manager. */
 @Component({
   selector: 'dc-content-page',
-  imports: [MatProgressBarModule, LocalizePipe, MarkdownView, PageFeedback, PageHero, TranslatePipe],
+  imports: [MatProgressBarModule, LocalizePipe, MarkdownView, PageBlocksView, PageFeedback, PageHero, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (page.hasValue()) {
@@ -16,7 +16,11 @@ import { PageHero } from '../portal/page-hero';
       <dc-page-hero data-testid="page-title" [title]="{ ar: p.titleAr, en: p.titleEn } | dcLocalize" />
       <div class="dc-portal-block dc-page-body">
         <article class="dc-content-page">
-          <dc-markdown [source]="i18n.localize({ ar: p.bodyAr, en: p.bodyEn })" data-testid="page-body" />
+          @if (design(); as d) {
+            <dc-page-blocks [design]="d" data-testid="page-body" />
+          } @else {
+            <dc-markdown [source]="i18n.localize({ ar: p.bodyAr, en: p.bodyEn })" data-testid="page-body" />
+          }
           <p class="dc-muted dc-content-page__updated">{{ 'pages.updated' | dcTranslate }} {{ updated() }}</p>
         </article>
         <dc-page-feedback [page]="'page:' + slug()" />
@@ -33,6 +37,9 @@ import { PageHero } from '../portal/page-hero';
     :host {
       display: block;
       width: 100%;
+    }
+    .dc-content-page:has(dc-page-blocks) {
+      max-width: none;
     }
     .dc-content-page {
       max-width: 52rem;
@@ -51,6 +58,8 @@ export class ContentPage {
   private readonly api = inject(ContentApi);
 
   protected readonly page = rxResource({ params: () => this.slug(), stream: ({ params }) => this.api.page(params) });
+  /** The published version of the page's designed layout, when it has one. */
+  protected readonly design = computed(() => (this.page.hasValue() ? readPageDesign(this.page.value().design) : null));
   protected readonly updated = computed(() => {
     const at = this.page.hasValue() ? this.page.value().updatedAt : null;
     if (!at) return '';

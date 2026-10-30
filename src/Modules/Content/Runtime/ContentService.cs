@@ -6,7 +6,8 @@ namespace DynamicCube.Modules.Content.Runtime;
 
 public sealed record PageLink(string Slug, string TitleAr, string TitleEn, bool ShowInFooter, int Order);
 
-public sealed record PageView(string Slug, string TitleAr, string TitleEn, string BodyAr, string BodyEn, DateTimeOffset UpdatedAt);
+/// <summary>A page as the portal shows it: its designed layout (the published version) when it has one, else its Markdown body.</summary>
+public sealed record PageView(string Slug, string TitleAr, string TitleEn, string BodyAr, string BodyEn, DateTimeOffset UpdatedAt, System.Text.Json.Nodes.JsonObject? Design = null);
 
 public sealed record FaqView(string Code, string QuestionAr, string QuestionEn, string AnswerAr, string AnswerEn, string? TopicAr, string? TopicEn, string? ServiceCode);
 
@@ -32,7 +33,11 @@ internal sealed class ContentService(ContentDbContext context)
         var candidates = new[] { CodeOf(slug), slug.ToUpperInvariant() };
         var page = await context.Pages.AsNoTracking().Where(p => p.IsActive && candidates.Contains(p.Code)).OrderBy(p => p.Code).FirstOrDefaultAsync(cancellationToken)
             ?? throw new ContentNotFoundException($"Page '{slug}' not found.");
-        return new PageView(Slug(page.Code), page.NameAr, page.NameEn, page.BodyAr, page.BodyEn, page.UpdatedAt ?? page.CreatedAt);
+        var version = page.PublishedVersion is { } number
+            ? await context.PageVersions.AsNoTracking().FirstOrDefaultAsync(v => v.PageId == page.Id && v.Number == number, cancellationToken)
+            : null;
+        var updated = new[] { page.UpdatedAt ?? page.CreatedAt, version?.CreatedAt ?? DateTimeOffset.MinValue }.Max();
+        return new PageView(Slug(page.Code), page.NameAr, page.NameEn, page.BodyAr, page.BodyEn, updated, version is null ? null : System.Text.Json.Nodes.JsonNode.Parse(version.Design) as System.Text.Json.Nodes.JsonObject);
     }
 
     /// <summary>All questions in topic order, or only those of a service.</summary>

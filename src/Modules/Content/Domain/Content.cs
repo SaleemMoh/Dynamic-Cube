@@ -14,6 +14,27 @@ public sealed class ContentPage : ConfigEntity
     public bool ShowInFooter { get; set; }
 
     public int Order { get; set; }
+
+    /// <summary>
+    /// The version of the designed layout the portal shows (<see cref="ContentPageVersion.Number"/>); none: the page shows
+    /// its Markdown body.
+    /// </summary>
+    public int? PublishedVersion { get; set; }
+}
+
+/// <summary>
+/// A version of a page's designed layout (sections of blocks, JSON), keyed <c>PAGE/N</c>. Versions never change once
+/// added; the page shows the one it publishes, and an earlier one can be published again.
+/// </summary>
+public sealed class ContentPageVersion : ConfigEntity
+{
+    public Guid PageId { get; set; }
+
+    public ContentPage? Page { get; set; }
+
+    public int Number { get; set; }
+
+    public string Design { get; set; } = "{}";
 }
 
 /// <summary>A frequently asked question: the name is the question, grouped on the portal by topic.</summary>

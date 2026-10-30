@@ -404,6 +404,7 @@ Delivered so far (3c, [ADR-0025](adr/0025-portal-content.md)):
 
 | Entity | Fields | Notes |
 |---|---|---|
-| `cms.page` | code, title (name, ar/en), body (Markdown, ar/en), show in footer, order, active | Address `/pages/{code in lower case, _ → -}`; read anonymously |
+| `cms.page` | code, title (name, ar/en), body (Markdown, ar/en), show in footer, order, active, `published_version` | Address `/pages/{code in lower case, _ → -}`; read anonymously. With a published version the portal shows that designed layout; without, the Markdown body (then required) |
+| `cms.page-version` | `PAGE/N`, names, `design` (sections of one to three columns — layouts 1, 1-1, 1-1-1, 2-1, 1-2; backgrounds none / light / brand / dark — holding blocks: heading, Markdown text, image, button, cards, callout, divider, spacer; texts in both languages) | Made in the *page designer* (Portal content → Pages → Design): drag and drop, undo/redo, device widths, preview. A version takes the next number and never changes; publishing sets the page's `published_version` (in the same change set or later), and an earlier version can be published again. Links must be site paths, https or mailto; images https or embedded png/jpeg/webp |
 | `cms.faq` | code, question (name, ar/en), answer (Markdown, ar/en), topic (ar/en, optional), service code (optional), order, active | Grouped by topic on `/faq`; a service's questions are linked from its page |
 | `PORTAL_HOME` (setting) | hero title and text, banner, statistics tiles (counted metric or fixed value, icon, labels), help phone / email / links | Edited with a structured form; categories and service display stay in Services |

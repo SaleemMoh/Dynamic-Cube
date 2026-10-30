@@ -95,7 +95,14 @@ export class ContentEditor {
     this.errors.set([]);
     const common = { nameAr: this.titleAr().trim(), nameEn: this.titleEn().trim(), isActive: this.active(), order: Number(this.order()) || 0 };
     const payload = this.isPage
-      ? { ...common, bodyAr: this.bodyAr(), bodyEn: this.bodyEn(), showInFooter: this.showInFooter() }
+      ? {
+          ...common,
+          bodyAr: this.bodyAr(),
+          bodyEn: this.bodyEn(),
+          showInFooter: this.showInFooter(),
+          // The designed layout the page shows stays published.
+          publishedVersion: (this.row?.['publishedVersion'] as number | null | undefined) ?? null,
+        }
       : {
           ...common,
           answerAr: this.bodyAr(),

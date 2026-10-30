@@ -56,6 +56,8 @@ export * from './lib/visits/visit-fields';
 export * from './lib/content/content.api';
 export * from './lib/content/markdown';
 export * from './lib/content/markdown-view';
+export * from './lib/content/page-design';
+export * from './lib/content/page-blocks';
 export * from './lib/services/request-answers';
 export * from './lib/services/request-files';
 export * from './lib/services/service-wizard';
