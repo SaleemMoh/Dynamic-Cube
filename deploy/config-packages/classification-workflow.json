@@ -217,7 +217,11 @@
         "status": "ACTIVE",
         "roles": [
           {
-            "roleCode": "CLS_REQUEST_MANAGER"
+            "roleCode": "CLS_REQUEST_MANAGER",
+            "companyCode": "*",
+            "branches": [
+              "*"
+            ]
           }
         ]
       }
@@ -233,13 +237,25 @@
         "status": "ACTIVE",
         "roles": [
           {
-            "roleCode": "CLS_GOV_ANALYST"
+            "roleCode": "CLS_GOV_ANALYST",
+            "companyCode": "*",
+            "branches": [
+              "*"
+            ]
           },
           {
-            "roleCode": "CLS_PROJECTS_ANALYST"
+            "roleCode": "CLS_PROJECTS_ANALYST",
+            "companyCode": "*",
+            "branches": [
+              "*"
+            ]
           },
           {
-            "roleCode": "CLS_FIN_ANALYST"
+            "roleCode": "CLS_FIN_ANALYST",
+            "companyCode": "*",
+            "branches": [
+              "*"
+            ]
           }
         ]
       }
@@ -255,16 +271,32 @@
         "status": "ACTIVE",
         "roles": [
           {
-            "roleCode": "CLS_GOV_ANALYST"
+            "roleCode": "CLS_GOV_ANALYST",
+            "companyCode": "*",
+            "branches": [
+              "*"
+            ]
           },
           {
-            "roleCode": "CLS_PROJECTS_ANALYST"
+            "roleCode": "CLS_PROJECTS_ANALYST",
+            "companyCode": "*",
+            "branches": [
+              "*"
+            ]
           },
           {
-            "roleCode": "CLS_FIN_ANALYST"
+            "roleCode": "CLS_FIN_ANALYST",
+            "companyCode": "*",
+            "branches": [
+              "*"
+            ]
           },
           {
-            "roleCode": "CLS_GOV_AUDITOR"
+            "roleCode": "CLS_GOV_AUDITOR",
+            "companyCode": "*",
+            "branches": [
+              "*"
+            ]
           }
         ]
       }
@@ -280,13 +312,25 @@
         "status": "ACTIVE",
         "roles": [
           {
-            "roleCode": "CLS_GOV_AUDITOR"
+            "roleCode": "CLS_GOV_AUDITOR",
+            "companyCode": "*",
+            "branches": [
+              "*"
+            ]
           },
           {
-            "roleCode": "CLS_PROJECTS_AUDITOR"
+            "roleCode": "CLS_PROJECTS_AUDITOR",
+            "companyCode": "*",
+            "branches": [
+              "*"
+            ]
           },
           {
-            "roleCode": "CLS_AUDIT_MANAGER"
+            "roleCode": "CLS_AUDIT_MANAGER",
+            "companyCode": "*",
+            "branches": [
+              "*"
+            ]
           }
         ]
       }
@@ -302,7 +346,11 @@
         "status": "ACTIVE",
         "roles": [
           {
-            "roleCode": "CLS_GENERAL_MANAGER"
+            "roleCode": "CLS_GENERAL_MANAGER",
+            "companyCode": "*",
+            "branches": [
+              "*"
+            ]
           }
         ]
       }

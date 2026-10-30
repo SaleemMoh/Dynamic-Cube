@@ -24,6 +24,12 @@ import { DraftsService } from '../drafts.service';
 import { ConfigField, ConfigType, scopeOf } from './config-types';
 import { emptyToNull, fromDate, payloadOf, toDate, withCurrentValues } from './form-values';
 
+/** The field's options with its explicit "all" option (`*`) first, when it has one. */
+function withAll(field: ConfigField, options: FormOption[] | undefined): FormOption[] | undefined {
+  if (!field.allOption) return options;
+  return [{ value: '*', label: field.allOption }, ...(options ?? []).filter((o) => o.value !== '*')];
+}
+
 export interface ConfigEditorData {
   type: ConfigType;
   /** Existing row (edit) or null (new). */
@@ -132,6 +138,18 @@ export class ConfigEditor {
 
   protected async save(value: FormValue, submit = false): Promise<void> {
     this.errors.set([]);
+    const payload = this.payloadFrom(value);
+    if (!payload) return;
+    try {
+      await this.drafts.addChange(this.data.type.entityType, this.entityCode(value), this.data.row ? 'UPDATE' : 'CREATE', payload, { submit });
+      this.ref.close(true);
+    } catch (error) {
+      this.errors.set(problemMessages(error));
+    }
+  }
+
+  /** The row's payload from the form's value; null (with the problem shown) when a value cannot be read. */
+  protected payloadFrom(value: FormValue): Record<string, unknown> | null {
     const type = this.data.type;
     // Start from the current row so fields edited elsewhere (e.g. the entity's logo and footer links) are kept.
     const payload: Record<string, unknown> = {
@@ -149,7 +167,7 @@ export class ConfigEditor {
       }
     } catch (error) {
       this.errors.set([(error as Error).message]);
-      return;
+      return null;
     }
 
     // The row's level; an empty string tells the server "none" (a missing one would keep the current level).
@@ -159,17 +177,10 @@ export class ConfigEditor {
       // Several apps: the first is the row's own, the others share it.
       if (scope === 'full') payload['businessApps'] = (value['businessApps'] as string[] | null) ?? [];
     }
-
-    const code = this.entityCode(value);
-    try {
-      await this.drafts.addChange(type.entityType, code, this.data.row ? 'UPDATE' : 'CREATE', payload, { submit });
-      this.ref.close(true);
-    } catch (error) {
-      this.errors.set(problemMessages(error));
-    }
+    return payload;
   }
 
-  private entityCode(value: FormValue): string {
+  protected entityCode(value: FormValue): string {
     const key = this.data.type.key;
     if (typeof key === 'object') {
       return key.singleton;
@@ -257,7 +268,7 @@ export class ConfigEditor {
       visibleWhen: f.visibleWhen,
       // App-scoped keys cannot move to another app on edit.
       readonly: editing && ((type.key === 'appScoped' && f.code === 'appCode') || !!f.lockedOnEdit),
-      options: withCurrentValues(options.get(f.code) ?? f.options, this.data.row?.[f.code]),
+      options: withAll(f, withCurrentValues(options.get(f.code) ?? f.options, this.data.row?.[f.code])),
     }));
     const level: FormField[] = this.scopeFields().map((f) => ({
       code: f.code,

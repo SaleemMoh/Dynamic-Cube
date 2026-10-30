@@ -32,7 +32,7 @@ public sealed class WorkflowRequestTests(DatabaseFixture fixture) : IAsyncLifeti
         await host.PublishAsync(
             AppsControlAreas.Security,
             new Change(AppsControlChangeTypes.Role, _role, ChangeOperation.Create, new { nameAr = "مراجع", nameEn = "Reviewer" }),
-            new Change(AppsControlChangeTypes.User, _employee, ChangeOperation.Create, new { nameAr = "مراجع", nameEn = "Reviewer", roles = new[] { new { roleCode = _role } } }));
+            new Change(AppsControlChangeTypes.User, _employee, ChangeOperation.Create, new { nameAr = "مراجع", nameEn = "Reviewer", roles = new[] { new { roleCode = _role, companyCode = "*", branches = new[] { "*" } } } }));
         await host.PublishAsync(
             WorkflowChangeTypes.Area,
             new Change(WorkflowChangeTypes.Version, _sample.Service + "/2", ChangeOperation.Create, new

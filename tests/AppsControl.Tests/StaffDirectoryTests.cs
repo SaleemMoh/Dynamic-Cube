@@ -41,20 +41,20 @@ public sealed class StaffDirectoryTests(AppsControlFixture fixture) : IAsyncLife
                 nameAr = "قائد",
                 nameEn = "Lead",
                 assignments = new[] { new { orgUnitCode = unit, positionCode = "MANAGER" } },
-                roles = new[] { new { roleCode = role } },
+                roles = new[] { new { roleCode = role, companyCode = "*", branches = new[] { "*" } } },
             }),
             new Change(AppsControlChangeTypes.User, member, ChangeOperation.Create, new
             {
                 nameAr = "عضو",
                 nameEn = "Member",
                 assignments = new[] { new { orgUnitCode = unit } },
-                roles = new[] { new { roleCode = role } },
+                roles = new[] { new { roleCode = role, companyCode = "*", branches = new[] { "*" } } },
             }),
             new Change(AppsControlChangeTypes.User, expired, ChangeOperation.Create, new
             {
                 nameAr = "منتهي",
                 nameEn = "Expired",
-                roles = new[] { new { roleCode = role, effectiveTo = "2020-01-01" } },
+                roles = new[] { new { roleCode = role, effectiveTo = "2020-01-01", companyCode = "*", branches = new[] { "*" } } },
             }));
 
         var (byRole, managers, inUnit, found) = await _harness.AsAsync("admin", async sp =>

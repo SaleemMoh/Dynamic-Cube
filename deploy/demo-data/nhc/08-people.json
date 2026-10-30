@@ -4,7 +4,7 @@
     {
       "entityType": "apps.role",
       "entityCode": "CLS_REQUEST_MANAGER",
-      "operation": "CREATE",
+      "operation": "UPSERT",
       "payload": {
         "nameAr": "مدير طلبات الفرع",
         "nameEn": "Branch requests manager",
@@ -36,7 +36,7 @@
     {
       "entityType": "apps.role",
       "entityCode": "CLS_GOV_ANALYST",
-      "operation": "CREATE",
+      "operation": "UPSERT",
       "payload": {
         "nameAr": "محلل الحوكمة",
         "nameEn": "Governance analyst",
@@ -61,7 +61,7 @@
     {
       "entityType": "apps.role",
       "entityCode": "CLS_GOV_AUDITOR",
-      "operation": "CREATE",
+      "operation": "UPSERT",
       "payload": {
         "nameAr": "مدقق الحوكمة",
         "nameEn": "Governance auditor",
@@ -86,7 +86,7 @@
     {
       "entityType": "apps.role",
       "entityCode": "CLS_PROJECTS_ANALYST",
-      "operation": "CREATE",
+      "operation": "UPSERT",
       "payload": {
         "nameAr": "محلل المشاريع والخبرات",
         "nameEn": "Projects & experience analyst",
@@ -111,7 +111,7 @@
     {
       "entityType": "apps.role",
       "entityCode": "CLS_PROJECTS_AUDITOR",
-      "operation": "CREATE",
+      "operation": "UPSERT",
       "payload": {
         "nameAr": "مدقق المشاريع",
         "nameEn": "Projects auditor",
@@ -136,7 +136,7 @@
     {
       "entityType": "apps.role",
       "entityCode": "CLS_FIN_ANALYST",
-      "operation": "CREATE",
+      "operation": "UPSERT",
       "payload": {
         "nameAr": "محلل التقييم المالي",
         "nameEn": "Financial evaluation analyst",
@@ -161,7 +161,7 @@
     {
       "entityType": "apps.role",
       "entityCode": "CLS_AUDIT_MANAGER",
-      "operation": "CREATE",
+      "operation": "UPSERT",
       "payload": {
         "nameAr": "مدير التدقيق",
         "nameEn": "Audit manager",
@@ -186,7 +186,7 @@
     {
       "entityType": "apps.role",
       "entityCode": "CLS_GENERAL_MANAGER",
-      "operation": "CREATE",
+      "operation": "UPSERT",
       "payload": {
         "nameAr": "المدير العام",
         "nameEn": "General manager",
@@ -218,7 +218,7 @@
     {
       "entityType": "apps.role",
       "entityCode": "CLS_CUSTOMER_CARE",
-      "operation": "CREATE",
+      "operation": "UPSERT",
       "payload": {
         "nameAr": "تجربة العملاء",
         "nameEn": "Customer experience",
@@ -318,10 +318,10 @@
     {
       "entityType": "apps.user",
       "entityCode": "ruh.manager",
-      "operation": "CREATE",
+      "operation": "UPSERT",
       "payload": {
-        "nameAr": "مدير طلبات فرع الرياض",
-        "nameEn": "Riyadh requests manager",
+        "nameAr": "فهد العتيبي",
+        "nameEn": "Fahad Al-Otaibi",
         "email": "ruh.manager@nhci.example",
         "status": "ACTIVE",
         "assignments": [
@@ -346,10 +346,10 @@
     {
       "entityType": "apps.user",
       "entityCode": "jed.manager",
-      "operation": "CREATE",
+      "operation": "UPSERT",
       "payload": {
-        "nameAr": "مدير طلبات فرع جدة",
-        "nameEn": "Jeddah requests manager",
+        "nameAr": "ريم الغامدي",
+        "nameEn": "Reem Al-Ghamdi",
         "email": "jed.manager@nhci.example",
         "status": "ACTIVE",
         "assignments": [
@@ -374,10 +374,10 @@
     {
       "entityType": "apps.user",
       "entityCode": "dmm.manager",
-      "operation": "CREATE",
+      "operation": "UPSERT",
       "payload": {
-        "nameAr": "مدير طلبات فرع الدمام",
-        "nameEn": "Dammam requests manager",
+        "nameAr": "خالد الدوسري",
+        "nameEn": "Khalid Al-Dosari",
         "email": "dmm.manager@nhci.example",
         "status": "ACTIVE",
         "assignments": [
@@ -402,10 +402,10 @@
     {
       "entityType": "apps.user",
       "entityCode": "gov.analyst1",
-      "operation": "CREATE",
+      "operation": "UPSERT",
       "payload": {
-        "nameAr": "محلل الحوكمة 1",
-        "nameEn": "Governance analyst 1",
+        "nameAr": "نورة القحطاني",
+        "nameEn": "Noura Al-Qahtani",
         "email": "gov.analyst1@nhci.example",
         "status": "ACTIVE",
         "assignments": [
@@ -422,10 +422,10 @@
     {
       "entityType": "apps.user",
       "entityCode": "gov.analyst2",
-      "operation": "CREATE",
+      "operation": "UPSERT",
       "payload": {
-        "nameAr": "محلل الحوكمة 2",
-        "nameEn": "Governance analyst 2",
+        "nameAr": "عبدالله الشهري",
+        "nameEn": "Abdullah Al-Shehri",
         "email": "gov.analyst2@nhci.example",
         "status": "ACTIVE",
         "assignments": [
@@ -442,10 +442,10 @@
     {
       "entityType": "apps.user",
       "entityCode": "gov.auditor",
-      "operation": "CREATE",
+      "operation": "UPSERT",
       "payload": {
-        "nameAr": "مدقق الحوكمة",
-        "nameEn": "Governance auditor",
+        "nameAr": "سارة الزهراني",
+        "nameEn": "Sarah Al-Zahrani",
         "email": "gov.auditor@nhci.example",
         "status": "ACTIVE",
         "assignments": [
@@ -459,7 +459,9 @@
           {
             "roleCode": "CLS_GOV_AUDITOR",
             "companyCode": "MAIN",
-            "branches": []
+            "branches": [
+              "*"
+            ]
           }
         ],
         "privileges": []
@@ -468,10 +470,10 @@
     {
       "entityType": "apps.user",
       "entityCode": "prj.analyst1",
-      "operation": "CREATE",
+      "operation": "UPSERT",
       "payload": {
-        "nameAr": "محلل المشاريع 1",
-        "nameEn": "Projects analyst 1",
+        "nameAr": "ماجد الحربي",
+        "nameEn": "Majed Al-Harbi",
         "email": "prj.analyst1@nhci.example",
         "status": "ACTIVE",
         "assignments": [
@@ -488,10 +490,10 @@
     {
       "entityType": "apps.user",
       "entityCode": "prj.analyst2",
-      "operation": "CREATE",
+      "operation": "UPSERT",
       "payload": {
-        "nameAr": "محلل المشاريع 2",
-        "nameEn": "Projects analyst 2",
+        "nameAr": "هيفاء المطيري",
+        "nameEn": "Haifa Al-Mutairi",
         "email": "prj.analyst2@nhci.example",
         "status": "ACTIVE",
         "assignments": [
@@ -508,10 +510,10 @@
     {
       "entityType": "apps.user",
       "entityCode": "prj.auditor",
-      "operation": "CREATE",
+      "operation": "UPSERT",
       "payload": {
-        "nameAr": "مدقق المشاريع",
-        "nameEn": "Projects auditor",
+        "nameAr": "تركي السبيعي",
+        "nameEn": "Turki Al-Subaie",
         "email": "prj.auditor@nhci.example",
         "status": "ACTIVE",
         "assignments": [
@@ -525,7 +527,9 @@
           {
             "roleCode": "CLS_PROJECTS_AUDITOR",
             "companyCode": "MAIN",
-            "branches": []
+            "branches": [
+              "*"
+            ]
           }
         ],
         "privileges": []
@@ -534,10 +538,10 @@
     {
       "entityType": "apps.user",
       "entityCode": "fin.analyst1",
-      "operation": "CREATE",
+      "operation": "UPSERT",
       "payload": {
-        "nameAr": "محلل التقييم المالي 1",
-        "nameEn": "Financial analyst 1",
+        "nameAr": "لمى العنزي",
+        "nameEn": "Lama Al-Anazi",
         "email": "fin.analyst1@nhci.example",
         "status": "ACTIVE",
         "assignments": [
@@ -554,10 +558,10 @@
     {
       "entityType": "apps.user",
       "entityCode": "fin.analyst2",
-      "operation": "CREATE",
+      "operation": "UPSERT",
       "payload": {
-        "nameAr": "محلل التقييم المالي 2",
-        "nameEn": "Financial analyst 2",
+        "nameAr": "يوسف الشمري",
+        "nameEn": "Yousef Al-Shammari",
         "email": "fin.analyst2@nhci.example",
         "status": "ACTIVE",
         "assignments": [
@@ -574,10 +578,10 @@
     {
       "entityType": "apps.user",
       "entityCode": "audit.manager",
-      "operation": "CREATE",
+      "operation": "UPSERT",
       "payload": {
-        "nameAr": "مدير التدقيق",
-        "nameEn": "Audit manager",
+        "nameAr": "منيرة الرشيد",
+        "nameEn": "Munira Al-Rasheed",
         "email": "audit.manager@nhci.example",
         "status": "ACTIVE",
         "assignments": [
@@ -591,7 +595,9 @@
           {
             "roleCode": "CLS_AUDIT_MANAGER",
             "companyCode": "MAIN",
-            "branches": []
+            "branches": [
+              "*"
+            ]
           }
         ],
         "privileges": [
@@ -608,10 +614,10 @@
     {
       "entityType": "apps.user",
       "entityCode": "nhc.gm",
-      "operation": "CREATE",
+      "operation": "UPSERT",
       "payload": {
-        "nameAr": "المدير العام",
-        "nameEn": "General manager",
+        "nameAr": "عبدالرحمن السالم",
+        "nameEn": "Abdulrahman Al-Salem",
         "email": "nhc.gm@nhci.example",
         "status": "ACTIVE",
         "assignments": [
@@ -628,10 +634,10 @@
     {
       "entityType": "apps.user",
       "entityCode": "care.agent",
-      "operation": "CREATE",
+      "operation": "UPSERT",
       "payload": {
-        "nameAr": "أخصائي تجربة العملاء",
-        "nameEn": "Customer experience specialist",
+        "nameAr": "أمل الجهني",
+        "nameEn": "Amal Al-Juhani",
         "email": "care.agent@nhci.example",
         "status": "ACTIVE",
         "assignments": [

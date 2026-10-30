@@ -170,7 +170,11 @@
         "status": "ACTIVE",
         "roles": [
           {
-            "roleCode": "FIELD_INSPECTOR"
+            "roleCode": "FIELD_INSPECTOR",
+            "companyCode": "*",
+            "branches": [
+              "*"
+            ]
           }
         ]
       }
@@ -186,7 +190,11 @@
         "status": "ACTIVE",
         "roles": [
           {
-            "roleCode": "VISIT_SUPERVISOR"
+            "roleCode": "VISIT_SUPERVISOR",
+            "companyCode": "*",
+            "branches": [
+              "*"
+            ]
           }
         ]
       }

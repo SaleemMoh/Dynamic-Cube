@@ -200,6 +200,7 @@
     }
   }
 
+  @if (showActions()) {
   <div class="dc-form__actions">
     @if (cancellable()) {
       <button matButton type="button" (click)="cancel()" data-testid="form-cancel">{{ cancelLabel() ?? ('form.cancel' | dcTranslate) }}</button>
@@ -215,4 +216,5 @@
       {{ submitLabel() ?? ('form.submit' | dcTranslate) }}
     </button>
   </div>
+  }
 </form>

@@ -92,7 +92,7 @@ internal sealed class ClassApplier(AppsControlDbContext db) : ConfigApplier<Look
         if (existing is { ValuesPerCompany: true } && !payload.ValuesPerCompany)
         {
             var limited = await refs.Context.Domains.AsNoTracking()
-                .Where(d => d.ClassId == existing.Id && d.Companies.Count > 0)
+                .Where(d => d.ClassId == existing.Id && d.Companies.Count > 0 && !d.Companies.Contains(CompanyScope.All))
                 .OrderBy(d => d.Code).Select(d => d.Code).Take(5).ToListAsync(cancellationToken);
             if (limited.Count > 0)
             {
@@ -100,6 +100,8 @@ internal sealed class ClassApplier(AppsControlDbContext db) : ConfigApplier<Look
             }
         }
 
+        // Values of a class that starts having values per company serve all companies until limited.
+        var startsPerCompany = existing is { ValuesPerCompany: false } && payload.ValuesPerCompany;
         entity.ValuesPerCompany = payload.ValuesPerCompany;
         if (payload.ParentClassCode == entity.Code)
         {
@@ -195,6 +197,12 @@ internal sealed class ClassApplier(AppsControlDbContext db) : ConfigApplier<Look
         if (errors.HasErrors || refs.IsValidating)
         {
             return;
+        }
+
+        if (startsPerCompany)
+        {
+            await refs.Context.Domains.Where(d => d.ClassId == entity.Id && d.Companies.Count == 0)
+                .ExecuteUpdateAsync(u => u.SetProperty(d => d.Companies, new List<string> { CompanyScope.All }), cancellationToken);
         }
 
         var removed = entity.Attributes.Select(a => a.Code).Except(definitions.Select(d => d.Code)).ToList();
@@ -330,7 +338,7 @@ public sealed class DomainPayload : ConfigPayload
 
     public DateOnly? EffectiveTo { get; set; }
 
-    /// <summary>Companies the value serves (only for classes with values per company); empty: every company.</summary>
+    /// <summary>Companies the value serves, or ["*"] for all (required for classes with values per company, empty otherwise).</summary>
     public List<string> Companies { get; set; } = [];
 
     public List<ExternalCodePayload> ExternalCodes { get; set; } = [];
@@ -410,12 +418,22 @@ internal sealed class DomainApplier(AppsControlDbContext db, IEnumerable<IDomain
             errors.Add("effectiveTo", "Must not be before the start date.");
         }
 
+        // With values per company the companies are chosen, "*" for all of them (ADR-0036); other classes have none.
         entity.Companies = [.. payload.Companies.Where(c => !string.IsNullOrWhiteSpace(c)).Select(c => c.Trim()).Distinct(StringComparer.Ordinal)];
+        if (entity.Companies.Contains(CompanyScope.All))
+        {
+            entity.Companies = cls.ValuesPerCompany ? [CompanyScope.All] : [];
+        }
+
         if (entity.Companies.Count > 0 && !cls.ValuesPerCompany)
         {
             errors.Add("companies", $"Class {cls.Code} does not have values per company.");
         }
-        else if (entity.Companies.Count > 0)
+        else if (cls.ValuesPerCompany && entity.Companies.Count == 0)
+        {
+            errors.Add("companies", "Choose the companies the value serves, or all companies (*).");
+        }
+        else if (entity.Companies.Count > 0 && !CompanyScope.IsAll(entity.Companies))
         {
             var known = await context.Companies.AsNoTracking().Where(c => entity.Companies.Contains(c.Code)).Select(c => c.Code).ToListAsync(cancellationToken);
             foreach (var code in entity.Companies.Where(c => !known.Contains(c) && !refs.IsPendingCreate(AppsControlChangeTypes.Company, c)))
@@ -485,7 +503,8 @@ internal sealed class DomainApplier(AppsControlDbContext db, IEnumerable<IDomain
             // Only one default value per class, or per company: values serving one of the same companies stop being the default.
             var companies = entity.Companies;
             await context.Domains.Where(d => d.ClassId == cls.Id && d.Id != entity.Id && d.IsDefault
-                    && (companies.Count == 0 || d.Companies.Count == 0 || d.Companies.Any(c => companies.Contains(c))))
+                    && (companies.Count == 0 || companies.Contains(CompanyScope.All) || d.Companies.Count == 0 || d.Companies.Contains(CompanyScope.All)
+                        || d.Companies.Any(c => companies.Contains(c))))
                 .ExecuteUpdateAsync(s => s.SetProperty(d => d.IsDefault, false), cancellationToken);
         }
     }

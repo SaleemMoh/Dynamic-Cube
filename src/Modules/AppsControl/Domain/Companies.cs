@@ -1,6 +1,18 @@
 namespace DynamicCube.Modules.AppsControl.Domain;
 
 /// <summary>
+/// The explicit choice of every company or every branch (ADR-0036). Where companies or branches are chosen (a user's roles
+/// and personal privileges, an app), "all" is this value: an empty choice is not valid and never means all.
+/// </summary>
+public static class CompanyScope
+{
+    public const string All = "*";
+
+    /// <summary>Whether a list of codes is the choice of all of them.</summary>
+    public static bool IsAll(IReadOnlyCollection<string> codes) => codes.Count == 1 && codes.Contains(All);
+}
+
+/// <summary>
 /// A legal entity of an organization (<see cref="ConfigEntity.EntityCode"/>, the <see cref="GovernmentEntity"/>): it holds
 /// branches, and requests, tasks and documents belong to one of its branches (ADR-0036).
 /// </summary>

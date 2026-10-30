@@ -6,14 +6,18 @@ apps are *Apps* (`apps.business-app` keeps its name in packages) with a kind, ch
 portal offers only the services of apps on the portal channel; the channel apps screen and the Resources menu are hidden.
 Menus are trees of any depth, edited as a tree per channel or per connected app (each connected app has its own tree;
 a Dynamic Cube app adds items to the channels it ticks). Default external roles and connected-app credentials come with
-connected apps (step 7). Step 3 done: one Access dialog per user with roles by company and branches, roles received
+connected apps (step 7). Step 3 done: one place for a user's access (now the user editor's Access tab) with roles by company and branches, roles received
 from departments (org units carry default roles) and personal privileges; roles can be added to or removed from many
 users at once after a review that leaves what they already hold alone; a class may have values per company (legacy
 *Company Lookups*: each value serves some companies or all). Step 4 done: a role may differ in a company (the role
 editor's company selector, shown with two or more companies; *Customize* starts the company's version from the role,
 which then has its own screens, actions, data permissions and menus there; the role is marked "differs in"); people
-holding the role in that company get that version. Company and branch limits are stored now and applied from steps 5
-and 6 (a role held in every company uses its own contents until a current company is chosen in step 5). The NHC demo data uses all of it. Replaces entities,
+holding the role in that company get that version. Owner feedback on steps 3–4 (done): *all* is always an explicit
+choice (`*`), never an empty field (see "All is chosen, never empty" below); a user's access is a tab of the user editor,
+saved with their details as one change; personal privileges are given on an app's menu tree, with actions and data on
+each screen; the Apps screen shows the Dynamic Cube apps apart from the apps Dynamic Cube manages. Company and branch
+limits are stored now and applied from steps 5 and 6 (a role held in all companies uses its own contents until a current
+company is chosen in step 5). The NHC demo data uses all of it. Replaces entities,
 business apps, channel apps and the System / Entity / App levels of [ADR-0031](0031-entities-business-apps-levels.md).
 
 ## Context
@@ -37,11 +41,15 @@ Organization  (a client or group: eSpire Group, ADEC, a ministry)
 - Customers (parties) belong to one or more companies and branches. Requests, tasks, projects and documents belong to
   one company and branch.
 
-### Apps: one list, two kinds
+### Apps: the Dynamic Cube apps, and the apps they manage
+The **Dynamic Cube apps** are the product's own: the *internal system*, the *portal* and the *field app*. Each has its
+menus and branding; the Apps screen shows them as cards (with links to their menus and branding and how many apps are
+built on each) above the list of **apps managed by Dynamic Cube**, which are of two kinds:
+
 | Kind | What it is | Data |
 |---|---|---|
-| **Dynamic Cube app** | Built with the platform: services from the Service Builder, portal, branding | In the platform database, tagged with organization, company and branch |
-| **Connected app** (LedgerVault, DocVault, HRVault, PMS…) | An outside application using the platform as its provider | In its own database |
+| **Built on Dynamic Cube** | Services from the Service Builder, screens and branding, shown in the Dynamic Cube apps it ticks | In the platform database, tagged with organization, company and branch |
+| **Connected system** (LedgerVault, DocVault, HRVault, PMS…) | An outside application with its own screens, using the platform as its provider | In its own database |
 
 **Channels.** A Dynamic Cube app ticks where it appears: the *internal system* (employees in the browser), the *portal*
 (external users) and the *field app* (inspectors on tablets and phones). One app may use several channels (Sejil: internal
@@ -57,6 +65,13 @@ registered with API credentials (client id and secret in the secret store) and i
 portal and the field app are fixed product channels, not configured apps; "mobile" is a channel of an app, not another
 app. Database connections are server configuration, never typed into screens.
 
+### All is chosen, never empty
+Wherever companies or branches are chosen — a user's roles and personal privileges, an app, the values of a class with
+values per company — *All companies* and *All branches* are options of their own, stored as `*` (`["*"]` for lists).
+An empty choice is incomplete and refused ("choose a company, or all companies"); it never means all. A role held in all
+companies is held in all branches. Rows saved before this rule had empty choices meaning all and were converted to `*`
+by the migration. (A role's data permission "on all screens" is the same kind of explicit option in the role editor.)
+
 ### Access: one tab per user
 | Company | Branches | Roles |
 |---|---|---|
@@ -70,8 +85,10 @@ app. Database connections are server configuration, never typed into screens.
   company selector, *All companies* by default; editing for one company stores an override for that company only,
   marked on the role.
 - **Personal privileges** cover small companies where everyone has their own responsibilities: on the user's Access tab,
-  extra screens and actions for that person (per company), edited with the same tree. They do not appear in the role
-  list, so no per-person roles.
+  pick an app (a Dynamic Cube app or a connected system) and a company (or all), and its menu tree loads; each screen in
+  the tree shows its actions to tick and, under *Data*, the lists on that screen with *as the roles give*, *all values*
+  or *some values* for this person. These only add to what the roles give. A summary below lists every personal
+  privilege in every app and company. They do not appear in the role list, so no per-person roles.
 - Bulk assignment adds or removes roles for many users; it never overwrites silently.
 - Employees still have their placement in the organization structure (unit and position) for task routing.
 - **Department default roles:** an organization unit may carry default roles, given to people placed in it (and taken

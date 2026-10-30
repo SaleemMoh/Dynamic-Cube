@@ -388,22 +388,36 @@ public sealed class UserRolePayload
 
     public DateOnly? EffectiveTo { get; set; }
 
-    /// <summary>The company the role is held in; empty: every company.</summary>
+    /// <summary>The company the role is held in, or "*" for all companies (required: empty is not "all").</summary>
     public string? CompanyCode { get; set; }
 
-    /// <summary>Branches of that company; empty: all of them.</summary>
+    /// <summary>Branches of that company, or ["*"] for all of them (required).</summary>
     public List<string> Branches { get; set; } = [];
 }
 
-/// <summary>Actions on a screen given to one person.</summary>
+/// <summary>Actions on a screen, and data on it, given to one person.</summary>
 public sealed class UserPrivilegePayload
 {
-    /// <summary>The company; empty: every company.</summary>
+    /// <summary>The company, or "*" for all companies (required).</summary>
     public string? CompanyCode { get; set; }
 
     public string ResourceCode { get; set; } = string.Empty;
 
+    /// <summary>Actions on the screen; may be empty when <see cref="Grants"/> gives data on it.</summary>
     public List<string> Actions { get; set; } = [];
+
+    /// <summary>Values of the screen's lists the person may see, besides those of their roles.</summary>
+    public List<UserGrantPayload> Grants { get; set; } = [];
+}
+
+/// <summary>Values of a list one person may see on a screen: ALL, or VALUES with the values.</summary>
+public sealed class UserGrantPayload
+{
+    public string LovCode { get; set; } = string.Empty;
+
+    public GrantType GrantType { get; set; }
+
+    public List<string> GrantedValues { get; set; } = [];
 }
 
 /// <summary>An employee account. The entity code is the username; sign-in links the identity-provider subject.</summary>
@@ -444,6 +458,7 @@ internal sealed class UserApplier(AppsControlDbContext db) : ConfigApplier<UserA
             .Include(u => u.Roles).ThenInclude(r => r.Role)
             .Include(u => u.Roles).ThenInclude(r => r.OrgUnit)
             .Include(u => u.Privileges).ThenInclude(p => p.Resource)
+            .Include(u => u.Privileges).ThenInclude(p => p.Grants).ThenInclude(g => g.Lov)
             .AsSplitQuery();
 
     /// <summary>A user is listed under the business app they belong to, or the apps of their roles.</summary>
@@ -499,7 +514,7 @@ internal sealed class UserApplier(AppsControlDbContext db) : ConfigApplier<UserA
             });
         }
 
-        ChildSync.RequireUnique(payload.Roles, r => (r.RoleCode, r.OrgUnitCode, Blank(r.CompanyCode)), "roles", errors);
+        ChildSync.RequireUnique(payload.Roles, r => (r.RoleCode, r.OrgUnitCode, r.CompanyCode?.Trim()), "roles", errors);
         var companies = await refs.Context.Companies.AsNoTracking().Select(c => c.Code).ToListAsync(cancellationToken);
         var branches = await refs.Context.Branches.AsNoTracking().Select(b => new { b.Code, b.CompanyCode }).ToListAsync(cancellationToken);
         var roles = new List<UserRole>();
@@ -512,9 +527,8 @@ internal sealed class UserApplier(AppsControlDbContext db) : ConfigApplier<UserA
 
             var roleId = await refs.RoleAsync(r.RoleCode, $"roles[{i}].roleCode", errors, cancellationToken);
             var orgUnitId = await refs.OrgUnitAsync(r.OrgUnitCode, $"roles[{i}].orgUnitCode", errors, cancellationToken);
-            var company = Blank(r.CompanyCode);
-            var roleBranches = r.Branches.Where(b => !string.IsNullOrWhiteSpace(b)).Select(b => b.Trim()).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToList();
-            CheckCompany(company, roleBranches, companies, branches.Select(b => (b.Code, b.CompanyCode)).ToList(), refs, $"roles[{i}]", errors);
+            var company = CheckCompany(r.CompanyCode, companies, refs, $"roles[{i}]", errors);
+            var roleBranches = CheckBranches(company, r.Branches, branches.Select(b => (b.Code, b.CompanyCode)).ToList(), refs, $"roles[{i}]", errors);
             roles.Add(new UserRole
             {
                 UserId = entity.Id,
@@ -527,31 +541,60 @@ internal sealed class UserApplier(AppsControlDbContext db) : ConfigApplier<UserA
             });
         }
 
-        ChildSync.RequireUnique(payload.Privileges, p => (Blank(p.CompanyCode), p.ResourceCode), "privileges", errors);
+        ChildSync.RequireUnique(payload.Privileges, p => (p.CompanyCode?.Trim(), p.ResourceCode), "privileges", errors);
         var privileges = new List<UserPrivilege>();
         foreach (var (p, i) in payload.Privileges.Select((p, i) => (p, i)))
         {
             var field = $"privileges[{i}]";
             errors.Required(field + ".resourceCode", p.ResourceCode);
-            var resource = await refs.Context.Resources.AsNoTracking().Where(r => r.Code == p.ResourceCode).Select(r => new { r.Id, r.AvailableActions }).SingleOrDefaultAsync(cancellationToken);
-            if (resource is null && !string.IsNullOrWhiteSpace(p.ResourceCode))
-            {
-                errors.Add(field + ".resourceCode", $"'{p.ResourceCode}' is not a screen.");
-            }
+            var resourceId = await refs.ResourceAsync(p.ResourceCode, field + ".resourceCode", errors, cancellationToken);
+            var available = resourceId is { } rid && rid != Guid.Empty
+                ? await refs.Context.Resources.AsNoTracking().Where(r => r.Id == rid).Select(r => r.AvailableActions).SingleOrDefaultAsync(cancellationToken)
+                : null;
 
             var actions = p.Actions.Where(a => !string.IsNullOrWhiteSpace(a)).Select(a => a.Trim().ToUpperInvariant()).Distinct(StringComparer.Ordinal).ToList();
-            if (actions.Count == 0)
+            if (actions.Count == 0 && p.Grants.Count == 0)
             {
-                errors.Add(field + ".actions", "Choose at least one action.");
+                errors.Add(field + ".actions", "Choose at least one action, or data on the screen.");
             }
-            else if (resource is not null && actions.Except(resource.AvailableActions, StringComparer.Ordinal).ToList() is { Count: > 0 } unknown)
+            else if (available is not null && actions.Except(available, StringComparer.Ordinal).ToList() is { Count: > 0 } unknown)
             {
                 errors.Add(field + ".actions", $"{string.Join(", ", unknown)} is not an action of {p.ResourceCode}.");
             }
 
-            var company = Blank(p.CompanyCode);
-            CheckCompany(company, [], companies, [], refs, field, errors);
-            privileges.Add(new UserPrivilege { UserId = entity.Id, CompanyCode = company, ResourceId = resource?.Id ?? Guid.Empty, Actions = actions });
+            var privilege = new UserPrivilege
+            {
+                UserId = entity.Id,
+                CompanyCode = CheckCompany(p.CompanyCode, companies, refs, field, errors),
+                ResourceId = resourceId ?? Guid.Empty,
+                Actions = actions,
+            };
+            ChildSync.RequireUnique(p.Grants, g => g.LovCode, field + ".grants", errors);
+            foreach (var (g, j) in p.Grants.Select((g, j) => (g, j)))
+            {
+                var grantField = $"{field}.grants[{j}]";
+                var lovId = await refs.LovAsync(g.LovCode, grantField + ".lovCode", errors, cancellationToken);
+                var values = g.GrantedValues.Where(v => !string.IsNullOrWhiteSpace(v)).Select(v => v.Trim()).Distinct(StringComparer.Ordinal).ToList();
+                switch (g.GrantType)
+                {
+                    case GrantType.All:
+                        values = [];
+                        break;
+                    case GrantType.Values when values.Count == 0:
+                        errors.Add(grantField + ".grantedValues", "List at least one value.");
+                        break;
+                    case GrantType.Values:
+                        break;
+                    default:
+                        // A personal grant only adds: all values or some (rules and "none" belong to roles).
+                        errors.Add(grantField + ".grantType", "Use ALL or VALUES.");
+                        break;
+                }
+
+                privilege.Grants.Add(new UserPrivilegeGrant { UserPrivilegeId = privilege.Id, LovId = lovId ?? Guid.Empty, GrantType = g.GrantType, GrantedValues = values });
+            }
+
+            privileges.Add(privilege);
         }
 
         if (errors.HasErrors || refs.IsValidating)
@@ -572,7 +615,15 @@ internal sealed class UserApplier(AppsControlDbContext db) : ConfigApplier<UserA
             to.EffectiveTo = from.EffectiveTo;
             to.Branches = from.Branches;
         });
-        ChildSync.Sync(entity.Privileges, privileges, p => (p.CompanyCode, p.ResourceId), (from, to) => to.Actions = from.Actions);
+        ChildSync.Sync(entity.Privileges, privileges, p => (p.CompanyCode, p.ResourceId), (from, to) =>
+        {
+            to.Actions = from.Actions;
+            ChildSync.Sync(to.Grants, from.Grants, g => g.LovId, (grantFrom, grantTo) =>
+            {
+                grantTo.GrantType = grantFrom.GrantType;
+                grantTo.GrantedValues = grantFrom.GrantedValues;
+            });
+        });
     }
 
     protected override Task<UserPayload> ToPayloadAsync(AppsControlDbContext context, UserAccount entity, CancellationToken cancellationToken) =>
@@ -608,37 +659,71 @@ internal sealed class UserApplier(AppsControlDbContext db) : ConfigApplier<UserA
                 .ToList(),
             Privileges = entity.Privileges
                 .OrderBy(p => p.CompanyCode).ThenBy(p => p.Resource?.Code)
-                .Select(p => new UserPrivilegePayload { CompanyCode = p.CompanyCode, ResourceCode = p.Resource?.Code ?? string.Empty, Actions = p.Actions })
+                .Select(p => new UserPrivilegePayload
+                {
+                    CompanyCode = p.CompanyCode,
+                    ResourceCode = p.Resource?.Code ?? string.Empty,
+                    Actions = p.Actions,
+                    Grants = [.. p.Grants
+                        .OrderBy(g => g.Lov?.Code, StringComparer.Ordinal)
+                        .Select(g => new UserGrantPayload { LovCode = g.Lov?.Code ?? string.Empty, GrantType = g.GrantType, GrantedValues = g.GrantedValues })],
+                })
                 .ToList(),
         });
 
-    private static string? Blank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
-
-    /// <summary>The company must exist (or be created in the same change set); branches need a company and must be its own.</summary>
-    private static void CheckCompany(string? company, List<string> branchCodes, List<string> companies, List<(string Code, string CompanyCode)> branches, RefResolver refs, string field, ValidationErrors errors)
+    /// <summary>
+    /// The company: required, "*" for all companies (an empty choice is not "all", ADR-0036); otherwise it must exist or be
+    /// created in the same change set.
+    /// </summary>
+    private static string CheckCompany(string? value, List<string> companies, RefResolver refs, string field, ValidationErrors errors)
     {
-        if (company is not null && !companies.Contains(company) && !refs.IsPendingCreate(AppsControlChangeTypes.Company, company))
+        var company = value?.Trim() ?? string.Empty;
+        if (company.Length == 0)
+        {
+            errors.Add(field + ".companyCode", "Choose a company, or all companies (*).");
+        }
+        else if (company != CompanyScope.All && !companies.Contains(company) && !refs.IsPendingCreate(AppsControlChangeTypes.Company, company))
         {
             errors.Add(field + ".companyCode", $"Company '{company}' does not exist.");
         }
 
-        if (branchCodes.Count > 0 && company is null)
+        return company;
+    }
+
+    /// <summary>The branches: required, ["*"] for all of them; with all companies only all branches; otherwise the company's own.</summary>
+    private static List<string> CheckBranches(string company, List<string> values, List<(string Code, string CompanyCode)> branches, RefResolver refs, string field, ValidationErrors errors)
+    {
+        var codes = values.Where(b => !string.IsNullOrWhiteSpace(b)).Select(b => b.Trim()).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToList();
+        if (codes.Count == 0)
         {
-            errors.Add(field + ".branches", "Choose the company of the branches.");
-            return;
+            errors.Add(field + ".branches", "Choose branches, or all branches (*).");
+            return codes;
         }
 
-        foreach (var code in branchCodes)
+        if (codes.Contains(CompanyScope.All))
+        {
+            return [CompanyScope.All];
+        }
+
+        if (company == CompanyScope.All)
+        {
+            errors.Add(field + ".branches", "With all companies, choose all branches (*).");
+            return codes;
+        }
+
+        foreach (var code in codes)
         {
             var branch = branches.FirstOrDefault(b => b.Code == code);
             if (branch.Code is null && !refs.IsPendingCreate(AppsControlChangeTypes.Branch, code))
             {
                 errors.Add(field + ".branches", $"Branch '{code}' does not exist.");
             }
-            else if (branch.Code is not null && branch.CompanyCode != company)
+            else if (branch.Code is not null && company.Length > 0 && branch.CompanyCode != company)
             {
                 errors.Add(field + ".branches", $"Branch {code} belongs to company {branch.CompanyCode}, not {company}.");
             }
         }
+
+        return codes;
     }
 }

@@ -128,11 +128,11 @@ public sealed class BusinessApplication : ConfigEntity
     /// <summary>Channel codes (<c>INTERNAL</c>, <c>EXTERNAL</c>, <c>FIELD</c>) of a Dynamic Cube app; empty for a connected app.</summary>
     public List<string> Channels { get; set; } = [];
 
-    /// <summary>Companies of the organization the app is enabled for; empty: all of them.</summary>
-    public List<string> Companies { get; set; } = [];
+    /// <summary>Companies of the organization the app is enabled for, or just <see cref="CompanyScope.All"/>.</summary>
+    public List<string> Companies { get; set; } = [CompanyScope.All];
 
-    /// <summary>Branches of those companies the app is enabled for; empty: all of them.</summary>
-    public List<string> Branches { get; set; } = [];
+    /// <summary>Branches of those companies the app is enabled for, or just <see cref="CompanyScope.All"/>.</summary>
+    public List<string> Branches { get; set; } = [CompanyScope.All];
 
     /// <summary>Address of a connected app.</summary>
     public string? BaseUrl { get; set; }

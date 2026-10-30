@@ -341,10 +341,10 @@ public sealed class BusinessAppPayload : ConfigPayload
     /// </summary>
     public List<string>? Channels { get; set; }
 
-    /// <summary>Companies the app is enabled for; empty: every company of its organization.</summary>
+    /// <summary>Companies the app is enabled for, or ["*"] for every company of its organization (required).</summary>
     public List<string> Companies { get; set; } = [];
 
-    /// <summary>Branches the app is enabled for; empty: every branch of those companies.</summary>
+    /// <summary>Branches the app is enabled for, or ["*"] for every branch of those companies (required).</summary>
     public List<string> Branches { get; set; } = [];
 
     public string? BaseUrl { get; set; }
@@ -410,10 +410,10 @@ internal sealed class BusinessAppApplier(AppsControlDbContext db) : ConfigApplie
         entity.Channels = payload.Kind == AppKind.DynamicCube ? channels : [];
         entity.BaseUrl = payload.Kind == AppKind.Connected && !string.IsNullOrWhiteSpace(payload.BaseUrl) ? payload.BaseUrl.Trim() : null;
 
-        // Companies of the app's organization, and branches of those companies.
-        entity.Companies = Codes(payload.Companies);
+        // Companies of the app's organization, and branches of those companies; "all" is chosen explicitly (ADR-0036).
+        entity.Companies = AllOrCodes(payload.Companies, "companies", "Choose companies, or all companies (*).", errors);
         var companies = await refs.Context.Companies.AsNoTracking().Where(c => entity.Companies.Contains(c.Code)).Select(c => new { c.Code, c.EntityCode }).ToListAsync(cancellationToken);
-        foreach (var code in entity.Companies)
+        foreach (var code in entity.Companies.Where(c => c != CompanyScope.All))
         {
             var company = companies.FirstOrDefault(c => c.Code == code);
             if (company is null && !refs.IsPendingCreate(AppsControlChangeTypes.Company, code))
@@ -426,16 +426,17 @@ internal sealed class BusinessAppApplier(AppsControlDbContext db) : ConfigApplie
             }
         }
 
-        entity.Branches = Codes(payload.Branches);
+        entity.Branches = AllOrCodes(payload.Branches, "branches", "Choose branches, or all branches (*).", errors);
+        var allCompanies = CompanyScope.IsAll(entity.Companies);
         var branches = await refs.Context.Branches.AsNoTracking().Where(b => entity.Branches.Contains(b.Code)).Select(b => new { b.Code, b.CompanyCode, b.EntityCode }).ToListAsync(cancellationToken);
-        foreach (var code in entity.Branches)
+        foreach (var code in entity.Branches.Where(c => c != CompanyScope.All))
         {
             var branch = branches.FirstOrDefault(b => b.Code == code);
             if (branch is null && !refs.IsPendingCreate(AppsControlChangeTypes.Branch, code))
             {
                 errors.Add("branches", $"Branch '{code}' does not exist.");
             }
-            else if (branch is not null && (entity.Companies.Count > 0 ? !entity.Companies.Contains(branch.CompanyCode) : branch.EntityCode != entity.EntityCode))
+            else if (branch is not null && (allCompanies ? branch.EntityCode != entity.EntityCode : !entity.Companies.Contains(branch.CompanyCode)))
             {
                 errors.Add("branches", $"Branch {code} belongs to company {branch.CompanyCode}, which the app is not enabled for.");
             }
@@ -463,6 +464,18 @@ internal sealed class BusinessAppApplier(AppsControlDbContext db) : ConfigApplie
 
     private static List<string> Codes(IEnumerable<string>? codes) =>
         [.. (codes ?? []).Where(c => !string.IsNullOrWhiteSpace(c)).Select(c => c.Trim()).Distinct(StringComparer.Ordinal)];
+
+    /// <summary>Codes that must be chosen: some, or just "*" for all of them (an empty choice is an error, not "all").</summary>
+    private static List<string> AllOrCodes(IEnumerable<string>? values, string field, string message, ValidationErrors errors)
+    {
+        var codes = Codes(values);
+        if (codes.Count == 0)
+        {
+            errors.Add(field, message);
+        }
+
+        return codes.Contains(CompanyScope.All) ? [CompanyScope.All] : codes;
+    }
 
     protected override async Task BeforeDeleteAsync(AppsControlDbContext context, BusinessApplication entity, CancellationToken cancellationToken)
     {

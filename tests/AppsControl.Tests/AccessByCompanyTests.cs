@@ -44,7 +44,7 @@ public sealed class AccessByCompanyTests(AppsControlFixture fixture) : IAsyncLif
             nameEn = "Staff",
             assignments = new[] { new { orgUnitCode = unit, isPrimary = true } },
             roles = new[] { new { roleCode = clerk, companyCode = company, branches = new[] { riyadh } } },
-            privileges = new[] { new { resourceCode = AppsControlResources.Menus, actions = new[] { "VIEW", "EDIT" } } },
+            privileges = new[] { new { companyCode = "*", resourceCode = AppsControlResources.Menus, actions = new[] { "VIEW", "EDIT" } } },
         }));
 
         var access = await _harness.AccessAsync(user);
@@ -76,7 +76,7 @@ public sealed class AccessByCompanyTests(AppsControlFixture fixture) : IAsyncLif
     }
 
     [Fact]
-    public async Task Branches_need_their_company_and_personal_actions_must_exist_on_the_screen()
+    public async Task All_is_an_explicit_choice_branches_need_their_company_and_personal_actions_must_exist_on_the_screen()
     {
         var (company, other, branch) = (Harness.Unique("CO"), Harness.Unique("CO2"), Harness.Unique("BR"));
         var role = Harness.Unique("ROLE");
@@ -89,10 +89,24 @@ public sealed class AccessByCompanyTests(AppsControlFixture fixture) : IAsyncLif
         async Task<IEnumerable<string>> Problems(object payload) =>
             (await Should.ThrowAsync<ChangeValidationException>(() => _harness.DraftAsync(AppsControlAreas.Security,
                 new Change(AppsControlChangeTypes.User, Harness.Unique("u").ToLowerInvariant(), ChangeOperation.Create, payload)))).Errors.Keys;
+        object Held(string? companyCode, string[] branches) => new { nameAr = "م", nameEn = "U", roles = new[] { new { roleCode = role, companyCode, branches } } };
 
-        (await Problems(new { nameAr = "م", nameEn = "U", roles = new[] { new { roleCode = role, companyCode = other, branches = new[] { branch } } } })).ShouldContain("roles[0].branches");
-        (await Problems(new { nameAr = "م", nameEn = "U", roles = new[] { new { roleCode = role, companyCode = (string?)null, branches = new[] { branch } } } })).ShouldContain("roles[0].branches");
-        (await Problems(new { nameAr = "م", nameEn = "U", roles = new[] { new { roleCode = role, companyCode = Harness.Unique("NONE"), branches = Array.Empty<string>() } } })).ShouldContain("roles[0].companyCode");
-        (await Problems(new { nameAr = "م", nameEn = "U", privileges = new[] { new { resourceCode = AppsControlResources.Root, actions = new[] { "DELETE" } } } })).ShouldContain("privileges[0].actions");
+        (await Problems(Held(other, [branch]))).ShouldContain("roles[0].branches", "the branch belongs to another company");
+        (await Problems(Held(null, ["*"]))).ShouldContain("roles[0].companyCode", "no company is not all companies");
+        (await Problems(Held(company, []))).ShouldContain("roles[0].branches", "no branches is not all branches");
+        (await Problems(Held("*", [branch]))).ShouldContain("roles[0].branches", "all companies come with all branches");
+        (await Problems(Held(Harness.Unique("NONE"), ["*"]))).ShouldContain("roles[0].companyCode");
+        (await Problems(new { nameAr = "م", nameEn = "U", privileges = new[] { new { companyCode = "*", resourceCode = AppsControlResources.Root, actions = new[] { "DELETE" } } } })).ShouldContain("privileges[0].actions");
+        (await Problems(new { nameAr = "م", nameEn = "U", privileges = new[] { new { companyCode = (string?)null, resourceCode = AppsControlResources.Classes, actions = new[] { "VIEW" } } } })).ShouldContain("privileges[0].companyCode");
+
+        // Stored as chosen: "*" stays "*".
+        var user = Harness.Unique("u").ToLowerInvariant();
+        await _harness.PublishAsync(AppsControlAreas.Security, new Change(AppsControlChangeTypes.User, user, ChangeOperation.Create, Held("*", ["*"])));
+        var row = await _harness.AsAsync("admin", sp => sp.GetServices<DynamicCube.Platform.Configuration.IConfigApplier>()
+            .Single(a => a.EntityType == AppsControlChangeTypes.User).GetAsync(user, CancellationToken.None));
+        var held = row!.Value.GetProperty("roles")[0];
+        held.GetProperty("companyCode").GetString().ShouldBe("*");
+        held.GetProperty("branches").EnumerateArray().Select(b => b.GetString()).ShouldBe(["*"]);
+        (await _harness.AccessAsync(user)).Can(AppsControlResources.Classes, PrivilegeActions.View).ShouldBeTrue();
     }
 }

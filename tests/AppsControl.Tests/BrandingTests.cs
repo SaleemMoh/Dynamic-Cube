@@ -121,8 +121,8 @@ public sealed class BrandingTests(AppsControlFixture fixture) : IAsyncLifetime
 
         var (app, connected) = (Harness.Unique("PERMITS"), Harness.Unique("HR"));
         await _harness.PublishAsync(AppsControlAreas.System,
-            new Change(AppsControlChangeTypes.BusinessApp, app, ChangeOperation.Create, new { nameAr = "التصاريح", nameEn = "Permits", kind = "DYNAMIC_CUBE" }),
-            new Change(AppsControlChangeTypes.BusinessApp, connected, ChangeOperation.Create, new { nameAr = "الموارد", nameEn = "HR", kind = "CONNECTED" }));
+            new Change(AppsControlChangeTypes.BusinessApp, app, ChangeOperation.Create, new { nameAr = "التصاريح", nameEn = "Permits", kind = "DYNAMIC_CUBE", companies = new[] { "*" }, branches = new[] { "*" } }),
+            new Change(AppsControlChangeTypes.BusinessApp, connected, ChangeOperation.Create, new { nameAr = "الموارد", nameEn = "HR", kind = "CONNECTED", companies = new[] { "*" }, branches = new[] { "*" } }));
         await _harness.PublishAsync(AppsControlAreas.System, new Change(AppsControlChangeTypes.AppBranding, app, ChangeOperation.Create, new
         {
             nameAr = "منصة التصاريح",

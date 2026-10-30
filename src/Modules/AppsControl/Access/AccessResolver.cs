@@ -85,14 +85,14 @@ public sealed partial class AccessResolver(
         var departmentCodes = await DepartmentRoles.OfUserAsync(context, user.Id, today, cancellationToken);
         roles.AddRange(await context.Roles.AsNoTracking()
             .Where(r => departmentCodes.Contains(r.Code) && r.IsActive && (r.AppId == null || r.AppId == app))
-            .Select(r => new { RoleId = r.Id, r.Code, r.BusinessApp, r.SharedApps, CompanyCode = (string?)null, r.OverrideCompanies })
+            .Select(r => new { RoleId = r.Id, r.Code, r.BusinessApp, r.SharedApps, CompanyCode = CompanyScope.All, r.OverrideCompanies })
             .ToListAsync(cancellationToken));
         var roleIds = roles.Select(r => r.RoleId).Distinct().ToList();
 
         // A role held in a company where it differs contributes that company's override; otherwise its own contents.
-        // (Held in every company it uses its own contents until a current company is chosen, ADR-0036 step 5.)
+        // (Held in all companies, "*", it uses its own contents until a current company is chosen, ADR-0036 step 5.)
         var sources = roles
-            .Select(r => new RoleSource(r.RoleId, r.CompanyCode is { } company && r.OverrideCompanies.Contains(company) ? company : null))
+            .Select(r => new RoleSource(r.RoleId, r.OverrideCompanies.Contains(r.CompanyCode) ? r.CompanyCode : null))
             .Distinct()
             .ToList();
         var overrideCompanies = sources.Select(s => s.CompanyCode).OfType<string>().Distinct().ToList();

@@ -111,7 +111,7 @@ public sealed class AccessTests(AppsControlFixture fixture) : IAsyncLifetime
             {
                 nameAr = "محلل",
                 nameEn = "Analyst",
-                roles = new[] { new { roleCode = role } },
+                roles = new[] { new { roleCode = role, companyCode = "*", branches = new[] { "*" } } },
             }));
 
         var access = await _harness.AccessAsync(userName);
@@ -129,7 +129,7 @@ public sealed class AccessTests(AppsControlFixture fixture) : IAsyncLifetime
         await _harness.PublishAsync(
             AppsControlAreas.Security,
             new Change(AppsControlChangeTypes.Role, role, ChangeOperation.Create, new { nameAr = "كاتب", nameEn = "Clerk", menus = new[] { "apps-control.lovs" } }),
-            new Change(AppsControlChangeTypes.User, userName, ChangeOperation.Create, new { nameAr = "كاتب", nameEn = "Clerk", roles = new[] { new { roleCode = role } } }));
+            new Change(AppsControlChangeTypes.User, userName, ChangeOperation.Create, new { nameAr = "كاتب", nameEn = "Clerk", roles = new[] { new { roleCode = role, companyCode = "*", branches = new[] { "*" } } } }));
 
         var (access, menu) = await _harness.AsAsync(userName, async sp =>
         {

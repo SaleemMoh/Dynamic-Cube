@@ -106,7 +106,7 @@ internal sealed class WorkflowHost : IAsyncDisposable
         {
             nameAr = "موظف " + u.User,
             nameEn = "Employee " + u.User,
-            roles = u.Roles.Select(r => new { roleCode = r }).ToArray(),
+            roles = u.Roles.Select(r => new { roleCode = r, companyCode = "*", branches = new[] { "*" } }).ToArray(),
         }))]);
 
     /// <summary>Publishes a service; it comes with its workflow (same code), whose version 1 completes requests without review.</summary>

@@ -60,6 +60,7 @@ public sealed class LovTests(AppsControlFixture fixture) : IAsyncLifetime
         var fixedUser = Harness.Unique("u").ToLowerInvariant();
         var ruleUser = Harness.Unique("u").ToLowerInvariant();
         var plainUser = Harness.Unique("u").ToLowerInvariant();
+        var personalUser = Harness.Unique("u").ToLowerInvariant();
 
         await _harness.PublishAsync(AppsControlAreas.Lovs, Lov(lov, new { sourceType = "CLASS", classCode = _class, requiresGrant = true }));
         var unitType = Harness.Unique("TYPE");
@@ -86,13 +87,23 @@ public sealed class LovTests(AppsControlFixture fixture) : IAsyncLifetime
                 nameEn = "Rule",
                 grants = new[] { new { lovCode = lov, grantType = "RULE", rule = new { var = "user.orgUnitAttributes.SECTORS" } } },
             }),
-            new Change(AppsControlChangeTypes.User, fixedUser, ChangeOperation.Create, new { nameAr = "أ", nameEn = "A", roles = new[] { new { roleCode = fixedRole } } }),
+            new Change(AppsControlChangeTypes.User, fixedUser, ChangeOperation.Create, new { nameAr = "أ", nameEn = "A", roles = new[] { new { roleCode = fixedRole, companyCode = "*", branches = new[] { "*" } } } }),
             new Change(AppsControlChangeTypes.User, ruleUser, ChangeOperation.Create, new
             {
                 nameAr = "ب",
                 nameEn = "B",
-                roles = new[] { new { roleCode = ruleRole } },
+                roles = new[] { new { roleCode = ruleRole, companyCode = "*", branches = new[] { "*" } } },
                 assignments = new[] { new { orgUnitCode = unit } },
+            }),
+            // Values given to one person on one screen, besides their roles.
+            new Change(AppsControlChangeTypes.User, personalUser, ChangeOperation.Create, new
+            {
+                nameAr = "ج",
+                nameEn = "C",
+                privileges = new[]
+                {
+                    new { companyCode = "*", resourceCode = screen, actions = Array.Empty<string>(), grants = new[] { new { lovCode = lov, grantType = "VALUES", grantedValues = new[] { "ICT" } } } },
+                },
             }));
 
         (await ValuesAsync(plainUser, lov, new LovQuery())).Items.ShouldBeEmpty();
@@ -103,6 +114,9 @@ public sealed class LovTests(AppsControlFixture fixture) : IAsyncLifetime
         (await ValuesAsync(fixedUser, lov, new LovQuery(Resource: screen))).Items.Count.ShouldBe(3);
 
         (await ValuesAsync(ruleUser, lov, new LovQuery())).Items.Select(i => i.Value).ShouldBe(["ICT", "CONSULTING"], ignoreOrder: true);
+
+        (await ValuesAsync(personalUser, lov, new LovQuery(Resource: screen))).Items.ShouldHaveSingleItem().Value.ShouldBe("ICT");
+        (await ValuesAsync(personalUser, lov, new LovQuery())).Items.ShouldBeEmpty("personal values hold on their screen only");
     }
 
     [Fact]
@@ -142,7 +156,7 @@ public sealed class LovTests(AppsControlFixture fixture) : IAsyncLifetime
                 nameEn = "Role",
                 grants = new[] { new { lovCode = lov, grantType = "VALUES", grantedValues = new[] { "ICT" } } },
             }),
-            new Change(AppsControlChangeTypes.User, user, ChangeOperation.Create, new { nameAr = "م", nameEn = "U", roles = new[] { new { roleCode = role } } }));
+            new Change(AppsControlChangeTypes.User, user, ChangeOperation.Create, new { nameAr = "م", nameEn = "U", roles = new[] { new { roleCode = role, companyCode = "*", branches = new[] { "*" } } } }));
 
         var adminPage = await ValuesAsync("admin", lov, new LovQuery(Search: "con"));
         adminPage.Items.Select(i => i.Value).ShouldBe(["CONSTRUCTION", "CONSULTING"], ignoreOrder: true);

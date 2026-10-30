@@ -58,7 +58,7 @@ public sealed class ApiTests(DatabaseFixture fixture) : IAsyncLifetime
         await host.Host.PublishAsync(
             AppsControlAreas.Security,
             new Change(AppsControlChangeTypes.Role, role, ChangeOperation.Create, new { nameAr = "موظف", nameEn = "Clerk", privileges = new[] { new { resourceCode = "action-center", actions = new[] { "VIEW" } } } }),
-            new Change(AppsControlChangeTypes.User, clerk, ChangeOperation.Create, new { nameAr = "موظف", nameEn = "Clerk", roles = new[] { new { roleCode = role } } }));
+            new Change(AppsControlChangeTypes.User, clerk, ChangeOperation.Create, new { nameAr = "موظف", nameEn = "Clerk", roles = new[] { new { roleCode = role, companyCode = "*", branches = new[] { "*" } } } }));
         var workflow = await host.WorkflowAsync([Start("REVIEW"), Human("REVIEW", Role(role), [Act("OK", "DONE")], sla: new { workingDays = 5 }), End("DONE", "APPROVED")]);
         var subject = await host.StartAsync(workflow);
 

@@ -135,10 +135,10 @@ const RESOURCE = 'apps-control.classes';
               <ng-container matColumnDef="companies">
                 <th mat-header-cell *matHeaderCellDef>{{ 'classes.companies' | dcTranslate }}</th>
                 <td mat-cell *matCellDef="let row" class="mono">
-                  @if (row.companies?.length) {
-                    {{ row.companies.join(', ') }}
-                  } @else {
+                  @if (row.companies?.includes('*')) {
                     <span class="dc-muted">{{ 'access.allCompanies' | dcTranslate }}</span>
+                  } @else {
+                    {{ row.companies?.join(', ') }}
                   }
                 </td>
               </ng-container>
@@ -332,7 +332,7 @@ export class ClassesPage {
         { label: { ar: 'يسري من', en: 'Effective from' }, value: row.effectiveFrom ?? '', ltr: true },
         { label: { ar: 'يسري حتى', en: 'Effective to' }, value: row.effectiveTo ?? '', ltr: true },
         ...(cls?.valuesPerCompany
-          ? [{ label: { ar: 'الشركات', en: 'Companies' }, value: row.companies?.length ? row.companies.join(', ') : this.i18n.translate('access.allCompanies'), ltr: true }]
+          ? [{ label: { ar: 'الشركات', en: 'Companies' }, value: row.companies?.includes('*') ? this.i18n.translate('access.allCompanies') : (row.companies ?? []).join(', '), ltr: true }]
           : []),
         ...(cls?.attributes ?? []).map((a) => ({ label: { ar: a.nameAr, en: a.nameEn }, value: displayValue(row.attributes?.[a.code]) })),
       ],

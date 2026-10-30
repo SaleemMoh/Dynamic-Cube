@@ -22,7 +22,7 @@ public sealed class MenuTreeTests(AppsControlFixture fixture) : IAsyncLifetime
     public ValueTask DisposeAsync() => _harness.DisposeAsync();
 
     private static Change App(string code, string kind, params string[] channels) =>
-        new(AppsControlChangeTypes.BusinessApp, code, ChangeOperation.Create, new { nameAr = "تطبيق", nameEn = "App " + code, kind, channels });
+        new(AppsControlChangeTypes.BusinessApp, code, ChangeOperation.Create, new { nameAr = "تطبيق", nameEn = "App " + code, kind, channels, companies = new[] { "*" }, branches = new[] { "*" } });
 
     private static Change Group(string code, string? app, string? channel) =>
         new(AppsControlChangeTypes.MenuGroup, code, ChangeOperation.Create, new { nameAr = "مجموعة", nameEn = "Group " + code, businessApp = app, appCode = channel });

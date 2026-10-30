@@ -41,7 +41,7 @@ public sealed class OrgRoutingTests(DatabaseFixture fixture)
             nameAr = "موظف " + user,
             nameEn = "Employee " + user,
             assignments = new[] { new { orgUnitCode = unit, positionCode = position } },
-            roles = roles.Select(r => new { roleCode = r }).ToArray(),
+            roles = roles.Select(r => new { roleCode = r, companyCode = "*", branches = new[] { "*" } }).ToArray(),
         });
 
     [Fact]

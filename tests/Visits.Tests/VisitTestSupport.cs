@@ -77,7 +77,7 @@ internal sealed class VisitHost : IAsyncDisposable
         await Host.PublishAsync(
             AppsControlAreas.Security,
             new Change(AppsControlChangeTypes.Role, role, ChangeOperation.Create, new { nameAr = "مفتش", nameEn = "Inspector" }),
-            new Change(AppsControlChangeTypes.User, inspector, ChangeOperation.Create, new { nameAr = "المفتش", nameEn = "Inspector", roles = new[] { new { roleCode = role } } }));
+            new Change(AppsControlChangeTypes.User, inspector, ChangeOperation.Create, new { nameAr = "المفتش", nameEn = "Inspector", roles = new[] { new { roleCode = role, companyCode = "*", branches = new[] { "*" } } } }));
         return (role, inspector);
     }
 

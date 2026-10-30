@@ -35,7 +35,7 @@ public sealed class UserAccount : ConfigEntity
 
     public List<UserRole> Roles { get; } = [];
 
-    /// <summary>Screens and actions given to this person alone (ADR-0036), besides those of their roles.</summary>
+    /// <summary>Screens, actions and data given to this person alone (ADR-0036), besides those of their roles.</summary>
     public List<UserPrivilege> Privileges { get; } = [];
 }
 
@@ -62,8 +62,8 @@ public sealed class UserAssignment : IAuditable
 }
 
 /// <summary>
-/// A role held by a user in a company (every company when <see cref="CompanyCode"/> is empty) and some of its branches
-/// (all when <see cref="Branches"/> is empty), optionally only within an org unit.
+/// A role held by a user in a company, or in all of them (<see cref="CompanyScope.All"/>), and in some of its branches or all
+/// of them, optionally only within an org unit. "All" is always chosen explicitly (ADR-0036): an empty choice is not valid.
 /// </summary>
 public sealed class UserRole : IAuditable
 {
@@ -83,25 +83,49 @@ public sealed class UserRole : IAuditable
 
     public DateOnly? EffectiveTo { get; set; }
 
-    /// <summary>The company the role is held in; empty: every company.</summary>
-    public string? CompanyCode { get; set; }
+    /// <summary>The company the role is held in, or <see cref="CompanyScope.All"/>.</summary>
+    public string CompanyCode { get; set; } = CompanyScope.All;
 
-    /// <summary>Branches of that company the role is held in; empty: all of them.</summary>
-    public List<string> Branches { get; set; } = [];
+    /// <summary>Branches of that company the role is held in, or just <see cref="CompanyScope.All"/>.</summary>
+    public List<string> Branches { get; set; } = [CompanyScope.All];
 }
 
-/// <summary>Actions on a screen given to one person (in a company, or every company when empty).</summary>
+/// <summary>
+/// Actions on a screen, and data on it, given to one person in a company or all of them (<see cref="CompanyScope.All"/>),
+/// besides what their roles give.
+/// </summary>
 public sealed class UserPrivilege : IAuditable
 {
     public Guid Id { get; set; } = Guid.CreateVersion7();
 
     public Guid UserId { get; set; }
 
-    public string? CompanyCode { get; set; }
+    public string CompanyCode { get; set; } = CompanyScope.All;
 
     public Guid ResourceId { get; set; }
 
     public Resource? Resource { get; set; }
 
+    /// <summary>Actions on the screen; may be empty when the person only receives data on it.</summary>
     public List<string> Actions { get; set; } = [];
+
+    /// <summary>Values of the screen's lists the person may see, besides those of their roles.</summary>
+    public List<UserPrivilegeGrant> Grants { get; } = [];
+}
+
+/// <summary>Values of a list (LOV) one person may see on the screen of a personal privilege: all, or some.</summary>
+public sealed class UserPrivilegeGrant : IAuditable
+{
+    public Guid Id { get; set; } = Guid.CreateVersion7();
+
+    public Guid UserPrivilegeId { get; set; }
+
+    public Guid LovId { get; set; }
+
+    public Lov? Lov { get; set; }
+
+    /// <summary><see cref="GrantType.All"/> or <see cref="GrantType.Values"/>.</summary>
+    public GrantType GrantType { get; set; }
+
+    public List<string> GrantedValues { get; set; } = [];
 }

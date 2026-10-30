@@ -38,13 +38,13 @@ public sealed class RoleOverrideTests(AppsControlFixture fixture) : IAsyncLifeti
                 new { companyCode = main, privileges = new[] { new { resourceCode = AppsControlResources.Lovs, actions = new[] { "VIEW" } } } },
             },
         }));
-        Change User(string code, string? company) => new(AppsControlChangeTypes.User, code, ChangeOperation.Create, new
+        Change User(string code, string company) => new(AppsControlChangeTypes.User, code, ChangeOperation.Create, new
         {
             nameAr = "موظف",
             nameEn = "Staff",
-            roles = new[] { new { roleCode = role, companyCode = company } },
+            roles = new[] { new { roleCode = role, companyCode = company, branches = new[] { "*" } } },
         });
-        await _harness.PublishAsync(AppsControlAreas.Security, User(inMain, main), User(inSub, sub), User(everywhere, null));
+        await _harness.PublishAsync(AppsControlAreas.Security, User(inMain, main), User(inSub, sub), User(everywhere, "*"));
 
         var main1 = await _harness.AccessAsync(inMain);
         main1.Can(AppsControlResources.Lovs, PrivilegeActions.View).ShouldBeTrue("the role's version in its company");
@@ -52,7 +52,7 @@ public sealed class RoleOverrideTests(AppsControlFixture fixture) : IAsyncLifeti
         var sub1 = await _harness.AccessAsync(inSub);
         sub1.Can(AppsControlResources.Classes, PrivilegeActions.Edit).ShouldBeTrue("other companies keep the role as it is");
         sub1.Can(AppsControlResources.Lovs, PrivilegeActions.View).ShouldBeFalse();
-        (await _harness.AccessAsync(everywhere)).Can(AppsControlResources.Classes, PrivilegeActions.View).ShouldBeTrue("held in every company: the role as it is");
+        (await _harness.AccessAsync(everywhere)).Can(AppsControlResources.Classes, PrivilegeActions.View).ShouldBeTrue("held in all companies (*): the role as it is");
 
         var row = await _harness.AsAsync("admin", sp => sp.GetServices<DynamicCube.Platform.Configuration.IConfigApplier>()
             .Single(a => a.EntityType == AppsControlChangeTypes.Role).GetAsync(role, CancellationToken.None));

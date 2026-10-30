@@ -29,5 +29,5 @@ public sealed class PortalChannelTests(DatabaseFixture fixture)
     }
 
     private static Change App(string code, ChangeOperation operation, params string[] channels) =>
-        new(AppsControlChangeTypes.BusinessApp, code, operation, new { nameAr = "تطبيق", nameEn = "App", kind = "DYNAMIC_CUBE", channels });
+        new(AppsControlChangeTypes.BusinessApp, code, operation, new { nameAr = "تطبيق", nameEn = "App", kind = "DYNAMIC_CUBE", channels, companies = new[] { "*" }, branches = new[] { "*" } });
 }

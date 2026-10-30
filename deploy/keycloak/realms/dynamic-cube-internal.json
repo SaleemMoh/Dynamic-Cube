@@ -144,8 +144,8 @@
       "username": "ruh.manager",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "Riyadh requests manager",
-      "lastName": "NHC",
+      "firstName": "Fahad",
+      "lastName": "Al-Otaibi",
       "email": "ruh.manager@nhci.example",
       "credentials": [
         {
@@ -160,8 +160,8 @@
       "username": "jed.manager",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "Jeddah requests manager",
-      "lastName": "NHC",
+      "firstName": "Reem",
+      "lastName": "Al-Ghamdi",
       "email": "jed.manager@nhci.example",
       "credentials": [
         {
@@ -176,8 +176,8 @@
       "username": "dmm.manager",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "Dammam requests manager",
-      "lastName": "NHC",
+      "firstName": "Khalid",
+      "lastName": "Al-Dosari",
       "email": "dmm.manager@nhci.example",
       "credentials": [
         {
@@ -192,8 +192,8 @@
       "username": "gov.analyst1",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "Governance analyst",
-      "lastName": "1",
+      "firstName": "Noura",
+      "lastName": "Al-Qahtani",
       "email": "gov.analyst1@nhci.example",
       "credentials": [
         {
@@ -208,8 +208,8 @@
       "username": "gov.analyst2",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "Governance analyst",
-      "lastName": "2",
+      "firstName": "Abdullah",
+      "lastName": "Al-Shehri",
       "email": "gov.analyst2@nhci.example",
       "credentials": [
         {
@@ -224,8 +224,8 @@
       "username": "gov.auditor",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "Governance auditor",
-      "lastName": "NHC",
+      "firstName": "Sarah",
+      "lastName": "Al-Zahrani",
       "email": "gov.auditor@nhci.example",
       "credentials": [
         {
@@ -240,8 +240,8 @@
       "username": "prj.analyst1",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "Projects analyst",
-      "lastName": "1",
+      "firstName": "Majed",
+      "lastName": "Al-Harbi",
       "email": "prj.analyst1@nhci.example",
       "credentials": [
         {
@@ -256,8 +256,8 @@
       "username": "prj.analyst2",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "Projects analyst",
-      "lastName": "2",
+      "firstName": "Haifa",
+      "lastName": "Al-Mutairi",
       "email": "prj.analyst2@nhci.example",
       "credentials": [
         {
@@ -272,8 +272,8 @@
       "username": "prj.auditor",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "Projects auditor",
-      "lastName": "NHC",
+      "firstName": "Turki",
+      "lastName": "Al-Subaie",
       "email": "prj.auditor@nhci.example",
       "credentials": [
         {
@@ -288,8 +288,8 @@
       "username": "fin.analyst1",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "Financial analyst",
-      "lastName": "1",
+      "firstName": "Lama",
+      "lastName": "Al-Anazi",
       "email": "fin.analyst1@nhci.example",
       "credentials": [
         {
@@ -304,8 +304,8 @@
       "username": "fin.analyst2",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "Financial analyst",
-      "lastName": "2",
+      "firstName": "Yousef",
+      "lastName": "Al-Shammari",
       "email": "fin.analyst2@nhci.example",
       "credentials": [
         {
@@ -320,8 +320,8 @@
       "username": "audit.manager",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "Audit manager",
-      "lastName": "NHC",
+      "firstName": "Munira",
+      "lastName": "Al-Rasheed",
       "email": "audit.manager@nhci.example",
       "credentials": [
         {
@@ -336,8 +336,8 @@
       "username": "nhc.gm",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "General manager",
-      "lastName": "NHC",
+      "firstName": "Abdulrahman",
+      "lastName": "Al-Salem",
       "email": "nhc.gm@nhci.example",
       "credentials": [
         {
@@ -352,8 +352,8 @@
       "username": "care.agent",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "Customer experience specialist",
-      "lastName": "NHC",
+      "firstName": "Amal",
+      "lastName": "Al-Juhani",
       "email": "care.agent@nhci.example",
       "credentials": [
         {

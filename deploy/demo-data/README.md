@@ -32,21 +32,22 @@ Violations come from Eyfaa, which is not connected yet, so the demotion for viol
 
 ### Sign-in (password `Dev@12345`)
 
-| Who | User name | Role |
+| Who | Name — user name | Role |
 |---|---|---|
-| Branch requests managers | `ruh.manager`, `jed.manager`, `dmm.manager` | Review, assign analysts, follow tasks |
-| Governance | `gov.analyst1`, `gov.analyst2`, `gov.auditor` | Analysis, audit |
-| Projects & experience | `prj.analyst1`, `prj.analyst2`, `prj.auditor` | Analysis, audit |
-| Financial | `fin.analyst1`, `fin.analyst2`, `audit.manager` | Analysis, audit manager review |
-| General manager | `nhc.gm` | Final approval |
-| Customer experience | `care.agent` | Views requests and certificates |
+| Branch requests managers | Fahad Al-Otaibi — `ruh.manager`, Reem Al-Ghamdi — `jed.manager`, Khalid Al-Dosari — `dmm.manager` | Review, assign analysts, follow tasks |
+| Governance | Noura Al-Qahtani — `gov.analyst1`, Abdullah Al-Shehri — `gov.analyst2`, Sarah Al-Zahrani — `gov.auditor` | Analysis, audit |
+| Projects & experience | Majed Al-Harbi — `prj.analyst1`, Haifa Al-Mutairi — `prj.analyst2`, Turki Al-Subaie — `prj.auditor` | Analysis, audit |
+| Financial | Lama Al-Anazi — `fin.analyst1`, Yousef Al-Shammari — `fin.analyst2`, Munira Al-Rasheed — `audit.manager` | Analysis, audit manager review |
+| General manager | Abdulrahman Al-Salem — `nhc.gm` | Final approval |
+| Customer experience | Amal Al-Juhani — `care.agent` | Views requests and certificates |
 | Configuration | `admin`, `maker`, `checker` | Apps Control |
 | Applicants (portal) | `1000000001`, `2000000002` | Act for the establishments the CR registry (mock gateway) reports |
 
-Staff are fictional and named by their job. How they get their access (open *Access* on a user):
+Staff are fictional people with realistic names; their user names follow their job so they are easy to sign in with.
+How they get their access (edit a user, *Access* tab):
 
 - **By company and branch:** each branch requests manager holds *Branch requests manager* in company *NHC Innovation*,
-  only in their own branch; auditors and the audit manager hold their roles in the company.
+  only in their own branch; auditors and the audit manager hold their roles in the company, in *All branches*.
 - **From the department:** the governance, projects and financial evaluation departments, the general manager office
   and customer experience carry default roles, so their staff have no roles of their own.
 - **Personal:** the audit manager can also open *Task supervision*.
@@ -55,6 +56,10 @@ Staff are fictional and named by their job. How they get their access (open *Acc
 
 `docker compose -f deploy/docker/docker-compose.yml up -d --build` rebuilds and restarts; the database migrates on
 start and keeps everything (branding, uploads, users, requests). The demo is loaded only into an empty database.
+
+To refresh only the NHC staff and roles in a database that already has the demo (for example after the staff got
+their names), import `deploy/demo-data/nhc/08-people.json` under **Apps Control → Change sets → Import package**, then
+submit and approve it: its roles and users are `UPSERT`, so they are updated in place and nothing else changes.
 
 ### Start again with the demo
 

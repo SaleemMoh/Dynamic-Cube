@@ -53,8 +53,12 @@ public sealed record LookupValue(
     string? BusinessApp = null,
     IReadOnlyList<string>? Companies = null)
 {
-    /// <summary>Whether the value serves a company (values not limited to companies serve all of them).</summary>
-    public bool Serves(string company) => Companies is not { Count: > 0 } || Companies.Contains(company, StringComparer.Ordinal);
+    /// <summary>
+    /// Whether the value serves a company: values of a class with values per company list their companies, or "*" for all
+    /// of them; values of other classes (no companies) serve every company.
+    /// </summary>
+    public bool Serves(string company) =>
+        Companies is not { Count: > 0 } || Companies.Contains("*", StringComparer.Ordinal) || Companies.Contains(company, StringComparer.Ordinal);
 
     public string? Text(string attribute) => Attributes[attribute] is JsonValue v && v.TryGetValue<string>(out var s) ? s : null;
 

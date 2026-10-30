@@ -65,8 +65,11 @@ public sealed class CompanyTests(AppsControlFixture fixture) : IAsyncLifetime
         (await Problems(new { nameAr = "ت", nameEn = "A", kind = "DYNAMIC_CUBE", channels = Array.Empty<string>() })).ShouldContain("channels");
         (await Problems(new { nameAr = "ت", nameEn = "A", kind = "DYNAMIC_CUBE", channels = new[] { "MOBILE" } })).ShouldContain("channels");
         (await Problems(new { nameAr = "ت", nameEn = "A", kind = "CONNECTED", channels = new[] { "INTERNAL" } })).ShouldContain("channels");
-        (await Problems(new { nameAr = "ت", nameEn = "A", kind = "DYNAMIC_CUBE", channels = new[] { "INTERNAL" }, companies = new[] { company } }))
+        (await Problems(new { nameAr = "ت", nameEn = "A", kind = "DYNAMIC_CUBE", channels = new[] { "INTERNAL" }, companies = new[] { company }, branches = new[] { "*" } }))
             .ShouldContain("companies", "the company belongs to another organization than the default one");
+        var unchosen = await Problems(new { nameAr = "ت", nameEn = "A", kind = "DYNAMIC_CUBE", channels = new[] { "INTERNAL" } });
+        unchosen.ShouldContain("companies", "all companies is an explicit choice, not an empty list");
+        unchosen.ShouldContain("branches");
 
         var app = Harness.Unique("APP");
         await _harness.PublishAsync(AppsControlAreas.System, App(app, new

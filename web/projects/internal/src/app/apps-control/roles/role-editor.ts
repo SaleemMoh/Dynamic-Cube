@@ -28,6 +28,12 @@ import {
 } from './role-models';
 import { ScreenData } from './screen-data';
 import { SubmitButton } from '../submit-button';
+import { ALL } from '../users/access-model';
+
+/** In the table of other grants "all screens" is an option of its own (`*`); the role stores it as no screen. */
+const toTable = (grants: GrantRow[]): GrantRow[] => grants.map((g) => ({ ...g, resourceCode: g.resourceCode ?? ALL }));
+const fromTable = (grants: GrantRow[]): GrantRow[] =>
+  grants.map((g) => ({ ...g, resourceCode: !g.resourceCode || g.resourceCode === ALL ? null : g.resourceCode }));
 
 export interface RoleEditorData {
   /** The full role (with privileges and grants), or null for a new one. */
@@ -559,7 +565,7 @@ export class RoleEditor {
   /** Grants on the role's screens, edited per screen. */
   protected readonly screenGrants = signal<GrantRow[]>(this.initialGrants.onScreens);
   /** The other grants (everywhere, or on screens the role does not open). */
-  protected readonly grants = new FormControl<GrantRow[]>(this.initialGrants.others, { nonNullable: true });
+  protected readonly grants = new FormControl<GrantRow[]>(toTable(this.initialGrants.others), { nonNullable: true });
   protected readonly grantsShape: StructuredShape = {
     kind: 'table',
     columns: [
@@ -572,9 +578,11 @@ export class RoleEditor {
       },
       {
         key: 'resourceCode',
-        label: { ar: 'الشاشة (فارغ: الكل)', en: 'Screen (empty: all)' },
+        label: { ar: 'الشاشة', en: 'Screen' },
         type: 'select',
-        options: this.data.screens.map((r) => ({ value: r.code, label: r.name })),
+        required: true,
+        defaultValue: ALL,
+        options: [{ value: ALL, label: { ar: 'كل الشاشات', en: 'All screens' } }, ...this.data.screens.map((r) => ({ value: r.code, label: r.name }))],
       },
       {
         key: 'grantType',
@@ -642,7 +650,7 @@ export class RoleEditor {
       permissions: this.permissions(),
       selected: this.selected(),
       screenGrants: this.screenGrants(),
-      otherGrants: this.grants.value ?? [],
+      otherGrants: fromTable(this.grants.value ?? []),
       menus: this.menus(),
       privileges: current?.privileges ?? [],
     });
@@ -652,7 +660,7 @@ export class RoleEditor {
     this.permissions.set(structuredClone(contents.permissions));
     this.selected.set([...contents.selected]);
     this.screenGrants.set(structuredClone(contents.screenGrants));
-    this.grants.setValue(structuredClone(contents.otherGrants));
+    this.grants.setValue(toTable(structuredClone(contents.otherGrants)));
     this.menus.set([...contents.menus]);
     this.pickedAvailable.set(new Set());
     this.pickedChosen.set(new Set());

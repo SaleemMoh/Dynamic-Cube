@@ -3071,6 +3071,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("actions");
 
                     b.Property<string>("CompanyCode")
+                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("company_code");
@@ -3095,6 +3096,44 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.ToTable("user_privilege", "apps");
                 });
 
+            modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.UserPrivilegeGrant", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("GrantType")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("grant_type");
+
+                    b.PrimitiveCollection<List<string>>("GrantedValues")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("granted_values");
+
+                    b.Property<Guid>("LovId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("lov_id");
+
+                    b.Property<Guid>("UserPrivilegeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_privilege_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_user_privilege_grant");
+
+                    b.HasIndex("LovId")
+                        .HasDatabaseName("ix_user_privilege_grant_lov_id");
+
+                    b.HasIndex("UserPrivilegeId", "LovId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_user_privilege_grant_user_privilege_id_lov_id");
+
+                    b.ToTable("user_privilege_grant", "apps");
+                });
+
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.UserRole", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3107,6 +3146,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("branches");
 
                     b.Property<string>("CompanyCode")
+                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("company_code");
@@ -3750,6 +3790,25 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.Navigation("Resource");
                 });
 
+            modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.UserPrivilegeGrant", b =>
+                {
+                    b.HasOne("DynamicCube.Modules.AppsControl.Domain.Lov", "Lov")
+                        .WithMany()
+                        .HasForeignKey("LovId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_privilege_grant_lovs_lov_id");
+
+                    b.HasOne("DynamicCube.Modules.AppsControl.Domain.UserPrivilege", null)
+                        .WithMany("Grants")
+                        .HasForeignKey("UserPrivilegeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_privilege_grant_user_privileges_user_privilege_id");
+
+                    b.Navigation("Lov");
+                });
+
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.UserRole", b =>
                 {
                     b.HasOne("DynamicCube.Modules.AppsControl.Domain.OrgUnit", "OrgUnit")
@@ -3823,6 +3882,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.Navigation("Privileges");
 
                     b.Navigation("Roles");
+                });
+
+            modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.UserPrivilege", b =>
+                {
+                    b.Navigation("Grants");
                 });
 
             modelBuilder.Entity("DynamicCube.Platform.ChangeSets.ChangeSet", b =>

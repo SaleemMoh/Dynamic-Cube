@@ -174,7 +174,7 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
             b.ToTable("user_role", Schema);
             b.HasOne(e => e.Role).WithMany().HasForeignKey(e => e.RoleId).OnDelete(DeleteBehavior.Restrict);
             b.HasOne(e => e.OrgUnit).WithMany().HasForeignKey(e => e.OrgUnitId).OnDelete(DeleteBehavior.Restrict);
-            b.Property(e => e.CompanyCode).HasMaxLength(100);
+            b.Property(e => e.CompanyCode).HasMaxLength(100).IsRequired();
             b.Property(e => e.Branches).HasColumnType("text[]");
         });
         modelBuilder.Entity<UserPrivilege>(b =>
@@ -182,8 +182,16 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
             b.ToTable("user_privilege", Schema);
             b.HasOne<UserAccount>().WithMany(u => u.Privileges).HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
             b.HasOne(e => e.Resource).WithMany().HasForeignKey(e => e.ResourceId).OnDelete(DeleteBehavior.Restrict);
-            b.Property(e => e.CompanyCode).HasMaxLength(100);
+            b.Property(e => e.CompanyCode).HasMaxLength(100).IsRequired();
             b.Property(e => e.Actions).HasColumnType("text[]");
+            b.HasMany(e => e.Grants).WithOne().HasForeignKey(g => g.UserPrivilegeId).OnDelete(DeleteBehavior.Cascade);
+        });
+        modelBuilder.Entity<UserPrivilegeGrant>(b =>
+        {
+            b.ToTable("user_privilege_grant", Schema);
+            b.HasOne(e => e.Lov).WithMany().HasForeignKey(e => e.LovId).OnDelete(DeleteBehavior.Cascade);
+            b.Property(e => e.GrantedValues).HasColumnType("text[]");
+            b.HasIndex(e => new { e.UserPrivilegeId, e.LovId }).IsUnique();
         });
 
         Config<Resource>(modelBuilder, "resource", b =>

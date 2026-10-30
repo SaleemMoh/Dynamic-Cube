@@ -89,7 +89,7 @@ public sealed class ClassFieldTests(AppsControlFixture fixture) : IAsyncLifetime
         Change Bank(string code, string[] companies, bool isDefault = false) =>
             new(AppsControlChangeTypes.Domain, $"{cls}/{code}", ChangeOperation.Create, new { nameAr = "بنك", nameEn = code, companies, isDefault });
         await _harness.PublishAsync(AppsControlAreas.Lookups,
-            Bank("SHARED", [], isDefault: true), Bank("MAIN_ONLY", [main], isDefault: true), Bank("SUB_ONLY", [sub], isDefault: true));
+            Bank("SHARED", ["*"], isDefault: true), Bank("MAIN_ONLY", [main], isDefault: true), Bank("SUB_ONLY", [sub], isDefault: true));
 
         var values = await _harness.AsAsync("admin", sp => sp.GetRequiredService<ILookupDirectory>().ValuesAsync(cls, CancellationToken.None));
         values.Where(v => v.Serves(main)).Select(v => v.Code).ShouldBe(["MAIN_ONLY", "SHARED"], ignoreOrder: true);
@@ -98,6 +98,8 @@ public sealed class ClassFieldTests(AppsControlFixture fixture) : IAsyncLifetime
 
         (await Should.ThrowAsync<ChangeValidationException>(() => _harness.DraftAsync(AppsControlAreas.Lookups, Bank("NOWHERE", [Harness.Unique("NONE")]))))
             .Errors.Keys.ShouldContain("companies");
+        (await Should.ThrowAsync<ChangeValidationException>(() => _harness.DraftAsync(AppsControlAreas.Lookups, Bank("UNCHOSEN", []))))
+            .Errors.Keys.ShouldContain("companies", "all companies is chosen explicitly (*), not left empty");
         (await Should.ThrowAsync<ChangeValidationException>(() => _harness.DraftAsync(AppsControlAreas.Lookups,
             new Change(AppsControlChangeTypes.Class, cls, ChangeOperation.Update, new { nameAr = "بنوك", nameEn = "Banks", valuesPerCompany = false, attributes = Array.Empty<object>() }))))
             .Errors.Keys.ShouldContain("valuesPerCompany", "values limited to a company must be opened first");

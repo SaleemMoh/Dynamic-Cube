@@ -106,9 +106,13 @@ export class DomainEditor {
           map((page) => page.items.map((i): FormOption => ({ value: i.value, label: { ar: i.labelAr, en: i.labelEn } }))),
           catchError(() => of<FormOption[]>([])),
         );
+      // "All companies" is a choice of its own (`*`); an empty choice is not valid (ADR-0036).
       const companies = cls.valuesPerCompany
         ? this.api.list('apps.company').pipe(
-            map((rows) => rows.map((r): FormOption => ({ value: r.code, label: { ar: r.nameAr, en: r.nameEn } }))),
+            map((rows) => [
+              { value: '*', label: { ar: 'كل الشركات', en: 'All companies' } } as FormOption,
+              ...rows.map((r): FormOption => ({ value: r.code, label: { ar: r.nameAr, en: r.nameEn } })),
+            ]),
             catchError(() => of<FormOption[]>([])),
           )
         : of<FormOption[]>([]);
@@ -159,7 +163,7 @@ export class DomainEditor {
       isDefault: value['isDefault'] ?? false,
       effectiveFrom: fromDate(value['effectiveFrom']),
       effectiveTo: fromDate(value['effectiveTo']),
-      companies: this.data.cls.valuesPerCompany ? ((value['companies'] as string[] | null) ?? []) : [],
+      companies: this.data.cls.valuesPerCompany ? onlyAll((value['companies'] as string[] | null) ?? []) : [],
       attributes,
       externalCodes: (this.data.row?.['externalCodes'] as unknown[] | undefined) ?? [],
     };
@@ -266,7 +270,9 @@ export class DomainEditor {
               code: 'companies',
               type: 'select',
               multiple: true,
-              label: { ar: 'الشركات (فارغ: كل الشركات)', en: 'Companies (empty: every company)' },
+              label: { ar: 'الشركات', en: 'Companies' },
+              hint: { ar: 'اختر الشركات أو «كل الشركات»', en: 'Choose companies, or "All companies"' },
+              required: true,
               options: companies,
             } satisfies FormField,
           ]
@@ -287,4 +293,9 @@ export class DomainEditor {
     // The general data alone stays one form; with fields, each kind gets its tab.
     return { code: 'domain-' + this.data.cls.code, display: sections.length > 1 ? 'tabs' : 'stacked', sections };
   }
+}
+
+/** "All companies" alone when it is among the chosen ones. */
+function onlyAll(companies: string[]): string[] {
+  return companies.includes('*') ? ['*'] : companies;
 }

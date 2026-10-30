@@ -61,6 +61,8 @@ export class DynamicForm {
   /** A second way to submit (e.g. "Submit for approval" beside "Add to draft"), emitting {@link altSubmitted}. */
   readonly altSubmitLabel = input<string | undefined>(undefined);
   readonly altSubmitIcon = input('send');
+  /** False when the host shows its own buttons and takes the value with {@link read} (e.g. a form in one tab of an editor). */
+  readonly showActions = input(true);
   /**
    * Values outside this form that rules may refer to (e.g. answers given in earlier wizard steps). The form's own values
    * win over them.
@@ -180,21 +182,27 @@ export class DynamicForm {
   }
 
   protected submit(alt = false): void {
+    const value = this.read();
+    if (value) (alt ? this.altSubmitted : this.submitted).emit(value);
+  }
+
+  /** The value as it would be submitted, or null (showing the first problem) when the form is not complete. */
+  read(): FormValue | null {
     const group = this.formGroup();
     group.markAllAsTouched();
     // Not "valid": a form of read-only fields only is DISABLED, and it can still be submitted.
-    if (!group.invalid) {
-      // Disabled (hidden) controls are excluded; read-only fields are disabled too but still submitted.
-      const value = group.value as FormValue;
-      for (const field of this.allFields()) {
-        if (field.readonly && this.isVisible(field.code)) {
-          value[field.code] = group.controls[field.code].getRawValue();
-        }
-      }
-      (alt ? this.altSubmitted : this.submitted).emit(value);
-    } else {
+    if (group.invalid) {
       this.revealProblem();
+      return null;
     }
+    // Disabled (hidden) controls are excluded; read-only fields are disabled too but still submitted.
+    const value = group.value as FormValue;
+    for (const field of this.allFields()) {
+      if (field.readonly && this.isVisible(field.code)) {
+        value[field.code] = group.controls[field.code].getRawValue();
+      }
+    }
+    return value;
   }
 
   /** Opens the tab or panel of the first field with a problem, so it can be seen. */

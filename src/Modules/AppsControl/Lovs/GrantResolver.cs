@@ -10,7 +10,8 @@ namespace DynamicCube.Modules.AppsControl.Lovs;
 
 /// <summary>
 /// Resolves a user's effective grant on an LOV: for each of the user's roles the screen-specific grant wins over the
-/// global one; results are unioned across roles. Users without any grant see everything unless the LOV requires a grant.
+/// global one; results are unioned across roles, and with the person's own grants on the screen (personal privileges,
+/// ADR-0036). Users without any grant see everything unless the LOV requires a grant.
 /// </summary>
 public sealed class GrantResolver(AppsControlDbContext context, JsonLogicEvaluator evaluator)
 {
@@ -31,13 +32,22 @@ public sealed class GrantResolver(AppsControlDbContext context, JsonLogicEvaluat
                 .Where(g => access.RoleSources.Contains(new RoleSource(g.RoleId, g.CompanyCode)))
                 .ToList();
 
-        if (grants.Count == 0)
+        // Values given to the person alone on this screen only add to what the roles give.
+        var personal = access.User.UserId is not { } userId || resourceCode is null
+            ? []
+            : await context.UserPrivileges.AsNoTracking()
+                .Where(p => p.UserId == userId && p.Resource!.Code == resourceCode)
+                .SelectMany(p => p.Grants.Where(g => g.LovId == lov.Id))
+                .Select(g => new { g.GrantType, g.GrantedValues })
+                .ToListAsync(cancellationToken);
+
+        if (grants.Count == 0 && (!lov.RequiresGrant || personal.Count == 0))
         {
             return lov.RequiresGrant ? GrantSet.Nothing : GrantSet.Everything;
         }
 
-        var all = false;
-        var values = new HashSet<string>(StringComparer.Ordinal);
+        var all = personal.Any(g => g.GrantType == GrantType.All);
+        var values = new HashSet<string>(personal.SelectMany(g => g.GrantedValues), StringComparer.Ordinal);
         string? defaultValue = null;
         var userJson = access.User.ToJson();
         foreach (var grant in grants.GroupBy(g => (g.RoleId, g.CompanyCode)).Select(g => g.OrderByDescending(x => x.IsOverride).First()))

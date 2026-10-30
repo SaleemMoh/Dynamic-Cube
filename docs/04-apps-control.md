@@ -60,12 +60,15 @@ Unless stated otherwise every table has:
 `weekend_days`, `calendar_display` (Hijri/Gregorian/both), `logo_file_id`, `default_file_folder`.
 
 **`app`** — the product channels (`INTERNAL` internal system, `EXTERNAL` portal, `FIELD` field app): fixed rows the
-product seeds, to which screens (resources), roles and menus belong. Not edited in the screens; shown as *Channel*.
+product seeds, to which screens (resources), roles and menus belong. Not edited in the screens; the Apps screen shows
+them as the *Dynamic Cube apps* (cards with their purpose, links to their menus and branding, and how many apps are
+built on each) above the apps they manage.
 
-**`business_app`** (`apps.business-app`, shown as *Apps*; ADR-0036) — an app of an organization: `kind`
-(`DYNAMIC_CUBE` | `CONNECTED`), `channels` (a Dynamic Cube app ticks at least one; a connected app has none),
-`companies` and `branches` it is enabled for (empty: all of the organization / of those companies; checked against the
-organization), `base_url` of a connected app, icon, descriptions, order. Rows (services, workflows, document types,
+**`business_app`** (`apps.business-app`, shown as *Apps managed by Dynamic Cube*; ADR-0036) — an app of an
+organization: `kind` (`DYNAMIC_CUBE` *Built on Dynamic Cube* | `CONNECTED` *Connected system*), `channels` (an app built
+on Dynamic Cube ticks at least one; a connected system has none), `companies` and `branches` it is enabled for (required:
+codes, or `["*"]` for all of the organization / of those companies — an empty list is refused; checked against the
+organization), `base_url` of a connected system, icon, descriptions, order. Rows (services, workflows, document types,
 roles…) belong to an app through their `business_app`. The portal offers a service only when it has no app or one of its
 apps ticks `EXTERNAL`. Existing apps became Dynamic Cube apps on `INTERNAL` and `EXTERNAL` for every company.
 
@@ -159,19 +162,30 @@ in the portal realm, configured by `AppsControl:PortalIdentity` (realm `dynamic-
 **`role`** — `app_id` (null = cross-app), `reference_code`.
 
 **`user_role`** — `user_id`, `role_id`, `org_unit_id` (optional: role held *within* a unit,
-e.g. "Analyst in Riyadh branch"), `company_code` (empty: every company), `branches` (text[], branches of that company;
-empty: all of them), `effective_from`, `effective_to`. A role is held once per company (and unit).
+e.g. "Analyst in Riyadh branch"), `company_code` (required: a company or `*` for all), `branches` (text[], required:
+branches of that company or `["*"]` for all; all companies take all branches), `effective_from`, `effective_to`. A role
+is held once per company (and unit). Empty never means all (ADR-0036 "All is chosen, never empty").
 
-**`user_privilege`** — `user_id`, `company_code` (empty: every company), `resource_id`, `actions` (text[], within the
-screen's available actions): screens and actions given to one person besides their roles.
+**`user_privilege`** — `user_id`, `company_code` (required: a company or `*`), `resource_id`, `actions` (text[], within
+the screen's available actions; may be empty when the row only gives data): screens and actions given to one person
+besides their roles. **`user_privilege_grant`** — `user_privilege_id`, `lov_id`, `grant_type` (`ALL` | `VALUES`),
+`granted_values`: values of a list on that screen given to the person; they add to what the roles give (a list the
+person's roles leave open stays open).
 
-**Access dialog** (*Users → Access*, [ADR-0036](adr/0036-organizations-companies-branches-apps.md)) shows a person's
-access in one place:
+**User editor** (*Users → edit*, [ADR-0036](adr/0036-organizations-companies-branches-apps.md)) has two tabs saved
+together as one change:
 
-- **Roles by company:** one row per company (or *All companies*) and branches, with the roles held there.
-- **From department:** read-only; the default roles of the units the person is placed in today, and the branch each
-  unit serves (the branch linked to it or to a unit above it). They are changed on the unit.
-- **Personal privileges:** a company, a screen and its actions.
+- **Details:** names, contact, status, language, placements (unit and position) and level.
+- **Access:**
+  - **Roles by company:** one line per company (or *All companies*) and branches (or *All branches*), with the roles
+    held there. A line with roles but no company or branches chosen is reported, not saved.
+  - **From department:** read-only; the default roles of the units the person is placed in (as saved), and the branch
+    each unit serves (the branch linked to it or to a unit above it), or the whole organization. They are changed on
+    the unit.
+  - **Personal privileges:** choose an app (Dynamic Cube apps: internal system, portal, field app; or a connected
+    system) and a company (or all); its menu tree loads, each screen with its actions to tick and *Data*: the lists on
+    the screen (bound to its fields or its sub-screens') with *as the roles give*, *all values* or *some values*. A
+    summary lists every personal privilege in every app and company, to review and remove.
 
 **Add or remove roles** (Users list, after ticking rows) adds or removes roles in a company and branches for every
 ticked user. A review first lists, per person, the roles added or removed and those left as they were (already held
@@ -269,7 +283,7 @@ Domain Value / Date / Number Parameters).
 | `display_order`, `is_default` | One default per class, or per company when values are per company |
 | `attributes` | jsonb, validated against `class_attribute` |
 | `effective_from`, `effective_to`, `is_active` | |
-| `companies` | text[]: the companies the value serves when the class has values per company; empty: every company. Modules read it as `LookupValue.Companies` / `Serves(company)`; it is a column of the generated view |
+| `companies` | text[]: the companies the value serves when the class has values per company, or `["*"]` for all of them (required for such classes; empty for other classes). Modules read it as `LookupValue.Companies` / `Serves(company)`; it is a column of the generated view |
 
 Indexes: unique (`class_id`, `code`); GIN on `attributes`.
 

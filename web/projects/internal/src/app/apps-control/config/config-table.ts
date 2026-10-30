@@ -122,7 +122,7 @@ import { ConfigBulkAction, ConfigBulkData, ConfigRowAction, ConfigType, scopeOf 
       @for (column of type().columns ?? []; track column) {
         <ng-container [matColumnDef]="column">
           <th mat-header-cell *matHeaderCellDef>{{ label(column) | dcLocalize }}</th>
-          <td mat-cell *matCellDef="let row">{{ display(row[column]) }}</td>
+          <td mat-cell *matCellDef="let row">{{ display(row[column], column) }}</td>
         </ng-container>
       }
       <ng-container matColumnDef="state">
@@ -262,14 +262,22 @@ export class ConfigTable {
     return this.type().fields.find((f) => f.code === column)?.label ?? { ar: column, en: column };
   }
 
-  protected display(value: unknown): string {
+  protected display(value: unknown, column?: string): string {
     if (value === null || value === undefined) {
       return '';
     }
     if (typeof value === 'boolean') {
       return value ? '✓' : '—';
     }
-    return Array.isArray(value) ? value.map((v) => (typeof v === 'object' ? JSON.stringify(v) : String(v))).join('، ') : typeof value === 'object' ? JSON.stringify(value) : String(value);
+    // Codes of fixed options show their labels; the explicit "all" (`*`) shows as such.
+    const field = column ? this.type().fields.find((f) => f.code === column) : undefined;
+    const text = (v: unknown): string => {
+      if (typeof v === 'object') return JSON.stringify(v);
+      if (v === '*' && field?.allOption) return this.i18n.localize(field.allOption);
+      const option = field?.options?.find((o) => o.value === v);
+      return option ? this.i18n.localize(option.label) : String(v);
+    };
+    return Array.isArray(value) ? value.map(text).join('، ') : text(value);
   }
 
   protected async openAction(action: ConfigRowAction, row: ConfigRow): Promise<void> {

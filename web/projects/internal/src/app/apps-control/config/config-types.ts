@@ -32,6 +32,11 @@ export interface ConfigField {
   optionsUrl?: string;
   /** Set when the row is created; read-only afterwards (e.g. the service a workflow belongs to). */
   lockedOnEdit?: boolean;
+  /**
+   * The label of an "all" option (value `*`) listed first, for choices where all is chosen explicitly and an empty
+   * choice is not valid (companies and branches, ADR-0036).
+   */
+  allOption?: LocalizedText;
 }
 
 /** A link from each row to a related screen (e.g. from a service to its workflow). */
@@ -277,19 +282,21 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
         title: t('التطبيقات', 'Apps'),
         key: 'code',
         scope: 'entity',
-        columns: ['kind', 'channels', 'displayOrder'],
+        columns: ['kind', 'channels', 'companies', 'displayOrder'],
+        // The product's own apps (internal system, portal, field app) above the apps it manages.
+        intro: () => import('../apps/apps-intro').then((m) => m.AppsIntro),
         fields: [
           {
             code: 'kind',
             type: 'select',
             label: t('نوع التطبيق', 'Kind'),
             options: [
-              opt('DYNAMIC_CUBE', 'تطبيق ديناميك كيوب', 'Dynamic Cube app'),
-              opt('CONNECTED', 'تطبيق مرتبط', 'Connected app'),
+              opt('DYNAMIC_CUBE', 'مبني على ديناميك كيوب', 'Built on Dynamic Cube'),
+              opt('CONNECTED', 'نظام مرتبط', 'Connected system'),
             ],
             hint: t(
-              'تطبيق ديناميك كيوب: خدماته وشاشاته من المنصة. التطبيق المرتبط: نظام خارجي له قاعدة بياناته ويستخدم المنصة لتسجيل الدخول والمستخدمين والأدوار',
-              'Dynamic Cube app: services and screens from the platform. Connected app: an outside system with its own database using the platform for sign-in, users and roles',
+              'مبني على ديناميك كيوب: خدماته وشاشاته تظهر في تطبيقات ديناميك كيوب (النظام الداخلي، البوابة، التطبيق الميداني). نظام مرتبط: نظام خارجي بشاشاته وقاعدة بياناته يستخدم ديناميك كيوب لتسجيل الدخول والمستخدمين والأدوار والقوائم',
+              'Built on Dynamic Cube: its services and screens appear in the Dynamic Cube apps (internal system, portal, field app). Connected system: an outside system with its own screens and database that uses Dynamic Cube for sign-in, users, roles and menus',
             ),
             required: true,
             defaultValue: 'DYNAMIC_CUBE',
@@ -315,7 +322,9 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
             multiple: true,
             label: t('الشركات', 'Companies'),
             ref: 'apps.company',
-            hint: t('فارغ: كل شركات الجهة', 'Empty: every company of the organization'),
+            required: true,
+            allOption: t('كل الشركات', 'All companies'),
+            hint: t('اختر الشركات أو «كل الشركات»', 'Choose companies, or "All companies"'),
           },
           {
             code: 'branches',
@@ -323,7 +332,9 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
             multiple: true,
             label: t('الفروع', 'Branches'),
             ref: 'apps.branch',
-            hint: t('فارغ: كل فروع الشركات المختارة', 'Empty: every branch of the chosen companies'),
+            required: true,
+            allOption: t('كل الفروع', 'All branches'),
+            hint: t('اختر الفروع أو «كل الفروع» (فروع الشركات المختارة)', 'Choose branches, or "All branches" (of the chosen companies)'),
           },
           {
             code: 'baseUrl',
@@ -412,15 +423,10 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
         key: 'code',
         columns: ['status', 'email'],
         createDialog: () => import('../users/new-user-dialog').then((m) => m.NewUserDialog),
+        // Details and access (roles by company, department roles, personal privileges) in one editor.
+        editor: () => import('../users/user-editor').then((m) => m.UserEditor),
         intro: () => import('../users/identity-notice').then((m) => m.IdentityNotice),
         rowActions: [
-          {
-            icon: 'key',
-            label: t('الصلاحيات حسب الشركة', 'Access'),
-            testId: 'access',
-            width: '60rem',
-            dialog: () => import('../users/access-dialog').then((m) => m.AccessDialog),
-          },
           {
             icon: 'manage_accounts',
             label: t('حساب الدخول', 'Sign-in account'),

@@ -123,7 +123,10 @@ public sealed class DomainValue : ConfigEntity
 
     public DateOnly? EffectiveTo { get; set; }
 
-    /// <summary>Companies the value serves when its class has values per company; empty: every company.</summary>
+    /// <summary>
+    /// Companies the value serves when its class has values per company, or just <see cref="CompanyScope.All"/> (chosen
+    /// explicitly); empty for values of other classes.
+    /// </summary>
     public List<string> Companies { get; set; } = [];
 
     public List<DomainExternalCode> ExternalCodes { get; } = [];

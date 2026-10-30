@@ -141,7 +141,7 @@ internal sealed class CommunicationHost : IAsyncDisposable
             nameAr = "موظف " + u.User,
             nameEn = "Employee " + u.User,
             email = u.Email,
-            roles = new[] { new { roleCode = role } },
+            roles = new[] { new { roleCode = role, companyCode = "*", branches = new[] { "*" } } },
         }))]);
         return role;
     }

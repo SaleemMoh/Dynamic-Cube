@@ -1441,7 +1441,11 @@
         "status": "ACTIVE",
         "roles": [
           {
-            "roleCode": "r001"
+            "roleCode": "r001",
+            "companyCode": "*",
+            "branches": [
+              "*"
+            ]
           }
         ]
       }
@@ -1457,7 +1461,11 @@
         "status": "ACTIVE",
         "roles": [
           {
-            "roleCode": "r001"
+            "roleCode": "r001",
+            "companyCode": "*",
+            "branches": [
+              "*"
+            ]
           }
         ]
       }
@@ -1473,37 +1481,81 @@
         "status": "ACTIVE",
         "roles": [
           {
-            "roleCode": "r001"
+            "roleCode": "r001",
+            "companyCode": "*",
+            "branches": [
+              "*"
+            ]
           },
           {
-            "roleCode": "ComplianceOfficer"
+            "roleCode": "ComplianceOfficer",
+            "companyCode": "*",
+            "branches": [
+              "*"
+            ]
           },
           {
-            "roleCode": "EquipmentReviewer"
+            "roleCode": "EquipmentReviewer",
+            "companyCode": "*",
+            "branches": [
+              "*"
+            ]
           },
           {
-            "roleCode": "EquipmentTeamLead"
+            "roleCode": "EquipmentTeamLead",
+            "companyCode": "*",
+            "branches": [
+              "*"
+            ]
           },
           {
-            "roleCode": "EquipmentViewOnly"
+            "roleCode": "EquipmentViewOnly",
+            "companyCode": "*",
+            "branches": [
+              "*"
+            ]
           },
           {
-            "roleCode": "GeneratorReviewer"
+            "roleCode": "GeneratorReviewer",
+            "companyCode": "*",
+            "branches": [
+              "*"
+            ]
           },
           {
-            "roleCode": "GeneratorTeamLead"
+            "roleCode": "GeneratorTeamLead",
+            "companyCode": "*",
+            "branches": [
+              "*"
+            ]
           },
           {
-            "roleCode": "GeneratorViewOnly"
+            "roleCode": "GeneratorViewOnly",
+            "companyCode": "*",
+            "branches": [
+              "*"
+            ]
           },
           {
-            "roleCode": "SourcesReviewer"
+            "roleCode": "SourcesReviewer",
+            "companyCode": "*",
+            "branches": [
+              "*"
+            ]
           },
           {
-            "roleCode": "SourcesTeamLead"
+            "roleCode": "SourcesTeamLead",
+            "companyCode": "*",
+            "branches": [
+              "*"
+            ]
           },
           {
-            "roleCode": "SourcesViewOnly"
+            "roleCode": "SourcesViewOnly",
+            "companyCode": "*",
+            "branches": [
+              "*"
+            ]
           }
         ]
       }

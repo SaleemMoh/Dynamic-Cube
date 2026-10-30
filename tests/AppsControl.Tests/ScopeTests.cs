@@ -24,7 +24,7 @@ public sealed class ScopeTests(AppsControlFixture fixture) : IAsyncLifetime
     public ValueTask DisposeAsync() => _harness.DisposeAsync();
 
     private static Change App(string code, string? entity = null) =>
-        new(AppsControlChangeTypes.BusinessApp, code, ChangeOperation.Create, new { nameAr = "تطبيق " + code, nameEn = "App " + code, entityCode = entity, icon = "apps" });
+        new(AppsControlChangeTypes.BusinessApp, code, ChangeOperation.Create, new { nameAr = "تطبيق " + code, nameEn = "App " + code, entityCode = entity, icon = "apps", companies = new[] { "*" }, branches = new[] { "*" } });
 
     private static Change Class(string code, string? app = null) =>
         new(AppsControlChangeTypes.Class, code, ChangeOperation.Create, new { nameAr = "تصنيف", nameEn = "Class", attributes = Array.Empty<object>(), businessApp = app });
@@ -62,7 +62,7 @@ public sealed class ScopeTests(AppsControlFixture fixture) : IAsyncLifetime
                 businessApp = appA,
                 privileges = new[] { new { resourceCode = AppsControlResources.Classes, actions = new[] { "VIEW", "CREATE", "EDIT" } } },
             }),
-            new Change(AppsControlChangeTypes.User, clerk, ChangeOperation.Create, new { nameAr = "كاتب", nameEn = "Clerk", roles = new[] { new { roleCode = role } } }));
+            new Change(AppsControlChangeTypes.User, clerk, ChangeOperation.Create, new { nameAr = "كاتب", nameEn = "Clerk", roles = new[] { new { roleCode = role, companyCode = "*", branches = new[] { "*" } } } }));
 
         // An app inherits its entity; a row of an app takes the app's entity.
         var apps = await ListAsync("admin", AppsControlChangeTypes.BusinessApp);
@@ -114,7 +114,7 @@ public sealed class ScopeTests(AppsControlFixture fixture) : IAsyncLifetime
         await _harness.PublishAsync(
             AppsControlAreas.Security,
             new Change(AppsControlChangeTypes.Role, role, ChangeOperation.Create, new { nameAr = "صانع", nameEn = "Maker", businessApp = app }),
-            new Change(AppsControlChangeTypes.User, maker, ChangeOperation.Create, new { nameAr = "صانع", nameEn = "Maker", roles = new[] { new { roleCode = role } } }));
+            new Change(AppsControlChangeTypes.User, maker, ChangeOperation.Create, new { nameAr = "صانع", nameEn = "Maker", roles = new[] { new { roleCode = role, companyCode = "*", branches = new[] { "*" } } } }));
 
         var code = Harness.Unique("CLS_C");
         var id = await _harness.AsAsync(maker, async sp =>
@@ -150,8 +150,8 @@ public sealed class ScopeTests(AppsControlFixture fixture) : IAsyncLifetime
             AppsControlAreas.Security,
             new Change(AppsControlChangeTypes.Role, onlyA, ChangeOperation.Create, new { nameAr = "أ", nameEn = "A", businessApp = appA, privileges }),
             new Change(AppsControlChangeTypes.Role, both, ChangeOperation.Create, new { nameAr = "أب", nameEn = "AB", businessApps = new[] { appA, appB }, privileges }),
-            new Change(AppsControlChangeTypes.User, clerkA, ChangeOperation.Create, new { nameAr = "أ", nameEn = "A", roles = new[] { new { roleCode = onlyA } } }),
-            new Change(AppsControlChangeTypes.User, clerkAb, ChangeOperation.Create, new { nameAr = "أب", nameEn = "AB", roles = new[] { new { roleCode = both } } }));
+            new Change(AppsControlChangeTypes.User, clerkA, ChangeOperation.Create, new { nameAr = "أ", nameEn = "A", roles = new[] { new { roleCode = onlyA, companyCode = "*", branches = new[] { "*" } } } }),
+            new Change(AppsControlChangeTypes.User, clerkAb, ChangeOperation.Create, new { nameAr = "أب", nameEn = "AB", roles = new[] { new { roleCode = both, companyCode = "*", branches = new[] { "*" } } } }));
 
         // A role of two apps gives both; a class shared by A and B is listed under each, not under C.
         (await _harness.AccessAsync(clerkAb)).Scope.Apps!.ShouldBe([appA, appB], ignoreOrder: true);

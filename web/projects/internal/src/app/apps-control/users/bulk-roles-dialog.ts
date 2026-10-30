@@ -10,6 +10,7 @@ import { MatSelectModule } from '@angular/material/select';
 import {
   AppsControlApi,
   ConfigRow,
+  I18nService,
   LocalizePipe,
   LocalizedText,
   TranslatePipe,
@@ -19,13 +20,8 @@ import { catchError, firstValueFrom, forkJoin, of } from 'rxjs';
 import { ConfigBulkData } from '../config/config-types';
 import { payloadOf } from '../config/form-values';
 import { DraftsService } from '../drafts.service';
-
-interface RoleEntry {
-  roleCode: string;
-  companyCode?: string | null;
-  branches?: string[];
-  orgUnitCode?: string | null;
-}
+import { ALL, RoleEntry, pickWithAll } from './access-model';
+import { ACCESS_TRANSLATIONS } from './access-translations';
 
 /** What a bulk change does to one user: roles added or removed, and those left as they were (with why). */
 export interface BulkPlan {
@@ -36,24 +32,30 @@ export interface BulkPlan {
   unchanged: string[];
 }
 
-/** Adds or removes roles (in a company and branches) for one user; never replaces what is there. */
+/**
+ * Adds or removes roles (in a company or all, `*`, and branches or all) for one user; never replaces what is there.
+ */
 export function planRoles(
   user: ConfigRow,
   action: 'ADD' | 'REMOVE',
-  company: string | null,
+  company: string,
   branches: string[],
   roles: string[],
 ): BulkPlan {
   const current = ((user['roles'] as RoleEntry[] | undefined) ?? []).map((r) => ({ ...r }));
   const same = (r: RoleEntry, code: string) =>
-    r.roleCode === code && (r.companyCode ?? null) === company && !r.orgUnitCode;
+    r.roleCode === code && r.companyCode === company && !r.orgUnitCode;
   const plan: BulkPlan = { user, roles: current, added: [], removed: [], unchanged: [] };
   for (const code of roles) {
     const held = current.find((r) => same(r, code));
     if (action === 'ADD') {
       if (held) plan.unchanged.push(code);
       else {
-        current.push({ roleCode: code, companyCode: company, branches: company ? branches : [] });
+        current.push({
+          roleCode: code,
+          companyCode: company,
+          branches: company === ALL ? [ALL] : branches,
+        });
         plan.added.push(code);
       }
     } else if (held) {
@@ -107,10 +109,11 @@ export function planRoles(
           <mat-label>{{ 'access.company' | dcTranslate }}</mat-label>
           <mat-select
             [value]="company()"
-            (selectionChange)="company.set($event.value); branches.set([]); plans.set(null)"
+            (selectionChange)="chooseCompany($event.value)"
+            [placeholder]="'access.chooseCompany' | dcTranslate"
             data-testid="bulk-company"
           >
-            <mat-option [value]="null">{{ 'access.allCompanies' | dcTranslate }}</mat-option>
+            <mat-option [value]="all">{{ 'access.allCompanies' | dcTranslate }}</mat-option>
             @for (c of lists.value()?.companies ?? []; track c.code) {
               <mat-option [value]="c.code">{{ name(c) | dcLocalize }}</mat-option>
             }
@@ -122,10 +125,12 @@ export function planRoles(
             <mat-select
               multiple
               [value]="branches()"
-              (selectionChange)="branches.set($event.value); plans.set(null)"
-              [disabled]="!company()"
-              [placeholder]="'access.allBranches' | dcTranslate"
+              (selectionChange)="branches.set(pick(branches(), $event.value)); plans.set(null)"
+              [disabled]="!company() || company() === all"
+              [placeholder]="'access.chooseBranches' | dcTranslate"
+              data-testid="bulk-branches"
             >
+              <mat-option [value]="all">{{ 'access.allBranches' | dcTranslate }}</mat-option>
               @for (b of companyBranches(); track b.code) {
                 <mat-option [value]="b.code">{{ name(b) | dcLocalize }}</mat-option>
               }
@@ -180,7 +185,7 @@ export function planRoles(
           matButton="filled"
           type="button"
           (click)="review()"
-          [disabled]="busy() || !roles().length"
+          [disabled]="busy() || !roles().length || !ready()"
           data-testid="bulk-review"
         >
           {{ 'bulk.reviewButton' | dcTranslate }}
@@ -220,14 +225,20 @@ export class BulkRolesDialog {
   private readonly ref = inject(MatDialogRef<BulkRolesDialog, boolean>);
   private readonly api = inject(AppsControlApi);
   protected readonly drafts = inject(DraftsService);
+  protected readonly all = ALL;
 
   protected readonly action = signal<'ADD' | 'REMOVE'>('ADD');
+  /** Chosen explicitly: a company or all of them. */
   protected readonly company = signal<string | null>(null);
   protected readonly branches = signal<string[]>([]);
   protected readonly roles = signal<string[]>([]);
   protected readonly plans = signal<BulkPlan[] | null>(null);
   protected readonly busy = signal(false);
   protected readonly errors = signal<string[]>([]);
+  /** The company is chosen, and when adding, the branches too ("all" being a choice of its own). */
+  protected readonly ready = computed(
+    () => !!this.company() && (this.action() === 'REMOVE' || this.branches().length > 0),
+  );
   protected readonly changes = computed(
     () => (this.plans() ?? []).filter((p) => p.added.length || p.removed.length).length,
   );
@@ -244,8 +255,22 @@ export class BulkRolesDialog {
     (this.lists.value()?.branches ?? []).filter((b) => b['companyCode'] === this.company()),
   );
 
+  constructor() {
+    inject(I18nService).register(ACCESS_TRANSLATIONS);
+  }
+
   protected name(row: ConfigRow): LocalizedText {
     return { ar: row.nameAr, en: row.nameEn };
+  }
+
+  protected chooseCompany(company: string): void {
+    this.company.set(company);
+    this.branches.set(company === ALL ? [ALL] : []);
+    this.plans.set(null);
+  }
+
+  protected pick(previous: string[], next: string[]): string[] {
+    return pickWithAll(previous, next);
   }
 
   protected roleName(code: string): LocalizedText {
@@ -262,7 +287,7 @@ export class BulkRolesDialog {
       );
       this.plans.set(
         users.map((u) =>
-          planRoles(u, this.action(), this.company(), this.branches(), this.roles()),
+          planRoles(u, this.action(), this.company()!, this.branches(), this.roles()),
         ),
       );
     } catch (error) {

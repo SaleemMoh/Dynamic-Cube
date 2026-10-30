@@ -49,7 +49,7 @@ export interface DomainRow extends ConfigRow {
   attributes: Record<string, unknown>;
   effectiveFrom: string | null;
   effectiveTo: string | null;
-  /** Companies the value serves (classes with values per company); empty: every company. */
+  /** Companies the value serves (classes with values per company), or just `*` for all of them. */
   companies?: string[];
 }
 

@@ -116,6 +116,9 @@
         "companies": [
           "MAIN"
         ],
+        "branches": [
+          "*"
+        ],
         "icon": "workspace_premium",
         "displayOrder": 1,
         "descriptionAr": "تصنيف المقاولين والمكاتب الهندسية: الخدمات في البوابة، ومعالجة الطلبات في النظام الداخلي.",

@@ -192,7 +192,7 @@ def security(path):
     user_items = [
         item("apps.user", name, {
             "nameAr": u["name"], "nameEn": u["name"], "email": u["email"], "status": "ACTIVE" if u["active"] else "INACTIVE",
-            "roles": [{"roleCode": r} for r in u["roles"]],
+            "roles": [{"roleCode": r, "companyCode": "*", "branches": ["*"]} for r in u["roles"]],
         })
         for name, u in users.items()
     ]
