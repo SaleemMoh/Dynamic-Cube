@@ -28,6 +28,7 @@ import { payloadOf } from '../config/form-values';
 import { DraftsService } from '../drafts.service';
 import { PrivilegesService } from '../privileges.service';
 import { actionLabel } from '../roles/role-models';
+import { SubmitButton } from '../submit-button';
 
 /** A role as the user row stores it (one per role and company). */
 interface RoleEntry {
@@ -135,6 +136,7 @@ export function departmentRoles(
 @Component({
   selector: 'dc-access-dialog',
   imports: [
+    SubmitButton,
     MatButtonModule,
     MatDialogModule,
     MatFormFieldModule,
@@ -339,6 +341,11 @@ export function departmentRoles(
         {{ (readonly() ? 'common.close' : 'form.cancel') | dcTranslate }}
       </button>
       @if (!readonly()) {
+        <dc-submit-button
+          [entityType]="'apps.user'"
+          [disabled]="saving() || !lists.hasValue()"
+          (submitted)="save(true)"
+        />
         <button
           matButton="filled"
           type="button"
@@ -513,7 +520,7 @@ export class AccessDialog {
     this.personal.update((rows) => rows.filter((_, i) => i !== index));
   }
 
-  protected async save(): Promise<void> {
+  protected async save(submit = false): Promise<void> {
     const lists = this.lists.value();
     if (!lists) return;
     const rows = this.rows().filter((r) => r.roles.length);
@@ -530,7 +537,7 @@ export class AccessDialog {
           actions: p.actions,
         })),
       };
-      await this.drafts.addChange('apps.user', this.data.row!.code, 'UPDATE', payload);
+      await this.drafts.addChange('apps.user', this.data.row!.code, 'UPDATE', payload, { submit });
       this.ref.close(true);
     } catch (error) {
       this.errors.set(problemMessages(error));

@@ -234,6 +234,21 @@ export class AppsControlApi {
     });
   }
 
+  /** Sends one change for approval at once, in a change set of its own (nothing is stored when it is invalid). */
+  submitChange(
+    entityType: string,
+    entityCode: string,
+    operation: ChangeOperation,
+    payload: unknown,
+  ): Observable<ChangeSetDetail> {
+    return this.http.post<ChangeSetDetail>(`${APPS_CONTROL_API}/change-sets/submit-change`, {
+      entityType,
+      entityCode,
+      operation,
+      payload,
+    });
+  }
+
   removeItem(id: string, itemId: string): Observable<ChangeSetDetail> {
     return this.http.delete<ChangeSetDetail>(
       `${APPS_CONTROL_API}/change-sets/${id}/items/${itemId}`,

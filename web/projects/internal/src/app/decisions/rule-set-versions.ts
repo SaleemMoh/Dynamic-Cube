@@ -28,6 +28,7 @@ import {
 import { firstValueFrom } from 'rxjs';
 import { DraftsService } from '../apps-control/drafts.service';
 import { PrivilegesService } from '../apps-control/privileges.service';
+import { SubmitButton } from '../apps-control/submit-button';
 
 const t = (ar: string, en: string) => ({ ar, en });
 /** Named steps: a code and a JSONLogic rule that may read input, vars and earlier steps. */
@@ -269,6 +270,7 @@ export function traceText(step: TraceStep): string {
 @Component({
   selector: 'dc-rule-set-versions',
   imports: [
+    SubmitButton,
     DatePipe,
     FormsModule,
     MatButtonModule,
@@ -373,6 +375,7 @@ export function traceText(step: TraceStep): string {
                 </ul>
               }
               <div class="dc-authoring__actions">
+                <dc-submit-button [entityType]="'dec.rule-set-version'" [disabled]="!parsed()" (submitted)="addVersion(true)" />
                 <button matButton="filled" [disabled]="!parsed()" (click)="addVersion()" data-testid="add-rule-set-version">
                   <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
                   {{ drafts.saveLabel('dec.rule-set-version') | dcTranslate }}
@@ -514,7 +517,7 @@ export class RuleSetVersions {
     this.dialog.open(EvaluationDialog, { data: evaluation, width: '72rem', maxWidth: '96vw' });
   }
 
-  protected async addVersion(): Promise<void> {
+  protected async addVersion(submit = false): Promise<void> {
     const configuration = this.parsed();
     if (!configuration) return;
     this.errors.set([]);
@@ -524,7 +527,7 @@ export class RuleSetVersions {
         nameAr: `الإصدار ${n}`,
         nameEn: `Version ${n}`,
         configuration,
-      });
+      }, { submit });
       this.versions.reload();
     } catch (error) {
       this.errors.set(problemMessages(error));

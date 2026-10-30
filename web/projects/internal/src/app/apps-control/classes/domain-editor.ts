@@ -71,6 +71,8 @@ const KINDS: { code: string; title: { ar: string; en: string }; types: Attribute
           [schema]="schema.value()"
           [initialValue]="initial"
           [submitLabel]="drafts.saveLabel('apps.domain') | dcTranslate"
+          [altSubmitLabel]="drafts.needsApproval('apps.domain') ? ('config.submitForApproval' | dcTranslate) : undefined"
+          (altSubmitted)="save($event, true)"
           [cancellable]="true"
           (submitted)="save($event)"
           (cancelled)="ref.close()"
@@ -129,7 +131,7 @@ export class DomainEditor {
     },
   });
 
-  protected async save(value: FormValue): Promise<void> {
+  protected async save(value: FormValue, submit = false): Promise<void> {
     this.errors.set([]);
     const attributes: Record<string, unknown> = {};
     try {
@@ -162,7 +164,7 @@ export class DomainEditor {
       externalCodes: (this.data.row?.['externalCodes'] as unknown[] | undefined) ?? [],
     };
     try {
-      await this.drafts.addChange('apps.domain', `${this.data.cls.code}/${code}`, this.data.row ? 'UPDATE' : 'CREATE', payload);
+      await this.drafts.addChange('apps.domain', `${this.data.cls.code}/${code}`, this.data.row ? 'UPDATE' : 'CREATE', payload, { submit });
       this.ref.close(true);
     } catch (error) {
       this.errors.set(problemMessages(error));

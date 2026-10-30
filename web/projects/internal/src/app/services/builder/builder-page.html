@@ -84,6 +84,7 @@
       {{ 'designer.check' | dcTranslate }}
     </button>
     @if (canCreate()) {
+      <dc-submit-button [entityType]="'svc.service-version'" (submitted)="save(true)" />
       <button matButton="filled" type="button" (click)="save()" [disabled]="busy() || problems().length > 0" data-testid="builder-save">
         <mat-icon fontSet="material-symbols-outlined">save</mat-icon>
         {{ drafts.saveLabel('svc.service-version') | dcTranslate }}

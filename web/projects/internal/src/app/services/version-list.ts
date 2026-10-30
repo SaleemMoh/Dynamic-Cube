@@ -16,6 +16,7 @@ import { firstValueFrom } from 'rxjs';
 import { DraftsService } from '../apps-control/drafts.service';
 import { PrivilegesService } from '../apps-control/privileges.service';
 import { VersionPreview } from './version-preview';
+import { SubmitButton } from '../apps-control/submit-button';
 
 const STARTER: VersionDefinition = {
   levels: [],
@@ -34,7 +35,7 @@ const STARTER: VersionDefinition = {
  */
 @Component({
   selector: 'dc-version-list',
-  imports: [DatePipe, FormsModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule, MatTableModule, MatTooltipModule, RouterLink, LocalizePipe, TranslatePipe],
+  imports: [SubmitButton, DatePipe, FormsModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule, MatTableModule, MatTooltipModule, RouterLink, LocalizePipe, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header class="dc-page__header dc-versions__header">
@@ -75,6 +76,7 @@ const STARTER: VersionDefinition = {
               <mat-icon fontSet="material-symbols-outlined">visibility</mat-icon>
               {{ 'versions.preview' | dcTranslate }}
             </button>
+            <dc-submit-button [entityType]="'svc.service-version'" (submitted)="addVersion(true)" />
             <button matButton="filled" (click)="addVersion()" data-testid="add-version">
               <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
               {{ drafts.saveLabel('svc.service-version') | dcTranslate }}
@@ -204,7 +206,7 @@ export class VersionList {
     this.dialog.open(VersionPreview, { data: resolved, width: '64rem', maxWidth: '95vw' });
   }
 
-  protected async addVersion(): Promise<void> {
+  protected async addVersion(submit = false): Promise<void> {
     const definition = this.parse();
     if (!definition) return;
     const number = this.nextNumber();
@@ -213,7 +215,7 @@ export class VersionList {
         nameAr: `الإصدار ${number}`,
         nameEn: `Version ${number}`,
         definition,
-      });
+      }, { submit });
       this.versions.reload();
     } catch (error) {
       this.errors.set(problemMessages(error));

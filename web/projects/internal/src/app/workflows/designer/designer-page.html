@@ -102,6 +102,7 @@
       {{ 'designer.check' | dcTranslate }}
     </button>
     @if (canCreate()) {
+      <dc-submit-button [entityType]="'wf.workflow-version'" (submitted)="save(true)" />
       <button matButton="filled" type="button" (click)="save()" [disabled]="busy() || errorsOnly().length > 0" data-testid="designer-save">
         <mat-icon fontSet="material-symbols-outlined">save</mat-icon>
         {{ drafts.saveLabel('wf.workflow-version') | dcTranslate }}

@@ -57,8 +57,10 @@ export interface ConfigEditorData {
           [schema]="schema.value()"
           [initialValue]="initial"
           [submitLabel]="drafts.saveLabel(data.type.entityType) | dcTranslate"
+          [altSubmitLabel]="drafts.needsApproval(data.type.entityType) ? ('config.submitForApproval' | dcTranslate) : undefined"
           [cancellable]="true"
           (submitted)="save($event)"
+          (altSubmitted)="save($event, true)"
           (cancelled)="ref.close()"
         />
       } @else {
@@ -128,7 +130,7 @@ export class ConfigEditor {
     return typeof this.data.type.key === 'object';
   }
 
-  protected async save(value: FormValue): Promise<void> {
+  protected async save(value: FormValue, submit = false): Promise<void> {
     this.errors.set([]);
     const type = this.data.type;
     // Start from the current row so fields edited elsewhere (e.g. the entity's logo and footer links) are kept.
@@ -160,7 +162,7 @@ export class ConfigEditor {
 
     const code = this.entityCode(value);
     try {
-      await this.drafts.addChange(type.entityType, code, this.data.row ? 'UPDATE' : 'CREATE', payload);
+      await this.drafts.addChange(type.entityType, code, this.data.row ? 'UPDATE' : 'CREATE', payload, { submit });
       this.ref.close(true);
     } catch (error) {
       this.errors.set(problemMessages(error));

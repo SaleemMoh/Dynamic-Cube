@@ -58,6 +58,9 @@ export class DynamicForm {
   readonly cancellable = input(false);
   readonly cancelLabel = input<string | undefined>(undefined);
   readonly submitIcon = input('send');
+  /** A second way to submit (e.g. "Submit for approval" beside "Add to draft"), emitting {@link altSubmitted}. */
+  readonly altSubmitLabel = input<string | undefined>(undefined);
+  readonly altSubmitIcon = input('send');
   /**
    * Values outside this form that rules may refer to (e.g. answers given in earlier wizard steps). The form's own values
    * win over them.
@@ -67,6 +70,7 @@ export class DynamicForm {
   readonly uploader = input<FileUploader | null>(null);
   readonly submitted = output<FormValue>();
   readonly cancelled = output<void>();
+  readonly altSubmitted = output<FormValue>();
 
   /** The reactive form built from the schema; rebuilt when the schema changes. */
   readonly formGroup = computed(() => this.buildGroup(this.schema(), this.initialValue()));
@@ -175,7 +179,7 @@ export class DynamicForm {
     this.cancelled.emit();
   }
 
-  protected submit(): void {
+  protected submit(alt = false): void {
     const group = this.formGroup();
     group.markAllAsTouched();
     // Not "valid": a form of read-only fields only is DISABLED, and it can still be submitted.
@@ -187,7 +191,7 @@ export class DynamicForm {
           value[field.code] = group.controls[field.code].getRawValue();
         }
       }
-      this.submitted.emit(value);
+      (alt ? this.altSubmitted : this.submitted).emit(value);
     } else {
       this.revealProblem();
     }

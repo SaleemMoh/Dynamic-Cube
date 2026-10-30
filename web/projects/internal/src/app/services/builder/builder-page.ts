@@ -20,6 +20,7 @@ import { FormTab } from './form-tab';
 import { PreviewTab } from './preview-tab';
 import { RulesTab } from './rules-tab';
 import { WorkflowTab } from './workflow-tab';
+import { SubmitButton } from '../../apps-control/submit-button';
 
 export type BuilderView = 'form' | 'rules' | 'card' | 'workflow' | 'preview' | 'json';
 const VIEWS: BuilderView[] = ['form', 'rules', 'card', 'workflow', 'preview', 'json'];
@@ -33,6 +34,7 @@ const VIEWS: BuilderView[] = ['form', 'rules', 'card', 'workflow', 'preview', 'j
 @Component({
   selector: 'dc-builder-page',
   imports: [
+    SubmitButton,
     FormsModule,
     MatButtonModule,
     MatFormFieldModule,
@@ -202,13 +204,13 @@ export class BuilderPage {
     }
   }
 
-  protected async save(): Promise<void> {
+  protected async save(submit = false): Promise<void> {
     if (this.view() === 'json' && !this.applyJson()) return;
     const code = `${this.current()}/${this.nextNumber()}`;
     this.errors.set([]);
     this.busy.set(true);
     try {
-      await this.drafts.addChange('svc.service-version', code, 'CREATE', this.payload());
+      await this.drafts.addChange('svc.service-version', code, 'CREATE', this.payload(), { submit });
       this.store.saved();
       this.savedAs.set(code);
       this.serverProblems.set(null);

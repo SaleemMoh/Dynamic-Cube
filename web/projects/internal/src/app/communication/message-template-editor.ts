@@ -14,6 +14,7 @@ import { ChannelPreview, CommunicationApi, LocalizePipe, MessageTemplateWording,
 import { catchError, debounceTime, filter, of, switchMap } from 'rxjs';
 import { ConfigEditorData } from '../apps-control/config/config-editor';
 import { DraftsService } from '../apps-control/drafts.service';
+import { SubmitButton } from '../apps-control/submit-button';
 
 type WordingKey = keyof MessageTemplateWording;
 
@@ -46,6 +47,7 @@ export function samplePaths(value: unknown, prefix = ''): string[] {
 @Component({
   selector: 'dc-message-template-editor',
   imports: [
+    SubmitButton,
     FormsModule,
     MatButtonModule,
     MatButtonToggleModule,
@@ -210,6 +212,7 @@ export function samplePaths(value: unknown, prefix = ''): string[] {
         </ul>
       }
       <button matButton type="button" mat-dialog-close>{{ 'form.cancel' | dcTranslate }}</button>
+      <dc-submit-button [entityType]="data.type.entityType" [disabled]="!valid()" (submitted)="save(true)" />
       <button matButton="filled" type="button" [disabled]="!valid()" (click)="save()" data-testid="msg-save">
         {{ drafts.saveLabel(data.type.entityType) | dcTranslate }}
       </button>
@@ -352,7 +355,7 @@ export class MessageTemplateEditor {
     return this.sanitizer.bypassSecurityTrustHtml(this.language() === 'ar' ? preview.bodyAr : preview.bodyEn);
   }
 
-  protected async save(): Promise<void> {
+  protected async save(submit = false): Promise<void> {
     this.errors.set([]);
     const wording = Object.fromEntries(KEYS.map((k) => [k, this.wording()[k]?.trim() ? this.wording()[k] : null]));
     try {
@@ -361,7 +364,7 @@ export class MessageTemplateEditor {
         nameEn: this.nameEn().trim(),
         isActive: this.active(),
         ...wording,
-      });
+      }, { submit });
       this.ref.close(true);
     } catch (error) {
       this.errors.set(problemMessages(error));

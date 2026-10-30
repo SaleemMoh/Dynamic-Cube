@@ -14,6 +14,7 @@ import { AppsControlApi, ConfigRow, DualList, DualListOption, I18nService, Trans
 import { catchError, firstValueFrom, of } from 'rxjs';
 import { DraftsService } from '../drafts.service';
 import { temporaryPassword } from './password';
+import { SubmitButton } from '../submit-button';
 
 const USER_NAME = /^[A-Za-z0-9][A-Za-z0-9_.@-]{0,255}$/;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -26,6 +27,7 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 @Component({
   selector: 'dc-new-user-dialog',
   imports: [
+    SubmitButton,
     FormsModule,
     MatButtonModule,
     MatButtonToggleModule,
@@ -122,6 +124,7 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         <span class="dc-nu__problem" data-testid="new-user-problem">{{ p | dcTranslate }}</span>
       }
       <button matButton mat-dialog-close type="button">{{ 'form.cancel' | dcTranslate }}</button>
+      <dc-submit-button [entityType]="'apps.user'" [disabled]="!!problem() || busy()" (submitted)="save(true)" />
       <button matButton="filled" type="button" [disabled]="!!problem() || busy()" (click)="save()" data-testid="new-user-save">
         {{ (caps()?.canCreate ? 'newUser.saveWithAccount' : 'newUser.save') | dcTranslate }}
       </button>
@@ -218,7 +221,7 @@ export class NewUserDialog {
     return null;
   });
 
-  protected async save(): Promise<void> {
+  protected async save(submit = false): Promise<void> {
     this.busy.set(true);
     this.errors.set([]);
     const userName = this.userName().trim().toLowerCase();
@@ -245,7 +248,7 @@ export class NewUserDialog {
         status: 'ACTIVE',
         roles: this.roles().map((roleCode) => ({ roleCode })),
         assignments: [],
-      });
+      }, { submit });
       this.ref.close(true);
     } catch (error) {
       this.errors.set(problemMessages(error));

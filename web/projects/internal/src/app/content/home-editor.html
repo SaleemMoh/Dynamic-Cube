@@ -5,6 +5,7 @@
     <span class="dc-he__dirty" data-testid="home-dirty">{{ 'portalHome.unsaved' | dcTranslate }}</span>
     <button matButton type="button" (click)="reset()">{{ 'portalHome.reset' | dcTranslate }}</button>
   }
+  <dc-submit-button [entityType]="'apps.setting'" [disabled]="!dirty() || problems().length > 0 || saving()" (submitted)="save(true)" />
   <button matButton="filled" type="button" [disabled]="!dirty() || problems().length > 0 || saving()" (click)="save()" data-testid="home-save">
     {{ drafts.saveLabel('apps.setting') | dcTranslate }}
   </button>

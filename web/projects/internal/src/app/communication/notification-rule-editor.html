@@ -189,6 +189,7 @@
     <span class="dc-nr__problem" data-testid="rule-problem">{{ problems()[0] | dcTranslate }}</span>
   }
   <button matButton mat-dialog-close type="button">{{ 'form.cancel' | dcTranslate }}</button>
+  <dc-submit-button [entityType]="data.type.entityType" [disabled]="problems().length > 0" (submitted)="save(true)" />
   <button matButton="filled" type="button" [disabled]="problems().length > 0" (click)="save()" data-testid="rule-save">
     {{ drafts.saveLabel(data.type.entityType) | dcTranslate }}
   </button>

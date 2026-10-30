@@ -55,6 +55,33 @@ public sealed class ChangeSetService<TContext>(
         return changeSet;
     }
 
+    /// <summary>
+    /// Records one change in a change set of its own and submits it for approval at once (published at once where the
+    /// area needs no approval). Nothing is stored when the change is invalid.
+    /// </summary>
+    public async Task<ChangeSet> SaveAndSubmitAsync(string area, string title, string entityType, string entityCode, ChangeOperation operation, string? payload, CancellationToken cancellationToken)
+    {
+        if (!await approvalPolicy.RequiresApprovalAsync(area, cancellationToken))
+        {
+            return await SaveAndPublishAsync(area, title, entityType, entityCode, operation, payload, cancellationToken);
+        }
+
+        if (!_appliers.TryGetValue(entityType, out var applier))
+        {
+            throw new ChangeSetException($"No change applier is registered for entity type '{entityType}'.");
+        }
+
+        var now = timeProvider.GetUtcNow();
+        var changeSet = ChangeSet.Create(area, title, requiresApproval: true, currentUser.UserId, now);
+        await applier.ValidateAsync(context, changeSet, entityCode, operation, payload, cancellationToken);
+        var before = await applier.GetSnapshotAsync(context, entityCode, cancellationToken);
+        changeSet.AddItem(entityType, entityCode, operation, before, operation == ChangeOperation.Delete ? null : payload);
+        changeSet.Submit(currentUser.UserId, now);
+        context.ChangeSets.Add(changeSet);
+        await context.SaveChangesAsync(cancellationToken);
+        return changeSet;
+    }
+
     public async Task<ChangeSet> GetAsync(Guid id, CancellationToken cancellationToken) =>
         await context.ChangeSets.Include(c => c.Items).SingleOrDefaultAsync(c => c.Id == id, cancellationToken)
             ?? throw new ChangeSetException($"Change set {id} was not found.");

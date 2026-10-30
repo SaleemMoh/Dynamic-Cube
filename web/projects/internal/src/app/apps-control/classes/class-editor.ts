@@ -13,6 +13,7 @@ import { catchError, of } from 'rxjs';
 import { DraftsService } from '../drafts.service';
 import { PrivilegesService } from '../privileges.service';
 import { AttributeDefinition, ClassRow, ClassSetting, DATA_TYPES, MULTI_TYPES } from './class-models';
+import { SubmitButton } from '../submit-button';
 
 type AttributeForm = FormGroup<{
   code: FormControl<string>;
@@ -49,6 +50,7 @@ const CODE = /^[A-Z][A-Z0-9_-]{0,50}$/;
 @Component({
   selector: 'dc-class-editor',
   imports: [
+    SubmitButton,
     ReactiveFormsModule,
     MatButtonModule,
     MatCheckboxModule,
@@ -67,6 +69,7 @@ const CODE = /^[A-Z][A-Z0-9_-]{0,50}$/;
 export class ClassEditor {
   protected readonly data = inject<ClassEditorData>(MAT_DIALOG_DATA);
   private readonly ref = inject(MatDialogRef<ClassEditor, boolean>);
+  private submitNext = false;
   protected readonly drafts = inject(DraftsService);
   private readonly privileges = inject(PrivilegesService);
 
@@ -161,7 +164,15 @@ export class ClassEditor {
     this.settings.removeAt(index);
   }
 
+  /** Saves like the save button, but sends the change for approval at once. */
+  protected submitForApproval(): void {
+    this.submitNext = true;
+    (document.getElementById('dc-class-form') as HTMLFormElement | null)?.requestSubmit();
+  }
+
   protected async saveClass(): Promise<void> {
+    const submit = this.submitNext;
+    this.submitNext = false;
     this.form.markAllAsTouched();
     if (this.form.invalid || !this.canEdit()) {
       return;
@@ -190,7 +201,7 @@ export class ClassEditor {
       settings: value.settings.map((c) => ({ ...c, value: c.value || null })),
     };
     try {
-      await this.drafts.addChange('apps.class', value.code, this.isNew() ? 'CREATE' : 'UPDATE', payload);
+      await this.drafts.addChange('apps.class', value.code, this.isNew() ? 'CREATE' : 'UPDATE', payload, { submit });
       this.ref.close(true);
     } catch (error) {
       this.errors.set(problemMessages(error));

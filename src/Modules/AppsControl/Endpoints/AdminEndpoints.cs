@@ -363,6 +363,22 @@ internal static class AdminEndpoints
             return Results.Ok(await DetailAsync(db, await service.GetAsync(changeSet.Id, ct), user.UserId, ct));
         }).RequirePrivilege(AppsControlResources.ChangeSets, PrivilegeActions.Create).WithName("ApplyChange");
 
+        // One change sent for approval at once, in a change set of its own (the user's draft is left as it is).
+        sets.MapPost("/submit-change", async (AddChangeItemRequest request, ChangeSetRouter router, AccessResolver resolver, AppsControlDbContext db, ICurrentUser user, CancellationToken ct) =>
+        {
+            var (applier, payload, problem) = await AuthorizeChangeAsync(request, router.Appliers, resolver, ct);
+            if (problem is not null)
+            {
+                return problem;
+            }
+
+            var service = router.ForEntityType(applier!.EntityType);
+            var code = request.EntityCode?.Trim() ?? string.Empty;
+            var title = $"{request.Operation.ToString().ToUpperInvariant()} {applier.EntityType} {code}";
+            var changeSet = await service.SaveAndSubmitAsync(applier.Area, title, applier.EntityType, code, request.Operation, payload, ct);
+            return Results.Ok(await DetailAsync(db, await service.GetAsync(changeSet.Id, ct), user.UserId, ct));
+        }).RequirePrivilege(AppsControlResources.ChangeSets, PrivilegeActions.Create).WithName("SubmitChange");
+
         // Configuration packages (e.g. a ready-made connector set): drafted per area, then submitted and approved as usual.
         sets.MapPost("/import", async (ImportPackageRequest request, ChangeSetRouter router, AccessResolver resolver, AppsControlDbContext db, ICurrentUser user, CancellationToken ct) =>
         {

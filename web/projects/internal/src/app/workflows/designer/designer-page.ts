@@ -19,6 +19,7 @@ import { DesignerPanel } from './designer-panel';
 import { DesignerReferences } from './designer-references';
 import { DesignerStore } from './designer-store';
 import { DesignerTestRun } from './designer-test-run';
+import { SubmitButton } from '../../apps-control/submit-button';
 
 const STARTER: WorkflowDraft = {
   slaWorkingDays: 10,
@@ -36,6 +37,7 @@ const STARTER: WorkflowDraft = {
 @Component({
   selector: 'dc-designer-page',
   imports: [
+    SubmitButton,
     FormsModule,
     MatButtonModule,
     MatFormFieldModule,
@@ -262,13 +264,13 @@ export class DesignerPage {
   }
 
   /** Adds the next version to the change set (published on approval, or at once where no approval is needed). */
-  protected async save(): Promise<void> {
+  protected async save(submit = false): Promise<void> {
     if (this.view() === 'json' && !this.applyJson()) return;
     const code = `${this.workflow()}/${this.nextNumber()}`;
     this.errors.set([]);
     this.busy.set(true);
     try {
-      await this.drafts.addChange('wf.workflow-version', code, 'CREATE', this.payload());
+      await this.drafts.addChange('wf.workflow-version', code, 'CREATE', this.payload(), { submit });
       this.store.saved();
       this.savedAs.set(code);
       this.serverProblems.set(null);

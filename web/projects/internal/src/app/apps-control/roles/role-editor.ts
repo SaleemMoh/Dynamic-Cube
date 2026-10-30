@@ -15,6 +15,7 @@ import { PermissionCards } from './permission-cards';
 import { RoleMenus } from './role-menus';
 import { GrantRow, MenuChoiceGroup, Permissions, RoleRow, ScreenNode, permissionsOf, privilegesOf, roleScreens, screenCodes, splitGrants } from './role-models';
 import { ScreenData } from './screen-data';
+import { SubmitButton } from '../submit-button';
 
 export interface RoleEditorData {
   /** The full role (with privileges and grants), or null for a new one. */
@@ -40,6 +41,7 @@ const CODE = /^[A-Za-z][A-Za-z0-9_-]{0,99}$/;
 @Component({
   selector: 'dc-role-editor',
   imports: [
+    SubmitButton,
     ReactiveFormsModule,
     MatButtonModule,
     MatCheckboxModule,
@@ -281,6 +283,7 @@ const CODE = /^[A-Za-z][A-Za-z0-9_-]{0,99}$/;
     <mat-dialog-actions>
       <button matButton="outlined" mat-dialog-close>{{ (data.readonly ? 'common.close' : 'form.cancel') | dcTranslate }}</button>
       @if (!data.readonly) {
+        <dc-submit-button entityType="apps.role" (submitted)="submitForApproval()" />
         <button matButton="filled" type="submit" form="dc-role-form" data-testid="save-role">{{ drafts.saveLabel('apps.role') | dcTranslate }}</button>
       }
     </mat-dialog-actions>
@@ -424,6 +427,7 @@ const CODE = /^[A-Za-z][A-Za-z0-9_-]{0,99}$/;
 export class RoleEditor {
   protected readonly data = inject<RoleEditorData>(MAT_DIALOG_DATA);
   private readonly ref = inject(MatDialogRef<RoleEditor, boolean>);
+  private submitNext = false;
   protected readonly drafts = inject(DraftsService);
   private readonly i18n = inject(I18nService);
 
@@ -578,7 +582,15 @@ export class RoleEditor {
     });
   }
 
+  /** Saves like the save button, but sends the change for approval at once. */
+  protected submitForApproval(): void {
+    this.submitNext = true;
+    (document.getElementById('dc-role-form') as HTMLFormElement | null)?.requestSubmit();
+  }
+
   protected async save(): Promise<void> {
+    const submit = this.submitNext;
+    this.submitNext = false;
     this.form.markAllAsTouched();
     this.errors.set([]);
     if (this.form.invalid) {
@@ -601,7 +613,7 @@ export class RoleEditor {
       menus: this.menus(),
     };
     try {
-      await this.drafts.addChange('apps.role', value.code.trim(), this.data.role ? 'UPDATE' : 'CREATE', payload);
+      await this.drafts.addChange('apps.role', value.code.trim(), this.data.role ? 'UPDATE' : 'CREATE', payload, { submit });
       this.ref.close(true);
     } catch (error) {
       this.errors.set(problemMessages(error));

@@ -311,6 +311,7 @@
     {{ (canEdit() ? 'form.cancel' : 'common.close') | dcTranslate }}
   </button>
   @if (canEdit()) {
+    <dc-submit-button entityType="apps.class" (submitted)="submitForApproval()" />
     <button matButton="filled" type="submit" form="dc-class-form" data-testid="save-class">
       {{ drafts.saveLabel('apps.class') | dcTranslate }}
     </button>

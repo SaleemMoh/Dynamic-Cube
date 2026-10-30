@@ -27,6 +27,7 @@ import {
 import { catchError, of } from 'rxjs';
 import { ConfigEditorData } from '../apps-control/config/config-editor';
 import { DraftsService } from '../apps-control/drafts.service';
+import { SubmitButton } from '../apps-control/submit-button';
 
 const CODE = /^[A-Z][A-Z0-9_-]{0,50}$/;
 const FIELD_CODE = /^[A-Za-z][A-Za-z0-9_]{0,63}$/;
@@ -84,6 +85,7 @@ const OUTCOME_MAP: StructuredShape = { kind: 'map', keyLabel: t('قيمة الج
 @Component({
   selector: 'dc-visit-type-editor',
   imports: [
+    SubmitButton,
     FormsModule,
     MatButtonModule,
     MatButtonToggleModule,
@@ -319,6 +321,7 @@ const OUTCOME_MAP: StructuredShape = { kind: 'map', keyLabel: t('قيمة الج
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button matButton mat-dialog-close>{{ 'form.cancel' | dcTranslate }}</button>
+      <dc-submit-button [entityType]="data.type.entityType" [disabled]="problems().length > 0" (submitted)="save(true)" />
       <button matButton="filled" [disabled]="problems().length > 0" (click)="save()" data-testid="vte-save">
         {{ drafts.saveLabel(data.type.entityType) | dcTranslate }}
       </button>
@@ -485,7 +488,7 @@ export class VisitTypeEditor {
     this.fields.update((list) => list.filter((_, i) => i !== index));
   }
 
-  protected async save(): Promise<void> {
+  protected async save(submit = false): Promise<void> {
     this.errors.set([]);
     const external = this.mode() === 'EXTERNAL';
     const payload = {
@@ -525,7 +528,7 @@ export class VisitTypeEditor {
         : null,
     };
     try {
-      await this.drafts.addChange(this.data.type.entityType, this.code().trim(), this.row ? 'UPDATE' : 'CREATE', payload);
+      await this.drafts.addChange(this.data.type.entityType, this.code().trim(), this.row ? 'UPDATE' : 'CREATE', payload, { submit });
       this.ref.close(true);
     } catch (error) {
       this.errors.set(problemMessages(error));

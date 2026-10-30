@@ -25,6 +25,7 @@ import { JsonImportButton } from '../change-sets/json-import-button';
 import { payloadOf } from '../config/form-values';
 import { DraftsService } from '../drafts.service';
 import { PrivilegesService } from '../privileges.service';
+import { SubmitButton } from '../submit-button';
 
 const RESOURCE = 'apps-control.installation';
 const ACCEPT = 'image/png,image/jpeg,image/webp,image/svg+xml';
@@ -65,6 +66,7 @@ const PRESETS = ['#ca9f45', '#1b8354', '#136f40', '#0e7490', '#1d4ed8', '#4338ca
 @Component({
   selector: 'dc-branding-page',
   imports: [
+    SubmitButton,
     AuthImageSrc,
     FormsModule,
     ExportButton,
@@ -96,6 +98,7 @@ const PRESETS = ['#ca9f45', '#1b8354', '#136f40', '#0e7490', '#1d4ed8', '#4338ca
           />
         }
         @if (canEdit()) {
+          <dc-submit-button [entityType]="'apps.entity'" [disabled]="busy()" (submitted)="save(true)" />
           <button matButton="filled" type="button" (click)="save()" [disabled]="busy()" data-testid="save-branding">
             {{ drafts.saveLabel('apps.entity') | dcTranslate }}
           </button>
@@ -581,7 +584,7 @@ export class BrandingPage {
     }
   }
 
-  protected async save(): Promise<void> {
+  protected async save(submit = false): Promise<void> {
     this.links.markAllAsTouched();
     const row = this.entity.hasValue() ? (this.entity.value() as ConfigRow) : null;
     if (!row) {
@@ -604,7 +607,7 @@ export class BrandingPage {
         ...this.colors(),
         footerLinks: this.links.getRawValue(),
         contact: { ...this.contact.getRawValue(), social: this.social.getRawValue() },
-      });
+      }, { submit });
     } catch (error) {
       this.errors.set(problemMessages(error));
     } finally {

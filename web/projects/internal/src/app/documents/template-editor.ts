@@ -13,6 +13,7 @@ import { DocumentsApi, TranslatePipe, problemMessages } from '@dynamic-cube/shar
 import { catchError, debounceTime, firstValueFrom, switchMap } from 'rxjs';
 import { DraftsService } from '../apps-control/drafts.service';
 import { ConfigEditorData } from '../apps-control/config/config-editor';
+import { SubmitButton } from '../apps-control/submit-button';
 
 const STARTER = `<html dir="rtl" lang="ar">
 <head>
@@ -47,6 +48,7 @@ const SAMPLE_LINES = [
 @Component({
   selector: 'dc-document-template-editor',
   imports: [
+    SubmitButton,
     FormsModule,
     MatButtonModule,
     MatCheckboxModule,
@@ -135,6 +137,7 @@ const SAMPLE_LINES = [
         </ul>
       }
       <button matButton type="button" mat-dialog-close>{{ 'form.cancel' | dcTranslate }}</button>
+      <dc-submit-button [entityType]="data.type.entityType" [disabled]="!valid()" (submitted)="save(true)" />
       <button matButton="filled" type="button" [disabled]="!valid()" (click)="save()" data-testid="tpl-save">
         {{ drafts.saveLabel(data.type.entityType) | dcTranslate }}
       </button>
@@ -258,7 +261,7 @@ export class DocumentTemplateEditor {
     }
   }
 
-  protected async save(): Promise<void> {
+  protected async save(submit = false): Promise<void> {
     this.errors.set([]);
     try {
       await this.drafts.addChange(this.data.type.entityType, this.code().trim(), this.data.row ? 'UPDATE' : 'CREATE', {
@@ -268,7 +271,7 @@ export class DocumentTemplateEditor {
         html: this.html(),
         pageSize: this.pageSize(),
         landscape: this.landscape(),
-      });
+      }, { submit });
       this.ref.close(true);
     } catch (error) {
       this.errors.set(problemMessages(error));

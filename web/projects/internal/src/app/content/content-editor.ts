@@ -12,6 +12,7 @@ import { AppsControlApi, ConfigRow, LocalizePipe, MarkdownView, TranslatePipe, p
 import { catchError, of } from 'rxjs';
 import { ConfigEditorData } from '../apps-control/config/config-editor';
 import { DraftsService } from '../apps-control/drafts.service';
+import { SubmitButton } from '../apps-control/submit-button';
 
 const CODE = /^[A-Z][A-Z0-9_-]{0,50}$/;
 
@@ -22,6 +23,7 @@ const CODE = /^[A-Z][A-Z0-9_-]{0,50}$/;
 @Component({
   selector: 'dc-content-editor',
   imports: [
+    SubmitButton,
     FormsModule,
     MatButtonModule,
     MatButtonToggleModule,
@@ -89,7 +91,7 @@ export class ContentEditor {
     this.topicEn.set(topic.en);
   }
 
-  protected async save(): Promise<void> {
+  protected async save(submit = false): Promise<void> {
     this.errors.set([]);
     const common = { nameAr: this.titleAr().trim(), nameEn: this.titleEn().trim(), isActive: this.active(), order: Number(this.order()) || 0 };
     const payload = this.isPage
@@ -103,7 +105,7 @@ export class ContentEditor {
           serviceCode: this.serviceCode(),
         };
     try {
-      await this.drafts.addChange(this.data.type.entityType, this.code().trim().toUpperCase(), this.row ? 'UPDATE' : 'CREATE', payload);
+      await this.drafts.addChange(this.data.type.entityType, this.code().trim().toUpperCase(), this.row ? 'UPDATE' : 'CREATE', payload, { submit });
       this.ref.close(true);
     } catch (error) {
       this.errors.set(problemMessages(error));

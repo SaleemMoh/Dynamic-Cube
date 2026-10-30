@@ -204,6 +204,12 @@
     @if (cancellable()) {
       <button matButton type="button" (click)="cancel()" data-testid="form-cancel">{{ cancelLabel() ?? ('form.cancel' | dcTranslate) }}</button>
     }
+    @if (altSubmitLabel(); as alt) {
+      <button matButton="outlined" type="button" (click)="submit(true)" data-testid="form-alt-submit">
+        <mat-icon fontSet="material-symbols-outlined">{{ altSubmitIcon() }}</mat-icon>
+        {{ alt }}
+      </button>
+    }
     <button matButton="filled" type="submit" data-testid="form-submit">
       <mat-icon fontSet="material-symbols-outlined">{{ submitIcon() }}</mat-icon>
       {{ submitLabel() ?? ('form.submit' | dcTranslate) }}

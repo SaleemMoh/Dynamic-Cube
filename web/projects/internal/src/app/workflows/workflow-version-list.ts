@@ -15,6 +15,7 @@ import { AppsControlApi, BusinessAppContext, ConfigRow, LocalizePipe, problemMes
 import { DraftsService } from '../apps-control/drafts.service';
 import { PrivilegesService } from '../apps-control/privileges.service';
 import { GraphDefinition, WorkflowGraph } from './workflow-graph';
+import { SubmitButton } from '../apps-control/submit-button';
 
 const STARTER = {
   slaWorkingDays: 10,
@@ -69,6 +70,7 @@ export class WorkflowGraphDialog {
 @Component({
   selector: 'dc-workflow-version-list',
   imports: [
+    SubmitButton,
     DatePipe,
     FormsModule,
     MatButtonModule,
@@ -142,6 +144,7 @@ export class WorkflowGraphDialog {
             </ul>
           }
           <div class="dc-authoring__actions">
+            <dc-submit-button [entityType]="'wf.workflow-version'" [disabled]="!parsed()" (submitted)="addVersion(true)" />
             <button matButton="filled" [disabled]="!parsed()" (click)="addVersion()" data-testid="add-wf-version">
               <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
               {{ drafts.saveLabel('wf.workflow-version') | dcTranslate }}
@@ -311,7 +314,7 @@ export class WorkflowVersionList {
     this.errors.set([]);
   }
 
-  protected async addVersion(): Promise<void> {
+  protected async addVersion(submit = false): Promise<void> {
     const definition = this.parsed();
     if (!definition) return;
     this.errors.set([]);
@@ -321,7 +324,7 @@ export class WorkflowVersionList {
         nameAr: `الإصدار ${number}`,
         nameEn: `Version ${number}`,
         definition,
-      });
+      }, { submit });
       this.versions.reload();
     } catch (error) {
       this.errors.set(problemMessages(error));

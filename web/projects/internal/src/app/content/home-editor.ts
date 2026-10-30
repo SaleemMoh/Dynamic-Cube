@@ -14,6 +14,7 @@ import { AppsControlApi, ConfigRow, TranslatePipe, pickIcon, problemMessages } f
 import { firstValueFrom } from 'rxjs';
 import { DraftsService } from '../apps-control/drafts.service';
 import { HomeSetting, METRICS, Tile, homeProblems, normalizeHome } from './home-model';
+import { SubmitButton } from '../apps-control/submit-button';
 
 /**
  * The portal home page without JSON: hero wording and banner, the statistics tiles (counted or fixed) and the help
@@ -22,6 +23,7 @@ import { HomeSetting, METRICS, Tile, homeProblems, normalizeHome } from './home-
 @Component({
   selector: 'dc-home-editor',
   imports: [
+    SubmitButton,
     FormsModule,
     MatButtonModule,
     MatButtonToggleModule,
@@ -105,14 +107,14 @@ export class HomeEditor {
     if (row) this.load(row);
   }
 
-  protected async save(): Promise<void> {
+  protected async save(submit = false): Promise<void> {
     const row = this.row();
     if (!row) return;
     this.errors.set([]);
     this.saving.set(true);
     try {
       const value = this.home();
-      await this.drafts.addChange('apps.setting', 'PORTAL_HOME', 'UPDATE', { ...row, value });
+      await this.drafts.addChange('apps.setting', 'PORTAL_HOME', 'UPDATE', { ...row, value }, { submit });
       this.saved.set(JSON.stringify(value));
       this.settings.reload();
     } catch (error) {

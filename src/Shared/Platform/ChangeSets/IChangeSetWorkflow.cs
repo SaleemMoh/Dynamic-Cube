@@ -30,6 +30,8 @@ public interface IChangeSetWorkflow
     Task DiscardAsync(Guid id, CancellationToken cancellationToken);
 
     Task<ChangeSet> SaveAndPublishAsync(string area, string title, string entityType, string entityCode, ChangeOperation operation, string? payload, CancellationToken cancellationToken);
+
+    Task<ChangeSet> SaveAndSubmitAsync(string area, string title, string entityType, string entityCode, ChangeOperation operation, string? payload, CancellationToken cancellationToken);
 }
 
 /// <summary>A configuration area whose approval policy the entity sets (registered by the module that owns it).</summary>

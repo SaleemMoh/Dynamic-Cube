@@ -180,6 +180,38 @@ public sealed class ApiTests(AppsControlFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Submit_change_endpoint_sends_one_change_for_approval_and_stores_nothing_when_invalid()
+    {
+        fixture.RequireConnectionString();
+        var ct = TestContext.Current.CancellationToken;
+        using var maker = Client("maker");
+        var code = Harness.Unique("SUBMITTED");
+
+        var submitted = await maker.PostAsJsonAsync("/api/apps-control/v1/change-sets/submit-change", new
+        {
+            entityType = "apps.class",
+            entityCode = code,
+            operation = "CREATE",
+            payload = new { nameAr = "تصنيف", nameEn = "Class", attributes = Array.Empty<object>() },
+        }, ct);
+        submitted.EnsureSuccessStatusCode();
+        var detail = await submitted.Content.ReadFromJsonAsync<JsonElement>(ct);
+        detail.GetProperty("changeSet").GetProperty("status").GetString().ShouldBe("SUBMITTED");
+        detail.GetProperty("items").GetArrayLength().ShouldBe(1);
+
+        var before = (await maker.GetFromJsonAsync<JsonElement>("/api/apps-control/v1/change-sets?mine=true", ct)).GetArrayLength();
+        var invalid = await maker.PostAsJsonAsync("/api/apps-control/v1/change-sets/submit-change", new
+        {
+            entityType = "apps.class",
+            entityCode = "bad code",
+            operation = "CREATE",
+            payload = new { nameAr = "أ", nameEn = "A" },
+        }, ct);
+        invalid.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await maker.GetFromJsonAsync<JsonElement>("/api/apps-control/v1/change-sets?mine=true", ct)).GetArrayLength().ShouldBe(before, "an invalid change leaves no change set behind");
+    }
+
+    [Fact]
     public async Task Checker_cannot_draft_changes()
     {
         fixture.RequireConnectionString();

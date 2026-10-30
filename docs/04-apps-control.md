@@ -359,6 +359,10 @@ without a release.
 - Every create/update/delete in Apps Control is captured in a **change set**
   (`cfg.change_set`, `cfg.change_item` with operation, entity type, code, before/after).
 - Maker-checker policy per area (e.g. roles and grants require approval; UI texts do not).
+- In areas that need approval every editor offers two ways to save: **Add to draft** (the user's draft change set,
+  submitted later with everything else in it) or **Submit for approval** (`POST /change-sets/submit-change`: the one
+  change in a change set of its own, submitted at once; nothing is stored when it is invalid, and the draft is left as
+  it is). Areas without approval show a single **Save** that publishes at once.
 - Publishing applies the change set atomically and writes `audit.audit_log`.
 - Export/import packages carry configuration by `code` ([ADR-0027](adr/0027-configuration-packages.md)).
   `POST /admin/export` returns `UPSERT` items. The import check resolves each item against the target and returns

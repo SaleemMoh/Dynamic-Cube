@@ -32,6 +32,7 @@ import { catchError, debounceTime, of, switchMap } from 'rxjs';
 import { ConfigEditorData } from '../apps-control/config/config-editor';
 import { DraftsService } from '../apps-control/drafts.service';
 import { samplePaths } from './message-template-editor';
+import { SubmitButton } from '../apps-control/submit-button';
 
 type Channel = (typeof CHANNELS)[number];
 type RecipientKind = 'PARTY' | 'ROLE' | 'USER';
@@ -81,6 +82,7 @@ export function fromRows(rows: RecipientRow[]): { kind: string; value?: JsonLogi
 @Component({
   selector: 'dc-notification-rule-editor',
   imports: [
+    SubmitButton,
     FormsModule,
     MatButtonModule,
     MatButtonToggleModule,
@@ -231,7 +233,7 @@ export class NotificationRuleEditor {
     return this.sanitizer.bypassSecurityTrustHtml(this.previewLanguage() === 'ar' ? preview.bodyAr : preview.bodyEn);
   }
 
-  protected async save(): Promise<void> {
+  protected async save(submit = false): Promise<void> {
     this.errors.set([]);
     try {
       await this.drafts.addChange(this.data.type.entityType, this.code().trim().toUpperCase(), this.row ? 'UPDATE' : 'CREATE', {
@@ -244,7 +246,7 @@ export class NotificationRuleEditor {
         channels: this.chosen(),
         recipients: fromRows(this.recipients()),
         language: this.language(),
-      });
+      }, { submit });
       this.ref.close(true);
     } catch (error) {
       this.errors.set(problemMessages(error));
