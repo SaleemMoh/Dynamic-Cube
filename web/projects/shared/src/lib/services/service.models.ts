@@ -1,5 +1,6 @@
 import { JsonLogicRule } from '../expressions/jsonlogic';
 import { PartyKind } from '../party/party.models';
+import { PanelDefinition } from './panel/panel.models';
 
 export type QuestionType = 'TEXT' | 'TEXTAREA' | 'NUMBER' | 'DATE' | 'SELECT' | 'CHECKBOX' | 'FILE';
 export type StepType = 'FORM' | 'LEVEL' | 'FEES' | 'REVIEW' | 'DECLARATION' | 'INTEGRATION';
@@ -135,6 +136,8 @@ export interface VersionDefinition {
   validations: unknown[];
   fees: unknown[];
   card?: ServiceCardDefinition;
+  /** The panel beside the applicant's form: assistant, readiness check, summary and live result (ADR-0040). */
+  panel?: PanelDefinition | null;
 }
 
 export type ServiceChannel = 'PORTAL' | 'MOBILE_APP' | 'BRANCH' | 'CALL_CENTER';

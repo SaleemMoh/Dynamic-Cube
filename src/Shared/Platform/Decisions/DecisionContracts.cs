@@ -31,10 +31,19 @@ public sealed record DecisionRequest(string RuleSetCode, JsonObject Input, strin
 /// <summary>A recorded evaluation: the rule-set version used, the results and the trace.</summary>
 public sealed record DecisionResult(Guid EvaluationId, string RuleSetCode, int Version, string Engine, JsonObject Output, JsonArray Trace);
 
+/// <summary>An evaluation that is not recorded (a live preview while a request is filled): the version used and the results.</summary>
+public sealed record DecisionPreview(string RuleSetCode, int Version, JsonObject Output);
+
 /// <summary>Evaluates a rule set's current published version and records the evaluation (implemented by the Decisions module).</summary>
 public interface IDecisionService
 {
     Task<DecisionResult> EvaluateAsync(DecisionRequest request, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Evaluates the rule set's current published version without recording anything (no evaluation row, no trace kept):
+    /// what a request would get with the answers as they are now. Not the official decision.
+    /// </summary>
+    Task<DecisionPreview> PreviewAsync(string ruleSetCode, JsonObject input, CancellationToken cancellationToken);
 
     /// <summary>Whether the rule set exists, is active and has a published version in use (so it can be evaluated).</summary>
     Task<bool> IsReadyAsync(string ruleSetCode, CancellationToken cancellationToken);

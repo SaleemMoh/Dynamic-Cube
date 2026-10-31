@@ -112,13 +112,13 @@ export function displayAnswer(question: QuestionSnapshot, value: unknown, langua
   if (value === null || value === undefined || value === '' || (Array.isArray(value) && value.length === 0)) return '—';
   if (question.type === 'FILE') {
     const ids = Array.isArray(value) ? value : [value];
-    return ids.map((id) => files.find((f) => f.id === id)?.fileName ?? String(id)).join('، ');
+    return ids.map((id) => files.find((f) => f.id === id)?.fileName ?? String(id)).join(language === 'ar' ? '، ' : ', ');
   }
   const label = (v: unknown) => {
     const option = question.options.find((o) => o.value === v);
     return option ? (language === 'ar' ? option.labelAr : option.labelEn) : String(v);
   };
-  if (Array.isArray(value)) return value.map(label).join('، ');
+  if (Array.isArray(value)) return value.map(label).join(language === 'ar' ? '، ' : ', ');
   if (question.type === 'CHECKBOX') return value ? (language === 'ar' ? 'نعم' : 'Yes') : language === 'ar' ? 'لا' : 'No';
   if (question.type === 'SELECT') return label(value);
   return String(value);

@@ -104,6 +104,9 @@ public sealed class RequestNotFoundException(string message) : Exception(message
 
 public sealed class RequestConflictException(string message) : Exception(message);
 
+/// <summary>The answers and level as the applicant has them on screen (not saved), for the live result; none: the saved ones.</summary>
+public sealed record LiveResultRequest(System.Text.Json.Nodes.JsonObject? Data, string? LevelCode);
+
 /// <summary>The applicant may not use the service now.</summary>
 public sealed class NotEligibleException(IReadOnlyList<EligibilityFailure> reasons) : Exception("Not eligible.")
 {

@@ -197,6 +197,31 @@ internal sealed class RequestService(
         return await ViewAsync(entity, service, version, facts, acting, null, cancellationToken, changes: changes);
     }
 
+    /// <summary>
+    /// The live result beside the form (ADR-0040): the version's result panel evaluated on the answers as they are on screen,
+    /// while the request is being filled (a draft, or returned to the applicant). Nothing is saved or recorded.
+    /// </summary>
+    public async Task<LiveResultView> LiveResultAsync(Guid id, LiveResultRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var (entity, _) = await LoadMineAsync(id, cancellationToken);
+        if (entity.StatusCategory is not (StatusCategory.Draft or StatusCategory.PendingCustomer))
+        {
+            throw new RequestConflictException("The live result is shown only while the request is being filled.");
+        }
+
+        var version = await cache.GetAsync(context, entity.ServiceVersionId, cancellationToken);
+        if (version.Definition.Panel?.Result is not { Enabled: true, Step: { Length: > 0 } step })
+        {
+            throw new RequestConflictException("This service shows no live result.");
+        }
+
+        var subject = services.GetRequiredService<RequestSubject>();
+        var data = request.Data ?? JsonNode.Parse(entity.Data)!.AsObject();
+        var facts = await subject.RuleContextAsync(entity, data, request.Data is null ? entity.LevelCode : request.LevelCode, cancellationToken);
+        return await services.GetRequiredService<LiveResult>().EvaluateAsync(entity.ServiceCode, step, facts, cancellationToken);
+    }
+
     /// <summary>Saves the answers of a draft as they are (autosave) and reports the problems of the given step.</summary>
     public async Task<RequestView> SaveAsync(Guid id, SaveRequest request, CancellationToken cancellationToken)
     {

@@ -500,6 +500,16 @@ Later, for connected apps:
 - The Action Center, workflow cases started by the app, notifications and party registry APIs for connected apps.
 - The app sending its own screens through the API (today staff enter them or import a package).
 
+## Applicant side panel (ADR-0040) ✅
+
+The classification reference's four sections, as parts any service turns on in the Service Builder (*Side panel* tab):
+the assistant (*وكيل التصنيف* in the NHC demo), the readiness check, the request summary and the live result (the
+workflow's decision step on the answers on screen, not recorded). Shown on the portal's request page and in the
+builder's preview.
+
+Later: a **configurable classification engine** usable by any business (not only NHC) — tracks, criteria, bands,
+gates and adjustments configured rather than written as rule sets; the panel's live result will show its results.
+
 ## Phase 4 — Extended capabilities
 
 - Report builder; pixel-perfect reports.

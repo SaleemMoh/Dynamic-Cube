@@ -1,4 +1,15 @@
-import { JsonValue, QuestionUse, SectionDefinition, ServiceCardDefinition, ServiceLevelDefinition, StepDefinition, StepType } from '@dynamic-cube/shared';
+import {
+  JsonValue,
+  PanelDefinition,
+  QuestionUse,
+  ResultValueDefinition,
+  SectionDefinition,
+  ServiceCardDefinition,
+  ServiceLevelDefinition,
+  StepDefinition,
+  StepType,
+  emptyPanel,
+} from '@dynamic-cube/shared';
 
 export type Rule = JsonValue;
 
@@ -51,6 +62,8 @@ export interface ServiceDraft {
   fees: FeeDef[];
   availability?: AvailabilityDef | null;
   card: ServiceCardDefinition;
+  /** The panel beside the applicant's form (ADR-0040); absent: none. */
+  panel?: PanelDefinition | null;
   [key: string]: unknown;
 }
 
@@ -99,6 +112,25 @@ export function normalize(definition: Partial<ServiceDraft> | null | undefined):
     fees: (d.fees ?? []).map((f) => ({ ...f, levels: f.levels ?? [], vatRate: f.vatRate ?? 0.15, vatIncluded: f.vatIncluded ?? true })),
     availability: d.availability ?? null,
     card: { ...EMPTY_CARD, ...(d.card ?? {}) },
+    ...(d.panel ? { panel: normalizePanel(d.panel) } : {}),
+  };
+}
+
+/** Fills in the parts of a panel an older or hand-written definition may lack. */
+export function normalizePanel(panel: Partial<PanelDefinition> | null | undefined): PanelDefinition {
+  const empty = emptyPanel();
+  const p = structuredClone(panel ?? {}) as Partial<PanelDefinition>;
+  return {
+    assistant: { ...empty.assistant, ...(p.assistant ?? {}), lines: p.assistant?.lines ?? [] },
+    readiness: { ...empty.readiness, ...(p.readiness ?? {}) },
+    summary: { ...empty.summary, ...(p.summary ?? {}), questions: p.summary?.questions ?? [] },
+    result: {
+      ...empty.result,
+      ...(p.result ?? {}),
+      scale: p.result?.scale ?? [],
+      values: p.result?.values ?? [],
+      items: p.result?.items ? { ...p.result.items, columns: p.result.items.columns ?? [] } : null,
+    },
   };
 }
 
@@ -242,7 +274,7 @@ export function usedQuestions(def: ServiceDraft): string[] {
 
 export interface Problem {
   /** Which tab it belongs to. */
-  tab: 'form' | 'rules' | 'card';
+  tab: 'form' | 'rules' | 'card' | 'panel';
   /** Translation key. */
   key: string;
   params?: Record<string, string | number>;
@@ -313,5 +345,34 @@ export function check(def: ServiceDraft, bank: ReadonlySet<string>): Problem[] {
   def.card.requiredDocuments.forEach((d, i) => {
     if (!d.nameAr?.trim() || !d.nameEn?.trim()) p('card', 'builder.problem.cardDocument', { n: i + 1 });
   });
+  if (def.panel) checkPanel(def, def.panel, stepCodes, p);
   return problems;
+}
+
+/** The panel's checks the server makes that can be made here. */
+function checkPanel(
+  def: ServiceDraft,
+  panel: PanelDefinition,
+  steps: Set<string>,
+  p: (tab: Problem['tab'], key: string, params?: Problem['params']) => void,
+): void {
+  panel.assistant.lines.forEach((line, i) => {
+    if (line.step && !steps.has(line.step)) p('panel', 'builder.problem.panelLineStep', { n: i + 1, code: line.step });
+    if (!line.textAr?.trim() || !line.textEn?.trim()) p('panel', 'builder.problem.panelLineText', { n: i + 1 });
+    if (line.kind === 'QUESTION' && (!line.questionAr?.trim() || !line.questionEn?.trim())) p('panel', 'builder.problem.panelLineQuestion', { n: i + 1 });
+  });
+  const asked = new Set(usedQuestions(def));
+  for (const code of panel.summary.questions) if (!asked.has(code)) p('panel', 'builder.problem.panelSummary', { code });
+  const result = panel.result;
+  if (!result.enabled) return;
+  if (!result.step?.trim()) p('panel', 'builder.problem.panelResultStep');
+  const values = new Set<string>();
+  result.scale.forEach((v, i) => {
+    if (!v.value?.trim() || !v.labelAr?.trim() || !v.labelEn?.trim() || values.has(v.value)) p('panel', 'builder.problem.panelScale', { n: i + 1 });
+    values.add(v.value);
+  });
+  const shown: ResultValueDefinition[] = [...(result.headline ? [result.headline] : []), ...result.values, ...(result.items?.columns ?? [])];
+  if (shown.some((v) => !v.output?.trim() || !v.labelAr?.trim() || !v.labelEn?.trim())) p('panel', 'builder.problem.panelValue');
+  if (result.items && (!result.items.output?.trim() || !result.items.titleOutput?.trim())) p('panel', 'builder.problem.panelItems');
+  if (!result.scale.length && shown.some((v) => v.onScale)) p('panel', 'builder.problem.panelNoScale');
 }

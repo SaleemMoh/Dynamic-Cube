@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using DynamicCube.Modules.Services.Changes;
 using DynamicCube.Modules.Services.Domain;
 using DynamicCube.Modules.Services.Persistence;
@@ -13,6 +14,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DynamicCube.Modules.Services.Endpoints;
+
+/// <summary>A decision step of a service's workflow (its rule set), for the builder's live result.</summary>
+public sealed record DecisionStepInfo(string Code, string? NameAr, string? NameEn, string? RuleSet);
 
 internal static class ServiceEndpoints
 {
@@ -30,6 +34,8 @@ internal static class ServiceEndpoints
         }).WithName("CreateRequest");
         group.MapGet("/requests/{id:guid}", async (Guid id, RequestService service, CancellationToken ct) => TypedResults.Ok(await service.GetAsync(id, ct))).WithName("GetMyRequest");
         group.MapPut("/requests/{id:guid}", async (Guid id, SaveRequest request, RequestService service, CancellationToken ct) => TypedResults.Ok(await service.SaveAsync(id, request, ct))).WithName("SaveRequest");
+        group.MapPost("/requests/{id:guid}/live-result", async (Guid id, LiveResultRequest request, RequestService service, CancellationToken ct) =>
+            TypedResults.Ok(await service.LiveResultAsync(id, request, ct))).WithName("GetLiveResult");
         group.MapPost("/requests/{id:guid}/submit", async (Guid id, SubmitRequest request, RequestService service, CancellationToken ct) => TypedResults.Ok(await service.SubmitAsync(id, request, ct))).WithName("SubmitRequest");
         group.MapDelete("/requests/{id:guid}", async (Guid id, RequestService service, CancellationToken ct) =>
         {
@@ -91,6 +97,24 @@ internal static class ServiceEndpoints
             .RequirePrivilege(ServiceResources.Config, CatalogActions.View).WithName("GetResolvedVersion");
         group.MapPost("/admin/versions/preview", async (PreviewRequest request, RequestAdminService admin, CancellationToken ct) => TypedResults.Ok(await admin.PreviewAsync(request, ct)))
             .RequirePrivilege(ServiceResources.Config, CatalogActions.View).WithName("PreviewVersion");
+        // The builder's preview of the live result (ADR-0040): the decision step on sample answers, without a party.
+        group.MapPost("/admin/live-result", async (LiveResultPreviewRequest request, LiveResult live, CancellationToken ct) =>
+        {
+            var facts = new JsonObject { ["data"] = request.Data?.DeepClone() ?? new JsonObject(), ["level"] = request.LevelCode, ["service"] = request.Service };
+            return TypedResults.Ok(await live.EvaluateAsync(request.Service, request.Step, facts, ct));
+        }).RequirePrivilege(ServiceResources.Config, CatalogActions.View).WithName("PreviewLiveResult");
+        // The decision steps of a service's workflow, for the builder's live result.
+        group.MapGet("/admin/services/{code}/decision-steps", async (string code, IServiceProvider services, CancellationToken ct) =>
+        {
+            var workflows = services.GetService<IServiceWorkflows>();
+            var workflow = workflows is null ? null : await workflows.WorkflowOfAsync(code, ct);
+            var definition = workflow is null ? null : await workflows!.LatestDefinitionAsync(workflow, ct);
+            var steps = (JsonNode.Parse(definition ?? "{}")?["nodes"] as JsonArray ?? []).OfType<JsonObject>()
+                .Where(n => string.Equals(n["type"]?.GetValue<string>(), "DECISION", StringComparison.OrdinalIgnoreCase))
+                .Select(n => new DecisionStepInfo(n["code"]?.GetValue<string>() ?? string.Empty, n["nameAr"]?.GetValue<string>(), n["nameEn"]?.GetValue<string>(), n["ruleSet"]?.GetValue<string>()))
+                .ToList();
+            return TypedResults.Ok(steps);
+        }).RequirePrivilege(ServiceResources.Config, CatalogActions.View).WithName("ListDecisionSteps");
     }
 
     public static async ValueTask<object?> Errors(EndpointFilterInvocationContext context, EndpointFilterDelegate next)

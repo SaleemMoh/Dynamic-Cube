@@ -53,6 +53,24 @@ internal sealed class DecisionService(DecisionsDbContext context, IEnumerable<ID
         return await RunAsync(ruleSet, version, request.Input, request.SubjectType, request.SubjectId, request.SubjectNumber, cancellationToken);
     }
 
+    public async Task<DecisionPreview> PreviewAsync(string ruleSetCode, JsonObject input, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        RuleSet ruleSet;
+        RuleSetVersion version;
+        try
+        {
+            (ruleSet, version) = await LoadAsync(ruleSetCode, null, cancellationToken);
+        }
+        catch (DecisionNotFoundException ex)
+        {
+            throw new DecisionException(ex.Message, ex);
+        }
+
+        var result = await EngineAsync(ruleSet, version, input, cancellationToken);
+        return new DecisionPreview(ruleSet.Code, version.Number, result.Output);
+    }
+
     public Task<bool> IsReadyAsync(string ruleSetCode, CancellationToken cancellationToken) =>
         context.Versions.AsNoTracking().AnyAsync(v => v.RuleSet!.Code == ruleSetCode && v.RuleSet.IsActive && !v.IsRetired, cancellationToken);
 

@@ -136,7 +136,9 @@ result.
   on it, shows its result on a card (status, provider's message, time, the outputs chosen to show with their labels,
   *try again*), can copy its outputs into answers, and when *required* stops the applicant on a failure; ADR-0038), sections shown by JSONLogic over the answers, question uses
   (required, required-when, visible-when, read-only), eligibility and validation rules with bilingual
-  messages, fees (fixed, formula or bracket table by any value, VAT included or added). Numbers are
+  messages, fees (fixed, formula or bracket table by any value, VAT included or added), and an optional **side panel**
+  beside the applicant's form: assistant lines, the readiness check, the request summary and the live result from a
+  decision step of the service's workflow (ADR-0040). Numbers are
   consecutive; publishing stores the version with **snapshots of its questions**, and afterwards only
   its names and the *retired* flag change.
 - **Rules** see `data` (answers by question code), `level`, `today`, `party` (the beneficiary's

@@ -129,11 +129,14 @@
       @case ('card') {
         <dc-builder-card-tab />
       }
+      @case ('panel') {
+        <dc-builder-panel-tab />
+      }
       @case ('workflow') {
         <dc-builder-workflow-tab [service]="current()" [archetype]="archetypeCode()" />
       }
       @case ('preview') {
-        <dc-builder-preview-tab [service]="editing()!" />
+        <dc-builder-preview-tab [service]="editing()!" [archetype]="!!archetypeCode()" />
       }
       @case ('json') {
         <div class="dc-builder__json">

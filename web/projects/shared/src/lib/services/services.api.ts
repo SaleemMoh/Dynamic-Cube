@@ -16,6 +16,7 @@ import {
   StatusCategory,
   VersionDefinition,
 } from './service.models';
+import { DecisionStepInfo, LiveResultView } from './panel/panel.models';
 
 export const SERVICES_API = '/api/services/v1';
 
@@ -90,6 +91,21 @@ export class ServicesApi {
   /** A file of a request: the applicant's own (portal) or, for employees, of a submitted request. */
   downloadFile(requestId: string, fileId: string, staff = false): Observable<Blob> {
     return this.http.get(`${SERVICES_API}${staff ? '/admin' : ''}/requests/${requestId}/files/${fileId}`, { responseType: 'blob' });
+  }
+
+  /** The live result of a draft (or a request returned for correction) on the answers on screen; null: the saved answers. */
+  liveResult(id: string, data: Record<string, unknown> | null, levelCode: string | null): Observable<LiveResultView> {
+    return this.http.post<LiveResultView>(`${SERVICES_API}/requests/${id}/live-result`, { data, levelCode });
+  }
+
+  /** The live result of a service's decision step on any answers (the builder's preview). */
+  previewLiveResult(service: string, step: string, data: Record<string, unknown> | null, levelCode: string | null): Observable<LiveResultView> {
+    return this.http.post<LiveResultView>(`${SERVICES_API}/admin/live-result`, { service, step, data, levelCode });
+  }
+
+  /** The decision steps of the service's workflow (its latest published version). */
+  decisionSteps(serviceCode: string): Observable<DecisionStepInfo[]> {
+    return this.http.get<DecisionStepInfo[]>(`${SERVICES_API}/admin/services/${encodeURIComponent(serviceCode)}/decision-steps`);
   }
 
   cancel(id: string): Observable<void> {

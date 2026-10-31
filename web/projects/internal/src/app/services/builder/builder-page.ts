@@ -18,6 +18,7 @@ import { BuilderStore } from './builder-store';
 import { Problem, STARTER, ServiceDraft, normalize } from './builder-model';
 import { CardTab } from './card-tab';
 import { FormTab } from './form-tab';
+import { PanelTab } from './panel-tab';
 import { PreviewTab } from './preview-tab';
 import { RulesTab } from './rules-tab';
 import { WorkflowTab } from './workflow-tab';
@@ -25,14 +26,14 @@ import { BUILDER_TRANSLATIONS } from './builder-translations';
 import { DESIGNER_TRANSLATIONS } from '../../workflows/designer/designer-translations';
 import { SubmitButton } from '../../apps-control/submit-button';
 
-export type BuilderView = 'form' | 'rules' | 'card' | 'workflow' | 'preview' | 'json';
-const VIEWS: BuilderView[] = ['form', 'rules', 'card', 'workflow', 'preview', 'json'];
+export type BuilderView = 'form' | 'rules' | 'card' | 'panel' | 'workflow' | 'preview' | 'json';
+const VIEWS: BuilderView[] = ['form', 'rules', 'card', 'panel', 'workflow', 'preview', 'json'];
 
 /**
  * The Service Builder: one designer per service. It opens a service's latest version (or an earlier one) and prepares
  * the next: the form (steps, sections, bank questions, conditions, layout), the rules (levels, eligibility, checks,
- * fees, availability), the portal card, a view of the workflow and a live preview. Saving adds the next version to a
- * change set; published versions never change.
+ * fees, availability), the portal card, the panel beside the applicant's form, a view of the workflow and a live
+ * preview. Saving adds the next version to a change set; published versions never change.
  */
 @Component({
   selector: 'dc-builder-page',
@@ -50,6 +51,7 @@ const VIEWS: BuilderView[] = ['form', 'rules', 'card', 'workflow', 'preview', 'j
     FormTab,
     RulesTab,
     CardTab,
+    PanelTab,
     WorkflowTab,
     PreviewTab,
   ],

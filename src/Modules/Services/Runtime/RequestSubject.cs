@@ -21,17 +21,23 @@ internal sealed class RequestSubject(ServicesDbContext context, IPartyFacts part
 
     public string SubjectType => Type;
 
-    public async Task<JsonObject> GetRuleContextAsync(Guid subjectId, CancellationToken cancellationToken)
+    public async Task<JsonObject> GetRuleContextAsync(Guid subjectId, CancellationToken cancellationToken) =>
+        await RuleContextAsync(await LoadAsync(subjectId, cancellationToken), null, null, cancellationToken);
+
+    /// <summary>
+    /// The facts the workflow's rules read about a request; with <paramref name="data"/> (and the level), the answers as the
+    /// applicant has them now instead of the saved ones (the live result, ADR-0040).
+    /// </summary>
+    internal async Task<JsonObject> RuleContextAsync(ServiceRequest request, JsonObject? data, string? levelCode, CancellationToken cancellationToken)
     {
-        var request = await LoadAsync(subjectId, cancellationToken);
         var party = await parties.GetAsync(request.BeneficiaryPartyId, refreshProfile: false, cancellationToken);
         var document = request.SourceDocumentId is { } documentId && services.GetService<IDocumentDirectory>() is { } documents
             ? await documents.GetAsync(documentId, cancellationToken)
             : null;
         return new JsonObject
         {
-            ["data"] = JsonNode.Parse(request.Data),
-            ["level"] = request.LevelCode,
+            ["data"] = data?.DeepClone() ?? JsonNode.Parse(request.Data),
+            ["level"] = data is null ? request.LevelCode : levelCode,
             ["service"] = request.ServiceCode,
             ["number"] = request.Number,
             ["submitterPartyId"] = request.SubmitterPartyId.ToString(),

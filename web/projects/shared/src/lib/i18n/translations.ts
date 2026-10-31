@@ -1,4 +1,5 @@
 import { DOCUMENT_TRANSLATIONS } from '../documents/documents.translations';
+import { PANEL_TRANSLATIONS } from '../services/panel/panel.translations';
 import { Language } from './language';
 
 export type TranslationDictionary = Record<Language, Record<string, string>>;
@@ -35,6 +36,7 @@ export const SHARED_TRANSLATIONS: TranslationDictionary = {
     'rule.op.filled': 'معبأ',
     'rule.op.empty': 'فارغ',
     ...DOCUMENT_TRANSLATIONS.ar,
+    ...PANEL_TRANSLATIONS.ar,
     'language.switch': 'English',
     'language.switch.aria': 'التبديل إلى الإنجليزية',
     'form.required': 'هذا الحقل مطلوب',
@@ -262,6 +264,7 @@ export const SHARED_TRANSLATIONS: TranslationDictionary = {
     'rule.op.filled': 'is filled',
     'rule.op.empty': 'is empty',
     ...DOCUMENT_TRANSLATIONS.en,
+    ...PANEL_TRANSLATIONS.en,
     'language.switch': 'العربية',
     'language.switch.aria': 'Switch to Arabic',
     'form.required': 'This field is required',

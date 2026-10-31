@@ -31,6 +31,12 @@ public sealed class VersionDefinition
     public ServiceCardDefinition Card { get; set; } = new();
 
     /// <summary>
+    /// The panel beside the applicant's form (ADR-0040): an assistant, the readiness check, the request summary and the live
+    /// result. Each part is optional; none is shown when it is left out.
+    /// </summary>
+    public PanelDefinition? Panel { get; set; }
+
+    /// <summary>
     /// Read only, from versions published before 1f: the workflow they named. Requests are now processed by the service's
     /// own workflow, so new versions leave it out.
     /// </summary>
@@ -348,4 +354,173 @@ public sealed class AvailabilityDefinition
 
     /// <summary>Last day the service is open (open for good when empty).</summary>
     public DateBound? To { get; set; }
+}
+
+/// <summary>The parts of the panel beside the applicant's form (ADR-0040), each switched on or off.</summary>
+public sealed class PanelDefinition
+{
+    public AssistantPanelDefinition Assistant { get; set; } = new();
+
+    /// <summary>The readiness check: every requirement of the form (questions, files, required integrations, the level) and the share met.</summary>
+    public ReadinessPanelDefinition Readiness { get; set; } = new();
+
+    public SummaryPanelDefinition Summary { get; set; } = new();
+
+    public ResultPanelDefinition Result { get; set; } = new();
+}
+
+/// <summary>
+/// The assistant: configured lines (a greeting, notes with the rule behind them, questions with their answers), shown on
+/// their step when their condition holds, plus the notes the form itself works out (missing items, uploads, problems).
+/// </summary>
+public sealed class AssistantPanelDefinition
+{
+    public bool Enabled { get; set; }
+
+    /// <summary>e.g. «وكيل التصنيف».</summary>
+    public string? TitleAr { get; set; }
+
+    public string? TitleEn { get; set; }
+
+    public string? SubtitleAr { get; set; }
+
+    public string? SubtitleEn { get; set; }
+
+    /// <summary>Add the notes worked out from the form: what the step still lacks, its uploads and the problems found.</summary>
+    public bool AutoNotes { get; set; } = true;
+
+    public List<AssistantLineDefinition> Lines { get; set; } = [];
+}
+
+public enum AssistantLineKind
+{
+    /// <summary>The greeting of the step.</summary>
+    Message,
+
+    /// <summary>A requirement that always applies.</summary>
+    Mandatory,
+
+    /// <summary>A requirement that applies depending on an answer.</summary>
+    Conditional,
+
+    /// <summary>Something that weighs on the result.</summary>
+    Impact,
+
+    /// <summary>A hint.</summary>
+    Advice,
+
+    /// <summary>A question the applicant can ask, with its answer.</summary>
+    Question,
+}
+
+/// <summary>A line of the assistant. Texts may use <c>{missing}</c>, <c>{readiness}</c> and <c>{service}</c>.</summary>
+public sealed class AssistantLineDefinition
+{
+    /// <summary>The step it is shown on; empty: every step.</summary>
+    public string? Step { get; set; }
+
+    public AssistantLineKind Kind { get; set; } = AssistantLineKind.Advice;
+
+    /// <summary>The message, note or answer.</summary>
+    public string TextAr { get; set; } = string.Empty;
+
+    public string TextEn { get; set; } = string.Empty;
+
+    /// <summary>A note's rule, shown under «لماذا؟» (why?).</summary>
+    public string? WhyAr { get; set; }
+
+    public string? WhyEn { get; set; }
+
+    /// <summary>The question of a question line.</summary>
+    public string? QuestionAr { get; set; }
+
+    public string? QuestionEn { get; set; }
+
+    /// <summary>JSONLogic over <c>data</c> (answers), <c>level</c>, <c>step</c>, <c>readiness</c>, <c>missing</c> and <c>result</c> (the live result); empty: always.</summary>
+    public JsonNode? When { get; set; }
+}
+
+public sealed class ReadinessPanelDefinition
+{
+    public bool Enabled { get; set; }
+}
+
+/// <summary>The request summary: the service, version, level, answers, files, fees and the live result's headline.</summary>
+public sealed class SummaryPanelDefinition
+{
+    public bool Enabled { get; set; }
+
+    /// <summary>Questions whose answers the summary also shows.</summary>
+    public List<string> Questions { get; set; } = [];
+}
+
+/// <summary>
+/// The live result: the decision step of the service's workflow evaluated on the answers as they are (not recorded, not the
+/// official decision), shown as a headline, a list of values and, for rule sets with items (e.g. one per sector), a card per
+/// item with its values on the scale.
+/// </summary>
+public sealed class ResultPanelDefinition
+{
+    public bool Enabled { get; set; }
+
+    public string? TitleAr { get; set; }
+
+    public string? TitleEn { get; set; }
+
+    /// <summary>The code of a decision step of the service's workflow: its rule set and input are used.</summary>
+    public string? Step { get; set; }
+
+    /// <summary>The main result, e.g. the best grade.</summary>
+    public ResultValueDefinition? Headline { get; set; }
+
+    /// <summary>The values a result may take, best first (e.g. grades 1 to 5) with their names; drawn as a ladder.</summary>
+    public List<ResultScaleValue> Scale { get; set; } = [];
+
+    /// <summary>What an empty result is called, e.g. «غير مصنف».</summary>
+    public string? UnknownAr { get; set; }
+
+    public string? UnknownEn { get; set; }
+
+    public List<ResultValueDefinition> Values { get; set; } = [];
+
+    public ResultItemsDefinition? Items { get; set; }
+}
+
+/// <summary>An output of the rule set shown with a label; <see cref="OutputEn"/> names the output holding the English text, when different.</summary>
+public sealed class ResultValueDefinition
+{
+    public string Output { get; set; } = string.Empty;
+
+    public string? OutputEn { get; set; }
+
+    public string LabelAr { get; set; } = string.Empty;
+
+    public string LabelEn { get; set; } = string.Empty;
+
+    /// <summary>The value is one of the scale's (shown with its name and place).</summary>
+    public bool OnScale { get; set; }
+}
+
+public sealed class ResultScaleValue
+{
+    public string Value { get; set; } = string.Empty;
+
+    public string LabelAr { get; set; } = string.Empty;
+
+    public string LabelEn { get; set; } = string.Empty;
+}
+
+/// <summary>A list output of the rule set (e.g. <c>items</c>, one per sector): a card per element with its title, result and columns.</summary>
+public sealed class ResultItemsDefinition
+{
+    public string Output { get; set; } = "items";
+
+    public string TitleOutput { get; set; } = string.Empty;
+
+    public string? TitleOutputEn { get; set; }
+
+    /// <summary>The element's result on the scale, e.g. its grade.</summary>
+    public string? ResultOutput { get; set; }
+
+    public List<ResultValueDefinition> Columns { get; set; } = [];
 }

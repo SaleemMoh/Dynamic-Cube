@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, effect, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
@@ -7,19 +7,25 @@ import { Router, RouterLink } from '@angular/router';
 import {
   BillCard,
   DraftAutosave,
+  EMPTY_READINESS,
   VisitCard,
   FeeTable,
   FieldError,
+  LiveResultFeed,
   LocalizePipe,
+  PanelReadiness,
   RequestAnswers,
   RequestFileInfo,
   UploadedFile,
   RequestView,
+  ServicePanel,
   ServiceWizard,
   ServicesApi,
   TranslatePipe,
   WizardDraft,
   WizardMove,
+  computeReadiness,
+  hasPanel,
   openRequestFile,
   requestErrors,
   requestFileUploader,
@@ -49,7 +55,9 @@ const EDITABLE = ['DRAFT', 'PENDING_CUSTOMER'];
     RouterLink,
     FeeTable,
     LocalizePipe,
+    PanelReadiness,
     RequestAnswers,
+    ServicePanel,
     ServiceWizard,
     TranslatePipe,
   ],
@@ -108,6 +116,9 @@ const EDITABLE = ['DRAFT', 'PENDING_CUSTOMER'];
             </div>
           }
           @if (v.request.status === 'DRAFT' || v.request.status === 'PENDING_CUSTOMER') {
+            @if (panel()?.readiness?.enabled) {
+              <dc-panel-readiness [version]="v.version" [readiness]="readiness()" [canOpen]="!busy()" (openStep)="openStep(v, $event)" />
+            }
             <dc-service-wizard
               [version]="v.version"
               [data]="v.data"
@@ -122,7 +133,7 @@ const EDITABLE = ['DRAFT', 'PENDING_CUSTOMER'];
               [integrations]="v.integrations ?? {}"
               [changes]="v.changes ?? []"
               (moved)="move(v, $event)"
-              (edited)="autosave.change($event)"
+              (edited)="edited($event)"
               (submitted)="submit(v, $event)"
             />
             <div class="dc-request__secondary">
@@ -189,7 +200,29 @@ const EDITABLE = ['DRAFT', 'PENDING_CUSTOMER'];
           <mat-progress-bar mode="indeterminate" />
         }
       </div>
-      <dc-contact-card class="dc-request__side" />
+      <div class="dc-request__side">
+        @if (panel(); as p) {
+          @if (view(); as v) {
+            <dc-service-panel
+              [panel]="p"
+              [version]="v.version"
+              [service]="{ ar: v.request.serviceNameAr, en: v.request.serviceNameEn }"
+              [data]="onScreen().data"
+              [levelCode]="onScreen().levelCode"
+              [step]="v.currentStep"
+              [number]="v.request.number"
+              [readiness]="readiness()"
+              [fees]="v.fees"
+              [files]="uploader.files()"
+              [errors]="errors()"
+              [live]="live.result()"
+              [liveLoading]="live.loading()"
+              [liveError]="live.error()"
+            />
+          }
+        }
+        <dc-contact-card />
+      </div>
     </div>
   `,
   styles: `
@@ -212,6 +245,8 @@ const EDITABLE = ['DRAFT', 'PENDING_CUSTOMER'];
     .dc-request__side {
       position: sticky;
       top: 16px;
+      display: grid;
+      gap: 16px;
     }
     @media (max-width: 64rem) {
       .dc-request {
@@ -325,6 +360,24 @@ export class RequestPage {
   protected readonly busy = signal(false);
   /** Set right after sending: SUBMITTED or RESUBMITTED. */
   protected readonly justSubmitted = signal<string | null>(null);
+  /** The answers and level as the applicant has them on screen (typed, not yet saved); null: as saved. */
+  private readonly typed = signal<WizardDraft | null>(null);
+  protected readonly onScreen = computed<WizardDraft>(() => {
+    const v = this.view();
+    return this.typed() ?? { data: v?.data ?? {}, levelCode: v?.levelCode ?? null };
+  });
+  /** The panel beside the form (ADR-0040), while the applicant edits the request and the version has one. */
+  protected readonly panel = computed(() => {
+    const v = this.view();
+    const panel = v?.version.definition.panel;
+    return v && EDITABLE.includes(v.request.status) && hasPanel(panel) ? panel : null;
+  });
+  protected readonly readiness = computed(() => {
+    const v = this.view();
+    return v ? computeReadiness({ version: v.version, data: this.onScreen().data, levelCode: this.onScreen().levelCode, integrations: v.integrations }) : EMPTY_READINESS;
+  });
+  /** The live result: the service's decision step on the answers on screen, a moment after they change (not recorded). */
+  protected readonly live = new LiveResultFeed((data, levelCode) => this.api.liveResult(this.view()!.request.id, data, levelCode));
   /**
    * Saves the answers a moment after each change (the step does not move and nothing is checked), so closing the page by
    * accident loses nothing; when the page is hidden or left, the waiting change is saved at once.
@@ -337,6 +390,15 @@ export class RequestPage {
 
   constructor() {
     effect(() => void this.load(this.id()));
+    // A new view (opened, moved, submitted) holds the saved answers: what was typed is in it, and the live result is read again.
+    effect(() => {
+      const v = this.view();
+      untracked(() => {
+        this.typed.set(null);
+        if (v && this.panel()?.result.enabled) void this.live.now(null, null);
+        else this.live.stop();
+      });
+    });
     const hidden = () => {
       if (document.visibilityState === 'hidden') void this.autosave.flush(true);
     };
@@ -346,6 +408,7 @@ export class RequestPage {
       document.removeEventListener('visibilitychange', hidden);
       window.removeEventListener('pagehide', hidden);
       void this.autosave.flush(true);
+      this.live.stop();
     });
   }
 
@@ -362,6 +425,28 @@ export class RequestPage {
       this.errors.set(saved.stepErrors);
       window.scrollTo({ top: 0 });
     });
+  }
+
+  /** An answer or the level changed on screen: saved a moment later, and the panel follows at once (the live result after a pause). */
+  protected edited(draft: WizardDraft): void {
+    this.autosave.change(draft);
+    this.typed.set(draft);
+    if (this.panel()?.result.enabled) this.live.change(draft.data, draft.levelCode);
+  }
+
+  /**
+   * A readiness group opens its step: going back keeps what was typed; going on checks the step being left first, as the
+   * wizard's own Next does (the steps in between are checked again when the request is submitted).
+   */
+  protected openStep(v: RequestView, step: string): void {
+    const steps = v.version.definition.steps.map((s) => s.code);
+    const from = v.currentStep ?? steps[0];
+    if (step === from) {
+      document.querySelector('dc-service-wizard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    const draft = this.onScreen();
+    void this.move(v, { data: draft.data, levelCode: draft.levelCode, from, to: step, forward: steps.indexOf(step) > steps.indexOf(from) });
   }
 
   protected async submit(v: RequestView, declarationAccepted: boolean): Promise<void> {

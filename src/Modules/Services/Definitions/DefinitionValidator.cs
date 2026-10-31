@@ -119,6 +119,109 @@ internal static partial class DefinitionValidator
         Fees(definition, evaluator, errors);
         Card(definition.Card, errors);
         Availability(definition.Availability, errors);
+        Panel(definition, evaluator, errors);
+    }
+
+    /// <summary>The panel beside the form (ADR-0040): lines on steps the version has, questions it asks, a decision step and labels for the live result.</summary>
+    private static void Panel(VersionDefinition definition, JsonLogicEvaluator evaluator, ValidationErrors errors)
+    {
+        if (definition.Panel is not { } panel)
+        {
+            return;
+        }
+
+        const string field = "definition.panel";
+        var steps = definition.Steps.Select(s => s.Code).ToHashSet(StringComparer.Ordinal);
+        var asked = definition.Steps.SelectMany(s => s.Sections).SelectMany(s => s.Questions).Select(q => q.Code).ToHashSet(StringComparer.Ordinal);
+        var assistant = panel.Assistant;
+        foreach (var name in new[] { (assistant.TitleAr, "titleAr"), (assistant.TitleEn, "titleEn"), (assistant.SubtitleAr, "subtitleAr"), (assistant.SubtitleEn, "subtitleEn") })
+        {
+            errors.MaxLength($"{field}.assistant.{name.Item2}", name.Item1, 200);
+        }
+
+        for (var i = 0; i < assistant.Lines.Count; i++)
+        {
+            var line = assistant.Lines[i];
+            var lineField = $"{field}.assistant.lines[{i}]";
+            if (!string.IsNullOrEmpty(line.Step) && !steps.Contains(line.Step))
+            {
+                errors.Add(lineField + ".step", $"The version has no step '{line.Step}'.");
+            }
+
+            errors.Required(lineField + ".textAr", line.TextAr);
+            errors.Required(lineField + ".textEn", line.TextEn);
+            foreach (var (text, name) in new[] { (line.TextAr, "textAr"), (line.TextEn, "textEn"), (line.WhyAr, "whyAr"), (line.WhyEn, "whyEn"), (line.QuestionAr, "questionAr"), (line.QuestionEn, "questionEn") })
+            {
+                errors.MaxLength($"{lineField}.{name}", text, 2000);
+            }
+
+            if (line.Kind == AssistantLineKind.Question)
+            {
+                errors.Required(lineField + ".questionAr", line.QuestionAr);
+                errors.Required(lineField + ".questionEn", line.QuestionEn);
+            }
+
+            CheckRule(line.When, lineField + ".when", evaluator, errors);
+        }
+
+        for (var i = 0; i < panel.Summary.Questions.Count; i++)
+        {
+            if (!asked.Contains(panel.Summary.Questions[i]))
+            {
+                errors.Add($"{field}.summary.questions[{i}]", $"The version does not ask question '{panel.Summary.Questions[i]}'.");
+            }
+        }
+
+        var result = panel.Result;
+        if (!result.Enabled)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(result.Step))
+        {
+            errors.Add(field + ".result.step", "Choose the decision step of the service's workflow the live result comes from.");
+        }
+
+        Unique(result.Scale.Select(v => v.Value), field + ".result.scale", errors);
+        for (var i = 0; i < result.Scale.Count; i++)
+        {
+            errors.Required($"{field}.result.scale[{i}].value", result.Scale[i].Value);
+            errors.Required($"{field}.result.scale[{i}].labelAr", result.Scale[i].LabelAr);
+            errors.Required($"{field}.result.scale[{i}].labelEn", result.Scale[i].LabelEn);
+        }
+
+        if (result.Headline is { } headline)
+        {
+            ResultValue(headline, $"{field}.result.headline", errors);
+        }
+
+        for (var i = 0; i < result.Values.Count; i++)
+        {
+            ResultValue(result.Values[i], $"{field}.result.values[{i}]", errors);
+        }
+
+        if (result.Items is { } items)
+        {
+            errors.Required(field + ".result.items.output", items.Output);
+            errors.Required(field + ".result.items.titleOutput", items.TitleOutput);
+            for (var i = 0; i < items.Columns.Count; i++)
+            {
+                ResultValue(items.Columns[i], $"{field}.result.items.columns[{i}]", errors);
+            }
+        }
+
+        if (result.Values.Concat(result.Items?.Columns ?? []).Append(result.Headline).Any(v => v?.OnScale == true) && result.Scale.Count == 0)
+        {
+            errors.Add(field + ".result.scale", "Values shown on the scale need the scale's values.");
+        }
+    }
+
+    private static void ResultValue(ResultValueDefinition value, string field, ValidationErrors errors)
+    {
+        errors.Required(field + ".output", value.Output);
+        errors.Required(field + ".labelAr", value.LabelAr);
+        errors.Required(field + ".labelEn", value.LabelEn);
     }
 
     /// <summary>An integration step names an operation, its inputs, and outputs into questions the version asks.</summary>

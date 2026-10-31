@@ -49,7 +49,9 @@ public static class ServicesModule
         services.AddScoped<FormValidator>();
         services.AddScoped<RequestService>();
         services.AddScoped<RequestIntegrations>();
-        services.AddScoped<IWorkflowSubject, RequestSubject>();
+        services.AddScoped<RequestSubject>();
+        services.AddScoped<IWorkflowSubject>(sp => sp.GetRequiredService<RequestSubject>());
+        services.AddScoped<LiveResult>();
         services.AddScoped<RequestAdminService>();
         services.AddScoped<PortalCatalogService>();
         services.AddScoped<PortalChannel>();

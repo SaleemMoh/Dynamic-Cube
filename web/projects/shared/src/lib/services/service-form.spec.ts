@@ -100,7 +100,7 @@ describe('answers', () => {
     const sections = answeredSections(version, { SECTORS: ['ICT', 'BUILDING'], EMPLOYEES: 5 });
     expect(sections.map((s) => s.titleEn)).toEqual(['C', 'ICT', 'B']);
     expect(sections[2].questions.map((q) => q.code)).toEqual(['PROJECTS']);
-    expect(displayAnswer(version.questions['SECTORS'], ['ICT', 'BUILDING'], 'en')).toBe('ICT، Building');
+    expect(displayAnswer(version.questions['SECTORS'], ['ICT', 'BUILDING'], 'en')).toBe('ICT, Building');
   });
 
   it('round-trips dates between the API and the date picker', () => {
@@ -128,7 +128,7 @@ describe('stepSchema layout', () => {
 describe('file answers', () => {
   it('shows the names of the uploaded files', () => {
     const question = { code: 'DOC', type: 'FILE', options: [] } as unknown as Parameters<typeof displayAnswer>[0];
-    expect(displayAnswer(question, ['a', 'b'], 'en', [{ id: 'a', fileName: 'license.pdf' }])).toBe('license.pdf، b');
+    expect(displayAnswer(question, ['a', 'b'], 'en', [{ id: 'a', fileName: 'license.pdf' }])).toBe('license.pdf, b');
     expect(displayAnswer(question, [], 'en')).toBe('—');
   });
 
