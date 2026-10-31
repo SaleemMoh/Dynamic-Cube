@@ -152,16 +152,18 @@ import { ConfigBulkAction, ConfigBulkData, ConfigRowAction, ConfigType, scopeOf 
             </a>
           }
           @for (action of type().rowActions ?? []; track action.testId) {
-            <button
-              matIconButton
-              type="button"
-              (click)="openAction(action, row)"
-              [matTooltip]="action.label | dcLocalize"
-              [attr.aria-label]="action.label | dcLocalize"
-              [attr.data-testid]="action.testId + '-' + row.code"
-            >
-              <mat-icon fontSet="material-symbols-outlined">{{ action.icon }}</mat-icon>
-            </button>
+            @if (!action.when || action.when(row)) {
+              <button
+                matIconButton
+                type="button"
+                (click)="openAction(action, row)"
+                [matTooltip]="action.label | dcLocalize"
+                [attr.aria-label]="action.label | dcLocalize"
+                [attr.data-testid]="action.testId + '-' + row.code"
+              >
+                <mat-icon fontSet="material-symbols-outlined">{{ action.icon }}</mat-icon>
+              </button>
+            }
           }
           @if (row.owner !== 'SYSTEM' && canEdit()) {
             <button matIconButton (click)="edit(row)" [attr.aria-label]="'config.edit' | dcTranslate" [attr.data-testid]="'edit-' + row.code">

@@ -15,6 +15,13 @@ through the public clients `dynamic-cube-internal-web` (internal system on :4200
 The files in `realms/` are **development seeds**: they are imported by `docker compose` (or
 `kc.sh start-dev --import-realm`) and contain test users and a password-grant client.
 
+**Connected apps** (ADR-0036 step 7) sign in to the internal realm with a confidential client of their own, set up from
+Apps Control (*Apps → Sign-in and credentials*). Their tokens carry the audience `dynamic-cube-connect-api` and are
+accepted only by the internal API's connected-app endpoints (`/api/connect/v1`). For Apps Control to create these
+clients, the account service account (`dynamic-cube-accounts`) needs realm-management `manage-clients` and
+`view-clients` besides its user roles; the development realm has them, and the sample app's client `dc-app-pms`
+(development secret `dev-connected-app-secret`). Docker Compose re-imports the realms when `DC_REALM_REVISION` changes.
+
 ## Login themes
 
 Both themes extend Keycloak's `keycloak.v2` theme with stylesheets and small scripts only. Docker Compose mounts them;

@@ -41,6 +41,9 @@ services:
       # Browsers reach Keycloak on localhost:8080; containers on keycloak:8080. Tokens keep one issuer.
       KC_HOSTNAME: http://localhost:8080
       KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+      # Keycloak keeps no data here: raising this recreates it, which imports the realms again after they change
+      # (2: connected apps — the account service account manages sign-in clients; the sample app's client).
+      DC_REALM_REVISION: "2"
     volumes:
       - ../keycloak/realms:/opt/keycloak/data/import:ro
       - ../keycloak/themes/dynamic-cube:/opt/keycloak/themes/dynamic-cube:ro
@@ -151,6 +154,11 @@ services:
       Sadad__ReturnUrl: http://localhost:4201/requests
       Cis__CallbackUrl: http://external-api:8080/api/visits/v1/callbacks/SAFETY_INSPECTION
       Cis__CallbackKey: ${CIS_CALLBACK_KEY:-dev-cis-callback-key}
+      # The sample connected app at http://localhost:5090/connected-app (ADR-0036 step 7): it signs in through Keycloak
+      # (browser on localhost, token exchange inside Docker) and calls the internal API's connected-app API.
+      ConnectedApp__TokenUrl: http://keycloak:8080/realms/dynamic-cube-internal
+      ConnectedApp__ApiUrl: http://internal-api:8080
+      ConnectedApp__ClientSecret: ${PMS_CLIENT_SECRET:-dev-connected-app-secret}
     ports:
       - "5090:8080"
 

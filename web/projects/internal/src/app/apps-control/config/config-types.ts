@@ -55,6 +55,8 @@ export interface ConfigRowAction {
   dialog: () => Promise<Type<unknown>>;
   /** Dialog width (default 44rem). */
   width?: string;
+  /** Shown only on the rows it is for (e.g. connected apps); all rows when not given. */
+  when?: (row: Record<string, unknown>) => boolean;
 }
 
 /** What a bulk dialog receives: the type and the ticked rows. */
@@ -285,6 +287,25 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
         columns: ['kind', 'channels', 'companies', 'displayOrder'],
         // The product's own apps (internal system, portal, field app) above the apps it manages.
         intro: () => import('../apps/apps-intro').then((m) => m.AppsIntro),
+        // A connected app's own screens and its sign-in client (ADR-0036 step 7).
+        rowActions: [
+          {
+            icon: 'view_quilt',
+            label: t('الشاشات والإجراءات', 'Screens and actions'),
+            testId: 'app-screens',
+            width: '64rem',
+            when: (row) => row['kind'] === 'CONNECTED',
+            dialog: () => import('../apps/connected-screens-dialog').then((m) => m.ConnectedScreensDialog),
+          },
+          {
+            icon: 'key',
+            label: t('تسجيل الدخول وبيانات الربط', 'Sign-in and credentials'),
+            testId: 'app-sign-in',
+            width: '48rem',
+            when: (row) => row['kind'] === 'CONNECTED',
+            dialog: () => import('../apps/connected-sign-in-dialog').then((m) => m.ConnectedSignInDialog),
+          },
+        ],
         fields: [
           {
             code: 'kind',
@@ -340,6 +361,27 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
             code: 'baseUrl',
             type: 'text',
             label: t('رابط التطبيق', 'App address'),
+            visibleWhen: { '==': [{ var: 'kind' }, 'CONNECTED'] },
+          },
+          {
+            code: 'clientId',
+            type: 'text',
+            label: t('معرّف عميل الدخول', 'Sign-in client'),
+            hint: t(
+              'يسجّل التطبيق دخول مستخدميه بهذا المعرّف في خادم الدخول، وبه يعرف ديناميك كيوب أي تطبيق يطلب. فارغ: dc-app- ثم رمز التطبيق',
+              'The app signs its users in with this client in the sign-in server; it is how Dynamic Cube knows which app is calling. Empty: dc-app- and the app code',
+            ),
+            visibleWhen: { '==': [{ var: 'kind' }, 'CONNECTED'] },
+          },
+          {
+            code: 'redirectUris',
+            type: 'json',
+            label: t('عناوين العودة بعد الدخول', 'Sign-in return addresses'),
+            hint: t(
+              'أين يعيد خادم الدخول المستخدمين بعد تسجيل الدخول (يمكن أن تنتهي بـ *). فارغ: رابط التطبيق ثم /*',
+              'Where the sign-in server sends users back after signing in (may end with *). Empty: the app address followed by /*',
+            ),
+            structure: { kind: 'list', item: 'text' },
             visibleWhen: { '==': [{ var: 'kind' }, 'CONNECTED'] },
           },
           { code: 'icon', type: 'icon', label: t('الأيقونة', 'Icon') },

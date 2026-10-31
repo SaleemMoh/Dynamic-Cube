@@ -2,6 +2,7 @@ using System.Reflection;
 using DynamicCube.Platform.Persistence;
 using DynamicCube.Platform.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -38,17 +39,33 @@ public static class ApiHostExtensions
             .PersistKeysToDbContext<PlatformDbContext>();
 
         var auth = builder.Configuration.GetSection(options.AuthenticationSection);
+        var audience = auth["Audience"];
+
+        // Connected apps' tokens (ADR-0036 step 7) carry their own audience and reach only the connected-app endpoints.
+        var connectAudience = auth["ConnectAudience"];
         builder.Services
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(jwt =>
             {
                 jwt.Authority = auth["Authority"];
-                jwt.Audience = auth["Audience"];
+                jwt.Audience = audience;
                 jwt.RequireHttpsMetadata = auth.GetValue("RequireHttpsMetadata", true);
                 jwt.MapInboundClaims = false;
                 jwt.TokenValidationParameters.NameClaimType = "preferred_username";
+                if (!string.IsNullOrEmpty(connectAudience))
+                {
+                    jwt.TokenValidationParameters.ValidAudiences = [.. new[] { audience, connectAudience }.OfType<string>()];
+                }
             });
-        builder.Services.AddAuthorization();
+        builder.Services.AddAuthorization(authorization =>
+        {
+            var connect = string.IsNullOrEmpty(connectAudience) ? ConnectedAppAuthorization.DefaultAudience : connectAudience;
+            authorization.DefaultPolicy = new AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
+                .RequireAssertion(context => !ConnectedAppAuthorization.IsConnectedOnly(context.User, audience, connect))
+                .Build();
+            authorization.AddPolicy(ConnectedAppAuthorization.Policy, policy => policy.RequireAuthenticatedUser().RequireClaim("aud", connect));
+        });
 
         return builder;
     }

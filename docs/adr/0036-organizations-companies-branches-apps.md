@@ -23,7 +23,11 @@ every company, the company's version of a role that differs there, personal priv
 department roles in the company of the branch the unit serves, and class values serving that company. Branch limits are
 stored and applied in step 6. Step 6 done: requests, tasks and documents belong to a company and branch (see "Work
 belongs to a company and branch" below), and employees see only the work of the company they work in and of the
-branches their roles cover. The NHC demo data uses all of it. Replaces entities,
+branches their roles cover. Step 7 done: connected apps sign in with a client of their own (set up from the Apps screen,
+secret shown once and kept by Keycloak only), register their screens and actions and their menu tree, and ask the
+connected-app API for their users' profile, workspace, menu, privileges and lists of values (see "Connected apps" below);
+outside users of a connected app and its default external role come later (owner's decision). The NHC demo data uses all
+of it. Replaces entities,
 business apps, channel apps and the System / Entity / App levels of [ADR-0031](0031-entities-business-apps-levels.md).
 
 ## Context
@@ -62,14 +66,34 @@ built on each) above the list of **apps managed by Dynamic Cube**, which are of 
 system and portal), so it is never split into "internal" and "external" apps. Connected apps run on their own screens and
 use no channel.
 
-**Default external role.** Each app may name a role given to external users on their first sign-in (e.g. through
-Nafath), so they get that app's permissions without staff action.
+**Default external role** (later, after step 7, by the owner's decision). Each app may name a role given to external
+users on their first sign-in (e.g. through Nafath), so they get that app's permissions without staff action.
 
 A connected app uses, as it needs: sign-in (single sign-on), users, roles, menus and branches (Apps Control), the
 Action Center, workflow (cases started by the app), parties, notifications (email, SMS, in-app) and branding. It is
-registered with API credentials (client id and secret in the secret store) and its menu tree. The internal system, the
+registered with API credentials (a client id and secret in the identity provider; the platform never stores the secret)
+and its menu tree. The internal system, the
 portal and the field app are fixed product channels, not configured apps; "mobile" is a channel of an app, not another
 app. Database connections are server configuration, never typed into screens.
+
+### Connected apps (step 7)
+Implemented with the owner's choices: sign-in, access and lists first (the Action Center, workflow, notifications and
+party APIs later); the app's screens entered by staff on the Apps screen or in a package (sent by the app later); outside
+users later.
+- **Registration.** A connected app has a sign-in client (`client_id`, default `dc-app-` and its code) and return
+  addresses. *Screens and actions* registers its screens (resources of the app, no channel); its menu tree opens only
+  them, and channel menus never do. Roles and personal privileges grant them like any screen.
+- **Sign-in client.** *Set up sign-in* creates (or brings in line) a confidential client in the employees' realm with the
+  app's return addresses, a service account and an audience mapper adding `dynamic-cube-connect-api`. The secret is shown
+  once when the client is created or the secret is replaced.
+- **Connected-app API** (`/api/connect/v1`). The app is the client its token was issued to (`azp`). Tokens with the
+  connected-app audience only reach these endpoints; the internal system's tokens do not reach them. With a user's token:
+  profile and workspace (companies of the user that use the app, branches there), the app's menu filtered by `VIEW`, the
+  app's screens and actions, and lists of values of the app, shared with it or of the whole organization with the user's
+  grants. With the app's own token: only its registration. Company as in step 5 (`X-Company`, else last, else first of
+  the user's companies that use the app).
+- **Demo.** NHC's *Projects management system* (`PMS`), with a sample app in the mock gateway that signs in and shows the
+  user's menu, screens and a list with their grants.
 
 ### All is chosen, never empty
 Wherever companies or branches are chosen — a user's roles and personal privileges, an app, the values of a class with
@@ -165,6 +189,6 @@ apps screen, the System / Entity / App wording and the header app selector.
 ## Consequences
 - Existing Dynamic Cube data moves over: the entity becomes the organization with one company, business apps become
   Dynamic Cube apps, users' roles become Access rows in that company.
-- Connected apps need a published integration contract (sign-in, menus and privileges of the signed-in user in the
-  chosen company and branch, Action Center and workflow APIs); it is a later phase after this structure.
+- Connected apps have a published contract for sign-in, the signed-in user's workspace, menus, privileges and lists
+  (step 7, documented in [Apps Control 4.12a](../04-apps-control.md)); the Action Center and workflow APIs are later.
 - Physically separate databases for Dynamic Cube apps are not part of this design.

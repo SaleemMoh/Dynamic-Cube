@@ -507,6 +507,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnType("text[]")
                         .HasColumnName("channels");
 
+                    b.Property<string>("ClientId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("client_id");
+
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -580,6 +585,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnType("character varying(64)")
                         .HasColumnName("owner");
 
+                    b.PrimitiveCollection<List<string>>("RedirectUris")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("redirect_uris");
+
                     b.Property<uint>("RowVersion")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
@@ -602,6 +612,10 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_business_app");
+
+                    b.HasIndex("ClientId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_business_app_client_id");
 
                     b.HasIndex("Code")
                         .IsUnique()

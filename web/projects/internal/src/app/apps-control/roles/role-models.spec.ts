@@ -24,6 +24,16 @@ describe('role models', () => {
     expect(tree[2].place.en).toBe('Other screens');
   });
 
+  it("places a connected app's screens under the app's name", () => {
+    const apps = [row('PMS', { kind: 'CONNECTED', nameEn: 'Projects' }), row('CLS', { kind: 'DYNAMIC_CUBE', nameEn: 'Classification' })];
+    const pmsResources = [row('PMS.PROJECTS', { businessApp: 'PMS' }), row('PMS.REPORTS', { businessApp: 'PMS' })];
+    const pmsMenus = [row('pm1', { resourceCode: 'PMS.PROJECTS', groupCode: 'PMS_WORK', businessApp: 'PMS' })];
+    const pmsGroups = [row('PMS_WORK', { nameEn: 'Daily work', businessApp: 'PMS', appCode: null })];
+    const tree = screenTree(pmsResources, pmsMenus, pmsGroups, apps);
+    expect(tree.find((s) => s.code === 'PMS.PROJECTS')!.place.en).toBe('Projects — Daily work');
+    expect(tree.find((s) => s.code === 'PMS.REPORTS')!.place.en).toBe('Projects');
+  });
+
   it('reads and writes privileges, keeping field rules and dropping resources without actions', () => {
     const tree = screenTree(resources, menus, groups);
     const permissions = permissionsOf([

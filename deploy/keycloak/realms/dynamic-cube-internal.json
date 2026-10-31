@@ -79,7 +79,7 @@
     {
       "clientId": "dynamic-cube-accounts",
       "name": "Dynamic Cube account management (Apps Control)",
-      "description": "Service account the internal API uses to create users, enable/disable them and set passwords. Development secret only.",
+      "description": "Service account the internal API uses to create users, enable/disable them and set passwords, and to set up connected apps' sign-in clients. Development secret only.",
       "enabled": true,
       "publicClient": false,
       "clientAuthenticatorType": "client-secret",
@@ -88,6 +88,43 @@
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": true,
       "protocol": "openid-connect"
+    },
+    {
+      "clientId": "dc-app-pms",
+      "name": "Projects management system (PMS)",
+      "description": "Sample connected app of the NHC demo (served by the mock gateway). Development secret only; a real app's client is set up from Apps Control.",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "dev-connected-app-secret",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": true,
+      "redirectUris": [
+        "http://localhost:5090/connected-app/*"
+      ],
+      "webOrigins": [
+        "http://localhost:5090"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5090/connected-app/*"
+      },
+      "protocolMappers": [
+        {
+          "name": "audience-dynamic-cube-connect-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.custom.audience": "dynamic-cube-connect-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
     }
   ],
   "users": [
@@ -374,7 +411,10 @@
           "view-users",
           "query-users",
           "view-realm",
-          "view-identity-providers"
+          "view-identity-providers",
+          "manage-clients",
+          "view-clients",
+          "query-clients"
         ]
       }
     }

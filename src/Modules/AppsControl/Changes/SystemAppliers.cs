@@ -1,3 +1,4 @@
+using DynamicCube.Modules.AppsControl.ConnectedApps;
 using DynamicCube.Modules.AppsControl.Domain;
 using DynamicCube.Modules.AppsControl.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -348,6 +349,14 @@ public sealed class BusinessAppPayload : ConfigPayload
     public List<string> Branches { get; set; } = [];
 
     public string? BaseUrl { get; set; }
+
+    /// <summary>
+    /// A connected app's sign-in client in the identity provider; not given: <c>dc-app-</c> and the app code in lower case.
+    /// </summary>
+    public string? ClientId { get; set; }
+
+    /// <summary>A connected app's sign-in return addresses; not given: its address followed by <c>/*</c>.</summary>
+    public List<string>? RedirectUris { get; set; }
 }
 
 /// <summary>
@@ -409,6 +418,7 @@ internal sealed class BusinessAppApplier(AppsControlDbContext db) : ConfigApplie
 
         entity.Channels = payload.Kind == AppKind.DynamicCube ? channels : [];
         entity.BaseUrl = payload.Kind == AppKind.Connected && !string.IsNullOrWhiteSpace(payload.BaseUrl) ? payload.BaseUrl.Trim() : null;
+        await SignInAsync(entity, payload, refs, errors, cancellationToken);
 
         // Companies of the app's organization, and branches of those companies; "all" is chosen explicitly (ADR-0036).
         entity.Companies = AllOrCodes(payload.Companies, "companies", "Choose companies, or all companies (*).", errors);
@@ -443,6 +453,58 @@ internal sealed class BusinessAppApplier(AppsControlDbContext db) : ConfigApplie
         }
     }
 
+    /// <summary>
+    /// A connected app's sign-in client and return addresses (ADR-0036 step 7). The client id tells the platform which app
+    /// a token was issued to, so it is unique and never one of the platform's own clients.
+    /// </summary>
+    private static async Task SignInAsync(BusinessApplication entity, BusinessAppPayload payload, RefResolver refs, ValidationErrors errors, CancellationToken cancellationToken)
+    {
+        if (payload.Kind != AppKind.Connected)
+        {
+            if (!string.IsNullOrWhiteSpace(payload.ClientId) || payload.RedirectUris is { Count: > 0 })
+            {
+                errors.Add("clientId", "Only a connected app has a sign-in client of its own.");
+            }
+
+            entity.ClientId = null;
+            entity.RedirectUris = [];
+            return;
+        }
+
+        var clientId = string.IsNullOrWhiteSpace(payload.ClientId) ? ConnectedClients.DefaultClientId(entity.Code) : payload.ClientId.Trim();
+        if (!ConnectedClients.ClientIdPattern().IsMatch(clientId))
+        {
+            errors.Add("clientId", "Use 3–100 lower-case letters, digits, dots, hyphens or underscores, starting with a letter or digit.");
+        }
+        else if (ConnectedClients.IsPlatformClient(clientId))
+        {
+            errors.Add("clientId", $"{clientId} is one of the platform's own sign-in clients.");
+        }
+        else if (await refs.Context.BusinessApps.AsNoTracking().AnyAsync(a => a.ClientId == clientId && a.Code != entity.Code, cancellationToken))
+        {
+            errors.Add("clientId", $"Another app already signs in with client {clientId}.");
+        }
+
+        var uris = Codes(payload.RedirectUris);
+        if (uris.Count == 0 && entity.BaseUrl is { } baseUrl)
+        {
+            uris = [baseUrl.TrimEnd('/') + "/*"];
+        }
+
+        if (uris.Count > 10)
+        {
+            errors.Add("redirectUris", "Give at most 10 return addresses.");
+        }
+
+        foreach (var uri in uris.Where(u => !ConnectedClients.IsRedirectUri(u)))
+        {
+            errors.Add("redirectUris", $"'{uri}' is not an http(s) address (it may end with *).");
+        }
+
+        entity.ClientId = clientId;
+        entity.RedirectUris = uris;
+    }
+
     protected override Task<BusinessAppPayload> ToPayloadAsync(AppsControlDbContext context, BusinessApplication entity, CancellationToken cancellationToken) =>
         Task.FromResult(new BusinessAppPayload
         {
@@ -455,6 +517,8 @@ internal sealed class BusinessAppApplier(AppsControlDbContext db) : ConfigApplie
             Companies = entity.Companies,
             Branches = entity.Branches,
             BaseUrl = entity.BaseUrl,
+            ClientId = entity.ClientId,
+            RedirectUris = entity.Kind == AppKind.Connected ? entity.RedirectUris : null,
         });
 
     /// <summary>The product channels an app can appear on (codes of the seeded <see cref="App"/> rows).</summary>

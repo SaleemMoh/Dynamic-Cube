@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using DynamicCube.Modules.AppsControl.ConnectedApps;
 using DynamicCube.Modules.AppsControl.Domain;
 using DynamicCube.Modules.AppsControl.Persistence;
 using DynamicCube.Platform.Expressions;
@@ -51,6 +52,22 @@ internal sealed class ResourceApplier(AppsControlDbContext db) : ConfigApplier<R
         foreach (var action in actions.Where(a => !ValidationErrors.IdentifierCode().IsMatch(a)))
         {
             errors.Add("availableActions", $"'{action}' is not a valid action code.");
+        }
+
+        // A connected app's screens (ADR-0036 step 7) have no channel, and their sub-resources stay in the same app.
+        var connected = await ConnectedClients.IsConnectedAsync(refs.Context, entity.BusinessApp, cancellationToken);
+        if (connected && appId is not null)
+        {
+            errors.Add("appCode", $"App {entity.BusinessApp} is a connected app: its screens have no channel; leave it empty.");
+        }
+
+        if (parentId is { } parent && parent != Guid.Empty)
+        {
+            var parentApp = await refs.Context.Resources.AsNoTracking().Where(r => r.Id == parent).Select(r => r.BusinessApp).SingleAsync(cancellationToken);
+            if (parentApp != entity.BusinessApp && (connected || await ConnectedClients.IsConnectedAsync(refs.Context, parentApp, cancellationToken)))
+            {
+                errors.Add("parentCode", $"{payload.ParentCode} belongs to another app; a connected app's screens are under its own screens only.");
+            }
         }
 
         entity.AppId = appId;

@@ -95,9 +95,16 @@ export function actionLabel(action: string): LocalizedText {
  * Top-level resources with their sub-resources, ordered by where they appear (menu group) and name. A resource whose
  * parent is not listed counts as top-level.
  */
-export function screenTree(resources: ConfigRow[], menus: ConfigRow[], groups: ConfigRow[]): ScreenNode[] {
+export function screenTree(resources: ConfigRow[], menus: ConfigRow[], groups: ConfigRow[], apps: ConfigRow[] = []): ScreenNode[] {
   const codes = new Set(resources.map((r) => r.code));
-  const groupNames = new Map(groups.map((g) => [g.code, { ar: g.nameAr, en: g.nameEn } as LocalizedText]));
+  // A connected app's screens and menu groups carry the app's name (its own tree, ADR-0036 step 7).
+  const connected = new Map(apps.filter((a) => a['kind'] === 'CONNECTED').map((a) => [a.code, { ar: a.nameAr, en: a.nameEn } as LocalizedText]));
+  const groupNames = new Map(
+    groups.map((g) => {
+      const app = !g['appCode'] && g['businessApp'] ? connected.get(g['businessApp'] as string) : undefined;
+      return [g.code, (app ? { ar: `${app.ar} — ${g.nameAr}`, en: `${app.en} — ${g.nameEn}` } : { ar: g.nameAr, en: g.nameEn }) as LocalizedText];
+    }),
+  );
   const placeOf = new Map<string, LocalizedText>();
   for (const menu of menus) {
     const resource = menu['resourceCode'] as string | null;
@@ -133,7 +140,7 @@ export function screenTree(resources: ConfigRow[], menus: ConfigRow[], groups: C
       return !parent || !codes.has(parent) || parent === r.code;
     })
     .map((r) => {
-      const place = placeOf.get(r.code) ?? OTHER_SCREENS;
+      const place = placeOf.get(r.code) ?? connected.get(r['businessApp'] as string) ?? OTHER_SCREENS;
       return { ...node(r, place), children: descendants(r.code, place, new Set([r.code])) };
     })
     .sort(

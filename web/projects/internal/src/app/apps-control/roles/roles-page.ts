@@ -148,7 +148,7 @@ export class RolesPage {
       }),
   });
   private readonly tree = computed(() =>
-    this.lists.hasValue() ? screenTree(this.lists.value().resources, this.lists.value().menus, this.lists.value().groups) : [],
+    this.lists.hasValue() ? screenTree(this.lists.value().resources, this.lists.value().menus, this.lists.value().groups, this.lists.value().businessApps) : [],
   );
 
   private readonly roleRows = computed(() => (this.roles.hasValue() ? this.roles.value() : []));

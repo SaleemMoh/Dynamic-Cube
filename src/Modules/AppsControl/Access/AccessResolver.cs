@@ -33,22 +33,27 @@ public sealed partial class AccessResolver(
 
     private AccessSnapshot? _current;
 
-    public async Task<AccessSnapshot> GetAsync(CancellationToken cancellationToken)
-    {
-        if (_current is not null)
-        {
-            return _current;
-        }
+    public async Task<AccessSnapshot> GetAsync(CancellationToken cancellationToken) =>
+        _current ??= await GetCoreAsync(currentUser.RequestedCompany, cancellationToken);
 
+    /// <summary>
+    /// The user's access while working in the given company when they may work in it (as if the request named it), e.g. the
+    /// first of their companies that uses a connected app.
+    /// </summary>
+    public Task<AccessSnapshot> GetInCompanyAsync(string? company, CancellationToken cancellationToken) =>
+        GetCoreAsync(company, cancellationToken);
+
+    private async Task<AccessSnapshot> GetCoreAsync(string? requestedCompany, CancellationToken cancellationToken)
+    {
         if (!currentUser.IsAuthenticated || !host.ManagesUsers)
         {
-            return _current = AccessSnapshot.Anonymous(currentUser.AppCode);
+            return AccessSnapshot.Anonymous(currentUser.AppCode);
         }
 
-        var key = $"apps-control:access:{accessCache.Version}:{currentUser.AppCode}:{currentUser.UserId}:{currentUser.RequestedCompany ?? "-"}";
+        var key = $"apps-control:access:{accessCache.Version}:{currentUser.AppCode}:{currentUser.UserId}:{requestedCompany ?? "-"}";
         if (cache.TryGetValue(key, out AccessSnapshot? cached) && cached is not null)
         {
-            return _current = cached;
+            return cached;
         }
 
         await BuildLock.WaitAsync(cancellationToken);
@@ -56,12 +61,12 @@ public sealed partial class AccessResolver(
         {
             if (cache.TryGetValue(key, out cached) && cached is not null)
             {
-                return _current = cached;
+                return cached;
             }
 
-            var snapshot = await BuildAsync(cancellationToken);
+            var snapshot = await BuildAsync(requestedCompany, cancellationToken);
             cache.Set(key, snapshot, TimeSpan.FromSeconds(Math.Max(1, options.Value.AccessCacheSeconds)));
-            return _current = snapshot;
+            return snapshot;
         }
         finally
         {
@@ -69,7 +74,7 @@ public sealed partial class AccessResolver(
         }
     }
 
-    private async Task<AccessSnapshot> BuildAsync(CancellationToken cancellationToken)
+    private async Task<AccessSnapshot> BuildAsync(string? requestedCompany, CancellationToken cancellationToken)
     {
         var user = await ProvisionAsync(cancellationToken);
         var today = DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime);
@@ -118,7 +123,7 @@ public sealed partial class AccessResolver(
                 && (opened.Contains(CompanyScope.All) || opened.Contains(c.Code)))
             .Select(c => c.Code)
             .ToList();
-        var (company, chosen) = CurrentCompany(companies, currentUser.RequestedCompany, user.LastCompanyCode);
+        var (company, chosen) = CurrentCompany(companies, requestedCompany, user.LastCompanyCode);
 
         // Only what is held in that company, or in every company, applies.
         var roles = held.Where(r => r.CompanyCode == CompanyScope.All || r.CompanyCode == company).ToList();

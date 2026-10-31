@@ -68,12 +68,15 @@ built on each) above the apps they manage.
 organization: `kind` (`DYNAMIC_CUBE` *Built on Dynamic Cube* | `CONNECTED` *Connected system*), `channels` (an app built
 on Dynamic Cube ticks at least one; a connected system has none), `companies` and `branches` it is enabled for (required:
 codes, or `["*"]` for all of the organization / of those companies — an empty list is refused; checked against the
-organization), `base_url` of a connected system, icon, descriptions, order. Rows (services, workflows, document types,
-roles…) belong to an app through their `business_app`. The portal offers a service only when it has no app or one of its
+organization), `base_url` of a connected system, icon, descriptions, order. A connected system also has `client_id`, the
+sign-in client it signs its users in with (default `dc-app-` and the code in lower case; unique, never one of the platform's
+own clients), and `redirect_uris`, where the sign-in server may send its users back (default: `base_url` followed by `/*`;
+see 4.12a). Rows (services, workflows, document types, roles…) belong to an app through their `business_app`. The portal offers a service only when it has no app or one of its
 apps ticks `EXTERNAL`. Existing apps became Dynamic Cube apps on `INTERNAL` and `EXTERNAL` for every company.
 
 **`resource`** register — filled by the product with its own screens and APIs; roles and menus use it. Its menu is
-hidden.
+hidden. A connected app's screens are rows of the register too (`business_app` = the app, no channel; sub-screens only
+under the app's own screens), entered from the Apps screen (*Screens and actions*) or a package.
 
 **`entity`** — the organization (screens say *Organization*; ADR-0036): names, `entity_kind` (ministry / authority /
 company — a domain of class `ENTITY_KIND`), `unified_number`, `cr_number`, `logo_file_id`. One row (`ENTITY`) is the
@@ -244,7 +247,8 @@ depth (e.g. `M010-000-000` → `M010-010-000` → `M010-010-010`). Each tree bel
 - **a channel** (`app_id`: internal system, portal, field app) — the platform's screens, plus items a Dynamic Cube app
   adds (`business_app` set; only on channels the app ticks); or
 - **a connected app** (`business_app` of a connected app, `app_id` empty) — the app's own tree (e.g. HRVault), served
-  to it with the user's privileges (connected apps, step 7).
+  to it with the user's privileges (4.12a). Its items open the app's own screens only, and a channel's items never open
+  a connected app's screens.
 
 A group or item's parent must be in the same tree, and an item cannot be placed under itself or its own items.
 
@@ -461,6 +465,48 @@ Used in-process by Dynamic Cube apps today; designed as a **versioned REST contr
 
 Authentication via Keycloak tokens; authorization decisions are made server-side so tokens stay
 small.
+
+## 4.12a Connected apps (ADR-0036 step 7)
+
+A connected app is an outside system with its own screens and database (e.g. a projects management system) that uses
+Dynamic Cube for sign-in, users, roles, menus and lists of values. What it needs is registered on the Apps screen:
+
+| Where | What |
+|---|---|
+| The app's row | Kind *Connected system*, address, companies and branches, sign-in client (`client_id`) and return addresses |
+| *Screens and actions* (row action) | The app's screens (codes, names, sub-screens) and the actions each offers; saved as `apps.resource` changes (Users & privileges, with approval) |
+| *Sign-in and credentials* (row action) | The client in Keycloak: set it up or bring it in line, replace its secret; shows the sign-in address, the connected-app API and how the app connects |
+| Menus (the app's tree) | Groups and items opening the app's screens |
+| Roles, Access tab | The app's screens and actions, granted like any other; lists of values shared with the app (`businessApps`) |
+
+**Sign-in client.** *Set up sign-in* creates a confidential client in the employees' realm (authorization code with PKCE,
+the app's return addresses and their origins, a service account) with an audience mapper adding
+`dynamic-cube-connect-api` to its tokens. A new client's secret, and each replaced secret, is shown **once**; Keycloak
+keeps it, the platform never stores it. The account service account needs realm-management `manage-clients` and
+`view-clients` for this (the development realm has them). With `AppsControl:Identity:Provider` = `None` the client is
+created in Keycloak by hand with the same settings.
+
+**The connected-app API** (`/api/connect/v1`, internal host). The app is the client the token was issued to (`azp`), so
+it cannot ask about another app. Its tokens carry the connected-app audience and are refused by the rest of the internal
+API; the internal system's tokens are refused here.
+
+| Endpoint | Token | Returns |
+|---|---|---|
+| `GET app` | the app's own (client credentials) or a user's | The app: companies, branches, screens and actions, its whole menu tree |
+| `GET me` | a user's | User name, names, email, language; `hasAccess`; the company they work in now and those they may choose among the app's; their branches there (`allBranches` when all); roles, unit, positions |
+| `GET menu` | a user's | The app's tree with the items whose screen the user may `VIEW` (items without a screen for all) |
+| `GET privileges` | a user's | The app's screens the user may use and the actions on each (roles, company versions, personal privileges) |
+| `GET lovs/{code}/values?parent=&q=&page=&size=&resource=` | a user's | Values of a list of the app, shared with it, or of the whole organization, with the user's grants and data scopes applied (`resource` = one of the app's screens) |
+| `GET lovs/{code}/grant?resource=` | a user's | The user's grant on the list (all, the values, the default) |
+
+The company is the one named by the `X-Company` header (one of the user's companies that uses the app), else the one
+they last chose, else the first of theirs that uses the app. Menus, privileges and lists need such a company (`403`
+otherwise); a user without one gets `hasAccess: false` from `me`. Inactive apps are refused. Outside users (applicants)
+of a connected app come later (see the roadmap). The sample app at `http://localhost:5090/connected-app` (mock gateway)
+does all of it in one small file (`src/Tools/MockGateway/ConnectedAppSample.cs`).
+
+**Admin endpoints** (Installation resource): `GET admin/connected-apps/{code}/sign-in` (View),
+`POST admin/connected-apps/{code}/sign-in` and `POST admin/connected-apps/{code}/secret` (Edit).
 
 ## 4.13 Implementation notes (Phase 1a)
 

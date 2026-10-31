@@ -96,6 +96,7 @@ docker compose -f deploy/docker/docker-compose.yml up --build
 | http://localhost:8080 | Keycloak (admin / admin) |
 | http://localhost:5080/health/ready | Internal API readiness |
 | http://localhost:5090 | Mock MoMRAH gateway (development only) |
+| http://localhost:5090/connected-app | Sample connected app: signs in through Keycloak and uses the connected-app API (development only) |
 | http://localhost:8025 | Mailpit — every email the platform sends in development |
 | http://localhost:4201/verify | Public document verification (the QR code on each document opens it) |
 

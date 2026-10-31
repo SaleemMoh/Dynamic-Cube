@@ -84,6 +84,21 @@ export class AppsControlApi {
     return this.http.post<T>(`${APPS_CONTROL_API}/admin/lov-builder/preview`, { query, limit, search: search || null });
   }
 
+  /** A connected app's sign-in client: as registered here and as the identity provider holds it (ADR-0036 step 7). */
+  connectedAppSignIn<T = unknown>(code: string): Observable<T> {
+    return this.http.get<T>(`${APPS_CONTROL_API}/admin/connected-apps/${encodeURIComponent(code)}/sign-in`);
+  }
+
+  /** Creates the app's sign-in client or brings it in line; a new client's secret comes back this once. */
+  setUpConnectedAppSignIn<T = unknown>(code: string): Observable<T> {
+    return this.http.post<T>(`${APPS_CONTROL_API}/admin/connected-apps/${encodeURIComponent(code)}/sign-in`, {});
+  }
+
+  /** Replaces the app's secret; the new one comes back this once. */
+  replaceConnectedAppSecret<T = unknown>(code: string): Observable<T> {
+    return this.http.post<T>(`${APPS_CONTROL_API}/admin/connected-apps/${encodeURIComponent(code)}/secret`, {});
+  }
+
   /** Each active role's own grant on a list (and how many screen or company grants it also has there). */
   lovRoleGrants<T = unknown>(code: string): Observable<T[]> {
     return this.http.get<T[]>(`${APPS_CONTROL_API}/admin/lov-builder/grants/${encodeURIComponent(code)}`);

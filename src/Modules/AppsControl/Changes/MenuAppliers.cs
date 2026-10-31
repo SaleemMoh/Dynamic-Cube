@@ -1,3 +1,4 @@
+using DynamicCube.Modules.AppsControl.ConnectedApps;
 using DynamicCube.Modules.AppsControl.Domain;
 using DynamicCube.Modules.AppsControl.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -162,6 +163,20 @@ internal sealed class MenuApplier(AppsControlDbContext db) : ConfigApplier<Menu,
         }
 
         entity.ResourceId = await refs.ResourceAsync(payload.ResourceCode, "resourceCode", errors, cancellationToken);
+        if (entity.ResourceId is { } resourceId && resourceId != Guid.Empty)
+        {
+            // A connected app's tree opens its own screens; a channel's tree never opens a connected app's screens.
+            var resourceApp = await refs.Context.Resources.AsNoTracking().Where(r => r.Id == resourceId).Select(r => r.BusinessApp).SingleAsync(cancellationToken);
+            if (entity.AppId is null && resourceApp != entity.BusinessApp && await ConnectedClients.IsConnectedAsync(refs.Context, entity.BusinessApp, cancellationToken))
+            {
+                errors.Add("resourceCode", $"{payload.ResourceCode} is not a screen of app {entity.BusinessApp}; register it with the app's screens first.");
+            }
+            else if (entity.AppId is not null && await ConnectedClients.IsConnectedAsync(refs.Context, resourceApp, cancellationToken))
+            {
+                errors.Add("resourceCode", $"{payload.ResourceCode} is a screen of connected app {resourceApp}; it belongs in that app's own menu tree.");
+            }
+        }
+
         if (payload.ItemType != MenuItemType.Group)
         {
             errors.Required("target", payload.Target);

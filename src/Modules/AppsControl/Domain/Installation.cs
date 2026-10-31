@@ -137,5 +137,14 @@ public sealed class BusinessApplication : ConfigEntity
     /// <summary>Address of a connected app.</summary>
     public string? BaseUrl { get; set; }
 
+    /// <summary>
+    /// The connected app's sign-in client in the identity provider (ADR-0036 step 7): tokens it obtains for a user carry it
+    /// (<c>azp</c>), which is how the platform knows which app is calling. Not a secret; null for a Dynamic Cube app.
+    /// </summary>
+    public string? ClientId { get; set; }
+
+    /// <summary>Addresses the identity provider may send a connected app's users back to after sign-in (may end with <c>*</c>).</summary>
+    public List<string> RedirectUris { get; set; } = [];
+
     public bool OnChannel(string channel) => Kind == AppKind.DynamicCube && Channels.Contains(channel);
 }

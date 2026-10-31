@@ -103,6 +103,7 @@ internal static class AdminEndpoints
         BrandingEndpoints.MapAdmin(admin);
         AccountEndpoints.Map(admin);
         AccountEndpoints.MapPortal(admin);
+        ConnectedAppEndpoints.MapAdmin(admin);
 
         // Every value of a list, whatever the administrator's own grants: to choose the values a role may see.
         admin.MapGet("/lovs/{code}/values", async (string code, string? q, int? size, AccessResolver resolver, LovService lovs, CancellationToken ct) =>

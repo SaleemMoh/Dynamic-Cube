@@ -237,6 +237,9 @@ app.MapPost("/cis/inspections/{id}", async (string id, HttpRequest form, IHttpCl
     return Results.Content(InspectionPage(inspection, null), "text/html; charset=utf-8");
 });
 
+// A sample connected app that signs in through the platform and uses its connected-app API (ADR-0036 step 7).
+DynamicCube.MockGateway.ConnectedAppSample.Map(app);
+
 app.Run();
 
 static JsonObject InspectionResult(Inspection inspection, string? result) => new()

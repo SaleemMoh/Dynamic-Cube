@@ -1,5 +1,6 @@
 using DynamicCube.Modules.AppsControl.Domain;
 using DynamicCube.Modules.AppsControl.Persistence;
+using DynamicCube.Platform.Configuration;
 using Microsoft.EntityFrameworkCore;
 
 namespace DynamicCube.Modules.AppsControl.Access;
@@ -27,25 +28,44 @@ public sealed class MenuService(AppsControlDbContext context)
         ArgumentNullException.ThrowIfNull(access);
 
         // A channel's menu: the platform's items and those of the apps the user works in.
-        var groups = (await context.MenuGroups.AsNoTracking()
-            .Where(g => g.App!.Code == appCode && g.IsActive)
+        return await BuildAsync(
+            context.MenuGroups.AsNoTracking().Where(g => g.App!.Code == appCode && g.IsActive),
+            context.Menus.AsNoTracking().Where(m => m.App!.Code == appCode && m.IsActive && m.IsVisible),
+            (row, resourceCode) => (resourceCode is null || access.Can(resourceCode, PrivilegeActions.View)) && access.Scope.CanSee(null, row.BusinessApp, row.SharedApps),
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// A connected app's own tree (ADR-0036 step 7): with <paramref name="access"/>, the items the user may open (their
+    /// screen's <c>VIEW</c>, or no screen); without, every active item, for the app itself.
+    /// </summary>
+    public async Task<IReadOnlyList<MenuGroupNode>> GetConnectedMenuAsync(string appCode, AccessSnapshot? access, CancellationToken cancellationToken) =>
+        await BuildAsync(
+            context.MenuGroups.AsNoTracking().Where(g => g.AppId == null && g.BusinessApp == appCode && g.IsActive),
+            context.Menus.AsNoTracking().Where(m => m.AppId == null && m.BusinessApp == appCode && m.IsActive && (access == null || m.IsVisible)),
+            (_, resourceCode) => access is null || resourceCode is null || access.Can(resourceCode, PrivilegeActions.View),
+            cancellationToken);
+
+    private static async Task<IReadOnlyList<MenuGroupNode>> BuildAsync(
+        IQueryable<MenuGroup> groupQuery, IQueryable<Menu> itemQuery, Func<ConfigEntity, string?, bool> visible, CancellationToken cancellationToken)
+    {
+        var groups = (await groupQuery
             .OrderBy(g => g.DisplayOrder).ThenBy(g => g.Code)
             .ToListAsync(cancellationToken))
-            .Where(g => access.Scope.CanSee(null, g.BusinessApp, g.SharedApps))
+            .Where(g => visible(g, null))
             .ToList();
-        var items = await context.Menus.AsNoTracking()
-            .Where(m => m.App!.Code == appCode && m.IsActive && m.IsVisible)
+        var items = await itemQuery
             .OrderBy(m => m.DisplayOrder).ThenBy(m => m.Code)
             .Select(m => new { Menu = m, ResourceCode = m.Resource != null ? m.Resource.Code : null })
             .ToListAsync(cancellationToken);
 
-        var visible = items
-            .Where(i => (i.ResourceCode is null || access.Can(i.ResourceCode, PrivilegeActions.View)) && access.Scope.CanSee(null, i.Menu.BusinessApp, i.Menu.SharedApps))
+        var shown = items
+            .Where(i => visible(i.Menu, i.ResourceCode))
             .Select(i => i.Menu)
             .ToList();
 
         IReadOnlyList<MenuNode> Build(Guid? parentId, Guid? groupId) =>
-            visible
+            shown
                 .Where(m => m.ParentId == parentId && (parentId != null || m.MenuGroupId == groupId))
                 .Select(m => new MenuNode(m.Code, m.NameAr, m.NameEn, m.ItemType, m.Target, m.Icon, m.DescriptionAr, m.DescriptionEn, Build(m.Id, null)))
                 .Where(n => n.ItemType != MenuItemType.Group || n.Children.Count > 0)

@@ -1,6 +1,7 @@
 using DynamicCube.Modules.AppsControl.Access;
 using DynamicCube.Modules.AppsControl.Accounts;
 using DynamicCube.Modules.AppsControl.Changes;
+using DynamicCube.Modules.AppsControl.ConnectedApps;
 using DynamicCube.Modules.AppsControl.Endpoints;
 using DynamicCube.Modules.AppsControl.Lookups;
 using DynamicCube.Modules.AppsControl.Lovs;
@@ -144,6 +145,19 @@ public static class AppsControlModule
         }
 
         services.AddScoped<PortalAccountService>();
+
+        // Connected apps (ADR-0036 step 7): their sign-in clients live in the employees' realm, maintained the same way.
+        services.AddSingleton(new ConnectedAppSettings(configuration["Authentication:Internal:ConnectAudience"] is { Length: > 0 } audience ? audience : ConnectedAppAuthorization.DefaultAudience));
+        if (string.Equals(configuration[$"{IdentityOptions.SectionName}:Provider"], "Keycloak", StringComparison.OrdinalIgnoreCase))
+        {
+            services.AddScoped<ISignInClients, KeycloakSignInClients>();
+        }
+        else
+        {
+            services.AddScoped<ISignInClients, UnmanagedSignInClients>();
+        }
+
+        services.AddScoped<ConnectedAppService>();
         return services;
     }
 
@@ -154,6 +168,9 @@ public static class AppsControlModule
         PublicEndpoints.Map(group, external: false);
         MeEndpoints.Map(group);
         AdminEndpoints.Map(group);
+
+        // Connected apps call their own API with their users' tokens (another audience, outside the group above).
+        ConnectEndpoints.Map(endpoints);
         return endpoints;
     }
 

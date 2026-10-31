@@ -485,6 +485,21 @@ Scope of the slices:
 - Sub-requests (prerequisite / bundled / spawned).
 - Configuration export/import packages with diff preview.
 
+## Apps Control review (ADR-0036)
+
+Reviewed and rebuilt part by part with the owner: organization, companies and branches (step 1), apps and menu trees
+(2), one Access tab per user (3), roles that differ per company (4), the workspace switcher (5), work by company and
+branch (6), the visual query builder for lists (ADR-0039) and **connected apps** (7): their sign-in client, screens and
+actions, menu tree and the connected-app API (profile and workspace, menu, privileges, lists with grants), with a sample
+app in the mock gateway. ✅
+
+Later, for connected apps:
+- **Outside users** (applicants) of a connected app: an Apps Control record created at their first sign-in (e.g. through
+  Nafath) holding the app's **default external role**, so they get the app's permissions without staff action (portal
+  applicants stay parties of the registry as today).
+- The Action Center, workflow cases started by the app, notifications and party registry APIs for connected apps.
+- The app sending its own screens through the API (today staff enter them or import a package).
+
 ## Phase 4 — Extended capabilities
 
 - Report builder; pixel-perfect reports.

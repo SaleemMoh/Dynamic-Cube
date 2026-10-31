@@ -1,0 +1,416 @@
+{
+  "title": "NHC — connected app: projects management system (demo)",
+  "items": [
+    {
+      "entityType": "apps.business-app",
+      "entityCode": "PMS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "نظام إدارة المشاريع",
+        "nameEn": "Projects management system",
+        "kind": "CONNECTED",
+        "companies": [
+          "MAIN"
+        ],
+        "branches": [
+          "*"
+        ],
+        "icon": "engineering",
+        "displayOrder": 2,
+        "baseUrl": "http://localhost:5090/connected-app",
+        "clientId": "dc-app-pms",
+        "redirectUris": [
+          "http://localhost:5090/connected-app/*"
+        ],
+        "descriptionAr": "نظام خارجي بقاعدة بياناته (مثال تطبيق مرتبط يقدمه محاكي البوابة): يستخدم ديناميك كيوب لتسجيل الدخول والمستخدمين والأدوار والقوائم وقوائم القيم.",
+        "descriptionEn": "An outside system with its own database (a sample connected app served by the mock gateway): it uses Dynamic Cube for sign-in, users, roles, menus and lists of values."
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "PMS.PROJECTS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المشاريع",
+        "nameEn": "Projects",
+        "businessApp": "PMS",
+        "resourceType": "SCREEN",
+        "parentCode": null,
+        "availableActions": [
+          "VIEW",
+          "CREATE",
+          "EDIT",
+          "EXPORT"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "PMS.PROJECTS.BUDGET",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "ميزانية المشروع",
+        "nameEn": "Project budget",
+        "businessApp": "PMS",
+        "resourceType": "SCREEN",
+        "parentCode": "PMS.PROJECTS",
+        "availableActions": [
+          "VIEW",
+          "EDIT",
+          "APPROVE"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "PMS.CONTRACTORS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المقاولون",
+        "nameEn": "Contractors",
+        "businessApp": "PMS",
+        "resourceType": "SCREEN",
+        "parentCode": null,
+        "availableActions": [
+          "VIEW",
+          "CREATE",
+          "EDIT"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.resource",
+      "entityCode": "PMS.REPORTS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تقارير المشاريع",
+        "nameEn": "Project reports",
+        "businessApp": "PMS",
+        "resourceType": "SCREEN",
+        "parentCode": null,
+        "availableActions": [
+          "VIEW",
+          "EXPORT",
+          "PRINT"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.role",
+      "entityCode": "PMS_PROJECT_MANAGER",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مدير مشاريع",
+        "nameEn": "Projects manager",
+        "businessApp": "PMS",
+        "privileges": [
+          {
+            "resourceCode": "PMS.PROJECTS",
+            "actions": [
+              "VIEW",
+              "CREATE",
+              "EDIT"
+            ]
+          },
+          {
+            "resourceCode": "PMS.PROJECTS.BUDGET",
+            "actions": [
+              "VIEW",
+              "EDIT"
+            ]
+          },
+          {
+            "resourceCode": "PMS.CONTRACTORS",
+            "actions": [
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "PMS.REPORTS",
+            "actions": [
+              "VIEW"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.role",
+      "entityCode": "PMS_VIEWER",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مطّلع على المشاريع",
+        "nameEn": "Projects viewer",
+        "businessApp": "PMS",
+        "privileges": [
+          {
+            "resourceCode": "PMS.PROJECTS",
+            "actions": [
+              "VIEW",
+              "EXPORT"
+            ]
+          },
+          {
+            "resourceCode": "PMS.REPORTS",
+            "actions": [
+              "VIEW",
+              "EXPORT",
+              "PRINT"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.user",
+      "entityCode": "ruh.manager",
+      "operation": "UPSERT",
+      "payload": {
+        "nameAr": "فهد العتيبي",
+        "nameEn": "Fahad Al-Otaibi",
+        "email": "ruh.manager@nhci.example",
+        "status": "ACTIVE",
+        "assignments": [
+          {
+            "orgUnitCode": "REQ_RUH",
+            "positionCode": "REQUESTS_MANAGER",
+            "isPrimary": true
+          }
+        ],
+        "roles": [
+          {
+            "roleCode": "CLS_REQUEST_MANAGER",
+            "companyCode": "MAIN",
+            "branches": [
+              "HQ"
+            ]
+          },
+          {
+            "roleCode": "PMS_PROJECT_MANAGER",
+            "companyCode": "MAIN",
+            "branches": [
+              "HQ"
+            ]
+          }
+        ],
+        "privileges": []
+      }
+    },
+    {
+      "entityType": "apps.user",
+      "entityCode": "audit.manager",
+      "operation": "UPSERT",
+      "payload": {
+        "nameAr": "منيرة الرشيد",
+        "nameEn": "Munira Al-Rasheed",
+        "email": "audit.manager@nhci.example",
+        "status": "ACTIVE",
+        "assignments": [
+          {
+            "orgUnitCode": "AUDIT",
+            "positionCode": "AUDIT_MANAGER",
+            "isPrimary": true
+          }
+        ],
+        "roles": [
+          {
+            "roleCode": "CLS_AUDIT_MANAGER",
+            "companyCode": "MAIN",
+            "branches": [
+              "*"
+            ]
+          },
+          {
+            "roleCode": "PMS_VIEWER",
+            "companyCode": "*",
+            "branches": [
+              "*"
+            ]
+          }
+        ],
+        "privileges": [
+          {
+            "companyCode": "MAIN",
+            "resourceCode": "action-center.supervision",
+            "actions": [
+              "VIEW"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.lov",
+      "entityCode": "MY_BRANCHES_BY_REGION",
+      "operation": "UPSERT",
+      "payload": {
+        "nameAr": "فروعي حسب المنطقة",
+        "nameEn": "My branches by region",
+        "sourceType": "QUERY",
+        "query": {
+          "from": {
+            "kind": "DATA_OBJECT",
+            "code": "BRANCHES",
+            "alias": "b"
+          },
+          "joins": [
+            {
+              "kind": "CLASS",
+              "code": "REGION",
+              "alias": "r",
+              "type": "LEFT",
+              "on": [
+                {
+                  "left": "b.region_code",
+                  "right": "r.code"
+                }
+              ]
+            }
+          ],
+          "map": {
+            "value": "b.code",
+            "labelAr": "b.name_ar",
+            "labelEn": "b.name_en",
+            "parent": "r.code"
+          },
+          "where": {
+            "match": "ALL",
+            "conditions": [
+              {
+                "column": "b.company_code",
+                "op": "IN",
+                "user": "COMPANY"
+              },
+              {
+                "column": "b.code",
+                "op": "IN",
+                "user": "BRANCHES"
+              }
+            ],
+            "groups": [
+              {
+                "match": "ALL",
+                "conditions": [
+                  {
+                    "column": "b.is_active",
+                    "op": "EQ",
+                    "value": true
+                  }
+                ],
+                "groups": []
+              }
+            ]
+          },
+          "sort": [
+            {
+              "column": "r.display_order",
+              "direction": "ASC"
+            },
+            {
+              "column": "b.display_order",
+              "direction": "ASC"
+            }
+          ],
+          "distinct": false
+        },
+        "searchMode": "FULL",
+        "maxRows": 500,
+        "defaultSelectionMode": "SINGLE",
+        "requiresGrant": false,
+        "isPublic": false,
+        "bindings": [],
+        "businessApps": [
+          "CLASSIFICATION",
+          "PMS"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.menu-group",
+      "entityCode": "PMS_WORK",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "العمل اليومي",
+        "nameEn": "Daily work",
+        "businessApp": "PMS",
+        "displayOrder": 1,
+        "icon": "work"
+      }
+    },
+    {
+      "entityType": "apps.menu-group",
+      "entityCode": "PMS_INSIGHTS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المتابعة",
+        "nameEn": "Follow-up",
+        "businessApp": "PMS",
+        "displayOrder": 2,
+        "icon": "insights"
+      }
+    },
+    {
+      "entityType": "apps.menu",
+      "entityCode": "PMS_M_PROJECTS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المشاريع",
+        "nameEn": "Projects",
+        "businessApp": "PMS",
+        "groupCode": "PMS_WORK",
+        "itemType": "SCREEN",
+        "target": "/projects",
+        "icon": "folder",
+        "displayOrder": 1,
+        "resourceCode": "PMS.PROJECTS"
+      }
+    },
+    {
+      "entityType": "apps.menu",
+      "entityCode": "PMS_M_CONTRACTORS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المقاولون",
+        "nameEn": "Contractors",
+        "businessApp": "PMS",
+        "groupCode": "PMS_WORK",
+        "itemType": "SCREEN",
+        "target": "/contractors",
+        "icon": "groups",
+        "displayOrder": 2,
+        "resourceCode": "PMS.CONTRACTORS"
+      }
+    },
+    {
+      "entityType": "apps.menu",
+      "entityCode": "PMS_M_REPORTS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تقارير المشاريع",
+        "nameEn": "Project reports",
+        "businessApp": "PMS",
+        "groupCode": "PMS_INSIGHTS",
+        "itemType": "SCREEN",
+        "target": "/reports",
+        "icon": "bar_chart",
+        "displayOrder": 1,
+        "resourceCode": "PMS.REPORTS"
+      }
+    },
+    {
+      "entityType": "apps.menu",
+      "entityCode": "PMS_M_HELP",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "دليل الاستخدام",
+        "nameEn": "User guide",
+        "businessApp": "PMS",
+        "groupCode": "PMS_INSIGHTS",
+        "itemType": "SCREEN",
+        "target": "/help",
+        "icon": "help",
+        "displayOrder": 2
+      }
+    }
+  ]
+}
