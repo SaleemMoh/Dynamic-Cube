@@ -19,6 +19,7 @@ import { catchError, of } from 'rxjs';
 import { InstanceFactsCard } from '../action-center/instance-facts';
 import { WorkflowCard } from '../action-center/workflow-card';
 import { BranchNames } from '../common/branch-names';
+import { GraphDefinition, WorkflowGraph } from '../workflows/workflow-graph';
 
 /** One request as submitted: who, what, the answers, fees, its workflow (when it has one) and the timeline. */
 @Component({
@@ -35,6 +36,7 @@ import { BranchNames } from '../common/branch-names';
     RequestAnswers,
     TranslatePipe,
     WorkflowCard,
+    WorkflowGraph,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -69,9 +71,20 @@ import { BranchNames } from '../common/branch-names';
       </header>
       <dc-instance-facts [facts]="instance.value()?.facts" />
       <div class="dc-request-grid">
-        <section class="dc-card">
-          <dc-request-answers [version]="d.view.version" [data]="d.view.data" [files]="d.view.files" (openFile)="openFile(d.view.request.id, $event)" />
-        </section>
+        <div class="dc-request-main">
+          <section class="dc-card">
+            <dc-request-answers [version]="d.view.version" [data]="d.view.data" [files]="d.view.files" (openFile)="openFile(d.view.request.id, $event)" />
+          </section>
+          @if (instance.value(); as i) {
+            @if (i.definition?.nodes?.length) {
+              <section class="dc-card" data-testid="request-workflow-position">
+                <h2>{{ 'requests.workflowPosition' | dcTranslate }}</h2>
+                <p class="dc-muted">{{ 'requests.workflowPositionHint' | dcTranslate }}</p>
+                <dc-workflow-graph [definition]="graphOf(i.definition)" [current]="i.currentNodes ?? []" [visited]="i.visitedNodes ?? []" />
+              </section>
+            }
+          }
+        </div>
         <div class="dc-request-side">
           @if (instance.value(); as i) {
             <dc-workflow-card [instance]="i" [linkTasks]="true" />
@@ -124,9 +137,15 @@ import { BranchNames } from '../common/branch-names';
         grid-template-columns: 1fr;
       }
     }
-    .dc-request-side {
+    .dc-request-side,
+    .dc-request-main {
       display: grid;
       gap: 1rem;
+      min-width: 0;
+    }
+    .dc-request-main h2 {
+      margin: 0 0 4px;
+      font-size: 18px;
     }
     .dc-request-side h2 {
       margin-top: 0;
@@ -159,6 +178,10 @@ export class RequestDetail {
     params: () => this.id(),
     stream: ({ params }) => this.workflow.instance('SERVICE_REQUEST', params).pipe(catchError(() => of(undefined))),
   });
+
+  protected graphOf(definition: unknown): GraphDefinition {
+    return definition as GraphDefinition;
+  }
 
   protected levelName(view: { levelCode: string | null; version: { definition: { levels: { code: string; nameAr: string; nameEn: string }[] } } }): {
     ar: string;

@@ -1,11 +1,12 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, effect, inject, input, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Router, RouterLink } from '@angular/router';
 import {
   BillCard,
+  DraftAutosave,
   VisitCard,
   FeeTable,
   FieldError,
@@ -17,6 +18,7 @@ import {
   ServiceWizard,
   ServicesApi,
   TranslatePipe,
+  WizardDraft,
   WizardMove,
   openRequestFile,
   requestErrors,
@@ -26,9 +28,12 @@ import { firstValueFrom } from 'rxjs';
 import { RequestDocuments } from '../documents/request-documents';
 import { ContactCard } from '../portal/contact-card';
 
+/** Statuses in which the applicant edits the answers. */
+const EDITABLE = ['DRAFT', 'PENDING_CUSTOMER'];
+
 /**
- * A request: the wizard while it is a draft (saved at every step), then its answers, fees, status and history. A request
- * returned for correction shows the reason and opens in the wizard again, to be resubmitted.
+ * A request: the wizard while it is a draft (saved at every step and a moment after each change), then its answers, fees,
+ * status and history. A request returned for correction shows the reason and opens in the wizard again, to be resubmitted.
  */
 @Component({
   selector: 'dc-request-page',
@@ -114,17 +119,33 @@ import { ContactCard } from '../portal/contact-card';
               [busy]="busy()"
               [resubmission]="v.request.status === 'PENDING_CUSTOMER'"
               [uploader]="uploader"
+              [integrations]="v.integrations ?? {}"
+              [changes]="v.changes ?? []"
               (moved)="move(v, $event)"
+              (edited)="autosave.change($event)"
               (submitted)="submit(v, $event)"
             />
-            @if (v.request.status === 'DRAFT') {
-              <div class="dc-request__secondary">
-                <span class="dc-muted">{{ 'requests.savedAsDraft' | dcTranslate }}</span>
+            <div class="dc-request__secondary">
+              <span class="dc-request__saved" [class.dc-request__saved--failed]="autosave.failed()" data-testid="autosave-status" aria-live="polite">
+                @if (autosave.saving()) {
+                  <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">sync</mat-icon>
+                  {{ 'requests.autosaving' | dcTranslate }}
+                } @else if (autosave.failed()) {
+                  <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">cloud_off</mat-icon>
+                  {{ 'requests.autosaveFailed' | dcTranslate }}
+                } @else if (autosave.savedAt(); as at) {
+                  <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">cloud_done</mat-icon>
+                  {{ 'requests.autosaved' | dcTranslate }} <span dir="ltr">{{ at | date: 'shortTime' }}</span>
+                } @else {
+                  {{ 'requests.savedAsDraft' | dcTranslate }}
+                }
+              </span>
+              @if (v.request.status === 'DRAFT') {
                 <button matButton type="button" class="dc-secondary-button" (click)="cancel(v)" [disabled]="busy()" data-testid="cancel-draft">
                   {{ 'requests.cancelDraft' | dcTranslate }}
                 </button>
-              </div>
-            }
+              }
+            </div>
           } @else {
             @if (justSubmitted()) {
               <div class="dc-card dc-request__done" role="status" data-testid="submitted-banner">
@@ -212,6 +233,21 @@ import { ContactCard } from '../portal/contact-card';
       font-weight: 700;
       line-height: 40px;
     }
+    .dc-request__saved {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--dga-gray-500, #667085);
+      font-size: 13px;
+    }
+    .dc-request__saved mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+    .dc-request__saved--failed {
+      color: var(--dga-error-600, #d92d20);
+    }
     .dc-request__secondary {
       display: flex;
       flex-wrap: wrap;
@@ -289,15 +325,38 @@ export class RequestPage {
   protected readonly busy = signal(false);
   /** Set right after sending: SUBMITTED or RESUBMITTED. */
   protected readonly justSubmitted = signal<string | null>(null);
+  /**
+   * Saves the answers a moment after each change (the step does not move and nothing is checked), so closing the page by
+   * accident loses nothing; when the page is hidden or left, the waiting change is saved at once.
+   */
+  protected readonly autosave = new DraftAutosave<WizardDraft>(async (draft, leaving) => {
+    const v = this.view();
+    if (!v || !EDITABLE.includes(v.request.status)) return;
+    await firstValueFrom(this.api.save(v.request.id, { data: draft.data, levelCode: draft.levelCode }, { keepalive: leaving }));
+  });
 
   constructor() {
     effect(() => void this.load(this.id()));
+    const hidden = () => {
+      if (document.visibilityState === 'hidden') void this.autosave.flush(true);
+    };
+    document.addEventListener('visibilitychange', hidden);
+    window.addEventListener('pagehide', hidden);
+    inject(DestroyRef).onDestroy(() => {
+      document.removeEventListener('visibilitychange', hidden);
+      window.removeEventListener('pagehide', hidden);
+      void this.autosave.flush(true);
+    });
   }
 
   protected async move(v: RequestView, move: WizardMove): Promise<void> {
+    // The move saves the same answers: a change waiting to be saved is dropped, and a save already running finishes first.
+    this.autosave.discard();
     await this.run(async () => {
-      const saved = await firstValueFrom(
-        this.api.save(v.request.id, { data: move.data, levelCode: move.levelCode, currentStep: move.to, ...(move.forward ? { validateStep: move.from } : {}) }),
+      const saved = await this.autosave.exclusive(() =>
+        firstValueFrom(
+          this.api.save(v.request.id, { data: move.data, levelCode: move.levelCode, currentStep: move.to, ...(move.forward ? { validateStep: move.from } : {}) }),
+        ),
       );
       this.view.set(saved);
       this.errors.set(saved.stepErrors);
@@ -306,7 +365,9 @@ export class RequestPage {
   }
 
   protected async submit(v: RequestView, declarationAccepted: boolean): Promise<void> {
+    this.autosave.discard();
     await this.run(async () => {
+      await this.autosave.flush();
       this.view.set(await firstValueFrom(this.api.submit(v.request.id, declarationAccepted)));
       this.justSubmitted.set(v.request.status === 'PENDING_CUSTOMER' ? 'RESUBMITTED' : 'SUBMITTED');
       window.scrollTo({ top: 0 });
@@ -318,7 +379,9 @@ export class RequestPage {
   }
 
   protected async cancel(v: RequestView): Promise<void> {
+    this.autosave.discard();
     await this.run(async () => {
+      await this.autosave.flush();
       await firstValueFrom(this.api.cancel(v.request.id));
       await this.router.navigate(['/requests']);
     });

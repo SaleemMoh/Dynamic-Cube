@@ -73,6 +73,8 @@ export class DynamicForm {
   readonly submitted = output<FormValue>();
   readonly cancelled = output<void>();
   readonly altSubmitted = output<FormValue>();
+  /** The answers as typed so far (complete or not), after each change the user makes; for saving drafts. */
+  readonly edited = output<FormValue>();
 
   /** The reactive form built from the schema; rebuilt when the schema changes. */
   readonly formGroup = computed(() => this.buildGroup(this.schema(), this.initialValue()));
@@ -95,6 +97,8 @@ export class DynamicForm {
       const subscription = group.valueChanges.subscribe(() => {
         this.applyRules(group);
         this.loadLovOptions(group);
+        // Only the user's changes (rules enabling or hiding fields also change the value).
+        if (group.dirty) this.edited.emit(this.snapshot());
       });
       onCleanup(() => subscription.unsubscribe());
     });
@@ -201,6 +205,17 @@ export class DynamicForm {
       if (field.readonly && this.isVisible(field.code)) {
         value[field.code] = group.controls[field.code].getRawValue();
       }
+    }
+    return value;
+  }
+
+  /** The answers of the shown fields as they are now, complete or not (hidden fields left out). */
+  snapshot(): FormValue {
+    const group = this.formGroup();
+    const value: FormValue = {};
+    for (const field of this.allFields()) {
+      const control = group.controls[field.code];
+      if (control && this.isVisible(field.code)) value[field.code] = control.getRawValue();
     }
     return value;
   }

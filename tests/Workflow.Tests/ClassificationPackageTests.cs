@@ -56,6 +56,11 @@ public sealed class ClassificationPackageTests(DatabaseFixture fixture)
         await ActAsync(host, subject, "FIN_ANALYSIS", "analyst1", "SEND_TO_AUDIT");
         await ClaimAndActAsync(host, subject, "PROJECTS_AUDIT", "auditor1", "CONFIRM");
         (await host.OpenTasksAsync(subject)).Select(t => t.NodeCode).ShouldBe(["FIN_AUDIT"], "the join waits for every branch");
+        var waiting = await host.AsAsync("director", c => c.InstanceAsync(TestSubject.Type, subject, CancellationToken.None));
+        waiting.CurrentNodes.ShouldBe(["FIN_AUDIT", "JOIN"], ignoreOrder: true, "two branches wait at the join, one is still audited");
+        waiting.VisitedNodes.ShouldContain("SPLIT", "steps without tasks are recorded too");
+        waiting.VisitedNodes.ShouldNotContain("GM_APPROVAL");
+        waiting.Definition.ShouldNotBeNull()["nodes"]!.AsArray().Count.ShouldBe(13);
         await ClaimAndActAsync(host, subject, "FIN_AUDIT", "auditor1", "CONFIRM");
 
         host.Subject.Last(subject).DisplayStatus.ShouldBe("PENDING_APPROVAL");
@@ -67,6 +72,12 @@ public sealed class ClassificationPackageTests(DatabaseFixture fixture)
         // SLA events are left out: other tests run the SLA monitor with clocks far ahead, over every instance in the database.
         timeline.Select(e => e.Type).Where(t => !t.StartsWith("SLA_", StringComparison.Ordinal)).TakeLast(3).ShouldBe(["CLAIMED", "ACTION", "COMPLETED"]);
         timeline.First(e => e.Type == "ASSIGNED" && e.Target == "analyst2").TargetNameEn.ShouldBe("Second Analyst");
+        var done = await host.AsAsync("director", c => c.InstanceAsync(TestSubject.Type, subject, CancellationToken.None));
+        done.CurrentNodes.ShouldBeEmpty();
+        done.VisitedNodes.ShouldContain("START");
+        done.VisitedNodes.ShouldContain("JOIN");
+        done.VisitedNodes.ShouldContain("APPROVED");
+        done.VisitedNodes.ShouldNotContain("REJECTED");
     }
 
     private static async Task<WorkTask> Single(WorkflowHost host, Guid subject, string node) =>

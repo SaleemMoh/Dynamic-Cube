@@ -20,14 +20,18 @@ internal sealed class FakeGateway : IIntegrationGateway
 
     public bool VerifyFails { get; set; }
 
+    public decimal Capital { get; set; } = 500000;
+
+    public string Status { get; set; } = "ACTIVE";
+
     public Task<IntegrationResult> InvokeAsync(string operationCode, IReadOnlyDictionary<string, string?> inputs, CancellationToken cancellationToken)
     {
         Calls.Add((operationCode, inputs));
         return Task.FromResult(operationCode switch
         {
-            "CR_INFO" => Result(IntegrationOutcome.Success, new Dictionary<string, JsonNode?> { ["capital"] = 500000 }, new JsonObject { ["name"] = "مؤسسة من السجل" }),
+            "CR_INFO" => Result(IntegrationOutcome.Success, new Dictionary<string, JsonNode?> { ["capital"] = Capital }, new JsonObject { ["name"] = "مؤسسة من السجل" }),
             "VERIFY" when VerifyFails => Result(IntegrationOutcome.BusinessError, new Dictionary<string, JsonNode?>(), null, "السجل غير نشط", "The registration is not active"),
-            "VERIFY" => Result(IntegrationOutcome.Success, new Dictionary<string, JsonNode?> { ["status"] = "ACTIVE" }, null),
+            "VERIFY" => Result(IntegrationOutcome.Success, new Dictionary<string, JsonNode?> { ["status"] = Status }, new JsonObject { ["expiry"] = "2030-01-01" }),
             _ => throw new IntegrationOperationNotFoundException(operationCode),
         });
     }
@@ -64,7 +68,13 @@ public sealed class IntegrationQuestionTests(DatabaseFixture fixture) : IAsyncLi
                     Type = StepType.Integration,
                     TitleAr = "التحقق من السجل",
                     TitleEn = "Verify the registration",
-                    Integration = new IntegrationStepDefinition { Operation = "VERIFY", Inputs = [crInput], Outputs = [new() { Output = "status", Question = _status }] },
+                    Integration = new IntegrationStepDefinition
+                    {
+                        Operation = "VERIFY",
+                        Inputs = [crInput],
+                        Outputs = [new() { Output = "status", Question = _status }],
+                        Display = [new() { Output = "status", LabelAr = "الحالة", LabelEn = "Status" }, new() { Output = "expiry", LabelAr = "الانتهاء", LabelEn = "Expiry" }],
+                    },
                 },
                 new()
                 {
@@ -141,6 +151,79 @@ public sealed class IntegrationQuestionTests(DatabaseFixture fixture) : IAsyncLi
         passed.Data[_status]!.GetValue<string>().ShouldBe("ACTIVE", "the step's output became an answer");
         var submitted = await Requests(s => s.SubmitAsync(id, new SubmitRequest(true), CancellationToken.None));
         submitted.Request.Status.ShouldNotBe(StatusCategory.Draft);
+    }
+
+    [Fact]
+    public async Task An_integration_step_runs_on_arrival_shows_the_chosen_values_and_a_reopened_draft_reads_its_integrations_again()
+    {
+        var draft = await Requests(s => s.CreateAsync(new CreateRequest(_service), CancellationToken.None));
+        var id = draft.Request.Id;
+
+        // Arriving on the step (here: back from the details) calls it, so the result card shows the outcome at once.
+        var arrived = await Requests(s => s.SaveAsync(id, new SaveRequest(draft.Data, null, "VERIFY", null), CancellationToken.None));
+        var run = arrived.Integrations["VERIFY"];
+        run.Success.ShouldBeTrue();
+        run.Values.ShouldNotBeNull();
+        run.Values["status"]!.GetValue<string>().ShouldBe("ACTIVE");
+        run.Values["expiry"]!.GetValue<string>().ShouldBe("2030-01-01", "a path in the provider's result");
+        arrived.Data[_status]!.GetValue<string>().ShouldBe("ACTIVE");
+        var calls = _gateway.Calls.Count(c => c.Operation == "VERIFY");
+
+        // Moving on after a success does not call it again; "try again" (leaving and arriving on the same step) does.
+        await Requests(s => s.SaveAsync(id, new SaveRequest(arrived.Data, null, "DETAILS", "VERIFY"), CancellationToken.None));
+        _gateway.Calls.Count(c => c.Operation == "VERIFY").ShouldBe(calls);
+        var retried = await Requests(s => s.SaveAsync(id, new SaveRequest(arrived.Data, null, "VERIFY", "VERIFY"), CancellationToken.None));
+        _gateway.Calls.Count(c => c.Operation == "VERIFY").ShouldBe(calls + 1);
+        retried.CurrentStep.ShouldBe("VERIFY");
+        retried.Integrations["VERIFY"].At.ShouldBeGreaterThanOrEqualTo(run.At);
+
+        // An autosave keeps the answers and the step, and calls nothing.
+        var autosaved = await Requests(s => s.SaveAsync(id, new SaveRequest(new JsonObject(retried.Data.Select(p => KeyValuePair.Create(p.Key, p.Value?.DeepClone()))) { [_name] = "اسم مكتوب" }, null, null, null), CancellationToken.None));
+        autosaved.CurrentStep.ShouldBe("VERIFY");
+        autosaved.Data[_name]!.GetValue<string>().ShouldBe("اسم مكتوب");
+        _gateway.Calls.Count(c => c.Operation == "VERIFY").ShouldBe(calls + 1);
+
+        // Opened again after the providers' data changed: the locked answer and the step's output are read again, and
+        // the applicant is told what changed.
+        _gateway.Capital = 750000;
+        _gateway.Status = "SUSPENDED";
+        var reopened = await Requests(s => s.GetAsync(id, CancellationToken.None));
+        reopened.Data[_capital]!.GetValue<decimal>().ShouldBe(750000m);
+        reopened.Data[_status]!.GetValue<string>().ShouldBe("SUSPENDED");
+        reopened.Data[_name]!.GetValue<string>().ShouldBe("اسم مكتوب", "an answer the applicant may change is not overwritten");
+        reopened.Changes.Select(c => c.Question).ShouldBe([_capital, _status], ignoreOrder: true);
+        var capital = reopened.Changes.Single(c => c.Question == _capital);
+        capital.From!.GetValue<decimal>().ShouldBe(500000m);
+        capital.To!.GetValue<decimal>().ShouldBe(750000m);
+        capital.LabelEn.ShouldBe("Capital");
+        reopened.Integrations["VERIFY"].Values!["status"]!.GetValue<string>().ShouldBe("SUSPENDED");
+
+        // Nothing changed since: no notice.
+        (await Requests(s => s.GetAsync(id, CancellationToken.None))).Changes.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Values_shown_on_a_result_card_need_a_valid_output_and_labels()
+    {
+        var bad = new VersionDefinition
+        {
+            Steps =
+            [
+                new()
+                {
+                    Code = "CHECK",
+                    Type = StepType.Integration,
+                    TitleAr = "تحقق",
+                    TitleEn = "Check",
+                    Integration = new IntegrationStepDefinition { Operation = "VERIFY", Display = [new() { Output = "not a path!", LabelAr = "", LabelEn = "" }] },
+                },
+            ],
+        };
+        var error = await Should.ThrowAsync<ChangeValidationException>(() => _applicant.Host.PublishAsync(
+            ServiceChangeTypes.Area,
+            new Change(ServiceChangeTypes.Version, $"{_service}/2", ChangeOperation.Create, new ServiceVersionPayload { NameAr = "2", NameEn = "2", Definition = bad })));
+        error.Errors.Keys.ShouldContain(k => k.EndsWith("display[0].output", StringComparison.Ordinal));
+        error.Errors.Keys.ShouldContain(k => k.EndsWith("display[0].label", StringComparison.Ordinal));
     }
 
     [Fact]

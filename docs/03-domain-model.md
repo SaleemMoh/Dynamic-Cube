@@ -125,13 +125,16 @@ result.
 - **Shared and service-level questions** — a question is shared (every service may use it) or belongs to one service
   (`serviceCode`); a version may use shared questions and its own service's, never another service's. The Service
   Builder's *New question for this service* creates one.
+- **Draft answers** are saved a moment after each change (autosave) and at every step. Opening a draft calls its
+  integrations again; answers that changed are saved and shown to the applicant as *from → to* (ADR-0038).
 - **Request files** — files uploaded to a draft for a file question (stored through the file abstraction, with
   name, size, SHA-256 and the content type of the extension); the answer is the list of their ids. A file
   required only for some answers is a file question with *required-when* (and usually *visible-when*) on the
   other answer. Staff open the files of submitted requests (ADR-0034).
 - **Service version** `SERVICE/N` — the definition: levels (SLA working days), steps (`FORM`, `LEVEL`,
-  `FEES`, `INTEGRATION`, `REVIEW`, `DECLARATION`; an integration step calls an operation when the applicant moves on,
-  shows its result, can copy its outputs into answers, and when *required* stops the applicant on a failure), sections shown by JSONLogic over the answers, question uses
+  `FEES`, `INTEGRATION`, `REVIEW`, `DECLARATION`; an integration step calls an operation when the applicant arrives
+  on it, shows its result on a card (status, provider's message, time, the outputs chosen to show with their labels,
+  *try again*), can copy its outputs into answers, and when *required* stops the applicant on a failure; ADR-0038), sections shown by JSONLogic over the answers, question uses
   (required, required-when, visible-when, read-only), eligibility and validation rules with bilingual
   messages, fees (fixed, formula or bracket table by any value, VAT included or added). Numbers are
   consecutive; publishing stores the version with **snapshots of its questions**, and afterwards only
@@ -279,6 +282,10 @@ JSONLogic rule over the facts, e.g. `data.LICENSE_NO`, `party.identifiers.CR_NUM
 Success → `next`; failure → `failed`, or, without a `failed` route, the step stops with the provider's message.
 In the designer: an *Integration call* step with two exits (✓ success, ✗ failed); the test run asks whether the call
 succeeded.
+
+**Where a request is:** an instance records each step its tokens reach (`visitedNodes`); with the live tokens' steps
+(the current ones) and the version's definition, the staff request page draws the workflow with the current step
+highlighted, steps done ticked and arrows taken in green (ADR-0038).
 
 ### Action catalog (configurable per human task)
 

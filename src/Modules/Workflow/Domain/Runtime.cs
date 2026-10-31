@@ -61,6 +61,9 @@ public sealed class WorkflowInstance : IAuditable
     /// <summary>What automatic steps produced (JSON): <c>decisions</c> and <c>documents</c> by node, read by later rules.</summary>
     public string Facts { get; set; } = "{}";
 
+    /// <summary>Steps the instance's tokens have passed through, in the order first reached (drawn on the workflow diagram).</summary>
+    public List<string> VisitedNodes { get; set; } = [];
+
     public DateTimeOffset StartedAt { get; set; }
 
     public DateTimeOffset? CompletedAt { get; set; }

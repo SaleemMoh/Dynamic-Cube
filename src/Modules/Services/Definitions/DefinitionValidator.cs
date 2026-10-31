@@ -147,6 +147,19 @@ internal static partial class DefinitionValidator
                 errors.Add($"{field}.integration.outputs[{i}].question", $"Question '{output.Question}' is not asked by this version.");
             }
         }
+
+        foreach (var (shown, i) in call.Display.Select((d, i) => (d, i)))
+        {
+            if (!Platform.Integration.JsonPaths.IsValid(shown.Output))
+            {
+                errors.Add($"{field}.integration.display[{i}].output", "Give an output of the operation, or a path in its result.");
+            }
+
+            if (string.IsNullOrWhiteSpace(shown.LabelAr) || string.IsNullOrWhiteSpace(shown.LabelEn))
+            {
+                errors.Add($"{field}.integration.display[{i}].label", "Give the label in Arabic and English.");
+            }
+        }
     }
 
     private static readonly string[] DocumentStatuses = ["ACTIVE", "EXPIRED", "SUSPENDED"];

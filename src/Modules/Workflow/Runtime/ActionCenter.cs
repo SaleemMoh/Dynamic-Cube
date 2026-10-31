@@ -92,7 +92,17 @@ public sealed record InstanceView(
     SlaState Sla,
     IReadOnlyList<TaskSummary> Tasks,
     IReadOnlyList<TimelineItem> Timeline,
-    JsonObject Facts);
+    JsonObject Facts)
+{
+    /// <summary>The definition of the version the request runs on (nodes and layout), to draw where it is.</summary>
+    public JsonNode? Definition { get; init; }
+
+    /// <summary>Steps the request is at now (tasks open, waiting for the applicant, a payment or a visit, or at a join).</summary>
+    public IReadOnlyList<string> CurrentNodes { get; init; } = [];
+
+    /// <summary>Steps the request has passed through.</summary>
+    public IReadOnlyList<string> VisitedNodes { get; init; } = [];
+}
 
 public sealed record TaskDetail(
     TaskSummary Task,
@@ -549,8 +559,23 @@ internal sealed class ActionCenter(
                 e.ActionCode, action?.NameAr, action?.NameEn, e.Target, targetAr, targetEn, e.Comment, e.VisibleToApplicant));
         }
 
+        // Where the request is: the nodes its live tokens are at, and the nodes it went through.
+        var current = await context.Tokens.AsNoTracking()
+            .Where(t => t.InstanceId == instance.Id && t.Status != TokenStatus.Done && t.Status != TokenStatus.Cancelled)
+            .Select(t => t.NodeCode)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+        // Instances started before steps were recorded fall back to the steps named by their events and tasks.
+        var visited = instance.VisitedNodes.Concat(events.Select(e => e.NodeCode).OfType<string>()).Concat(tasks.Select(t => t.NodeCode))
+            .Distinct(StringComparer.Ordinal).ToList();
+        var stored = await context.Versions.AsNoTracking().Where(v => v.Id == instance.VersionId).Select(v => v.Definition).SingleOrDefaultAsync(cancellationToken);
         return new InstanceView(instance.Id, instance.WorkflowCode, instance.VersionNumber, instance.Status, instance.Outcome, instance.StartedAt, instance.CompletedAt,
-            instance.DueAt, instance.Sla, await SummariesAsync(tasks, cancellationToken), timeline, JsonNode.Parse(instance.Facts)?.AsObject() ?? []);
+            instance.DueAt, instance.Sla, await SummariesAsync(tasks, cancellationToken), timeline, JsonNode.Parse(instance.Facts)?.AsObject() ?? [])
+        {
+            Definition = stored is null ? null : JsonNode.Parse(stored),
+            CurrentNodes = current,
+            VisitedNodes = visited,
+        };
     }
 
     private async Task<IReadOnlyList<TaskSummary>> SummariesAsync(List<WorkTask> tasks, CancellationToken cancellationToken)

@@ -432,6 +432,42 @@
           <button matButton type="button" (click)="addOutput(s.path.step)" data-testid="step-add-output">
             <mat-icon fontSet="material-symbols-outlined">add</mat-icon>{{ 'builder.addOutput' | dcTranslate }}
           </button>
+          <h3 class="dc-ft__sub">{{ 'builder.resultCard' | dcTranslate }}</h3>
+          <mat-checkbox [ngModel]="call?.showResult ?? true" (ngModelChange)="integration(s.path.step, { showResult: $event })" data-testid="step-show-result">
+            {{ 'builder.showResult' | dcTranslate }}
+          </mat-checkbox>
+          @if (call?.showResult !== false) {
+            <p class="dc-ft__muted">{{ 'builder.resultCardHint' | dcTranslate }}</p>
+            @for (d of call?.display ?? []; track $index; let r = $index) {
+              <div class="dc-ft__display" [attr.data-testid]="'step-display-' + r">
+                <mat-form-field subscriptSizing="dynamic" class="dc-ft__display-output">
+                  <mat-label>{{ 'builder.output' | dcTranslate }}</mat-label>
+                  <input
+                    matInput
+                    dir="ltr"
+                    [ngModel]="d.output"
+                    (ngModelChange)="setDisplay(s.path.step, r, { output: $event })"
+                    [ngModelOptions]="{ updateOn: 'blur' }"
+                    placeholder="status"
+                  />
+                </mat-form-field>
+                <mat-form-field subscriptSizing="dynamic">
+                  <mat-label>{{ 'builder.labelAr' | dcTranslate }}</mat-label>
+                  <input matInput dir="rtl" [ngModel]="d.labelAr" (ngModelChange)="setDisplay(s.path.step, r, { labelAr: $event })" [ngModelOptions]="{ updateOn: 'blur' }" />
+                </mat-form-field>
+                <mat-form-field subscriptSizing="dynamic">
+                  <mat-label>{{ 'builder.labelEn' | dcTranslate }}</mat-label>
+                  <input matInput dir="ltr" [ngModel]="d.labelEn" (ngModelChange)="setDisplay(s.path.step, r, { labelEn: $event })" [ngModelOptions]="{ updateOn: 'blur' }" />
+                </mat-form-field>
+                <button matIconButton type="button" (click)="removeDisplay(s.path.step, r)" [attr.aria-label]="'builder.remove' | dcTranslate">
+                  <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+                </button>
+              </div>
+            }
+            <button matButton type="button" (click)="addDisplay(s.path.step)" data-testid="step-add-display">
+              <mat-icon fontSet="material-symbols-outlined">add</mat-icon>{{ 'builder.addDisplay' | dcTranslate }}
+            </button>
+          }
           <mat-form-field subscriptSizing="dynamic">
             <mat-label>{{ 'builder.integrationTextAr' | dcTranslate }}</mat-label>
             <textarea matInput dir="rtl" rows="2" [ngModel]="s.step.textAr ?? ''" (ngModelChange)="step(s.path.step, { textAr: $event })" [ngModelOptions]="{ updateOn: 'blur' }"></textarea>

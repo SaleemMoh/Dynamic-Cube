@@ -56,6 +56,7 @@ public sealed class WorkflowDbContext(DbContextOptions<WorkflowDbContext> option
             b.Property(e => e.LevelCode).HasMaxLength(100);
             b.Property(e => e.Outcome).HasMaxLength(50);
             b.Property(e => e.Facts).HasColumnType("jsonb").IsRequired();
+            b.Property(e => e.VisitedNodes).HasDefaultValueSql("'{}'::text[]");
             b.Property<uint>("RowVersion").IsRowVersion();
             b.HasOne<WorkflowVersion>().WithMany().HasForeignKey(e => e.VersionId).OnDelete(DeleteBehavior.Restrict);
             b.HasIndex(e => new { e.SubjectType, e.SubjectId }).IsUnique();

@@ -601,6 +601,13 @@ namespace DynamicCube.Modules.Workflow.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("version_number");
 
+                    b.PrimitiveCollection<List<string>>("VisitedNodes")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text[]")
+                        .HasColumnName("visited_nodes")
+                        .HasDefaultValueSql("'{}'::text[]");
+
                     b.Property<string>("WorkflowCode")
                         .IsRequired()
                         .HasMaxLength(100)

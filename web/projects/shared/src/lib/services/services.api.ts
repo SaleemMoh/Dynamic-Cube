@@ -63,8 +63,13 @@ export class ServicesApi {
     return this.http.get<RequestView>(`${SERVICES_API}/requests/${id}`);
   }
 
-  save(id: string, body: { data?: Record<string, unknown>; levelCode?: string | null; currentStep?: string | null }): Observable<RequestView> {
-    return this.http.put<RequestView>(`${SERVICES_API}/requests/${id}`, body);
+  /** Saves a draft's answers; `validateStep` reports that step's problems; `keepalive` lets the save finish when the page closes. */
+  save(
+    id: string,
+    body: { data?: Record<string, unknown>; levelCode?: string | null; currentStep?: string | null; validateStep?: string | null },
+    options: { keepalive?: boolean } = {},
+  ): Observable<RequestView> {
+    return this.http.put<RequestView>(`${SERVICES_API}/requests/${id}`, body, options.keepalive ? { keepalive: true } : {});
   }
 
   submit(id: string, declarationAccepted: boolean): Observable<RequestView> {

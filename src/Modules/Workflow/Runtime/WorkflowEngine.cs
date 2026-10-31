@@ -203,6 +203,12 @@ internal sealed class WorkflowEngine(
         }
 
         var node = run.Version.Node(token.NodeCode);
+        if (!run.Instance.VisitedNodes.Contains(node.Code))
+        {
+            // A new list, so the change is saved.
+            run.Instance.VisitedNodes = [.. run.Instance.VisitedNodes, node.Code];
+        }
+
         switch (node.Type)
         {
             case NodeType.Start:

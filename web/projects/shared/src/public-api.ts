@@ -62,6 +62,8 @@ export * from './lib/content/page-blocks';
 export * from './lib/services/request-answers';
 export * from './lib/services/request-files';
 export * from './lib/services/service-wizard';
+export * from './lib/services/draft-autosave';
+export * from './lib/services/integration-result';
 export * from './lib/workflow/workflow.models';
 export * from './lib/workflow/workflow.api';
 export * from './lib/workflow/sla-chip';

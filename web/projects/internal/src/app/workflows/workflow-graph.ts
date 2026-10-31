@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
-import { I18nService, localize } from '@dynamic-cube/shared';
+import { I18nService, TranslatePipe, localize } from '@dynamic-cube/shared';
 
 /** The parts of a workflow definition the preview draws (the server validates the rest). */
 export interface GraphDefinition {
@@ -8,7 +8,7 @@ export interface GraphDefinition {
 
 export interface GraphNode {
   code: string;
-  type: 'START' | 'HUMAN_TASK' | 'PARALLEL_SPLIT' | 'JOIN' | 'GATEWAY' | 'END';
+  type: 'START' | 'HUMAN_TASK' | 'PARALLEL_SPLIT' | 'JOIN' | 'GATEWAY' | 'END' | (string & {});
   nameAr?: string;
   nameEn?: string;
   next?: string | null;
@@ -17,6 +17,7 @@ export interface GraphNode {
   default?: string | null;
   expired?: string | null;
   cancelled?: string | null;
+  failed?: string | null;
   outcomes?: Record<string, string>;
   actions?: { code: string; kind: string; nameAr?: string; nameEn?: string; to?: string | null }[];
   assignment?: {
@@ -60,6 +61,7 @@ export function graphEdges(definition: GraphDefinition, language: 'ar' | 'en'): 
     for (const [outcome, to] of Object.entries(n.outcomes ?? {})) edges.push({ from: n.code, to, label: outcome });
     if (n.expired) edges.push({ from: n.code, to: n.expired, label: '✗' });
     if (n.cancelled) edges.push({ from: n.code, to: n.cancelled, label: '✗' });
+    if (n.failed) edges.push({ from: n.code, to: n.failed, label: '✗' });
     for (const a of n.actions ?? []) {
       if (a.to)
         edges.push({
@@ -127,6 +129,7 @@ export function layout(definition: GraphDefinition, edges: GraphEdge[]): { nodes
  */
 @Component({
   selector: 'dc-workflow-graph',
+  imports: [TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @let g = graph();
@@ -143,9 +146,18 @@ export function layout(definition: GraphDefinition, edges: GraphEdge[]): { nodes
           <marker id="dc-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M0,0 L10,5 L0,10 z" class="dc-graph__head" />
           </marker>
+          <marker id="dc-arrow-taken" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" class="dc-graph__head dc-graph__head--taken" />
+          </marker>
         </defs>
         @for (e of g.lines; track $index) {
-          <path [attr.d]="e.d" class="dc-graph__edge" [class.dc-graph__edge--back]="e.back" marker-end="url(#dc-arrow)" />
+          <path
+            [attr.d]="e.d"
+            class="dc-graph__edge"
+            [class.dc-graph__edge--back]="e.back"
+            [class.dc-graph__edge--taken]="e.taken"
+            [attr.marker-end]="e.taken ? 'url(#dc-arrow-taken)' : 'url(#dc-arrow)'"
+          />
           @if (e.label) {
             <text [attr.x]="e.lx" [attr.y]="e.ly" class="dc-graph__label" [attr.text-anchor]="e.anchor">
               {{ e.label }}
@@ -153,13 +165,24 @@ export function layout(definition: GraphDefinition, edges: GraphEdge[]): { nodes
           }
         }
         @for (p of g.nodes; track p.node.code) {
-          <g [attr.transform]="'translate(' + p.x + ',' + p.y + ')'" [attr.data-node]="p.node.code">
+          @let state = stateOf(p.node.code);
+          <g [attr.transform]="'translate(' + p.x + ',' + p.y + ')'" [attr.data-node]="p.node.code" [attr.data-state]="state">
+            @if (state === 'current') {
+              <rect class="dc-graph__halo" x="-6" y="-6" [attr.width]="w + 12" [attr.height]="h + 12" [attr.rx]="p.node.type === 'START' || p.node.type === 'END' ? 34 : 12" />
+            }
             <rect
               [attr.width]="w"
               [attr.height]="h"
               [attr.rx]="p.node.type === 'START' || p.node.type === 'END' ? 28 : 8"
-              [class]="'dc-graph__node dc-graph__node--' + p.node.type"
+              [class]="'dc-graph__node dc-graph__node--' + p.node.type + (state ? ' dc-graph__node--' + state : '')"
             />
+            @if (state === 'visited') {
+              <circle [attr.cx]="w - 2" cy="2" r="9" class="dc-graph__badge" />
+              <path [attr.d]="'M' + (w - 6) + ',2 l3,3 l5,-6'" class="dc-graph__tick" />
+            } @else if (state === 'current') {
+              <circle [attr.cx]="w - 2" cy="2" r="9" class="dc-graph__badge dc-graph__badge--current" />
+              <circle [attr.cx]="w - 2" cy="2" r="3.5" class="dc-graph__dot" />
+            }
             <text [attr.x]="w / 2" y="23" text-anchor="middle" class="dc-graph__name">
               {{ name(p.node) }}
             </text>
@@ -170,6 +193,13 @@ export function layout(definition: GraphDefinition, edges: GraphEdge[]): { nodes
         }
       </svg>
     </div>
+    @if (tracking()) {
+      <ul class="dc-graph__legend" aria-hidden="true">
+        <li><span class="dc-graph__key dc-graph__key--current"></span>{{ 'workflow.graph.current' | dcTranslate }}</li>
+        <li><span class="dc-graph__key dc-graph__key--visited"></span>{{ 'workflow.graph.visited' | dcTranslate }}</li>
+        <li><span class="dc-graph__key"></span>{{ 'workflow.graph.ahead' | dcTranslate }}</li>
+      </ul>
+    }
   `,
   styles: `
     .dc-graph {
@@ -221,6 +251,82 @@ export function layout(definition: GraphDefinition, edges: GraphEdge[]): { nodes
     .dc-graph__node--GATEWAY {
       fill: var(--dga-gray-50, #f9fafb);
     }
+    .dc-graph__edge--taken {
+      stroke: var(--dynamic-cube-green, #136f40);
+      stroke-width: 2.5;
+    }
+    .dc-graph__head--taken {
+      fill: var(--dynamic-cube-green, #136f40);
+    }
+    .dc-graph__node--visited {
+      stroke: var(--dynamic-cube-green, #136f40);
+      stroke-width: 2;
+    }
+    .dc-graph__node--current {
+      fill: #eff8ff;
+      stroke: var(--dga-info-600, #1570ef);
+      stroke-width: 3;
+    }
+    .dc-graph__halo {
+      fill: none;
+      stroke: var(--dga-info-600, #1570ef);
+      stroke-width: 2;
+      opacity: 0.35;
+      animation: dc-graph-pulse 1.6s ease-in-out infinite;
+    }
+    @keyframes dc-graph-pulse {
+      50% {
+        opacity: 0.05;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .dc-graph__halo {
+        animation: none;
+      }
+    }
+    .dc-graph__badge {
+      fill: var(--dynamic-cube-green, #136f40);
+    }
+    .dc-graph__badge--current {
+      fill: var(--dga-info-600, #1570ef);
+    }
+    .dc-graph__tick {
+      fill: none;
+      stroke: #fff;
+      stroke-width: 2;
+    }
+    .dc-graph__dot {
+      fill: #fff;
+    }
+    .dc-graph__legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin: 8px 0 0;
+      padding: 0;
+      list-style: none;
+      color: var(--dga-text-3, #6c737f);
+      font-size: 12px;
+    }
+    .dc-graph__legend li {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .dc-graph__key {
+      width: 14px;
+      height: 14px;
+      border: 1.5px solid var(--dga-gray-300, #d2d6db);
+      border-radius: 4px;
+      background: #fff;
+    }
+    .dc-graph__key--current {
+      border: 3px solid var(--dga-info-600, #1570ef);
+      background: #eff8ff;
+    }
+    .dc-graph__key--visited {
+      border: 2px solid var(--dynamic-cube-green, #136f40);
+    }
     .dc-graph__name {
       font-size: 13px;
       font-weight: 600;
@@ -234,7 +340,17 @@ export function layout(definition: GraphDefinition, edges: GraphEdge[]): { nodes
 })
 export class WorkflowGraph {
   readonly definition = input.required<GraphDefinition>();
+  /** Steps a request is at now (highlighted), when the drawing shows where a request is. */
+  readonly current = input<string[]>([]);
+  /** Steps the request has been through (marked done; the arrows between them are drawn as taken). */
+  readonly visited = input<string[]>([]);
   private readonly i18n = inject(I18nService);
+  protected readonly tracking = computed(() => this.current().length > 0 || this.visited().length > 0);
+
+  protected stateOf(code: string): 'current' | 'visited' | null {
+    if (this.current().includes(code)) return 'current';
+    return this.visited().includes(code) ? 'visited' : null;
+  }
   protected readonly w = NODE_W;
   protected readonly h = NODE_H;
 
@@ -249,6 +365,8 @@ export class WorkflowGraph {
         const a = at.get(e.from)!;
         const b = at.get(e.to)!;
         const back = b.layer <= a.layer;
+        const been = new Set([...this.visited(), ...this.current()]);
+        const taken = this.visited().includes(e.from) && been.has(e.to);
         const long = b.layer - a.layer > 1;
         const x1 = a.x + NODE_W / 2;
         const y1 = a.y + NODE_H;
@@ -262,6 +380,7 @@ export class WorkflowGraph {
           return {
             d: `M${a.x + NODE_W},${midA} C${a.x + NODE_W + 60},${midA} ${b.x + NODE_W + 60},${midB} ${b.x + NODE_W},${midB}`,
             back,
+            taken,
             label: e.label,
             lx: Math.max(a.x, b.x) + NODE_W + 40,
             ly: (midA + midB) / 2,
@@ -269,11 +388,12 @@ export class WorkflowGraph {
           };
         }
         if (long) {
-          return { d: `M${a.x},${midA} H${MARGIN} V${midB} H${b.x}`, back, label: e.label, lx: a.x - 6, ly: midA - 6, anchor: 'end' };
+          return { d: `M${a.x},${midA} H${MARGIN} V${midB} H${b.x}`, back, taken, label: e.label, lx: a.x - 6, ly: midA - 6, anchor: 'end' };
         }
         return {
           d: `M${x1},${y1} C${x1},${(y1 + y2) / 2} ${x2},${(y1 + y2) / 2} ${x2},${y2}`,
           back,
+          taken,
           label: e.label,
           lx: (x1 + x2) / 2,
           ly: (y1 + y2) / 2 + 4,

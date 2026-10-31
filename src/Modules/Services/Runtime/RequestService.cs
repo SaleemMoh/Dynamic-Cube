@@ -178,7 +178,23 @@ internal sealed class RequestService(
 
         var version = await cache.GetAsync(context, entity.ServiceVersionId, cancellationToken);
         var facts = await FactsAsync(acting, refresh: false, cancellationToken);
-        return await ViewAsync(entity, service, version, facts, acting, null, cancellationToken);
+
+        // A draft reads its integrations again when opened: the providers' data may have changed since it was saved, and the
+        // applicant is told which answers changed.
+        IReadOnlyList<AnswerChange> changes = [];
+        if (entity.StatusCategory == StatusCategory.Draft
+            && (version.Questions.Values.Any(q => q.Locked && q.Integration is not null) || (JsonNode.Parse(entity.Integrations) as JsonObject)?.Count > 0))
+        {
+            var data = JsonNode.Parse(entity.Data)!.AsObject();
+            var runs = JsonNode.Parse(entity.Integrations) as JsonObject ?? [];
+            var document = await SourceDocumentAsync(entity, cancellationToken);
+            changes = await integrations.RefreshAsync(version, Context(facts, acting, data, entity.LevelCode, document), data, runs, cancellationToken);
+            entity.Data = data.ToJsonString();
+            entity.Integrations = runs.ToJsonString();
+            await context.SaveChangesAsync(cancellationToken);
+        }
+
+        return await ViewAsync(entity, service, version, facts, acting, null, cancellationToken, changes: changes);
     }
 
     /// <summary>Saves the answers of a draft as they are (autosave) and reports the problems of the given step.</summary>
@@ -217,16 +233,19 @@ internal sealed class RequestService(
         var document = await SourceDocumentAsync(entity, cancellationToken);
         IReadOnlyList<FieldError> stepErrors = [];
 
-        // Answers the applicant may not change always hold the integration's value; an integration step being left calls its
-        // operation and puts the outputs into the current.
+        // Answers the applicant may not change always hold the integration's value. An integration step calls its operation
+        // when the applicant arrives on it (its result card shows the outcome) and, when leaving, again if it did not succeed
+        // or the applicant asks to try again; the outputs go into the answers.
         var current = JsonNode.Parse(entity.Data)!.AsObject();
         await integrations.FillAsync(version, Context(facts, acting, current, entity.LevelCode, document), current, lockedOnly: true, cancellationToken);
+        var runs = JsonNode.Parse(entity.Integrations) as JsonObject ?? [];
         if (request.ValidateStep is not null && version.Definition.Steps.FirstOrDefault(s => s.Code == request.ValidateStep) is { Type: StepType.Integration, Integration: { } call } step)
         {
-            var run = await integrations.RunStepAsync(call, Context(facts, acting, current, entity.LevelCode, document), current, cancellationToken);
-            var runs = JsonNode.Parse(entity.Integrations) as JsonObject ?? [];
+            var last = runs[step.Code]?.Deserialize<IntegrationStepRun>(ChangeJson.Options);
+            var run = last is { Success: true } && request.CurrentStep != request.ValidateStep
+                ? last
+                : await integrations.RunStepAsync(call, Context(facts, acting, current, entity.LevelCode, document), current, cancellationToken);
             runs[step.Code] = JsonSerializer.SerializeToNode(run, ChangeJson.Options);
-            entity.Integrations = runs.ToJsonString();
             if (!run.Success && call.Required)
             {
                 stepErrors = [IntegrationFailed(step, run)];
@@ -244,6 +263,17 @@ internal sealed class RequestService(
             }
         }
 
+        // Arriving on an integration step: its operation is called now, so the step shows the result.
+        if (stepErrors.Count == 0 && request.CurrentStep is not null && request.CurrentStep != request.ValidateStep
+            && version.Definition.Steps.FirstOrDefault(s => s.Code == request.CurrentStep) is { Type: StepType.Integration, Integration: { } arriving } target)
+        {
+            var arrived = JsonNode.Parse(entity.Data)!.AsObject();
+            var run = await integrations.RunStepAsync(arriving, Context(facts, acting, arrived, entity.LevelCode, document), arrived, cancellationToken);
+            runs[target.Code] = JsonSerializer.SerializeToNode(run, ChangeJson.Options);
+            entity.Data = arrived.ToJsonString();
+        }
+
+        entity.Integrations = runs.ToJsonString();
         entity.CurrentStep = stepErrors.Count > 0 ? request.ValidateStep : request.CurrentStep ?? entity.CurrentStep;
         if (entity.StatusCategory == StatusCategory.Draft)
         {
@@ -507,7 +537,9 @@ internal sealed class RequestService(
         await context.SaveChangesAsync(cancellationToken);
     }
 
-    private async Task<RequestView> ViewAsync(ServiceRequest entity, Service service, ResolvedVersion version, PartyFacts facts, ActingParty acting, string? step, CancellationToken cancellationToken, DocumentFacts? document = null)
+    private async Task<RequestView> ViewAsync(
+        ServiceRequest entity, Service service, ResolvedVersion version, PartyFacts facts, ActingParty acting, string? step, CancellationToken cancellationToken,
+        DocumentFacts? document = null, IReadOnlyList<AnswerChange>? changes = null)
     {
         var data = JsonNode.Parse(entity.Data)!.AsObject();
         if (document is null && entity.SourceDocumentId is not null && entity.StatusCategory is StatusCategory.Draft or StatusCategory.PendingCustomer)
@@ -534,7 +566,15 @@ internal sealed class RequestService(
             ? await registry.OfSubjectAsync(RequestSubject.Type, entity.Id, cancellationToken)
             : [];
         var files = await RequestFiles.ListAsync(context, entity.Id, cancellationToken);
-        return new RequestView(Summary(entity, (service.NameAr, service.NameEn)), entity.VersionNumber, entity.LevelCode, entity.CurrentStep, data, lines, byLevel, version, stepErrors, timeline, bills, visits, files);
+        var runs = (JsonNode.Parse(entity.Integrations) as JsonObject ?? [])
+            .Select(p => (p.Key, Run: p.Value?.Deserialize<IntegrationStepRun>(ChangeJson.Options)))
+            .Where(p => p.Run is not null)
+            .ToDictionary(p => p.Key, p => p.Run!, StringComparer.Ordinal);
+        return new RequestView(Summary(entity, (service.NameAr, service.NameEn)), entity.VersionNumber, entity.LevelCode, entity.CurrentStep, data, lines, byLevel, version, stepErrors, timeline, bills, visits, files)
+        {
+            Integrations = runs,
+            Changes = changes ?? [],
+        };
     }
 
     /// <summary>Expires a draft past its date, or moves it to the current version when the service says so. True when expired.</summary>

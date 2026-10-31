@@ -7,8 +7,14 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace DynamicCube.Modules.Services.Runtime;
 
-/// <summary>The outcome of an integration step, kept on the request so a required one is checked again on submit.</summary>
-public sealed record IntegrationStepRun(bool Success, string? Code, string? MessageAr, string? MessageEn, DateTimeOffset At);
+/// <summary>
+/// The outcome of an integration step, kept on the request so a required one is checked again on submit and the applicant
+/// sees it: <paramref name="Values"/> are the outputs the step shows (by output), for its result card.
+/// </summary>
+public sealed record IntegrationStepRun(bool Success, string? Code, string? MessageAr, string? MessageEn, DateTimeOffset At, Dictionary<string, JsonNode?>? Values = null);
+
+/// <summary>An answer that changed when a draft's integrations were read again (shown to the applicant: from → to).</summary>
+public sealed record AnswerChange(string Question, string LabelAr, string LabelEn, JsonNode? From, JsonNode? To);
 
 /// <summary>
 /// Integration Manager calls made for a request: questions answered by an integration (filled when the draft starts, and
@@ -77,7 +83,36 @@ internal sealed class RequestIntegrations(IServiceProvider services, TimeProvide
             }
         }
 
-        return new IntegrationStepRun(true, result.Code, result.MessageAr, result.MessageEn, clock.GetUtcNow());
+        var values = step.Display.ToDictionary(d => d.Output, d => Output(result, d.Output), StringComparer.Ordinal);
+        return new IntegrationStepRun(true, result.Code, result.MessageAr, result.MessageEn, clock.GetUtcNow(), values);
+    }
+
+    /// <summary>
+    /// Reads a draft's integrations again when it is opened (providers' data may have changed since): the integration steps
+    /// already run and the locked answers. Returns the answers that changed, from → to.
+    /// </summary>
+    public async Task<IReadOnlyList<AnswerChange>> RefreshAsync(ResolvedVersion version, JsonObject context, JsonObject data, JsonObject runs, CancellationToken cancellationToken)
+    {
+        var before = data.DeepClone().AsObject();
+        await FillAsync(version, context, data, lockedOnly: true, cancellationToken);
+        foreach (var step in version.Definition.Steps.Where(s => s.Type == StepType.Integration && s.Integration is not null && runs.ContainsKey(s.Code)))
+        {
+            var run = await RunStepAsync(step.Integration!, context, data, cancellationToken);
+            runs[step.Code] = JsonSerializer.SerializeToNode(run, Platform.Configuration.ChangeJson.Options);
+        }
+
+        var changes = new List<AnswerChange>();
+        foreach (var code in before.Select(p => p.Key).Union(data.Select(p => p.Key)).Distinct(StringComparer.Ordinal))
+        {
+            var from = before[code];
+            var to = data[code];
+            if (!JsonNode.DeepEquals(from, to) && version.Questions.TryGetValue(code, out var question))
+            {
+                changes.Add(new AnswerChange(code, question.LabelAr, question.LabelEn, from?.DeepClone(), to?.DeepClone()));
+            }
+        }
+
+        return changes;
     }
 
     private static Dictionary<string, string?> Inputs(List<IntegrationInput> inputs, JsonObject context) =>

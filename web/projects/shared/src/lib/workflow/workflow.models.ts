@@ -99,6 +99,12 @@ export interface InstanceView {
   timeline: TimelineItem[];
   /** What automated steps recorded: `decisions.<result>` (rule-set outputs) and `documents.<step>` (issued documents). */
   facts: InstanceFacts;
+  /** The workflow version's definition (nodes and routes), to draw where the instance is. */
+  definition?: { nodes: { code: string; type: string }[] } | null;
+  /** Steps the instance is at now. */
+  currentNodes?: string[];
+  /** Steps it has been through. */
+  visitedNodes?: string[];
 }
 
 export interface InstanceFacts {

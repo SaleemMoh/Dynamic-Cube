@@ -88,6 +88,35 @@ export interface IntegrationStep {
   outputs: { output: string; question: string }[];
   /** The applicant cannot continue (or submit) until the call succeeds. */
   required: boolean;
+  /** Show the outcome to the applicant in the form (default on). */
+  showResult?: boolean;
+  /** Outputs of the call shown on the result card, each with a label. */
+  display?: IntegrationDisplay[];
+}
+
+export interface IntegrationDisplay {
+  output: string;
+  labelAr: string;
+  labelEn: string;
+}
+
+/** The last call of an integration step of a request: its outcome and the values shown on the result card. */
+export interface IntegrationStepRun {
+  success: boolean;
+  code: string | null;
+  messageAr: string | null;
+  messageEn: string | null;
+  at: string;
+  values?: Record<string, unknown> | null;
+}
+
+/** An answer that changed when a draft's integrations were read again (from → to). */
+export interface AnswerChange {
+  question: string;
+  labelAr: string;
+  labelEn: string;
+  from: unknown;
+  to: unknown;
 }
 
 export interface ServiceLevelDefinition {
@@ -314,6 +343,10 @@ export interface RequestView {
   bills?: BillInfo[] | null;
   /** Visits requested by the request's visit steps. */
   visits?: VisitInfo[] | null;
+  /** The last call of each integration step, by step code. */
+  integrations?: Record<string, IntegrationStepRun> | null;
+  /** Answers that changed when the draft's integrations were read again on opening it. */
+  changes?: AnswerChange[] | null;
 }
 
 export type VisitStatus = 'PENDING' | 'SCHEDULED' | 'IN_PROGRESS' | 'SENT' | 'COMPLETED' | 'CANCELLED';

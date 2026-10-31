@@ -1,5 +1,5 @@
 import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -9,10 +9,11 @@ import { DynamicForm, FormValue } from '../forms/dynamic-form';
 import { FileUploader } from '../forms/file-input';
 import { I18nService } from '../i18n/i18n.service';
 import { LocalizePipe, TranslatePipe } from '../i18n/translate.pipe';
+import { AnswerChanges, IntegrationResult, ResultValue, fetchedAnswers } from './integration-result';
 import { FeeTable } from './fee-table';
 import { RequestAnswers } from './request-answers';
 import { fromAnswers, stepSchema, toAnswers } from './service-form';
-import { FeeLine, FieldError, ResolvedVersion, StepDefinition } from './service.models';
+import { AnswerChange, FeeLine, FieldError, IntegrationStepRun, ResolvedVersion, StepDefinition } from './service.models';
 
 /** Moving between steps: the answers so far, the chosen level, the step being left and the step to show. */
 export interface WizardMove {
@@ -24,6 +25,12 @@ export interface WizardMove {
   forward: boolean;
 }
 
+/** The answers and level as the applicant has them now (not yet saved), for saving the draft. */
+export interface WizardDraft {
+  data: Record<string, unknown>;
+  levelCode: string | null;
+}
+
 /**
  * Renders a service version as a wizard: form steps (via {@link DynamicForm}), service level, fees, review and
  * declaration. It holds no request state: the page saves each move and passes back the server's answers, current step,
@@ -32,6 +39,7 @@ export interface WizardMove {
 @Component({
   selector: 'dc-service-wizard',
   imports: [
+    AnswerChanges,
     DecimalPipe,
     NgTemplateOutlet,
     FormsModule,
@@ -41,12 +49,16 @@ export interface WizardMove {
     MatProgressBarModule,
     DynamicForm,
     FeeTable,
+    IntegrationResult,
     LocalizePipe,
     RequestAnswers,
     TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
+    @if (changes().length) {
+      <dc-answer-changes [version]="version()" [changes]="changes()" />
+    }
     <ol class="dc-steps" aria-label="steps">
       @for (s of steps(); track s.code; let i = $index) {
         <li class="dc-steps__item" [class.dc-steps__item--current]="i === index()" [class.dc-steps__item--done]="i < index()">
@@ -98,6 +110,7 @@ export interface WizardMove {
               [uploader]="uploader()"
               (submitted)="next(s, $event)"
               (cancelled)="back()"
+              (edited)="typed($event)"
             />
           }
           @case ('LEVEL') {
@@ -110,7 +123,7 @@ export interface WizardMove {
                   [class.dc-level--chosen]="level.code === chosenLevel()"
                   [attr.aria-checked]="level.code === chosenLevel()"
                   [disabled]="resubmission() && level.code !== chosenLevel()"
-                  (click)="levelChoice.set(level.code)"
+                  (click)="chooseLevel(level.code)"
                   [attr.data-testid]="'level-' + level.code"
                 >
                   <strong>{{ { ar: level.nameAr, en: level.nameEn } | dcLocalize }}</strong>
@@ -139,23 +152,27 @@ export interface WizardMove {
             <ng-container *ngTemplateOutlet="nav" />
           }
           @case ('INTEGRATION') {
-            <div class="dc-integration" data-testid="integration-step">
-              <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">sync_alt</mat-icon>
-              <div>
-                @if (s.textAr || s.textEn) {
-                  <p>{{ { ar: s.textAr ?? '', en: s.textEn ?? '' } | dcLocalize }}</p>
-                }
-                <p class="dc-muted">{{ (s.integration?.required === false ? 'wizard.integrationOptional' : 'wizard.integrationHint') | dcTranslate }}</p>
-                @if (fetched(s).length) {
-                  <dl class="dc-integration__values">
-                    @for (f of fetched(s); track f.code) {
-                      <dt>{{ f.label | dcLocalize }}</dt>
-                      <dd>{{ f.value }}</dd>
-                    }
-                  </dl>
-                }
+            @if (s.textAr || s.textEn) {
+              <p class="dc-integration__text">{{ { ar: s.textAr ?? '', en: s.textEn ?? '' } | dcLocalize }}</p>
+            }
+            @if (s.integration?.showResult !== false && run(s); as r) {
+              <dc-integration-result [version]="version()" [data]="data()" [step]="s" [run]="r" [disabled]="busy() || preview()" (retry)="retry(s)" />
+            } @else {
+              <div class="dc-integration" data-testid="integration-step">
+                <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">sync_alt</mat-icon>
+                <div>
+                  <p class="dc-muted">{{ (s.integration?.required === false ? 'wizard.integrationOptional' : 'wizard.integrationHint') | dcTranslate }}</p>
+                  @if (fetched(s).length) {
+                    <dl class="dc-integration__values">
+                      @for (f of fetched(s); track f.code) {
+                        <dt>{{ f.label | dcLocalize }}</dt>
+                        <dd>{{ f.value }}</dd>
+                      }
+                    </dl>
+                  }
+                </div>
               </div>
-            </div>
+            }
             <ng-container *ngTemplateOutlet="nav" />
           }
           @case ('DECLARATION') {
@@ -201,6 +218,9 @@ export interface WizardMove {
     </ng-template>
   `,
   styles: `
+    .dc-integration__text {
+      margin: 0 0 12px;
+    }
     .dc-integration {
       display: flex;
       gap: 12px;
@@ -328,13 +348,21 @@ export class ServiceWizard {
   readonly preview = input(false);
   /** Where file questions upload (the request's files on the portal, the browser in a preview). */
   readonly uploader = input<FileUploader | null>(null);
+  /** The last call of each integration step (its result card). */
+  readonly integrations = input<Record<string, IntegrationStepRun>>({});
+  /** Answers that changed when the draft's integrations were read again (shown until closed). */
+  readonly changes = input<AnswerChange[]>([]);
   readonly moved = output<WizardMove>();
+  /** The applicant changed an answer or the level (not yet saved): the page saves the draft a moment later. */
+  readonly edited = output<WizardDraft>();
   /** Submission requested; true when the declaration was accepted. */
   readonly submitted = output<boolean>();
 
   private readonly i18n = inject(I18nService);
   protected readonly accepted = signal(false);
   protected readonly levelChoice = signal<string | null>(null);
+  /** Answers typed on this step since the server last sent the answers (kept when going back). */
+  private readonly draft = linkedSignal<Record<string, unknown>, Record<string, unknown> | null>({ source: this.data, computation: () => null });
 
   protected readonly steps = computed(() => this.version().definition.steps);
   protected readonly index = computed(() =>
@@ -354,20 +382,14 @@ export class ServiceWizard {
     return q ? this.i18n.localize({ ar: q.labelAr, en: q.labelEn }) : null;
   }
 
+  /** The last call of an integration step, if it was called. */
+  protected run(step: StepDefinition): IntegrationStepRun | null {
+    return this.integrations()[step.code] ?? null;
+  }
+
   /** Answers an integration step fetched so far (its outputs), to show the applicant. */
-  protected fetched(step: StepDefinition): { code: string; label: { ar: string; en: string }; value: string }[] {
-    const data = this.data();
-    return (step.integration?.outputs ?? [])
-      .filter((o) => data[o.question] !== undefined && data[o.question] !== null && data[o.question] !== '')
-      .map((o) => {
-        const q = this.version().questions[o.question];
-        const value = data[o.question];
-        return {
-          code: o.question,
-          label: q ? { ar: q.labelAr, en: q.labelEn } : { ar: o.question, en: o.question },
-          value: typeof value === 'object' ? JSON.stringify(value) : String(value),
-        };
-      });
+  protected fetched(step: StepDefinition): ResultValue[] {
+    return fetchedAnswers(this.version(), step, this.data(), this.i18n);
   }
 
   protected levelTotal(lines: FeeLine[]): number {
@@ -382,13 +404,30 @@ export class ServiceWizard {
     this.emitMove(step.code, this.steps()[this.index() + 1]?.code ?? step.code, this.data());
   }
 
+  /** Calls the integration step again (staying on it). */
+  protected retry(step: StepDefinition): void {
+    this.emitMove(step.code, step.code, this.data());
+  }
+
+  protected typed(value: FormValue): void {
+    const data = { ...this.data(), ...toAnswers(value) };
+    this.draft.set(data);
+    this.edited.emit({ data, levelCode: this.chosenLevel() });
+  }
+
+  protected chooseLevel(code: string): void {
+    this.levelChoice.set(code);
+    this.edited.emit({ data: this.draft() ?? this.data(), levelCode: code });
+  }
+
   protected back(): void {
     const previous = this.steps()[this.index() - 1];
     if (previous) this.go(previous.code);
   }
 
   protected go(code: string): void {
-    this.moved.emit({ data: this.data(), levelCode: this.chosenLevel(), from: this.step()!.code, to: code, forward: false });
+    // Going back keeps what was typed on this step (not checked until the applicant moves on again).
+    this.moved.emit({ data: this.draft() ?? this.data(), levelCode: this.chosenLevel(), from: this.step()!.code, to: code, forward: false });
   }
 
   private emitMove(from: string, to: string, data: Record<string, unknown>): void {

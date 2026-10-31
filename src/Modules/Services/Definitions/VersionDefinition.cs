@@ -134,6 +134,23 @@ public sealed class IntegrationStepDefinition
 
     /// <summary>The applicant cannot continue (or submit) until the call succeeds.</summary>
     public bool Required { get; set; } = true;
+
+    /// <summary>Show the applicant a result card: whether the check passed, the provider's message and <see cref="Display"/>.</summary>
+    public bool ShowResult { get; set; } = true;
+
+    /// <summary>Outputs of the result shown on the card, each with its label (whether or not it fills an answer).</summary>
+    public List<IntegrationDisplay> Display { get; set; } = [];
+}
+
+/// <summary>An output of an integration step shown to the applicant on its result card.</summary>
+public sealed class IntegrationDisplay
+{
+    /// <summary>An output of the operation (its configured name) or a path in its result.</summary>
+    public string Output { get; set; } = string.Empty;
+
+    public string LabelAr { get; set; } = string.Empty;
+
+    public string LabelEn { get; set; } = string.Empty;
 }
 
 /// <summary>An output of an integration step and the question whose answer it becomes.</summary>

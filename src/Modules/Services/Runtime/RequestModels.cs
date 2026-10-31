@@ -79,7 +79,14 @@ public sealed record RequestView(
     IReadOnlyList<TimelineEntry> Timeline,
     IReadOnlyList<BillInfo>? Bills = null,
     IReadOnlyList<VisitInfo>? Visits = null,
-    IReadOnlyList<RequestFileInfo>? Files = null);
+    IReadOnlyList<RequestFileInfo>? Files = null)
+{
+    /// <summary>The outcome of each integration step run so far, by step (for its result card).</summary>
+    public IReadOnlyDictionary<string, IntegrationStepRun> Integrations { get; init; } = new Dictionary<string, IntegrationStepRun>();
+
+    /// <summary>Answers that changed when the draft's integrations were read again on opening it (from → to).</summary>
+    public IReadOnlyList<AnswerChange> Changes { get; init; } = [];
+}
 
 public sealed record TimelineEntry(DateTimeOffset At, string UserId, string Type, StatusCategory? FromStatus, StatusCategory? ToStatus, string? Comment);
 

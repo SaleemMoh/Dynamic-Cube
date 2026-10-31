@@ -13,6 +13,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
   I18nService,
+  IntegrationDisplay,
   JsonLogicRule,
   LocalizePipe,
   QuestionUse,
@@ -324,5 +325,19 @@ export class FormTab {
 
   protected removeOutput(index: number, row: number): void {
     this.integration(index, { outputs: (this.store.definition().steps[index]?.integration?.outputs ?? []).filter((_, i) => i !== row) });
+  }
+
+  protected addDisplay(index: number): void {
+    const current = this.store.definition().steps[index]?.integration?.display ?? [];
+    this.integration(index, { display: [...current, { output: '', labelAr: '', labelEn: '' }] });
+  }
+
+  protected setDisplay(index: number, row: number, change: Partial<IntegrationDisplay>): void {
+    const display = (this.store.definition().steps[index]?.integration?.display ?? []).map((x, i) => (i === row ? { ...x, ...change } : x));
+    this.integration(index, { display });
+  }
+
+  protected removeDisplay(index: number, row: number): void {
+    this.integration(index, { display: (this.store.definition().steps[index]?.integration?.display ?? []).filter((_, i) => i !== row) });
   }
 }
