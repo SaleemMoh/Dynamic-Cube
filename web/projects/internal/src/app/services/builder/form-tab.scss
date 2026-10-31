@@ -198,3 +198,41 @@
   background: var(--dga-primary-100, #fdf3d7);
   font-size: 11px;
 }
+.dc-ft__filters {
+  display: grid;
+  gap: 0.5rem;
+}
+/* Where an answer comes from: an integration or the beneficiary's data. */
+.dc-ft__fill {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 6px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.dc-ft__fill mat-icon {
+  width: 14px;
+  height: 14px;
+  font-size: 14px;
+}
+.dc-ft__fill--integration {
+  background: #e0ecff;
+  color: #1d4ed8;
+}
+.dc-ft__fill--party {
+  background: #e3f4ea;
+  color: #136f40;
+}
+/* An integration step stands out from form steps. */
+.dc-ft__step--integration {
+  border-inline-start: 4px solid #3b82f6;
+  background: #f5f9ff;
+}
+.dc-ft__integration {
+  margin: 0.25rem 0 0;
+  color: var(--dga-text-2, #4d5761);
+  font-size: 13px;
+}

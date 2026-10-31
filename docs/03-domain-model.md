@@ -107,9 +107,10 @@ result.
   policy (expiry days; on a new version drafts *continue* or *restart*), request number prefix.
 - **Archetype** `svc.archetype` — a declared kind of service (code, names, description, icon, order) with a default
   **service template** (a version definition using shared questions only) and a default **workflow** (a workflow
-  definition, or none for straight-through). A new service of the archetype opens its template in the Service Builder,
-  and gets the archetype's workflow when it is first published. Either can be copied from an existing service
-  (*template from* / *workflow from*). Seeded: `ISSUANCE`, `AMENDMENT`, `VISIT_REQUEST` (review by role
+  definition, or none for straight-through), designed in the Service Builder and the Workflow Designer (*Services →
+  Service archetypes*, one link each per archetype). A new service of the archetype opens its template in the Service
+  Builder, and gets the archetype's workflow when it is first published. Either can also be copied from an existing
+  service (*template from* / *workflow from*). Seeded: `ISSUANCE`, `AMENDMENT`, `VISIT_REQUEST` (review by role
   `SERVICE_REVIEWER`) and `ATTESTATION` (no review). An archetype in use cannot be deleted.
 - **Question bank** — typed questions (text, long text, number, date, choice with options or an Apps
   Control LOV with a parent question, yes/no, file upload), limits (min, max, length, pattern; for files the

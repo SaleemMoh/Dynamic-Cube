@@ -885,16 +885,18 @@
 } @else {
   <h2 class="dc-panel__title">
     <mat-icon fontSet="material-symbols-outlined">tune</mat-icon>
-    {{ 'designer.version' | dcTranslate }}
+    {{ (showVersion() ? 'designer.version' : 'designer.archetypeWorkflow') | dcTranslate }}
   </h2>
-  <mat-form-field subscriptSizing="dynamic">
-    <mat-label>{{ 'designer.field.nameAr' | dcTranslate }}</mat-label>
-    <input matInput dir="rtl" [ngModel]="versionNameAr()" (ngModelChange)="versionNameArChange.emit($event)" data-testid="version-name-ar" />
-  </mat-form-field>
-  <mat-form-field subscriptSizing="dynamic">
-    <mat-label>{{ 'designer.field.nameEn' | dcTranslate }}</mat-label>
-    <input matInput dir="ltr" [ngModel]="versionNameEn()" (ngModelChange)="versionNameEnChange.emit($event)" data-testid="version-name-en" />
-  </mat-form-field>
+  @if (showVersion()) {
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>{{ 'designer.field.nameAr' | dcTranslate }}</mat-label>
+      <input matInput dir="rtl" [ngModel]="versionNameAr()" (ngModelChange)="versionNameArChange.emit($event)" data-testid="version-name-ar" />
+    </mat-form-field>
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>{{ 'designer.field.nameEn' | dcTranslate }}</mat-label>
+      <input matInput dir="ltr" [ngModel]="versionNameEn()" (ngModelChange)="versionNameEnChange.emit($event)" data-testid="version-name-en" />
+    </mat-form-field>
+  }
   <mat-form-field subscriptSizing="dynamic">
     <mat-label>{{ 'designer.field.slaWorkingDays' | dcTranslate }}</mat-label>
     <input

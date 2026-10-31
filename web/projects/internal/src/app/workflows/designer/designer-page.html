@@ -1,6 +1,17 @@
 <header class="dc-page__header dc-designer__header">
   <h1>{{ 'designer.title' | dcTranslate }}</h1>
   <div class="dc-designer__pick">
+    @if (archetypeCode()) {
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'designer.archetypeWorkflow' | dcTranslate }}</mat-label>
+        <mat-select [ngModel]="archetypeCode()" (ngModelChange)="openArchetype($event)" data-testid="designer-archetype">
+          @for (a of archetypes.value() ?? []; track a.code) {
+            <mat-option [value]="a.code">{{ { ar: a.nameAr, en: a.nameEn } | dcLocalize }} ({{ a.code }})</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <span class="dc-designer__hint" data-testid="designer-target">{{ 'designer.archetypeHint' | dcTranslate }}</span>
+    } @else {
     <mat-form-field subscriptSizing="dynamic">
       <mat-label>{{ 'wfVersions.workflow' | dcTranslate }}</mat-label>
       <mat-select [ngModel]="workflow()" (ngModelChange)="open($event, null)" data-testid="designer-workflow">
@@ -20,10 +31,11 @@
       </mat-form-field>
       <span class="dc-designer__target" dir="ltr" data-testid="designer-target">→ {{ workflow() }}/{{ nextNumber() }}</span>
     }
+    }
   </div>
 </header>
 
-@if (workflow()) {
+@if (editing()) {
   <div class="dc-designer__toolbar" role="toolbar" [attr.aria-label]="'designer.title' | dcTranslate">
     <button
       matIconButton
@@ -102,10 +114,10 @@
       {{ 'designer.check' | dcTranslate }}
     </button>
     @if (canCreate()) {
-      <dc-submit-button [entityType]="'wf.workflow-version'" (submitted)="save(true)" />
+      <dc-submit-button [entityType]="target()" (submitted)="save(true)" />
       <button matButton="filled" type="button" (click)="save()" [disabled]="busy() || errorsOnly().length > 0" data-testid="designer-save">
         <mat-icon fontSet="material-symbols-outlined">save</mat-icon>
-        {{ drafts.saveLabel('wf.workflow-version') | dcTranslate }}
+        {{ drafts.saveLabel(target()) | dcTranslate }}
       </button>
     }
   </div>
@@ -168,6 +180,7 @@
 
     <aside class="dc-designer__panel">
       <dc-designer-panel
+        [showVersion]="!archetypeCode()"
         [versionNameAr]="versionNameAr()"
         [versionNameEn]="versionNameEn()"
         (versionNameArChange)="versionNameAr.set($event)"

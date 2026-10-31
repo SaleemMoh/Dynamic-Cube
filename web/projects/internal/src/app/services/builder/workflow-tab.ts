@@ -16,6 +16,7 @@ interface WorkflowNode {
   provider?: string | null;
   visitType?: string | null;
   outcome?: string | null;
+  [key: string]: unknown;
 }
 
 /**
@@ -33,10 +34,15 @@ interface WorkflowNode {
         <section class="dc-card">
           <header class="dc-wt__head">
             <div>
-              <h2>{{ 'builder.wf.title' | dcTranslate }}</h2>
+              <h2>{{ (archetype() ? 'builder.wf.archetypeTitle' : 'builder.wf.title') | dcTranslate }}</h2>
               <p class="dc-wt__muted" dir="ltr">{{ w.code }}{{ w.number ? '/' + w.number : '' }}</p>
             </div>
-            <a matButton="filled" routerLink="/workflows/designer" [queryParams]="{ workflowCode: w.code }" data-testid="builder-open-designer">
+            <a
+              matButton="filled"
+              routerLink="/workflows/designer"
+              [queryParams]="archetype() ? { archetype: archetype() } : { workflowCode: w.code }"
+              data-testid="builder-open-designer"
+            >
               <mat-icon fontSet="material-symbols-outlined">design_services</mat-icon>
               {{ 'builder.wf.openDesigner' | dcTranslate }}
             </a>
@@ -67,6 +73,9 @@ interface WorkflowNode {
         }
       } @else {
         <p class="dc-wt__muted">{{ 'builder.wf.noWorkflow' | dcTranslate }}</p>
+      }
+      @if (archetype() && !hasNodes()) {
+        <p class="dc-wt__muted" data-testid="archetype-no-workflow">{{ 'builder.wf.archetypeNone' | dcTranslate }}</p>
       }
     </div>
   `,
@@ -114,8 +123,17 @@ export class WorkflowTab {
   private readonly refs = inject(BuilderReferences);
   private readonly i18n = inject(I18nService);
   readonly service = input<string | null>(null);
+  /** An archetype's default workflow instead of a service's (the builder edits the archetype's template). */
+  readonly archetype = input<string | null>(null);
 
-  protected readonly workflow = computed(() => this.refs.workflowOf(this.service()));
+  protected readonly workflow = computed(() => {
+    const archetype = this.archetype();
+    if (!archetype) return this.refs.workflowOf(this.service());
+    const row = this.refs.archetypes().find((a) => a.code === archetype);
+    const definition = (row?.['workflow'] as { nodes: Record<string, unknown>[] } | null | undefined) ?? { nodes: [] };
+    return { code: archetype, number: 0, definition };
+  });
+  protected readonly hasNodes = computed(() => (this.workflow()?.definition.nodes ?? []).length > 0);
 
   protected readonly groups = computed(() => {
     const nodes = (this.workflow()?.definition.nodes ?? []) as unknown as WorkflowNode[];
@@ -126,6 +144,7 @@ export class WorkflowTab {
       { key: 'decisions', icon: 'rule', items: of('DECISION') },
       { key: 'payments', icon: 'payments', items: of('PAYMENT') },
       { key: 'visits', icon: 'location_on', items: of('VISIT') },
+      { key: 'integrations', icon: 'sync_alt', items: of('INTEGRATION') },
       { key: 'outcomes', icon: 'flag', items: of('END') },
     ];
   });
@@ -146,6 +165,8 @@ export class WorkflowTab {
         return n.provider ?? this.i18n.translate('designer.defaultProvider');
       case 'VISIT':
         return n.visitType ?? null;
+      case 'INTEGRATION':
+        return (n['operation'] as string | null | undefined) ?? null;
       case 'END':
         return n.outcome ?? null;
       default:

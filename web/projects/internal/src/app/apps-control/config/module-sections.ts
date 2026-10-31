@@ -622,11 +622,32 @@ export const SERVICE_SECTIONS: ConfigSection[] = [
           },
         ],
       },
+    ],
+  },
+  {
+    path: 'archetypes',
+    title: t('أنماط الخدمات', 'Service archetypes'),
+    resource: 'services.config',
+    types: [
       {
         entityType: 'svc.archetype',
         title: t('أنماط الخدمات', 'Service archetypes'),
         key: 'code',
         columns: ['displayOrder'],
+        rowLinks: [
+          {
+            icon: 'construction',
+            label: t('تصميم قالب الخدمة', 'Design the service template'),
+            route: (row) => ({ commands: ['/services/builder'], queryParams: { archetype: String(row['code']) } }),
+            testId: 'archetype-template',
+          },
+          {
+            icon: 'account_tree',
+            label: t('تصميم مسار العمل الافتراضي', 'Design the default workflow'),
+            route: (row) => ({ commands: ['/workflows/designer'], queryParams: { archetype: String(row['code']) } }),
+            testId: 'archetype-workflow',
+          },
+        ],
         fields: [
           { code: 'descriptionAr', type: 'textarea', label: t('الوصف بالعربية', 'Arabic description') },
           { code: 'descriptionEn', type: 'textarea', label: t('الوصف بالإنجليزية', 'English description') },
@@ -637,20 +658,15 @@ export const SERVICE_SECTIONS: ConfigSection[] = [
             type: 'select',
             label: t('نسخ قالب الخدمة من خدمة', 'Copy the service template from a service'),
             ref: 'svc.service',
-            hint: t(
-              'عند الحفظ يصبح القالب نسخة من آخر إصدار للخدمة (الخطوات والأسئلة المشتركة والقواعد والرسوم والبطاقة).',
-              "On saving, the template becomes a copy of the service's latest version (steps, shared questions, rules, fees and card).",
-            ),
+            hint: t('اختياري: يصبح القالب نسخة من آخر إصدار للخدمة.', "Optional: the template becomes a copy of the service's latest version."),
           },
           {
             code: 'workflowFrom',
             type: 'select',
             label: t('نسخ مسار العمل الافتراضي من مسار', 'Copy the default workflow from a workflow'),
             ref: 'wf.workflow',
-            hint: t('عند الحفظ يصبح المسار الافتراضي نسخة من آخر إصدار منشور للمسار.', 'On saving, the default workflow becomes a copy of the workflow’s latest published version.'),
+            hint: t('اختياري: يصبح المسار نسخة من آخر إصدار منشور للمسار.', "Optional: it becomes a copy of the workflow's latest published version."),
           },
-          json('template', t('قالب الخدمة (JSON)', 'Service template (JSON)'), { kind: 'json' }, t('فارغ: البداية الفارغة لمنشئ الخدمات.', "Empty: the builder's blank start."), null),
-          json('workflow', t('مسار العمل الافتراضي (JSON)', 'Default workflow (JSON)'), { kind: 'json' }, t('فارغ: تكتمل الطلبات دون مراجعة.', 'Empty: requests complete without review.'), null),
         ],
       },
     ],

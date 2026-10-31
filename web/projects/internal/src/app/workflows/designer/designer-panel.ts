@@ -46,6 +46,8 @@ export class DesignerPanel {
   protected readonly store = inject(DesignerStore);
   protected readonly refs = inject(DesignerReferences);
   private readonly i18n = inject(I18nService);
+  /** Whether the version's names are edited (not for an archetype's default workflow). */
+  readonly showVersion = input(true);
   readonly versionNameAr = input('');
   readonly versionNameEn = input('');
   readonly versionNameArChange = output<string>();

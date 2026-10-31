@@ -21,6 +21,27 @@
       <mat-icon matPrefix fontSet="material-symbols-outlined">search</mat-icon>
       <input matInput [placeholder]="'builder.searchBank' | dcTranslate" [ngModel]="search()" (ngModelChange)="search.set($event)" data-testid="bank-search" />
     </mat-form-field>
+    <div class="dc-ft__filters">
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'builder.filterOwner' | dcTranslate }}</mat-label>
+        <mat-select [ngModel]="owner()" (ngModelChange)="owner.set($event)" data-testid="bank-owner">
+          <mat-option value="ALL">{{ 'builder.filterAll' | dcTranslate }}</mat-option>
+          <mat-option value="SHARED">{{ 'builder.filterShared' | dcTranslate }}</mat-option>
+          @if (store.service()) {
+            <mat-option value="OWN">{{ 'builder.filterOwn' | dcTranslate }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'builder.filterType' | dcTranslate }}</mat-label>
+        <mat-select [ngModel]="answerType()" (ngModelChange)="answerType.set($event)" data-testid="bank-type">
+          <mat-option [value]="null">{{ 'builder.filterAll' | dcTranslate }}</mat-option>
+          @for (type of answerTypes(); track type) {
+            <mat-option [value]="type">{{ 'builder.qtype.' + type | dcTranslate }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
     <div class="dc-ft__banklist" cdkDropList id="bank" [cdkDropListData]="null" [cdkDropListConnectedTo]="listIds()" cdkDropListSortingDisabled>
       @for (q of bank(); track q.code) {
         <button
@@ -39,6 +60,7 @@
             }
           </span>
           <small dir="ltr">{{ q.code }} · {{ 'builder.qtype.' + q.type | dcTranslate }}</small>
+          <ng-container [ngTemplateOutlet]="fillMarks" [ngTemplateOutletContext]="{ $implicit: q }" />
         </button>
       }
     </div>
@@ -50,6 +72,7 @@
       @for (step of steps(); track $index; let i = $index) {
         <article
           class="dc-ft__step"
+          [class.dc-ft__step--integration]="step.type === 'INTEGRATION'"
           cdkDrag
           [class.dc-ft__on]="isSelected({ step: i })"
           (click)="select({ step: i }, $event)"
@@ -63,7 +86,17 @@
             >
             <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">{{ icons[step.type] }}</mat-icon>
             <strong>{{ i + 1 }}. {{ name(step) }}</strong>
-            <span class="dc-ft__badge">{{ 'builder.stepType.' + step.type | dcTranslate }}</span>
+            @if (step.type === 'INTEGRATION') {
+              <span class="dc-ft__fill dc-ft__fill--integration" data-testid="step-integration-mark">
+                <mat-icon fontSet="material-symbols-outlined">sync_alt</mat-icon>
+                {{ 'builder.stepType.INTEGRATION' | dcTranslate }}
+                @if (step.integration?.operation; as operation) {
+                  <bdi dir="ltr">· {{ operation }}</bdi>
+                }
+              </span>
+            } @else {
+              <span class="dc-ft__badge">{{ 'builder.stepType.' + step.type | dcTranslate }}</span>
+            }
             @if (step.display && step.display !== 'STACKED') {
               <span class="dc-ft__badge">{{ 'builder.display.' + step.display | dcTranslate }}</span>
             }
@@ -72,6 +105,18 @@
               <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
             </button>
           </header>
+          @if (step.type === 'INTEGRATION') {
+            <p class="dc-ft__integration" [attr.data-testid]="'integration-summary-' + step.code">
+              {{ 'builder.integrationCalls' | dcTranslate }}
+              <bdi dir="ltr">{{ step.integration?.operation || '—' }}</bdi>
+              @if (integrationFills(step); as fills) {
+                · {{ 'builder.integrationFills' | dcTranslate }} {{ fills }}
+              }
+              @if (step.integration?.required !== false) {
+                · {{ 'builder.integrationMustSucceed' | dcTranslate }}
+              }
+            </p>
+          }
           @if (step.type === 'FORM') {
             <div cdkDropList (cdkDropListDropped)="dropSection(i, $event)" class="dc-ft__sections">
               @for (section of step.sections; track $index; let j = $index) {
@@ -121,6 +166,7 @@
                       >
                         <mat-icon class="dc-ft__handle" cdkDragHandle fontSet="material-symbols-outlined">drag_indicator</mat-icon>
                         <span class="dc-ft__qlabel">{{ questionName(q.code) }}</span>
+                        <ng-container [ngTemplateOutlet]="fillMarks" [ngTemplateOutletContext]="{ $implicit: question(q.code) }" />
                         @if (q.required) {
                           <span class="dc-ft__req" [matTooltip]="'builder.required' | dcTranslate">*</span>
                         }
@@ -425,4 +471,21 @@
       <p class="dc-ft__muted">{{ 'builder.formHowTo' | dcTranslate }}</p>
     }
   </aside>
+
+  <ng-template #fillMarks let-q>
+    @if (q?.fill === 'INTEGRATION') {
+      <span class="dc-ft__fill dc-ft__fill--integration" [matTooltip]="('builder.fillIntegration' | dcTranslate) + (q.operation ? ' · ' + q.operation : '')">
+        <mat-icon fontSet="material-symbols-outlined">sync_alt</mat-icon>
+        {{ 'builder.markIntegration' | dcTranslate }}
+      </span>
+    } @else if (q?.fill === 'PARTY') {
+      <span class="dc-ft__fill dc-ft__fill--party" [matTooltip]="'builder.fillParty' | dcTranslate">
+        <mat-icon fontSet="material-symbols-outlined">badge</mat-icon>
+        {{ 'builder.markParty' | dcTranslate }}
+      </span>
+    }
+    @if (q && q.fill !== 'NONE' && !q.allowManualEntry) {
+      <mat-icon class="dc-ft__flag" fontSet="material-symbols-outlined" [matTooltip]="'builder.fillLocked' | dcTranslate">lock</mat-icon>
+    }
+  </ng-template>
 </div>

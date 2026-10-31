@@ -12,6 +12,7 @@ import { AppsControlApi, BusinessAppContext, ConfigRow, I18nService, LocalizePip
 import { firstValueFrom } from 'rxjs';
 import { FullWindow } from '../../common/full-window';
 import { DraftsService } from '../../apps-control/drafts.service';
+import { payloadOf } from '../../apps-control/config/form-values';
 import { PrivilegesService } from '../../apps-control/privileges.service';
 import { DesignerCanvas, PALETTE_MIME } from './designer-canvas';
 import { NodeType, Problem, WorkflowDraft, arrange, disconnect, removeNode, toDefinition } from './designer-model';
@@ -19,6 +20,7 @@ import { DesignerPanel } from './designer-panel';
 import { DesignerReferences } from './designer-references';
 import { DesignerStore } from './designer-store';
 import { DesignerTestRun } from './designer-test-run';
+import { DESIGNER_TRANSLATIONS } from './designer-translations';
 import { SubmitButton } from '../../apps-control/submit-button';
 
 const STARTER: WorkflowDraft = {
@@ -71,11 +73,20 @@ export class DesignerPage {
   /** Query parameters: the workflow, and the version to start from (default: the latest). */
   readonly workflowCode = input<string | undefined>();
   readonly version = input<string | undefined>();
+  /** Query parameter: a service archetype whose default workflow is edited instead of a workflow's version. */
+  readonly archetype = input<string | undefined>();
 
   private readonly appContext = inject(BusinessAppContext);
   protected readonly workflows = rxResource({ params: () => ({ app: this.appContext.current() }), stream: ({ params }) => this.api.list('wf.workflow', null, params.app) });
   private readonly versions = rxResource({ stream: () => this.api.list('wf.workflow-version') });
   protected readonly workflow = signal<string | null>(null);
+  protected readonly archetypes = rxResource({ stream: () => this.api.list('svc.archetype') });
+  /** The archetype whose default workflow is open (instead of a workflow). */
+  protected readonly archetypeCode = signal<string | null>(null);
+  /** What is open: a workflow, or an archetype's default workflow. */
+  protected readonly editing = computed(() => this.workflow() ?? this.archetypeCode());
+  /** The change saving adds: the workflow's next version, or the archetype with its new default workflow. */
+  protected readonly target = computed(() => (this.archetypeCode() ? 'svc.archetype' : 'wf.workflow-version'));
   protected readonly base = signal<number | null>(null);
   protected readonly zoom = signal(1);
   protected readonly view = signal<'canvas' | 'json' | 'test'>('canvas');
@@ -100,12 +111,19 @@ export class DesignerPage {
   protected readonly errorsOnly = computed(() => this.store.problems().filter((p) => !p.warning));
 
   constructor() {
+    // The designer's texts load with it.
+    this.i18n.register(DESIGNER_TRANSLATIONS);
     // Open what the link asks for once the lists are in.
     effect(() => {
       const list = this.workflows.value();
       if (!list || !this.versions.hasValue() || this.workflow()) return;
       const wanted = this.workflowCode();
       if (wanted && list.some((w) => w.code === wanted)) untracked(() => this.open(wanted, this.version() ? Number(this.version()) : null));
+    });
+    effect(() => {
+      const wanted = this.archetype();
+      const archetypes = this.archetypes.value();
+      if (wanted && archetypes && !this.editing() && archetypes.some((a) => a.code === wanted)) untracked(() => this.openArchetype(wanted));
     });
     effect(() => {
       const service = this.serviceCode();
@@ -141,6 +159,7 @@ export class DesignerPage {
   protected open(code: string, from: number | null): void {
     if (this.store.dirty() && !confirm(this.i18n.translate('designer.discard'))) return;
     this.workflow.set(code);
+    this.archetypeCode.set(null);
     const versions = this.versionsOf();
     const chosen = (from !== null ? versions.find((r) => number(r.code) === from) : undefined) ?? versions[0];
     this.base.set(chosen ? number(chosen.code) : null);
@@ -152,6 +171,29 @@ export class DesignerPage {
     this.savedAs.set(null);
     this.errors.set([]);
     this.view.set('canvas');
+  }
+
+  /** Opens an archetype's default workflow (the start when it has none). */
+  protected openArchetype(code: string): void {
+    if (this.store.dirty() && !confirm(this.i18n.translate('designer.discard'))) return;
+    this.workflow.set(null);
+    this.archetypeCode.set(code);
+    this.base.set(null);
+    const row = (this.archetypes.value() ?? []).find((a) => a.code === code);
+    this.store.load((row?.['workflow'] as WorkflowDraft | null | undefined) ?? STARTER);
+    this.serverProblems.set(null);
+    this.savedAs.set(null);
+    this.errors.set([]);
+    this.view.set('canvas');
+  }
+
+  /** The archetype as stored, with the default workflow being edited. */
+  private archetypePayload(): Record<string, unknown> {
+    const row = (this.archetypes.value() ?? []).find((a) => a.code === this.archetypeCode());
+    const payload: Record<string, unknown> = { ...payloadOf(row), workflow: toDefinition(this.store.definition()) };
+    delete payload['templateFrom'];
+    delete payload['workflowFrom'];
+    return payload;
   }
 
   protected startFrom(row: ConfigRow): void {
@@ -239,19 +281,11 @@ export class DesignerPage {
     this.errors.set([]);
     this.busy.set(true);
     try {
-      const result = await firstValueFrom(
-        this.api.checkPackage({
-          title: 'designer',
-          items: [
-            {
-              entityType: 'wf.workflow-version',
-              entityCode: `${this.workflow()}/${this.nextNumber()}`,
-              operation: 'CREATE',
-              payload: this.payload(),
-            },
-          ],
-        }),
-      );
+      const archetype = this.archetypeCode();
+      const item = archetype
+        ? { entityType: 'svc.archetype', entityCode: archetype, operation: 'UPDATE' as const, payload: this.archetypePayload() }
+        : { entityType: 'wf.workflow-version', entityCode: `${this.workflow()}/${this.nextNumber()}`, operation: 'CREATE' as const, payload: this.payload() };
+      const result = await firstValueFrom(this.api.checkPackage({ title: 'designer', items: [item] }));
       const messages = [...Object.entries(result.errors), ...Object.entries(result.items[0]?.errors ?? {})].flatMap(([field, list]) =>
         list.map((m) => `${field}: ${m}`),
       );
@@ -266,15 +300,18 @@ export class DesignerPage {
   /** Adds the next version to the change set (published on approval, or at once where no approval is needed). */
   protected async save(submit = false): Promise<void> {
     if (this.view() === 'json' && !this.applyJson()) return;
-    const code = `${this.workflow()}/${this.nextNumber()}`;
+    const archetype = this.archetypeCode();
+    const code = archetype ?? `${this.workflow()}/${this.nextNumber()}`;
     this.errors.set([]);
     this.busy.set(true);
     try {
-      await this.drafts.addChange('wf.workflow-version', code, 'CREATE', this.payload(), { submit });
+      if (archetype) await this.drafts.addChange('svc.archetype', archetype, 'UPDATE', this.archetypePayload(), { submit });
+      else await this.drafts.addChange('wf.workflow-version', code, 'CREATE', this.payload(), { submit });
       this.store.saved();
       this.savedAs.set(code);
       this.serverProblems.set(null);
-      this.versions.reload();
+      if (archetype) this.archetypes.reload();
+      else this.versions.reload();
     } catch (error) {
       this.errors.set(problemMessages(error));
     } finally {

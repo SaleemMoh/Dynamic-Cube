@@ -11,6 +11,7 @@ import { AppsControlApi, BusinessAppContext, ConfigRow, I18nService, LocalizePip
 import { firstValueFrom } from 'rxjs';
 import { FullWindow } from '../../common/full-window';
 import { DraftsService } from '../../apps-control/drafts.service';
+import { payloadOf } from '../../apps-control/config/form-values';
 import { PrivilegesService } from '../../apps-control/privileges.service';
 import { BuilderReferences } from './builder-references';
 import { BuilderStore } from './builder-store';
@@ -20,6 +21,8 @@ import { FormTab } from './form-tab';
 import { PreviewTab } from './preview-tab';
 import { RulesTab } from './rules-tab';
 import { WorkflowTab } from './workflow-tab';
+import { BUILDER_TRANSLATIONS } from './builder-translations';
+import { DESIGNER_TRANSLATIONS } from '../../workflows/designer/designer-translations';
 import { SubmitButton } from '../../apps-control/submit-button';
 
 export type BuilderView = 'form' | 'rules' | 'card' | 'workflow' | 'preview' | 'json';
@@ -68,12 +71,21 @@ export class BuilderPage {
   /** Query parameters: the service, and the version to start from (default: the latest). */
   readonly service = input<string | undefined>();
   readonly version = input<string | undefined>();
+  /** Query parameter: an archetype whose service template is edited instead of a service's version. */
+  readonly archetype = input<string | undefined>();
 
   protected readonly views = VIEWS;
   private readonly appContext = inject(BusinessAppContext);
   protected readonly services = rxResource({ params: () => ({ app: this.appContext.current() }), stream: ({ params }) => this.api.list('svc.service', null, params.app) });
   private readonly versions = rxResource({ stream: () => this.api.list('svc.service-version') });
   protected readonly current = signal<string | null>(null);
+  /** The archetype whose template is open (instead of a service). */
+  protected readonly archetypeCode = signal<string | null>(null);
+  /** What is open: a service, or an archetype's template. */
+  protected readonly editing = computed(() => this.current() ?? this.archetypeCode());
+  /** The change saving adds: the service's next version, or the archetype with its new template. */
+  protected readonly target = computed(() => (this.archetypeCode() ? 'svc.archetype' : 'svc.service-version'));
+  protected readonly archetypeRow = computed(() => this.refs.archetypes().find((a) => a.code === this.archetypeCode()) ?? null);
   protected readonly base = signal<number | null>(null);
   protected readonly view = signal<BuilderView>('form');
   protected readonly jsonText = signal('');
@@ -99,11 +111,19 @@ export class BuilderPage {
   });
 
   constructor() {
+    // The builder's texts (and the designer's it shares) load with it.
+    this.i18n.register(DESIGNER_TRANSLATIONS);
+    this.i18n.register(BUILDER_TRANSLATIONS);
     effect(() => {
       const list = this.services.value();
       if (!list || !this.versions.hasValue() || this.current()) return;
       const wanted = this.service();
       if (wanted && list.some((s) => s.code === wanted)) untracked(() => this.open(wanted, this.version() ? Number(this.version()) : null));
+    });
+    effect(() => {
+      const wanted = this.archetype();
+      const archetypes = this.refs.archetypes();
+      if (wanted && !this.editing() && archetypes.some((a) => a.code === wanted)) untracked(() => this.openArchetype(wanted));
     });
     effect(() => this.store.bank.set(this.refs.bank()));
   }
@@ -131,6 +151,7 @@ export class BuilderPage {
   protected open(code: string, from: number | null): void {
     if (this.store.dirty() && !confirm(this.i18n.translate('designer.discard'))) return;
     this.current.set(code);
+    this.archetypeCode.set(null);
     this.store.service.set(code);
     const versions = this.versionsOf();
     const chosen = (from !== null ? versions.find((r) => number(r.code) === from) : undefined) ?? versions[0];
@@ -142,6 +163,29 @@ export class BuilderPage {
     this.savedAs.set(null);
     this.errors.set([]);
     if (this.view() === 'json') this.jsonText.set(this.json());
+  }
+
+  /** Opens an archetype's service template (shared questions only: no service owns it). */
+  protected openArchetype(code: string): void {
+    if (this.store.dirty() && !confirm(this.i18n.translate('designer.discard'))) return;
+    this.current.set(null);
+    this.archetypeCode.set(code);
+    this.store.service.set(null);
+    this.base.set(null);
+    const row = this.refs.archetypes().find((a) => a.code === code);
+    this.store.load((row?.['template'] as ServiceDraft | null | undefined) ?? STARTER);
+    this.serverProblems.set(null);
+    this.savedAs.set(null);
+    this.errors.set([]);
+    if (this.view() === 'json') this.jsonText.set(this.json());
+  }
+
+  /** The archetype as stored, with the template being edited. */
+  private archetypePayload(): Record<string, unknown> {
+    const payload: Record<string, unknown> = { ...payloadOf(this.archetypeRow()), template: this.store.definition() };
+    delete payload['templateFrom'];
+    delete payload['workflowFrom'];
+    return payload;
   }
 
   protected showView(view: BuilderView): void {
@@ -191,12 +235,11 @@ export class BuilderPage {
     this.errors.set([]);
     this.busy.set(true);
     try {
-      const result = await firstValueFrom(
-        this.api.checkPackage({
-          title: 'builder',
-          items: [{ entityType: 'svc.service-version', entityCode: `${this.current()}/${this.nextNumber()}`, operation: 'CREATE', payload: this.payload() }],
-        }),
-      );
+      const archetype = this.archetypeCode();
+      const item = archetype
+        ? { entityType: 'svc.archetype', entityCode: archetype, operation: 'UPDATE' as const, payload: this.archetypePayload() }
+        : { entityType: 'svc.service-version', entityCode: `${this.current()}/${this.nextNumber()}`, operation: 'CREATE' as const, payload: this.payload() };
+      const result = await firstValueFrom(this.api.checkPackage({ title: 'builder', items: [item] }));
       this.serverProblems.set(
         [...Object.entries(result.errors), ...Object.entries(result.items[0]?.errors ?? {})].flatMap(([field, list]) => list.map((m) => `${field}: ${m}`)),
       );
@@ -209,15 +252,18 @@ export class BuilderPage {
 
   protected async save(submit = false): Promise<void> {
     if (this.view() === 'json' && !this.applyJson()) return;
-    const code = `${this.current()}/${this.nextNumber()}`;
+    const archetype = this.archetypeCode();
+    const code = archetype ?? `${this.current()}/${this.nextNumber()}`;
     this.errors.set([]);
     this.busy.set(true);
     try {
-      await this.drafts.addChange('svc.service-version', code, 'CREATE', this.payload(), { submit });
+      if (archetype) await this.drafts.addChange('svc.archetype', archetype, 'UPDATE', this.archetypePayload(), { submit });
+      else await this.drafts.addChange('svc.service-version', code, 'CREATE', this.payload(), { submit });
       this.store.saved();
       this.savedAs.set(code);
       this.serverProblems.set(null);
-      this.versions.reload();
+      if (archetype) this.refs.reloadArchetypes();
+      else this.versions.reload();
     } catch (error) {
       this.errors.set(problemMessages(error));
     } finally {

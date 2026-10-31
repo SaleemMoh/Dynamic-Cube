@@ -12,9 +12,11 @@ crowded every other service's list. Neither the service wizard nor the workflow 
 operation.
 
 ## Decision
-- **Archetypes are declared** (`svc.archetype`, *Service catalog → Archetypes*): code, names, description, icon, order,
-  a **default service template** (a version definition, shared questions only) and a **default workflow** (a workflow
-  definition, or none). Both can be copied from an existing service (*template from*, *workflow from*), then edited. A
+- **Archetypes are declared** (`svc.archetype`, *Services → Service archetypes*, a menu item of its own): code, names,
+  description, icon, order, a **default service template** (a version definition, shared questions only) and a **default
+  workflow** (a workflow definition, or none). Each row opens *Design the service template* in the Service Builder and
+  *Design the default workflow* in the Workflow Designer (the same editors as for a service, saved as a change to the
+  archetype); either can also be copied from an existing service or workflow. No JSON is typed. A
   service names its archetype. A new service opens its archetype's template in the Service Builder. When the service is
   first published it gets the archetype's workflow (otherwise the no-review workflow, as before). An archetype in use
   cannot be deleted. The four seeded archetypes keep their codes and belong to the organization (not locked as system rows), so their names, template and workflow can be edited, or they can be removed. Issuance, Amendment and Visit Request review by role
@@ -31,6 +33,11 @@ operation.
   several services cannot be moved to one of them. The Service Builder's question bank shows shared questions plus the
   service's own, and *New question for this service* creates one there. (The owner confirmed that "service level
   questions" means questions of one service, not questions per service level such as Regular or Premium.)
+- **Integration in the Service Builder is visible at a glance:** an integration step has a blue edge, an *Integration*
+  tag with the operation, and a line saying what it calls, which answers it fills and whether it must succeed; questions
+  filled through an integration carry a blue *Integration* tag, questions filled from the party a green *Beneficiary
+  data* tag, and a lock when the applicant cannot change them (in the bank and in the form). The bank can be filtered by
+  *question of* (all, the shared bank, this service) and *answer type*.
 - **Integration step in the service form** (`INTEGRATION`): an operation, its inputs (from the party, the applicant or
   answers), outputs copied into answers, and *required*. It runs when the applicant moves past the step; the outcome is
   kept on the request (`integrations`) and shown. A required step that failed stops the applicant with the provider's

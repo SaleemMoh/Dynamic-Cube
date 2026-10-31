@@ -25,6 +25,11 @@
   font-family: ui-monospace, monospace;
   font-weight: 600;
 }
+.dc-builder__hint {
+  max-width: 28rem;
+  color: var(--dga-text-3, #6c737f);
+  font-size: 13px;
+}
 .dc-builder__toolbar {
   display: flex;
   flex-wrap: wrap;

@@ -8,6 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
+import { NgTemplateOutlet } from '@angular/common';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
@@ -73,6 +74,7 @@ const CODE = /^[A-Z][A-Z0-9_-]{0,50}$/;
     MatInputModule,
     MatMenuModule,
     MatSelectModule,
+    NgTemplateOutlet,
     MatTooltipModule,
     LocalizePipe,
     TranslatePipe,
@@ -90,18 +92,29 @@ export class FormTab {
   protected readonly stepTypes = STEP_TYPES;
   protected readonly icons = STEP_ICONS;
   protected readonly search = signal('');
+  /** Bank filter: every question, the shared bank's, or this service's own. */
+  protected readonly owner = signal<'ALL' | 'SHARED' | 'OWN'>('ALL');
+  /** Bank filter: an answer type, or every type. */
+  protected readonly answerType = signal<string | null>(null);
 
   protected readonly steps = computed(() => this.store.definition().steps);
   /** Ids of every question list, so a question can be dragged into any section. */
   protected readonly listIds = computed(() => ['bank', ...this.steps().flatMap((s, i) => s.sections.map((_, j) => `q-${i}-${j}`))]);
   protected readonly used = computed(() => new Set(usedQuestions(this.store.definition())));
   /** Shared bank questions and this service's own questions (another service's are not offered). */
+  protected readonly offered = computed(() => {
+    const service = this.store.service();
+    return this.refs.questions().filter((q) => !q.serviceCode || q.serviceCode === service);
+  });
+  /** The answer types of the questions offered, for the type filter. */
+  protected readonly answerTypes = computed(() => [...new Set(this.offered().map((q) => q.type))].sort());
   protected readonly bank = computed(() => {
     const term = this.search().trim().toLowerCase();
-    const service = this.store.service();
-    return this.refs
-      .questions()
-      .filter((q) => !q.serviceCode || q.serviceCode === service)
+    const owner = this.owner();
+    const type = this.answerType();
+    return this.offered()
+      .filter((q) => owner === 'ALL' || (owner === 'OWN' ? !!q.serviceCode : !q.serviceCode))
+      .filter((q) => !type || q.type === type)
       .filter((q) => !term || q.code.toLowerCase().includes(term) || q.label.ar.includes(term) || q.label.en.toLowerCase().includes(term));
   });
   /** What section and question rules can read: the answers, by question code. */
@@ -123,6 +136,15 @@ export class FormTab {
 
   protected question(code: string): BankQuestion | undefined {
     return this.refs.byCode().get(code);
+  }
+
+  /** The questions an integration step's outputs fill, by name. */
+  protected integrationFills(step: { integration?: { outputs?: { question: string }[] } | null }): string {
+    return (step.integration?.outputs ?? [])
+      .map((o) => o.question)
+      .filter(Boolean)
+      .map((code) => this.questionName(code))
+      .join(this.i18n.language() === 'ar' ? '، ' : ', ');
   }
 
   protected questionName(code: string): string {

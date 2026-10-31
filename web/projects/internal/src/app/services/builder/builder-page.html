@@ -1,6 +1,17 @@
 <header class="dc-page__header dc-builder__header">
   <h1>{{ 'builder.title' | dcTranslate }}</h1>
   <div class="dc-builder__pick">
+    @if (archetypeCode()) {
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'builder.archetypeTemplate' | dcTranslate }}</mat-label>
+        <mat-select [ngModel]="archetypeCode()" (ngModelChange)="openArchetype($event)" data-testid="builder-archetype">
+          @for (a of refs.archetypes(); track a.code) {
+            <mat-option [value]="a.code">{{ serviceName(a) }} ({{ a.code }})</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <span class="dc-builder__hint" data-testid="builder-target">{{ 'builder.archetypeHint' | dcTranslate }}</span>
+    } @else {
     <mat-form-field subscriptSizing="dynamic">
       <mat-label>{{ 'versions.service' | dcTranslate }}</mat-label>
       <mat-select [ngModel]="current()" (ngModelChange)="open($event, null)" data-testid="builder-service">
@@ -20,10 +31,11 @@
       </mat-form-field>
       <span class="dc-builder__target" dir="ltr" data-testid="builder-target">→ {{ current() }}/{{ nextNumber() }}</span>
     }
+    }
   </div>
 </header>
 
-@if (current()) {
+@if (editing()) {
   <div class="dc-builder__toolbar" role="toolbar" [attr.aria-label]="'builder.title' | dcTranslate">
     <button
       matIconButton
@@ -84,10 +96,10 @@
       {{ 'designer.check' | dcTranslate }}
     </button>
     @if (canCreate()) {
-      <dc-submit-button [entityType]="'svc.service-version'" (submitted)="save(true)" />
+      <dc-submit-button [entityType]="target()" (submitted)="save(true)" />
       <button matButton="filled" type="button" (click)="save()" [disabled]="busy() || problems().length > 0" data-testid="builder-save">
         <mat-icon fontSet="material-symbols-outlined">save</mat-icon>
-        {{ drafts.saveLabel('svc.service-version') | dcTranslate }}
+        {{ drafts.saveLabel(target()) | dcTranslate }}
       </button>
     }
   </div>
@@ -118,10 +130,10 @@
         <dc-builder-card-tab />
       }
       @case ('workflow') {
-        <dc-builder-workflow-tab [service]="current()" />
+        <dc-builder-workflow-tab [service]="current()" [archetype]="archetypeCode()" />
       }
       @case ('preview') {
-        <dc-builder-preview-tab [service]="current()!" />
+        <dc-builder-preview-tab [service]="editing()!" />
       }
       @case ('json') {
         <div class="dc-builder__json">

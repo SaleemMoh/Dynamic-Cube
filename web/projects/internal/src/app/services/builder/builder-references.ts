@@ -14,6 +14,12 @@ export interface BankQuestion {
   prefill: string | null;
   /** The service the question belongs to; null for a shared bank question. */
   serviceCode: string | null;
+  /** Where the answer comes from: the applicant, the party's data or an integration. */
+  fill: 'NONE' | 'PARTY' | 'INTEGRATION';
+  /** The integration operation that fills the answer. */
+  operation: string | null;
+  /** False: the applicant cannot type or change the answer (it is always the fetched value). */
+  allowManualEntry: boolean;
 }
 
 /** A path an integration input can take its value from, with its name. */
@@ -38,7 +44,7 @@ export class BuilderReferences {
   /** Integration Manager operations (for integration steps). */
   readonly operations = this.list('integ.operation');
   /** Service archetypes, with the template a service without versions starts from. */
-  readonly archetypes = this.list('svc.archetype');
+  readonly archetypes = signal<ConfigRow[]>([]);
   /** Where integration inputs can take their values from: the party's data and the answers. */
   readonly fillSources = toSignal(
     inject(HttpClient)
@@ -50,6 +56,15 @@ export class BuilderReferences {
 
   constructor() {
     this.loadQuestions();
+    this.reloadArchetypes();
+  }
+
+  /** Reads the archetypes again (after one was saved). */
+  reloadArchetypes(): void {
+    this.api
+      .list('svc.archetype')
+      .pipe(catchError(() => of([] as ConfigRow[])))
+      .subscribe((rows) => this.archetypes.set(rows));
   }
 
   /** Reads the question bank again (after a question was added). */
@@ -76,6 +91,9 @@ export class BuilderReferences {
         lov: (q['lov'] as string | null) ?? null,
         prefill: (q['prefill'] as string | null) ?? null,
         serviceCode: q['serviceCode'] && q['serviceCode'] !== '*' ? (q['serviceCode'] as string) : null,
+        fill: fillOf(q['fill'], q['prefill']),
+        operation: ((q['integration'] as { operation?: string | null } | null | undefined)?.operation ?? null) || null,
+        allowManualEntry: q['allowManualEntry'] !== false,
       };
     }),
   );
@@ -135,4 +153,11 @@ export class BuilderReferences {
       ? { code: wf.code, number: Number(latest.code.split('/')[1]), definition: latest['definition'] as { nodes: Record<string, unknown>[] } }
       : { code: wf.code, number: 0, definition: { nodes: [] } };
   }
+}
+
+/** The fill source as the question stores it (older rows only have a prefill path). */
+function fillOf(fill: unknown, prefill: unknown): BankQuestion['fill'] {
+  const value = typeof fill === 'string' ? fill.toUpperCase() : '';
+  if (value === 'PARTY' || value === 'INTEGRATION') return value;
+  return value === 'NONE' || !prefill ? 'NONE' : 'PARTY';
 }

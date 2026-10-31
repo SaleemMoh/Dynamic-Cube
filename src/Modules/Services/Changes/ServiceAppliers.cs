@@ -173,9 +173,9 @@ public sealed class ArchetypePayload : ConfigPayload
 }
 
 /// <summary>
-/// Service archetypes (declarations): a kind of service with its service template and default workflow, each set by
-/// copying an existing service or workflow (or as JSON). A new service takes its archetype's workflow when it is first
-/// published and the builder opens its template.
+/// Service archetypes (declarations): a kind of service with its service template and default workflow, designed in the
+/// Service Builder and the Workflow Designer or copied from an existing service or workflow. A new service takes its
+/// archetype's workflow when it is first published and the builder opens its template.
 /// </summary>
 internal sealed class ArchetypeApplier(ServicesDbContext db, IServiceProvider services) : ServiceApplier<Archetype, ArchetypePayload>(db)
 {
