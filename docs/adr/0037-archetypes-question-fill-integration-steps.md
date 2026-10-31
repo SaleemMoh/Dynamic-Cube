@@ -29,8 +29,8 @@ operation.
 - **Service-level questions:** a question is shared (`serviceCode` empty, shown as `*`) or belongs to one service.
   A version may use shared questions and its own service's questions, never another service's. A question used by
   several services cannot be moved to one of them. The Service Builder's question bank shows shared questions plus the
-  service's own, and *New question for this service* creates one there. (We read "service level questions" this way,
-  not as questions per service level such as Regular or Premium.)
+  service's own, and *New question for this service* creates one there. (The owner confirmed that "service level
+  questions" means questions of one service, not questions per service level such as Regular or Premium.)
 - **Integration step in the service form** (`INTEGRATION`): an operation, its inputs (from the party, the applicant or
   answers), outputs copied into answers, and *required*. It runs when the applicant moves past the step; the outcome is
   kept on the request (`integrations`) and shown. A required step that failed stops the applicant with the provider's
