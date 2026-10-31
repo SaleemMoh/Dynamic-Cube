@@ -14,6 +14,25 @@ export interface MeInfo {
   entityCode?: string | null;
   /** The business apps of the user's roles (null: every app). */
   businessApps?: string[] | null;
+  /** The company the user works in now (ADR-0036 step 5). */
+  company?: string | null;
+}
+
+/** A company the user may work in, with its organization. */
+export interface WorkspaceCompany {
+  code: string;
+  nameAr: string;
+  nameEn: string;
+  entityCode: string | null;
+  entityNameAr: string | null;
+  entityNameEn: string | null;
+}
+
+/** The company the user works in, whether they still have to choose one, and the companies they may work in. */
+export interface WorkspaceInfo {
+  company: string | null;
+  chosen: boolean;
+  companies: WorkspaceCompany[];
 }
 
 /** A business app the user may work in (e.g. Classification, Permits). */

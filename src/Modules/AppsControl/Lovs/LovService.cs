@@ -69,7 +69,7 @@ public sealed class LovService(AppsControlDbContext context, GrantResolver grant
         var defaultValue = grant.DefaultValue;
         if (defaultValue is null && lov.SourceType == LovSourceType.Class)
         {
-            defaultValue = await context.Domains.AsNoTracking()
+            defaultValue = await ForCompany(context.Domains.AsNoTracking(), access.Company)
                 .Where(d => d.ClassId == lov.ClassId && d.IsDefault && d.IsActive)
                 .Select(d => d.Code)
                 .FirstOrDefaultAsync(cancellationToken);
@@ -83,10 +83,17 @@ public sealed class LovService(AppsControlDbContext context, GrantResolver grant
         return new LovPage(lov.Code, items, defaultValue, hasMore);
     }
 
+    /// <summary>
+    /// Values the company works with (ADR-0036 step 5): those of classes without values per company, those serving every
+    /// company and those serving this one. No company (the portal): every value.
+    /// </summary>
+    internal static IQueryable<DomainValue> ForCompany(IQueryable<DomainValue> domains, string? company) =>
+        company is null ? domains : domains.Where(d => d.Companies.Count == 0 || d.Companies.Contains(CompanyScope.All) || d.Companies.Contains(company));
+
     private async Task<List<LovItem>> ClassValuesAsync(Lov lov, AccessSnapshot access, string? parent, string? search, GrantSet grant, int limit, int offset, CancellationToken cancellationToken)
     {
         var today = DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime);
-        var domains = context.Domains.AsNoTracking()
+        var domains = ForCompany(context.Domains.AsNoTracking(), access.Company)
             .Where(d => d.ClassId == lov.ClassId && d.IsActive
                 && (d.EffectiveFrom == null || d.EffectiveFrom <= today) && (d.EffectiveTo == null || d.EffectiveTo >= today));
         if (parent is not null)

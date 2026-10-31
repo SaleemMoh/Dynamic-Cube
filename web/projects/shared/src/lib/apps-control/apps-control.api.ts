@@ -24,9 +24,13 @@ import {
   MenuGroupNode,
   UiTextItem,
   UploadedAsset,
+  WorkspaceInfo,
 } from './apps-control.models';
 
 export const APPS_CONTROL_API = '/api/apps-control/v1';
+
+/** Request header naming the company the employee works in; Apps Control checks it. */
+export const COMPANY_HEADER = 'X-Company';
 
 export interface LovRequest {
   parent?: string | null;
@@ -160,9 +164,19 @@ export class AppsControlApi {
     });
   }
 
-  /** The business apps the signed-in employee may work in. */
-  myBusinessApps(): Observable<MyBusinessApp[]> {
-    return this.http.get<MyBusinessApp[]>(`${APPS_CONTROL_API}/me/business-apps`);
+  /** The business apps the signed-in employee may work in (in the company they work in, or in `company`). */
+  myBusinessApps(company?: string): Observable<MyBusinessApp[]> {
+    return this.http.get<MyBusinessApp[]>(`${APPS_CONTROL_API}/me/business-apps`, company ? { headers: { [COMPANY_HEADER]: company } } : {});
+  }
+
+  /** The companies the signed-in employee may work in and the current one (ADR-0036 step 5). */
+  myWorkspaces(): Observable<WorkspaceInfo> {
+    return this.http.get<WorkspaceInfo>(`${APPS_CONTROL_API}/me/workspaces`);
+  }
+
+  /** Remembers the company the employee works in. */
+  chooseWorkspace(company: string): Observable<WorkspaceInfo> {
+    return this.http.put<WorkspaceInfo>(`${APPS_CONTROL_API}/me/workspace`, { company });
   }
 
   /** Rows under each row of a type (values per class, users per role, menus per group), keyed by code. */

@@ -41,6 +41,20 @@ public sealed class Harness : IAsyncDisposable
     public Task<AccessSnapshot> AccessAsync(string userName) =>
         AsAsync(userName, sp => sp.GetRequiredService<AccessResolver>().GetAsync(CancellationToken.None));
 
+    /// <summary>The user's access while working in a company (the workspace header); null sends no header.</summary>
+    public async Task<AccessSnapshot> AccessAsync(string userName, string? company)
+    {
+        _user.Company = company;
+        try
+        {
+            return await AccessAsync(userName);
+        }
+        finally
+        {
+            _user.Company = null;
+        }
+    }
+
     /// <summary>Maker drafts and submits; the checker approves and publishes (when the area needs approval).</summary>
     public async Task<Guid> PublishAsync(string area, params Change[] changes)
     {

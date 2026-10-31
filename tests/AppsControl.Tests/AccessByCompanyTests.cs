@@ -3,6 +3,7 @@ using DynamicCube.Modules.AppsControl.Domain;
 using DynamicCube.Modules.AppsControl.Tests.Infrastructure;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Security;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 
@@ -47,7 +48,7 @@ public sealed class AccessByCompanyTests(AppsControlFixture fixture) : IAsyncLif
             privileges = new[] { new { companyCode = "*", resourceCode = AppsControlResources.Menus, actions = new[] { "VIEW", "EDIT" } } },
         }));
 
-        var access = await _harness.AccessAsync(user);
+        var access = await _harness.AccessAsync(user, company);
         access.Can(AppsControlResources.Classes, PrivilegeActions.View).ShouldBeTrue("the role held in the company");
         access.Can(AppsControlResources.Lovs, PrivilegeActions.View).ShouldBeTrue("the department's default role");
         access.Can(AppsControlResources.Menus, PrivilegeActions.Edit).ShouldBeTrue("a personal privilege");
@@ -107,7 +108,89 @@ public sealed class AccessByCompanyTests(AppsControlFixture fixture) : IAsyncLif
         var held = row!.Value.GetProperty("roles")[0];
         held.GetProperty("companyCode").GetString().ShouldBe("*");
         held.GetProperty("branches").EnumerateArray().Select(b => b.GetString()).ShouldBe(["*"]);
-        (await _harness.AccessAsync(user)).Can(AppsControlResources.Classes, PrivilegeActions.View).ShouldBeTrue();
+        (await _harness.AccessAsync(user, company)).Can(AppsControlResources.Classes, PrivilegeActions.View).ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task Access_applies_for_the_company_the_person_works_in()
+    {
+        var (first, second, branch, unitType, unit) = (Harness.Unique("CO1"), Harness.Unique("CO2"), Harness.Unique("BR"), Harness.Unique("TYPE"), Harness.Unique("UNIT"));
+        var (clerk, everywhere, department) = (Harness.Unique("CLERK"), Harness.Unique("ALLCO"), Harness.Unique("DEPT"));
+        var user = Harness.Unique("staff").ToLowerInvariant();
+        await _harness.PublishAsync(AppsControlAreas.System,
+            new Change(AppsControlChangeTypes.Company, first, ChangeOperation.Create, new { nameAr = "شركة ١", nameEn = "First" }),
+            new Change(AppsControlChangeTypes.Company, second, ChangeOperation.Create, new { nameAr = "شركة ٢", nameEn = "Second" }));
+        await _harness.PublishAsync(AppsControlAreas.Security,
+            Role(clerk, AppsControlResources.Classes, "VIEW"),
+            Role(department, AppsControlResources.Roles, "VIEW"),
+            new Change(AppsControlChangeTypes.Role, everywhere, ChangeOperation.Create, new
+            {
+                nameAr = "دور",
+                nameEn = "Everywhere",
+                privileges = new[] { new { resourceCode = AppsControlResources.Lovs, actions = new[] { "VIEW" } } },
+                overrides = new[] { new { companyCode = second, privileges = new[] { new { resourceCode = AppsControlResources.Lovs, actions = new[] { "VIEW", "EDIT" } } } } },
+            }));
+        await _harness.PublishAsync(AppsControlAreas.Organization,
+            new Change(AppsControlChangeTypes.OrgUnitType, unitType, ChangeOperation.Create, new { nameAr = "نوع", nameEn = "Type" }),
+            new Change(AppsControlChangeTypes.OrgUnit, unit, ChangeOperation.Create, new { nameAr = "فرع", nameEn = "Branch unit", typeCode = unitType, defaultRoles = new[] { department } }));
+        await _harness.PublishAsync(AppsControlAreas.System,
+            new Change(AppsControlChangeTypes.Branch, branch, ChangeOperation.Create, new { nameAr = "فرع", nameEn = "Branch", companyCode = second, orgUnitCode = unit }));
+        await _harness.PublishAsync(AppsControlAreas.Security, new Change(AppsControlChangeTypes.User, user, ChangeOperation.Create, new
+        {
+            nameAr = "موظف",
+            nameEn = "Staff",
+            assignments = new[] { new { orgUnitCode = unit, isPrimary = true } },
+            roles = new object[]
+            {
+                new { roleCode = clerk, companyCode = first, branches = new[] { "*" } },
+                new { roleCode = everywhere, companyCode = "*", branches = new[] { "*" } },
+            },
+            privileges = new[] { new { companyCode = second, resourceCode = AppsControlResources.Menus, actions = new[] { "VIEW" } } },
+        }));
+
+        var inFirst = await _harness.AccessAsync(user, first);
+        inFirst.Company.ShouldBe(first);
+        inFirst.Companies.ShouldContain(first);
+        inFirst.Companies.ShouldContain(second, "a role held in every company opens every company");
+        inFirst.Can(AppsControlResources.Classes, PrivilegeActions.View).ShouldBeTrue("the role held in this company");
+        inFirst.Can(AppsControlResources.Lovs, PrivilegeActions.View).ShouldBeTrue("the role held in every company");
+        inFirst.Can(AppsControlResources.Lovs, PrivilegeActions.Edit).ShouldBeFalse("the role's own contents here");
+        inFirst.Can(AppsControlResources.Menus, PrivilegeActions.View).ShouldBeFalse("a personal privilege of the other company");
+        inFirst.Can(AppsControlResources.Roles, PrivilegeActions.View).ShouldBeFalse("the department serves a branch of the other company");
+        inFirst.User.ToJson()["company"]!.GetValue<string>().ShouldBe(first);
+
+        var inSecond = await _harness.AccessAsync(user, second);
+        inSecond.Company.ShouldBe(second);
+        inSecond.Can(AppsControlResources.Classes, PrivilegeActions.View).ShouldBeFalse("held in the other company only");
+        inSecond.Can(AppsControlResources.Lovs, PrivilegeActions.Edit).ShouldBeTrue("the role's version for this company");
+        inSecond.Can(AppsControlResources.Menus, PrivilegeActions.View).ShouldBeTrue("the personal privilege of this company");
+        inSecond.Can(AppsControlResources.Roles, PrivilegeActions.View).ShouldBeTrue("the department's default role, in its branch's company");
+
+        // A company the person may not work in is ignored; with none chosen yet they are asked to choose.
+        var unknown = await _harness.AccessAsync(user, "NO_SUCH_COMPANY");
+        unknown.Companies.ShouldContain(unknown.Company!);
+        unknown.CompanyChosen.ShouldBeFalse();
+
+        // The last choice applies when the request names no company.
+        await _harness.AsAsync("admin", async sp =>
+        {
+            var db = sp.GetRequiredService<AppsControl.Persistence.AppsControlDbContext>();
+            await db.Users.Where(u => u.Code == user).ExecuteUpdateAsync(u => u.SetProperty(x => x.LastCompanyCode, second));
+            sp.GetRequiredService<AppsControl.Access.AccessCache>().Invalidate();
+        });
+        var remembered = await _harness.AccessAsync(user, null);
+        (remembered.Company, remembered.CompanyChosen).ShouldBe((second, true));
+    }
+
+    [Fact]
+    public void The_current_company_is_the_requested_one_else_the_last_choice_else_the_first()
+    {
+        string[] companies = ["A", "B"];
+        AppsControl.Access.AccessResolver.CurrentCompany(companies, "B", "A").ShouldBe(("B", true));
+        AppsControl.Access.AccessResolver.CurrentCompany(companies, "X", "B").ShouldBe(("B", true));
+        AppsControl.Access.AccessResolver.CurrentCompany(companies, null, null).ShouldBe(("A", false));
+        AppsControl.Access.AccessResolver.CurrentCompany(["A"], null, null).ShouldBe(("A", true));
+        AppsControl.Access.AccessResolver.CurrentCompany([], "A", null).ShouldBe((null, true));
     }
 
     [Fact]

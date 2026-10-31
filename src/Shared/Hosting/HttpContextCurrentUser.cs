@@ -19,4 +19,7 @@ public sealed class HttpContextCurrentUser(IHttpContextAccessor accessor, ApiHos
     public bool IsAuthenticated => Principal?.Identity?.IsAuthenticated == true;
 
     public string AppCode => options.AppCode;
+
+    public string? RequestedCompany =>
+        accessor.HttpContext?.Request.Headers[WorkspaceHeaders.Company].FirstOrDefault() is { Length: > 0 and <= 100 } code ? code.Trim() : null;
 }

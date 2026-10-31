@@ -4,7 +4,7 @@ namespace DynamicCube.Modules.AppsControl.Access;
 
 /// <summary>
 /// Facts about the signed-in user that grant rules and LOV parameters can use, exposed to JSONLogic as <c>user.*</c>
-/// (e.g. <c>{"var":"user.orgUnitAttributes.REGION"}</c>) plus <c>app</c>.
+/// (e.g. <c>{"var":"user.orgUnitAttributes.REGION"}</c>) plus <c>app</c> and <c>company</c> (the company they work in).
 /// </summary>
 public sealed record UserContext(
     Guid? UserId,
@@ -15,17 +15,19 @@ public sealed record UserContext(
     IReadOnlyList<string> OrgUnits,
     string? PrimaryOrgUnit,
     JsonObject OrgUnitAttributes,
-    IReadOnlyList<string> SubtreeOrgUnits)
+    IReadOnlyList<string> SubtreeOrgUnits,
+    string? Company = null)
 {
     public static UserContext Anonymous(string app) => new(null, "anonymous", app, [], [], [], null, [], []);
 
     /// <summary>Representative context used to check rules when they are saved.</summary>
     public static UserContext Sample() =>
-        new(Guid.Empty, "sample", "INTERNAL", ["ROLE"], ["POSITION"], ["UNIT"], "UNIT", new JsonObject { ["REGION"] = "R1" }, ["UNIT", "SUB_UNIT"]);
+        new(Guid.Empty, "sample", "INTERNAL", ["ROLE"], ["POSITION"], ["UNIT"], "UNIT", new JsonObject { ["REGION"] = "R1" }, ["UNIT", "SUB_UNIT"], "COMPANY");
 
     public JsonObject ToJson() => new()
     {
         ["app"] = App,
+        ["company"] = Company,
         ["user"] = new JsonObject
         {
             ["id"] = UserId?.ToString(),

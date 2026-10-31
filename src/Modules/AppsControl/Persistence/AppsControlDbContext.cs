@@ -153,6 +153,7 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
         Config<UserAccount>(modelBuilder, "user_account", b =>
         {
             b.Property(e => e.Code).HasMaxLength(256);
+            b.Property(e => e.LastCompanyCode).HasMaxLength(100);
             b.HasIndex(e => e.IdpSubject).IsUnique();
             b.Property(e => e.IdpSubject).HasMaxLength(128);
             b.Property(e => e.AuthSource).HasMaxLength(32);

@@ -82,4 +82,9 @@ public sealed class TestUser(string userName) : ICurrentUser
     public bool IsAuthenticated => true;
 
     public string AppCode => "INTERNAL";
+
+    /// <summary>The company sent as the workspace header (ADR-0036 step 5); null sends none.</summary>
+    public string? Company { get; set; }
+
+    public string? RequestedCompany => Company;
 }

@@ -45,7 +45,7 @@ public sealed partial class AccessResolver(
             return _current = AccessSnapshot.Anonymous(currentUser.AppCode);
         }
 
-        var key = $"apps-control:access:{accessCache.Version}:{currentUser.AppCode}:{currentUser.UserId}";
+        var key = $"apps-control:access:{accessCache.Version}:{currentUser.AppCode}:{currentUser.UserId}:{currentUser.RequestedCompany ?? "-"}";
         if (cache.TryGetValue(key, out AccessSnapshot? cached) && cached is not null)
         {
             return _current = cached;
@@ -75,24 +75,49 @@ public sealed partial class AccessResolver(
         var today = DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime);
         var app = await context.Apps.AsNoTracking().Where(a => a.Code == currentUser.AppCode).Select(a => (Guid?)a.Id).SingleOrDefaultAsync(cancellationToken);
 
-        var roles = await context.UserRoles.AsNoTracking()
+        // Roles in force today in any company: those held directly, and the default roles of the units the user is placed
+        // in, counted in the company of the branch the unit serves (ADR-0036).
+        var held = await context.UserRoles.AsNoTracking()
             .Where(r => r.UserId == user.Id && r.Role!.IsActive && (r.Role.AppId == null || r.Role.AppId == app)
                 && (r.EffectiveFrom == null || r.EffectiveFrom <= today) && (r.EffectiveTo == null || r.EffectiveTo >= today))
             .Select(r => new { r.RoleId, r.Role!.Code, r.Role.BusinessApp, r.Role.SharedApps, r.CompanyCode, r.Role.OverrideCompanies })
             .ToListAsync(cancellationToken);
-
-        // Department default roles: those of the units the user is placed in today (ADR-0036).
-        var departmentCodes = await DepartmentRoles.OfUserAsync(context, user.Id, today, cancellationToken);
-        roles.AddRange(await context.Roles.AsNoTracking()
+        var department = await DepartmentRoles.OfUserByCompanyAsync(context, user.Id, today, cancellationToken);
+        var departmentCodes = department.Select(d => d.Role).Distinct().ToList();
+        var departmentRoles = await context.Roles.AsNoTracking()
             .Where(r => departmentCodes.Contains(r.Code) && r.IsActive && (r.AppId == null || r.AppId == app))
-            .Select(r => new { RoleId = r.Id, r.Code, r.BusinessApp, r.SharedApps, CompanyCode = CompanyScope.All, r.OverrideCompanies })
-            .ToListAsync(cancellationToken));
+            .Select(r => new { r.Id, r.Code, r.BusinessApp, r.SharedApps, r.OverrideCompanies })
+            .ToListAsync(cancellationToken);
+        held.AddRange(department.Join(departmentRoles, d => d.Role, r => r.Code, (d, r) => new { RoleId = r.Id, r.Code, r.BusinessApp, r.SharedApps, CompanyCode = d.Company, r.OverrideCompanies }));
+
+        // Personal privileges in their period, in any company.
+        var personalRows = await context.UserPrivileges.AsNoTracking()
+            .Where(p => p.UserId == user.Id && p.Resource!.IsActive
+                && (p.EffectiveFrom == null || p.EffectiveFrom <= today) && (p.EffectiveTo == null || p.EffectiveTo >= today))
+            .Select(p => new { p.CompanyCode, p.Resource!.Code, p.Actions, p.DeniedActions })
+            .ToListAsync(cancellationToken);
+
+        // The company the user works in (ADR-0036 step 5): one of the active companies their roles or personal privileges
+        // open (all of them when one is held in every company), within their organization.
+        var opened = held.Select(r => r.CompanyCode).Concat(personalRows.Select(p => p.CompanyCode)).ToHashSet(StringComparer.Ordinal);
+        var companies = (await context.Companies.AsNoTracking()
+            .Where(c => c.IsActive)
+            .OrderBy(c => c.DisplayOrder).ThenBy(c => c.Code)
+            .Select(c => new { c.Code, c.EntityCode })
+            .ToListAsync(cancellationToken))
+            .Where(c => (user.EntityCode is null || c.EntityCode is null || c.EntityCode == user.EntityCode)
+                && (opened.Contains(CompanyScope.All) || opened.Contains(c.Code)))
+            .Select(c => c.Code)
+            .ToList();
+        var (company, chosen) = CurrentCompany(companies, currentUser.RequestedCompany, user.LastCompanyCode);
+
+        // Only what is held in that company, or in every company, applies.
+        var roles = held.Where(r => r.CompanyCode == CompanyScope.All || r.CompanyCode == company).ToList();
         var roleIds = roles.Select(r => r.RoleId).Distinct().ToList();
 
-        // A role held in a company where it differs contributes that company's override; otherwise its own contents.
-        // (Held in all companies, "*", it uses its own contents until a current company is chosen, ADR-0036 step 5.)
+        // A role that differs in the current company contributes that company's version; otherwise its own contents.
         var sources = roles
-            .Select(r => new RoleSource(r.RoleId, r.OverrideCompanies.Contains(r.CompanyCode) ? r.CompanyCode : null))
+            .Select(r => new RoleSource(r.RoleId, company is not null && r.OverrideCompanies.Contains(company) ? company : null))
             .Distinct()
             .ToList();
         var overrideCompanies = sources.Select(s => s.CompanyCode).OfType<string>().Distinct().ToList();
@@ -120,13 +145,9 @@ public sealed partial class AccessResolver(
             .Select(m => m.Code);
         privilegeRows.AddRange(menuScreens.Select(code => new { Code = code, Actions = new List<string> { PrivilegeActions.View } }));
 
-        // Personal privileges in their period: screens and actions given to this person alone, and actions taken away from
-        // them (which win over what roles give).
-        var personal = await context.UserPrivileges.AsNoTracking()
-            .Where(p => p.UserId == user.Id && p.Resource!.IsActive
-                && (p.EffectiveFrom == null || p.EffectiveFrom <= today) && (p.EffectiveTo == null || p.EffectiveTo >= today))
-            .Select(p => new { p.Resource!.Code, p.Actions, p.DeniedActions })
-            .ToListAsync(cancellationToken);
+        // Personal privileges in the current company (or every company): screens and actions given to this person alone,
+        // and actions taken away from them (which win over what roles give).
+        var personal = personalRows.Where(p => p.CompanyCode == CompanyScope.All || p.CompanyCode == company).ToList();
         privilegeRows.AddRange(personal.Select(p => new { p.Code, p.Actions }));
         var denied = personal.Where(p => p.DeniedActions.Count > 0)
             .GroupBy(p => p.Code, StringComparer.Ordinal)
@@ -163,9 +184,29 @@ public sealed partial class AccessResolver(
             assignments.Select(a => a.UnitCode).ToList(),
             primary?.UnitCode,
             primary is null ? [] : JsonNode.Parse(primary.Attributes) as JsonObject ?? [],
-            subtree.Distinct().ToList());
+            subtree.Distinct().ToList(),
+            company);
 
-        return new AccessSnapshot(userContext, user.NameAr, user.NameEn, user.Status, user.PreferredLanguage, roleIds, privileges, scope, sources);
+        return new AccessSnapshot(userContext, user.NameAr, user.NameEn, user.Status, user.PreferredLanguage, roleIds, privileges, scope, sources, companies, chosen);
+    }
+
+    /// <summary>
+    /// The company the request names when the user may work in it, else the one they last chose, else their first. Chosen
+    /// unless several are open and neither names one.
+    /// </summary>
+    internal static (string? Company, bool Chosen) CurrentCompany(IReadOnlyList<string> companies, string? requested, string? last)
+    {
+        if (requested is not null && companies.Contains(requested, StringComparer.Ordinal))
+        {
+            return (requested, true);
+        }
+
+        if (last is not null && companies.Contains(last, StringComparer.Ordinal))
+        {
+            return (last, true);
+        }
+
+        return (companies.Count > 0 ? companies[0] : null, companies.Count <= 1);
     }
 
     private async Task<UserAccount> ProvisionAsync(CancellationToken cancellationToken)

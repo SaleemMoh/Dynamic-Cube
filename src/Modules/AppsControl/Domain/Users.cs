@@ -31,6 +31,12 @@ public sealed class UserAccount : ConfigEntity
 
     public DateTimeOffset? LastLoginAt { get; set; }
 
+    /// <summary>
+    /// The company the person last chose to work in (ADR-0036 step 5): used when a request names none. Kept by the
+    /// workspace switcher, not by change sets.
+    /// </summary>
+    public string? LastCompanyCode { get; set; }
+
     public List<UserAssignment> Assignments { get; } = [];
 
     public List<UserRole> Roles { get; } = [];

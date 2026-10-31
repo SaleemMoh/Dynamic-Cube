@@ -13,8 +13,22 @@ public sealed class AccessSnapshot(
     IReadOnlyList<Guid> roleIds,
     IReadOnlyDictionary<string, IReadOnlySet<string>> privileges,
     ConfigScope? scope = null,
-    IReadOnlyList<RoleSource>? roleSources = null)
+    IReadOnlyList<RoleSource>? roleSources = null,
+    IReadOnlyList<string>? companies = null,
+    bool companyChosen = true)
 {
+    /// <summary>
+    /// The company the user works in now (ADR-0036 step 5): the one the request names, else the one they last chose, else
+    /// their first; null when they may work in none. Roles, personal privileges and lists apply for this company.
+    /// </summary>
+    public string? Company { get; } = user.Company;
+
+    /// <summary>The active companies the user may work in (their roles or personal privileges open them), in order.</summary>
+    public IReadOnlyList<string> Companies { get; } = companies ?? [];
+
+    /// <summary>False when the user may work in several companies and has not chosen one yet (the switcher then asks).</summary>
+    public bool CompanyChosen { get; } = companyChosen;
+
     /// <summary>
     /// Whose contents each held role contributes: the role's own (no company) or a company's override (ADR-0036), e.g.
     /// for the data permissions of lists of values.

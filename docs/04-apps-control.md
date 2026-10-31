@@ -195,8 +195,17 @@ together as one change:
 **Add or remove roles** (Users list, after ticking rows) adds or removes roles in a company and branches for every
 ticked user. A review first lists, per person, the roles added or removed and those left as they were (already held
 when adding, not held when removing); nothing a person already has is replaced. Each person becomes one update in the
-draft change set. Company and branch limits are stored now and applied once the workspace switcher (current company)
-and branch filtering come (ADR-0036 steps 5 and 6).
+draft change set.
+
+**Current company** (ADR-0036 step 5) — everyone works in one company at a time. `GET /me/workspaces` lists the companies
+the person may work in (active companies of their organization that their roles, department roles or personal privileges
+open; *All companies* opens every one), the current one and whether they still have to choose; `PUT /me/workspace`
+remembers a choice (`user_account.last_company_code`). Every call carries the company in header `X-Company`; the server
+uses it only when the person may work there, else the remembered company, else their first. Access is computed for that
+company (roles held there or in all companies, a role's version for that company, personal privileges of that company or
+all, department roles in the company of the branch the unit serves), `/me/business-apps` lists the apps enabled for it,
+and class values per company are filtered to it (`/classes/{code}/domains` and class lists of values). Branch limits are
+stored and applied in step 6.
 
 **`resource`** — anything securable: `app_id`, `resource_type` (`SCREEN` | `API` | `REPORT` |
 `SERVICE` | `WORKFLOW_ACTION` | `FIELD`), `parent_id`, `available_actions` (text[]).
@@ -211,9 +220,9 @@ in every company; rarely it differs in one. `role.override_companies` lists thos
 role's own). In the role editor (with two or more companies) a company selector shows *All companies* by default;
 choosing a company shows the role as it is there, *Customize* starts the company's version from the role's own, and
 *Drop this company's version* removes it. Saved in the role payload as `overrides: [{ companyCode, privileges, grants,
-menus }]`. Access: a role held in a company where it differs contributes that version (screens, actions, menus and
-list-of-values grants); held in every company it contributes its own contents until a current company is chosen (step
-5). A company that a role differs in cannot be deleted.
+menus }]`. Access: while the person works in a company where the role differs (held there or in every company), the role
+contributes that company's version (screens, actions, menus and list-of-values grants); elsewhere its own contents. A
+company that a role differs in cannot be deleted.
 
 **`role_menu`** — `role_id`, `menu_id`: the menu items a role shows. An assigned item gives the role `VIEW` on the
 screen it opens, so a role can be built from the menu alone; items whose screen the role may view show anyway. A

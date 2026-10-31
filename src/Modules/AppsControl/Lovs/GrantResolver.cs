@@ -38,6 +38,7 @@ public sealed class GrantResolver(AppsControlDbContext context, JsonLogicEvaluat
             ? []
             : await context.UserPrivileges.AsNoTracking()
                 .Where(p => p.UserId == userId && p.Resource!.Code == resourceCode
+                    && (p.CompanyCode == CompanyScope.All || p.CompanyCode == access.Company)
                     && (p.EffectiveFrom == null || p.EffectiveFrom <= today) && (p.EffectiveTo == null || p.EffectiveTo >= today))
                 .SelectMany(p => p.Grants.Where(g => g.LovId == lov.Id))
                 .Select(g => new { g.GrantType, g.GrantedValues })

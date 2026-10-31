@@ -15,9 +15,13 @@ which then has its own screens, actions, data permissions and menus there; the r
 holding the role in that company get that version. Owner feedback on steps 3–4 (done): *all* is always an explicit
 choice (`*`), never an empty field (see "All is chosen, never empty" below); a user's access is a tab of the user editor,
 saved with their details as one change; personal privileges are given on an app's menu tree, with actions and data on
-each screen; the Apps screen shows the Dynamic Cube apps apart from the apps Dynamic Cube manages. Company and branch
-limits are stored now and applied from steps 5 and 6 (a role held in all companies uses its own contents until a current
-company is chosen in step 5). The NHC demo data uses all of it. Replaces entities,
+each screen; the Apps screen shows the Dynamic Cube apps apart from the apps Dynamic Cube manages. Step 5 done: everyone
+works in one company (the owner's decision: there is no "all companies" view). After sign-in an employee who may work in
+several companies chooses one (then an app of it when it has several); the header shows the company and app and changes
+them without signing out; the last choice is remembered. Access is computed for that company: roles held there or in
+every company, the company's version of a role that differs there, personal privileges of that company or every company,
+department roles in the company of the branch the unit serves, and class values serving that company. Branch limits are
+stored and applied in step 6. The NHC demo data uses all of it. Replaces entities,
 business apps, channel apps and the System / Entity / App levels of [ADR-0031](0031-entities-business-apps-levels.md).
 
 ## Context
@@ -99,6 +103,23 @@ by the migration. (A role's data permission "on all screens" is the same kind of
 ### After sign-in: workspace switcher
 Only when a user has more than one company or app: companies grouped by organization, apps as tiles, the last choice
 remembered, switching from the header without signing out. Inactive combinations are never shown.
+
+Implemented (step 5): **everyone works in exactly one company**; there is no "all companies" view, so company limits and
+company versions of roles always mean something.
+
+- **Which companies:** the active companies of the person's organization that their roles, department roles or personal
+  privileges open; holding anything in *All companies* opens every company.
+- **Choosing:** with several companies and none chosen yet, a picker asks after sign-in (companies grouped by organization
+  when there are several, then the apps of the chosen company as tiles, or *All apps*). The header's switcher shows
+  *company · app*; changing the company starts the page again in it, changing the app only filters lists.
+- **Carrying it:** the browser sends the company with every API call (header `X-Company`). The server accepts it only if
+  the person may work there; otherwise, and when no company is sent, it uses the company they last chose (remembered on
+  their account, so a new browser or the field app starts there) or their first. One company: nothing to choose.
+- **What it changes:** menus, screens and actions come from roles held in that company or in every company (a role that
+  differs there contributes the company's version); personal privileges and their data apply in their company or every
+  company; department default roles count in the company of the branch the unit serves (every company when it serves
+  none); lists of class values show the values serving that company. Grant rules can read `company`. Requests, tasks and
+  documents are not filtered by company or branch yet (step 6).
 
 ### Configuration level
 Configuration (services, workflows, document types, lists of values…) belongs to an organization and optionally to some
