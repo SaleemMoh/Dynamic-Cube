@@ -8,6 +8,7 @@ using DynamicCube.Modules.AppsControl.Persistence;
 using DynamicCube.Platform.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Options;
 
 namespace DynamicCube.Modules.AppsControl.Lovs;
 
@@ -18,7 +19,7 @@ public sealed record LovQueryPreview(string? Sql, IReadOnlyList<LovItem> Items, 
 /// Sources of the query builder (registered data objects and classes, with the columns they offer) and the runs of
 /// query LOVs. Queries run on a read-only transaction with a statement timeout; the data object's data scopes apply.
 /// </summary>
-public sealed class LovQueryService(AppsControlDbContext context, DataScopeService scopes)
+public sealed class LovQueryService(AppsControlDbContext context, DataScopeService scopes, IOptions<AppsControlOptions> options)
 {
     public const int TimeoutMilliseconds = 5000;
 
@@ -38,10 +39,14 @@ public sealed class LovQueryService(AppsControlDbContext context, DataScopeServi
     ];
 
     private Dictionary<(string Kind, string Code), LovQuerySourceInfo>? _sources;
+    private Dictionary<(string Kind, string Code), LovQuerySourceInfo>? _withTables;
 
-    /// <summary>Every source the builder may use: active data objects (their registered columns) and classes.</summary>
+    /// <summary>
+    /// Every source the builder may use: active data objects (their registered columns), classes, and the other tables
+    /// and views of the schemas open to data objects (all their columns), which the list registers when it is saved.
+    /// </summary>
     public async Task<IReadOnlyList<LovQuerySourceInfo>> SourcesAsync(CancellationToken cancellationToken) =>
-        [.. (await LoadAsync(cancellationToken)).Values.OrderBy(s => s.Kind, StringComparer.Ordinal).ThenBy(s => s.Code, StringComparer.Ordinal)];
+        [.. (await LoadWithTablesAsync(cancellationToken)).Values.OrderBy(s => s.Kind, StringComparer.Ordinal).ThenBy(s => s.Code, StringComparer.Ordinal)];
 
     /// <param name="pending">Sources registered earlier in the same change set (not saved yet), which count as existing.</param>
     public async Task<IReadOnlyList<LovQueryProblem>> CheckAsync(LovQueryDefinition? query, IEnumerable<LovQuerySourceInfo>? pending, CancellationToken cancellationToken)
@@ -81,7 +86,7 @@ public sealed class LovQueryService(AppsControlDbContext context, DataScopeServi
     {
         ArgumentNullException.ThrowIfNull(access);
         limit = Math.Clamp(limit, 1, 200);
-        var (compiled, problems) = await CompileAsync(query, access, new LovQueryRun(Facts(access), null, search, null, limit + 1, 0), null, cancellationToken);
+        var (compiled, problems) = await CompileAsync(query, access, new LovQueryRun(Facts(access), null, search, null, limit + 1, 0), null, cancellationToken, withTables: true);
         if (compiled is null)
         {
             return new LovQueryPreview(null, [], false, problems, null);
@@ -111,10 +116,11 @@ public sealed class LovQueryService(AppsControlDbContext context, DataScopeServi
         access.User.App,
         access.User.Roles);
 
+    /// <param name="withTables">While building (the preview): tables not registered yet may be read too.</param>
     private async Task<(LovCompiledQuery? Query, IReadOnlyList<LovQueryProblem> Problems)> CompileAsync(
-        LovQueryDefinition? query, AccessSnapshot access, LovQueryRun run, string? resource, CancellationToken cancellationToken)
+        LovQueryDefinition? query, AccessSnapshot access, LovQueryRun run, string? resource, CancellationToken cancellationToken, bool withTables = false)
     {
-        var sources = await LoadAsync(cancellationToken);
+        var sources = withTables ? await LoadWithTablesAsync(cancellationToken) : await LoadAsync(cancellationToken);
 
         // Data scopes of the data objects read (the same rule filters lists, inboxes and reports).
         var scoped = new Dictionary<string, IReadOnlyList<DataScopeFilter>>(StringComparer.Ordinal);
@@ -195,6 +201,31 @@ public sealed class LovQueryService(AppsControlDbContext context, DataScopeServi
                 await connection.CloseAsync();
             }
         }
+    }
+
+    /// <summary>The registered sources and, besides, the tables and views of the open schemas that no data object registers.</summary>
+    private async Task<Dictionary<(string Kind, string Code), LovQuerySourceInfo>> LoadWithTablesAsync(CancellationToken cancellationToken)
+    {
+        if (_withTables is not null)
+        {
+            return _withTables;
+        }
+
+        var sources = new Dictionary<(string Kind, string Code), LovQuerySourceInfo>(await LoadAsync(cancellationToken));
+        var registered = sources.Values.Where(s => s.Kind == LovQueryKinds.DataObject).Select(s => (s.Schema, s.DbObject)).ToHashSet();
+        foreach (var table in await DatabaseCatalog.GetTablesAsync(context, options.Value.DataObjectSchemas, cancellationToken))
+        {
+            if (registered.Contains((table.Schema, table.Name)))
+            {
+                continue;
+            }
+
+            var code = $"{table.Schema}.{table.Name}";
+            var columns = table.Columns.Select(c => new LovSourceColumn(c.Column, c.DataType, LovQueryCompiler.CategoryOf(c.DataType), null, null)).ToList();
+            sources[(LovQueryKinds.Table, code)] = new LovQuerySourceInfo(LovQueryKinds.Table, code, code, code, table.Schema, table.Name, columns, table.IsView ? "VIEW" : "TABLE");
+        }
+
+        return _withTables = sources;
     }
 
     private async Task<Dictionary<(string Kind, string Code), LovQuerySourceInfo>> LoadAsync(CancellationToken cancellationToken)

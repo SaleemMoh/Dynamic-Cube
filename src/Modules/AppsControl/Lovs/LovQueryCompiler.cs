@@ -286,9 +286,9 @@ public static partial class LovQueryCompiler
             }
 
             var kind = source.Kind?.ToUpperInvariant() ?? string.Empty;
-            if (kind is not (LovQueryKinds.Class or LovQueryKinds.DataObject))
+            if (kind is not (LovQueryKinds.Class or LovQueryKinds.DataObject or LovQueryKinds.Table))
             {
-                problems.Add(new($"{path}.kind", "Choose a class or a registered table."));
+                problems.Add(new($"{path}.kind", "Choose a class or a table."));
                 _unresolved.Add(alias);
                 return null;
             }
@@ -298,7 +298,12 @@ public static partial class LovQueryCompiler
             {
                 problems.Add(new($"{path}.code", string.IsNullOrWhiteSpace(source.Code)
                     ? "Choose the class or table."
-                    : kind == LovQueryKinds.Class ? $"Class '{source.Code}' does not exist." : $"'{source.Code}' is not a registered data object."));
+                    : kind switch
+                    {
+                        LovQueryKinds.Class => $"Class '{source.Code}' does not exist.",
+                        LovQueryKinds.Table => $"Table '{source.Code}' is not registered; save the list from the query builder, which registers it.",
+                        _ => $"'{source.Code}' is not a registered data object.",
+                    }));
                 _unresolved.Add(alias);
                 return null;
             }

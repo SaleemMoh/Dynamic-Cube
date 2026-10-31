@@ -17,8 +17,11 @@ public sealed class AppsControlOptions
     /// </summary>
     public bool RelinkAccountsByUserName { get; init; }
 
-    /// <summary>Database schemas whose tables and views may be registered as data objects.</summary>
-    public string[] DataObjectSchemas { get; init; } = ["apps", "lov", "party", "svc", "req", "wf", "doc", "rpt"];
+    /// <summary>
+    /// Database schemas whose tables and views may be registered as data objects and offered by the query builder: the
+    /// modules' own (the platform's infrastructure — audit, change sets, data protection keys — stays closed).
+    /// </summary>
+    public string[] DataObjectSchemas { get; init; } = ["apps", "lov", "party", "svc", "req", "wf", "doc", "dec", "pay", "vis", "cms", "com", "integ", "rpt"];
 
     /// <summary>
     /// Connection string of a read-only database role used for restricted-SQL LOVs. Restricted SQL is disabled when empty.

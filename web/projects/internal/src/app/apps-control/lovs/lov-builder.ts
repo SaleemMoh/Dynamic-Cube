@@ -23,6 +23,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
@@ -51,12 +52,14 @@ import {
   QuerySourceInfo,
   RULE_FACTS,
   RoleGrantRow,
+  SourceKind,
   USER_FACTS,
   columnsOf,
   emptyGroup,
   emptyQuery,
   fromLegacy,
   nextAlias,
+  registerTables,
   stepOf,
   toDefinition,
   withGrant,
@@ -66,7 +69,7 @@ type Preview = LovPreview;
 
 /**
  * The entry of the lists of values screen: a visual query builder. Step by step the administrator chooses a source
- * (a class or a registered table), joins others, maps the value and its labels, filters, sorts and decides who sees
+ * (a class, a registered table, or another table of the modules, registered with the list), joins others, maps the value and its labels, filters, sorts and decides who sees
  * which values (conditions on the user's data, and each role's grant, saved on the roles). The preview runs the query
  * as it is built and shows the SQL it becomes. Lists written in SQL open in an SQL editor.
  */
@@ -102,6 +105,7 @@ export class LovBuilder {
   private readonly i18n = inject(I18nService);
   private readonly dialog = inject(MatDialog);
   private readonly appContext = inject(BusinessAppContext);
+  private readonly snackBar = inject(MatSnackBar);
 
   protected readonly row: ConfigRow | null = this.data.row;
   protected readonly isNew = !this.row;
@@ -207,9 +211,20 @@ export class LovBuilder {
     return [...groups.values()];
   });
   protected readonly classes = computed(() => this.sources().filter((s) => s.kind === 'CLASS'));
-  protected readonly tables = computed(() =>
+  protected readonly registeredTables = computed(() =>
     this.sources().filter((s) => s.kind === 'DATA_OBJECT'),
   );
+  /** Tables and views not registered yet: the list registers those it uses when it is saved. */
+  protected readonly otherTables = computed(() => this.sources().filter((s) => s.kind === 'TABLE'));
+  /** The tables this list will register when saved. */
+  protected readonly pendingTables = computed(() => {
+    const q = this.query();
+    return [
+      ...new Set(
+        [q.from, ...q.joins].filter((s) => s.kind === 'TABLE' && s.code).map((s) => s.code),
+      ),
+    ];
+  });
   protected readonly fromSource = computed(
     () =>
       this.sources().find(
@@ -258,7 +273,22 @@ export class LovBuilder {
     this.query.set(next);
   }
 
-  protected setFrom(kind: 'CLASS' | 'DATA_OBJECT', code: string): void {
+  /** A table choice is the kind and code together (`DATA_OBJECT|BRANCHES`, `TABLE|party.party`). */
+  protected tableKey(source: { kind: SourceKind; code: string }): string {
+    return source.kind === 'CLASS' || !source.code ? '' : `${source.kind}|${source.code}`;
+  }
+
+  protected pickFrom(key: string): void {
+    const [kind, code] = key.split('|') as [SourceKind, string];
+    this.setFrom(kind, code);
+  }
+
+  protected pickJoin(index: number, key: string): void {
+    const [kind, code] = key.split('|') as [SourceKind, string];
+    this.edit((q) => Object.assign(q.joins[index], { kind, code }));
+  }
+
+  protected setFrom(kind: SourceKind, code: string): void {
     this.edit((q) => {
       const previous = q.from;
       q.from = { kind, code, alias: previous.alias || 'a' };
@@ -323,7 +353,7 @@ export class LovBuilder {
   protected setJoin(
     index: number,
     change: Partial<{
-      kind: 'CLASS' | 'DATA_OBJECT';
+      kind: SourceKind;
       code: string;
       type: 'INNER' | 'LEFT';
       alias: string;
@@ -532,6 +562,10 @@ export class LovBuilder {
 
     const visual = this.mode() === 'VISUAL';
     const columns = this.sqlColumns();
+    // Tables not registered yet become data objects, registered in the same change as the list.
+    const { definition, registrations } = visual
+      ? registerTables(toDefinition(this.query()), this.sources(), this.entityCode())
+      : { definition: null, registrations: [] };
     const payload: Record<string, unknown> = {
       ...payloadOf(this.row),
       nameAr: this.nameAr().trim(),
@@ -540,7 +574,7 @@ export class LovBuilder {
       entityCode: this.entityCode() ?? '',
       businessApps: this.businessApps(),
       sourceType: visual ? 'QUERY' : 'SQL',
-      query: visual ? toDefinition(this.query()) : null,
+      query: definition,
       classCode: null,
       dataObjectCode: null,
       staticFilter: null,
@@ -559,9 +593,31 @@ export class LovBuilder {
 
     this.saving.set(true);
     try {
-      await this.drafts.addChange('apps.lov', code, this.isNew ? 'CREATE' : 'UPDATE', payload, {
-        submit,
-      });
+      const operation = this.isNew ? 'CREATE' : 'UPDATE';
+      if (registrations.length && submit && this.drafts.needsApproval('apps.lov')) {
+        // Sent for approval together: one change set with the tables' registrations and the list.
+        const sets = await firstValueFrom(
+          this.api.importPackage({
+            title: `${this.i18n.translate('qb.title')} — ${code}`,
+            items: [
+              ...registrations.map((r) => ({
+                entityType: 'apps.data-object',
+                entityCode: r.code,
+                operation: 'CREATE',
+                payload: r.payload,
+              })),
+              { entityType: 'apps.lov', entityCode: code, operation, payload },
+            ],
+          }),
+        );
+        for (const set of sets) await firstValueFrom(this.api.submit(set.changeSet.id));
+        this.snackBar.open(this.i18n.translate('drafts.submitted'), undefined, { duration: 6000 });
+      } else {
+        for (const r of registrations) {
+          await this.drafts.addChange('apps.data-object', r.code, 'CREATE', r.payload);
+        }
+        await this.drafts.addChange('apps.lov', code, operation, payload, { submit });
+      }
 
       // Role grants live on the roles (Security changes); a new list must be approved before roles can refer to it.
       if (!this.isNew) {

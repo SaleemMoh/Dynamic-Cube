@@ -1,10 +1,13 @@
 import {
   BuilderQuery,
+  QuerySourceInfo,
+  dataObjectCode,
   emptyGroup,
   emptyQuery,
   fromDefinition,
   fromLegacy,
   nextAlias,
+  registerTables,
   stepOf,
   toDefinition,
   withGrant,
@@ -121,5 +124,69 @@ describe('LOV builder model', () => {
     expect(stepOf('query.where.groups[0].conditions[1].value')).toBe(3);
     expect(stepOf('query.where.conditions[0].user')).toBe(5);
     expect(stepOf('nameAr')).toBe(6);
+  });
+
+  it('registers the tables a list uses with the list, once each, under a free data object code', () => {
+    const table = (schema: string, name: string, objectType = 'TABLE'): QuerySourceInfo => ({
+      kind: 'TABLE',
+      code: `${schema}.${name}`,
+      nameAr: `${schema}.${name}`,
+      nameEn: `${schema}.${name}`,
+      schema,
+      dbObject: name,
+      objectType,
+      columns: [{ name: 'code', dataType: 'TEXT', category: 'TEXT', labelAr: null, labelEn: null }],
+    });
+    const sources: QuerySourceInfo[] = [
+      { ...table('apps', 'branch'), kind: 'DATA_OBJECT', code: 'PARTY_PARTY' },
+      table('party', 'party'),
+      table('svc', 'request', 'VIEW'),
+    ];
+    const definition = toDefinition({
+      ...emptyQuery(),
+      from: { kind: 'TABLE', code: 'party.party', alias: 'p' },
+      joins: [
+        {
+          kind: 'TABLE',
+          code: 'svc.request',
+          alias: 'r',
+          type: 'LEFT',
+          on: [{ left: 'p.code', right: 'r.code' }],
+        },
+        {
+          kind: 'TABLE',
+          code: 'party.party',
+          alias: 'q',
+          type: 'INNER',
+          on: [{ left: 'p.code', right: 'q.code' }],
+        },
+        {
+          kind: 'CLASS',
+          code: 'REGION',
+          alias: 'g',
+          type: 'LEFT',
+          on: [{ left: 'p.code', right: 'g.code' }],
+        },
+      ],
+    });
+
+    const { definition: saved, registrations } = registerTables(definition, sources, 'ENTITY');
+
+    expect(registrations.map((r) => r.code)).toEqual(['PARTY_PARTY_2', 'SVC_REQUEST']);
+    expect(saved.from).toEqual({ kind: 'DATA_OBJECT', code: 'PARTY_PARTY_2', alias: 'p' });
+    expect(saved.joins.map((j) => `${j.kind}:${j.code}`)).toEqual([
+      'DATA_OBJECT:SVC_REQUEST',
+      'DATA_OBJECT:PARTY_PARTY_2',
+      'CLASS:REGION',
+    ]);
+    expect(registrations[1].payload).toMatchObject({
+      dbSchema: 'svc',
+      dbObject: 'request',
+      objectType: 'VIEW',
+      entityCode: 'ENTITY',
+      businessApp: '',
+    });
+    expect((registrations[0].payload['columns'] as unknown[]).length).toBe(1);
+    expect(dataObjectCode('com', 'outbound-message', new Set())).toBe('COM_OUTBOUND_MESSAGE');
   });
 });

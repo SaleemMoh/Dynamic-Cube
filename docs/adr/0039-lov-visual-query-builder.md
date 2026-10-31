@@ -1,7 +1,8 @@
 # ADR-0039: Lists of values built in a visual query builder
 
 **Status:** Accepted (asked for by the owner; implemented). The owner chose: registered tables and classes only, and role
-grants saved on the roles (Security approval).
+grants saved on the roles (Security approval). Owner's follow-up (done): the builder offers the other tables too — the
+modules' tables not registered yet, which the list registers when it is saved.
 
 ## Context
 A list of values came from one class, one registered data object (three column names typed by hand) or restricted SQL.
@@ -19,6 +20,13 @@ separate privilege and a read-only database role. Which values each role sees wa
   connection inside a read-only transaction with a 5-second timeout. The user's grant on the value, and the data
   scopes of the data objects read, apply on top. A definition that no longer compiles (a source or column removed)
   shows no values rather than failing the screen.
+- **Other tables** (owner's follow-up). Besides classes and registered data objects, the builder offers every table and
+  view of the schemas open to data objects (`AppsControl:DataObjectSchemas`, now all the modules' schemas; the
+  platform's infrastructure — audit, change sets, data protection — stays closed) with all their columns. The preview
+  reads them as they are; saving the list registers each one it uses as a data object (code `SCHEMA_NAME`, all its
+  columns, the list's organization and no app, so other lists can reuse it) in the same change set, before the list —
+  in the draft, or sent for approval together. A saved list still never reads an unregistered table: one naming a table
+  directly is refused.
 - **Conditions on the user's data** compare a column with the signed-in user's company, branches (passing when they
   have every branch), unit, units, units below, user name, app or roles. They are kept apart from the filter and always
   joined to it with *and*, so a filter of *any* can never widen what a user sees. Portal visitors have none of these
@@ -37,5 +45,6 @@ separate privilege and a read-only database role. Which values each role sees wa
 - Most lists no longer need restricted SQL; it stays for queries the builder cannot express.
 - Saving role grants from the builder creates two changes in two areas (lists, security), each approved by its own
   approvers.
-- Lists built visually still follow the registration rule: a table must be registered (and its columns chosen) before
-  any list, including a public one, can read it.
+- Lists built visually still follow the registration rule: a table is registered before any list, including a public
+  one, can read it — by hand with chosen columns, or by the builder with all its columns when the list is saved (the
+  approver sees the registration next to the list).

@@ -333,7 +333,9 @@ dropdowns and, through grants, **filters data** for each role.
 
 ### `data_object` (catalog)
 
-Tables or views that LOVs and data scopes may use. Only registered objects are queryable.
+Tables or views that LOVs and data scopes may use. Only registered objects are queryable. Tables of the modules' schemas
+may be registered (`AppsControl:DataObjectSchemas`: `apps`, `party`, `svc`, `wf`, `doc`, `dec`, `pay`, `vis`, `cms`,
+`com`, `integ`); the platform's infrastructure (`audit`, `cfg`, `platform`) is not offered.
 
 | Column | Notes |
 |---|---|
@@ -376,8 +378,8 @@ in its SQL editor; class and data object lists open converted to a query). Its s
 
 | Step | What it sets |
 |---|---|
-| Source | A class (its typed view `apps.v_class_*`, keeping only active values in effect today that serve the user's company) or a registered data object (*Register a table* adds one; it can be used in the same change) |
-| Join | Other classes or data objects: *every row* (`LEFT`) or *matching rows only* (`INNER`), on one or more equal column pairs |
+| Source | A class (its typed view `apps.v_class_*`, keeping only active values in effect today that serve the user's company), a registered data object, or **another table** of the modules' schemas (any table or view not registered yet, with all its columns). Saving a list that uses another table registers it as a data object (code `SCHEMA_NAME`, e.g. `SVC_SERVICE`; all its columns) in the same change, approved with the list; *Register a table* still registers one with chosen columns and labels |
+| Join | Other classes, data objects or tables: *every row* (`LEFT`) or *matching rows only* (`INNER`), on one or more equal column pairs |
 | Value & labels | The columns giving the stored value, the Arabic and English labels, and the parent (cascading lists) |
 | Filter | Conditions (all / any, with groups): equals, not equals, greater or less than, contains, starts or ends with, one of, empty — by the column's type |
 | Sort | Columns, ascending or descending; *each value once* (distinct) |
@@ -385,7 +387,8 @@ in its SQL editor; class and data object lists open converted to a query). Its s
 | Details | Organization and apps, full list or type-ahead, max rows, single or multiple selection, active |
 
 A live preview runs the query as it is built (as the administrator, without role grants) and shows the SQL it becomes.
-The definition holds only registered names and values: the platform quotes the names, binds every value as a parameter
+A saved definition holds only registered names and values (another table is previewed while building, and registered
+when the list is saved): the platform quotes the names, binds every value as a parameter
 and runs the query in a read-only transaction with a 5-second timeout; the user's grant on the value and the data
 scopes of the data objects read are applied on top. Endpoints: `GET /api/apps-control/v1/admin/lov-builder/sources`,
 `POST …/lov-builder/preview`, `GET …/lov-builder/grants/{code}`.

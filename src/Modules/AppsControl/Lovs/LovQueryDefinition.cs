@@ -98,6 +98,12 @@ public static class LovQueryKinds
 {
     public const string Class = "CLASS";
     public const string DataObject = "DATA_OBJECT";
+
+    /// <summary>
+    /// A table or view not registered yet (code <c>schema.name</c>): the builder offers it and previews it; saving the list
+    /// registers it as a data object in the same change, so a saved list never reads an unregistered table.
+    /// </summary>
+    public const string Table = "TABLE";
 }
 
 /// <summary>How a column compares: as text, number, date, true/false, or not at all (JSON).</summary>
@@ -114,7 +120,8 @@ public enum LovColumnCategory
 public sealed record LovSourceColumn(string Name, string DataType, LovColumnCategory Category, string? LabelAr, string? LabelEn);
 
 /// <summary>A source the builder offers: where it lives in the database and its usable columns.</summary>
-public sealed record LovQuerySourceInfo(string Kind, string Code, string NameAr, string NameEn, string Schema, string DbObject, IReadOnlyList<LovSourceColumn> Columns);
+/// <param name="ObjectType">For a table not registered yet: <c>TABLE</c> or <c>VIEW</c>, as it is registered when the list is saved.</param>
+public sealed record LovQuerySourceInfo(string Kind, string Code, string NameAr, string NameEn, string Schema, string DbObject, IReadOnlyList<LovSourceColumn> Columns, string? ObjectType = null);
 
 /// <summary>Facts of the signed-in user a condition may compare with; null where the user has every value (all branches).</summary>
 public sealed record LovUserFacts(

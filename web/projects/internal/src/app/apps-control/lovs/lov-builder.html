@@ -131,7 +131,7 @@
                   @case ('get') {
                     <p class="qb-muted">{{ 'qb.get.hint' | dcTranslate }}</p>
                     <mat-button-toggle-group
-                      [value]="query().from.kind"
+                      [value]="query().from.kind === 'CLASS' ? 'CLASS' : 'DATA_OBJECT'"
                       (change)="setFrom($event.value, '')"
                       [attr.aria-label]="'qb.source' | dcTranslate"
                       data-testid="qb-from-kind"
@@ -146,22 +146,52 @@
                     <div class="qb-row">
                       <mat-form-field subscriptSizing="dynamic" class="qb-grow">
                         <mat-label>{{ 'qb.source' | dcTranslate }}</mat-label>
-                        <mat-select
-                          [value]="query().from.code"
-                          (selectionChange)="setFrom(query().from.kind, $event.value)"
-                          data-testid="qb-from"
-                        >
-                          @for (
-                            s of query().from.kind === 'CLASS' ? classes() : tables();
-                            track s.code
-                          ) {
-                            <mat-option [value]="s.code"
-                              >{{ { ar: s.nameAr, en: s.nameEn } | dcLocalize }} ({{
-                                s.code
-                              }})</mat-option
+                        @if (query().from.kind === 'CLASS') {
+                          <mat-select
+                            [value]="query().from.code"
+                            (selectionChange)="setFrom('CLASS', $event.value)"
+                            data-testid="qb-from"
+                          >
+                            @for (s of classes(); track s.code) {
+                              <mat-option [value]="s.code"
+                                >{{ { ar: s.nameAr, en: s.nameEn } | dcLocalize }} ({{
+                                  s.code
+                                }})</mat-option
+                              >
+                            }
+                          </mat-select>
+                        } @else {
+                          <mat-select
+                            [value]="tableKey(query().from)"
+                            (selectionChange)="pickFrom($event.value)"
+                            data-testid="qb-from"
+                          >
+                            <mat-optgroup [label]="'qb.tables.registered' | dcTranslate">
+                              @for (s of registeredTables(); track s.code) {
+                                <mat-option [value]="'DATA_OBJECT|' + s.code"
+                                  >{{ { ar: s.nameAr, en: s.nameEn } | dcLocalize }} ({{
+                                    s.code
+                                  }})</mat-option
+                                >
+                              }
+                            </mat-optgroup>
+                            <mat-optgroup
+                              [label]="'qb.tables.other' | dcTranslate"
+                              data-testid="qb-other-tables"
                             >
-                          }
-                        </mat-select>
+                              @for (s of otherTables(); track s.code) {
+                                <mat-option [value]="'TABLE|' + s.code"
+                                  ><bdi dir="ltr">{{ s.code }}</bdi>
+                                  @if (s.objectType === 'VIEW') {
+                                    <small class="qb-muted"
+                                      >({{ 'qb.tables.view' | dcTranslate }})</small
+                                    >
+                                  }
+                                </mat-option>
+                              }
+                            </mat-optgroup>
+                          </mat-select>
+                        }
                       </mat-form-field>
                       <mat-form-field subscriptSizing="dynamic" class="qb-alias">
                         <mat-label>{{ 'qb.alias' | dcTranslate }}</mat-label>
@@ -174,7 +204,13 @@
                         />
                       </mat-form-field>
                     </div>
-                    @if (query().from.kind === 'DATA_OBJECT') {
+                    @if (query().from.kind !== 'CLASS') {
+                      @if (pendingTables().length) {
+                        <p class="qb-note qb-note--warn" data-testid="qb-will-register">
+                          {{ 'qb.tables.willRegister' | dcTranslate }}
+                          <bdi dir="ltr">{{ pendingTables().join(', ') }}</bdi>
+                        </p>
+                      }
                       <div class="qb-register">
                         <button
                           matButton
@@ -212,7 +248,7 @@
                       <div class="qb-card" [attr.data-testid]="'qb-join-' + ji">
                         <div class="qb-row">
                           <mat-button-toggle-group
-                            [value]="j.kind"
+                            [value]="j.kind === 'CLASS' ? 'CLASS' : 'DATA_OBJECT'"
                             (change)="setJoin(ji, { kind: $event.value })"
                           >
                             <mat-button-toggle value="CLASS">{{
@@ -224,19 +260,52 @@
                           </mat-button-toggle-group>
                           <mat-form-field subscriptSizing="dynamic" class="qb-grow">
                             <mat-label>{{ 'qb.source' | dcTranslate }}</mat-label>
-                            <mat-select
-                              [value]="j.code"
-                              (selectionChange)="setJoin(ji, { code: $event.value })"
-                              [attr.data-testid]="'qb-join-source-' + ji"
-                            >
-                              @for (s of j.kind === 'CLASS' ? classes() : tables(); track s.code) {
-                                <mat-option [value]="s.code"
-                                  >{{ { ar: s.nameAr, en: s.nameEn } | dcLocalize }} ({{
-                                    s.code
-                                  }})</mat-option
+                            @if (j.kind === 'CLASS') {
+                              <mat-select
+                                [value]="j.code"
+                                (selectionChange)="setJoin(ji, { code: $event.value })"
+                                [attr.data-testid]="'qb-join-source-' + ji"
+                              >
+                                @for (s of classes(); track s.code) {
+                                  <mat-option [value]="s.code"
+                                    >{{ { ar: s.nameAr, en: s.nameEn } | dcLocalize }} ({{
+                                      s.code
+                                    }})</mat-option
+                                  >
+                                }
+                              </mat-select>
+                            } @else {
+                              <mat-select
+                                [value]="tableKey(j)"
+                                (selectionChange)="pickJoin(ji, $event.value)"
+                                [attr.data-testid]="'qb-join-source-' + ji"
+                              >
+                                <mat-optgroup [label]="'qb.tables.registered' | dcTranslate">
+                                  @for (s of registeredTables(); track s.code) {
+                                    <mat-option [value]="'DATA_OBJECT|' + s.code"
+                                      >{{ { ar: s.nameAr, en: s.nameEn } | dcLocalize }} ({{
+                                        s.code
+                                      }})</mat-option
+                                    >
+                                  }
+                                </mat-optgroup>
+                                <mat-optgroup
+                                  [label]="'qb.tables.other' | dcTranslate"
+                                  data-testid="qb-other-tables"
                                 >
-                              }
-                            </mat-select>
+                                  @for (s of otherTables(); track s.code) {
+                                    <mat-option [value]="'TABLE|' + s.code"
+                                      ><bdi dir="ltr">{{ s.code }}</bdi>
+                                      @if (s.objectType === 'VIEW') {
+                                        <small class="qb-muted"
+                                          >({{ 'qb.tables.view' | dcTranslate }})</small
+                                        >
+                                      }
+                                    </mat-option>
+                                  }
+                                </mat-optgroup>
+                              </mat-select>
+                            }
                           </mat-form-field>
                           <mat-form-field subscriptSizing="dynamic" class="qb-alias">
                             <mat-label>{{ 'qb.alias' | dcTranslate }}</mat-label>

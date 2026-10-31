@@ -1,6 +1,7 @@
 /** The visual query builder's model of a list of values (source type QUERY) and its conversions. */
 
-export type SourceKind = 'CLASS' | 'DATA_OBJECT';
+/** A class, a registered table (data object), or a table not registered yet (registered when the list is saved). */
+export type SourceKind = 'CLASS' | 'DATA_OBJECT' | 'TABLE';
 export type ColumnCategory = 'TEXT' | 'NUMBER' | 'DATE' | 'BOOL' | 'JSON';
 
 export interface SourceColumn {
@@ -19,6 +20,8 @@ export interface QuerySourceInfo {
   schema: string;
   dbObject: string;
   columns: SourceColumn[];
+  /** For a table not registered yet: TABLE or VIEW. */
+  objectType?: string | null;
 }
 
 export interface QuerySource {
@@ -310,5 +313,74 @@ function normalizeGroup(group: Partial<QueryGroup>): QueryGroup {
     match: group.match === 'ANY' ? 'ANY' : 'ALL',
     conditions: (group.conditions ?? []).map((c) => ({ ...c })),
     groups: (group.groups ?? []).map(normalizeGroup),
+  };
+}
+
+/** A table the list registers as a data object when it is saved (in the same change). */
+export interface TableRegistration {
+  code: string;
+  payload: Record<string, unknown>;
+}
+
+/** The data object code a table is registered under: schema and name in capitals (e.g. PARTY_PARTY), unique. */
+export function dataObjectCode(schema: string, name: string, taken: Set<string>): string {
+  const base = `${schema}_${name}`.toUpperCase().replace(/[^A-Z0-9_]/g, '_');
+  let code = base;
+  for (let n = 2; taken.has(code); n++) code = `${base}_${n}`;
+  return code;
+}
+
+/**
+ * The definition as saved, with every table not registered yet replaced by the data object it is registered as, and
+ * those registrations (all the table's columns, at the list's organization and no app, so other lists can use them).
+ */
+export function registerTables(
+  definition: QueryDefinition,
+  sources: QuerySourceInfo[],
+  entityCode: string | null,
+): { definition: QueryDefinition; registrations: TableRegistration[] } {
+  const taken = new Set(sources.filter((s) => s.kind === 'DATA_OBJECT').map((s) => s.code));
+  const codes = new Map<string, string>();
+  const registrations: TableRegistration[] = [];
+  const convert = <T extends QuerySource>(source: T): T => {
+    if (source.kind !== 'TABLE') return source;
+    const info = sources.find((s) => s.kind === 'TABLE' && s.code === source.code);
+    if (!info) return source;
+    let code = codes.get(info.code);
+    if (!code) {
+      code = dataObjectCode(info.schema, info.dbObject, taken);
+      taken.add(code);
+      codes.set(info.code, code);
+      registrations.push({
+        code,
+        payload: {
+          nameAr: `جدول ${info.schema}.${info.dbObject}`,
+          nameEn: `${info.schema}.${info.dbObject}`,
+          entityCode: entityCode ?? '',
+          businessApp: '',
+          dbSchema: info.schema,
+          dbObject: info.dbObject,
+          objectType: info.objectType === 'VIEW' ? 'VIEW' : 'TABLE',
+          columns: info.columns.map((c) => ({
+            name: c.name,
+            dataType: c.dataType,
+            labelAr: c.labelAr,
+            labelEn: c.labelEn,
+            filterable: false,
+            searchable: false,
+          })),
+          scopeBindings: [],
+        },
+      });
+    }
+    return { ...source, kind: 'DATA_OBJECT', code };
+  };
+  return {
+    definition: {
+      ...definition,
+      from: convert(definition.from),
+      joins: definition.joins.map(convert),
+    },
+    registrations,
   };
 }

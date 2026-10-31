@@ -166,6 +166,69 @@ public sealed class LovQueryBuilderTests(AppsControlFixture fixture) : IAsyncLif
     }
 
     [Fact]
+    public async Task Other_tables_are_offered_and_previewed_and_a_saved_list_registers_them_first()
+    {
+        var table = Harness.Unique("qb_parcel").ToLowerInvariant();
+        await _harness.AsAsync("admin", async sp => await Sql.QueryAsync(
+            sp.GetRequiredService<Persistence.AppsControlDbContext>(),
+            $"CREATE TABLE apps.{table} (code text, name_ar text, name_en text, area numeric); "
+            + $"INSERT INTO apps.{table} VALUES ('P1', 'قطعة 1', 'Parcel 1', 500), ('P2', 'قطعة 2', 'Parcel 2', 900)"));
+
+        async Task<IReadOnlyList<LovQuerySourceInfo>> Sources() =>
+            await _harness.AsAsync("admin", sp => sp.GetRequiredService<LovQueryService>().SourcesAsync(CancellationToken.None));
+        var sources = await Sources();
+        var other = sources.Single(s => s.Kind == LovQueryKinds.Table && s.Code == $"apps.{table}");
+        other.ObjectType.ShouldBe("TABLE");
+        other.Columns.Select(c => c.Name).ShouldBe(["code", "name_ar", "name_en", "area"]);
+        other.Columns.Single(c => c.Name == "area").Category.ShouldBe(LovColumnCategory.Number);
+        sources.ShouldNotContain(s => s.Kind == LovQueryKinds.Table
+            && (s.Code.StartsWith("cfg.", StringComparison.Ordinal) || s.Code.StartsWith("platform.", StringComparison.Ordinal)
+                || s.Code.StartsWith("apps.v_class_", StringComparison.Ordinal) || s.Code.Contains("__", StringComparison.Ordinal)),
+            "the platform's infrastructure, migration history and class views (offered as classes) are not offered");
+
+        // While building, the table is previewed as it is.
+        var definition = new LovQueryDefinition
+        {
+            From = new LovQuerySource { Kind = LovQueryKinds.Table, Code = $"apps.{table}", Alias = "p" },
+            Map = new LovQueryMap { Value = "p.code", LabelAr = "p.name_ar", LabelEn = "p.name_en" },
+            Where = new LovQueryGroup { Match = "ALL", Conditions = [new LovQueryCondition { Column = "p.area", Op = "GT", Value = 600 }] },
+        };
+        var preview = await _harness.AsAsync("admin", async sp => await sp.GetRequiredService<LovQueryService>().PreviewAsync(
+            definition, await sp.GetRequiredService<Access.AccessResolver>().GetAsync(CancellationToken.None), 10, null, CancellationToken.None));
+        preview.Problems.ShouldBeEmpty();
+        preview.Items.ShouldHaveSingleItem().Value.ShouldBe("P2");
+
+        // A saved list never reads an unregistered table.
+        object Saved(string kind, string code) => new
+        {
+            from = new { kind, code, alias = "p" },
+            map = new { value = "p.code", labelAr = "p.name_ar", labelEn = "p.name_en" },
+        };
+        var refused = await Should.ThrowAsync<ChangeValidationException>(() => _harness.PublishAsync(AppsControlAreas.Lovs, Lov(Harness.Unique("LOV"), Saved(LovQueryKinds.Table, $"apps.{table}"))));
+        refused.Errors.Keys.ShouldBe(["query.from.code"]);
+
+        // As the builder saves it: the table registered as a data object, with the list, in one change.
+        var (dataObject, lov) = ("APPS_" + table.ToUpperInvariant(), Harness.Unique("LOV"));
+        await _harness.PublishAsync(
+            AppsControlAreas.Lovs,
+            new Change(AppsControlChangeTypes.DataObject, dataObject, ChangeOperation.Create, new
+            {
+                nameAr = "جدول apps." + table,
+                nameEn = "apps." + table,
+                businessApp = "",
+                dbSchema = "apps",
+                dbObject = table,
+                objectType = "TABLE",
+                columns = other.Columns.Select(c => new { name = c.Name, dataType = c.DataType }).ToArray(),
+            }),
+            Lov(lov, Saved(LovQueryKinds.DataObject, dataObject)));
+        (await ValuesAsync("admin", lov, new LovQuery())).Items.Select(i => i.Value).ShouldBe(["P1", "P2"], ignoreOrder: true);
+        var after = await Sources();
+        after.ShouldNotContain(s => s.Kind == LovQueryKinds.Table && s.Code == $"apps.{table}", "a registered table is offered as registered");
+        after.ShouldContain(s => s.Kind == LovQueryKinds.DataObject && s.Code == dataObject);
+    }
+
+    [Fact]
     public async Task The_builder_lists_its_sources_and_previews_a_definition()
     {
         var sources = await _harness.AsAsync("admin", sp => sp.GetRequiredService<LovQueryService>().SourcesAsync(CancellationToken.None));
