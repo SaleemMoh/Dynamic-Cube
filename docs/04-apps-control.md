@@ -342,7 +342,8 @@ Tables or views that LOVs and data scopes may use. Only registered objects are q
 | Column | Notes |
 |---|---|
 | `code`, names | e.g. `LOV_SECTOR`, `LOV_CITY_BY_REGION` |
-| `source_type` | `CLASS` · `DATA_OBJECT` · `INTEGRATION` · `SQL` |
+| `source_type` | `QUERY` (the visual query builder, ADR-0039) · `CLASS` · `DATA_OBJECT` · `INTEGRATION` · `SQL` |
+| `query` | When `QUERY`: the query definition (jsonb), below |
 | `class_id` | When `CLASS` |
 | `data_object_id` | When `DATA_OBJECT` |
 | `integration_operation_code` | When `INTEGRATION` (cached) |
@@ -363,6 +364,27 @@ only (`@user_id`, `@username`, `@org_unit`, `@app`), validated on save, row limi
 editable only with a dedicated privilege. The LOV names the query's value, Arabic and English label
 (and optional parent) columns; when left empty they default to `value`, `display_ar`, `display_en`,
 so queries can be pasted as they are.
+
+### The visual query builder (`QUERY`, ADR-0039)
+
+The way into *Apps Control → Lists of values*: *New* and every existing list open the builder (lists written in SQL open
+in its SQL editor; class and data object lists open converted to a query). Its steps:
+
+| Step | What it sets |
+|---|---|
+| Source | A class (its typed view `apps.v_class_*`, keeping only active values in effect today that serve the user's company) or a registered data object (*Register a table* adds one; it can be used in the same change) |
+| Join | Other classes or data objects: *every row* (`LEFT`) or *matching rows only* (`INNER`), on one or more equal column pairs |
+| Value & labels | The columns giving the stored value, the Arabic and English labels, and the parent (cascading lists) |
+| Filter | Conditions (all / any, with groups): equals, not equals, greater or less than, contains, starts or ends with, one of, empty — by the column's type |
+| Sort | Columns, ascending or descending; *each value once* (distinct) |
+| Access | **By the user's data**: a column in the user's company, branches (all when they have every branch), unit, units, units below, user name, app or roles — always applied with the filter. **By role**: each role's own grant (all, some values, values from the user's data, nothing) and what users with no grant see (`requires_grant`); saved on the roles, approved as Security changes, once the list exists. **Public**: available to the portal |
+| Details | Organization and apps, full list or type-ahead, max rows, single or multiple selection, active |
+
+A live preview runs the query as it is built (as the administrator, without role grants) and shows the SQL it becomes.
+The definition holds only registered names and values: the platform quotes the names, binds every value as a parameter
+and runs the query in a read-only transaction with a 5-second timeout; the user's grant on the value and the data
+scopes of the data objects read are applied on top. Endpoints: `GET /api/apps-control/v1/admin/lov-builder/sources`,
+`POST …/lov-builder/preview`, `GET …/lov-builder/grants/{code}`.
 
 ### `lov_binding` (screen ↔ LOV)
 

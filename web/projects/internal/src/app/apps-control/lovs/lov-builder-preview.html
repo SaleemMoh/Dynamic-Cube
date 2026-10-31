@@ -1,0 +1,84 @@
+<aside class="qb-preview" data-testid="qb-preview">
+  <div class="qb-preview__head">
+    <h3>{{ 'qb.preview' | dcTranslate }}</h3>
+    @if (previewing()) {
+      <mat-icon fontSet="material-symbols-outlined" class="qb-spin" aria-hidden="true"
+        >progress_activity</mat-icon
+      >
+    }
+  </div>
+  <p class="qb-muted">{{ 'qb.preview.hint' | dcTranslate }}</p>
+  <mat-form-field subscriptSizing="dynamic" class="qb-full">
+    <mat-label>{{ 'qb.preview.search' | dcTranslate }}</mat-label>
+    <mat-icon matPrefix fontSet="material-symbols-outlined">search</mat-icon>
+    <input
+      matInput
+      [ngModel]="search()"
+      (ngModelChange)="search.set($event); searched.emit($event)"
+    />
+  </mat-form-field>
+  @if (preview(); as p) {
+    @if (p.problems.length) {
+      <div class="qb-problems" role="alert" data-testid="qb-problems">
+        <strong>{{ 'qb.problems' | dcTranslate }}</strong>
+        <ul>
+          @for (problem of p.problems; track $index) {
+            <li>
+              <button type="button" class="qb-link" (click)="problemChosen.emit(problem.field)">
+                {{ 'qb.step.' + steps[stepOf(problem.field)] | dcTranslate }}
+              </button>
+              {{ problem.message }}
+            </li>
+          }
+        </ul>
+      </div>
+    } @else if (p.error) {
+      <p class="qb-problems" role="alert">{{ p.error }}</p>
+    } @else {
+      <table class="qb-values">
+        <thead>
+          <tr>
+            <th>{{ 'qb.preview.value' | dcTranslate }}</th>
+            <th>{{ 'qb.preview.labelAr' | dcTranslate }}</th>
+            <th>{{ 'qb.preview.labelEn' | dcTranslate }}</th>
+            @if (hasParent()) {
+              <th>{{ 'qb.preview.parent' | dcTranslate }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of p.items; track $index) {
+            <tr>
+              <td dir="ltr">{{ item.value }}</td>
+              <td dir="rtl">{{ item.labelAr }}</td>
+              <td dir="ltr">{{ item.labelEn }}</td>
+              @if (hasParent()) {
+                <td dir="ltr">{{ item.parent }}</td>
+              }
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4" class="qb-muted">{{ 'qb.preview.empty' | dcTranslate }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      @if (p.hasMore) {
+        <p class="qb-muted">{{ 'qb.preview.more' | dcTranslate }}</p>
+      }
+    }
+    @if (p.sql) {
+      <button matButton type="button" (click)="showSql.set(!showSql())" data-testid="qb-show-sql">
+        <mat-icon fontSet="material-symbols-outlined">{{
+          showSql() ? 'expand_less' : 'code'
+        }}</mat-icon>
+        {{ 'qb.sql' | dcTranslate }}
+      </button>
+      @if (showSql()) {
+        <pre class="qb-sql" dir="ltr" data-testid="qb-sql">{{ p.sql }}</pre>
+      }
+    }
+  } @else {
+    <p class="qb-empty">{{ 'qb.preview.start' | dcTranslate }}</p>
+  }
+</aside>

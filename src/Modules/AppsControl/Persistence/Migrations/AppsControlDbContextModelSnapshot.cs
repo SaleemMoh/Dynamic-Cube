@@ -1677,6 +1677,10 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnType("character varying(63)")
                         .HasColumnName("parent_column");
 
+                    b.Property<string>("Query")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("query");
+
                     b.Property<bool>("RequiresGrant")
                         .HasColumnType("boolean")
                         .HasColumnName("requires_grant");

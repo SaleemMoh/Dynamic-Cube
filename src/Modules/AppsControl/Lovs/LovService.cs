@@ -23,7 +23,7 @@ public sealed class LovNotFoundException(string code) : Exception($"LOV '{code}'
 /// Reads LOV values: generates the query for the LOV's source and always applies the user's grant, so the same rule
 /// governs every dropdown that uses the LOV.
 /// </summary>
-public sealed class LovService(AppsControlDbContext context, GrantResolver grants, SqlLovRunner sqlRunner, JsonLogicEvaluator evaluator, TimeProvider timeProvider)
+public sealed class LovService(AppsControlDbContext context, GrantResolver grants, SqlLovRunner sqlRunner, LovQueryService queries, JsonLogicEvaluator evaluator, TimeProvider timeProvider)
 {
     public const int DefaultPageSize = 50;
 
@@ -60,6 +60,7 @@ public sealed class LovService(AppsControlDbContext context, GrantResolver grant
         {
             LovSourceType.Class => await ClassValuesAsync(lov, access, query.Parent, search, grant, pageSize + 1, offset, cancellationToken),
             LovSourceType.DataObject => await DataObjectValuesAsync(lov, query.Parent, search, grant, pageSize + 1, offset, cancellationToken),
+            LovSourceType.Query => await queries.QueryAsync(lov, access, query.Parent, search, grant, pageSize + 1, offset, cancellationToken),
             LovSourceType.Sql => await sqlRunner.QueryAsync(lov.SqlText!, SqlLovColumns.From(lov.ValueColumn, lov.DisplayArColumn, lov.DisplayEnColumn, lov.ParentColumn), access.User, query.Parent, search, grant, pageSize + 1, offset, cancellationToken),
             _ => [],
         };

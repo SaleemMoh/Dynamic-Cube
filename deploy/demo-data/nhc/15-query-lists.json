@@ -1,0 +1,143 @@
+{
+  "title": "NHC — lists built with the query builder (demo)",
+  "items": [
+    {
+      "entityType": "apps.data-object",
+      "entityCode": "BRANCHES",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الفروع",
+        "nameEn": "Branches",
+        "dbSchema": "apps",
+        "dbObject": "branch",
+        "objectType": "TABLE",
+        "columns": [
+          {
+            "name": "code",
+            "labelAr": "رمز الفرع",
+            "labelEn": "Branch code"
+          },
+          {
+            "name": "name_ar",
+            "labelAr": "اسم الفرع بالعربية",
+            "labelEn": "Arabic name"
+          },
+          {
+            "name": "name_en",
+            "labelAr": "اسم الفرع بالإنجليزية",
+            "labelEn": "English name"
+          },
+          {
+            "name": "company_code",
+            "labelAr": "الشركة",
+            "labelEn": "Company"
+          },
+          {
+            "name": "region_code",
+            "labelAr": "المنطقة",
+            "labelEn": "Region"
+          },
+          {
+            "name": "city",
+            "labelAr": "المدينة",
+            "labelEn": "City"
+          },
+          {
+            "name": "is_active",
+            "labelAr": "نشط",
+            "labelEn": "Active"
+          },
+          {
+            "name": "display_order",
+            "labelAr": "ترتيب العرض",
+            "labelEn": "Display order"
+          }
+        ],
+        "scopeBindings": []
+      }
+    },
+    {
+      "entityType": "apps.lov",
+      "entityCode": "MY_BRANCHES_BY_REGION",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "فروعي حسب المنطقة",
+        "nameEn": "My branches by region",
+        "sourceType": "QUERY",
+        "query": {
+          "from": {
+            "kind": "DATA_OBJECT",
+            "code": "BRANCHES",
+            "alias": "b"
+          },
+          "joins": [
+            {
+              "kind": "CLASS",
+              "code": "REGION",
+              "alias": "r",
+              "type": "LEFT",
+              "on": [
+                {
+                  "left": "b.region_code",
+                  "right": "r.code"
+                }
+              ]
+            }
+          ],
+          "map": {
+            "value": "b.code",
+            "labelAr": "b.name_ar",
+            "labelEn": "b.name_en",
+            "parent": "r.code"
+          },
+          "where": {
+            "match": "ALL",
+            "conditions": [
+              {
+                "column": "b.company_code",
+                "op": "IN",
+                "user": "COMPANY"
+              },
+              {
+                "column": "b.code",
+                "op": "IN",
+                "user": "BRANCHES"
+              }
+            ],
+            "groups": [
+              {
+                "match": "ALL",
+                "conditions": [
+                  {
+                    "column": "b.is_active",
+                    "op": "EQ",
+                    "value": true
+                  }
+                ],
+                "groups": []
+              }
+            ]
+          },
+          "sort": [
+            {
+              "column": "r.display_order",
+              "direction": "ASC"
+            },
+            {
+              "column": "b.display_order",
+              "direction": "ASC"
+            }
+          ],
+          "distinct": false
+        },
+        "searchMode": "FULL",
+        "maxRows": 500,
+        "defaultSelectionMode": "SINGLE",
+        "requiresGrant": false,
+        "isPublic": false,
+        "businessApp": "CLASSIFICATION",
+        "bindings": []
+      }
+    }
+  ]
+}

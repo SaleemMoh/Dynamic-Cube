@@ -300,6 +300,7 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
             b.Property(e => e.DisplayEnColumn).HasMaxLength(63);
             b.Property(e => e.ParentColumn).HasMaxLength(63);
             b.Property(e => e.StaticFilter).HasColumnType("jsonb");
+            b.Property(e => e.Query).HasColumnType("jsonb");
             b.HasOne(e => e.Class).WithMany().HasForeignKey(e => e.ClassId).OnDelete(DeleteBehavior.Restrict);
             b.HasOne(e => e.DataObject).WithMany().HasForeignKey(e => e.DataObjectId).OnDelete(DeleteBehavior.Restrict);
             b.HasMany(e => e.Bindings).WithOne().HasForeignKey(x => x.LovId).OnDelete(DeleteBehavior.Cascade);

@@ -660,6 +660,8 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
         title: t('قوائم القيم', 'Lists of values'),
         key: 'code',
         columns: ['sourceType', 'classCode'],
+        // The visual query builder is the way in: new lists and existing ones open in it (SQL lists in its SQL editor).
+        editor: () => import('../lovs/lov-builder').then((m) => m.LovBuilder),
         fields: [
           {
             code: 'sourceType',
@@ -667,7 +669,12 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
             label: t('المصدر', 'Source'),
             required: true,
             defaultValue: 'CLASS',
-            options: [opt('CLASS', 'تصنيف', 'Class'), opt('DATA_OBJECT', 'كائن بيانات', 'Data object'), opt('SQL', 'استعلام مقيد', 'Restricted SQL')],
+            options: [
+              opt('QUERY', 'منشئ الاستعلام', 'Query builder'),
+              opt('CLASS', 'تصنيف', 'Class'),
+              opt('DATA_OBJECT', 'كائن بيانات', 'Data object'),
+              opt('SQL', 'استعلام مقيد', 'Restricted SQL'),
+            ],
           },
           {
             code: 'classCode',

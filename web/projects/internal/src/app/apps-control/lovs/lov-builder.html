@@ -1,0 +1,948 @@
+<header class="qb-head">
+  <mat-icon fontSet="material-symbols-outlined" class="qb-head__icon" aria-hidden="true"
+    >schema</mat-icon
+  >
+  <div class="qb-head__text">
+    <h2>{{ 'qb.title' | dcTranslate }}</h2>
+    <p>{{ 'qb.subtitle' | dcTranslate }}</p>
+  </div>
+  <button
+    matIconButton
+    type="button"
+    (click)="close()"
+    [attr.aria-label]="'qb.cancel' | dcTranslate"
+  >
+    <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+  </button>
+</header>
+
+<div class="qb-identity">
+  <mat-form-field subscriptSizing="dynamic">
+    <mat-label>{{ 'qb.code' | dcTranslate }}</mat-label>
+    <input
+      matInput
+      dir="ltr"
+      [ngModel]="code()"
+      (ngModelChange)="code.set($event)"
+      [disabled]="!isNew"
+      data-testid="qb-code"
+    />
+  </mat-form-field>
+  <mat-form-field subscriptSizing="dynamic">
+    <mat-label>{{ 'qb.nameAr' | dcTranslate }}</mat-label>
+    <input
+      matInput
+      dir="rtl"
+      [ngModel]="nameAr()"
+      (ngModelChange)="nameAr.set($event)"
+      data-testid="qb-name-ar"
+    />
+  </mat-form-field>
+  <mat-form-field subscriptSizing="dynamic">
+    <mat-label>{{ 'qb.nameEn' | dcTranslate }}</mat-label>
+    <input
+      matInput
+      dir="ltr"
+      [ngModel]="nameEn()"
+      (ngModelChange)="nameEn.set($event)"
+      data-testid="qb-name-en"
+    />
+  </mat-form-field>
+</div>
+
+@if (saving()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+@if (errors().length) {
+  <ul class="dc-errors" role="alert" data-testid="qb-errors">
+    @for (e of errors(); track $index) {
+      <li>{{ e }}</li>
+    }
+  </ul>
+}
+
+<mat-dialog-content class="qb-body">
+  @if (mode() === 'SQL') {
+    <section class="qb-sql-mode" data-testid="qb-sql-mode">
+      <h3>{{ 'qb.sqlMode' | dcTranslate }}</h3>
+      <p class="qb-muted">{{ 'qb.sqlMode.hint' | dcTranslate }}</p>
+      <mat-form-field subscriptSizing="dynamic" class="qb-full">
+        <mat-label>{{ 'qb.sql.text' | dcTranslate }}</mat-label>
+        <textarea
+          matInput
+          dir="ltr"
+          rows="8"
+          class="qb-code"
+          [ngModel]="sqlText()"
+          (ngModelChange)="sqlText.set($event)"
+        ></textarea>
+      </mat-form-field>
+      <div class="qb-grid4">
+        @for (key of ['value', 'labelAr', 'labelEn', 'parent']; track key) {
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>{{ 'qb.sql.' + key | dcTranslate }}</mat-label>
+            <input
+              matInput
+              dir="ltr"
+              [ngModel]="$any(sqlColumns())[key]"
+              (ngModelChange)="setSqlColumn(key, $event)"
+            />
+          </mat-form-field>
+        }
+      </div>
+      <button matButton="outlined" type="button" (click)="rebuild()" data-testid="qb-rebuild">
+        <mat-icon fontSet="material-symbols-outlined">schema</mat-icon>
+        {{ 'qb.sqlMode.rebuild' | dcTranslate }}
+      </button>
+    </section>
+  } @else {
+    <div class="qb-layout">
+      <section class="qb-steps">
+        @if (hasStaticFilter) {
+          <p class="qb-note qb-note--warn">{{ 'qb.legacyFilter' | dcTranslate }}</p>
+        }
+        <mat-tab-group
+          [selectedIndex]="step()"
+          (selectedIndexChange)="step.set($event)"
+          mat-stretch-tabs="false"
+          animationDuration="0ms"
+        >
+          @for (
+            label of ['get', 'join', 'map', 'filter', 'sort', 'access', 'details'];
+            track label;
+            let i = $index
+          ) {
+            <mat-tab>
+              <ng-template mat-tab-label>
+                <span class="qb-tab" [attr.data-testid]="'qb-tab-' + label">
+                  <span class="qb-tab__n">{{ i + 1 }}</span>
+                  {{ 'qb.step.' + label | dcTranslate }}
+                  @if (stepProblems()[i]) {
+                    <span class="qb-tab__bad" [attr.aria-label]="'qb.problems' | dcTranslate">{{
+                      stepProblems()[i]
+                    }}</span>
+                  }
+                </span>
+              </ng-template>
+
+              <div class="qb-pane">
+                @switch (label) {
+                  <!-- 1. Get -->
+                  @case ('get') {
+                    <p class="qb-muted">{{ 'qb.get.hint' | dcTranslate }}</p>
+                    <mat-button-toggle-group
+                      [value]="query().from.kind"
+                      (change)="setFrom($event.value, '')"
+                      [attr.aria-label]="'qb.source' | dcTranslate"
+                      data-testid="qb-from-kind"
+                    >
+                      <mat-button-toggle value="CLASS">{{
+                        'qb.kind.CLASS' | dcTranslate
+                      }}</mat-button-toggle>
+                      <mat-button-toggle value="DATA_OBJECT">{{
+                        'qb.kind.DATA_OBJECT' | dcTranslate
+                      }}</mat-button-toggle>
+                    </mat-button-toggle-group>
+                    <div class="qb-row">
+                      <mat-form-field subscriptSizing="dynamic" class="qb-grow">
+                        <mat-label>{{ 'qb.source' | dcTranslate }}</mat-label>
+                        <mat-select
+                          [value]="query().from.code"
+                          (selectionChange)="setFrom(query().from.kind, $event.value)"
+                          data-testid="qb-from"
+                        >
+                          @for (
+                            s of query().from.kind === 'CLASS' ? classes() : tables();
+                            track s.code
+                          ) {
+                            <mat-option [value]="s.code"
+                              >{{ { ar: s.nameAr, en: s.nameEn } | dcLocalize }} ({{
+                                s.code
+                              }})</mat-option
+                            >
+                          }
+                        </mat-select>
+                      </mat-form-field>
+                      <mat-form-field subscriptSizing="dynamic" class="qb-alias">
+                        <mat-label>{{ 'qb.alias' | dcTranslate }}</mat-label>
+                        <input
+                          matInput
+                          dir="ltr"
+                          [ngModel]="query().from.alias"
+                          (ngModelChange)="setAlias($event)"
+                          [ngModelOptions]="{ updateOn: 'blur' }"
+                        />
+                      </mat-form-field>
+                    </div>
+                    @if (query().from.kind === 'DATA_OBJECT') {
+                      <div class="qb-register">
+                        <button
+                          matButton
+                          type="button"
+                          (click)="registerTable()"
+                          data-testid="qb-register"
+                        >
+                          <mat-icon fontSet="material-symbols-outlined">add_box</mat-icon>
+                          {{ 'qb.register' | dcTranslate }}
+                        </button>
+                        <span class="qb-muted">{{ 'qb.registerHint' | dcTranslate }}</span>
+                      </div>
+                    } @else {
+                      <p class="qb-note">{{ 'qb.classRules' | dcTranslate }}</p>
+                    }
+                    @if (fromSource(); as source) {
+                      <h4>{{ 'qb.columns' | dcTranslate }}</h4>
+                      <div class="qb-chips">
+                        @for (c of source.columns; track c.name) {
+                          <span class="qb-chip" [attr.data-category]="c.category">
+                            <bdi dir="ltr">{{ c.name }}</bdi>
+                            <small>{{
+                              { ar: c.labelAr ?? '', en: c.labelEn ?? '' } | dcLocalize
+                            }}</small>
+                          </span>
+                        }
+                      </div>
+                    }
+                  }
+
+                  <!-- 2. Join -->
+                  @case ('join') {
+                    <p class="qb-muted">{{ 'qb.join.hint' | dcTranslate }}</p>
+                    @for (j of query().joins; track $index; let ji = $index) {
+                      <div class="qb-card" [attr.data-testid]="'qb-join-' + ji">
+                        <div class="qb-row">
+                          <mat-button-toggle-group
+                            [value]="j.kind"
+                            (change)="setJoin(ji, { kind: $event.value })"
+                          >
+                            <mat-button-toggle value="CLASS">{{
+                              'qb.kind.CLASS' | dcTranslate
+                            }}</mat-button-toggle>
+                            <mat-button-toggle value="DATA_OBJECT">{{
+                              'qb.kind.DATA_OBJECT' | dcTranslate
+                            }}</mat-button-toggle>
+                          </mat-button-toggle-group>
+                          <mat-form-field subscriptSizing="dynamic" class="qb-grow">
+                            <mat-label>{{ 'qb.source' | dcTranslate }}</mat-label>
+                            <mat-select
+                              [value]="j.code"
+                              (selectionChange)="setJoin(ji, { code: $event.value })"
+                              [attr.data-testid]="'qb-join-source-' + ji"
+                            >
+                              @for (s of j.kind === 'CLASS' ? classes() : tables(); track s.code) {
+                                <mat-option [value]="s.code"
+                                  >{{ { ar: s.nameAr, en: s.nameEn } | dcLocalize }} ({{
+                                    s.code
+                                  }})</mat-option
+                                >
+                              }
+                            </mat-select>
+                          </mat-form-field>
+                          <mat-form-field subscriptSizing="dynamic" class="qb-alias">
+                            <mat-label>{{ 'qb.alias' | dcTranslate }}</mat-label>
+                            <input
+                              matInput
+                              dir="ltr"
+                              [ngModel]="j.alias"
+                              (ngModelChange)="setJoin(ji, { alias: $event })"
+                              [ngModelOptions]="{ updateOn: 'blur' }"
+                            />
+                          </mat-form-field>
+                          <button
+                            matIconButton
+                            type="button"
+                            (click)="removeJoin(ji)"
+                            [attr.aria-label]="'qb.remove' | dcTranslate"
+                          >
+                            <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
+                          </button>
+                        </div>
+                        <mat-button-toggle-group
+                          [value]="j.type"
+                          (change)="setJoin(ji, { type: $event.value })"
+                          class="qb-small"
+                        >
+                          <mat-button-toggle value="LEFT">{{
+                            'qb.join.LEFT' | dcTranslate
+                          }}</mat-button-toggle>
+                          <mat-button-toggle value="INNER">{{
+                            'qb.join.INNER' | dcTranslate
+                          }}</mat-button-toggle>
+                        </mat-button-toggle-group>
+                        @for (p of j.on; track $index; let pi = $index) {
+                          <div class="qb-pair">
+                            <span class="qb-word">{{ 'qb.join.on' | dcTranslate }}</span>
+                            <mat-form-field subscriptSizing="dynamic">
+                              <mat-select
+                                [value]="p.left"
+                                (selectionChange)="setPair(ji, pi, { left: $event.value })"
+                                [attr.data-testid]="'qb-join-left-' + ji"
+                              >
+                                @for (c of columnsBefore(ji); track c.ref) {
+                                  <mat-option [value]="c.ref">{{ c.label }}</mat-option>
+                                }
+                              </mat-select>
+                            </mat-form-field>
+                            <span class="qb-word">{{ 'qb.join.equals' | dcTranslate }}</span>
+                            <mat-form-field subscriptSizing="dynamic">
+                              <mat-select
+                                [value]="p.right"
+                                (selectionChange)="setPair(ji, pi, { right: $event.value })"
+                                [attr.data-testid]="'qb-join-right-' + ji"
+                              >
+                                @for (c of sourceColumns(j.alias); track c.ref) {
+                                  <mat-option [value]="c.ref">{{ c.label }}</mat-option>
+                                }
+                              </mat-select>
+                            </mat-form-field>
+                            <button
+                              matIconButton
+                              type="button"
+                              (click)="removePair(ji, pi)"
+                              [attr.aria-label]="'qb.remove' | dcTranslate"
+                            >
+                              <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+                            </button>
+                          </div>
+                        }
+                        <button matButton type="button" (click)="addPair(ji)">
+                          <mat-icon fontSet="material-symbols-outlined">add</mat-icon
+                          >{{ 'qb.join.addPair' | dcTranslate }}
+                        </button>
+                      </div>
+                    } @empty {
+                      <p class="qb-empty">{{ 'qb.join.none' | dcTranslate }}</p>
+                    }
+                    <button
+                      matButton="outlined"
+                      type="button"
+                      (click)="addJoin()"
+                      data-testid="qb-add-join"
+                    >
+                      <mat-icon fontSet="material-symbols-outlined">join_inner</mat-icon
+                      >{{ 'qb.join.add' | dcTranslate }}
+                    </button>
+                  }
+
+                  <!-- 3. Map -->
+                  @case ('map') {
+                    <p class="qb-muted">{{ 'qb.map.hint' | dcTranslate }}</p>
+                    <div class="qb-map">
+                      @for (key of ['value', 'labelAr', 'labelEn', 'parent']; track key) {
+                        <div class="qb-map__row">
+                          <span class="qb-map__key">{{ 'qb.map.' + key | dcTranslate }}</span>
+                          <mat-icon
+                            fontSet="material-symbols-outlined"
+                            class="qb-map__arrow"
+                            aria-hidden="true"
+                            >arrow_back</mat-icon
+                          >
+                          <mat-form-field subscriptSizing="dynamic" class="qb-grow">
+                            <mat-select
+                              [value]="$any(query().map)[key]"
+                              (selectionChange)="setMap($any(key), $event.value)"
+                              [attr.data-testid]="'qb-map-' + key"
+                            >
+                              @if (key === 'parent') {
+                                <mat-option [value]="null">{{
+                                  'qb.none' | dcTranslate
+                                }}</mat-option>
+                              }
+                              @for (g of columnGroups(); track g.alias) {
+                                <mat-optgroup [label]="g.title | dcLocalize">
+                                  @for (o of g.options; track o.ref) {
+                                    @if (o.category !== 'JSON') {
+                                      <mat-option [value]="o.ref">{{ o.label }}</mat-option>
+                                    }
+                                  }
+                                </mat-optgroup>
+                              }
+                            </mat-select>
+                          </mat-form-field>
+                        </div>
+                      }
+                    </div>
+                  }
+
+                  <!-- 4. Filter -->
+                  @case ('filter') {
+                    <p class="qb-muted">{{ 'qb.filter.hint' | dcTranslate }}</p>
+                    <ng-container
+                      *ngTemplateOutlet="groupTpl; context: { $implicit: query().filter, g: null }"
+                    />
+                    @for (sub of query().filter.groups; track $index; let gi = $index) {
+                      <div class="qb-group" [attr.data-testid]="'qb-group-' + gi">
+                        <div class="qb-row">
+                          <strong>{{ 'qb.filter.group' | dcTranslate }} {{ gi + 1 }}</strong>
+                          <span class="qb-grow"></span>
+                          <button
+                            matIconButton
+                            type="button"
+                            (click)="removeGroup(gi)"
+                            [attr.aria-label]="'qb.remove' | dcTranslate"
+                          >
+                            <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
+                          </button>
+                        </div>
+                        <ng-container
+                          *ngTemplateOutlet="groupTpl; context: { $implicit: sub, g: gi }"
+                        />
+                      </div>
+                    }
+                    <div class="qb-row">
+                      <button
+                        matButton="outlined"
+                        type="button"
+                        (click)="addCondition(null)"
+                        data-testid="qb-add-condition"
+                      >
+                        <mat-icon fontSet="material-symbols-outlined">add</mat-icon
+                        >{{ 'qb.filter.add' | dcTranslate }}
+                      </button>
+                      <button
+                        matButton
+                        type="button"
+                        (click)="addGroup()"
+                        data-testid="qb-add-group"
+                      >
+                        <mat-icon fontSet="material-symbols-outlined">data_array</mat-icon
+                        >{{ 'qb.filter.addGroup' | dcTranslate }}
+                      </button>
+                    </div>
+                  }
+
+                  <!-- 5. Sort -->
+                  @case ('sort') {
+                    <p class="qb-muted">{{ 'qb.sort.hint' | dcTranslate }}</p>
+                    @for (s of query().sort; track $index; let si = $index) {
+                      <div class="qb-row qb-sort">
+                        <span class="qb-tab__n">{{ si + 1 }}</span>
+                        <mat-form-field subscriptSizing="dynamic" class="qb-grow">
+                          <mat-select
+                            [value]="s.column"
+                            (selectionChange)="setSort(si, { column: $event.value })"
+                            [attr.data-testid]="'qb-sort-' + si"
+                          >
+                            @for (g of columnGroups(); track g.alias) {
+                              <mat-optgroup [label]="g.title | dcLocalize">
+                                @for (o of g.options; track o.ref) {
+                                  @if (o.category !== 'JSON') {
+                                    <mat-option [value]="o.ref">{{ o.label }}</mat-option>
+                                  }
+                                }
+                              </mat-optgroup>
+                            }
+                          </mat-select>
+                        </mat-form-field>
+                        <mat-button-toggle-group
+                          [value]="s.direction"
+                          (change)="setSort(si, { direction: $event.value })"
+                          class="qb-small"
+                        >
+                          <mat-button-toggle value="ASC">{{
+                            'qb.sort.ASC' | dcTranslate
+                          }}</mat-button-toggle>
+                          <mat-button-toggle value="DESC">{{
+                            'qb.sort.DESC' | dcTranslate
+                          }}</mat-button-toggle>
+                        </mat-button-toggle-group>
+                        <button
+                          matIconButton
+                          type="button"
+                          (click)="moveSort(si, -1)"
+                          [disabled]="si === 0"
+                          [attr.aria-label]="'qb.up' | dcTranslate"
+                        >
+                          <mat-icon fontSet="material-symbols-outlined">arrow_upward</mat-icon>
+                        </button>
+                        <button
+                          matIconButton
+                          type="button"
+                          (click)="moveSort(si, 1)"
+                          [disabled]="si === query().sort.length - 1"
+                          [attr.aria-label]="'qb.down' | dcTranslate"
+                        >
+                          <mat-icon fontSet="material-symbols-outlined">arrow_downward</mat-icon>
+                        </button>
+                        <button
+                          matIconButton
+                          type="button"
+                          (click)="removeSort(si)"
+                          [attr.aria-label]="'qb.remove' | dcTranslate"
+                        >
+                          <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
+                        </button>
+                      </div>
+                    }
+                    <button
+                      matButton="outlined"
+                      type="button"
+                      (click)="addSort()"
+                      data-testid="qb-add-sort"
+                    >
+                      <mat-icon fontSet="material-symbols-outlined">sort</mat-icon
+                      >{{ 'qb.sort.add' | dcTranslate }}
+                    </button>
+                    <mat-checkbox
+                      [checked]="query().distinct"
+                      (change)="setDistinct($event.checked)"
+                      class="qb-block"
+                      >{{ 'qb.sort.distinct' | dcTranslate }}</mat-checkbox
+                    >
+                  }
+
+                  <!-- 6. Access -->
+                  @case ('access') {
+                    <section class="qb-section">
+                      <h3>
+                        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true"
+                          >person_pin</mat-icon
+                        >{{ 'qb.access.userTitle' | dcTranslate }}
+                      </h3>
+                      <p class="qb-muted">{{ 'qb.access.userHint' | dcTranslate }}</p>
+                      @for (c of query().userConditions; track $index; let ui = $index) {
+                        <div class="qb-row qb-user" [attr.data-testid]="'qb-user-' + ui">
+                          <mat-form-field subscriptSizing="dynamic" class="qb-grow">
+                            <mat-label>{{ 'qb.filter.column' | dcTranslate }}</mat-label>
+                            <mat-select
+                              [value]="c.column"
+                              (selectionChange)="setUserCondition(ui, { column: $event.value })"
+                            >
+                              @for (g of columnGroups(); track g.alias) {
+                                <mat-optgroup [label]="g.title | dcLocalize">
+                                  @for (o of g.options; track o.ref) {
+                                    @if (o.category !== 'JSON') {
+                                      <mat-option [value]="o.ref">{{ o.label }}</mat-option>
+                                    }
+                                  }
+                                </mat-optgroup>
+                              }
+                            </mat-select>
+                          </mat-form-field>
+                          <mat-button-toggle-group
+                            [value]="c.op"
+                            (change)="setUserCondition(ui, { op: $event.value })"
+                            class="qb-small"
+                          >
+                            <mat-button-toggle value="IN">{{
+                              'qb.access.is' | dcTranslate
+                            }}</mat-button-toggle>
+                            <mat-button-toggle value="NOT_IN">{{
+                              'qb.access.isNot' | dcTranslate
+                            }}</mat-button-toggle>
+                          </mat-button-toggle-group>
+                          <mat-form-field subscriptSizing="dynamic" class="qb-grow">
+                            <mat-label>{{ 'qb.access.of' | dcTranslate }}</mat-label>
+                            <mat-select
+                              [value]="c.user"
+                              (selectionChange)="setUserCondition(ui, { user: $event.value })"
+                            >
+                              @for (f of userFacts; track f) {
+                                <mat-option [value]="f">{{
+                                  'qb.fact.' + f | dcTranslate
+                                }}</mat-option>
+                              }
+                            </mat-select>
+                          </mat-form-field>
+                          <button
+                            matIconButton
+                            type="button"
+                            (click)="removeUserCondition(ui)"
+                            [attr.aria-label]="'qb.remove' | dcTranslate"
+                          >
+                            <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
+                          </button>
+                        </div>
+                      }
+                      <button
+                        matButton="outlined"
+                        type="button"
+                        (click)="addUserCondition()"
+                        data-testid="qb-add-user"
+                      >
+                        <mat-icon fontSet="material-symbols-outlined">add</mat-icon
+                        >{{ 'qb.access.addUser' | dcTranslate }}
+                      </button>
+                    </section>
+
+                    <section class="qb-section">
+                      <h3>
+                        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true"
+                          >admin_panel_settings</mat-icon
+                        >{{ 'qb.access.rolesTitle' | dcTranslate }}
+                      </h3>
+                      <p class="qb-muted">{{ 'qb.access.rolesHint' | dcTranslate }}</p>
+                      <div class="qb-row">
+                        <span>{{ 'qb.access.requires' | dcTranslate }}</span>
+                        <mat-button-toggle-group
+                          [value]="requiresGrant()"
+                          (change)="requiresGrant.set($event.value)"
+                          class="qb-small"
+                          data-testid="qb-requires"
+                        >
+                          <mat-button-toggle [value]="false">{{
+                            'qb.access.requires.false' | dcTranslate
+                          }}</mat-button-toggle>
+                          <mat-button-toggle [value]="true">{{
+                            'qb.access.requires.true' | dcTranslate
+                          }}</mat-button-toggle>
+                        </mat-button-toggle-group>
+                      </div>
+                      @if (isNew) {
+                        <p class="qb-note">{{ 'qb.access.newList' | dcTranslate }}</p>
+                      } @else {
+                        <table class="qb-roles" data-testid="qb-roles">
+                          <thead>
+                            <tr>
+                              <th>{{ 'qb.access.role' | dcTranslate }}</th>
+                              <th>{{ 'qb.access.grant' | dcTranslate }}</th>
+                              <th></th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @for (r of roles(); track r.roleCode) {
+                              <tr
+                                [class.qb-roles__changed]="changedRoles().has(r.roleCode)"
+                                [attr.data-role]="r.roleCode"
+                              >
+                                <td>
+                                  <strong>{{ { ar: r.nameAr, en: r.nameEn } | dcLocalize }}</strong>
+                                  <small class="qb-muted" dir="ltr">{{ r.roleCode }}</small>
+                                  @if (r.otherGrants) {
+                                    <small class="qb-muted qb-block">{{
+                                      ('qb.access.others' | dcTranslate).replace(
+                                        '{n}',
+                                        '' + r.otherGrants
+                                      )
+                                    }}</small>
+                                  }
+                                </td>
+                                <td>
+                                  <mat-form-field subscriptSizing="dynamic">
+                                    <mat-select
+                                      [value]="r.grantType"
+                                      [placeholder]="'qb.grant.null' | dcTranslate"
+                                      (selectionChange)="
+                                        setRole(r.roleCode, { grantType: $event.value })
+                                      "
+                                      [attr.data-testid]="'qb-grant-' + r.roleCode"
+                                    >
+                                      @for (g of grantTypes; track g) {
+                                        <mat-option [value]="g">{{
+                                          'qb.grant.' + g | dcTranslate
+                                        }}</mat-option>
+                                      }
+                                    </mat-select>
+                                  </mat-form-field>
+                                </td>
+                                <td class="qb-roles__detail">
+                                  @if (r.grantType === 'VALUES') {
+                                    <mat-form-field subscriptSizing="dynamic" class="qb-full">
+                                      <mat-label>{{ 'qb.access.values' | dcTranslate }}</mat-label>
+                                      <mat-select
+                                        multiple
+                                        [value]="r.grantedValues"
+                                        (selectionChange)="
+                                          setRole(r.roleCode, { grantedValues: $event.value })
+                                        "
+                                      >
+                                        @for (v of knownValues(); track v.value) {
+                                          <mat-option [value]="v.value"
+                                            >{{ v.label }}
+                                            <small dir="ltr">({{ v.value }})</small></mat-option
+                                          >
+                                        }
+                                      </mat-select>
+                                    </mat-form-field>
+                                  } @else if (r.grantType === 'RULE') {
+                                    <mat-form-field subscriptSizing="dynamic" class="qb-full">
+                                      <mat-label>{{ 'qb.access.rule' | dcTranslate }}</mat-label>
+                                      <mat-select
+                                        [value]="ruleFact(r.rule)"
+                                        (selectionChange)="
+                                          setRole(r.roleCode, { rule: { var: $event.value } })
+                                        "
+                                      >
+                                        @for (f of ruleFacts; track f) {
+                                          <mat-option [value]="f">{{
+                                            'qb.rule.' + f | dcTranslate
+                                          }}</mat-option>
+                                        }
+                                      </mat-select>
+                                    </mat-form-field>
+                                  }
+                                  @if (changedRoles().has(r.roleCode)) {
+                                    <span class="qb-changed">{{
+                                      'qb.access.changed' | dcTranslate
+                                    }}</span>
+                                  }
+                                </td>
+                              </tr>
+                            }
+                          </tbody>
+                        </table>
+                      }
+                    </section>
+
+                    <section class="qb-section">
+                      <mat-checkbox
+                        [checked]="isPublic()"
+                        (change)="isPublic.set($event.checked)"
+                        data-testid="qb-public"
+                        >{{ 'qb.access.public' | dcTranslate }}</mat-checkbox
+                      >
+                      @if (isPublic()) {
+                        <p class="qb-note qb-note--warn">
+                          {{ 'qb.access.publicHint' | dcTranslate }}
+                        </p>
+                      }
+                    </section>
+                  }
+
+                  <!-- 7. Details -->
+                  @case ('details') {
+                    <p class="qb-muted">{{ 'qb.details.hint' | dcTranslate }}</p>
+                    <div class="qb-grid2">
+                      <mat-form-field subscriptSizing="dynamic">
+                        <mat-label>{{ 'qb.details.entity' | dcTranslate }}</mat-label>
+                        <mat-select
+                          [value]="entityCode()"
+                          (selectionChange)="entityCode.set($event.value)"
+                        >
+                          <mat-option [value]="null">{{ 'qb.none' | dcTranslate }}</mat-option>
+                          @for (e of entities(); track e.code) {
+                            <mat-option [value]="e.code">{{
+                              { ar: e.nameAr, en: e.nameEn } | dcLocalize
+                            }}</mat-option>
+                          }
+                        </mat-select>
+                      </mat-form-field>
+                      <mat-form-field subscriptSizing="dynamic">
+                        <mat-label>{{ 'qb.details.apps' | dcTranslate }}</mat-label>
+                        <mat-select
+                          multiple
+                          [value]="businessApps()"
+                          (selectionChange)="businessApps.set($event.value)"
+                        >
+                          @for (a of apps(); track a.code) {
+                            <mat-option [value]="a.code">{{
+                              { ar: a.nameAr, en: a.nameEn } | dcLocalize
+                            }}</mat-option>
+                          }
+                        </mat-select>
+                      </mat-form-field>
+                      <mat-form-field subscriptSizing="dynamic">
+                        <mat-label>{{ 'qb.details.search' | dcTranslate }}</mat-label>
+                        <mat-select
+                          [value]="searchMode()"
+                          (selectionChange)="searchMode.set($event.value)"
+                        >
+                          @for (m of ['FULL', 'TYPEAHEAD']; track m) {
+                            <mat-option [value]="m">{{
+                              'qb.details.search.' + m | dcTranslate
+                            }}</mat-option>
+                          }
+                        </mat-select>
+                      </mat-form-field>
+                      <mat-form-field subscriptSizing="dynamic">
+                        <mat-label>{{ 'qb.details.maxRows' | dcTranslate }}</mat-label>
+                        <input
+                          matInput
+                          type="number"
+                          min="1"
+                          max="5000"
+                          [ngModel]="maxRows()"
+                          (ngModelChange)="maxRows.set(+$event || 500)"
+                        />
+                      </mat-form-field>
+                      <mat-form-field subscriptSizing="dynamic">
+                        <mat-label>{{ 'qb.details.selection' | dcTranslate }}</mat-label>
+                        <mat-select
+                          [value]="selectionMode()"
+                          (selectionChange)="selectionMode.set($event.value)"
+                        >
+                          @for (m of ['SINGLE', 'MULTI']; track m) {
+                            <mat-option [value]="m">{{
+                              'qb.details.selection.' + m | dcTranslate
+                            }}</mat-option>
+                          }
+                        </mat-select>
+                      </mat-form-field>
+                      <mat-checkbox
+                        [checked]="isActive()"
+                        (change)="isActive.set($event.checked)"
+                        >{{ 'qb.details.active' | dcTranslate }}</mat-checkbox
+                      >
+                    </div>
+                  }
+                }
+              </div>
+            </mat-tab>
+          }
+        </mat-tab-group>
+      </section>
+
+      <!-- Live preview -->
+      <dc-lov-builder-preview
+        [preview]="preview()"
+        [previewing]="previewing()"
+        [hasParent]="!!query().map.parent"
+        (searched)="previewSearch.set($event)"
+        (problemChosen)="goTo($event)"
+      />
+    </div>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions class="qb-actions">
+  @if (mode() === 'VISUAL' && isNew) {
+    <button matButton type="button" (click)="useSql()" class="qb-sql-link">
+      {{ 'qb.sqlMode.use' | dcTranslate }}
+    </button>
+  }
+  <span class="qb-grow"></span>
+  <button matButton type="button" (click)="close()">{{ 'qb.cancel' | dcTranslate }}</button>
+  @if (drafts.needsApproval('apps.lov')) {
+    <button
+      matButton="outlined"
+      type="button"
+      [disabled]="saving()"
+      (click)="save(true)"
+      data-testid="qb-submit"
+    >
+      {{ 'config.submitForApproval' | dcTranslate }}
+    </button>
+  }
+  <button
+    matButton="filled"
+    type="button"
+    [disabled]="saving()"
+    (click)="save()"
+    data-testid="qb-save"
+  >
+    {{ drafts.saveLabel('apps.lov') | dcTranslate }}
+  </button>
+</mat-dialog-actions>
+
+<!-- A group of conditions (the filter, or one of its groups). -->
+<ng-template #groupTpl let-group let-g="g">
+  <div class="qb-row">
+    <span>{{ 'qb.filter.match' | dcTranslate }}</span>
+    <mat-button-toggle-group
+      [value]="group.match"
+      (change)="setMatch(g, $event.value)"
+      class="qb-small"
+    >
+      <mat-button-toggle value="ALL">{{ 'qb.match.ALL' | dcTranslate }}</mat-button-toggle>
+      <mat-button-toggle value="ANY">{{ 'qb.match.ANY' | dcTranslate }}</mat-button-toggle>
+    </mat-button-toggle-group>
+  </div>
+  @for (c of group.conditions; track $index; let ci = $index) {
+    <div class="qb-condition" [attr.data-testid]="'qb-condition-' + (g ?? 'top') + '-' + ci">
+      <mat-form-field subscriptSizing="dynamic" class="qb-grow">
+        <mat-label>{{ 'qb.filter.column' | dcTranslate }}</mat-label>
+        <mat-select
+          [value]="c.column"
+          (selectionChange)="setCondition(g, ci, { column: $event.value })"
+        >
+          @for (gr of columnGroups(); track gr.alias) {
+            <mat-optgroup [label]="gr.title | dcLocalize">
+              @for (o of gr.options; track o.ref) {
+                <mat-option [value]="o.ref">{{ o.label }}</mat-option>
+              }
+            </mat-optgroup>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field subscriptSizing="dynamic" class="qb-op">
+        <mat-label>{{ 'qb.filter.op' | dcTranslate }}</mat-label>
+        <mat-select [value]="c.op" (selectionChange)="setCondition(g, ci, { op: $event.value })">
+          @for (op of operators[categoryOf(c.column)]; track op) {
+            <mat-option [value]="op">{{ 'qb.op.' + op | dcTranslate }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      @if (!noValue.includes(c.op)) {
+        @switch (c.op === 'IN' || c.op === 'NOT_IN' ? 'LIST' : categoryOf(c.column)) {
+          @case ('LIST') {
+            <mat-form-field subscriptSizing="dynamic" class="qb-grow">
+              <mat-label>{{ 'qb.filter.values' | dcTranslate }}</mat-label>
+              <input
+                matInput
+                [ngModel]="valuesText(c.value)"
+                (ngModelChange)="setCondition(g, ci, { value: valuesFrom($event) })"
+                [ngModelOptions]="{ updateOn: 'blur' }"
+              />
+            </mat-form-field>
+          }
+          @case ('BOOL') {
+            <mat-form-field subscriptSizing="dynamic" class="qb-grow">
+              <mat-label>{{ 'qb.filter.value' | dcTranslate }}</mat-label>
+              <mat-select
+                [value]="c.value"
+                (selectionChange)="setCondition(g, ci, { value: $event.value })"
+              >
+                <mat-option [value]="true">{{ 'qb.yes' | dcTranslate }}</mat-option>
+                <mat-option [value]="false">{{ 'qb.no' | dcTranslate }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          }
+          @case ('NUMBER') {
+            <mat-form-field subscriptSizing="dynamic" class="qb-grow">
+              <mat-label>{{ 'qb.filter.value' | dcTranslate }}</mat-label>
+              <input
+                matInput
+                type="number"
+                dir="ltr"
+                [ngModel]="c.value"
+                (ngModelChange)="setCondition(g, ci, { value: numberFrom('' + $event) })"
+                [ngModelOptions]="{ updateOn: 'blur' }"
+              />
+            </mat-form-field>
+          }
+          @case ('DATE') {
+            <mat-form-field subscriptSizing="dynamic" class="qb-grow">
+              <mat-label>{{ 'qb.filter.value' | dcTranslate }}</mat-label>
+              <input
+                matInput
+                type="date"
+                dir="ltr"
+                [ngModel]="c.value"
+                (ngModelChange)="setCondition(g, ci, { value: $event })"
+              />
+            </mat-form-field>
+          }
+          @default {
+            <mat-form-field subscriptSizing="dynamic" class="qb-grow">
+              <mat-label>{{ 'qb.filter.value' | dcTranslate }}</mat-label>
+              <input
+                matInput
+                [ngModel]="c.value"
+                (ngModelChange)="setCondition(g, ci, { value: $event })"
+                [ngModelOptions]="{ updateOn: 'blur' }"
+              />
+            </mat-form-field>
+          }
+        }
+      }
+      <button
+        matIconButton
+        type="button"
+        (click)="removeCondition(g, ci)"
+        [attr.aria-label]="'qb.remove' | dcTranslate"
+      >
+        <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+      </button>
+    </div>
+  } @empty {
+    @if (g === null && !query().filter.groups.length) {
+      <p class="qb-empty">{{ 'qb.filter.none' | dcTranslate }}</p>
+    }
+  }
+  @if (g !== null) {
+    <button matButton type="button" (click)="addCondition(g)">
+      <mat-icon fontSet="material-symbols-outlined">add</mat-icon
+      >{{ 'qb.filter.add' | dcTranslate }}
+    </button>
+  }
+</ng-template>

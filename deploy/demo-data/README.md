@@ -26,6 +26,7 @@ Built from the customer journey study (V05), the classification rules workbook (
 | 12-notifications | Returned, rejected, approved, certificate issued, renewal available, expiry, task assigned, overdue | Communication |
 | 13-portal | Portal home, *About classification* and 10 FAQs answering the complaint themes of the study | Portal |
 | 14-individual-service | **Demo service for individuals** — *Professional qualification for housing-sector practitioners* (below): NIC and SCE through the gateway, the regions as a list of values, the individual's ID status in the party registry, the qualification card, 26 questions, the workflow and its notifications | Services, portal, Workflows, Documents |
+| 15-query-lists | A list built with the visual query builder: *My branches by region* (registered table `BRANCHES` joined to the regions class; each user sees their company's branches they work in, with the region as parent) | Apps Control → Lists of values |
 
 **Tracks:** *normal* — free, up to 60 working days; *fast (NHC)* — paid, 5 working days. The fast-track fee
 (5,000 / 10,000 / 20,000 / 30,000 SAR by annual revenue) is an assumption; change it in the service's Fees tab.

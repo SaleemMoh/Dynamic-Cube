@@ -74,6 +74,21 @@ export class AppsControlApi {
     return this.http.get<LovPage>(`${APPS_CONTROL_API}/admin/lovs/${encodeURIComponent(code)}/values`, { params: params({ q: search }) });
   }
 
+  /** Sources the LOV query builder may read: registered data objects and classes, with their columns. */
+  lovBuilderSources<T = unknown>(): Observable<T[]> {
+    return this.http.get<T[]>(`${APPS_CONTROL_API}/admin/lov-builder/sources`);
+  }
+
+  /** Runs a query definition as the signed-in administrator, without grants: its SQL, first values and problems. */
+  previewLovQuery<T = unknown>(query: unknown, limit = 20, search?: string | null): Observable<T> {
+    return this.http.post<T>(`${APPS_CONTROL_API}/admin/lov-builder/preview`, { query, limit, search: search || null });
+  }
+
+  /** Each active role's own grant on a list (and how many screen or company grants it also has there). */
+  lovRoleGrants<T = unknown>(code: string): Observable<T[]> {
+    return this.http.get<T[]>(`${APPS_CONTROL_API}/admin/lov-builder/grants/${encodeURIComponent(code)}`);
+  }
+
   classDomains(classCode: string, parent?: string | null): Observable<DomainItem[]> {
     return this.http.get<DomainItem[]>(
       `${APPS_CONTROL_API}/classes/${encodeURIComponent(classCode)}/domains`,

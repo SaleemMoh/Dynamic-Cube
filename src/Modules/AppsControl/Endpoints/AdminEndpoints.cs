@@ -122,6 +122,40 @@ internal static class AdminEndpoints
             .RequirePrivilege(AppsControlResources.Classes, PrivilegeActions.View)
             .WithName("GetLovOptionsForClassValues");
 
+        // The visual query builder of lists of values: what it can read, a trial run, and each role's grant on a list.
+        admin.MapGet("/lov-builder/sources", async (LovQueryService service, CancellationToken ct) => TypedResults.Ok(await service.SourcesAsync(ct)))
+            .RequirePrivilege(AppsControlResources.Lovs, PrivilegeActions.View)
+            .WithName("GetLovBuilderSources");
+        admin.MapPost("/lov-builder/preview", async (LovPreviewRequest request, AccessResolver resolver, LovQueryService service, CancellationToken ct) =>
+                TypedResults.Ok(await service.PreviewAsync(request.Query, await resolver.GetAsync(ct), request.Limit ?? 50, request.Search, ct)))
+            .RequirePrivilege(AppsControlResources.Lovs, PrivilegeActions.View)
+            .WithName("PreviewLovQuery");
+        admin.MapGet("/lov-builder/grants/{code}", async (string code, AppsControlDbContext db, CancellationToken ct) =>
+            {
+                var lovId = await db.Lovs.AsNoTracking().Where(l => l.Code == code).Select(l => (Guid?)l.Id).SingleOrDefaultAsync(ct);
+                var roles = await db.Roles.AsNoTracking().Where(r => r.IsActive).OrderBy(r => r.Code).Select(r => new { r.Id, r.Code, r.NameAr, r.NameEn }).ToListAsync(ct);
+                var grants = lovId is null
+                    ? []
+                    : await db.LovGrants.AsNoTracking().Where(g => g.LovId == lovId)
+                        .Select(g => new { g.RoleId, g.ResourceId, g.CompanyCode, g.GrantType, g.GrantedValues, g.Rule, g.DefaultValue })
+                        .ToListAsync(ct);
+                return TypedResults.Ok(roles.Select(r =>
+                {
+                    var own = grants.FirstOrDefault(g => g.RoleId == r.Id && g.ResourceId == null && g.CompanyCode == null);
+                    return new LovRoleGrant(
+                        r.Code,
+                        r.NameAr,
+                        r.NameEn,
+                        own?.GrantType,
+                        own?.GrantedValues ?? [],
+                        JsonNodeExtensions.ParseOrNull(own?.Rule),
+                        own?.DefaultValue,
+                        grants.Count(g => g.RoleId == r.Id && (g.ResourceId != null || g.CompanyCode != null)));
+                }).ToList());
+            })
+            .RequirePrivilege(AppsControlResources.Roles, PrivilegeActions.View)
+            .WithName("GetLovRoleGrants");
+
         admin.MapGet("/types", async (IEnumerable<IConfigApplier> appliers, AccessResolver resolver, IChangeApprovalPolicy policy, CancellationToken ct) =>
         {
             var access = await resolver.GetAsync(ct);

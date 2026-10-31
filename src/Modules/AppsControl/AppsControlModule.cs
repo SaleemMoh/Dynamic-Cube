@@ -104,6 +104,7 @@ public static class AppsControlModule
         services.AddScoped<MenuService>();
         services.AddScoped<GrantResolver>();
         services.AddScoped<LovService>();
+        services.AddScoped<LovQueryService>();
         services.AddScoped<ILovValidator, LovValidator>();
         services.AddScoped<DataScopeService>();
         services.AddScoped<AppsControlSeeder>();

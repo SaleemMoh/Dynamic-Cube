@@ -61,6 +61,9 @@ public enum LovSourceType
     DataObject,
     Integration,
     Sql,
+
+    /// <summary>Built in the visual query builder (<see cref="Lov.Query"/>).</summary>
+    Query,
 }
 
 #pragma warning disable CA1720 // "Single" is the business term for single selection.
@@ -105,6 +108,9 @@ public sealed class Lov : ConfigEntity
 
     /// <summary>JSONLogic evaluated per value (class sources: over <c>attributes</c>, <c>code</c>, <c>parent</c>).</summary>
     public string? StaticFilter { get; set; }
+
+    /// <summary>Query sources: the visual query definition (JSON), see <c>LovQueryDefinition</c>.</summary>
+    public string? Query { get; set; }
 
     public SelectionMode DefaultSelectionMode { get; set; }
 

@@ -180,6 +180,9 @@ public sealed class LovPayload : ConfigPayload
 
     public JsonNode? StaticFilter { get; set; }
 
+    /// <summary>Query sources: what the visual query builder made.</summary>
+    public LovQueryDefinition? Query { get; set; }
+
     public SelectionMode DefaultSelectionMode { get; set; }
 
     public LovSearchMode SearchMode { get; set; }
@@ -193,7 +196,7 @@ public sealed class LovPayload : ConfigPayload
     public List<LovBindingPayload> Bindings { get; set; } = [];
 }
 
-internal sealed class LovApplier(AppsControlDbContext db, JsonLogicEvaluator evaluator, SqlLovRunner sqlRunner) : ConfigApplier<Lov, LovPayload>(db)
+internal sealed class LovApplier(AppsControlDbContext db, JsonLogicEvaluator evaluator, SqlLovRunner sqlRunner, LovQueryService queries) : ConfigApplier<Lov, LovPayload>(db)
 {
     public const int MaxRowsLimit = 5000;
 
@@ -213,6 +216,7 @@ internal sealed class LovApplier(AppsControlDbContext db, JsonLogicEvaluator eva
         entity.DataObjectId = null;
         entity.IntegrationOperationCode = null;
         entity.SqlText = null;
+        entity.Query = null;
         entity.ValueColumn = payload.ValueColumn;
         entity.DisplayArColumn = payload.DisplayArColumn;
         entity.DisplayEnColumn = payload.DisplayEnColumn;
@@ -258,6 +262,15 @@ internal sealed class LovApplier(AppsControlDbContext db, JsonLogicEvaluator eva
                 entity.DisplayArColumn = string.IsNullOrWhiteSpace(payload.DisplayArColumn) ? null : columns.DisplayAr;
                 entity.DisplayEnColumn = string.IsNullOrWhiteSpace(payload.DisplayEnColumn) ? null : columns.DisplayEn;
                 entity.ParentColumn = columns.Parent;
+                break;
+            case LovSourceType.Query:
+                foreach (var problem in await queries.CheckAsync(payload.Query, await PendingSourcesAsync(refs, cancellationToken), cancellationToken))
+                {
+                    errors.Add(problem.Field, problem.Message);
+                }
+
+                entity.Query = payload.Query is null ? null : JsonSerializer.Serialize(payload.Query, DynamicCube.Platform.Configuration.ChangeJson.Options);
+                entity.ValueColumn = entity.DisplayArColumn = entity.DisplayEnColumn = entity.ParentColumn = null;
                 break;
             case LovSourceType.Integration:
                 errors.Add("sourceType", "Integration LOVs become available with the Integration Manager.");
@@ -325,6 +338,7 @@ internal sealed class LovApplier(AppsControlDbContext db, JsonLogicEvaluator eva
             DisplayEnColumn = entity.DisplayEnColumn,
             ParentColumn = entity.ParentColumn,
             StaticFilter = JsonNodeExtensions.ParseOrNull(entity.StaticFilter),
+            Query = LovQueryService.Parse(entity.Query),
             DefaultSelectionMode = entity.DefaultSelectionMode,
             SearchMode = entity.SearchMode,
             MaxRows = entity.MaxRows,
@@ -342,6 +356,28 @@ internal sealed class LovApplier(AppsControlDbContext db, JsonLogicEvaluator eva
         {
             throw new DynamicCube.Platform.ChangeSets.ChangeSetException($"LOV '{entity.Code}' is used by data scope bindings.");
         }
+    }
+
+    /// <summary>Data objects registered earlier in the change set being checked, as query sources.</summary>
+    private static async Task<List<LovQuerySourceInfo>> PendingSourcesAsync(RefResolver refs, CancellationToken cancellationToken)
+    {
+        var sources = new List<LovQuerySourceInfo>();
+        foreach (var item in refs.Draft?.Items.Where(i => i.EntityType == AppsControlChangeTypes.DataObject && i.Operation != DynamicCube.Platform.ChangeSets.ChangeOperation.Delete && i.After is not null) ?? [])
+        {
+            var payload = JsonSerializer.Deserialize<DataObjectPayload>(item.After!, DynamicCube.Platform.Configuration.ChangeJson.Options);
+            if (payload is null || payload.IsActive == false)
+            {
+                continue;
+            }
+
+            var types = await DatabaseCatalog.GetColumnsAsync(refs.Context, payload.DbSchema, payload.DbObject, cancellationToken);
+            var columns = payload.Columns
+                .Where(c => types.ContainsKey(c.Name))
+                .Select(c => new DataObjectColumn { Name = c.Name, DataType = string.IsNullOrWhiteSpace(c.DataType) ? types[c.Name] : c.DataType, LabelAr = c.LabelAr, LabelEn = c.LabelEn });
+            sources.Add(LovQueryService.DataObjectSource(item.EntityCode, payload.NameAr ?? item.EntityCode, payload.NameEn ?? item.EntityCode, payload.DbSchema, payload.DbObject, columns));
+        }
+
+        return sources;
     }
 
     private static async Task ValidateColumnsAsync(RefResolver refs, Guid? dataObjectId, LovPayload payload, ValidationErrors errors, CancellationToken cancellationToken)
