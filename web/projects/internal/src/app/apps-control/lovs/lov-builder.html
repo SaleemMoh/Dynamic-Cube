@@ -150,9 +150,21 @@
                           <mat-select
                             [value]="query().from.code"
                             (selectionChange)="setFrom('CLASS', $event.value)"
+                            (openedChange)="searchOpened($event, fromClassSearch)"
                             data-testid="qb-from"
                           >
-                            @for (s of classes(); track s.code) {
+                            <dc-select-search
+                              #fromClassSearch
+                              [value]="sourceSearch()"
+                              (valueChange)="sourceSearch.set($event)"
+                              testId="qb-search"
+                            />
+                            @if (!classOptions(query().from.code).length) {
+                              <mat-option disabled>{{
+                                'selectSearch.none' | dcTranslate
+                              }}</mat-option>
+                            }
+                            @for (s of classOptions(query().from.code); track s.code) {
                               <mat-option [value]="s.code"
                                 >{{ { ar: s.nameAr, en: s.nameEn } | dcLocalize }} ({{
                                   s.code
@@ -164,32 +176,51 @@
                           <mat-select
                             [value]="tableKey(query().from)"
                             (selectionChange)="pickFrom($event.value)"
+                            (openedChange)="searchOpened($event, fromTableSearch)"
                             data-testid="qb-from"
                           >
-                            <mat-optgroup [label]="'qb.tables.registered' | dcTranslate">
-                              @for (s of registeredTables(); track s.code) {
-                                <mat-option [value]="'DATA_OBJECT|' + s.code"
-                                  >{{ { ar: s.nameAr, en: s.nameEn } | dcLocalize }} ({{
-                                    s.code
-                                  }})</mat-option
-                                >
-                              }
-                            </mat-optgroup>
-                            <mat-optgroup
-                              [label]="'qb.tables.other' | dcTranslate"
-                              data-testid="qb-other-tables"
-                            >
-                              @for (s of otherTables(); track s.code) {
-                                <mat-option [value]="'TABLE|' + s.code"
-                                  ><bdi dir="ltr">{{ s.code }}</bdi>
-                                  @if (s.objectType === 'VIEW') {
-                                    <small class="qb-muted"
-                                      >({{ 'qb.tables.view' | dcTranslate }})</small
-                                    >
-                                  }
-                                </mat-option>
-                              }
-                            </mat-optgroup>
+                            <dc-select-search
+                              #fromTableSearch
+                              [value]="sourceSearch()"
+                              (valueChange)="sourceSearch.set($event)"
+                              testId="qb-search"
+                            />
+                            @if (
+                              !registeredOptions(query().from).length &&
+                              !otherOptions(query().from).length
+                            ) {
+                              <mat-option disabled>{{
+                                'selectSearch.none' | dcTranslate
+                              }}</mat-option>
+                            }
+                            @if (registeredOptions(query().from).length) {
+                              <mat-optgroup [label]="'qb.tables.registered' | dcTranslate">
+                                @for (s of registeredOptions(query().from); track s.code) {
+                                  <mat-option [value]="'DATA_OBJECT|' + s.code"
+                                    >{{ { ar: s.nameAr, en: s.nameEn } | dcLocalize }} ({{
+                                      s.code
+                                    }})</mat-option
+                                  >
+                                }
+                              </mat-optgroup>
+                            }
+                            @if (otherOptions(query().from).length) {
+                              <mat-optgroup
+                                [label]="'qb.tables.other' | dcTranslate"
+                                data-testid="qb-other-tables"
+                              >
+                                @for (s of otherOptions(query().from); track s.code) {
+                                  <mat-option [value]="'TABLE|' + s.code"
+                                    ><bdi dir="ltr">{{ s.code }}</bdi>
+                                    @if (s.objectType === 'VIEW') {
+                                      <small class="qb-muted"
+                                        >({{ 'qb.tables.view' | dcTranslate }})</small
+                                      >
+                                    }
+                                  </mat-option>
+                                }
+                              </mat-optgroup>
+                            }
                           </mat-select>
                         }
                       </mat-form-field>
@@ -264,9 +295,21 @@
                               <mat-select
                                 [value]="j.code"
                                 (selectionChange)="setJoin(ji, { code: $event.value })"
+                                (openedChange)="searchOpened($event, joinClassSearch)"
                                 [attr.data-testid]="'qb-join-source-' + ji"
                               >
-                                @for (s of classes(); track s.code) {
+                                <dc-select-search
+                                  #joinClassSearch
+                                  [value]="sourceSearch()"
+                                  (valueChange)="sourceSearch.set($event)"
+                                  testId="qb-search"
+                                />
+                                @if (!classOptions(j.code).length) {
+                                  <mat-option disabled>{{
+                                    'selectSearch.none' | dcTranslate
+                                  }}</mat-option>
+                                }
+                                @for (s of classOptions(j.code); track s.code) {
                                   <mat-option [value]="s.code"
                                     >{{ { ar: s.nameAr, en: s.nameEn } | dcLocalize }} ({{
                                       s.code
@@ -278,32 +321,48 @@
                               <mat-select
                                 [value]="tableKey(j)"
                                 (selectionChange)="pickJoin(ji, $event.value)"
+                                (openedChange)="searchOpened($event, joinTableSearch)"
                                 [attr.data-testid]="'qb-join-source-' + ji"
                               >
-                                <mat-optgroup [label]="'qb.tables.registered' | dcTranslate">
-                                  @for (s of registeredTables(); track s.code) {
-                                    <mat-option [value]="'DATA_OBJECT|' + s.code"
-                                      >{{ { ar: s.nameAr, en: s.nameEn } | dcLocalize }} ({{
-                                        s.code
-                                      }})</mat-option
-                                    >
-                                  }
-                                </mat-optgroup>
-                                <mat-optgroup
-                                  [label]="'qb.tables.other' | dcTranslate"
-                                  data-testid="qb-other-tables"
-                                >
-                                  @for (s of otherTables(); track s.code) {
-                                    <mat-option [value]="'TABLE|' + s.code"
-                                      ><bdi dir="ltr">{{ s.code }}</bdi>
-                                      @if (s.objectType === 'VIEW') {
-                                        <small class="qb-muted"
-                                          >({{ 'qb.tables.view' | dcTranslate }})</small
-                                        >
-                                      }
-                                    </mat-option>
-                                  }
-                                </mat-optgroup>
+                                <dc-select-search
+                                  #joinTableSearch
+                                  [value]="sourceSearch()"
+                                  (valueChange)="sourceSearch.set($event)"
+                                  testId="qb-search"
+                                />
+                                @if (!registeredOptions(j).length && !otherOptions(j).length) {
+                                  <mat-option disabled>{{
+                                    'selectSearch.none' | dcTranslate
+                                  }}</mat-option>
+                                }
+                                @if (registeredOptions(j).length) {
+                                  <mat-optgroup [label]="'qb.tables.registered' | dcTranslate">
+                                    @for (s of registeredOptions(j); track s.code) {
+                                      <mat-option [value]="'DATA_OBJECT|' + s.code"
+                                        >{{ { ar: s.nameAr, en: s.nameEn } | dcLocalize }} ({{
+                                          s.code
+                                        }})</mat-option
+                                      >
+                                    }
+                                  </mat-optgroup>
+                                }
+                                @if (otherOptions(j).length) {
+                                  <mat-optgroup
+                                    [label]="'qb.tables.other' | dcTranslate"
+                                    data-testid="qb-other-tables"
+                                  >
+                                    @for (s of otherOptions(j); track s.code) {
+                                      <mat-option [value]="'TABLE|' + s.code"
+                                        ><bdi dir="ltr">{{ s.code }}</bdi>
+                                        @if (s.objectType === 'VIEW') {
+                                          <small class="qb-muted"
+                                            >({{ 'qb.tables.view' | dcTranslate }})</small
+                                          >
+                                        }
+                                      </mat-option>
+                                    }
+                                  </mat-optgroup>
+                                }
                               </mat-select>
                             }
                           </mat-form-field>

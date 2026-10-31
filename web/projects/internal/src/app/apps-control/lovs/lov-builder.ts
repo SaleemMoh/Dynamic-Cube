@@ -34,6 +34,8 @@ import {
   LocalizePipe,
   TranslatePipe,
   problemMessages,
+  SelectSearch,
+  matchesSearch,
 } from '@dynamic-cube/shared';
 import { catchError, firstValueFrom, of } from 'rxjs';
 import { ConfigEditor, ConfigEditorData } from '../config/config-editor';
@@ -77,6 +79,7 @@ type Preview = LovPreview;
   selector: 'dc-lov-builder',
   imports: [
     NgTemplateOutlet,
+    SelectSearch,
     FormsModule,
     MatButtonModule,
     MatButtonToggleModule,
@@ -216,6 +219,36 @@ export class LovBuilder {
   );
   /** Tables and views not registered yet: the list registers those it uses when it is saved. */
   protected readonly otherTables = computed(() => this.sources().filter((s) => s.kind === 'TABLE'));
+  /** What is typed in the search box of the open source picker (cleared when it closes). */
+  protected readonly sourceSearch = signal('');
+
+  /** Classes matching the search (the chosen one always stays, so the picker keeps showing it). */
+  protected classOptions(keep: string | null): QuerySourceInfo[] {
+    const search = this.sourceSearch();
+    return this.classes().filter(
+      (s) => s.code === keep || matchesSearch(search, s.code, s.nameAr, s.nameEn),
+    );
+  }
+
+  protected registeredOptions(chosen: { kind: SourceKind; code: string }): QuerySourceInfo[] {
+    const search = this.sourceSearch();
+    const keep = chosen.kind === 'DATA_OBJECT' ? chosen.code : null;
+    return this.registeredTables().filter(
+      (s) => s.code === keep || matchesSearch(search, s.code, s.nameAr, s.nameEn),
+    );
+  }
+
+  protected otherOptions(chosen: { kind: SourceKind; code: string }): QuerySourceInfo[] {
+    const search = this.sourceSearch();
+    const keep = chosen.kind === 'TABLE' ? chosen.code : null;
+    return this.otherTables().filter((s) => s.code === keep || matchesSearch(search, s.code));
+  }
+
+  protected searchOpened(open: boolean, box: SelectSearch): void {
+    if (open) box.focus();
+    else this.sourceSearch.set('');
+  }
+
   /** The tables this list will register when saved. */
   protected readonly pendingTables = computed(() => {
     const q = this.query();

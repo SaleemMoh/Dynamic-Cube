@@ -378,7 +378,7 @@ in its SQL editor; class and data object lists open converted to a query). Its s
 
 | Step | What it sets |
 |---|---|
-| Source | A class (its typed view `apps.v_class_*`, keeping only active values in effect today that serve the user's company), a registered data object, or **another table** of the modules' schemas (any table or view not registered yet, with all its columns). Saving a list that uses another table registers it as a data object (code `SCHEMA_NAME`, e.g. `SVC_SERVICE`; all its columns) in the same change, approved with the list; *Register a table* still registers one with chosen columns and labels |
+| Source | A class (its typed view `apps.v_class_*`, keeping only active values in effect today that serve the user's company), a registered data object, or **another table** of the modules' schemas (any table or view not registered yet, with all its columns). Saving a list that uses another table registers it as a data object (code `SCHEMA_NAME`, e.g. `SVC_SERVICE`; all its columns) in the same change, approved with the list; *Register a table* still registers one with chosen columns and labels. The class and table pickers have a search box (code or name, any words) |
 | Join | Other classes, data objects or tables: *every row* (`LEFT`) or *matching rows only* (`INNER`), on one or more equal column pairs |
 | Value & labels | The columns giving the stored value, the Arabic and English labels, and the parent (cascading lists) |
 | Filter | Conditions (all / any, with groups): equals, not equals, greater or less than, contains, starts or ends with, one of, empty — by the column's type |
