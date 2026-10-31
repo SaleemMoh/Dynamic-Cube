@@ -14,7 +14,8 @@ namespace DynamicCube.Modules.Workflow.Tests;
 /// <summary>
 /// The NHC demo data (deploy/demo-data/nhc) loads into an empty installation, and a new certificate request goes through
 /// the normal track: the branch requests manager assigns, three analyst/auditor pairs evaluate, the grade is calculated by
-/// the rules of the guide, the general manager approves and the certificate is issued.
+/// the rules of the guide, the general manager approves and the certificate is issued. The individuals' demo service
+/// issues a qualification card.
 /// </summary>
 public sealed class NhcDemoTests
 {
@@ -68,6 +69,39 @@ public sealed class NhcDemoTests
                 return await documents.Versions.SingleAsync(v => v.DocumentId == document.Id);
             });
             version.Lines.ShouldContain("التشييد والبناء");
+
+            // The individuals' demo service: an engineer with 12 years of experience. The membership check cannot reach
+            // the Saudi Council of Engineers here, so the branch checks it by hand; 10 years or more go to the general
+            // manager; the qualification card is issued with the expert grade.
+            var person = await host.StartAsync("IND_QUALIFY", new JsonObject
+            {
+                ["IND_PROFESSION"] = "ENGINEER",
+                ["IND_ENG_SPECIALTY"] = "CIVIL",
+                ["IND_SCE_NUMBER"] = "123456",
+                ["IND_DEGREE"] = "BACHELOR",
+                ["IND_YEARS"] = 12,
+                ["IND_REGION"] = "MAKKAH",
+            }, level: "STANDARD", sla: 10);
+            await ClaimAndActAsync(host, person, "INTAKE", "ruh.manager", "ACCEPT");
+            await ClaimAndActAsync(host, person, "SCE_MANUAL", "ruh.manager", "VERIFIED");
+            await ClaimAndActAsync(host, person, "EVALUATION", "prj.analyst1", "RECOMMEND");
+            await ClaimAndActAsync(host, person, "GM_APPROVAL", "nhc.gm", "APPROVE");
+            host.Subject.Last(person).Status.ShouldBe(SubjectStatus.Approved);
+            var visited = (await host.InstanceAsync(person)).VisitedNodes;
+            visited.ShouldContain("SCE_CHECK");
+            visited.ShouldNotContain("PAY", "the standard track pays nothing");
+            var card = JsonNode.Parse((await host.InstanceAsync(person)).Facts)!["documents"]!["ISSUE"]!["number"]!.GetValue<string>();
+            card.ShouldStartWith("QLF");
+            var cardData = await host.Host.AsAsync("admin", async sp =>
+            {
+                var documents = sp.GetRequiredService<DocumentsDbContext>();
+                var document = await documents.Documents.SingleAsync(d => d.Number == card);
+                return JsonNode.Parse((await documents.Versions.SingleAsync(v => v.DocumentId == document.Id)).Data)!;
+            });
+            cardData["profession"]!.GetValue<string>().ShouldBe("مهندس");
+            cardData["specialty"]!.GetValue<string>().ShouldBe("هندسة مدنية");
+            cardData["grade"]!.GetValue<string>().ShouldBe("خبير");
+            cardData["region"]!.GetValue<string>().ShouldBe("منطقة مكة المكرمة");
         }
         finally
         {

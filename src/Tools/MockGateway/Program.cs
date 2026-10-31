@@ -7,7 +7,8 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 
 // Development stand-in for the MoMRAH API gateway (apiservicesstg.balady.gov.sa): the OAuth2 token endpoint and the MCI
-// operations, answering with the response envelope and codes of the MCI integration guide; and a SADAD stand-in that
+// operations, answering with the response envelope and codes of the MCI integration guide; NIC person data and SCE
+// memberships for the individuals' demo service; a SADAD stand-in that
 // registers bills, offers a payment page and notifies the platform of payments, signed; and an inspection body (CIS)
 // that books inspections, answers their results and notifies them, signed. Never deploy it.
 var builder = WebApplication.CreateBuilder(args);
@@ -53,6 +54,44 @@ mci.MapGet("/cr-information-id-number/{idNumber}", (string idNumber) =>
 
 mci.MapGet("/CR-Information/{crNumber}", (string crNumber) =>
     samples["byCrNumber"]?[crNumber] is JsonObject cr ? Success(cr.DeepClone()) : Business("001-000001", "Record Not Found"));
+
+// NIC (National Information Center): a person's identity data by ID number; SCE (Saudi Council of Engineers): an
+// engineer's membership by number. Used by the individuals' demo service.
+var people = JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "samples", "people.json")))!;
+var nic = app.MapGroup("/v1/NIC").AddEndpointFilter(async (context, next) =>
+{
+    var authorization = context.HttpContext.Request.Headers.Authorization.ToString();
+    var token = authorization.StartsWith("Bearer ", StringComparison.Ordinal) ? authorization[7..] : string.Empty;
+    return tokens.TryGetValue(token, out var expires) && expires > DateTimeOffset.UtcNow
+        ? await next(context)
+        : Results.Json(Status(401, "Access Token Expired"), statusCode: 401);
+});
+
+nic.MapGet("/person-information/{idNumber}", (string idNumber) =>
+{
+    if (idNumber.Length != 10 || !idNumber.All(char.IsAsciiDigit))
+    {
+        return Business("004-000002", "Wrong ID Number");
+    }
+
+    return people["byIdNumber"]?[idNumber] is JsonObject person ? Success(person.DeepClone()) : Business("004-000001", "Person Not Found");
+});
+
+var sce = app.MapGroup("/v1/SCE").AddEndpointFilter(async (context, next) =>
+{
+    var authorization = context.HttpContext.Request.Headers.Authorization.ToString();
+    var token = authorization.StartsWith("Bearer ", StringComparison.Ordinal) ? authorization[7..] : string.Empty;
+    return tokens.TryGetValue(token, out var expires) && expires > DateTimeOffset.UtcNow
+        ? await next(context)
+        : Results.Json(Status(401, "Access Token Expired"), statusCode: 401);
+});
+
+sce.MapGet("/membership/{number}", (string number) => people["sceMemberships"]?[number] switch
+{
+    JsonObject { } membership when membership["status"]?["code"]?.ToString() == "EXPIRED" => Business("005-000002", "Membership Expired"),
+    JsonObject { } membership => Success(membership.DeepClone()),
+    _ => Business("005-000001", "Membership Not Found"),
+});
 
 // SADAD: bills registered by the platform (Integration Manager operation SADAD_CREATE_BILL), paid on a page of the mock.
 var sadad = app.MapGroup("/v1/SADAD").AddEndpointFilter(async (context, next) =>

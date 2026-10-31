@@ -1,0 +1,49 @@
+{
+  "byIdNumber": {
+    "1000000001": {
+      "nameAr": "محمد بن عبدالله العتيبي",
+      "nameEn": "Mohammed Abdullah Al-Otaibi",
+      "birthDate": "1990-04-12",
+      "birthDateHijri": "1410/09/17",
+      "gender": { "code": "M", "name": "ذكر" },
+      "nationality": { "code": "SA", "name": "سعودي" },
+      "idStatus": { "code": "1", "name": "سارية" },
+      "idExpiryDate": "1450/03/01",
+      "city": "الرياض"
+    },
+    "1000000003": {
+      "nameAr": "سارة بنت خالد القحطاني",
+      "nameEn": "Sarah Khalid Al-Qahtani",
+      "birthDate": "1994-11-02",
+      "birthDateHijri": "1415/06/29",
+      "gender": { "code": "F", "name": "أنثى" },
+      "nationality": { "code": "SA", "name": "سعودية" },
+      "idStatus": { "code": "1", "name": "سارية" },
+      "idExpiryDate": "1452/08/15",
+      "city": "جدة"
+    }
+  },
+  "sceMemberships": {
+    "123456": {
+      "membershipNumber": "123456",
+      "status": { "code": "ACTIVE", "name": "سارية" },
+      "grade": "مهندس محترف",
+      "specialty": "هندسة مدنية",
+      "expiryDate": "2027-06-30"
+    },
+    "654321": {
+      "membershipNumber": "654321",
+      "status": { "code": "ACTIVE", "name": "سارية" },
+      "grade": "مهندس",
+      "specialty": "هندسة معمارية",
+      "expiryDate": "2026-12-31"
+    },
+    "111111": {
+      "membershipNumber": "111111",
+      "status": { "code": "EXPIRED", "name": "منتهية" },
+      "grade": "مهندس مشارك",
+      "specialty": "هندسة كهربائية",
+      "expiryDate": "2025-01-31"
+    }
+  }
+}

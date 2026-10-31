@@ -871,6 +871,7 @@ internal sealed class WorkflowEngine(
         facts["documents"] = produced["documents"]?.DeepClone() ?? new JsonObject();
         facts["payments"] = produced["payments"]?.DeepClone() ?? new JsonObject();
         facts["visits"] = produced["visits"]?.DeepClone() ?? new JsonObject();
+        facts["integrations"] = produced["integrations"]?.DeepClone() ?? new JsonObject();
         return facts;
     }
 

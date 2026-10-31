@@ -25,10 +25,34 @@ Built from the customer journey study (V05), the classification rules workbook (
 | 11-workflows | New and change: branch manager review → *fast track: invoice and payment* → three parallel analyst/auditor evaluations → grading → general manager → certificate. Renew: branch manager review → renewal | Workflows |
 | 12-notifications | Returned, rejected, approved, certificate issued, renewal available, expiry, task assigned, overdue | Communication |
 | 13-portal | Portal home, *About classification* and 10 FAQs answering the complaint themes of the study | Portal |
+| 14-individual-service | **Demo service for individuals** — *Professional qualification for housing-sector practitioners* (below): NIC and SCE through the gateway, the regions as a list of values, the individual's ID status in the party registry, the qualification card, 26 questions, the workflow and its notifications | Services, portal, Workflows, Documents |
 
 **Tracks:** *normal* — free, up to 60 working days; *fast (NHC)* — paid, 5 working days. The fast-track fee
 (5,000 / 10,000 / 20,000 / 30,000 SAR by annual revenue) is an assumption; change it in the service's Fees tab.
 Violations come from Eyfaa, which is not connected yet, so the demotion for violations does not apply until it is.
+
+### Demo service for individuals: professional qualification
+
+Shows every part of a service in one place. Sign in to the portal as `1000000001`, choose **yourself** (not an
+establishment) and open *Services for individuals → Professional qualification for housing-sector practitioners*.
+
+| Part | In this service |
+|---|---|
+| Question types | Text, multi-line text, number, date, single and multiple choice, choice from a list of values (regions), checkbox, single and multiple file uploads |
+| Where answers come from | ID number from the beneficiary (locked); full name and date of birth from the National Information Center (locked); nationality from the identity check step (editable); the rest typed by the applicant |
+| Question bank | Mobile, email, region and address are shared questions; the others belong to this service only |
+| Integration step | *Identity check* calls the NIC on arrival and shows the result card (name, date of birth, nationality, ID status and expiry) |
+| Paths in the form | Track: *standard* (free) or *express* (SAR 500 with VAT). The engineer, technician and craftsman sections appear for their profession, each with its own required questions; the graduation date is hidden for high school; the housing projects description appears when its box is ticked. The *Experience* step uses tabs |
+| Checks | Eligibility: a national ID that has not expired at the NIC. Validations: an engineer needs at least a bachelor's degree; a craftsman must have passed the skills test |
+| Branch | The region answer sends the request to that region's branch (Makkah → Jeddah, Eastern → Dammam, others → Riyadh head office) |
+| Workflow | Branch review → *express?* SADAD bill and payment → *engineer?* SCE membership checked through the gateway (on failure the branch checks it by hand) → professional evaluation → *10 years or more?* general manager approval → card issued |
+| Result | *Housing-sector professional qualification card* (`QLF-…`, 24 months, one per person; applying again adds a version) with profession, specialty, SCE grade, grade (practitioner under 5 years, professional, expert from 10), years and region |
+| Notifications | Returned, rejected and card issued (to the applicant); task assigned (to the employee) |
+
+Who works on it: the branch requests manager of the request's branch (`ruh.manager`, `jed.manager`, `dmm.manager`),
+the projects analysts (`prj.analyst1`, `prj.analyst2`) and the general manager (`nhc.gm`). SCE membership numbers in
+the mock gateway: `123456` and `654321` (active), `111111` (expired: the automatic check fails and the branch checks it
+by hand); any other number is not found. NIC data exists for `1000000001` (and `1000000003`).
 
 ### Sign-in (password `Dev@12345`)
 
@@ -55,7 +79,9 @@ How they get their access (edit a user, *Access* tab):
 ### Update without losing data
 
 `docker compose -f deploy/docker/docker-compose.yml up -d --build` rebuilds and restarts; the database migrates on
-start and keeps everything (branding, uploads, users, requests). The demo is loaded only into an empty database.
+start and keeps everything (branding, uploads, users, requests). The demo is loaded in full only into an empty
+database; a demo file added later (such as `14-individual-service`) is loaded into an existing database on the next
+start, and the files loaded before are not applied again, so changes made since are kept.
 
 To refresh only the NHC staff and roles in a database that already has the demo (for example after the staff got
 their names), import `deploy/demo-data/nhc/08-people.json` under **Apps Control → Change sets → Import package**, then

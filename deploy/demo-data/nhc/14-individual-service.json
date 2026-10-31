@@ -1,0 +1,2334 @@
+{
+  "title": "NHC — professional qualification for individuals (demo service)",
+  "items": [
+    {
+      "entityType": "integ.provider",
+      "entityCode": "NIC",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مركز المعلومات الوطني",
+        "nameEn": "National Information Center",
+        "descriptionAr": "بيانات هوية المواطنين والمقيمين",
+        "descriptionEn": "Identity data of citizens and residents"
+      }
+    },
+    {
+      "entityType": "integ.connection",
+      "entityCode": "NIC_GATEWAY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مركز المعلومات الوطني عبر بوابة التكامل",
+        "nameEn": "NIC through the integration gateway",
+        "providerCode": "NIC",
+        "baseUrl": "${GATEWAY_URL}",
+        "authType": "OAUTH2_CLIENT_CREDENTIALS",
+        "secretName": "MOMRAH_GATEWAY",
+        "tokenUrl": "/oauth/v1/token",
+        "timeoutSeconds": 30,
+        "retryCount": 2,
+        "circuitBreakerFailures": 5,
+        "circuitBreakerSeconds": 60,
+        "headers": []
+      }
+    },
+    {
+      "entityType": "integ.provider",
+      "entityCode": "SCE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الهيئة السعودية للمهندسين",
+        "nameEn": "Saudi Council of Engineers",
+        "descriptionAr": "عضويات المهندسين ودرجاتهم المهنية",
+        "descriptionEn": "Engineers' memberships and professional grades"
+      }
+    },
+    {
+      "entityType": "integ.connection",
+      "entityCode": "SCE_GATEWAY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الهيئة السعودية للمهندسين عبر بوابة التكامل",
+        "nameEn": "SCE through the integration gateway",
+        "providerCode": "SCE",
+        "baseUrl": "${GATEWAY_URL}",
+        "authType": "OAUTH2_CLIENT_CREDENTIALS",
+        "secretName": "MOMRAH_GATEWAY",
+        "tokenUrl": "/oauth/v1/token",
+        "timeoutSeconds": 30,
+        "retryCount": 2,
+        "circuitBreakerFailures": 5,
+        "circuitBreakerSeconds": 60,
+        "headers": []
+      }
+    },
+    {
+      "entityType": "integ.operation",
+      "entityCode": "NIC_PERSON_INFO",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "بيانات الشخص بدلالة رقم الهوية",
+        "nameEn": "Person information by ID number",
+        "descriptionAr": "الاسم وتاريخ الميلاد والجنسية وحالة الهوية",
+        "descriptionEn": "Name, date of birth, nationality and ID status",
+        "connectionCode": "NIC_GATEWAY",
+        "envelopeProfileCode": "MOMRAH",
+        "method": "GET",
+        "pathTemplate": "/v1/NIC/person-information/{idNumber}",
+        "parameters": [
+          {
+            "name": "idNumber",
+            "location": "PATH",
+            "isRequired": true,
+            "isMasked": true,
+            "sampleValue": "1000000001"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "nameAr",
+            "path": "nameAr"
+          },
+          {
+            "name": "nameEn",
+            "path": "nameEn"
+          },
+          {
+            "name": "birthDate",
+            "path": "birthDate"
+          },
+          {
+            "name": "birthDateHijri",
+            "path": "birthDateHijri"
+          },
+          {
+            "name": "gender",
+            "path": "gender.name"
+          },
+          {
+            "name": "nationality",
+            "path": "nationality.name"
+          },
+          {
+            "name": "idStatus",
+            "path": "idStatus.name"
+          },
+          {
+            "name": "idExpiry",
+            "path": "idExpiryDate"
+          },
+          {
+            "name": "city",
+            "path": "city"
+          }
+        ],
+        "cacheSeconds": 3600,
+        "responseCodes": [
+          {
+            "code": "004-000001",
+            "outcome": "NOT_FOUND",
+            "messageAr": "لا توجد بيانات لهذا الرقم لدى مركز المعلومات الوطني.",
+            "messageEn": "No data was found for this number at the National Information Center."
+          },
+          {
+            "code": "004-000002",
+            "outcome": "BUSINESS_ERROR",
+            "messageAr": "رقم الهوية غير صحيح.",
+            "messageEn": "The ID number is not valid."
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "integ.operation",
+      "entityCode": "SCE_MEMBERSHIP",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "عضوية مهندس في الهيئة",
+        "nameEn": "Engineer's SCE membership",
+        "descriptionAr": "حالة العضوية والدرجة المهنية والتخصص",
+        "descriptionEn": "Membership status, professional grade and specialty",
+        "connectionCode": "SCE_GATEWAY",
+        "envelopeProfileCode": "MOMRAH",
+        "method": "GET",
+        "pathTemplate": "/v1/SCE/membership/{membershipNumber}",
+        "parameters": [
+          {
+            "name": "membershipNumber",
+            "location": "PATH",
+            "isRequired": true,
+            "isMasked": false,
+            "sampleValue": "123456"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "status",
+            "path": "status.name"
+          },
+          {
+            "name": "grade",
+            "path": "grade"
+          },
+          {
+            "name": "specialty",
+            "path": "specialty"
+          },
+          {
+            "name": "expiryDate",
+            "path": "expiryDate"
+          }
+        ],
+        "responseCodes": [
+          {
+            "code": "005-000001",
+            "outcome": "NOT_FOUND",
+            "messageAr": "لا توجد عضوية بهذا الرقم لدى الهيئة السعودية للمهندسين.",
+            "messageEn": "No membership with this number at the Saudi Council of Engineers."
+          },
+          {
+            "code": "005-000002",
+            "outcome": "BUSINESS_ERROR",
+            "messageAr": "عضوية الهيئة منتهية.",
+            "messageEn": "The SCE membership has expired."
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "party.profile-field",
+      "entityCode": "ID_STATUS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "حالة الهوية",
+        "nameEn": "ID status",
+        "partyKind": "INDIVIDUAL",
+        "dataType": "TEXT",
+        "operationCode": "NIC_PERSON_INFO",
+        "outputName": "idStatus",
+        "inputs": [
+          {
+            "parameter": "idNumber",
+            "identifierType": "NATIONAL_ID"
+          }
+        ],
+        "refreshHours": 24
+      }
+    },
+    {
+      "entityType": "apps.lov",
+      "entityCode": "REGIONS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المناطق الإدارية",
+        "nameEn": "Administrative regions",
+        "sourceType": "CLASS",
+        "classCode": "REGION",
+        "defaultSelectionMode": "SINGLE",
+        "searchMode": "FULL",
+        "maxRows": 50,
+        "requiresGrant": false,
+        "isPublic": true
+      }
+    },
+    {
+      "entityType": "doc.template",
+      "entityCode": "IND_QUALIFICATION_CARD",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "بطاقة التأهيل المهني",
+        "nameEn": "Professional qualification card",
+        "html": "<html dir=\"rtl\" lang=\"ar\">\n<head>\n<style>\n  @page { margin: 0; }\n  body { font-family: 'IBM Plex Sans Arabic'; margin: 0; color: #161616; }\n  .card { margin: 1.4cm; border: 2px solid #0f5c4d; border-radius: 16px; overflow: hidden; }\n  .band { background: #0f5c4d; color: #fff; padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; }\n  .band h1 { margin: 0; font-size: 24px; }\n  .band p { margin: 4px 0 0; font-size: 13px; opacity: .85; }\n  .grade { background: #fff; color: #0f5c4d; border-radius: 999px; padding: 6px 18px; font-weight: 700; font-size: 18px; }\n  .body { display: flex; gap: 24px; padding: 24px; }\n  .who { flex: 1; }\n  .who h2 { margin: 0; font-size: 22px; }\n  .who .en { margin: 2px 0 14px; color: #4d5761; }\n  table { width: 100%; border-collapse: collapse; }\n  td { padding: 8px 10px; border-bottom: 1px solid #e5e7eb; }\n  td.k { color: #6c737f; width: 38%; }\n  .qr { text-align: center; font-size: 11px; color: #6c737f; }\n  .dates { display: flex; gap: 16px; padding: 0 24px 20px; }\n  .dates div { flex: 1; padding: 10px 14px; background: #eef6f3; border-radius: 8px; }\n  .dates span { display: block; color: #4d5761; font-size: 12px; }\n  .dates b { font-size: 16px; }\n  .foot { padding: 10px 24px; font-size: 11px; color: #6c737f; border-top: 1px solid #e5e7eb; }\n</style>\n</head>\n<body>\n<div class=\"card\">\n  <div class=\"band\">\n    <div>\n      <h1>{{ document.typeNameAr }}</h1>\n      <p>{{ document.typeNameEn }} — رقم البطاقة <b dir=\"ltr\">{{ document.number }}</b>{% if document.version > 1 %} — الإصدار {{ document.version }}{% endif %}</p>\n    </div>\n    <div class=\"grade\">{{ data.grade }}</div>\n  </div>\n  <div class=\"body\">\n    <div class=\"who\">\n      <h2>{{ holder.nameAr }}</h2>\n      <p class=\"en\">{{ holder.nameEn }}</p>\n      <table>\n        <tr><td class=\"k\">رقم الهوية</td><td dir=\"ltr\">{{ holder.identifiers.NATIONAL_ID }}</td></tr>\n        <tr><td class=\"k\">المهنة</td><td>{{ data.profession }}</td></tr>\n        <tr><td class=\"k\">التخصص</td><td>{{ data.specialty }}</td></tr>\n        {% if data.sceGrade %}<tr><td class=\"k\">درجة الهيئة السعودية للمهندسين</td><td>{{ data.sceGrade }}</td></tr>{% endif %}\n        <tr><td class=\"k\">سنوات الخبرة</td><td>{{ data.years }}</td></tr>\n        <tr><td class=\"k\">المنطقة</td><td>{{ data.region }}</td></tr>\n      </table>\n    </div>\n    <div class=\"qr\"><img src=\"{{ qr }}\" width=\"130\" alt=\"QR\"><br>امسح للتحقق</div>\n  </div>\n  <div class=\"dates\">\n    <div><span>تاريخ الإصدار</span><b>{{ document.issuedOn }}</b></div>\n    <div><span>تاريخ الانتهاء</span><b>{{ document.expiresOn }}</b></div>\n  </div>\n  <div class=\"foot\">بطاقة صادرة إلكترونياً ولا تحتاج إلى ختم. للتحقق من صحتها وسريانها: <span dir=\"ltr\">{{ verifyUrl }}</span></div>\n</div>\n</body>\n</html>\n"
+      }
+    },
+    {
+      "entityType": "doc.document-type",
+      "entityCode": "IND_QUALIFICATION_CARD",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "بطاقة التأهيل المهني لقطاع الإسكان",
+        "nameEn": "Housing-sector professional qualification card",
+        "descriptionAr": "بطاقة واحدة لكل فرد تبيّن مهنته وتخصصه ودرجته؛ إعادة التقديم تحدّث البطاقة بإصدار جديد.",
+        "descriptionEn": "One card per person showing their profession, specialty and grade; applying again updates the card with a new version.",
+        "numberPrefix": "QLF",
+        "validityMonths": 24,
+        "onePerHolder": true,
+        "amendResetsValidity": true,
+        "templateCode": "IND_QUALIFICATION_CARD",
+        "alertDaysBefore": [
+          30
+        ],
+        "fields": [
+          {
+            "code": "profession",
+            "nameAr": "المهنة",
+            "nameEn": "Profession",
+            "isPublic": true
+          },
+          {
+            "code": "specialty",
+            "nameAr": "التخصص",
+            "nameEn": "Specialty",
+            "isPublic": true
+          },
+          {
+            "code": "grade",
+            "nameAr": "الدرجة",
+            "nameEn": "Grade",
+            "isPublic": true
+          },
+          {
+            "code": "sceGrade",
+            "nameAr": "درجة الهيئة",
+            "nameEn": "SCE grade",
+            "isPublic": true
+          },
+          {
+            "code": "years",
+            "nameAr": "سنوات الخبرة",
+            "nameEn": "Years of experience",
+            "isPublic": false
+          },
+          {
+            "code": "region",
+            "nameAr": "المنطقة",
+            "nameEn": "Region",
+            "isPublic": true
+          },
+          {
+            "code": "requestNumber",
+            "nameAr": "رقم الطلب",
+            "nameEn": "Request number",
+            "isPublic": false
+          }
+        ],
+        "lineFields": [],
+        "businessApp": "CLASSIFICATION"
+      }
+    },
+    {
+      "entityType": "svc.category",
+      "entityCode": "INDIVIDUALS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "خدمات الأفراد",
+        "nameEn": "Services for individuals",
+        "descriptionAr": "خدمات يقدمها الأفراد لأنفسهم، مثل التأهيل المهني",
+        "descriptionEn": "Services people apply for themselves, such as professional qualification",
+        "icon": "person",
+        "displayOrder": 20
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "IND_MOBILE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "رقم الجوال",
+        "nameEn": "Mobile number",
+        "type": "TEXT",
+        "hintAr": "مثال: 0512345678",
+        "hintEn": "e.g. 0512345678",
+        "validation": {
+          "pattern": "^05[0-9]{8}$"
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "IND_EMAIL",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "البريد الإلكتروني",
+        "nameEn": "Email",
+        "type": "TEXT",
+        "validation": {
+          "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+          "maxLength": 120
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "IND_REGION",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المنطقة",
+        "nameEn": "Region",
+        "type": "SELECT",
+        "lov": "REGIONS",
+        "hintAr": "يُوجَّه الطلب إلى فرع منطقتك",
+        "hintEn": "The request goes to your region's branch",
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "IND_ADDRESS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "العنوان الوطني",
+        "nameEn": "National address",
+        "type": "TEXTAREA",
+        "validation": {
+          "maxLength": 300
+        }
+      }
+    },
+    {
+      "entityType": "svc.service",
+      "entityCode": "IND_QUALIFY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "التأهيل المهني للعاملين في قطاع الإسكان",
+        "nameEn": "Professional qualification for housing-sector practitioners",
+        "descriptionAr": "يتقدم المهندس أو الفني أو الحرفي بمؤهلاته وخبرته، فيُقيَّم ويحصل على بطاقة تأهيل مهني بدرجة ممارس أو محترف أو خبير.",
+        "descriptionEn": "Engineers, technicians and craftsmen apply with their qualifications and experience, are evaluated and receive a professional qualification card as practitioner, professional or expert.",
+        "archetype": "ISSUANCE",
+        "categoryCode": "INDIVIDUALS",
+        "icon": "badge",
+        "displayOrder": 10,
+        "partyKinds": [
+          "INDIVIDUAL"
+        ],
+        "isListed": true,
+        "draftsAllowed": true,
+        "draftExpiryDays": 30,
+        "onNewVersion": "CONTINUE",
+        "numberPrefix": "QLF",
+        "companyCode": "MAIN",
+        "branchQuestion": "IND_REGION",
+        "businessApp": "CLASSIFICATION"
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "IND_ID_NUMBER",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "رقم الهوية الوطنية",
+        "nameEn": "National ID number",
+        "type": "TEXT",
+        "fill": "PARTY",
+        "prefill": "party.identifiers.NATIONAL_ID",
+        "allowManualEntry": false,
+        "validation": {
+          "pattern": "^1[0-9]{9}$"
+        },
+        "serviceCode": "IND_QUALIFY"
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "IND_FULL_NAME",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الاسم الكامل",
+        "nameEn": "Full name",
+        "type": "TEXT",
+        "fill": "INTEGRATION",
+        "integration": {
+          "operation": "NIC_PERSON_INFO",
+          "inputs": [
+            {
+              "parameter": "idNumber",
+              "from": "party.identifiers.NATIONAL_ID"
+            }
+          ],
+          "output": "nameAr"
+        },
+        "allowManualEntry": false,
+        "hintAr": "من مركز المعلومات الوطني",
+        "hintEn": "From the National Information Center",
+        "validation": {},
+        "serviceCode": "IND_QUALIFY"
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "IND_BIRTH_DATE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تاريخ الميلاد",
+        "nameEn": "Date of birth",
+        "type": "DATE",
+        "fill": "INTEGRATION",
+        "integration": {
+          "operation": "NIC_PERSON_INFO",
+          "inputs": [
+            {
+              "parameter": "idNumber",
+              "from": "party.identifiers.NATIONAL_ID"
+            }
+          ],
+          "output": "birthDate"
+        },
+        "allowManualEntry": false,
+        "validation": {},
+        "serviceCode": "IND_QUALIFY"
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "IND_NATIONALITY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الجنسية",
+        "nameEn": "Nationality",
+        "type": "TEXT",
+        "hintAr": "تُعبأ من خطوة التحقق من الهوية، ويمكن تعديلها",
+        "hintEn": "Filled by the identity check step; you may change it",
+        "validation": {
+          "maxLength": 50
+        },
+        "serviceCode": "IND_QUALIFY"
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "IND_PROFESSION",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المهنة",
+        "nameEn": "Profession",
+        "type": "SELECT",
+        "options": [
+          {
+            "value": "ENGINEER",
+            "labelAr": "مهندس",
+            "labelEn": "Engineer"
+          },
+          {
+            "value": "TECHNICIAN",
+            "labelAr": "فني",
+            "labelEn": "Technician"
+          },
+          {
+            "value": "CRAFTSMAN",
+            "labelAr": "حرفي",
+            "labelEn": "Craftsman"
+          }
+        ],
+        "validation": {},
+        "serviceCode": "IND_QUALIFY"
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "IND_ENG_SPECIALTY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "التخصص الهندسي",
+        "nameEn": "Engineering specialty",
+        "type": "SELECT",
+        "options": [
+          {
+            "value": "CIVIL",
+            "labelAr": "هندسة مدنية",
+            "labelEn": "Civil engineering"
+          },
+          {
+            "value": "ARCHITECTURAL",
+            "labelAr": "هندسة معمارية",
+            "labelEn": "Architectural engineering"
+          },
+          {
+            "value": "ELECTRICAL",
+            "labelAr": "هندسة كهربائية",
+            "labelEn": "Electrical engineering"
+          },
+          {
+            "value": "MECHANICAL",
+            "labelAr": "هندسة ميكانيكية",
+            "labelEn": "Mechanical engineering"
+          }
+        ],
+        "validation": {},
+        "serviceCode": "IND_QUALIFY"
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "IND_SCE_NUMBER",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "رقم العضوية في الهيئة السعودية للمهندسين",
+        "nameEn": "SCE membership number",
+        "type": "TEXT",
+        "hintAr": "للتجربة: 123456 أو 654321 (سارية)، 111111 (منتهية)",
+        "hintEn": "To try: 123456 or 654321 (active), 111111 (expired)",
+        "validation": {
+          "pattern": "^[0-9]{6}$"
+        },
+        "serviceCode": "IND_QUALIFY"
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "IND_SCE_CARD",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "بطاقة عضوية الهيئة",
+        "nameEn": "SCE membership card",
+        "type": "FILE",
+        "validation": {
+          "extensions": [
+            "pdf",
+            "jpg",
+            "jpeg",
+            "png"
+          ],
+          "maxSizeMb": 5
+        },
+        "serviceCode": "IND_QUALIFY"
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "IND_TECH_FIELD",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المجال الفني",
+        "nameEn": "Technical field",
+        "type": "SELECT",
+        "options": [
+          {
+            "value": "SURVEYING",
+            "labelAr": "المساحة",
+            "labelEn": "Surveying"
+          },
+          {
+            "value": "LABORATORY",
+            "labelAr": "مختبرات المواد",
+            "labelEn": "Materials laboratory"
+          },
+          {
+            "value": "HVAC",
+            "labelAr": "التكييف والتبريد",
+            "labelEn": "HVAC"
+          },
+          {
+            "value": "SAFETY",
+            "labelAr": "السلامة المهنية",
+            "labelEn": "Occupational safety"
+          }
+        ],
+        "validation": {},
+        "serviceCode": "IND_QUALIFY"
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "IND_TECH_CERT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "شهادة التدريب التقني",
+        "nameEn": "Technical training certificate",
+        "type": "FILE",
+        "validation": {
+          "extensions": [
+            "pdf"
+          ],
+          "maxSizeMb": 5
+        },
+        "serviceCode": "IND_QUALIFY"
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "IND_CRAFTS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الحرف",
+        "nameEn": "Crafts",
+        "type": "SELECT",
+        "multiple": true,
+        "options": [
+          {
+            "value": "PLUMBING",
+            "labelAr": "سباكة",
+            "labelEn": "Plumbing"
+          },
+          {
+            "value": "ELECTRICAL",
+            "labelAr": "كهرباء",
+            "labelEn": "Electrical"
+          },
+          {
+            "value": "CARPENTRY",
+            "labelAr": "نجارة",
+            "labelEn": "Carpentry"
+          },
+          {
+            "value": "MASONRY",
+            "labelAr": "بناء",
+            "labelEn": "Masonry"
+          },
+          {
+            "value": "PAINTING",
+            "labelAr": "دهان",
+            "labelEn": "Painting"
+          },
+          {
+            "value": "TILING",
+            "labelAr": "تبليط",
+            "labelEn": "Tiling"
+          }
+        ],
+        "hintAr": "اختر حرفة أو أكثر",
+        "hintEn": "Choose one or more",
+        "validation": {},
+        "serviceCode": "IND_QUALIFY"
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "IND_SKILL_TEST",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "اجتزت اختبار المهارات المهنية المعتمد",
+        "nameEn": "I passed the accredited professional skills test",
+        "type": "CHECKBOX",
+        "validation": {},
+        "serviceCode": "IND_QUALIFY"
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "IND_DEGREE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المؤهل العلمي",
+        "nameEn": "Highest qualification",
+        "type": "SELECT",
+        "options": [
+          {
+            "value": "HIGH_SCHOOL",
+            "labelAr": "ثانوية عامة",
+            "labelEn": "High school"
+          },
+          {
+            "value": "DIPLOMA",
+            "labelAr": "دبلوم",
+            "labelEn": "Diploma"
+          },
+          {
+            "value": "BACHELOR",
+            "labelAr": "بكالوريوس",
+            "labelEn": "Bachelor's"
+          },
+          {
+            "value": "MASTER",
+            "labelAr": "ماجستير",
+            "labelEn": "Master's"
+          },
+          {
+            "value": "PHD",
+            "labelAr": "دكتوراه",
+            "labelEn": "PhD"
+          }
+        ],
+        "validation": {},
+        "serviceCode": "IND_QUALIFY"
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "IND_GRAD_DATE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تاريخ التخرج",
+        "nameEn": "Graduation date",
+        "type": "DATE",
+        "validation": {},
+        "serviceCode": "IND_QUALIFY"
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "IND_DEGREE_CERT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "شهادة المؤهل",
+        "nameEn": "Qualification certificate",
+        "type": "FILE",
+        "validation": {
+          "extensions": [
+            "pdf"
+          ],
+          "maxSizeMb": 5
+        },
+        "serviceCode": "IND_QUALIFY"
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "IND_YEARS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "سنوات الخبرة في المهنة",
+        "nameEn": "Years of experience in the profession",
+        "type": "NUMBER",
+        "hintAr": "10 سنوات فأكثر: درجة خبير باعتماد المدير العام",
+        "hintEn": "10 years or more: expert grade, approved by the general manager",
+        "validation": {
+          "min": 0,
+          "max": 50
+        },
+        "serviceCode": "IND_QUALIFY"
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "IND_EMPLOYER",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "جهة العمل الحالية",
+        "nameEn": "Current employer",
+        "type": "TEXT",
+        "validation": {
+          "maxLength": 150
+        },
+        "serviceCode": "IND_QUALIFY"
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "IND_JOB_START",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تاريخ بدء العمل الحالي",
+        "nameEn": "Current job start date",
+        "type": "DATE",
+        "validation": {},
+        "serviceCode": "IND_QUALIFY"
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "IND_HOUSING_PROJECTS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "شاركت في مشاريع إسكان سابقاً",
+        "nameEn": "I worked on housing projects before",
+        "type": "CHECKBOX",
+        "validation": {},
+        "serviceCode": "IND_QUALIFY"
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "IND_PROJECTS_DESC",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "وصف مشاريع الإسكان",
+        "nameEn": "Housing projects",
+        "type": "TEXTAREA",
+        "hintAr": "اسم المشروع ودورك فيه ومدته",
+        "hintEn": "Project name, your role and how long",
+        "validation": {
+          "maxLength": 1000
+        },
+        "serviceCode": "IND_QUALIFY"
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "IND_CV",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "السيرة الذاتية",
+        "nameEn": "CV",
+        "type": "FILE",
+        "validation": {
+          "extensions": [
+            "pdf"
+          ],
+          "maxSizeMb": 5
+        },
+        "serviceCode": "IND_QUALIFY"
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "IND_TRAINING",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "شهادات التدريب والدورات",
+        "nameEn": "Training certificates",
+        "type": "FILE",
+        "multiple": true,
+        "hintAr": "اختياري، حتى 5 ملفات",
+        "hintEn": "Optional, up to 5 files",
+        "validation": {
+          "extensions": [
+            "pdf",
+            "jpg",
+            "jpeg",
+            "png"
+          ],
+          "maxSizeMb": 5,
+          "maxFiles": 5
+        },
+        "serviceCode": "IND_QUALIFY"
+      }
+    },
+    {
+      "entityType": "svc.service-version",
+      "entityCode": "IND_QUALIFY/1",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 1",
+        "nameEn": "Version 1",
+        "definition": {
+          "levels": [
+            {
+              "code": "STANDARD",
+              "nameAr": "المسار العادي",
+              "nameEn": "Standard",
+              "descriptionAr": "بدون رسوم — خلال 10 أيام عمل",
+              "descriptionEn": "Free of charge — within 10 working days",
+              "slaWorkingDays": 10
+            },
+            {
+              "code": "EXPRESS",
+              "nameAr": "المسار العاجل",
+              "nameEn": "Express",
+              "descriptionAr": "برسوم 500 ريال — خلال يومي عمل من السداد",
+              "descriptionEn": "SAR 500 — within 2 working days of payment",
+              "slaWorkingDays": 2
+            }
+          ],
+          "eligibility": [
+            {
+              "code": "CITIZEN",
+              "rule": {
+                "!=": [
+                  {
+                    "var": "party.identifiers.NATIONAL_ID"
+                  },
+                  null
+                ]
+              },
+              "messageAr": "الخدمة متاحة لحاملي الهوية الوطنية.",
+              "messageEn": "The service is for holders of a national ID."
+            },
+            {
+              "code": "ID_VALID",
+              "rule": {
+                "!=": [
+                  {
+                    "var": "party.profile.ID_STATUS"
+                  },
+                  "منتهية"
+                ]
+              },
+              "messageAr": "هويتك منتهية لدى مركز المعلومات الوطني؛ جدّدها ثم تقدّم.",
+              "messageEn": "Your ID has expired at the National Information Center; renew it, then apply."
+            }
+          ],
+          "validations": [
+            {
+              "code": "ENGINEER_DEGREE",
+              "step": "QUALIFICATION",
+              "rule": {
+                "or": [
+                  {
+                    "!=": [
+                      {
+                        "var": "data.IND_PROFESSION"
+                      },
+                      "ENGINEER"
+                    ]
+                  },
+                  {
+                    "in": [
+                      {
+                        "var": "data.IND_DEGREE"
+                      },
+                      [
+                        "BACHELOR",
+                        "MASTER",
+                        "PHD"
+                      ]
+                    ]
+                  }
+                ]
+              },
+              "messageAr": "يحتاج المهندس مؤهل بكالوريوس على الأقل.",
+              "messageEn": "An engineer needs at least a bachelor's degree."
+            },
+            {
+              "code": "CRAFTSMAN_TEST",
+              "step": "QUALIFICATION",
+              "rule": {
+                "or": [
+                  {
+                    "!=": [
+                      {
+                        "var": "data.IND_PROFESSION"
+                      },
+                      "CRAFTSMAN"
+                    ]
+                  },
+                  {
+                    "==": [
+                      {
+                        "var": "data.IND_SKILL_TEST"
+                      },
+                      true
+                    ]
+                  }
+                ]
+              },
+              "messageAr": "يجب أن يجتاز الحرفي اختبار المهارات المهنية المعتمد.",
+              "messageEn": "A craftsman must have passed the accredited skills test."
+            }
+          ],
+          "fees": [
+            {
+              "code": "EXPRESS_FEE",
+              "nameAr": "رسوم المسار العاجل",
+              "nameEn": "Express fee",
+              "levels": [
+                "EXPRESS"
+              ],
+              "fixed": 500,
+              "vatRate": 0.15,
+              "vatIncluded": true
+            }
+          ],
+          "steps": [
+            {
+              "code": "LEVEL",
+              "type": "LEVEL",
+              "titleAr": "مسار الخدمة",
+              "titleEn": "Track",
+              "sections": []
+            },
+            {
+              "code": "IDENTITY",
+              "type": "INTEGRATION",
+              "titleAr": "التحقق من الهوية",
+              "titleEn": "Identity check",
+              "sections": [],
+              "textAr": "نتحقق من بيانات هويتك لدى مركز المعلومات الوطني ونعبئ بها النموذج.",
+              "textEn": "We check your identity data with the National Information Center and fill the form with it.",
+              "integration": {
+                "operation": "NIC_PERSON_INFO",
+                "inputs": [
+                  {
+                    "parameter": "idNumber",
+                    "from": "party.identifiers.NATIONAL_ID"
+                  }
+                ],
+                "required": true,
+                "showResult": true,
+                "outputs": [
+                  {
+                    "output": "nationality",
+                    "question": "IND_NATIONALITY"
+                  }
+                ],
+                "display": [
+                  {
+                    "output": "nameAr",
+                    "labelAr": "الاسم",
+                    "labelEn": "Name"
+                  },
+                  {
+                    "output": "birthDateHijri",
+                    "labelAr": "تاريخ الميلاد (هجري)",
+                    "labelEn": "Date of birth (Hijri)"
+                  },
+                  {
+                    "output": "nationality",
+                    "labelAr": "الجنسية",
+                    "labelEn": "Nationality"
+                  },
+                  {
+                    "output": "idStatus",
+                    "labelAr": "حالة الهوية",
+                    "labelEn": "ID status"
+                  },
+                  {
+                    "output": "idExpiry",
+                    "labelAr": "انتهاء الهوية",
+                    "labelEn": "ID expiry"
+                  }
+                ]
+              }
+            },
+            {
+              "code": "PERSONAL",
+              "type": "FORM",
+              "titleAr": "البيانات الشخصية",
+              "titleEn": "Personal details",
+              "sections": [
+                {
+                  "code": "IDENTITY_DATA",
+                  "titleAr": "بيانات الهوية",
+                  "titleEn": "Identity",
+                  "columns": 2,
+                  "questions": [
+                    {
+                      "code": "IND_ID_NUMBER",
+                      "required": true,
+                      "readonly": true
+                    },
+                    {
+                      "code": "IND_FULL_NAME",
+                      "required": true,
+                      "readonly": true
+                    },
+                    {
+                      "code": "IND_BIRTH_DATE",
+                      "required": false,
+                      "readonly": true
+                    },
+                    {
+                      "code": "IND_NATIONALITY",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ]
+                },
+                {
+                  "code": "CONTACT",
+                  "titleAr": "التواصل والعنوان",
+                  "titleEn": "Contact and address",
+                  "columns": 2,
+                  "questions": [
+                    {
+                      "code": "IND_MOBILE",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "IND_EMAIL",
+                      "required": false,
+                      "readonly": false
+                    },
+                    {
+                      "code": "IND_REGION",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "IND_ADDRESS",
+                      "required": false,
+                      "readonly": false,
+                      "width": "FULL"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "QUALIFICATION",
+              "type": "FORM",
+              "titleAr": "المهنة والمؤهل",
+              "titleEn": "Profession and qualification",
+              "sections": [
+                {
+                  "code": "PROFESSION",
+                  "titleAr": "المهنة",
+                  "titleEn": "Profession",
+                  "questions": [
+                    {
+                      "code": "IND_PROFESSION",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ]
+                },
+                {
+                  "code": "ENGINEER",
+                  "titleAr": "بيانات المهندس",
+                  "titleEn": "Engineer",
+                  "columns": 2,
+                  "visibleWhen": {
+                    "==": [
+                      {
+                        "var": "IND_PROFESSION"
+                      },
+                      "ENGINEER"
+                    ]
+                  },
+                  "questions": [
+                    {
+                      "code": "IND_ENG_SPECIALTY",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "IND_PROFESSION"
+                          },
+                          "ENGINEER"
+                        ]
+                      }
+                    },
+                    {
+                      "code": "IND_SCE_NUMBER",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "IND_PROFESSION"
+                          },
+                          "ENGINEER"
+                        ]
+                      }
+                    },
+                    {
+                      "code": "IND_SCE_CARD",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "IND_PROFESSION"
+                          },
+                          "ENGINEER"
+                        ]
+                      },
+                      "width": "FULL"
+                    }
+                  ]
+                },
+                {
+                  "code": "TECHNICIAN",
+                  "titleAr": "بيانات الفني",
+                  "titleEn": "Technician",
+                  "columns": 2,
+                  "visibleWhen": {
+                    "==": [
+                      {
+                        "var": "IND_PROFESSION"
+                      },
+                      "TECHNICIAN"
+                    ]
+                  },
+                  "questions": [
+                    {
+                      "code": "IND_TECH_FIELD",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "IND_PROFESSION"
+                          },
+                          "TECHNICIAN"
+                        ]
+                      }
+                    },
+                    {
+                      "code": "IND_TECH_CERT",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "IND_PROFESSION"
+                          },
+                          "TECHNICIAN"
+                        ]
+                      },
+                      "width": "FULL"
+                    }
+                  ]
+                },
+                {
+                  "code": "CRAFTSMAN",
+                  "titleAr": "بيانات الحرفي",
+                  "titleEn": "Craftsman",
+                  "visibleWhen": {
+                    "==": [
+                      {
+                        "var": "IND_PROFESSION"
+                      },
+                      "CRAFTSMAN"
+                    ]
+                  },
+                  "questions": [
+                    {
+                      "code": "IND_CRAFTS",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "IND_PROFESSION"
+                          },
+                          "CRAFTSMAN"
+                        ]
+                      }
+                    },
+                    {
+                      "code": "IND_SKILL_TEST",
+                      "required": false,
+                      "readonly": false
+                    }
+                  ]
+                },
+                {
+                  "code": "EDUCATION",
+                  "titleAr": "المؤهل العلمي",
+                  "titleEn": "Qualification",
+                  "columns": 2,
+                  "questions": [
+                    {
+                      "code": "IND_DEGREE",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "IND_GRAD_DATE",
+                      "required": false,
+                      "readonly": false,
+                      "visibleWhen": {
+                        "!=": [
+                          {
+                            "var": "IND_DEGREE"
+                          },
+                          "HIGH_SCHOOL"
+                        ]
+                      }
+                    },
+                    {
+                      "code": "IND_DEGREE_CERT",
+                      "required": true,
+                      "readonly": false,
+                      "width": "FULL"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "EXPERIENCE",
+              "type": "FORM",
+              "titleAr": "الخبرة والمرفقات",
+              "titleEn": "Experience and attachments",
+              "display": "TABS",
+              "sections": [
+                {
+                  "code": "WORK",
+                  "titleAr": "الخبرة",
+                  "titleEn": "Experience",
+                  "columns": 2,
+                  "questions": [
+                    {
+                      "code": "IND_YEARS",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "IND_EMPLOYER",
+                      "required": false,
+                      "readonly": false
+                    },
+                    {
+                      "code": "IND_JOB_START",
+                      "required": false,
+                      "readonly": false
+                    },
+                    {
+                      "code": "IND_HOUSING_PROJECTS",
+                      "required": false,
+                      "readonly": false,
+                      "width": "FULL"
+                    },
+                    {
+                      "code": "IND_PROJECTS_DESC",
+                      "required": false,
+                      "readonly": false,
+                      "width": "FULL",
+                      "visibleWhen": {
+                        "==": [
+                          {
+                            "var": "IND_HOUSING_PROJECTS"
+                          },
+                          true
+                        ]
+                      },
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "IND_HOUSING_PROJECTS"
+                          },
+                          true
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "code": "ATTACHMENTS",
+                  "titleAr": "المرفقات",
+                  "titleEn": "Attachments",
+                  "questions": [
+                    {
+                      "code": "IND_CV",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "IND_TRAINING",
+                      "required": false,
+                      "readonly": false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "FEES",
+              "type": "FEES",
+              "titleAr": "الرسوم",
+              "titleEn": "Fees",
+              "sections": []
+            },
+            {
+              "code": "REVIEW",
+              "type": "REVIEW",
+              "titleAr": "مراجعة الطلب",
+              "titleEn": "Review",
+              "sections": []
+            },
+            {
+              "code": "DECLARATION",
+              "type": "DECLARATION",
+              "titleAr": "الإقرار",
+              "titleEn": "Declaration",
+              "sections": [],
+              "textAr": "أُقرّ بأن جميع البيانات والمرفقات المقدمة صحيحة وتخصني، وأوافق على التحقق منها لدى الجهات المختصة، وأعلم أن تقديم بيانات غير صحيحة يُلغي الطلب والبطاقة.",
+              "textEn": "I declare that all data and attachments are true and mine, I agree to their verification with the authorities concerned, and I understand that false data cancels the request and the card."
+            }
+          ],
+          "card": {
+            "audienceAr": "المهندسون والفنيون والحرفيون العاملون في مشاريع الإسكان",
+            "audienceEn": "Engineers, technicians and craftsmen working on housing projects",
+            "steps": [
+              {
+                "textAr": "الدخول عبر النفاذ الوطني والتقديم عن نفسك",
+                "textEn": "Sign in with Nafath and apply for yourself"
+              },
+              {
+                "textAr": "اختيار المسار: العادي (مجاناً) أو العاجل (500 ريال)",
+                "textEn": "Choose the track: standard (free) or express (SAR 500)"
+              },
+              {
+                "textAr": "التحقق من الهوية تلقائياً، ثم تعبئة المهنة والمؤهل والخبرة وإرفاق المستندات",
+                "textEn": "Your identity is checked automatically; then fill in the profession, qualification and experience and attach the documents"
+              },
+              {
+                "textAr": "مراجعة الفرع والتقييم المهني (والتحقق من عضوية الهيئة للمهندسين)",
+                "textEn": "Branch review and professional evaluation (and the SCE membership check for engineers)"
+              },
+              {
+                "textAr": "استلام بطاقة التأهيل المهني في البوابة",
+                "textEn": "Receive the professional qualification card in the portal"
+              }
+            ],
+            "termsAr": "أن يكون المتقدم من حاملي الهوية الوطنية وهويته سارية.\nالمهندس: مؤهل بكالوريوس على الأقل وعضوية سارية في الهيئة السعودية للمهندسين.\nالحرفي: اجتياز اختبار المهارات المهنية المعتمد.\n10 سنوات خبرة فأكثر: درجة خبير باعتماد المدير العام.",
+            "termsEn": "The applicant holds a valid national ID.\nEngineers: at least a bachelor's degree and an active Saudi Council of Engineers membership.\nCraftsmen: the accredited professional skills test passed.\n10 years of experience or more: expert grade, approved by the general manager.",
+            "requiredDocuments": [
+              {
+                "nameAr": "السيرة الذاتية",
+                "nameEn": "CV",
+                "noteAr": "PDF",
+                "noteEn": "PDF"
+              },
+              {
+                "nameAr": "شهادة المؤهل العلمي",
+                "nameEn": "Qualification certificate",
+                "noteAr": "PDF",
+                "noteEn": "PDF"
+              },
+              {
+                "nameAr": "بطاقة عضوية الهيئة السعودية للمهندسين",
+                "nameEn": "SCE membership card",
+                "noteAr": "للمهندسين",
+                "noteEn": "Engineers"
+              },
+              {
+                "nameAr": "شهادة التدريب التقني",
+                "nameEn": "Technical training certificate",
+                "noteAr": "للفنيين",
+                "noteEn": "Technicians"
+              }
+            ],
+            "channels": [
+              "PORTAL"
+            ],
+            "phone": "199040",
+            "email": "qualification@nhci.example"
+          }
+        }
+      }
+    },
+    {
+      "entityType": "wf.workflow",
+      "entityCode": "IND_QUALIFY",
+      "operation": "UPDATE",
+      "payload": {
+        "nameAr": "معالجة طلبات التأهيل المهني",
+        "nameEn": "Professional qualification processing",
+        "descriptionAr": "مراجعة الفرع؛ المسار العاجل يسدد الفاتورة؛ عضوية الهيئة للمهندسين تُتحقق آلياً (أو يدوياً إن تعذر)؛ التقييم المهني؛ اعتماد المدير العام لدرجة خبير؛ إصدار البطاقة.",
+        "descriptionEn": "Branch review; the express track pays its invoice; engineers’ SCE membership is checked automatically (or by hand when the check fails); professional evaluation; the general manager approves the expert grade; the card is issued.",
+        "serviceCode": "IND_QUALIFY"
+      }
+    },
+    {
+      "entityType": "wf.workflow-version",
+      "entityCode": "IND_QUALIFY/2",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 2",
+        "nameEn": "Version 2",
+        "definition": {
+          "nodes": [
+            {
+              "code": "START",
+              "type": "START",
+              "nameAr": "تقديم الطلب",
+              "nameEn": "Submitted",
+              "next": "INTAKE",
+              "layout": {
+                "x": 340,
+                "y": 60
+              }
+            },
+            {
+              "code": "INTAKE",
+              "type": "HUMAN_TASK",
+              "nameAr": "مراجعة الطلب في الفرع",
+              "nameEn": "Branch review",
+              "assignment": {
+                "target": "ROLE",
+                "role": "CLS_REQUEST_MANAGER",
+                "mode": "QUEUE"
+              },
+              "actions": [
+                {
+                  "code": "ACCEPT",
+                  "kind": "COMPLETE",
+                  "nameAr": "قبول وإحالة للتقييم",
+                  "nameEn": "Accept and send for evaluation",
+                  "to": "TRACK"
+                },
+                {
+                  "code": "RETURN",
+                  "kind": "RETURN",
+                  "nameAr": "طلب استكمال من مقدم الطلب",
+                  "nameEn": "Ask the applicant to complete the request"
+                },
+                {
+                  "code": "REJECT",
+                  "kind": "REJECT",
+                  "nameAr": "رفض الطلب",
+                  "nameEn": "Reject the request",
+                  "commentRequired": true,
+                  "commentToApplicant": true,
+                  "to": "REJECTED"
+                }
+              ],
+              "sla": {
+                "byLevel": {
+                  "STANDARD": 2,
+                  "EXPRESS": 1
+                }
+              },
+              "layout": {
+                "x": 340,
+                "y": 170
+              }
+            },
+            {
+              "code": "TRACK",
+              "type": "GATEWAY",
+              "nameAr": "المسار العاجل؟",
+              "nameEn": "Express?",
+              "routes": [
+                {
+                  "when": {
+                    "==": [
+                      {
+                        "var": "level"
+                      },
+                      "EXPRESS"
+                    ]
+                  },
+                  "to": "PAY"
+                }
+              ],
+              "default": "PROFESSION",
+              "layout": {
+                "x": 340,
+                "y": 280
+              }
+            },
+            {
+              "code": "PAY",
+              "type": "PAYMENT",
+              "nameAr": "فاتورة المسار العاجل وسدادها",
+              "nameEn": "Express invoice and payment",
+              "provider": "SADAD",
+              "displayStatus": "AWAITING_PAYMENT",
+              "next": "PROFESSION",
+              "expired": "UNPAID",
+              "layout": {
+                "x": 600,
+                "y": 390
+              }
+            },
+            {
+              "code": "PROFESSION",
+              "type": "GATEWAY",
+              "nameAr": "مهندس؟",
+              "nameEn": "Engineer?",
+              "routes": [
+                {
+                  "when": {
+                    "==": [
+                      {
+                        "var": "data.IND_PROFESSION"
+                      },
+                      "ENGINEER"
+                    ]
+                  },
+                  "to": "SCE_CHECK"
+                }
+              ],
+              "default": "EVALUATION",
+              "layout": {
+                "x": 340,
+                "y": 500
+              }
+            },
+            {
+              "code": "SCE_CHECK",
+              "type": "INTEGRATION",
+              "nameAr": "التحقق من عضوية الهيئة",
+              "nameEn": "SCE membership check",
+              "operation": "SCE_MEMBERSHIP",
+              "parameters": {
+                "membershipNumber": {
+                  "var": "data.IND_SCE_NUMBER"
+                }
+              },
+              "result": "sce",
+              "next": "EVALUATION",
+              "failed": "SCE_MANUAL",
+              "layout": {
+                "x": 80,
+                "y": 610
+              }
+            },
+            {
+              "code": "SCE_MANUAL",
+              "type": "HUMAN_TASK",
+              "nameAr": "التحقق اليدوي من عضوية الهيئة",
+              "nameEn": "Manual SCE membership check",
+              "assignment": {
+                "target": "ROLE",
+                "role": "CLS_REQUEST_MANAGER",
+                "mode": "QUEUE"
+              },
+              "actions": [
+                {
+                  "code": "VERIFIED",
+                  "kind": "COMPLETE",
+                  "nameAr": "العضوية سليمة",
+                  "nameEn": "Membership verified",
+                  "to": "EVALUATION"
+                },
+                {
+                  "code": "RETURN",
+                  "kind": "RETURN",
+                  "nameAr": "طلب استكمال من مقدم الطلب",
+                  "nameEn": "Ask the applicant to complete the request"
+                },
+                {
+                  "code": "REJECT",
+                  "kind": "REJECT",
+                  "nameAr": "رفض الطلب",
+                  "nameEn": "Reject the request",
+                  "commentRequired": true,
+                  "commentToApplicant": true,
+                  "to": "REJECTED"
+                }
+              ],
+              "sla": {
+                "byLevel": {
+                  "STANDARD": 2,
+                  "EXPRESS": 1
+                }
+              },
+              "layout": {
+                "x": 80,
+                "y": 720
+              }
+            },
+            {
+              "code": "EVALUATION",
+              "type": "HUMAN_TASK",
+              "nameAr": "التقييم المهني والخبرات",
+              "nameEn": "Professional evaluation",
+              "assignment": {
+                "target": "ROLE",
+                "role": "CLS_PROJECTS_ANALYST",
+                "mode": "QUEUE"
+              },
+              "actions": [
+                {
+                  "code": "RECOMMEND",
+                  "kind": "COMPLETE",
+                  "nameAr": "التوصية بإصدار البطاقة",
+                  "nameEn": "Recommend the card",
+                  "to": "SENIORITY"
+                },
+                {
+                  "code": "RETURN",
+                  "kind": "RETURN",
+                  "nameAr": "طلب استكمال من مقدم الطلب",
+                  "nameEn": "Ask the applicant to complete the request"
+                },
+                {
+                  "code": "REJECT",
+                  "kind": "REJECT",
+                  "nameAr": "رفض الطلب",
+                  "nameEn": "Reject the request",
+                  "commentRequired": true,
+                  "commentToApplicant": true,
+                  "to": "REJECTED"
+                }
+              ],
+              "sla": {
+                "byLevel": {
+                  "STANDARD": 5,
+                  "EXPRESS": 1
+                },
+                "escalateToRole": "CLS_REQUEST_MANAGER"
+              },
+              "layout": {
+                "x": 340,
+                "y": 830
+              }
+            },
+            {
+              "code": "SENIORITY",
+              "type": "GATEWAY",
+              "nameAr": "درجة خبير؟",
+              "nameEn": "Expert grade?",
+              "routes": [
+                {
+                  "when": {
+                    ">=": [
+                      {
+                        "var": "data.IND_YEARS"
+                      },
+                      10
+                    ]
+                  },
+                  "to": "GM_APPROVAL"
+                }
+              ],
+              "default": "ISSUE",
+              "layout": {
+                "x": 340,
+                "y": 940
+              }
+            },
+            {
+              "code": "GM_APPROVAL",
+              "type": "HUMAN_TASK",
+              "nameAr": "اعتماد المدير العام (درجة خبير)",
+              "nameEn": "General manager approval (expert grade)",
+              "assignment": {
+                "target": "ROLE",
+                "role": "CLS_GENERAL_MANAGER",
+                "mode": "QUEUE"
+              },
+              "displayStatus": "PENDING_APPROVAL",
+              "actions": [
+                {
+                  "code": "APPROVE",
+                  "kind": "APPROVE",
+                  "nameAr": "اعتماد درجة خبير",
+                  "nameEn": "Approve the expert grade",
+                  "to": "ISSUE"
+                },
+                {
+                  "code": "REJECT",
+                  "kind": "REJECT",
+                  "nameAr": "رفض الطلب",
+                  "nameEn": "Reject the request",
+                  "commentRequired": true,
+                  "commentToApplicant": true,
+                  "to": "REJECTED"
+                },
+                {
+                  "code": "RETURN",
+                  "kind": "RETURN",
+                  "nameAr": "طلب استكمال من مقدم الطلب",
+                  "nameEn": "Ask the applicant to complete the request"
+                }
+              ],
+              "sla": {
+                "byLevel": {
+                  "STANDARD": 3,
+                  "EXPRESS": 1
+                }
+              },
+              "layout": {
+                "x": 600,
+                "y": 1050
+              }
+            },
+            {
+              "code": "ISSUE",
+              "type": "DOCUMENT",
+              "nameAr": "إصدار بطاقة التأهيل",
+              "nameEn": "Issue the qualification card",
+              "documentType": "IND_QUALIFICATION_CARD",
+              "data": {
+                "profession": {
+                  "if": [
+                    {
+                      "==": [
+                        {
+                          "var": "data.IND_PROFESSION"
+                        },
+                        "ENGINEER"
+                      ]
+                    },
+                    "مهندس",
+                    {
+                      "==": [
+                        {
+                          "var": "data.IND_PROFESSION"
+                        },
+                        "TECHNICIAN"
+                      ]
+                    },
+                    "فني",
+                    {
+                      "==": [
+                        {
+                          "var": "data.IND_PROFESSION"
+                        },
+                        "CRAFTSMAN"
+                      ]
+                    },
+                    "حرفي",
+                    null
+                  ]
+                },
+                "specialty": {
+                  "if": [
+                    {
+                      "==": [
+                        {
+                          "var": "data.IND_PROFESSION"
+                        },
+                        "ENGINEER"
+                      ]
+                    },
+                    {
+                      "if": [
+                        {
+                          "==": [
+                            {
+                              "var": "data.IND_ENG_SPECIALTY"
+                            },
+                            "CIVIL"
+                          ]
+                        },
+                        "هندسة مدنية",
+                        {
+                          "==": [
+                            {
+                              "var": "data.IND_ENG_SPECIALTY"
+                            },
+                            "ARCHITECTURAL"
+                          ]
+                        },
+                        "هندسة معمارية",
+                        {
+                          "==": [
+                            {
+                              "var": "data.IND_ENG_SPECIALTY"
+                            },
+                            "ELECTRICAL"
+                          ]
+                        },
+                        "هندسة كهربائية",
+                        {
+                          "==": [
+                            {
+                              "var": "data.IND_ENG_SPECIALTY"
+                            },
+                            "MECHANICAL"
+                          ]
+                        },
+                        "هندسة ميكانيكية",
+                        null
+                      ]
+                    },
+                    {
+                      "==": [
+                        {
+                          "var": "data.IND_PROFESSION"
+                        },
+                        "TECHNICIAN"
+                      ]
+                    },
+                    {
+                      "if": [
+                        {
+                          "==": [
+                            {
+                              "var": "data.IND_TECH_FIELD"
+                            },
+                            "SURVEYING"
+                          ]
+                        },
+                        "المساحة",
+                        {
+                          "==": [
+                            {
+                              "var": "data.IND_TECH_FIELD"
+                            },
+                            "LABORATORY"
+                          ]
+                        },
+                        "مختبرات المواد",
+                        {
+                          "==": [
+                            {
+                              "var": "data.IND_TECH_FIELD"
+                            },
+                            "HVAC"
+                          ]
+                        },
+                        "التكييف والتبريد",
+                        {
+                          "==": [
+                            {
+                              "var": "data.IND_TECH_FIELD"
+                            },
+                            "SAFETY"
+                          ]
+                        },
+                        "السلامة المهنية",
+                        null
+                      ]
+                    },
+                    "حرف البناء والتشطيب"
+                  ]
+                },
+                "grade": {
+                  "if": [
+                    {
+                      ">=": [
+                        {
+                          "var": "data.IND_YEARS"
+                        },
+                        10
+                      ]
+                    },
+                    "خبير",
+                    {
+                      ">=": [
+                        {
+                          "var": "data.IND_YEARS"
+                        },
+                        5
+                      ]
+                    },
+                    "محترف",
+                    "ممارس"
+                  ]
+                },
+                "sceGrade": {
+                  "var": "integrations.sce.outputs.grade"
+                },
+                "years": {
+                  "var": "data.IND_YEARS"
+                },
+                "region": {
+                  "if": [
+                    {
+                      "==": [
+                        {
+                          "var": "data.IND_REGION"
+                        },
+                        "RIYADH"
+                      ]
+                    },
+                    "منطقة الرياض",
+                    {
+                      "==": [
+                        {
+                          "var": "data.IND_REGION"
+                        },
+                        "MAKKAH"
+                      ]
+                    },
+                    "منطقة مكة المكرمة",
+                    {
+                      "==": [
+                        {
+                          "var": "data.IND_REGION"
+                        },
+                        "EASTERN"
+                      ]
+                    },
+                    "المنطقة الشرقية",
+                    {
+                      "==": [
+                        {
+                          "var": "data.IND_REGION"
+                        },
+                        "MADINAH"
+                      ]
+                    },
+                    "منطقة المدينة المنورة",
+                    {
+                      "==": [
+                        {
+                          "var": "data.IND_REGION"
+                        },
+                        "QASSIM"
+                      ]
+                    },
+                    "منطقة القصيم",
+                    {
+                      "==": [
+                        {
+                          "var": "data.IND_REGION"
+                        },
+                        "ASIR"
+                      ]
+                    },
+                    "منطقة عسير",
+                    {
+                      "==": [
+                        {
+                          "var": "data.IND_REGION"
+                        },
+                        "TABUK"
+                      ]
+                    },
+                    "منطقة تبوك",
+                    {
+                      "==": [
+                        {
+                          "var": "data.IND_REGION"
+                        },
+                        "HAIL"
+                      ]
+                    },
+                    "منطقة حائل",
+                    {
+                      "==": [
+                        {
+                          "var": "data.IND_REGION"
+                        },
+                        "NORTHERN"
+                      ]
+                    },
+                    "منطقة الحدود الشمالية",
+                    {
+                      "==": [
+                        {
+                          "var": "data.IND_REGION"
+                        },
+                        "JAZAN"
+                      ]
+                    },
+                    "منطقة جازان",
+                    {
+                      "==": [
+                        {
+                          "var": "data.IND_REGION"
+                        },
+                        "NAJRAN"
+                      ]
+                    },
+                    "منطقة نجران",
+                    {
+                      "==": [
+                        {
+                          "var": "data.IND_REGION"
+                        },
+                        "JOUF"
+                      ]
+                    },
+                    "منطقة الجوف",
+                    {
+                      "==": [
+                        {
+                          "var": "data.IND_REGION"
+                        },
+                        "BAHA"
+                      ]
+                    },
+                    "منطقة الباحة",
+                    null
+                  ]
+                },
+                "requestNumber": {
+                  "var": "number"
+                }
+              },
+              "reason": "اعتماد طلب التأهيل المهني",
+              "next": "APPROVED",
+              "layout": {
+                "x": 340,
+                "y": 1160
+              }
+            },
+            {
+              "code": "APPROVED",
+              "type": "END",
+              "nameAr": "صدرت البطاقة",
+              "nameEn": "Card issued",
+              "outcome": "APPROVED",
+              "layout": {
+                "x": 340,
+                "y": 1270
+              }
+            },
+            {
+              "code": "REJECTED",
+              "type": "END",
+              "nameAr": "مرفوض",
+              "nameEn": "Rejected",
+              "outcome": "REJECTED",
+              "layout": {
+                "x": 640,
+                "y": 1270
+              }
+            },
+            {
+              "code": "UNPAID",
+              "type": "END",
+              "nameAr": "إغلاق لعدم السداد",
+              "nameEn": "Closed: not paid",
+              "outcome": "CLOSED",
+              "displayStatus": "CLOSED_UNPAID",
+              "layout": {
+                "x": 860,
+                "y": 500
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "entityType": "com.template",
+      "entityCode": "IND_REQUEST_RETURNED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "طلب التأهيل: استكمال",
+        "nameEn": "Qualification request: information needed",
+        "inAppTitleAr": "طلبكم {{ request.number }} بحاجة إلى استكمال",
+        "inAppTitleEn": "Your request {{ request.number }} needs more information",
+        "inAppBodyAr": "أُعيد طلب {{ request.serviceNameAr }} رقم {{ request.number }} لاستكمال: {{ request.comment }}",
+        "inAppBodyEn": "Request {{ request.number }} ({{ request.serviceNameEn }}) was returned for: {{ request.comment }}",
+        "link": "/requests/{{ request.id }}",
+        "emailSubjectAr": "طلبكم {{ request.number }} بحاجة إلى استكمال",
+        "emailSubjectEn": "Your request {{ request.number }} needs more information",
+        "emailBodyAr": "<p>{{ recipient.name }}،</p><p>أُعيد طلب {{ request.serviceNameAr }} رقم {{ request.number }} لاستكمال: {{ request.comment }}</p><p>منصة الخدمات الإلكترونية</p>",
+        "emailBodyEn": "<p>Dear {{ recipient.name }},</p><p>Request {{ request.number }} ({{ request.serviceNameEn }}) was returned for: {{ request.comment }}</p><p>e-Services platform</p>",
+        "smsAr": "طلبكم {{ request.number }} بحاجة إلى استكمال",
+        "smsEn": "Your request {{ request.number }} needs more information"
+      }
+    },
+    {
+      "entityType": "com.template",
+      "entityCode": "IND_REQUEST_REJECTED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "طلب التأهيل: رفض",
+        "nameEn": "Qualification request: rejected",
+        "inAppTitleAr": "تعذر قبول طلبكم {{ request.number }}",
+        "inAppTitleEn": "Request {{ request.number }} was not accepted",
+        "inAppBodyAr": "نعتذر عن قبول طلب {{ request.serviceNameAr }} رقم {{ request.number }}. {{ request.comment }}",
+        "inAppBodyEn": "Request {{ request.number }} ({{ request.serviceNameEn }}) was not accepted. {{ request.comment }}",
+        "link": "/requests/{{ request.id }}",
+        "emailSubjectAr": "تعذر قبول طلبكم {{ request.number }}",
+        "emailSubjectEn": "Request {{ request.number }} was not accepted",
+        "emailBodyAr": "<p>{{ recipient.name }}،</p><p>نعتذر عن قبول طلب {{ request.serviceNameAr }} رقم {{ request.number }}. {{ request.comment }}</p><p>منصة الخدمات الإلكترونية</p>",
+        "emailBodyEn": "<p>Dear {{ recipient.name }},</p><p>Request {{ request.number }} ({{ request.serviceNameEn }}) was not accepted. {{ request.comment }}</p><p>e-Services platform</p>",
+        "smsAr": "تعذر قبول طلبكم {{ request.number }}",
+        "smsEn": "Request {{ request.number }} was not accepted"
+      }
+    },
+    {
+      "entityType": "com.template",
+      "entityCode": "IND_CARD_ISSUED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "بطاقة التأهيل: إصدار",
+        "nameEn": "Qualification card: issued",
+        "inAppTitleAr": "صدرت بطاقة التأهيل المهني {{ document.number }}",
+        "inAppTitleEn": "Qualification card {{ document.number }} issued",
+        "inAppBodyAr": "صدرت {{ document.typeNameAr }} رقم {{ document.number }}، سارية حتى {{ document.expiresOn }}. يمكنكم تنزيلها من البوابة والتحقق منها عبر {{ document.verifyUrl }}",
+        "inAppBodyEn": "{{ document.typeNameEn }} {{ document.number }} was issued, valid until {{ document.expiresOn }}. Download it from the portal; anyone can verify it at {{ document.verifyUrl }}",
+        "link": "/documents/{{ document.id }}",
+        "emailSubjectAr": "صدرت بطاقة التأهيل المهني {{ document.number }}",
+        "emailSubjectEn": "Qualification card {{ document.number }} issued",
+        "emailBodyAr": "<p>{{ recipient.name }}،</p><p>صدرت {{ document.typeNameAr }} رقم {{ document.number }}، سارية حتى {{ document.expiresOn }}. يمكنكم تنزيلها من البوابة والتحقق منها عبر {{ document.verifyUrl }}</p><p>منصة الخدمات الإلكترونية</p>",
+        "emailBodyEn": "<p>Dear {{ recipient.name }},</p><p>{{ document.typeNameEn }} {{ document.number }} was issued, valid until {{ document.expiresOn }}. Download it from the portal; anyone can verify it at {{ document.verifyUrl }}</p><p>e-Services platform</p>",
+        "smsAr": "صدرت بطاقة التأهيل المهني {{ document.number }}",
+        "smsEn": "Qualification card {{ document.number }} issued"
+      }
+    },
+    {
+      "entityType": "com.template",
+      "entityCode": "IND_TASK_ASSIGNED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مهمة تأهيل مسندة",
+        "nameEn": "Qualification task assigned",
+        "inAppTitleAr": "أُسندت إليك مهمة: {{ task.nameAr }}",
+        "inAppTitleEn": "Task assigned to you: {{ task.nameEn }}",
+        "inAppBodyAr": "{{ task.titleAr }} — {{ subject.number }} — {{ task.partyNameAr }}",
+        "inAppBodyEn": "{{ task.titleEn }} — {{ subject.number }} — {{ task.partyNameEn }}",
+        "link": "/action-center/tasks/{{ task.id }}",
+        "emailSubjectAr": "أُسندت إليك مهمة: {{ task.nameAr }}",
+        "emailSubjectEn": "Task assigned to you: {{ task.nameEn }}",
+        "emailBodyAr": "<p>{{ recipient.name }}،</p><p>{{ task.titleAr }} — {{ subject.number }} — {{ task.partyNameAr }}</p><p>منصة الخدمات الإلكترونية</p>",
+        "emailBodyEn": "<p>Dear {{ recipient.name }},</p><p>{{ task.titleEn }} — {{ subject.number }} — {{ task.partyNameEn }}</p><p>e-Services platform</p>"
+      }
+    },
+    {
+      "entityType": "com.rule",
+      "entityCode": "IND_REQUEST_RETURNED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إبلاغ المتقدم بالاستكمال (التأهيل)",
+        "nameEn": "Tell the applicant the request needs more (qualification)",
+        "eventCode": "REQUEST_RETURNED",
+        "templateCode": "IND_REQUEST_RETURNED",
+        "condition": {
+          "==": [
+            {
+              "var": "request.service"
+            },
+            "IND_QUALIFY"
+          ]
+        },
+        "channels": [
+          "IN_APP",
+          "EMAIL",
+          "SMS"
+        ],
+        "recipients": [
+          {
+            "kind": "PARTY"
+          }
+        ],
+        "language": "AR"
+      }
+    },
+    {
+      "entityType": "com.rule",
+      "entityCode": "IND_REQUEST_REJECTED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إبلاغ المتقدم بالرفض (التأهيل)",
+        "nameEn": "Tell the applicant the request was rejected (qualification)",
+        "eventCode": "REQUEST_REJECTED",
+        "templateCode": "IND_REQUEST_REJECTED",
+        "condition": {
+          "==": [
+            {
+              "var": "request.service"
+            },
+            "IND_QUALIFY"
+          ]
+        },
+        "channels": [
+          "IN_APP",
+          "EMAIL",
+          "SMS"
+        ],
+        "recipients": [
+          {
+            "kind": "PARTY"
+          }
+        ],
+        "language": "AR"
+      }
+    },
+    {
+      "entityType": "com.rule",
+      "entityCode": "IND_TASK_ASSIGNED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إبلاغ الموظف بالمهمة (التأهيل)",
+        "nameEn": "Tell the employee about the task (qualification)",
+        "eventCode": "TASK_ASSIGNED",
+        "templateCode": "IND_TASK_ASSIGNED",
+        "condition": {
+          "==": [
+            {
+              "var": "task.service"
+            },
+            "IND_QUALIFY"
+          ]
+        },
+        "channels": [
+          "IN_APP"
+        ],
+        "recipients": [
+          {
+            "kind": "USER",
+            "value": {
+              "var": "task.assignee"
+            }
+          }
+        ],
+        "language": "AR"
+      }
+    },
+    {
+      "entityType": "com.rule",
+      "entityCode": "IND_CARD_ISSUED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إبلاغ الفرد بإصدار البطاقة",
+        "nameEn": "Tell the person the card was issued",
+        "eventCode": "DOCUMENT_ISSUED",
+        "templateCode": "IND_CARD_ISSUED",
+        "condition": {
+          "==": [
+            {
+              "var": "document.type"
+            },
+            "IND_QUALIFICATION_CARD"
+          ]
+        },
+        "channels": [
+          "IN_APP",
+          "EMAIL",
+          "SMS"
+        ],
+        "recipients": [
+          {
+            "kind": "PARTY"
+          }
+        ],
+        "language": "AR"
+      }
+    }
+  ]
+}

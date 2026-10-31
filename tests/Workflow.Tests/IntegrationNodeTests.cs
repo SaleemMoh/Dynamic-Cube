@@ -72,4 +72,30 @@ public sealed class IntegrationNodeTests(DatabaseFixture fixture)
         var events = await host.Host.AsAsync("admin", sp => sp.GetRequiredService<Persistence.WorkflowDbContext>().Events.Where(e => e.InstanceId == missing.Id).Select(e => e.Type).ToListAsync());
         events.ShouldContain(WorkflowEventTypes.IntegrationFailed);
     }
+
+    [Fact]
+    public async Task Later_steps_see_the_outcome_of_a_call()
+    {
+        var gateway = new LicenceGateway();
+        await using var host = new WorkflowHost(fixture, s => s.AddSingleton<IIntegrationGateway>(gateway));
+        var workflow = await host.WorkflowAsync(
+        [
+            Start("CHECK"),
+            Call("CHECK", "ROUTE", "REJECTED"),
+            new
+            {
+                code = "ROUTE",
+                type = "GATEWAY",
+                nameAr = "حالة الترخيص",
+                nameEn = "Licence status",
+                routes = new[] { new { when = new Dictionary<string, object[]> { ["=="] = [new { var = "integrations.licence.outputs.status" }, "ACTIVE"] }, to = "APPROVED" } },
+                @default = "REJECTED",
+            },
+            End("APPROVED", "APPROVED"),
+            End("REJECTED", "REJECTED"),
+        ]);
+
+        var instance = await host.InstanceAsync(await host.StartAsync(workflow, new JsonObject { ["LICENCE"] = "L-1" }));
+        instance.Outcome.ShouldBe("APPROVED", "the gateway read integrations.licence.outputs.status");
+    }
 }

@@ -102,15 +102,28 @@ try
         var loader = host.Services.GetRequiredService<PackageLoader>();
         var variables = builder.Configuration.GetSection("DemoData:Variables").GetChildren().ToDictionary(v => v.Key, v => v.Value ?? string.Empty);
         var packages = PackageLoader.ReadFolder(folder, variables);
-        if (await loader.IsLoadedAsync(packages, identity.ActAs, CancellationToken.None))
+
+        // Loaded from the first package not loaded yet: everything on an empty database, the rest of a load that stopped
+        // half-way, or only the packages added to the demo since it was loaded (packages loaded before are not applied
+        // again, so their updates do not overwrite later changes). Packages that create nothing cannot tell and are
+        // loaded with the packages around them.
+        var first = -1;
+        for (var i = 0; i < packages.Count && first < 0; i++)
         {
-            MigratorLog.DemoLoaded(logger, demo, 0);
+            if (packages[i].Items.Any(item => string.Equals(item.Operation, "CREATE", StringComparison.OrdinalIgnoreCase))
+                && !await loader.IsLoadedAsync([packages[i]], identity.ActAs, CancellationToken.None))
+            {
+                first = i;
+            }
         }
-        else
+
+        var pending = first < 0 ? [] : packages.Skip(first).ToList();
+        if (pending.Count > 0)
         {
-            await loader.LoadAsync(packages, identity.ActAs, CancellationToken.None);
-            MigratorLog.DemoLoaded(logger, demo, packages.Count);
+            await loader.LoadAsync(pending, identity.ActAs, CancellationToken.None);
         }
+
+        MigratorLog.DemoLoaded(logger, demo, pending.Count);
 
         identity.ActAs(null);
     }
