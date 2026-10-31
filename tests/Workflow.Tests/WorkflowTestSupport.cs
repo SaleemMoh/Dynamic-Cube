@@ -134,12 +134,12 @@ internal sealed class WorkflowHost : IAsyncDisposable
         return code;
     }
 
-    public async Task<Guid> StartAsync(string workflow, JsonObject? data = null, string? level = null, int? sla = null)
+    public async Task<Guid> StartAsync(string workflow, JsonObject? data = null, string? level = null, int? sla = null, string? company = null, string? branch = null)
     {
         var id = Guid.CreateVersion7();
         Subject.Data[id] = data ?? [];
         await Host.AsAsync("submitter", sp => sp.GetRequiredService<IWorkflowRuntime>().StartAsync(
-            new WorkflowStart(workflow, TestSubject.Type, id, "T-" + id.ToString("N")[..8], "خدمة", "Service", "منشأة", "Establishment", "SVC", level, sla),
+            new WorkflowStart(workflow, TestSubject.Type, id, "T-" + id.ToString("N")[..8], "خدمة", "Service", "منشأة", "Establishment", "SVC", level, sla, company, branch),
             CancellationToken.None));
         return id;
     }

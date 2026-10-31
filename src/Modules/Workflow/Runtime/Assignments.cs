@@ -11,7 +11,7 @@ internal sealed class Assignments(WorkflowDbContext context, IStaffDirectory sta
 {
     public static bool IsCandidate(WorkTask task, StaffMember who) =>
         (task.CandidateUser is null || task.CandidateUser == who.UserName)
-        && (task.CandidateRole is null || who.Roles.Contains(task.CandidateRole))
+        && (task.CandidateRole is null || who.Holds(task.CandidateRole, task.CompanyCode, task.BranchCode))
         && Placed(task, who)
         && !task.ExcludedUsers.Contains(who.UserName);
 
@@ -43,7 +43,13 @@ internal sealed class Assignments(WorkflowDbContext context, IStaffDirectory sta
         }
 
         var found = await staff.SearchAsync(
-            new StaffQuery(task.CandidateRole, Position: task.CandidatePosition, OrgUnits: task.CandidateOrgUnits.Count > 0 ? task.CandidateOrgUnits : null), cancellationToken);
+            new StaffQuery(
+                task.CandidateRole,
+                Position: task.CandidatePosition,
+                OrgUnits: task.CandidateOrgUnits.Count > 0 ? task.CandidateOrgUnits : null,
+                Company: task.CompanyCode,
+                Branch: task.BranchCode),
+            cancellationToken);
         return [.. found.Where(s => !task.ExcludedUsers.Contains(s.UserName))];
     }
 

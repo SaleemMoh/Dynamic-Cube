@@ -62,7 +62,9 @@ public sealed record RequestSummary(
     DateTimeOffset CreatedAt,
     DateTimeOffset? SubmittedAt,
     DateTimeOffset? DraftExpiresAt,
-    string? SourceDocumentNumber = null);
+    string? SourceDocumentNumber = null,
+    string? CompanyCode = null,
+    string? BranchCode = null);
 
 public sealed record RequestView(
     RequestSummary Request,

@@ -10,6 +10,7 @@ using DynamicCube.Platform.Documents;
 using DynamicCube.Platform.Expressions;
 using DynamicCube.Platform.Integration;
 using DynamicCube.Platform.Parties;
+using DynamicCube.Platform.Security;
 using DynamicCube.Platform.Workflow;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -61,6 +62,12 @@ public sealed class ServicePayload : ConfigPayload
 
     /// <summary>The document type a follow-up service acts on.</summary>
     public string? DocumentType { get; set; }
+
+    /// <summary>The company that handles the requests; empty for the default company.</summary>
+    public string? CompanyCode { get; set; }
+
+    /// <summary>The question whose answer picks the branch (branch code, region or city); empty for the default branch.</summary>
+    public string? BranchQuestion { get; set; }
 }
 
 internal sealed partial class ServiceDefinitionApplier(ServicesDbContext db, IServiceProvider services) : ServiceApplier<Service, ServicePayload>(db)
@@ -100,6 +107,21 @@ internal sealed partial class ServiceDefinitionApplier(ServicesDbContext db, ISe
             errors.Add("numberPrefix", "Up to 20 upper-case letters, digits, _ or -.");
         }
 
+        // Where the requests go (ADR-0036 step 6): a company of the installation, and a question the service may ask.
+        var company = Blank(payload.CompanyCode);
+        if (company is not null && services.GetService<IOrganizationDirectory>() is { } organization
+            && !(await organization.CompaniesAsync(cancellationToken)).Any(c => c.Code == company))
+        {
+            errors.Add("companyCode", $"Company '{company}' does not exist or is not active.");
+        }
+
+        var branchQuestion = Blank(payload.BranchQuestion);
+        if (branchQuestion is not null && !refs.IsPendingCreate(ServiceChangeTypes.Question, branchQuestion)
+            && !await refs.Context.Questions.AnyAsync(q => q.Code == branchQuestion && (q.ServiceCode == null || q.ServiceCode == entity.Code), cancellationToken))
+        {
+            errors.Add("branchQuestion", $"Question '{branchQuestion}' does not exist in the bank or for this service.");
+        }
+
         // Packages from before archetypes were declared may leave it out: they were issuance services.
         var archetype = Blank(payload.Archetype)?.ToUpperInvariant() ?? "ISSUANCE";
         await refs.ResolveAsync(refs.Context.Archetypes, ServiceChangeTypes.Archetype, archetype, "archetype", errors, cancellationToken);
@@ -117,6 +139,8 @@ internal sealed partial class ServiceDefinitionApplier(ServicesDbContext db, ISe
         entity.OnNewVersion = payload.OnNewVersion;
         entity.NumberPrefix = prefix;
         entity.DocumentType = documentType;
+        entity.CompanyCode = company;
+        entity.BranchQuestion = branchQuestion;
     }
 
     protected override Task<ServicePayload> ToPayloadAsync(ServicesDbContext context, Service entity, CancellationToken cancellationToken) =>
@@ -135,6 +159,8 @@ internal sealed partial class ServiceDefinitionApplier(ServicesDbContext db, ISe
             OnNewVersion = entity.OnNewVersion,
             NumberPrefix = entity.NumberPrefix,
             DocumentType = entity.DocumentType,
+            CompanyCode = entity.CompanyCode,
+            BranchQuestion = entity.BranchQuestion,
         });
 
     protected override async Task BeforeDeleteAsync(ServicesDbContext context, Service entity, CancellationToken cancellationToken)

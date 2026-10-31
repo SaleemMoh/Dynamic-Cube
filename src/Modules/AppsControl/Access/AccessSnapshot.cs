@@ -1,5 +1,6 @@
 using DynamicCube.Modules.AppsControl.Domain;
 using DynamicCube.Platform.Configuration;
+using DynamicCube.Platform.Security;
 
 namespace DynamicCube.Modules.AppsControl.Access;
 
@@ -15,8 +16,16 @@ public sealed class AccessSnapshot(
     ConfigScope? scope = null,
     IReadOnlyList<RoleSource>? roleSources = null,
     IReadOnlyList<string>? companies = null,
-    bool companyChosen = true)
+    bool companyChosen = true,
+    IReadOnlyList<string>? branches = null,
+    IReadOnlyList<RoleHolding>? holdings = null)
 {
+    /// <summary>The branches of <see cref="Company"/> the user works in (ADR-0036 step 6); null for every branch.</summary>
+    public IReadOnlyList<string>? Branches { get; } = branches;
+
+    /// <summary>The roles in force in <see cref="Company"/> with the company and branches each is held in.</summary>
+    public IReadOnlyList<RoleHolding> Holdings { get; } = holdings ?? [];
+
     /// <summary>
     /// The company the user works in now (ADR-0036 step 5): the one the request names, else the one they last chose, else
     /// their first; null when they may work in none. Roles, personal privileges and lists apply for this company.

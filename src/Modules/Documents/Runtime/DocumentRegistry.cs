@@ -5,6 +5,7 @@ using DynamicCube.Modules.Documents.Persistence;
 using DynamicCube.Platform.Files;
 using DynamicCube.Platform.Security;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DynamicCube.Modules.Documents.Runtime;
 
@@ -20,7 +21,8 @@ public sealed record DocumentSummary(
     DocumentStatus Status,
     DateTimeOffset IssuedAt,
     DateTimeOffset? ExpiresAt,
-    int CurrentVersion);
+    int CurrentVersion,
+    string? BranchCode = null);
 
 public sealed record DocumentPage(IReadOnlyList<DocumentSummary> Items, int Total);
 
@@ -88,12 +90,13 @@ internal sealed class DocumentRegistry(
     DocumentRenderer renderer,
     IFileStorage files,
     ICurrentUser user,
+    IServiceProvider services,
     TimeProvider clock)
 {
     /// <param name="app">Only documents of the document types of this business app.</param>
     public async Task<DocumentPage> SearchAsync(string? search, string? type, DocumentStatus? status, Guid? holder, int skip, int take, CancellationToken cancellationToken, string? app = null)
     {
-        var query = context.Documents.AsNoTracking();
+        var query = holder is null ? await ScopedAsync(context.Documents.AsNoTracking(), cancellationToken) : context.Documents.AsNoTracking();
         if (!string.IsNullOrWhiteSpace(app))
         {
             var types = context.DocumentTypes.Where(t => t.BusinessApp == app || t.SharedApps.Contains(app)).Select(t => t.Code);
@@ -282,7 +285,8 @@ internal sealed class DocumentRegistry(
             throw new DocumentValidationException("comment", "Give the reason.");
         }
 
-        var document = await context.Documents.SingleOrDefaultAsync(d => d.Id == id, cancellationToken) ?? throw new DocumentNotFoundException("The document does not exist.");
+        var document = await (await ScopedAsync(context.Documents, cancellationToken)).SingleOrDefaultAsync(d => d.Id == id, cancellationToken)
+            ?? throw new DocumentNotFoundException("The document does not exist.");
         if (!from.Contains(document.Status))
         {
             throw new DocumentConflictException($"Document {document.Number} is {document.Status.ToString().ToUpperInvariant()}.");
@@ -313,8 +317,26 @@ internal sealed class DocumentRegistry(
 
     private async Task<IssuedDocument> FindAsync(Guid id, Guid? holder, CancellationToken cancellationToken)
     {
-        var document = await context.Documents.AsNoTracking().SingleOrDefaultAsync(d => d.Id == id, cancellationToken);
+        var documents = holder is null ? await ScopedAsync(context.Documents.AsNoTracking(), cancellationToken) : context.Documents.AsNoTracking();
+        var document = await documents.SingleOrDefaultAsync(d => d.Id == id, cancellationToken);
         return document is null || (holder is not null && document.HolderPartyId != holder) ? throw new DocumentNotFoundException("The document does not exist.") : document;
+    }
+
+    /// <summary>
+    /// Documents of the company the employee works in and the branches their roles cover (ADR-0036 step 6); documents
+    /// without a company (older ones) stay visible.
+    /// </summary>
+    private async Task<IQueryable<IssuedDocument>> ScopedAsync(IQueryable<IssuedDocument> query, CancellationToken cancellationToken)
+    {
+        var scope = services.GetService<IWorkScope>() is { } work ? await work.CurrentAsync(cancellationToken) : WorkScope.Unrestricted;
+        if (!scope.Restricted)
+        {
+            return query;
+        }
+
+        var company = scope.Company;
+        var branches = scope.Branches?.ToList();
+        return query.Where(d => d.CompanyCode == null || (d.CompanyCode == company && (branches == null || d.BranchCode == null || branches.Contains(d.BranchCode))));
     }
 
     private async Task<List<DocumentSummary>> SummariesAsync(List<IssuedDocument> rows, CancellationToken cancellationToken)
@@ -323,7 +345,7 @@ internal sealed class DocumentRegistry(
         var types = await context.DocumentTypes.AsNoTracking().Where(t => typeIds.Contains(t.Id)).ToDictionaryAsync(t => t.Id, cancellationToken);
         return [.. rows.Select(d => new DocumentSummary(
             d.Id, d.Number, d.TypeCode, types[d.DocumentTypeId].NameAr, types[d.DocumentTypeId].NameEn, d.HolderPartyId, d.HolderNameAr, d.HolderNameEn,
-            d.Status, d.IssuedAt, d.ExpiresAt, d.CurrentVersion))];
+            d.Status, d.IssuedAt, d.ExpiresAt, d.CurrentVersion, d.BranchCode))];
     }
 
     private static List<FieldView> Fields(string json) =>

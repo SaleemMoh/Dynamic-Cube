@@ -64,6 +64,8 @@ internal sealed class DocumentIssuer(DocumentsDbContext context, DocumentRendere
                 IssuedAt = now,
                 ExpiresAt = Expiry(type, now, issue.Validity?.Mode is ValidityMode.Keep ? null : issue.Validity?.Months),
                 VerificationCode = NewCode(),
+                CompanyCode = issue.CompanyCode,
+                BranchCode = issue.BranchCode,
             };
             context.Documents.Add(document);
         }

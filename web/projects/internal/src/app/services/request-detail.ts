@@ -18,6 +18,7 @@ import {
 import { catchError, of } from 'rxjs';
 import { InstanceFactsCard } from '../action-center/instance-facts';
 import { WorkflowCard } from '../action-center/workflow-card';
+import { BranchNames } from '../common/branch-names';
 
 /** One request as submitted: who, what, the answers, fees, its workflow (when it has one) and the timeline. */
 @Component({
@@ -53,6 +54,9 @@ import { WorkflowCard } from '../action-center/workflow-card';
             · {{ 'requests.submitter' | dcTranslate }}:
             <a class="dc-link" [routerLink]="['/party/parties', d.submitterPartyId]">{{ d.submitterName }}</a>
             · {{ 'requests.version' | dcTranslate }} {{ d.view.versionNumber }}
+            @if (branches.several() && d.view.request.branchCode) {
+              · {{ 'requests.branch' | dcTranslate }} <span data-testid="request-branch">{{ branches.name(d.view.request.branchCode) | dcLocalize }}</span>
+            }
             @if (d.view.request.sourceDocumentNumber) {
               · {{ 'requests.document' | dcTranslate }} <span dir="ltr" data-testid="request-document">{{ d.view.request.sourceDocumentNumber }}</span>
             }
@@ -141,6 +145,7 @@ import { WorkflowCard } from '../action-center/workflow-card';
   `,
 })
 export class RequestDetail {
+  protected readonly branches = inject(BranchNames);
   readonly id = input.required<string>();
   private readonly api = inject(ServicesApi);
 

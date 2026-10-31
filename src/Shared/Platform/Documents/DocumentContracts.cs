@@ -11,6 +11,8 @@ namespace DynamicCube.Platform.Documents;
 /// renewal act on the document they were requested for. Empty <paramref name="Data"/> keeps the document's data (given
 /// fields replace theirs) and null <paramref name="Lines"/> keeps its lines.</param>
 /// <param name="Validity">How the expiry date changes; null follows the document type.</param>
+/// <param name="CompanyCode">The company the document belongs to (that of the request it is issued for, ADR-0036 step 6).</param>
+/// <param name="BranchCode">The branch of that company.</param>
 public sealed record DocumentIssue(
     string DocumentType,
     Guid HolderPartyId,
@@ -21,7 +23,9 @@ public sealed record DocumentIssue(
     string? SourceNumber,
     string? Reason,
     Guid? Document = null,
-    ValidityChange? Validity = null);
+    ValidityChange? Validity = null,
+    string? CompanyCode = null,
+    string? BranchCode = null);
 
 public enum ValidityMode
 {

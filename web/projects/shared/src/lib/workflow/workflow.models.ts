@@ -31,6 +31,8 @@ export interface TaskSummary {
   sla: SlaState;
   completedBy: string | null;
   actionCode: string | null;
+  /** The branch the task belongs to (ADR-0036 step 6). */
+  branchCode?: string | null;
 }
 
 export interface TaskPage {

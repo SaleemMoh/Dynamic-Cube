@@ -146,6 +146,7 @@ internal sealed class RequestService(
             SourceDocumentId = document?.Id,
             SourceDocumentNumber = document?.Number,
         };
+        (entity.CompanyCode, entity.BranchCode) = await PlaceAsync(service, data, cancellationToken);
         context.Requests.Add(entity);
         AddEvent(entity, RequestEventTypes.Created, null, StatusCategory.Draft, null);
         await context.SaveChangesAsync(cancellationToken);
@@ -244,6 +245,11 @@ internal sealed class RequestService(
         }
 
         entity.CurrentStep = stepErrors.Count > 0 ? request.ValidateStep : request.CurrentStep ?? entity.CurrentStep;
+        if (entity.StatusCategory == StatusCategory.Draft)
+        {
+            (entity.CompanyCode, entity.BranchCode) = await PlaceAsync(service, JsonNode.Parse(entity.Data)!.AsObject(), cancellationToken);
+        }
+
         await context.SaveChangesAsync(cancellationToken);
         var view = await ViewAsync(entity, service, version, facts, acting, null, cancellationToken, document);
         return view with { StepErrors = stepErrors };
@@ -328,6 +334,7 @@ internal sealed class RequestService(
         entity.Fees = [.. lines];
         entity.FeeTotal = lines.Sum(l => l.Total);
         entity.Number = await NextNumberAsync(service.NumberPrefix, now, cancellationToken);
+        (entity.CompanyCode, entity.BranchCode) = await PlaceAsync(service, check.Data, cancellationToken);
         entity.StatusCategory = StatusCategory.Submitted;
         entity.DisplayStatus = "SUBMITTED";
         entity.SubmittedAt = now;
@@ -343,7 +350,7 @@ internal sealed class RequestService(
             var level = version.Definition.Levels.FirstOrDefault(l => l.Code == entity.LevelCode);
             await workflows.StartAsync(
                 new WorkflowStart(workflow, RequestSubject.Type, entity.Id, entity.Number!, service.NameAr, service.NameEn, entity.BeneficiaryNameAr, entity.BeneficiaryNameEn,
-                    service.Code, entity.LevelCode, level?.SlaWorkingDays),
+                    service.Code, entity.LevelCode, level?.SlaWorkingDays, entity.CompanyCode, entity.BranchCode),
                 cancellationToken);
 
             await work.CommitAsync(cancellationToken);
@@ -576,6 +583,10 @@ internal sealed class RequestService(
     }
 
     /// <summary>Drafts, and requests returned to the applicant for correction, can be edited.</summary>
+    /// <summary>The company and branch the request belongs to (ADR-0036 step 6).</summary>
+    private Task<(string? Company, string? Branch)> PlaceAsync(Service service, JsonObject data, CancellationToken cancellationToken) =>
+        RequestPlacement.PlaceAsync(services.GetService<IOrganizationDirectory>(), service, data, cancellationToken);
+
     private static void RequireEditable(ServiceRequest entity)
     {
         if (entity.StatusCategory is not (StatusCategory.Draft or StatusCategory.PendingCustomer))
@@ -773,7 +784,7 @@ internal sealed class RequestService(
     }
 
     internal static RequestSummary Summary(ServiceRequest r, (string NameAr, string NameEn) service) =>
-        new(r.Id, r.Number, r.ServiceCode, service.NameAr, service.NameEn, r.StatusCategory, r.DisplayStatus, r.BeneficiaryNameAr, r.BeneficiaryNameEn, r.FeeTotal, r.CreatedAt, r.SubmittedAt, r.DraftExpiresAt, r.SourceDocumentNumber);
+        new(r.Id, r.Number, r.ServiceCode, service.NameAr, service.NameEn, r.StatusCategory, r.DisplayStatus, r.BeneficiaryNameAr, r.BeneficiaryNameEn, r.FeeTotal, r.CreatedAt, r.SubmittedAt, r.DraftExpiresAt, r.SourceDocumentNumber, r.CompanyCode, r.BranchCode);
 
     private static CatalogEntry Entry(Service service, ResolvedVersion version, List<EligibilityFailure> failures) =>
         new(service.Code, service.NameAr, service.NameEn, service.DescriptionAr, service.DescriptionEn, service.Archetype, service.CategoryCode, service.Icon, service.PartyKinds, version.Number, failures.Count == 0, failures, service.DocumentType);

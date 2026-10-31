@@ -7,6 +7,7 @@ using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Expressions;
 using DynamicCube.Platform.Files;
 using DynamicCube.Platform.Payments;
+using DynamicCube.Platform.Security;
 using DynamicCube.Platform.Visits;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,7 +24,7 @@ internal sealed class RequestAdminService(ServicesDbContext context, ServiceCata
     /// <param name="app">Only requests for the services of this business app.</param>
     public async Task<RequestPage> SearchAsync(string? service, StatusCategory? status, string? search, int skip, int take, CancellationToken cancellationToken, string? app = null)
     {
-        var query = context.Requests.AsNoTracking().Where(r => r.StatusCategory != StatusCategory.Draft);
+        var query = await ScopedAsync(context.Requests.AsNoTracking().Where(r => r.StatusCategory != StatusCategory.Draft), cancellationToken);
         if (!string.IsNullOrWhiteSpace(app))
         {
             var services = context.Services.Where(s => s.BusinessApp == app || s.SharedApps.Contains(app)).Select(s => s.Code);
@@ -55,7 +56,7 @@ internal sealed class RequestAdminService(ServicesDbContext context, ServiceCata
 
     public async Task<RequestDetail> GetAsync(Guid id, CancellationToken cancellationToken)
     {
-        var entity = await context.Requests.AsNoTracking().SingleOrDefaultAsync(r => r.Id == id && r.StatusCategory != StatusCategory.Draft, cancellationToken)
+        var entity = await (await ScopedAsync(context.Requests.AsNoTracking(), cancellationToken)).SingleOrDefaultAsync(r => r.Id == id && r.StatusCategory != StatusCategory.Draft, cancellationToken)
             ?? throw new RequestNotFoundException($"Request {id} does not exist.");
         var service = await context.Services.AsNoTracking().SingleAsync(s => s.Id == entity.ServiceId, cancellationToken);
         var version = await cache.GetAsync(context, entity.ServiceVersionId, cancellationToken);
@@ -73,8 +74,9 @@ internal sealed class RequestAdminService(ServicesDbContext context, ServiceCata
     /// <summary>The content of a file uploaded with a submitted request.</summary>
     public async Task<(Stream Content, string ContentType, string FileName)> OpenFileAsync(Guid id, Guid fileId, CancellationToken cancellationToken)
     {
+        var requests = await ScopedAsync(context.Requests, cancellationToken);
         var file = await context.RequestFiles.AsNoTracking()
-            .Where(f => f.Id == fileId && f.RequestId == id && context.Requests.Any(r => r.Id == id && r.StatusCategory != StatusCategory.Draft))
+            .Where(f => f.Id == fileId && f.RequestId == id && requests.Any(r => r.Id == id && r.StatusCategory != StatusCategory.Draft))
             .SingleOrDefaultAsync(cancellationToken)
             ?? throw new RequestNotFoundException($"File {fileId} does not exist.");
         return (await storage.OpenReadAsync(file.StorageKey, cancellationToken), file.ContentType, file.FileName);
@@ -97,6 +99,24 @@ internal sealed class RequestAdminService(ServicesDbContext context, ServiceCata
         errors.ThrowIfAny();
         var used = request.Definition.Steps.SelectMany(s => s.Sections).SelectMany(s => s.Questions).Select(q => q.Code).Distinct();
         return new ResolvedVersion(request.ServiceCode, 0, request.Definition, used.ToDictionary(c => c, c => QuestionSnapshot.Of(questions[c])));
+    }
+
+    /// <summary>
+    /// Requests of the company the employee works in and of the branches their roles cover (ADR-0036 step 6); requests from
+    /// before branches applied (no company) stay visible.
+    /// </summary>
+    private async Task<IQueryable<ServiceRequest>> ScopedAsync(IQueryable<ServiceRequest> query, CancellationToken cancellationToken)
+    {
+        var scope = services.GetService<IWorkScope>() is { } work ? await work.CurrentAsync(cancellationToken) : WorkScope.Unrestricted;
+        if (!scope.Restricted)
+        {
+            return query;
+        }
+
+        var company = scope.Company;
+        var branches = scope.Branches?.ToList();
+        return query.Where(r => r.CompanyCode == null
+            || (r.CompanyCode == company && (branches == null || r.BranchCode == null || branches.Contains(r.BranchCode))));
     }
 
     internal static string Serialize(ResolvedVersion version) => JsonSerializer.Serialize(version, ChangeJson.Options);

@@ -16,7 +16,7 @@ internal sealed class StaffDirectory(AppsControlDbContext context, AccessResolve
         var user = snapshot.User;
         return user.UserId is null || !snapshot.IsActive
             ? null
-            : new StaffMember(user.UserName, snapshot.NameAr ?? user.UserName, snapshot.NameEn ?? user.UserName, user.Roles, user.OrgUnits, user.Positions);
+            : new StaffMember(user.UserName, snapshot.NameAr ?? user.UserName, snapshot.NameEn ?? user.UserName, user.Roles, user.OrgUnits, user.Positions, Holdings: snapshot.Holdings);
     }
 
     public async Task<StaffMember?> FindAsync(string userName, CancellationToken cancellationToken) =>
@@ -48,7 +48,12 @@ internal sealed class StaffDirectory(AppsControlDbContext context, AccessResolve
                 && (a.EffectiveFrom == null || a.EffectiveFrom <= today) && (a.EffectiveTo == null || a.EffectiveTo >= today)));
         }
 
-        return await LoadAsync(users.OrderBy(u => u.Code).Take(MaxResults), cancellationToken);
+        var found = await LoadAsync(users.OrderBy(u => u.Code).Take(MaxResults), cancellationToken);
+
+        // Holders of the role in the company and branch the work belongs to (ADR-0036 step 6).
+        return query.Role is not null && (query.Company is not null || query.Branch is not null)
+            ? [.. found.Where(m => m.Holds(query.Role, query.Company, query.Branch))]
+            : found;
     }
 
     public async Task<IReadOnlyList<OrgUnitNode>> OrgUnitsAsync(CancellationToken cancellationToken)
@@ -72,11 +77,17 @@ internal sealed class StaffDirectory(AppsControlDbContext context, AccessResolve
         var ids = rows.Select(r => r.Id).ToList();
         var roles = await context.UserRoles.AsNoTracking()
             .Where(r => ids.Contains(r.UserId) && r.Role!.IsActive && (r.EffectiveFrom == null || r.EffectiveFrom <= today) && (r.EffectiveTo == null || r.EffectiveTo >= today))
-            .Select(r => new { r.UserId, r.Role!.Code })
+            .Select(r => new { r.UserId, r.Role!.Code, r.CompanyCode, r.Branches })
             .ToListAsync(cancellationToken);
-        var departments = await DepartmentRoles.OfUsersAsync(context, ids, today, cancellationToken);
+        var departments = await DepartmentRoles.OfUsersByCompanyAsync(context, ids, today, cancellationToken);
         var activeRoles = departments.Count == 0 ? [] : await context.Roles.AsNoTracking().Where(r => r.IsActive).Select(r => r.Code).ToListAsync(cancellationToken);
-        roles.AddRange(departments.SelectMany(d => d.Value.Where(activeRoles.Contains).Select(code => new { UserId = d.Key, Code = code })));
+        roles.AddRange(departments.SelectMany(d => d.Value.Where(x => activeRoles.Contains(x.Role)).Select(x => new
+        {
+            UserId = d.Key,
+            Code = x.Role,
+            CompanyCode = x.Company,
+            Branches = x.Branch is null ? new List<string> { CompanyScope.All } : [x.Branch],
+        })));
         var assignments = await context.UserAssignments.AsNoTracking()
             .Where(a => ids.Contains(a.UserId) && (a.EffectiveFrom == null || a.EffectiveFrom <= today) && (a.EffectiveTo == null || a.EffectiveTo >= today))
             .OrderByDescending(a => a.IsPrimary)
@@ -91,6 +102,7 @@ internal sealed class StaffDirectory(AppsControlDbContext context, AccessResolve
             [.. assignments.Where(x => x.UserId == r.Id && x.Position != null).Select(x => x.Position!).Distinct()],
             r.Email,
             r.Mobile,
-            [.. assignments.Where(x => x.UserId == r.Id).Select(x => new StaffPlacement(x.Unit, x.Position)).Distinct()]))];
+            [.. assignments.Where(x => x.UserId == r.Id).Select(x => new StaffPlacement(x.Unit, x.Position)).Distinct()],
+            [.. roles.Where(x => x.UserId == r.Id).Select(x => new RoleHolding(x.Code, x.CompanyCode, x.Branches))]))];
     }
 }

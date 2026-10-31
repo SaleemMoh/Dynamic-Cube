@@ -204,8 +204,14 @@ remembers a choice (`user_account.last_company_code`). Every call carries the co
 uses it only when the person may work there, else the remembered company, else their first. Access is computed for that
 company (roles held there or in all companies, a role's version for that company, personal privileges of that company or
 all, department roles in the company of the branch the unit serves), `/me/business-apps` lists the apps enabled for it,
-and class values per company are filtered to it (`/classes/{code}/domains` and class lists of values). Branch limits are
-stored and applied in step 6.
+and class values per company are filtered to it (`/classes/{code}/domains` and class lists of values).
+
+**Work scope** (ADR-0036 step 6) — other modules read the employee's company and covered branches through
+`IWorkScope` (null branches: every branch) and companies and branches through `IOrganizationDirectory`. Branches come
+from the roles in force in the current company (`user_role.branches`; `*` or a role held in every company covers all;
+a department role covers the branch its unit serves); personal privileges cover the whole company. The staff
+directory reports each role with the company and branches it is held in (`StaffMember.Holdings`), and searches for a
+role's holders can be limited to a company and branch, which task queues, assignment and role notifications use.
 
 **`resource`** — anything securable: `app_id`, `resource_type` (`SCREEN` | `API` | `REPORT` |
 `SERVICE` | `WORKFLOW_ACTION` | `FIELD`), `parent_id`, `available_actions` (text[]).

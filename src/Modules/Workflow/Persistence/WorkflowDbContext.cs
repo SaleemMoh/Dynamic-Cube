@@ -51,6 +51,8 @@ public sealed class WorkflowDbContext(DbContextOptions<WorkflowDbContext> option
             b.Property(e => e.PartyNameAr).HasMaxLength(500);
             b.Property(e => e.PartyNameEn).HasMaxLength(500);
             b.Property(e => e.ServiceCode).HasMaxLength(100);
+            b.Property(e => e.CompanyCode).HasMaxLength(100);
+            b.Property(e => e.BranchCode).HasMaxLength(100);
             b.Property(e => e.LevelCode).HasMaxLength(100);
             b.Property(e => e.Outcome).HasMaxLength(50);
             b.Property(e => e.Facts).HasColumnType("jsonb").IsRequired();
@@ -93,6 +95,8 @@ public sealed class WorkflowDbContext(DbContextOptions<WorkflowDbContext> option
             b.Property(e => e.PartyNameAr).HasMaxLength(500);
             b.Property(e => e.PartyNameEn).HasMaxLength(500);
             b.Property(e => e.ServiceCode).HasMaxLength(100);
+            b.Property(e => e.CompanyCode).HasMaxLength(100);
+            b.Property(e => e.BranchCode).HasMaxLength(100);
             b.Property(e => e.LevelCode).HasMaxLength(100);
             b.Property<uint>("RowVersion").IsRowVersion();
             b.HasOne<WorkflowInstance>().WithMany().HasForeignKey(e => e.InstanceId).OnDelete(DeleteBehavior.Cascade);

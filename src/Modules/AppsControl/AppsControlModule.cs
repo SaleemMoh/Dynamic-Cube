@@ -96,6 +96,8 @@ public static class AppsControlModule
         services.AddScoped<AccessResolver>();
         services.AddScoped<IAccessChecker, AccessChecker>();
         services.AddScoped<IStaffDirectory, StaffDirectory>();
+        services.AddScoped<IWorkScope, WorkScopes>();
+        services.AddScoped<IOrganizationDirectory, OrganizationDirectory>();
         services.AddScoped<IConfigScopes, ConfigScopes>();
         services.AddScoped<ILookupDirectory, LookupDirectory>();
         services.AddScoped<IWorkingCalendarProvider, WorkingCalendarProvider>();

@@ -5,6 +5,8 @@ namespace DynamicCube.Platform.Workflow;
 /// <summary>What a workflow is processing (a service request) and how its inbox rows describe it.</summary>
 /// <param name="SubjectType">Which <see cref="IWorkflowSubject"/> owns the subject, e.g. <c>SERVICE_REQUEST</c>.</param>
 /// <param name="SlaWorkingDays">Overall target from the subject (e.g. the service level); the workflow's own target otherwise.</param>
+/// <param name="CompanyCode">The company the subject belongs to (ADR-0036 step 6); its tasks are that company's.</param>
+/// <param name="BranchCode">The branch of that company; its tasks go to staff whose roles cover it.</param>
 public sealed record WorkflowStart(
     string WorkflowCode,
     string SubjectType,
@@ -16,7 +18,9 @@ public sealed record WorkflowStart(
     string PartyNameEn,
     string? ServiceCode,
     string? LevelCode,
-    int? SlaWorkingDays);
+    int? SlaWorkingDays,
+    string? CompanyCode = null,
+    string? BranchCode = null);
 
 /// <summary>Starts and resumes workflows (implemented by the Workflow module). Callers run it inside their unit of work.</summary>
 public interface IWorkflowRuntime

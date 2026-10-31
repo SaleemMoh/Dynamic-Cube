@@ -111,6 +111,11 @@ namespace DynamicCube.Modules.Workflow.Persistence.Migrations
                         .HasColumnType("character varying(256)")
                         .HasColumnName("assignee");
 
+                    b.Property<string>("BranchCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("branch_code");
+
                     b.Property<string>("CandidateOrgUnit")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
@@ -142,6 +147,11 @@ namespace DynamicCube.Modules.Workflow.Persistence.Migrations
                         .HasMaxLength(4000)
                         .HasColumnType("character varying(4000)")
                         .HasColumnName("comment");
+
+                    b.Property<string>("CompanyCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("company_code");
 
                     b.Property<DateTimeOffset?>("CompletedAt")
                         .HasColumnType("timestamp with time zone")
@@ -474,6 +484,16 @@ namespace DynamicCube.Modules.Workflow.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
                         .HasColumnName("id");
+
+                    b.Property<string>("BranchCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("branch_code");
+
+                    b.Property<string>("CompanyCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("company_code");
 
                     b.Property<DateTimeOffset?>("CompletedAt")
                         .HasColumnType("timestamp with time zone")

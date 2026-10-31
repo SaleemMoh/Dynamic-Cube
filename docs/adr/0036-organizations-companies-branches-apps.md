@@ -21,7 +21,9 @@ several companies chooses one (then an app of it when it has several); the heade
 them without signing out; the last choice is remembered. Access is computed for that company: roles held there or in
 every company, the company's version of a role that differs there, personal privileges of that company or every company,
 department roles in the company of the branch the unit serves, and class values serving that company. Branch limits are
-stored and applied in step 6. The NHC demo data uses all of it. Replaces entities,
+stored and applied in step 6. Step 6 done: requests, tasks and documents belong to a company and branch (see "Work
+belongs to a company and branch" below), and employees see only the work of the company they work in and of the
+branches their roles cover. The NHC demo data uses all of it. Replaces entities,
 business apps, channel apps and the System / Entity / App levels of [ADR-0031](0031-entities-business-apps-levels.md).
 
 ## Context
@@ -120,6 +122,23 @@ company versions of roles always mean something.
   company; department default roles count in the company of the branch the unit serves (every company when it serves
   none); lists of class values show the values serving that company. Grant rules can read `company`. Requests, tasks and
   documents are not filtered by company or branch yet (step 6).
+
+### Work belongs to a company and branch
+Implemented (step 6):
+
+- **Where a request goes:** each service names the company that handles its requests (empty: the installation's first
+  company) and, optionally, a **branch question**: the applicant's answer is matched against the company's branches by
+  code, region or city (e.g. a city question routes to the branch in that city). No question, or no match: the
+  company's default branch. The draft follows the answer; the branch is fixed when the request is submitted.
+- **What follows the request:** its workflow, the workflow's tasks and the documents it issues carry the same company
+  and branch; work from before step 6 was given the default company and its default branch.
+- **Who sees it:** lists and details of requests, tasks (Action Center boxes and supervision) and documents show only
+  the company the employee works in (step 5) and the branches their roles there cover: a role held in all companies
+  or all branches covers every branch, a department's default role covers the branch the unit serves, and personal
+  privileges (which have no branch) cover the whole company. A queued task is offered to holders of its role *in its
+  branch*; distribution, escalation and task notifications to a role follow the same rule.
+- **On screen:** with more than one branch, request, task and document lists show the branch.
+- Not yet branch-bound: field visits and portal-side lists (applicants see their own requests regardless of branch).
 
 ### Configuration level
 Configuration (services, workflows, document types, lists of values…) belongs to an organization and optionally to some

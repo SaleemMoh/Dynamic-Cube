@@ -104,7 +104,10 @@ result.
 `svc.services`, one area so a version can use questions created in the same change set):
 
 - **Service** — names, archetype, who may apply (individuals, establishments), catalog listing, draft
-  policy (expiry days; on a new version drafts *continue* or *restart*), request number prefix.
+  policy (expiry days; on a new version drafts *continue* or *restart*), request number prefix, the **company** that
+  handles its requests and an optional **branch question** whose answer picks the branch (matched to a branch's code,
+  region or city; otherwise the company's default branch). Requests, their workflow tasks and the documents they issue
+  carry that company and branch, and staff see them only within their company and branches (ADR-0036 step 6).
 - **Archetype** `svc.archetype` — a declared kind of service (code, names, description, icon, order) with a default
   **service template** (a version definition using shared questions only) and a default **workflow** (a workflow
   definition, or none for straight-through), designed in the Service Builder and the Workflow Designer (*Services →

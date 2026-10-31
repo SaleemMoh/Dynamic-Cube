@@ -37,6 +37,8 @@ public sealed class ServicesDbContext(DbContextOptions<ServicesDbContext> option
             b.Property(e => e.Icon).HasMaxLength(100);
             b.Property(e => e.NumberPrefix).HasMaxLength(20).IsRequired();
             b.Property(e => e.DocumentType).HasMaxLength(100);
+            b.Property(e => e.CompanyCode).HasMaxLength(100);
+            b.Property(e => e.BranchQuestion).HasMaxLength(100);
             b.Property(e => e.Archetype).HasMaxLength(100).IsRequired();
             b.Property(e => e.PartyKinds).HasJsonColumn();
         });
@@ -78,6 +80,9 @@ public sealed class ServicesDbContext(DbContextOptions<ServicesDbContext> option
             b.HasIndex(e => e.Number).IsUnique();
             b.Property(e => e.ServiceCode).HasMaxLength(100).IsRequired();
             b.Property(e => e.LevelCode).HasMaxLength(100);
+            b.Property(e => e.CompanyCode).HasMaxLength(100);
+            b.Property(e => e.BranchCode).HasMaxLength(100);
+            b.HasIndex(e => new { e.CompanyCode, e.BranchCode });
             b.Property(e => e.SubmitterName).HasMaxLength(500);
             b.Property(e => e.BeneficiaryNameAr).HasMaxLength(500);
             b.Property(e => e.BeneficiaryNameEn).HasMaxLength(500);

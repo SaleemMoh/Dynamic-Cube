@@ -43,6 +43,12 @@ public sealed class ServiceRequest : IAuditable, IHasAuditColumns
 
     public string? LevelCode { get; set; }
 
+    /// <summary>The company the request belongs to (ADR-0036 step 6): staff see it only while working in that company.</summary>
+    public string? CompanyCode { get; set; }
+
+    /// <summary>The branch of that company the request belongs to: staff see it only when their roles cover that branch.</summary>
+    public string? BranchCode { get; set; }
+
     /// <summary>The individual who filled in the request.</summary>
     public Guid SubmitterPartyId { get; set; }
 

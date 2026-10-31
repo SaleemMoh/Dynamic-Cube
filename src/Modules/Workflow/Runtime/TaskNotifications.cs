@@ -41,6 +41,8 @@ internal static class TaskNotifications
                 ["partyNameAr"] = task.PartyNameAr,
                 ["partyNameEn"] = task.PartyNameEn,
                 ["service"] = task.ServiceCode,
+                ["company"] = task.CompanyCode,
+                ["branch"] = task.BranchCode,
             },
         });
 

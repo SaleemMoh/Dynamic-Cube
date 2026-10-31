@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { rxResource, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -11,6 +11,7 @@ import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
 import { BusinessAppContext, LocalizePipe, ServicesApi, StatusCategory, TranslatePipe } from '@dynamic-cube/shared';
 import { debounceTime } from 'rxjs';
+import { BranchNames } from '../common/branch-names';
 
 /** Submitted requests (processing arrives with the workflow engine and Action Center). */
 @Component({
@@ -44,6 +45,10 @@ import { debounceTime } from 'rxjs';
         <th mat-header-cell *matHeaderCellDef>{{ 'requests.service' | dcTranslate }}</th>
         <td mat-cell *matCellDef="let r">{{ { ar: r.serviceNameAr, en: r.serviceNameEn } | dcLocalize }}</td>
       </ng-container>
+      <ng-container matColumnDef="branch">
+        <th mat-header-cell *matHeaderCellDef>{{ 'requests.branch' | dcTranslate }}</th>
+        <td mat-cell *matCellDef="let r">{{ branches.name(r.branchCode) | dcLocalize }}</td>
+      </ng-container>
       <ng-container matColumnDef="beneficiary">
         <th mat-header-cell *matHeaderCellDef>{{ 'requests.beneficiary' | dcTranslate }}</th>
         <td mat-cell *matCellDef="let r">{{ { ar: r.beneficiaryNameAr, en: r.beneficiaryNameEn } | dcLocalize }}</td>
@@ -60,8 +65,8 @@ import { debounceTime } from 'rxjs';
         <th mat-header-cell *matHeaderCellDef>{{ 'fees.grandTotal' | dcTranslate }}</th>
         <td mat-cell *matCellDef="let r" dir="ltr">{{ r.feeTotal | number: '1.0-2' }}</td>
       </ng-container>
-      <tr mat-header-row *matHeaderRowDef="columns"></tr>
-      <tr mat-row *matRowDef="let row; columns: columns"></tr>
+      <tr mat-header-row *matHeaderRowDef="columns()"></tr>
+      <tr mat-row *matRowDef="let row; columns: columns()"></tr>
     </table>
     <mat-paginator [length]="page.value()?.total ?? 0" [pageSize]="take()" [pageSizeOptions]="[25, 50, 100]" (page)="paginate($event)" />
   `,
@@ -69,7 +74,17 @@ import { debounceTime } from 'rxjs';
 export class RequestList {
   private readonly api = inject(ServicesApi);
   private readonly appContext = inject(BusinessAppContext);
-  protected readonly columns = ['number', 'service', 'beneficiary', 'status', 'submitted', 'fees'];
+  protected readonly branches = inject(BranchNames);
+  /** The branch shows when there is more than one. */
+  protected readonly columns = computed(() => [
+    'number',
+    'service',
+    ...(this.branches.several() ? ['branch'] : []),
+    'beneficiary',
+    'status',
+    'submitted',
+    'fees',
+  ]);
   protected readonly statuses: StatusCategory[] = ['SUBMITTED', 'IN_PROGRESS', 'PENDING_CUSTOMER', 'PENDING_EXTERNAL', 'APPROVED', 'REJECTED', 'CANCELLED', 'CLOSED'];
   protected readonly search = signal('');
   private readonly debounced = toSignal(toObservable(this.search).pipe(debounceTime(300)), { initialValue: '' });

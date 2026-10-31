@@ -80,7 +80,7 @@ public sealed partial class AccessResolver(
         var held = await context.UserRoles.AsNoTracking()
             .Where(r => r.UserId == user.Id && r.Role!.IsActive && (r.Role.AppId == null || r.Role.AppId == app)
                 && (r.EffectiveFrom == null || r.EffectiveFrom <= today) && (r.EffectiveTo == null || r.EffectiveTo >= today))
-            .Select(r => new { r.RoleId, r.Role!.Code, r.Role.BusinessApp, r.Role.SharedApps, r.CompanyCode, r.Role.OverrideCompanies })
+            .Select(r => new { r.RoleId, r.Role!.Code, r.Role.BusinessApp, r.Role.SharedApps, r.CompanyCode, r.Branches, r.Role.OverrideCompanies })
             .ToListAsync(cancellationToken);
         var department = await DepartmentRoles.OfUserByCompanyAsync(context, user.Id, today, cancellationToken);
         var departmentCodes = department.Select(d => d.Role).Distinct().ToList();
@@ -88,7 +88,16 @@ public sealed partial class AccessResolver(
             .Where(r => departmentCodes.Contains(r.Code) && r.IsActive && (r.AppId == null || r.AppId == app))
             .Select(r => new { r.Id, r.Code, r.BusinessApp, r.SharedApps, r.OverrideCompanies })
             .ToListAsync(cancellationToken);
-        held.AddRange(department.Join(departmentRoles, d => d.Role, r => r.Code, (d, r) => new { RoleId = r.Id, r.Code, r.BusinessApp, r.SharedApps, CompanyCode = d.Company, r.OverrideCompanies }));
+        held.AddRange(department.Join(departmentRoles, d => d.Role, r => r.Code, (d, r) => new
+        {
+            RoleId = r.Id,
+            r.Code,
+            r.BusinessApp,
+            r.SharedApps,
+            CompanyCode = d.Company,
+            Branches = d.Branch is null ? new List<string> { CompanyScope.All } : [d.Branch],
+            r.OverrideCompanies,
+        }));
 
         // Personal privileges in their period, in any company.
         var personalRows = await context.UserPrivileges.AsNoTracking()
@@ -113,6 +122,7 @@ public sealed partial class AccessResolver(
 
         // Only what is held in that company, or in every company, applies.
         var roles = held.Where(r => r.CompanyCode == CompanyScope.All || r.CompanyCode == company).ToList();
+        var holdings = roles.Select(r => new RoleHolding(r.Code, r.CompanyCode, r.Branches)).Distinct().ToList();
         var roleIds = roles.Select(r => r.RoleId).Distinct().ToList();
 
         // A role that differs in the current company contributes that company's version; otherwise its own contents.
@@ -148,6 +158,12 @@ public sealed partial class AccessResolver(
         // Personal privileges in the current company (or every company): screens and actions given to this person alone,
         // and actions taken away from them (which win over what roles give).
         var personal = personalRows.Where(p => p.CompanyCode == CompanyScope.All || p.CompanyCode == company).ToList();
+
+        // The branches of that company the person works in (ADR-0036 step 6): those of their roles there; every branch
+        // when a role is held in every company or branch, or when they work through personal privileges (company-wide).
+        IReadOnlyList<string>? branches = roles.Any(r => r.CompanyCode == CompanyScope.All || r.Branches.Contains(CompanyScope.All)) || personal.Count > 0
+            ? null
+            : roles.SelectMany(r => r.Branches).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToList();
         privilegeRows.AddRange(personal.Select(p => new { p.Code, p.Actions }));
         var denied = personal.Where(p => p.DeniedActions.Count > 0)
             .GroupBy(p => p.Code, StringComparer.Ordinal)
@@ -187,7 +203,7 @@ public sealed partial class AccessResolver(
             subtree.Distinct().ToList(),
             company);
 
-        return new AccessSnapshot(userContext, user.NameAr, user.NameEn, user.Status, user.PreferredLanguage, roleIds, privileges, scope, sources, companies, chosen);
+        return new AccessSnapshot(userContext, user.NameAr, user.NameEn, user.Status, user.PreferredLanguage, roleIds, privileges, scope, sources, companies, chosen, branches, holdings);
     }
 
     /// <summary>

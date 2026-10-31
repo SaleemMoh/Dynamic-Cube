@@ -35,6 +35,11 @@ public sealed class TestUser(string userName) : ICurrentUser
     public bool IsAuthenticated => true;
 
     public string AppCode => "INTERNAL";
+
+    /// <summary>The company sent as the workspace header (ADR-0036 step 5); null sends none.</summary>
+    public string? Company { get; set; }
+
+    public string? RequestedCompany => Company;
 }
 
 /// <summary>Platform and module services against the test database, with a fake provider gateway.</summary>
@@ -79,6 +84,13 @@ public sealed class TestHost : IAsyncDisposable
     }
 
     public FakeProvider Provider { get; } = new();
+
+    /// <summary>The company the signed-in employee works in (the workspace header); null sends none.</summary>
+    public string? Company
+    {
+        get => _user.Company;
+        set => _user.Company = value;
+    }
 
     public static string Unique(string prefix) => $"{prefix}_{Guid.NewGuid().ToString("N")[..8].ToUpperInvariant()}";
 
@@ -130,10 +142,11 @@ public sealed class TestHost : IAsyncDisposable
     public Task<List<CommunicationEvent>> RaisedAsync(Guid subjectId) =>
         AsAsync("admin", async sp =>
         {
+            // Tests often freeze the clock, so events can share a time: the time-ordered id keeps the order they were raised in.
             var rows = await sp.GetRequiredService<PlatformDbContext>().OutboxMessages
-                .FromSql($"SELECT * FROM platform.outbox_messages WHERE type = 'comm.event' AND payload->>'subjectId' = {subjectId.ToString()}")
+                .FromSql($"SELECT * FROM platform.outbox_messages WHERE type = 'comm.event' AND payload->>'subjectId' = {subjectId.ToString()} ORDER BY occurred_at, id")
                 .AsNoTracking().ToListAsync();
-            return rows.OrderBy(r => r.OccurredAt).Select(r => JsonSerializer.Deserialize<CommunicationEvent>(r.Payload, JsonSerializerOptions.Web)!).ToList();
+            return rows.Select(r => JsonSerializer.Deserialize<CommunicationEvent>(r.Payload, JsonSerializerOptions.Web)!).ToList();
         });
 
     public static IChangeSetWorkflow Workflow(IServiceProvider services, string entityType) =>

@@ -69,6 +69,8 @@ internal sealed class WorkflowEngine(
             PartyNameAr = start.PartyNameAr,
             PartyNameEn = start.PartyNameEn,
             ServiceCode = start.ServiceCode,
+            CompanyCode = start.CompanyCode,
+            BranchCode = start.BranchCode,
             LevelCode = start.LevelCode,
             Status = InstanceStatus.Running,
             StartedAt = now,
@@ -374,7 +376,8 @@ internal sealed class WorkflowEngine(
         try
         {
             issued = await issuer.IssueAsync(
-                new DocumentIssue(node.DocumentType!, holder, Map(node.Data, facts), node.Lines is null ? null : lines, run.Instance.SubjectType, run.Instance.SubjectId, run.Instance.SubjectNumber, node.Reason, target, validity),
+                new DocumentIssue(node.DocumentType!, holder, Map(node.Data, facts), node.Lines is null ? null : lines, run.Instance.SubjectType, run.Instance.SubjectId, run.Instance.SubjectNumber, node.Reason, target, validity,
+                    run.Instance.CompanyCode, run.Instance.BranchCode),
                 cancellationToken);
         }
         catch (DocumentIssueException ex)
@@ -698,6 +701,8 @@ internal sealed class WorkflowEngine(
             PartyNameAr = instance.PartyNameAr,
             PartyNameEn = instance.PartyNameEn,
             ServiceCode = instance.ServiceCode,
+            CompanyCode = instance.CompanyCode,
+            BranchCode = instance.BranchCode,
             LevelCode = instance.LevelCode,
         };
 

@@ -427,6 +427,11 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("archetype");
 
+                    b.Property<string>("BranchQuestion")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("branch_question");
+
                     b.Property<string>("BusinessApp")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
@@ -442,6 +447,11 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("code");
+
+                    b.Property<string>("CompanyCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("company_code");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -585,9 +595,19 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("beneficiary_party_id");
 
+                    b.Property<string>("BranchCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("branch_code");
+
                     b.Property<DateTimeOffset?>("ClosedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("closed_at");
+
+                    b.Property<string>("CompanyCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("company_code");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -718,6 +738,9 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
 
                     b.HasIndex("BeneficiaryPartyId", "StatusCategory")
                         .HasDatabaseName("ix_request_beneficiary_party_id_status_category");
+
+                    b.HasIndex("CompanyCode", "BranchCode")
+                        .HasDatabaseName("ix_request_company_code_branch_code");
 
                     b.HasIndex("ServiceCode", "StatusCategory")
                         .HasDatabaseName("ix_request_service_code_status_category");

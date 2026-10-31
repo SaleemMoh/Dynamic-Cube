@@ -607,6 +607,23 @@ export const SERVICE_SECTIONS: ConfigSection[] = [
             ),
           },
           {
+            code: 'companyCode',
+            type: 'select',
+            label: t('الشركة التي تعالج الطلبات', 'Company that handles the requests'),
+            ref: 'apps.company',
+            hint: t('فارغ: الشركة الأولى.', 'Empty: the first company.'),
+          },
+          {
+            code: 'branchQuestion',
+            type: 'select',
+            label: t('سؤال يحدد الفرع', 'Question that picks the branch'),
+            ref: 'svc.question',
+            hint: t(
+              'تُطابق الإجابة رمز الفرع أو منطقته أو مدينته؛ دون سؤال أو تطابق: الفرع الافتراضي.',
+              "The answer is matched to a branch's code, region or city; no question or no match: the default branch.",
+            ),
+          },
+          {
             code: 'draftsAllowed',
             type: 'checkbox',
             label: t('السماح بحفظ المسودات', 'Drafts allowed'),

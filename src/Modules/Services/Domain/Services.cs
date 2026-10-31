@@ -71,6 +71,18 @@ public sealed class Service : ConfigEntity
     /// documents of this type, within the availability of the version.
     /// </summary>
     public string? DocumentType { get; set; }
+
+    /// <summary>
+    /// The company that handles the service's requests (ADR-0036 step 6); null for the installation's default company (its
+    /// first company).
+    /// </summary>
+    public string? CompanyCode { get; set; }
+
+    /// <summary>
+    /// The question whose answer places a request in a branch of that company: the answer is matched against the branches'
+    /// codes, regions and cities. None (or no match): the company's default branch.
+    /// </summary>
+    public string? BranchQuestion { get; set; }
 }
 
 public enum QuestionType

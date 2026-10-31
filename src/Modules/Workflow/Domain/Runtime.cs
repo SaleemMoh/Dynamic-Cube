@@ -46,6 +46,12 @@ public sealed class WorkflowInstance : IAuditable
 
     public string? ServiceCode { get; set; }
 
+    /// <summary>The company the subject belongs to (ADR-0036 step 6).</summary>
+    public string? CompanyCode { get; set; }
+
+    /// <summary>The branch of that company: tasks go to staff whose roles cover it.</summary>
+    public string? BranchCode { get; set; }
+
     public string? LevelCode { get; set; }
 
     public InstanceStatus Status { get; set; }
@@ -196,6 +202,12 @@ public sealed class WorkTask : IAuditable
     public string PartyNameEn { get; set; } = string.Empty;
 
     public string? ServiceCode { get; set; }
+
+    /// <summary>The company the subject belongs to (ADR-0036 step 6).</summary>
+    public string? CompanyCode { get; set; }
+
+    /// <summary>The branch of that company: tasks go to staff whose roles cover it.</summary>
+    public string? BranchCode { get; set; }
 
     public string? LevelCode { get; set; }
 }

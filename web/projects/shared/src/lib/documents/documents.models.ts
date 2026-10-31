@@ -15,6 +15,8 @@ export interface DocumentSummary {
   issuedAt: string;
   expiresAt: string | null;
   currentVersion: number;
+  /** The branch the document belongs to (ADR-0036 step 6). */
+  branchCode?: string | null;
 }
 
 export interface DocumentPage {

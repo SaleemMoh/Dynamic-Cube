@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { rxResource, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -11,6 +11,7 @@ import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
 import { AppsControlApi, BusinessAppContext, docStatusBadge, DOCUMENT_STATUSES, DocumentsApi, DocumentStatus, LocalizePipe, TranslatePipe } from '@dynamic-cube/shared';
 import { debounceTime } from 'rxjs';
+import { BranchNames } from '../common/branch-names';
 
 /** The issued-document registry: search by number or holder, filter by type and status. */
 @Component({
@@ -74,6 +75,10 @@ import { debounceTime } from 'rxjs';
         <th mat-header-cell *matHeaderCellDef>{{ 'documents.type' | dcTranslate }}</th>
         <td mat-cell *matCellDef="let d">{{ { ar: d.typeNameAr, en: d.typeNameEn } | dcLocalize }}</td>
       </ng-container>
+      <ng-container matColumnDef="branch">
+        <th mat-header-cell *matHeaderCellDef>{{ 'requests.branch' | dcTranslate }}</th>
+        <td mat-cell *matCellDef="let d">{{ branches.name(d.branchCode) | dcLocalize }}</td>
+      </ng-container>
       <ng-container matColumnDef="holder">
         <th mat-header-cell *matHeaderCellDef>{{ 'documents.holder' | dcTranslate }}</th>
         <td mat-cell *matCellDef="let d">{{ { ar: d.holderNameAr, en: d.holderNameEn } | dcLocalize }}</td>
@@ -96,8 +101,8 @@ import { debounceTime } from 'rxjs';
         <th mat-header-cell *matHeaderCellDef>{{ 'documents.version' | dcTranslate }}</th>
         <td mat-cell *matCellDef="let d">{{ d.currentVersion }}</td>
       </ng-container>
-      <tr mat-header-row *matHeaderRowDef="columns"></tr>
-      <tr mat-row *matRowDef="let row; columns: columns"></tr>
+      <tr mat-header-row *matHeaderRowDef="columns()"></tr>
+      <tr mat-row *matRowDef="let row; columns: columns()"></tr>
     </table>
     @if ((page.value()?.items ?? []).length === 0 && !page.isLoading()) {
       <p class="dc-empty">{{ 'documents.none' | dcTranslate }}</p>
@@ -109,7 +114,18 @@ export class DocumentList {
   private readonly api = inject(DocumentsApi);
   private readonly appContext = inject(BusinessAppContext);
   private readonly config = inject(AppsControlApi);
-  protected readonly columns = ['number', 'type', 'holder', 'status', 'issued', 'expires', 'version'];
+  protected readonly branches = inject(BranchNames);
+  /** The branch shows when there is more than one. */
+  protected readonly columns = computed(() => [
+    'number',
+    'type',
+    ...(this.branches.several() ? ['branch'] : []),
+    'holder',
+    'status',
+    'issued',
+    'expires',
+    'version',
+  ]);
   protected readonly statuses = DOCUMENT_STATUSES;
   protected readonly types = rxResource({ stream: () => this.config.list('doc.document-type') });
   protected readonly search = signal('');

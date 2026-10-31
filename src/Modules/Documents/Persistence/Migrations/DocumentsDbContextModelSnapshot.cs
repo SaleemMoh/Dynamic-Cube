@@ -426,6 +426,16 @@ namespace DynamicCube.Modules.Documents.Persistence.Migrations
                         .HasColumnType("integer[]")
                         .HasColumnName("alerts_sent");
 
+                    b.Property<string>("BranchCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("branch_code");
+
+                    b.Property<string>("CompanyCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("company_code");
+
                     b.Property<int>("CurrentVersion")
                         .HasColumnType("integer")
                         .HasColumnName("current_version");

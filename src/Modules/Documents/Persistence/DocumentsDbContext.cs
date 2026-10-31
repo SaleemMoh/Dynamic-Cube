@@ -49,6 +49,8 @@ public sealed class DocumentsDbContext(DbContextOptions<DocumentsDbContext> opti
             b.Property(e => e.HolderNameEn).HasMaxLength(500).IsRequired();
             b.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
             b.Property(e => e.VerificationCode).HasMaxLength(40).IsRequired();
+            b.Property(e => e.CompanyCode).HasMaxLength(100);
+            b.Property(e => e.BranchCode).HasMaxLength(100);
             b.Property<uint>("RowVersion").IsRowVersion();
             b.HasOne<DocumentType>().WithMany().HasForeignKey(e => e.DocumentTypeId).OnDelete(DeleteBehavior.Restrict);
             b.HasIndex(e => e.Number).IsUnique();

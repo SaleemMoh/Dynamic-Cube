@@ -6,6 +6,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router, RouterLink } from '@angular/router';
 import { I18nService, LocalizePipe, SlaChip, TaskSummary, TranslatePipe, localize } from '@dynamic-cube/shared';
+import { BranchNames } from '../common/branch-names';
 
 /**
  * Tasks as inboxes and supervision list them: the request and its service, the step, the beneficiary, who has it (with
@@ -38,7 +39,12 @@ import { I18nService, LocalizePipe, SlaChip, TaskSummary, TranslatePipe, localiz
       </ng-container>
       <ng-container matColumnDef="party">
         <th mat-header-cell *matHeaderCellDef>{{ 'requests.beneficiary' | dcTranslate }}</th>
-        <td mat-cell *matCellDef="let t">{{ { ar: t.partyNameAr, en: t.partyNameEn } | dcLocalize }}</td>
+        <td mat-cell *matCellDef="let t">
+          {{ { ar: t.partyNameAr, en: t.partyNameEn } | dcLocalize }}
+          @if (branches.several() && t.branchCode) {
+            <div class="dc-tasks__sub" data-testid="task-branch">{{ branches.name(t.branchCode) | dcLocalize }}</div>
+          }
+        </td>
       </ng-container>
       <ng-container matColumnDef="assignee">
         <th mat-header-cell *matHeaderCellDef>{{ 'tasks.assignee' | dcTranslate }}</th>
@@ -163,6 +169,7 @@ export class TaskTable {
   readonly emptyKey = input('tasks.none');
   readonly claim = output<TaskSummary>();
   protected readonly columns = ['number', 'task', 'party', 'assignee', 'created', 'sla', 'actions'];
+  protected readonly branches = inject(BranchNames);
   private readonly router = inject(Router);
   private readonly i18n = inject(I18nService);
 

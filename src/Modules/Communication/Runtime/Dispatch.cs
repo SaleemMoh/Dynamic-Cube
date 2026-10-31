@@ -231,9 +231,12 @@ internal sealed class EventDispatcher(
 
                     break;
                 case RecipientKinds.Role:
+                    // A task's role: its holders in the task's company and branch (ADR-0036 step 6).
+                    var company = (facts["task"] as JsonObject)?["company"]?.GetValue<string>();
+                    var branch = (facts["task"] as JsonObject)?["branch"]?.GetValue<string>();
                     foreach (var key in keys)
                     {
-                        found.AddRange((await staff.SearchAsync(new StaffQuery(Role: key), cancellationToken)).Select(m => Staff(m, rule)));
+                        found.AddRange((await staff.SearchAsync(new StaffQuery(Role: key, Company: company, Branch: branch), cancellationToken)).Select(m => Staff(m, rule)));
                     }
 
                     break;

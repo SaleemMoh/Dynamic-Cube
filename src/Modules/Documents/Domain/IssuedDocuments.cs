@@ -41,6 +41,12 @@ public sealed class IssuedDocument : IAuditable
     /// <summary>Random, unguessable code of the public verification link.</summary>
     public string VerificationCode { get; set; } = string.Empty;
 
+    /// <summary>The company the document belongs to (that of the request it was issued for, ADR-0036 step 6).</summary>
+    public string? CompanyCode { get; set; }
+
+    /// <summary>The branch of that company: staff see the document when their roles cover it.</summary>
+    public string? BranchCode { get; set; }
+
     /// <summary>Expiry reminders already sent (days before expiry).</summary>
     public int[] AlertsSent { get; set; } = [];
 

@@ -50,7 +50,8 @@ public sealed record TaskSummary(
     DateTimeOffset? DueAt,
     SlaState Sla,
     string? CompletedBy,
-    string? ActionCode);
+    string? ActionCode,
+    string? BranchCode = null);
 
 public sealed record TaskPage(IReadOnlyList<TaskSummary> Items, int Total);
 
@@ -174,7 +175,7 @@ internal sealed class ActionCenter(
     /// <summary>Every open task, for supervisors.</summary>
     public async Task<TaskPage> SupervisionAsync(string? search, string? role, SlaState? sla, bool? unassigned, int skip, int take, CancellationToken cancellationToken)
     {
-        var query = Search(context.Tasks.AsNoTracking().Where(t => t.Status == WorkTaskStatus.Open), search);
+        var query = Search(InScope(context.Tasks.AsNoTracking().Where(t => t.Status == WorkTaskStatus.Open), await ScopeAsync(cancellationToken)), search);
         if (!string.IsNullOrWhiteSpace(role))
         {
             query = query.Where(t => t.CandidateRole == role);
@@ -415,8 +416,15 @@ internal sealed class ActionCenter(
 
     private async Task<IQueryable<WorkTask>> BoxAsync(StaffMember me, InboxBox box, CancellationToken cancellationToken)
     {
-        var open = context.Tasks.AsNoTracking().Where(t => t.Status == WorkTaskStatus.Open);
+        // Tasks of the company the employee works in (ADR-0036 step 6).
+        var scope = await ScopeAsync(cancellationToken);
+        var company = scope.Company;
+        var open = context.Tasks.AsNoTracking().Where(t => t.Status == WorkTaskStatus.Open && (!scope.Restricted || t.CompanyCode == null || t.CompanyCode == company));
         var roles = me.Roles.ToList();
+
+        // A role counts for a task's branch when held in every branch, or in that branch ("ROLE|BRANCH").
+        var everyBranch = me.Holdings is null ? roles : me.Holdings.Where(h => h.Branches.Contains(RoleHolding.All)).Select(h => h.Role).Distinct().ToList();
+        var inBranch = me.Holdings is null ? [] : me.Holdings.SelectMany(h => h.Branches.Where(b => b != RoleHolding.All).Select(b => h.Role + "|" + b)).Distinct().ToList();
         var units = me.OrgUnits.ToList();
         var positions = me.Positions.ToList();
         var user = me.UserName;
@@ -430,15 +438,34 @@ internal sealed class ActionCenter(
                 return open.Where(t => t.Assignee == null && t.Mode != AssignmentMode.Distribute
                     && (t.CandidateUser != null || t.CandidateRole != null || t.CandidateOrgUnits.Count > 0 || t.CandidatePosition != null)
                     && (t.CandidateUser == null || t.CandidateUser == user)
-                    && (t.CandidateRole == null || roles.Contains(t.CandidateRole))
+                    && (t.CandidateRole == null || everyBranch.Contains(t.CandidateRole)
+                        || (t.BranchCode == null ? roles.Contains(t.CandidateRole) : inBranch.Contains(t.CandidateRole + "|" + t.BranchCode)))
                     && (t.CandidateOrgUnits.Count == 0 || t.CandidateOrgUnits.Any(u => units.Contains(u)))
                     && (t.CandidatePosition == null || positions.Contains(t.CandidatePosition))
                     && !t.ExcludedUsers.Contains(user));
             case InboxBox.Distribute:
-                return open.Where(t => t.Assignee == null && t.Mode == AssignmentMode.Distribute && t.DistributorRole != null && roles.Contains(t.DistributorRole));
+                return open.Where(t => t.Assignee == null && t.Mode == AssignmentMode.Distribute && t.DistributorRole != null
+                    && (everyBranch.Contains(t.DistributorRole) || (t.BranchCode == null ? roles.Contains(t.DistributorRole) : inBranch.Contains(t.DistributorRole + "|" + t.BranchCode))));
             default:
-                return open.Where(t => t.EscalatedToRole != null && roles.Contains(t.EscalatedToRole));
+                return open.Where(t => t.EscalatedToRole != null
+                    && (everyBranch.Contains(t.EscalatedToRole) || (t.BranchCode == null ? roles.Contains(t.EscalatedToRole) : inBranch.Contains(t.EscalatedToRole + "|" + t.BranchCode))));
         }
+    }
+
+    private async Task<WorkScope> ScopeAsync(CancellationToken cancellationToken) =>
+        services.GetService<IWorkScope>() is { } work ? await work.CurrentAsync(cancellationToken) : WorkScope.Unrestricted;
+
+    /// <summary>Tasks of the company the employee works in and the branches their roles cover (tasks without a company stay visible).</summary>
+    private static IQueryable<WorkTask> InScope(IQueryable<WorkTask> query, WorkScope scope)
+    {
+        if (!scope.Restricted)
+        {
+            return query;
+        }
+
+        var company = scope.Company;
+        var branches = scope.Branches?.ToList();
+        return query.Where(t => t.CompanyCode == null || (t.CompanyCode == company && (branches == null || t.BranchCode == null || branches.Contains(t.BranchCode))));
     }
 
     private static IQueryable<WorkTask> Search(IQueryable<WorkTask> query, string? search)
@@ -455,8 +482,10 @@ internal sealed class ActionCenter(
     private async Task<Rights> RightsAsync(StaffMember me, WorkTask task, CancellationToken cancellationToken)
     {
         var delegators = await DelegatorsAsync(me.UserName, cancellationToken);
-        var supervisor = await access.CanAsync(WorkflowResources.Supervision, CatalogActions.View, cancellationToken);
-        var reassigner = await access.CanAsync(WorkflowResources.Supervision, CatalogActions.Edit, cancellationToken);
+        // Supervisors act on the tasks of their company and branches only.
+        var inScope = (await ScopeAsync(cancellationToken)).Allows(task.CompanyCode, task.BranchCode);
+        var supervisor = inScope && await access.CanAsync(WorkflowResources.Supervision, CatalogActions.View, cancellationToken);
+        var reassigner = inScope && await access.CanAsync(WorkflowResources.Supervision, CatalogActions.Edit, cancellationToken);
         var involved = await context.Tasks.AsNoTracking().AnyAsync(t => t.InstanceId == task.InstanceId && (t.CompletedBy == me.UserName || t.Assignee == me.UserName), cancellationToken)
             || await context.Events.AsNoTracking().AnyAsync(e => e.InstanceId == task.InstanceId && e.Actor == me.UserName, cancellationToken);
         return new Rights(me, delegators, supervisor, reassigner, involved);
@@ -532,7 +561,7 @@ internal sealed class ActionCenter(
             var (assigneeAr, assigneeEn) = t.Assignee is null ? (null, null) : await NameAsync(t.Assignee, cancellationToken);
             list.Add(new TaskSummary(t.Id, t.InstanceId, t.NodeCode, t.NameAr, t.NameEn, t.Status, t.SubjectId, t.SubjectType, t.SubjectNumber, t.TitleAr, t.TitleEn,
                 t.PartyNameAr, t.PartyNameEn, t.ServiceCode, t.LevelCode, t.Assignee, assigneeAr, assigneeEn,
-                t.Mode, t.CreatedAt, t.DueAt, t.Sla, t.CompletedBy, t.ActionCode));
+                t.Mode, t.CreatedAt, t.DueAt, t.Sla, t.CompletedBy, t.ActionCode, t.BranchCode));
         }
 
         return list;
@@ -562,11 +591,11 @@ internal sealed class ActionCenter(
     {
         public bool IsAssignee(WorkTask task) => task.Assignee is not null && (task.Assignee == Me.UserName || Delegators.Contains(task.Assignee));
 
-        public bool IsDistributor(WorkTask task) => task.DistributorRole is not null && Me.Roles.Contains(task.DistributorRole);
+        public bool IsDistributor(WorkTask task) => task.DistributorRole is not null && Me.Holds(task.DistributorRole, task.CompanyCode, task.BranchCode);
 
         public bool CanViewTask(WorkTask task) =>
             Supervisor || Involved || IsAssignee(task) || Assignments.IsCandidate(task, Me) || IsDistributor(task)
-            || (task.EscalatedToRole is not null && Me.Roles.Contains(task.EscalatedToRole));
+            || (task.EscalatedToRole is not null && Me.Holds(task.EscalatedToRole, task.CompanyCode, task.BranchCode));
 
         public TaskPermissions Permissions(WorkTask task)
         {

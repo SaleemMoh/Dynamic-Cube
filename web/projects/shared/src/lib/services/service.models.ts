@@ -273,6 +273,9 @@ export interface RequestSummary {
   draftExpiresAt: string | null;
   /** The document a follow-up request is for. */
   sourceDocumentNumber: string | null;
+  /** The company and branch the request belongs to (ADR-0036 step 6). */
+  companyCode?: string | null;
+  branchCode?: string | null;
 }
 
 export interface FieldError {
