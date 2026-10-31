@@ -137,7 +137,7 @@ public sealed class FollowUpServiceTests(DatabaseFixture fixture)
         {
             NameAr = "خدمة لاحقة",
             NameEn = "Follow-up service",
-            Archetype = ServiceArchetype.Amendment,
+            Archetype = "AMENDMENT",
             PartyKinds = [PartyKind.Establishment],
             DocumentType = documentType,
         });

@@ -87,8 +87,10 @@ by the migration. (A role's data permission "on all screens" is the same kind of
 - **Personal privileges** cover small companies where everyone has their own responsibilities: on the user's Access tab,
   pick an app (a Dynamic Cube app or a connected system) and a company (or all), and its menu tree loads; each screen in
   the tree shows its actions to tick and, under *Data*, the lists on that screen with *as the roles give*, *all values*
-  or *some values* for this person. These only add to what the roles give. A summary below lists every personal
-  privilege in every app and company. They do not appear in the role list, so no per-person roles.
+  or *some values* for this person. The tree also shows what the person's roles already give; an action given by a
+  role can be **removed for this one person** (a deny that wins over the roles), without making a role just for them.
+  Each personal privilege can have **effective dates** (from / to). A summary below lists every personal privilege in
+  every app and company. They do not appear in the role list, so no per-person roles.
 - Bulk assignment adds or removes roles for many users; it never overwrites silently.
 - Employees still have their placement in the organization structure (unit and position) for task routing.
 - **Department default roles:** an organization unit may carry default roles, given to people placed in it (and taken

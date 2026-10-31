@@ -52,7 +52,9 @@ public static class HostDefaults
             });
 
         builder.Services.AddPlatform(builder.Configuration);
-        builder.Services.AddHealthChecks().AddDbContextCheck<PlatformDbContext>("database", tags: [ReadyTag]);
+        builder.Services.AddHealthChecks()
+            .AddDbContextCheck<PlatformDbContext>("database", tags: [ReadyTag])
+            .AddCheck<FileStorageHealthCheck>("file-storage", tags: [ReadyTag]);
 
         return builder;
     }

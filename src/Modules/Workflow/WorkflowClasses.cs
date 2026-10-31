@@ -39,6 +39,7 @@ internal static class WorkflowClasses
             Step("DOCUMENT", "مستند", "Document", "description", "يصدر مستندًا أو يعدّله", "Issues or amends a document"),
             Step("PAYMENT", "سداد", "Payment", "payments", "يصدر فاتورة وينتظر السداد", "Bills the fees and waits for payment"),
             Step("VISIT", "زيارة ميدانية", "Site visit", "location_on", "يطلب زيارة (ميدانية أو لدى جهة معاينة أو يدوية) وينتظر نتيجتها", "Requests a visit (field, external inspection or manual) and waits for its result"),
+            Step("INTEGRATION", "استدعاء تكامل", "Integration call", "sync_alt", "يستدعي عملية من مدير التكامل ويحفظ نتيجتها", "Calls an Integration Manager operation and keeps its result"),
             Step("END", "نهاية", "End", "flag", "نتيجة الطلب للمستفيد", "The result for the applicant"),
         ],
         "الخطوات التي يعرضها مصمم مسارات العمل. يمكن تغيير أسمائها أو إيقاف أحدها فلا يظهر في المصمم.",

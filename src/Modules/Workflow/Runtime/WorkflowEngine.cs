@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using DynamicCube.Modules.Workflow.Definitions;
 using DynamicCube.Modules.Workflow.Domain;
@@ -253,11 +254,65 @@ internal sealed class WorkflowEngine(
                 await RequestVisitAsync(run, token, node, cancellationToken);
                 break;
 
+            case NodeType.Integration:
+                token.NodeCode = await CallAsync(run, node, cancellationToken) ? node.Next! : node.Failed!;
+                await AdvanceAsync(run, token, cancellationToken);
+                break;
+
             case NodeType.End:
                 token.Status = TokenStatus.Done;
                 Complete(run, node);
                 break;
         }
+    }
+
+    /// <summary>
+    /// Calls the node's integration operation with its parameters and keeps the outcome as <c>integrations.&lt;result&gt;</c>
+    /// (<c>success</c>, <c>code</c>, <c>messageAr</c>, <c>messageEn</c>, <c>outputs</c>, <c>data</c>). Returns whether it
+    /// succeeded; a failure without a <c>failed</c> route stops the step with the message.
+    /// </summary>
+    private async Task<bool> CallAsync(Run run, NodeDefinition node, CancellationToken cancellationToken)
+    {
+        var gateway = services.GetService<IIntegrationGateway>() ?? throw new WorkflowConflictException("Integrations are not installed.");
+        var facts = await RuleContextAsync(run, cancellationToken);
+        var parameters = Map(node.Parameters, facts);
+        var inputs = parameters.ToDictionary(
+            p => p.Key,
+            p => p.Value is JsonValue value && value.GetValueKind() == JsonValueKind.String ? value.GetValue<string>() : p.Value?.ToJsonString(),
+            StringComparer.Ordinal);
+        IntegrationResult? result = null;
+        string? problem = null;
+        try
+        {
+            result = await gateway.InvokeAsync(node.Operation!, inputs, cancellationToken);
+        }
+        catch (IntegrationOperationNotFoundException ex)
+        {
+            problem = ex.Message;
+        }
+        catch (IntegrationInputException ex)
+        {
+            problem = $"{ex.Message} {string.Join("; ", ex.Errors.Select(e => $"{e.Key}: {string.Join(", ", e.Value)}"))}";
+        }
+
+        var success = result?.IsSuccess == true;
+        SetFact(run, "integrations", node.Result ?? node.Code, new JsonObject
+        {
+            ["success"] = success,
+            ["code"] = result?.Code,
+            ["messageAr"] = result?.MessageAr ?? problem,
+            ["messageEn"] = result?.MessageEn ?? problem,
+            ["outputs"] = new JsonObject((result?.Outputs ?? new Dictionary<string, JsonNode?>()).Select(o => KeyValuePair.Create(o.Key, o.Value?.DeepClone()))),
+            ["data"] = result?.Data?.DeepClone(),
+            ["callId"] = result?.CallId.ToString(),
+        });
+        run.Event(success ? WorkflowEventTypes.IntegrationCalled : WorkflowEventTypes.IntegrationFailed, null, null, $"{node.Operation}: {result?.Code ?? problem}", node: node.Code);
+        if (!success && node.Failed is null)
+        {
+            throw new WorkflowConflictException($"Step '{node.Code}': {result?.MessageEn ?? problem ?? "the integration call failed."}");
+        }
+
+        return success;
     }
 
     /// <summary>Evaluates the node's rule set (Decisions module) and keeps the results as <c>decisions.&lt;result&gt;</c>.</summary>

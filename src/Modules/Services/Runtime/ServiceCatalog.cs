@@ -81,11 +81,13 @@ internal sealed class ServiceWorkflowProvisioner(IServiceProvider services) : IC
             }
         }
 
+        // A new service starts with its archetype's default workflow (or one completing requests without review).
+        var archetypes = await context.Archetypes.AsNoTracking().Where(a => a.Workflow != null).ToDictionaryAsync(a => a.Code, a => a.Workflow, cancellationToken);
         foreach (var code in created)
         {
             if (found.TryGetValue(code, out var s))
             {
-                await workflows.EnsureAsync(s.Code, s.NameAr, s.NameEn, cancellationToken);
+                await workflows.EnsureAsync(s.Code, s.NameAr, s.NameEn, cancellationToken, archetypes.GetValueOrDefault(s.Archetype));
             }
         }
 

@@ -40,6 +40,7 @@ internal sealed class RequestService(
     IServiceProvider services,
     IFileStorage storage,
     PortalChannel portal,
+    RequestIntegrations integrations,
     TimeProvider clock)
 {
     private static readonly StatusCategory[] OpenStatuses = [StatusCategory.Draft, StatusCategory.Submitted, StatusCategory.InProgress, StatusCategory.PendingCustomer, StatusCategory.PendingExternal, StatusCategory.PendingPayment];
@@ -119,6 +120,9 @@ internal sealed class RequestService(
         {
             throw new NotEligibleException(failures);
         }
+
+        // Answers fetched from integrations (e.g. the capital from the commercial register).
+        await integrations.FillAsync(version, Context(facts, acting, data, null, document), data, lockedOnly: false, cancellationToken);
 
         var individual = acting.IsSelf ? facts : await FactsAsync(acting.IndividualId, cancellationToken);
         var now = clock.GetUtcNow();
@@ -211,7 +215,25 @@ internal sealed class RequestService(
         var facts = await FactsAsync(acting, refresh: false, cancellationToken);
         var document = await SourceDocumentAsync(entity, cancellationToken);
         IReadOnlyList<FieldError> stepErrors = [];
-        if (request.ValidateStep is not null)
+
+        // Answers the applicant may not change always hold the integration's value; an integration step being left calls its
+        // operation and puts the outputs into the current.
+        var current = JsonNode.Parse(entity.Data)!.AsObject();
+        await integrations.FillAsync(version, Context(facts, acting, current, entity.LevelCode, document), current, lockedOnly: true, cancellationToken);
+        if (request.ValidateStep is not null && version.Definition.Steps.FirstOrDefault(s => s.Code == request.ValidateStep) is { Type: StepType.Integration, Integration: { } call } step)
+        {
+            var run = await integrations.RunStepAsync(call, Context(facts, acting, current, entity.LevelCode, document), current, cancellationToken);
+            var runs = JsonNode.Parse(entity.Integrations) as JsonObject ?? [];
+            runs[step.Code] = JsonSerializer.SerializeToNode(run, ChangeJson.Options);
+            entity.Integrations = runs.ToJsonString();
+            if (!run.Success && call.Required)
+            {
+                stepErrors = [IntegrationFailed(step, run)];
+            }
+        }
+
+        entity.Data = current.ToJsonString();
+        if (request.ValidateStep is not null && stepErrors.Count == 0)
         {
             var data = JsonNode.Parse(entity.Data)!.AsObject();
             stepErrors = (await validator.CheckAsync(version, data, Context(facts, acting, data, entity.LevelCode, document), request.ValidateStep, cancellationToken)).Errors;
@@ -275,6 +297,17 @@ internal sealed class RequestService(
         if (declaration is not null && !request.DeclarationAccepted)
         {
             errors.Add(new FieldError("declaration", "REQUIRED", "يجب الموافقة على الإقرار.", "You must accept the declaration.", declaration.Code));
+        }
+
+        // Required integration steps must have succeeded.
+        var runs = JsonNode.Parse(entity.Integrations) as JsonObject;
+        foreach (var step in version.Definition.Steps.Where(s => s is { Type: StepType.Integration, Integration.Required: true }))
+        {
+            var run = runs?[step.Code]?.Deserialize<IntegrationStepRun>(ChangeJson.Options);
+            if (run is not { Success: true })
+            {
+                errors.Add(IntegrationFailed(step, run));
+            }
         }
 
         if (errors.Count > 0)
@@ -694,6 +727,14 @@ internal sealed class RequestService(
         copy["level"] = level;
         return copy;
     }
+
+    private static FieldError IntegrationFailed(StepDefinition step, IntegrationStepRun? run) =>
+        new(
+            null,
+            "INTEGRATION",
+            run?.MessageAr is { Length: > 0 } ar ? ar : $"لم تكتمل خطوة «{step.TitleAr}»؛ حاول مرة أخرى.",
+            run?.MessageEn is { Length: > 0 } en ? en : $"The step \"{step.TitleEn}\" did not complete; try again.",
+            step.Code);
 
     /// <summary>Initial answers from the party's data (and the document a follow-up request is for) for questions with a prefill path.</summary>
     private JsonObject Prefill(ResolvedVersion version, PartyFacts facts, ActingParty acting, DocumentFacts? document = null)

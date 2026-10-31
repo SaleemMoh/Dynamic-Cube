@@ -13,7 +13,7 @@ namespace DynamicCube.Modules.AppsControl.Lovs;
 /// global one; results are unioned across roles, and with the person's own grants on the screen (personal privileges,
 /// ADR-0036). Users without any grant see everything unless the LOV requires a grant.
 /// </summary>
-public sealed class GrantResolver(AppsControlDbContext context, JsonLogicEvaluator evaluator)
+public sealed class GrantResolver(AppsControlDbContext context, JsonLogicEvaluator evaluator, TimeProvider timeProvider)
 {
     public async Task<GrantSet> ResolveAsync(Lov lov, AccessSnapshot access, string? resourceCode, CancellationToken cancellationToken)
     {
@@ -32,11 +32,13 @@ public sealed class GrantResolver(AppsControlDbContext context, JsonLogicEvaluat
                 .Where(g => access.RoleSources.Contains(new RoleSource(g.RoleId, g.CompanyCode)))
                 .ToList();
 
-        // Values given to the person alone on this screen only add to what the roles give.
+        // Values given to the person alone on this screen (in their period) only add to what the roles give.
+        var today = DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime);
         var personal = access.User.UserId is not { } userId || resourceCode is null
             ? []
             : await context.UserPrivileges.AsNoTracking()
-                .Where(p => p.UserId == userId && p.Resource!.Code == resourceCode)
+                .Where(p => p.UserId == userId && p.Resource!.Code == resourceCode
+                    && (p.EffectiveFrom == null || p.EffectiveFrom <= today) && (p.EffectiveTo == null || p.EffectiveTo >= today))
                 .SelectMany(p => p.Grants.Where(g => g.LovId == lov.Id))
                 .Select(g => new { g.GrantType, g.GrantedValues })
                 .ToListAsync(cancellationToken);

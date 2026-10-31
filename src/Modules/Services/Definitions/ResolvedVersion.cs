@@ -15,10 +15,18 @@ public sealed record QuestionSnapshot(
     IReadOnlyList<QuestionOption> Options,
     bool Multiple,
     QuestionValidation Validation,
-    string? Prefill)
+    string? Prefill,
+    IntegrationFill? Integration = null,
+    bool? AllowManualEntry = null)
 {
+    /// <summary>The answer is always the filled value (the applicant may not type or change it).</summary>
+    public bool Locked => AllowManualEntry == false && (Prefill is not null || Integration is not null);
+
     public static QuestionSnapshot Of(Question q) =>
-        new(q.Code, q.NameAr, q.NameEn, q.HintAr, q.HintEn, q.Type, q.Lov, q.LovParentQuestion, q.Options, q.Multiple, q.Validation, q.Prefill);
+        new(q.Code, q.NameAr, q.NameEn, q.HintAr, q.HintEn, q.Type, q.Lov, q.LovParentQuestion, q.Options, q.Multiple, q.Validation,
+            q.Fill == QuestionFill.Party ? q.Prefill : null,
+            q.Fill == QuestionFill.Integration ? q.Integration : null,
+            q.Fill == QuestionFill.None ? null : q.AllowManualEntry);
 }
 
 /// <summary>A published version with snapshots of every question it uses: everything the wizard and the server need.</summary>

@@ -13,6 +13,8 @@ public sealed class ServicesDbContext(DbContextOptions<ServicesDbContext> option
 
     public DbSet<Question> Questions => Set<Question>();
 
+    public DbSet<Archetype> Archetypes => Set<Archetype>();
+
     public DbSet<ServiceVersion> Versions => Set<ServiceVersion>();
 
     public DbSet<ServiceRequest> Requests => Set<ServiceRequest>();
@@ -35,7 +37,16 @@ public sealed class ServicesDbContext(DbContextOptions<ServicesDbContext> option
             b.Property(e => e.Icon).HasMaxLength(100);
             b.Property(e => e.NumberPrefix).HasMaxLength(20).IsRequired();
             b.Property(e => e.DocumentType).HasMaxLength(100);
+            b.Property(e => e.Archetype).HasMaxLength(100).IsRequired();
             b.Property(e => e.PartyKinds).HasJsonColumn();
+        });
+        modelBuilder.ConfigTable<Archetype>(Schema, "archetype", b =>
+        {
+            b.Property(e => e.DescriptionAr).HasMaxLength(2000);
+            b.Property(e => e.DescriptionEn).HasMaxLength(2000);
+            b.Property(e => e.Icon).HasMaxLength(100);
+            b.Property(e => e.Template).HasColumnType("jsonb");
+            b.Property(e => e.Workflow).HasColumnType("jsonb");
         });
         modelBuilder.ConfigTable<Question>(Schema, "question", b =>
         {
@@ -46,6 +57,9 @@ public sealed class ServicesDbContext(DbContextOptions<ServicesDbContext> option
             b.Property(e => e.Lov).HasMaxLength(100);
             b.Property(e => e.LovParentQuestion).HasMaxLength(100);
             b.Property(e => e.Prefill).HasMaxLength(200);
+            b.Property(e => e.ServiceCode).HasMaxLength(100);
+            b.HasIndex(e => e.ServiceCode);
+            b.Property(e => e.Integration).HasJsonColumn();
             b.Property(e => e.Options).HasJsonColumn();
             b.Property(e => e.Validation).HasJsonColumn();
         });
@@ -70,6 +84,7 @@ public sealed class ServicesDbContext(DbContextOptions<ServicesDbContext> option
             b.Property(e => e.DisplayStatus).HasMaxLength(100).IsRequired();
             b.Property(e => e.Data).HasColumnType("jsonb").IsRequired();
             b.Property(e => e.CurrentStep).HasMaxLength(100);
+            b.Property(e => e.Integrations).HasColumnType("jsonb").IsRequired();
             b.Property(e => e.SourceDocumentNumber).HasMaxLength(50);
             b.Property(e => e.Fees).HasJsonColumn();
             b.Property(e => e.FeeTotal).HasPrecision(18, 2);

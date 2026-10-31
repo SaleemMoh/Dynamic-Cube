@@ -554,16 +554,14 @@ export const SERVICE_SECTIONS: ConfigSection[] = [
           {
             code: 'archetype',
             type: 'select',
-            label: t('النمط', 'Archetype'),
+            label: t('نمط الخدمة', 'Archetype'),
             required: true,
             defaultValue: 'ISSUANCE',
-            refDomains: 'SVC_ARCHETYPE',
-            options: [
-              opt('ISSUANCE', 'إصدار', 'Issuance'),
-              opt('AMENDMENT', 'تعديل', 'Amendment'),
-              opt('VISIT_REQUEST', 'طلب زيارة', 'Visit request'),
-              opt('ATTESTATION', 'تصديق', 'Attestation'),
-            ],
+            ref: 'svc.archetype',
+            hint: t(
+              'تبدأ الخدمة الجديدة بمسار العمل الافتراضي للنمط عند نشرها، ويفتح منشئ الخدمات قالبه.',
+              "A new service starts with the archetype's default workflow when published, and the builder opens its template.",
+            ),
           },
           {
             code: 'partyKinds',
@@ -624,6 +622,37 @@ export const SERVICE_SECTIONS: ConfigSection[] = [
           },
         ],
       },
+      {
+        entityType: 'svc.archetype',
+        title: t('أنماط الخدمات', 'Service archetypes'),
+        key: 'code',
+        columns: ['displayOrder'],
+        fields: [
+          { code: 'descriptionAr', type: 'textarea', label: t('الوصف بالعربية', 'Arabic description') },
+          { code: 'descriptionEn', type: 'textarea', label: t('الوصف بالإنجليزية', 'English description') },
+          { code: 'icon', type: 'icon', label: t('الأيقونة', 'Icon') },
+          number('displayOrder', t('الترتيب', 'Display order'), 0),
+          {
+            code: 'templateFrom',
+            type: 'select',
+            label: t('نسخ قالب الخدمة من خدمة', 'Copy the service template from a service'),
+            ref: 'svc.service',
+            hint: t(
+              'عند الحفظ يصبح القالب نسخة من آخر إصدار للخدمة (الخطوات والأسئلة المشتركة والقواعد والرسوم والبطاقة).',
+              "On saving, the template becomes a copy of the service's latest version (steps, shared questions, rules, fees and card).",
+            ),
+          },
+          {
+            code: 'workflowFrom',
+            type: 'select',
+            label: t('نسخ مسار العمل الافتراضي من مسار', 'Copy the default workflow from a workflow'),
+            ref: 'wf.workflow',
+            hint: t('عند الحفظ يصبح المسار الافتراضي نسخة من آخر إصدار منشور للمسار.', 'On saving, the default workflow becomes a copy of the workflow’s latest published version.'),
+          },
+          json('template', t('قالب الخدمة (JSON)', 'Service template (JSON)'), { kind: 'json' }, t('فارغ: البداية الفارغة لمنشئ الخدمات.', "Empty: the builder's blank start."), null),
+          json('workflow', t('مسار العمل الافتراضي (JSON)', 'Default workflow (JSON)'), { kind: 'json' }, t('فارغ: تكتمل الطلبات دون مراجعة.', 'Empty: requests complete without review.'), null),
+        ],
+      },
     ],
   },
   {
@@ -667,7 +696,7 @@ export const SERVICE_SECTIONS: ConfigSection[] = [
         entityType: 'svc.question',
         title: t('بنك الأسئلة', 'Question bank'),
         key: 'code',
-        columns: ['type', 'lov', 'prefill'],
+        columns: ['type', 'serviceCode', 'fill'],
         nameLabels: {
           ar: t('نص السؤال بالعربية', 'Arabic label'),
           en: t('نص السؤال بالإنجليزية', 'English label'),
@@ -744,10 +773,72 @@ export const SERVICE_SECTIONS: ConfigSection[] = [
             {},
           ),
           {
+            code: 'serviceCode',
+            type: 'select',
+            label: t('السؤال لـ', 'Question of'),
+            ref: 'svc.service',
+            required: true,
+            defaultValue: '*',
+            allOption: t('بنك الأسئلة (مشترك بين الخدمات)', 'The question bank (shared by every service)'),
+            hint: t(
+              'سؤال لخدمة واحدة لا تستخدمه إلا إصداراتها؛ سؤال البنك تستخدمه كل الخدمات.',
+              'A question of one service is used by its versions only; a bank question by every service.',
+            ),
+          },
+          {
+            code: 'fill',
+            type: 'select',
+            label: t('مصدر الإجابة', 'Where the answer comes from'),
+            required: true,
+            defaultValue: 'NONE',
+            options: [
+              opt('NONE', 'يجيب مقدم الطلب', 'The applicant answers'),
+              opt('PARTY', 'من بيانات المستفيد', "From the beneficiary's data"),
+              opt('INTEGRATION', 'من تكامل مع جهة أخرى', 'From an integration'),
+            ],
+          },
+          {
             code: 'prefill',
-            type: 'text',
-            label: t('تعبئة من بيانات المتعامل', 'Prefill from the party'),
-            hint: t('مثال: party.identifiers.CR_NUMBER أو party.profile.CR_CAPITAL', 'e.g. party.identifiers.CR_NUMBER or party.profile.CR_CAPITAL'),
+            type: 'select',
+            label: t('حقل بيانات المستفيد', "Field of the beneficiary's data"),
+            optionsUrl: '/api/party/v1/fact-fields',
+            visibleWhen: { '==': [{ var: 'fill' }, 'PARTY'] },
+            requiredWhen: { '==': [{ var: 'fill' }, 'PARTY'] },
+          },
+          {
+            ...json(
+              'integration',
+              t('التكامل', 'Integration'),
+              object(
+                col('operation', t('العملية', 'Operation'), 'select', { ref: 'integ.operation', required: true }),
+                col('inputs', t('المدخلات', 'Inputs'), 'table', {
+                  columns: [
+                    col('parameter', t('المعامل', 'Parameter'), 'text', LTR_REQ),
+                    col('from', t('القيمة من', 'Value from'), 'select', { optionsUrl: '/api/services/v1/admin/fill-sources', required: true }),
+                  ],
+                }),
+                col('output', t('المخرج المستخدم', 'Output used'), 'text', {
+                  ...LTR_REQ,
+                }),
+              ),
+              t(
+                'المخرج: اسم مخرج معرّف في العملية، أو مسار في نتيجتها مثل capital أو data.capital.',
+                'Output: an output defined in the operation, or a path in its result such as capital or data.capital.',
+              ),
+              null,
+            ),
+            visibleWhen: { '==': [{ var: 'fill' }, 'INTEGRATION'] },
+          },
+          {
+            code: 'allowManualEntry',
+            type: 'checkbox',
+            label: t('يمكن لمقدم الطلب إدخال الإجابة أو تعديلها', 'The applicant may type or change the answer'),
+            defaultValue: true,
+            visibleWhen: { '!=': [{ var: 'fill' }, 'NONE'] },
+            hint: t(
+              'عند عدم السماح تكون الإجابة دائمًا القيمة المجلوبة وتُعرض للقراءة فقط.',
+              'When not allowed, the answer is always the fetched value and is shown read-only.',
+            ),
           },
         ],
       },

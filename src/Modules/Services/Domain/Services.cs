@@ -2,12 +2,26 @@ using DynamicCube.Platform.Parties;
 
 namespace DynamicCube.Modules.Services.Domain;
 
-public enum ServiceArchetype
+/// <summary>
+/// A kind of service (issuance, amendment, visit request, attestation…) declared once with what a new service of that
+/// kind starts from: its default workflow (given to the service when it is first published) and its service template
+/// (the first version the Service Builder opens). Entity code: e.g. <c>ISSUANCE</c>.
+/// </summary>
+public sealed class Archetype : ConfigEntity
 {
-    Issuance,
-    Amendment,
-    VisitRequest,
-    Attestation,
+    public string? DescriptionAr { get; set; }
+
+    public string? DescriptionEn { get; set; }
+
+    public string? Icon { get; set; }
+
+    public int DisplayOrder { get; set; }
+
+    /// <summary>The version definition a new service starts from (JSON); none: the builder's blank start.</summary>
+    public string? Template { get; set; }
+
+    /// <summary>The workflow definition a new service's workflow starts from (JSON); none: completed without review.</summary>
+    public string? Workflow { get; set; }
 }
 
 /// <summary>What happens to drafts when a newer version is published.</summary>
@@ -27,7 +41,8 @@ public sealed class Service : ConfigEntity
 
     public string? DescriptionEn { get; set; }
 
-    public ServiceArchetype Archetype { get; set; }
+    /// <summary>The service's archetype (<see cref="Domain.Archetype"/> code).</summary>
+    public string Archetype { get; set; } = "ISSUANCE";
 
     /// <summary>The category grouping the service in the catalog: a value of class <c>SVC_CATEGORY</c>.</summary>
     public string? CategoryCode { get; set; }
@@ -100,12 +115,49 @@ public sealed class QuestionValidation
     public int? MaxFiles { get; set; }
 }
 
+/// <summary>Where a question's first answer comes from.</summary>
+public enum QuestionFill
+{
+    /// <summary>The applicant answers.</summary>
+    None,
+
+    /// <summary>A field of the applicant's (beneficiary's) data: <see cref="Question.Prefill"/>.</summary>
+    Party,
+
+    /// <summary>An Integration Manager operation: <see cref="Question.Integration"/>.</summary>
+    Integration,
+}
+
+/// <summary>A parameter passed to an integration operation and where its value comes from in the request.</summary>
+public sealed class IntegrationInput
+{
+    public string Parameter { get; set; } = string.Empty;
+
+    /// <summary>A path in the request's facts, e.g. <c>party.identifiers.CR_NUMBER</c> or <c>data.REGION</c>.</summary>
+    public string From { get; set; } = string.Empty;
+}
+
+/// <summary>A call of an Integration Manager operation that gives a question its answer.</summary>
+public sealed class IntegrationFill
+{
+    public string Operation { get; set; } = string.Empty;
+
+    public List<IntegrationInput> Inputs { get; set; } = [];
+
+    /// <summary>An output of the operation (its configured name) or a path in its result, e.g. <c>capital</c>.</summary>
+    public string Output { get; set; } = string.Empty;
+}
+
 /// <summary>
 /// A question of the bank, used by code in service versions so a question shared by several sections is answered
-/// once. The name is the label shown to the applicant.
+/// once. The name is the label shown to the applicant. A question with a <see cref="ServiceCode"/> belongs to that
+/// service alone (a service-level question); the others are shared by every service.
 /// </summary>
 public sealed class Question : ConfigEntity
 {
+    /// <summary>The service the question belongs to (only its versions use it); none: a shared bank question.</summary>
+    public string? ServiceCode { get; set; }
+
     public QuestionType Type { get; set; }
 
     public string? HintAr { get; set; }
@@ -124,8 +176,20 @@ public sealed class Question : ConfigEntity
 
     public QuestionValidation Validation { get; set; } = new();
 
+    /// <summary>Where the first answer comes from: the applicant, the party's data or an integration.</summary>
+    public QuestionFill Fill { get; set; }
+
     /// <summary>Path in the applicant's facts used as the initial answer, e.g. <c>party.profile.CR_CAPITAL</c>.</summary>
     public string? Prefill { get; set; }
+
+    /// <summary>The integration call that answers the question (with <see cref="QuestionFill.Integration"/>).</summary>
+    public IntegrationFill? Integration { get; set; }
+
+    /// <summary>
+    /// Whether the applicant may type or change a filled answer; when not, the answer is always the filled value (shown
+    /// read-only and reset on the server).
+    /// </summary>
+    public bool AllowManualEntry { get; set; } = true;
 }
 
 /// <summary>

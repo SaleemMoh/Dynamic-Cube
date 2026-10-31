@@ -12,7 +12,13 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { AppsControlApi, I18nService, LocalizePipe, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
+import {
+  AppsControlApi,
+  I18nService,
+  LocalizePipe,
+  TranslatePipe,
+  problemMessages,
+} from '@dynamic-cube/shared';
 import { Observable, catchError, firstValueFrom, of } from 'rxjs';
 import { ConfigEditorData } from '../config/config-editor';
 import { PrivilegesService } from '../privileges.service';
@@ -41,7 +47,9 @@ import { temporaryPassword } from './password';
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <h2 mat-dialog-title>{{ 'account.title' | dcTranslate }} — {{ { ar: row.nameAr, en: row.nameEn } | dcLocalize }}</h2>
+    <h2 mat-dialog-title>
+      {{ 'account.title' | dcTranslate }} — {{ { ar: row.nameAr, en: row.nameEn } | dcLocalize }}
+    </h2>
     <mat-dialog-content class="dc-acc">
       @if (busy() || account.isLoading()) {
         <mat-progress-bar mode="indeterminate" />
@@ -56,24 +64,34 @@ import { temporaryPassword } from './password';
       @if (caps(); as c) {
         @if (c.provider === 'None') {
           <p class="dc-acc__note" data-testid="account-unmanaged">
-            <mat-icon fontSet="material-symbols-outlined">info</mat-icon>{{ 'account.unmanaged' | dcTranslate }}
+            <mat-icon fontSet="material-symbols-outlined">info</mat-icon
+            >{{ 'account.unmanaged' | dcTranslate }}
           </p>
         }
       }
       @if (view(); as a) {
         <div class="dc-acc__state" data-testid="account-state">
-          <span class="dc-acc__avatar" aria-hidden="true"><mat-icon fontSet="material-symbols-outlined">person</mat-icon></span>
+          <span class="dc-acc__avatar" aria-hidden="true"
+            ><mat-icon fontSet="material-symbols-outlined">person</mat-icon></span
+          >
           <div class="dc-acc__who">
             <strong class="mono">{{ row.code }}</strong>
             <span class="dc-muted">{{ a.email ?? row['email'] ?? '—' }}</span>
           </div>
           @if (a.exists) {
-            <span class="dc-pill" [class.dc-pill--green]="a.enabled" data-testid="account-enabled">{{
-              (a.enabled ? 'account.active' : 'account.inactive') | dcTranslate
+            <span
+              class="dc-pill"
+              [class.dc-pill--green]="a.enabled"
+              data-testid="account-enabled"
+              >{{ (a.enabled ? 'account.active' : 'account.inactive') | dcTranslate }}</span
+            >
+            <span class="dc-pill dc-pill--gold" data-testid="account-source">{{
+              a.source === 'LOCAL' ? ('account.local' | dcTranslate) : a.source
             }}</span>
-            <span class="dc-pill dc-pill--gold" data-testid="account-source">{{ a.source === 'LOCAL' ? ('account.local' | dcTranslate) : a.source }}</span>
           } @else if (caps()?.provider !== 'None') {
-            <span class="dc-pill" data-testid="account-missing">{{ 'account.none' | dcTranslate }}</span>
+            <span class="dc-pill" data-testid="account-missing">{{
+              'account.none' | dcTranslate
+            }}</span>
           }
         </div>
         @if (a.exists) {
@@ -117,12 +135,24 @@ import { temporaryPassword } from './password';
                     {{ 'account.deactivate' | dcTranslate }}
                   </button>
                 } @else {
-                  <button matButton="filled" type="button" (click)="setEnabled(true)" [disabled]="busy()" data-testid="account-enable">
+                  <button
+                    matButton="filled"
+                    type="button"
+                    (click)="setEnabled(true)"
+                    [disabled]="busy()"
+                    data-testid="account-enable"
+                  >
                     <mat-icon fontSet="material-symbols-outlined">check_circle</mat-icon>
                     {{ 'account.activate' | dcTranslate }}
                   </button>
                 }
-                <button matButton="outlined" type="button" (click)="signOut()" [disabled]="busy()" data-testid="account-sign-out">
+                <button
+                  matButton="outlined"
+                  type="button"
+                  (click)="signOut()"
+                  [disabled]="busy()"
+                  data-testid="account-sign-out"
+                >
                   <mat-icon fontSet="material-symbols-outlined">logout</mat-icon>
                   {{ 'account.signOut' | dcTranslate }}
                 </button>
@@ -134,27 +164,54 @@ import { temporaryPassword } from './password';
           @if (a.exists ? a.canSetPassword : caps()?.canCreate) {
             <section class="dc-acc__section" data-testid="account-password">
               <h3>{{ (a.exists ? 'account.password' : 'account.create') | dcTranslate }}</h3>
-              <mat-button-toggle-group [ngModel]="mode()" (ngModelChange)="mode.set($event)" [attr.aria-label]="'account.password' | dcTranslate">
-                <mat-button-toggle value="temporary">{{ 'account.temporary' | dcTranslate }}</mat-button-toggle>
-                <mat-button-toggle value="email">{{ 'account.byEmail' | dcTranslate }}</mat-button-toggle>
+              <mat-button-toggle-group
+                [ngModel]="mode()"
+                (ngModelChange)="mode.set($event)"
+                [attr.aria-label]="'account.password' | dcTranslate"
+              >
+                <mat-button-toggle value="temporary">{{
+                  'account.temporary' | dcTranslate
+                }}</mat-button-toggle>
+                <mat-button-toggle value="email">{{
+                  'account.byEmail' | dcTranslate
+                }}</mat-button-toggle>
               </mat-button-toggle-group>
               @if (mode() === 'temporary') {
                 <div class="dc-acc__row">
                   <mat-form-field subscriptSizing="dynamic" class="dc-acc__password">
                     <mat-label>{{ 'account.temporary' | dcTranslate }}</mat-label>
-                    <input matInput dir="ltr" [ngModel]="password()" (ngModelChange)="password.set($event)" data-testid="account-temp-password" />
-                    <button matIconButton matSuffix type="button" (click)="password.set(generate())" [matTooltip]="'account.generate' | dcTranslate">
+                    <input
+                      matInput
+                      dir="ltr"
+                      [ngModel]="password()"
+                      (ngModelChange)="password.set($event)"
+                      data-testid="account-temp-password"
+                    />
+                    <button
+                      matIconButton
+                      matSuffix
+                      type="button"
+                      (click)="password.set(generate())"
+                      [matTooltip]="'account.generate' | dcTranslate"
+                    >
                       <mat-icon fontSet="material-symbols-outlined">autorenew</mat-icon>
                     </button>
                   </mat-form-field>
-                  <button matIconButton type="button" (click)="copy(password())" [disabled]="!password()" [matTooltip]="'account.copy' | dcTranslate">
+                  <button
+                    matIconButton
+                    type="button"
+                    (click)="copy(password())"
+                    [disabled]="!password()"
+                    [matTooltip]="'account.copy' | dcTranslate"
+                  >
                     <mat-icon fontSet="material-symbols-outlined">content_copy</mat-icon>
                   </button>
                 </div>
                 <p class="dc-muted">{{ 'account.temporaryHint' | dcTranslate }}</p>
               } @else {
                 <p class="dc-muted">
-                  {{ 'account.byEmailHint' | dcTranslate }} <span dir="ltr">{{ a.email ?? row['email'] ?? '—' }}</span>
+                  {{ 'account.byEmailHint' | dcTranslate }}
+                  <span dir="ltr">{{ a.email ?? row['email'] ?? '—' }}</span>
                 </p>
               }
               <button
@@ -169,14 +226,17 @@ import { temporaryPassword } from './password';
             </section>
           } @else if (a.exists && !a.canSetPassword) {
             <p class="dc-acc__note">
-              <mat-icon fontSet="material-symbols-outlined">lock</mat-icon>{{ 'account.passwordElsewhere' | dcTranslate }} {{ a.source }}
+              <mat-icon fontSet="material-symbols-outlined">lock</mat-icon
+              >{{ 'account.passwordElsewhere' | dcTranslate }} {{ a.source }}
             </p>
           }
         }
       }
     </mat-dialog-content>
     <mat-dialog-actions>
-      <button matButton type="button" [mat-dialog-close]="changed()">{{ 'common.close' | dcTranslate }}</button>
+      <button matButton type="button" [mat-dialog-close]="changed()">
+        {{ 'common.close' | dcTranslate }}
+      </button>
     </mat-dialog-actions>
   `,
   styles: `
@@ -274,9 +334,13 @@ export class AccountDialog {
   private readonly clipboard = inject(Clipboard);
   private readonly privileges = inject(PrivilegesService);
 
-  protected readonly capabilities = rxResource({ stream: () => this.api.accountCapabilities().pipe(catchError(() => of(null))) });
+  protected readonly capabilities = rxResource({
+    stream: () => this.api.accountCapabilities().pipe(catchError(() => of(null))),
+  });
   protected readonly account = rxResource({ stream: () => this.api.account(this.row.code) });
-  protected readonly caps = computed(() => (this.capabilities.hasValue() ? this.capabilities.value() : null));
+  protected readonly caps = computed(() =>
+    this.capabilities.hasValue() ? this.capabilities.value() : null,
+  );
   protected readonly view = computed(() => (this.account.hasValue() ? this.account.value() : null));
   protected readonly canEdit = computed(() => this.privileges.can('apps-control.users', 'EDIT'));
   protected readonly mode = signal<'temporary' | 'email'>('temporary');
@@ -287,7 +351,10 @@ export class AccountDialog {
   protected readonly generate = temporaryPassword;
 
   protected setEnabled(enabled: boolean): Promise<void> {
-    return this.run(this.api.setAccountEnabled(this.row.code, enabled), enabled ? 'account.activated' : 'account.deactivated');
+    return this.run(
+      this.api.setAccountEnabled(this.row.code, enabled),
+      enabled ? 'account.activated' : 'account.deactivated',
+    );
   }
 
   protected signOut(): Promise<void> {
@@ -297,14 +364,19 @@ export class AccountDialog {
   protected setPassword(): Promise<void> {
     const temporary = this.mode() === 'temporary';
     return this.run(
-      this.api.setAccountPassword(this.row.code, { temporaryPassword: temporary ? this.password() : null, sendEmail: !temporary }),
+      this.api.setAccountPassword(this.row.code, {
+        temporaryPassword: temporary ? this.password() : null,
+        sendEmail: !temporary,
+      }),
       temporary ? 'account.passwordSet' : 'account.emailSent',
     );
   }
 
   protected create(): Promise<void> {
     const temporary = this.mode() === 'temporary';
-    const [firstName, ...rest] = String(this.row.nameEn || this.row.nameAr || this.row.code).split(' ');
+    const [firstName, ...rest] = String(this.row.nameEn || this.row.nameAr || this.row.code).split(
+      ' ',
+    );
     return this.run(
       this.api.createAccount({
         userName: this.row.code,
@@ -319,7 +391,8 @@ export class AccountDialog {
   }
 
   protected copy(text: string): void {
-    if (this.clipboard.copy(text)) this.snackBar.open(this.i18n.translate('account.copied'), undefined, { duration: 2500 });
+    if (this.clipboard.copy(text))
+      this.snackBar.open(this.i18n.translate('account.copied'), undefined, { duration: 2500 });
   }
 
   private async run(change: Observable<unknown>, done: string): Promise<void> {

@@ -3076,6 +3076,19 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("company_code");
 
+                    b.PrimitiveCollection<List<string>>("DeniedActions")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("denied_actions");
+
+                    b.Property<DateOnly?>("EffectiveFrom")
+                        .HasColumnType("date")
+                        .HasColumnName("effective_from");
+
+                    b.Property<DateOnly?>("EffectiveTo")
+                        .HasColumnType("date")
+                        .HasColumnName("effective_to");
+
                     b.Property<Guid>("ResourceId")
                         .HasColumnType("uuid")
                         .HasColumnName("resource_id");

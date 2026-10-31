@@ -15,6 +15,8 @@ export class BuilderStore {
   readonly selection = signal<FormPath | null>(null);
   /** Codes of the question bank (to flag questions that do not exist). */
   readonly bank = signal<ReadonlySet<string>>(new Set());
+  /** The service being built (its own questions are offered besides the shared bank). */
+  readonly service = signal<string | null>(null);
   readonly problems = computed(() => check(this.current(), this.bank()));
   readonly canUndo = computed(() => this.past().length > 0);
   readonly canRedo = computed(() => this.future().length > 0);

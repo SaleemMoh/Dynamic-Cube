@@ -2,7 +2,7 @@ import { JsonValue, LocalizedText } from '@dynamic-cube/shared';
 import { GraphDefinition, graphEdges, layout } from '../workflow-graph';
 
 /** The node types the engine runs; the palette offers exactly these. */
-export const NODE_TYPES = ['START', 'HUMAN_TASK', 'PARALLEL_SPLIT', 'JOIN', 'GATEWAY', 'DECISION', 'DOCUMENT', 'PAYMENT', 'VISIT', 'END'] as const;
+export const NODE_TYPES = ['START', 'HUMAN_TASK', 'PARALLEL_SPLIT', 'JOIN', 'GATEWAY', 'DECISION', 'DOCUMENT', 'PAYMENT', 'VISIT', 'INTEGRATION', 'END'] as const;
 export type NodeType = (typeof NODE_TYPES)[number];
 
 export type JsonRule = JsonValue;
@@ -90,6 +90,12 @@ export interface NodeDef {
   /** Visit: outcome code → the node it leads to. */
   outcomes?: Record<string, string>;
   cancelled?: string | null;
+  /** Integration: the Integration Manager operation to call. */
+  operation?: string | null;
+  /** Integration: operation parameter → rule over the workflow facts. */
+  parameters?: Record<string, JsonRule>;
+  /** Integration: where a failed call goes (none: the step stops with the provider's message). */
+  failed?: string | null;
   [key: string]: unknown;
 }
 
@@ -111,7 +117,7 @@ export const GRID = 8;
 export const MAX_CANVAS = 20000;
 
 /** Where an arrow leaves a node: the property that holds its target. */
-export type OutletKind = 'next' | 'branch' | 'route' | 'default' | 'action' | 'expired' | 'resume' | 'cancelled' | 'outcome';
+export type OutletKind = 'next' | 'branch' | 'route' | 'default' | 'action' | 'expired' | 'resume' | 'cancelled' | 'outcome' | 'failed';
 
 export interface Outlet {
   kind: OutletKind;
@@ -165,6 +171,11 @@ export function handles(node: NodeDef): Handle[] {
         { kind: 'outcome', hint: 'designer.handle.outcome', mark: '?' },
         { kind: 'cancelled', hint: 'designer.handle.visitCancelled', mark: '✗' },
       ];
+    case 'INTEGRATION':
+      return [
+        { kind: 'next', hint: 'designer.handle.called', mark: '✓' },
+        { kind: 'failed', hint: 'designer.handle.callFailed', mark: '✗' },
+      ];
     case 'END':
       return [];
   }
@@ -179,7 +190,8 @@ export function edges(def: WorkflowDraft): Edge[] {
         from: n.code,
         to: n.next,
         outlet: { kind: 'next' },
-        label: n.type === 'PAYMENT' ? 'designer.edge.paid' : n.type === 'VISIT' ? 'designer.edge.visited' : '',
+        label:
+          n.type === 'PAYMENT' ? 'designer.edge.paid' : n.type === 'VISIT' ? 'designer.edge.visited' : n.type === 'INTEGRATION' ? 'designer.edge.called' : '',
       });
     Object.entries(n.outcomes ?? {}).forEach(([outcome, to], index) => out.push({ from: n.code, to, outlet: { kind: 'outcome', index }, label: outcome }));
     if (n.cancelled)
@@ -204,6 +216,13 @@ export function edges(def: WorkflowDraft): Edge[] {
         to: n.default,
         outlet: { kind: 'default' },
         label: 'designer.edge.default',
+      });
+    if (n.failed)
+      out.push({
+        from: n.code,
+        to: n.failed,
+        outlet: { kind: 'failed' },
+        label: 'designer.edge.callFailed',
       });
     if (n.expired)
       out.push({
@@ -248,6 +267,7 @@ const PREFIX: Record<NodeType, string> = {
   DOCUMENT: 'DOCUMENT',
   PAYMENT: 'PAYMENT',
   VISIT: 'VISIT',
+  INTEGRATION: 'INTEGRATION',
   END: 'END',
 };
 
@@ -261,6 +281,7 @@ const DEFAULT_NAMES: Record<NodeType, LocalizedText> = {
   DOCUMENT: { ar: 'إصدار مستند', en: 'Issue document' },
   PAYMENT: { ar: 'سداد الرسوم', en: 'Payment' },
   VISIT: { ar: 'زيارة ميدانية', en: 'Site visit' },
+  INTEGRATION: { ar: 'استدعاء تكامل', en: 'Integration call' },
   END: { ar: 'النهاية', en: 'End' },
 };
 
@@ -293,6 +314,8 @@ export function newNode(def: WorkflowDraft, type: NodeType): NodeDef {
       return { ...node, outcome: 'APPROVED' };
     case 'VISIT':
       return { ...node, visitType: null, outcomes: {}, next: null, cancelled: null };
+    case 'INTEGRATION':
+      return { ...node, operation: null, parameters: {}, next: null, failed: null };
     default:
       return { ...node, next: null };
   }
@@ -357,6 +380,9 @@ export function connect(def: WorkflowDraft, from: string, kind: OutletKind, to: 
     case 'cancelled':
       node.cancelled = to;
       break;
+    case 'failed':
+      node.failed = to;
+      break;
     case 'outcome': {
       // A placeholder outcome code: the panel picks the visit type's outcome it stands for.
       const used = node.outcomes ?? {};
@@ -403,6 +429,9 @@ export function disconnect(def: WorkflowDraft, from: string, outlet: Outlet): Wo
     case 'cancelled':
       node.cancelled = null;
       break;
+    case 'failed':
+      node.failed = null;
+      break;
     case 'outcome':
       node.outcomes = Object.fromEntries(Object.entries(node.outcomes ?? {}).filter((_, k) => k !== i));
       break;
@@ -431,6 +460,7 @@ export function removeNode(def: WorkflowDraft, code: string): WorkflowDraft {
     if (n.default === code) n.default = null;
     if (n.expired === code) n.expired = null;
     if (n.cancelled === code) n.cancelled = null;
+    if (n.failed === code) n.failed = null;
     if (n.outcomes) n.outcomes = Object.fromEntries(Object.entries(n.outcomes).filter(([, to]) => to !== code));
     if (n.branches) n.branches = n.branches.filter((b) => b !== code);
     if (n.routes) n.routes = n.routes.filter((r) => r.to !== code);
@@ -460,6 +490,7 @@ export function renameNode(def: WorkflowDraft, from: string, to: string): Workfl
     n.default = swap(n.default);
     n.expired = swap(n.expired);
     n.cancelled = swap(n.cancelled);
+    n.failed = swap(n.failed);
     if (n.outcomes) n.outcomes = Object.fromEntries(Object.entries(n.outcomes).map(([o, t]) => [o, swap(t)!]));
     if (n.branches) n.branches = n.branches.map((b) => swap(b)!);
     if (n.routes) for (const r of n.routes) r.to = swap(r.to)!;
@@ -559,6 +590,12 @@ export function check(def: WorkflowDraft): Problem[] {
           target(n, to, 'designer.problem.noVisited');
         }
         break;
+      case 'INTEGRATION':
+        if (!n.operation) p(n, 'designer.problem.operation');
+        target(n, n.next, 'designer.problem.noCalled');
+        if (n.failed) target(n, n.failed, 'designer.problem.noCalled');
+        else p(n, 'designer.problem.noCallFailed', undefined, true);
+        break;
       case 'HUMAN_TASK': {
         const a = n.assignment;
         if (
@@ -631,5 +668,6 @@ export const NODE_ICONS: Record<NodeType, string> = {
   DOCUMENT: 'description',
   PAYMENT: 'payments',
   VISIT: 'location_on',
+  INTEGRATION: 'sync_alt',
   END: 'flag',
 };

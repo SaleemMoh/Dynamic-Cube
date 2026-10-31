@@ -41,6 +41,7 @@ public static class PartiesModule
         services.AddScoped<PartyAdminService>();
         services.AddScoped<IActingPartyAccessor, ActingPartyAccessor>();
         services.AddScoped<IPartyFacts, PartyFactsProvider>();
+        services.AddScoped<IPartyFactFields, PartyFactFields>();
         services.AddScoped<IDomainRules, RelationshipTypeRules>();
         services.AddScoped<IDomainRules, CredentialTypeRules>();
         services.AddScoped<IDomainRules, SanctionTypeRules>();

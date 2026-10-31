@@ -49,7 +49,7 @@ internal sealed class ServiceSamples
         {
             NameAr = "تصنيف مقدمي الخدمات",
             NameEn = "Service provider classification",
-            Archetype = ServiceArchetype.Issuance,
+            Archetype = "ATTESTATION",
             PartyKinds = kinds.Length == 0 ? [PartyKind.Establishment] : [.. kinds],
             NumberPrefix = "CLS",
         });

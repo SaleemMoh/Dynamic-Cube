@@ -92,7 +92,7 @@ public sealed class UserRole : IAuditable
 
 /// <summary>
 /// Actions on a screen, and data on it, given to one person in a company or all of them (<see cref="CompanyScope.All"/>),
-/// besides what their roles give.
+/// besides what their roles give; or actions their roles give that this person must not have. Optionally for a period.
 /// </summary>
 public sealed class UserPrivilege : IAuditable
 {
@@ -108,6 +108,15 @@ public sealed class UserPrivilege : IAuditable
 
     /// <summary>Actions on the screen; may be empty when the person only receives data on it.</summary>
     public List<string> Actions { get; set; } = [];
+
+    /// <summary>Actions taken away from this person on the screen although their roles give them (they win over any grant).</summary>
+    public List<string> DeniedActions { get; set; } = [];
+
+    /// <summary>First day the personal privilege holds (none: already).</summary>
+    public DateOnly? EffectiveFrom { get; set; }
+
+    /// <summary>Last day the personal privilege holds (none: until removed).</summary>
+    public DateOnly? EffectiveTo { get; set; }
 
     /// <summary>Values of the screen's lists the person may see, besides those of their roles.</summary>
     public List<UserPrivilegeGrant> Grants { get; } = [];

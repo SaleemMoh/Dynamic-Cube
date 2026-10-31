@@ -23,6 +23,117 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("DynamicCube.Modules.Services.Domain.Archetype", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("BusinessApp")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("business_app");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("code");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("DescriptionAr")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("description_ar");
+
+                    b.Property<string>("DescriptionEn")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("description_en");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("display_order");
+
+                    b.Property<string>("EntityCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("entity_code");
+
+                    b.Property<string>("Icon")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("icon");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("NameAr")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("name_ar");
+
+                    b.Property<string>("NameEn")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("name_en");
+
+                    b.Property<string>("Owner")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("owner");
+
+                    b.Property<uint>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.PrimitiveCollection<List<string>>("SharedApps")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("shared_apps");
+
+                    b.Property<string>("Template")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("template");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("updated_by");
+
+                    b.Property<string>("Workflow")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("workflow");
+
+                    b.HasKey("Id")
+                        .HasName("pk_archetype");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_archetype_code");
+
+                    b.ToTable("archetype", "svc");
+                });
+
             modelBuilder.Entity("DynamicCube.Modules.Services.Domain.NumberSequence", b =>
                 {
                     b.Property<string>("Key")
@@ -45,6 +156,10 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
                         .HasColumnName("id");
+
+                    b.Property<bool>("AllowManualEntry")
+                        .HasColumnType("boolean")
+                        .HasColumnName("allow_manual_entry");
 
                     b.Property<string>("BusinessApp")
                         .HasMaxLength(100)
@@ -72,6 +187,12 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("entity_code");
 
+                    b.Property<string>("Fill")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("fill");
+
                     b.Property<string>("HintAr")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)")
@@ -81,6 +202,10 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)")
                         .HasColumnName("hint_en");
+
+                    b.Property<string>("Integration")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("integration");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
@@ -134,6 +259,11 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
 
+                    b.Property<string>("ServiceCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("service_code");
+
                     b.PrimitiveCollection<List<string>>("SharedApps")
                         .IsRequired()
                         .HasColumnType("text[]")
@@ -165,6 +295,9 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
                     b.HasIndex("Code")
                         .IsUnique()
                         .HasDatabaseName("ix_question_code");
+
+                    b.HasIndex("ServiceCode")
+                        .HasDatabaseName("ix_question_service_code");
 
                     b.ToTable("question", "svc");
                 });
@@ -290,8 +423,8 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
 
                     b.Property<string>("Archetype")
                         .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("archetype");
 
                     b.Property<string>("BusinessApp")
@@ -495,6 +628,11 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("jsonb")
                         .HasColumnName("fees");
+
+                    b.Property<string>("Integrations")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("integrations");
 
                     b.Property<string>("LevelCode")
                         .HasMaxLength(100)

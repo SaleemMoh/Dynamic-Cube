@@ -54,7 +54,7 @@ export interface ServiceDraft {
   [key: string]: unknown;
 }
 
-export const STEP_TYPES: StepType[] = ['FORM', 'LEVEL', 'FEES', 'REVIEW', 'DECLARATION'];
+export const STEP_TYPES: StepType[] = ['FORM', 'LEVEL', 'FEES', 'REVIEW', 'DECLARATION', 'INTEGRATION'];
 
 export const EMPTY_CARD: ServiceCardDefinition = {
   audienceAr: null,
@@ -126,6 +126,7 @@ const STEP_TITLES: Record<StepType, [string, string]> = {
   FEES: ['الرسوم', 'Fees'],
   REVIEW: ['المراجعة', 'Review'],
   DECLARATION: ['الإقرار', 'Declaration'],
+  INTEGRATION: ['التحقق', 'Verification'],
 };
 
 /** Adds a step of a type after `after` (at the end by default); a form step comes with an empty section. */
@@ -147,6 +148,7 @@ export function addStep(def: ServiceDraft, type: StepType, after?: number): { de
     titleEn: en,
     sections: type === 'FORM' ? [{ code: sectionCode, titleAr: 'قسم جديد', titleEn: 'New section', questions: [] }] : [],
     ...(type === 'DECLARATION' ? { textAr: 'أقر بصحة البيانات المقدمة.', textEn: 'I confirm the information given is correct.' } : {}),
+    ...(type === 'INTEGRATION' ? { integration: { operation: '', inputs: [], outputs: [], required: true } } : {}),
   };
   const index = after === undefined ? next.steps.length : after + 1;
   next.steps.splice(index, 0, step);
@@ -268,6 +270,13 @@ export function check(def: ServiceDraft, bank: ReadonlySet<string>): Problem[] {
     if (step.type === 'FORM' && !step.sections.length) p('form', 'builder.problem.noSections', { code: step.code }, { step: i });
     if (step.type === 'DECLARATION' && (!step.textAr?.trim() || !step.textEn?.trim())) p('form', 'builder.problem.declaration', {}, { step: i });
     if (step.type === 'LEVEL' && !def.levels.length) p('rules', 'builder.problem.levelStepWithoutLevels');
+    if (step.type === 'INTEGRATION') {
+      if (!step.integration?.operation) p('form', 'builder.problem.integrationOperation', { code: step.code }, { step: i });
+      const asked = new Set(usedQuestions(def));
+      for (const output of step.integration?.outputs ?? []) {
+        if (!output.output?.trim() || !asked.has(output.question)) p('form', 'builder.problem.integrationOutput', { code: step.code }, { step: i });
+      }
+    }
     step.sections.forEach((section, j) => {
       if (!CODE.test(section.code)) p('form', 'builder.problem.code', { code: section.code }, { step: i, section: j });
       if (sectionCodes.has(section.code)) p('form', 'builder.problem.duplicate', { code: section.code }, { step: i, section: j });

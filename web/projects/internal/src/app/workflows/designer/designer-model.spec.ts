@@ -82,6 +82,28 @@ describe('designer model', () => {
     expect(disconnect(def, 'VISIT_1', { kind: 'outcome', index: 0 }).nodes.find((n) => n.code === 'VISIT_1')!.outcomes).toEqual({});
   });
 
+  it('an integration step has a success and a failed way and needs its operation', () => {
+    let def = addNode(base(), 'INTEGRATION', { x: 0, y: 0 }).def;
+    def = connect(def, 'START', 'next', 'INTEGRATION_1');
+    expect(check(def).map((p) => p.key)).toEqual(
+      expect.arrayContaining(['designer.problem.operation', 'designer.problem.noCalled', 'designer.problem.noCallFailed']),
+    );
+    def = connect(def, 'INTEGRATION_1', 'next', 'REVIEW');
+    def = connect(def, 'INTEGRATION_1', 'failed', 'DONE');
+    def = { ...def, nodes: def.nodes.map((n) => (n.code === 'INTEGRATION_1' ? { ...n, operation: 'LICENSE_CHECK' } : n)) };
+    expect(
+      edges(def)
+        .filter((e) => e.from === 'INTEGRATION_1')
+        .map((e) => e.outlet.kind),
+    ).toEqual(['next', 'failed']);
+    expect(check(def)).toEqual([]);
+    expect(renameNode(def, 'DONE', 'END_OK').nodes.find((n) => n.code === 'INTEGRATION_1')!.failed).toBe('END_OK');
+    expect(removeNode(def, 'DONE').nodes.find((n) => n.code === 'INTEGRATION_1')!.failed).toBeNull();
+    // Without a failed way the step stops on a failure: allowed, with a warning.
+    const stops = disconnect(def, 'INTEGRATION_1', { kind: 'failed' });
+    expect(check(stops)).toEqual([{ node: 'INTEGRATION_1', key: 'designer.problem.noCallFailed', params: undefined, warning: true }]);
+  });
+
   it('an org-structure assignment needs to know where its unit comes from', () => {
     const assign = (assignment: object) => ({
       ...base(),

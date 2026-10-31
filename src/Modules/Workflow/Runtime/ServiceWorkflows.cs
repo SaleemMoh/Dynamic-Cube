@@ -3,6 +3,7 @@ using DynamicCube.Modules.Workflow.Definitions;
 using DynamicCube.Modules.Workflow.Domain;
 using DynamicCube.Modules.Workflow.Persistence;
 using DynamicCube.Platform.ChangeSets;
+using DynamicCube.Platform.Configuration;
 using DynamicCube.Platform.Services;
 using DynamicCube.Platform.Workflow;
 using Microsoft.EntityFrameworkCore;
@@ -10,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 namespace DynamicCube.Modules.Workflow.Runtime;
 
 /// <summary>Each service's own workflow; a new service gets one that completes requests without review.</summary>
-internal sealed class ServiceWorkflows(WorkflowDbContext context, TimeProvider clock) : IServiceWorkflows
+internal sealed class ServiceWorkflows(WorkflowDbContext context, TimeProvider clock, DynamicCube.Platform.Expressions.JsonLogicEvaluator evaluator) : IServiceWorkflows
 {
     /// <summary>The first version of every service's workflow: submitted requests complete (approved) at once.</summary>
     internal static WorkflowDefinition Default() => new()
@@ -25,12 +26,15 @@ internal sealed class ServiceWorkflows(WorkflowDbContext context, TimeProvider c
     public Task<string?> WorkflowOfAsync(string serviceCode, CancellationToken cancellationToken) =>
         context.Workflows.Where(w => w.ServiceCode == serviceCode).Select(w => w.Code).SingleOrDefaultAsync(cancellationToken);
 
-    public async Task EnsureAsync(string serviceCode, string nameAr, string nameEn, CancellationToken cancellationToken)
+    public async Task EnsureAsync(string serviceCode, string nameAr, string nameEn, CancellationToken cancellationToken, string? definition = null)
     {
         if (await WorkflowOfAsync(serviceCode, cancellationToken) is not null)
         {
             return;
         }
+
+        // The archetype's default workflow when it can run; otherwise requests complete without review.
+        var start = definition is not null && Check(definition).Count == 0 ? Parse(definition) : null;
 
         var code = await FreeCodeAsync(serviceCode, cancellationToken);
         var now = clock.GetUtcNow();
@@ -41,9 +45,9 @@ internal sealed class ServiceWorkflows(WorkflowDbContext context, TimeProvider c
             Code = code + "/1",
             WorkflowId = workflow.Id,
             Number = 1,
-            NameAr = "بدون مراجعة",
-            NameEn = "No review",
-            Definition = ChangeJson.Serialize(Default()),
+            NameAr = start is null ? "بدون مراجعة" : "من نمط الخدمة",
+            NameEn = start is null ? "No review" : "From the service archetype",
+            Definition = ChangeJson.Serialize(start ?? Default()),
             PublishedAt = now,
         });
         await context.SaveChangesAsync(cancellationToken);
@@ -66,6 +70,37 @@ internal sealed class ServiceWorkflows(WorkflowDbContext context, TimeProvider c
                 v => v.SetProperty(x => x.EntityCode, entityCode).SetProperty(x => x.BusinessApp, businessApp).SetProperty(x => x.SharedApps, shared),
                 cancellationToken);
         await context.SaveChangesAsync(cancellationToken);
+    }
+
+    public Task<string?> LatestDefinitionAsync(string workflowCode, CancellationToken cancellationToken) =>
+        context.Versions.Where(v => v.Workflow!.Code == workflowCode && v.PublishedAt != null && !v.IsRetired)
+            .OrderByDescending(v => v.Number).Select(v => v.Definition).FirstOrDefaultAsync(cancellationToken);
+
+    public IReadOnlyDictionary<string, string[]> Check(string definition)
+    {
+        var errors = new ValidationErrors();
+        if (Parse(definition) is not { } parsed)
+        {
+            errors.Add("workflow", "Not a workflow definition.");
+        }
+        else
+        {
+            DefinitionValidator.Validate(parsed, evaluator, errors);
+        }
+
+        return errors.ToDictionary();
+    }
+
+    private static WorkflowDefinition? Parse(string definition)
+    {
+        try
+        {
+            return JsonSerializer.Deserialize<WorkflowDefinition>(definition, ChangeJson.Options);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 
     public Task<bool> ExistsAsync(string workflowCode, CancellationToken cancellationToken) =>

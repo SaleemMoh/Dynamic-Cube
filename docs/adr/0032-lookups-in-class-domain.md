@@ -29,7 +29,7 @@ and every new list meant a new table, applier, migration and screen.
   `sanction.sanction_type_code`, `service.category_code`) instead of a key to a module table.
 - **Lists that were only in code are classes now:** `WF_STEP_TYPE` (with `ICON`, `HINT_AR`, `HINT_EN`),
   `WF_ASSIGNEE_TYPE`, `WF_DISPATCH_MODE`, `WF_ACTION_KIND`, `WF_JOIN_MODE`, `WF_END_OUTCOME`, `WF_UNIT_SOURCE`,
-  `DOC_VALIDITY_MODE`, `COM_CHANNEL`, `VIS_MODE`, `VIS_OUTCOME_KIND`, `SVC_ARCHETYPE`, `SVC_QUESTION_TYPE`. Screens
+  `DOC_VALIDITY_MODE`, `COM_CHANNEL`, `VIS_MODE`, `VIS_OUTCOME_KIND`, `SVC_ARCHETYPE` (since replaced by the archetypes table, ADR-0037), `SVC_QUESTION_TYPE`. Screens
   take their names from the class (`refDomains` on a field, falling back to the built-in options), and the workflow
   designer takes its palette, names, icons and hints from `WF_STEP_TYPE`; a step type made inactive is no longer
   offered. What each code does stays in the engine: renaming, reordering and hiding work, a new code needs the code

@@ -5,6 +5,17 @@
       <button matIconButton type="button" (click)="newQuestion()" [matTooltip]="'builder.newQuestion' | dcTranslate" data-testid="bank-new">
         <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
       </button>
+      @if (store.service()) {
+        <button
+          matIconButton
+          type="button"
+          (click)="newServiceQuestion()"
+          [matTooltip]="'builder.newServiceQuestion' | dcTranslate"
+          data-testid="bank-new-service"
+        >
+          <mat-icon fontSet="material-symbols-outlined">post_add</mat-icon>
+        </button>
+      }
     </div>
     <mat-form-field subscriptSizing="dynamic">
       <mat-icon matPrefix fontSet="material-symbols-outlined">search</mat-icon>
@@ -21,7 +32,12 @@
           (click)="addToSelected(q.code)"
           [attr.data-testid]="'bank-' + q.code"
         >
-          <span class="dc-ft__qlabel">{{ q.label | dcLocalize }}</span>
+          <span class="dc-ft__qlabel">
+            {{ q.label | dcLocalize }}
+            @if (q.serviceCode) {
+              <span class="dc-ft__own" [matTooltip]="'builder.serviceQuestion' | dcTranslate">{{ 'builder.own' | dcTranslate }}</span>
+            }
+          </span>
           <small dir="ltr">{{ q.code }} · {{ 'builder.qtype.' + q.type | dcTranslate }}</small>
         </button>
       }
@@ -308,6 +324,75 @@
                 <mat-option [value]="d">{{ 'builder.display.' + d | dcTranslate }}</mat-option>
               }
             </mat-select>
+          </mat-form-field>
+        }
+        @if (s.step.type === 'INTEGRATION') {
+          @let call = s.step.integration;
+          <p class="dc-ft__muted">{{ 'builder.integrationHowTo' | dcTranslate }}</p>
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>{{ 'builder.operation' | dcTranslate }}</mat-label>
+            <mat-select [ngModel]="call?.operation ?? ''" (ngModelChange)="integration(s.path.step, { operation: $event })" data-testid="step-operation">
+              @for (o of refs.operations(); track o.code) {
+                <mat-option [value]="o.code">{{ { ar: o.nameAr, en: o.nameEn } | dcLocalize }} ({{ o.code }})</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-checkbox [ngModel]="call?.required ?? true" (ngModelChange)="integration(s.path.step, { required: $event })" data-testid="step-required">
+            {{ 'builder.integrationRequired' | dcTranslate }}
+          </mat-checkbox>
+          <h3 class="dc-ft__sub">{{ 'builder.inputs' | dcTranslate }}</h3>
+          @for (input of call?.inputs ?? []; track $index; let r = $index) {
+            <div class="dc-ft__pair">
+              <mat-form-field subscriptSizing="dynamic">
+                <mat-label>{{ 'builder.parameter' | dcTranslate }}</mat-label>
+                <input matInput dir="ltr" [ngModel]="input.parameter" (ngModelChange)="setInput(s.path.step, r, { parameter: $event })" [ngModelOptions]="{ updateOn: 'blur' }" />
+              </mat-form-field>
+              <mat-form-field subscriptSizing="dynamic">
+                <mat-label>{{ 'builder.valueFrom' | dcTranslate }}</mat-label>
+                <mat-select [ngModel]="input.from" (ngModelChange)="setInput(s.path.step, r, { from: $event })">
+                  @for (f of refs.fillSources(); track f.code) {
+                    <mat-option [value]="f.code">{{ { ar: f.nameAr, en: f.nameEn } | dcLocalize }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              <button matIconButton type="button" (click)="removeInput(s.path.step, r)" [attr.aria-label]="'builder.remove' | dcTranslate">
+                <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+              </button>
+            </div>
+          }
+          <button matButton type="button" (click)="addInput(s.path.step)" data-testid="step-add-input">
+            <mat-icon fontSet="material-symbols-outlined">add</mat-icon>{{ 'builder.addInput' | dcTranslate }}
+          </button>
+          <h3 class="dc-ft__sub">{{ 'builder.outputs' | dcTranslate }}</h3>
+          @for (output of call?.outputs ?? []; track $index; let r = $index) {
+            <div class="dc-ft__pair">
+              <mat-form-field subscriptSizing="dynamic">
+                <mat-label>{{ 'builder.output' | dcTranslate }}</mat-label>
+                <input matInput dir="ltr" [ngModel]="output.output" (ngModelChange)="setOutput(s.path.step, r, { output: $event })" [ngModelOptions]="{ updateOn: 'blur' }" />
+              </mat-form-field>
+              <mat-form-field subscriptSizing="dynamic">
+                <mat-label>{{ 'builder.intoQuestion' | dcTranslate }}</mat-label>
+                <mat-select [ngModel]="output.question" (ngModelChange)="setOutput(s.path.step, r, { question: $event })">
+                  @for (code of askedQuestions(); track code) {
+                    <mat-option [value]="code">{{ questionName(code) }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              <button matIconButton type="button" (click)="removeOutput(s.path.step, r)" [attr.aria-label]="'builder.remove' | dcTranslate">
+                <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+              </button>
+            </div>
+          }
+          <button matButton type="button" (click)="addOutput(s.path.step)" data-testid="step-add-output">
+            <mat-icon fontSet="material-symbols-outlined">add</mat-icon>{{ 'builder.addOutput' | dcTranslate }}
+          </button>
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>{{ 'builder.integrationTextAr' | dcTranslate }}</mat-label>
+            <textarea matInput dir="rtl" rows="2" [ngModel]="s.step.textAr ?? ''" (ngModelChange)="step(s.path.step, { textAr: $event })" [ngModelOptions]="{ updateOn: 'blur' }"></textarea>
+          </mat-form-field>
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>{{ 'builder.integrationTextEn' | dcTranslate }}</mat-label>
+            <textarea matInput dir="ltr" rows="2" [ngModel]="s.step.textEn ?? ''" (ngModelChange)="step(s.path.step, { textEn: $event })" [ngModelOptions]="{ updateOn: 'blur' }"></textarea>
           </mat-form-field>
         }
         @if (s.step.type === 'DECLARATION') {

@@ -532,6 +532,48 @@
       <dc-mapping-editor [mapping]="n.input ?? {}" [variables]="variables()" (mappingChange)="patch({ input: $event })" />
     }
 
+    @case ('INTEGRATION') {
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'designer.field.operation' | dcTranslate }}</mat-label>
+        <mat-select [ngModel]="n.operation ?? null" (ngModelChange)="patch({ operation: $event })" data-testid="integration-operation">
+          @for (o of refs.operations(); track o.value) {
+            <mat-option [value]="o.value">{{ o.label | dcLocalize }} ({{ o.value }})</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'designer.field.result' | dcTranslate }}</mat-label>
+        <input
+          matInput
+          dir="ltr"
+          [placeholder]="n.code"
+          [ngModel]="n.result ?? ''"
+          (ngModelChange)="patch({ result: $event.trim() || null })"
+          [ngModelOptions]="{ updateOn: 'blur' }"
+        />
+        <mat-hint dir="ltr">integrations.{{ n.result || n.code }}</mat-hint>
+      </mat-form-field>
+      <h3>{{ 'designer.section.parameters' | dcTranslate }}</h3>
+      <p class="dc-panel__hint">{{ 'designer.parametersHint' | dcTranslate }}</p>
+      @if (refs.operation(n.operation).parameters.length) {
+        <button matButton type="button" (click)="addOperationParameters()" data-testid="integration-add-parameters">
+          <mat-icon fontSet="material-symbols-outlined">playlist_add</mat-icon>
+          {{ 'designer.addOperationParameters' | dcTranslate }}
+        </button>
+      }
+      <dc-mapping-editor [mapping]="n.parameters ?? {}" [variables]="variables()" (mappingChange)="patch({ parameters: $event })" />
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'designer.field.failed' | dcTranslate }}</mat-label>
+        <mat-select [ngModel]="n.failed ?? null" (ngModelChange)="patch({ failed: $event })" data-testid="integration-failed">
+          <mat-option [value]="null">{{ 'designer.failedStops' | dcTranslate }}</mat-option>
+          @for (t of targets(); track t.code) {
+            <mat-option [value]="t.code">{{ name(t) }} ({{ t.code }})</mat-option>
+          }
+        </mat-select>
+        <mat-hint>{{ 'designer.failedHint' | dcTranslate }}</mat-hint>
+      </mat-form-field>
+    }
+
     @case ('DOCUMENT') {
       <mat-form-field subscriptSizing="dynamic">
         <mat-label>{{ 'designer.field.documentType' | dcTranslate }}</mat-label>
@@ -806,10 +848,25 @@
     }
   }
 
-  @if (n.type === 'START' || n.type === 'JOIN' || n.type === 'DECISION' || n.type === 'DOCUMENT' || n.type === 'PAYMENT' || n.type === 'VISIT') {
+  @if (
+    n.type === 'START' ||
+    n.type === 'JOIN' ||
+    n.type === 'DECISION' ||
+    n.type === 'DOCUMENT' ||
+    n.type === 'PAYMENT' ||
+    n.type === 'VISIT' ||
+    n.type === 'INTEGRATION'
+  ) {
     <mat-form-field subscriptSizing="dynamic">
       <mat-label>{{
-        (n.type === 'PAYMENT' ? 'designer.field.paidNext' : n.type === 'VISIT' ? 'designer.field.visitedNext' : 'designer.field.next') | dcTranslate
+        (n.type === 'PAYMENT'
+          ? 'designer.field.paidNext'
+          : n.type === 'VISIT'
+            ? 'designer.field.visitedNext'
+            : n.type === 'INTEGRATION'
+              ? 'designer.field.calledNext'
+              : 'designer.field.next'
+        ) | dcTranslate
       }}</mat-label>
       <mat-select [ngModel]="n.next ?? null" (ngModelChange)="patch({ next: $event })" data-testid="node-next">
         @for (t of targets(); track t.code) {

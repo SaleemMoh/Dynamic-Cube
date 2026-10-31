@@ -131,10 +131,13 @@ export class BuilderPage {
   protected open(code: string, from: number | null): void {
     if (this.store.dirty() && !confirm(this.i18n.translate('designer.discard'))) return;
     this.current.set(code);
+    this.store.service.set(code);
     const versions = this.versionsOf();
     const chosen = (from !== null ? versions.find((r) => number(r.code) === from) : undefined) ?? versions[0];
     this.base.set(chosen ? number(chosen.code) : null);
-    this.store.load((chosen?.['definition'] as ServiceDraft | undefined) ?? STARTER);
+    // A service without versions starts from its archetype's template (or the blank start).
+    const archetype = this.refs.archetypes().find((a) => a.code === this.serviceRow()?.['archetype']);
+    this.store.load((chosen?.['definition'] as ServiceDraft | undefined) ?? (archetype?.['template'] as ServiceDraft | null | undefined) ?? STARTER);
     this.serverProblems.set(null);
     this.savedAs.set(null);
     this.errors.set([]);

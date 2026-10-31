@@ -1,7 +1,7 @@
 import { JsonLogicRule, jsonLogic } from '../expressions/jsonlogic';
 import { FieldWidth, FormDisplay, FormField, FormFieldType, FormSchema, FormSection } from '../forms/form-schema';
 import { problemMessages } from '../apps-control/apps-control.models';
-import { EligibilityFailure, FieldError, QuestionSnapshot, QuestionUse, ResolvedVersion, StepDefinition } from './service.models';
+import { EligibilityFailure, FieldError, QuestionSnapshot, QuestionUse, ResolvedVersion, StepDefinition, isLocked } from './service.models';
 
 const TYPES: Record<QuestionSnapshot['type'], FormFieldType> = {
   TEXT: 'text',
@@ -33,7 +33,7 @@ export function stepSchema(version: ResolvedVersion, step: StepDefinition): Form
         const shownBefore: JsonLogicRule | undefined = before.length ? { or: before } : undefined;
         const visibleWhen = both(use.visibleWhen, shownBefore ? { '!': shownBefore } : undefined);
         if (current.code === step.code && question) {
-          fields.push({ ...toField(question, use.required, use.requiredWhen ?? undefined, visibleWhen, use.readonly), width: widthOf(use.width) });
+          fields.push({ ...toField(question, use.required, use.requiredWhen ?? undefined, visibleWhen, use.readonly || isLocked(question)), width: widthOf(use.width) });
         }
         earlier.set(use.code, [...before, both(section.visibleWhen, use.visibleWhen) ?? true]);
       }

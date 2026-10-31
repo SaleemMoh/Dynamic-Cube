@@ -70,7 +70,7 @@ public sealed class TestParties : IPartyFacts
 /// <summary>A test host with the test subject and clock, plus helpers to define staff and workflows.</summary>
 internal sealed class WorkflowHost : IAsyncDisposable
 {
-    public WorkflowHost(DatabaseFixture fixture)
+    public WorkflowHost(DatabaseFixture fixture, Action<IServiceCollection>? configure = null)
     {
         Host = new TestHost(fixture.RequireConnectionString(), s =>
         {
@@ -79,6 +79,7 @@ internal sealed class WorkflowHost : IAsyncDisposable
             s.AddSingleton(Clock);
             s.AddSingleton<TimeProvider>(Clock);
             s.AddSingleton<IPartyFacts>(new TestParties());
+            configure?.Invoke(s);
         });
     }
 
@@ -117,7 +118,7 @@ internal sealed class WorkflowHost : IAsyncDisposable
         {
             nameAr = "خدمة " + code,
             nameEn = "Service " + code,
-            archetype = "ISSUANCE",
+            archetype = "ATTESTATION",
             partyKinds = new[] { "ESTABLISHMENT" },
         }));
         return code;

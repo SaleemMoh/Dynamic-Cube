@@ -34,6 +34,10 @@ internal static class PartyEndpoints
     /// <summary>Internal system: the registry for employees.</summary>
     public static void MapInternal(RouteGroupBuilder group)
     {
+        // For the question bank and integration inputs: what a party's data offers (no registry rights needed).
+        group.MapGet("/fact-fields", async (IPartyFactFields fields, CancellationToken ct) => TypedResults.Ok(await fields.ListAsync(ct)))
+            .WithName("GetPartyFactFields");
+
         // The kind as the API writes it (ESTABLISHMENT, INDIVIDUAL); query binding of the enum itself only takes its C# name.
         group.MapGet("/parties", async Task<IResult> (string? search, string? kind, string? app, int? skip, int? take, PartyAdminService service, CancellationToken ct) =>
         {

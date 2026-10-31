@@ -69,6 +69,13 @@ import { TestLogEntry, TestState, choose, startRun, waiting } from './test-run';
                   <button matButton="outlined" type="button" (click)="pick(w.token.id, 'UNPAID')" data-testid="test-unpaid">
                     {{ 'designer.test.markUnpaid' | dcTranslate }}
                   </button>
+                } @else if (w.node.type === 'INTEGRATION') {
+                  <button matButton="outlined" type="button" (click)="pick(w.token.id, 'SUCCEEDED')" data-testid="test-call-succeeded">
+                    {{ 'designer.test.markCalled' | dcTranslate }}
+                  </button>
+                  <button matButton="outlined" type="button" (click)="pick(w.token.id, 'FAILED')" data-testid="test-call-failed">
+                    {{ 'designer.test.markCallFailed' | dcTranslate }}
+                  </button>
                 } @else if (w.node.type === 'VISIT') {
                   @for (o of visitOutcomes(w.node); track o.value) {
                     <button matButton="outlined" type="button" (click)="pick(w.token.id, o.value)" [attr.data-testid]="'test-outcome-' + o.value">

@@ -10,7 +10,15 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { AppsControlApi, ConfigRow, DualList, DualListOption, I18nService, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
+import {
+  AppsControlApi,
+  ConfigRow,
+  DualList,
+  DualListOption,
+  I18nService,
+  TranslatePipe,
+  problemMessages,
+} from '@dynamic-cube/shared';
 import { catchError, firstValueFrom, of } from 'rxjs';
 import { DraftsService } from '../drafts.service';
 import { temporaryPassword } from './password';
@@ -62,20 +70,45 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       <div class="dc-nu__grid">
         <mat-form-field subscriptSizing="dynamic">
           <mat-label>{{ 'newUser.userName' | dcTranslate }}</mat-label>
-          <input matInput dir="ltr" [ngModel]="userName()" (ngModelChange)="userName.set($event)" data-testid="new-user-name" />
+          <input
+            matInput
+            dir="ltr"
+            [ngModel]="userName()"
+            (ngModelChange)="userName.set($event)"
+            data-testid="new-user-name"
+          />
           <mat-hint>{{ 'newUser.userNameHint' | dcTranslate }}</mat-hint>
         </mat-form-field>
         <mat-form-field subscriptSizing="dynamic">
           <mat-label>{{ 'newUser.email' | dcTranslate }}</mat-label>
-          <input matInput dir="ltr" type="email" [ngModel]="email()" (ngModelChange)="email.set($event)" data-testid="new-user-email" />
+          <input
+            matInput
+            dir="ltr"
+            type="email"
+            [ngModel]="email()"
+            (ngModelChange)="email.set($event)"
+            data-testid="new-user-email"
+          />
         </mat-form-field>
         <mat-form-field subscriptSizing="dynamic">
           <mat-label>{{ 'config.nameAr' | dcTranslate }}</mat-label>
-          <input matInput dir="rtl" [ngModel]="nameAr()" (ngModelChange)="nameAr.set($event)" data-testid="new-user-name-ar" />
+          <input
+            matInput
+            dir="rtl"
+            [ngModel]="nameAr()"
+            (ngModelChange)="nameAr.set($event)"
+            data-testid="new-user-name-ar"
+          />
         </mat-form-field>
         <mat-form-field subscriptSizing="dynamic">
           <mat-label>{{ 'config.nameEn' | dcTranslate }}</mat-label>
-          <input matInput dir="ltr" [ngModel]="nameEn()" (ngModelChange)="nameEn.set($event)" data-testid="new-user-name-en" />
+          <input
+            matInput
+            dir="ltr"
+            [ngModel]="nameEn()"
+            (ngModelChange)="nameEn.set($event)"
+            data-testid="new-user-name-en"
+          />
         </mat-form-field>
         <mat-form-field subscriptSizing="dynamic">
           <mat-label>{{ 'newUser.mobile' | dcTranslate }}</mat-label>
@@ -84,21 +117,46 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       </div>
       <section class="dc-nu__roles">
         <h3>{{ 'newUser.roles' | dcTranslate }}</h3>
-        <dc-dual-list [ngModel]="roles()" (ngModelChange)="roles.set($event)" [options]="roleChoices()" testId="new-user-roles" />
+        <dc-dual-list
+          [ngModel]="roles()"
+          (ngModelChange)="roles.set($event)"
+          [options]="roleChoices()"
+          testId="new-user-roles"
+        />
       </section>
 
       @if (caps()?.canCreate) {
         <section class="dc-nu__section" data-testid="new-user-account">
           <h3>{{ 'newUser.account' | dcTranslate }}</h3>
-          <mat-button-toggle-group [ngModel]="mode()" (ngModelChange)="mode.set($event)" [attr.aria-label]="'newUser.account' | dcTranslate">
-            <mat-button-toggle value="temporary">{{ 'account.temporary' | dcTranslate }}</mat-button-toggle>
-            <mat-button-toggle value="email">{{ 'account.byEmail' | dcTranslate }}</mat-button-toggle>
+          <mat-button-toggle-group
+            [ngModel]="mode()"
+            (ngModelChange)="mode.set($event)"
+            [attr.aria-label]="'newUser.account' | dcTranslate"
+          >
+            <mat-button-toggle value="temporary">{{
+              'account.temporary' | dcTranslate
+            }}</mat-button-toggle>
+            <mat-button-toggle value="email">{{
+              'account.byEmail' | dcTranslate
+            }}</mat-button-toggle>
           </mat-button-toggle-group>
           @if (mode() === 'temporary') {
             <mat-form-field subscriptSizing="dynamic" class="dc-nu__password">
               <mat-label>{{ 'account.temporary' | dcTranslate }}</mat-label>
-              <input matInput dir="ltr" [ngModel]="password()" (ngModelChange)="password.set($event)" data-testid="new-user-password" />
-              <button matIconButton matSuffix type="button" (click)="password.set(generate())" [matTooltip]="'account.generate' | dcTranslate">
+              <input
+                matInput
+                dir="ltr"
+                [ngModel]="password()"
+                (ngModelChange)="password.set($event)"
+                data-testid="new-user-password"
+              />
+              <button
+                matIconButton
+                matSuffix
+                type="button"
+                (click)="password.set(generate())"
+                [matTooltip]="'account.generate' | dcTranslate"
+              >
                 <mat-icon fontSet="material-symbols-outlined">autorenew</mat-icon>
               </button>
             </mat-form-field>
@@ -124,8 +182,18 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         <span class="dc-nu__problem" data-testid="new-user-problem">{{ p | dcTranslate }}</span>
       }
       <button matButton mat-dialog-close type="button">{{ 'form.cancel' | dcTranslate }}</button>
-      <dc-submit-button [entityType]="'apps.user'" [disabled]="!!problem() || busy()" (submitted)="save(true)" />
-      <button matButton="filled" type="button" [disabled]="!!problem() || busy()" (click)="save()" data-testid="new-user-save">
+      <dc-submit-button
+        [entityType]="'apps.user'"
+        [disabled]="!!problem() || busy()"
+        (submitted)="save(true)"
+      />
+      <button
+        matButton="filled"
+        type="button"
+        [disabled]="!!problem() || busy()"
+        (click)="save()"
+        data-testid="new-user-save"
+      >
         {{ (caps()?.canCreate ? 'newUser.saveWithAccount' : 'newUser.save') | dcTranslate }}
       </button>
     </mat-dialog-actions>
@@ -190,12 +258,24 @@ export class NewUserDialog {
   private readonly drafts = inject(DraftsService);
   private readonly i18n = inject(I18nService);
 
-  protected readonly capabilities = rxResource({ stream: () => this.api.accountCapabilities().pipe(catchError(() => of(null))) });
-  private readonly roleRows = rxResource({ stream: () => this.api.list('apps.role').pipe(catchError(() => of([] as ConfigRow[]))) });
-  protected readonly caps = computed(() => (this.capabilities.hasValue() ? this.capabilities.value() : null));
-  protected readonly roleOptions = computed(() => (this.roleRows.hasValue() ? this.roleRows.value() : []).filter((r) => r.isActive !== false));
+  protected readonly capabilities = rxResource({
+    stream: () => this.api.accountCapabilities().pipe(catchError(() => of(null))),
+  });
+  private readonly roleRows = rxResource({
+    stream: () => this.api.list('apps.role').pipe(catchError(() => of([] as ConfigRow[]))),
+  });
+  protected readonly caps = computed(() =>
+    this.capabilities.hasValue() ? this.capabilities.value() : null,
+  );
+  protected readonly roleOptions = computed(() =>
+    (this.roleRows.hasValue() ? this.roleRows.value() : []).filter((r) => r.isActive !== false),
+  );
   protected readonly roleChoices = computed<DualListOption[]>(() =>
-    this.roleOptions().map((r) => ({ value: r.code, label: { ar: r.nameAr, en: r.nameEn }, hint: { ar: r.code, en: r.code } })),
+    this.roleOptions().map((r) => ({
+      value: r.code,
+      label: { ar: r.nameAr, en: r.nameEn },
+      hint: { ar: r.code, en: r.code },
+    })),
   );
 
   protected readonly userName = signal('');
@@ -215,7 +295,8 @@ export class NewUserDialog {
     if (!this.nameAr().trim() || !this.nameEn().trim()) return 'newUser.problem.names';
     if (this.email().trim() && !EMAIL.test(this.email().trim())) return 'newUser.problem.email';
     if (this.caps()?.canCreate) {
-      if (this.mode() === 'temporary' && this.password().length < 8) return 'newUser.problem.password';
+      if (this.mode() === 'temporary' && this.password().length < 8)
+        return 'newUser.problem.password';
       if (this.mode() === 'email' && !this.email().trim()) return 'newUser.problem.emailNeeded';
     }
     return null;
@@ -239,16 +320,22 @@ export class NewUserDialog {
           }),
         );
       }
-      await this.drafts.addChange('apps.user', userName, 'CREATE', {
-        nameAr: this.nameAr().trim(),
-        nameEn: this.nameEn().trim(),
-        isActive: true,
-        email: this.email().trim() || null,
-        mobile: this.mobile().trim() || null,
-        status: 'ACTIVE',
-        roles: this.roles().map((roleCode) => ({ roleCode })),
-        assignments: [],
-      }, { submit });
+      await this.drafts.addChange(
+        'apps.user',
+        userName,
+        'CREATE',
+        {
+          nameAr: this.nameAr().trim(),
+          nameEn: this.nameEn().trim(),
+          isActive: true,
+          email: this.email().trim() || null,
+          mobile: this.mobile().trim() || null,
+          status: 'ACTIVE',
+          roles: this.roles().map((roleCode) => ({ roleCode })),
+          assignments: [],
+        },
+        { submit },
+      );
       this.ref.close(true);
     } catch (error) {
       this.errors.set(problemMessages(error));

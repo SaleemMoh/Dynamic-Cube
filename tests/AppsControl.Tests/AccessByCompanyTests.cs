@@ -109,4 +109,38 @@ public sealed class AccessByCompanyTests(AppsControlFixture fixture) : IAsyncLif
         held.GetProperty("branches").EnumerateArray().Select(b => b.GetString()).ShouldBe(["*"]);
         (await _harness.AccessAsync(user)).Can(AppsControlResources.Classes, PrivilegeActions.View).ShouldBeTrue();
     }
+
+    [Fact]
+    public async Task A_person_can_lose_an_action_their_roles_give_and_personal_privileges_hold_in_their_period()
+    {
+        var role = Harness.Unique("EDITOR");
+        var user = Harness.Unique("u").ToLowerInvariant();
+        await _harness.PublishAsync(AppsControlAreas.Security, Role(role, AppsControlResources.Classes, "VIEW", "EDIT"));
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        object Payload(object[] privileges) => new
+        {
+            nameAr = "م",
+            nameEn = "U",
+            roles = new[] { new { roleCode = role, companyCode = "*", branches = new[] { "*" } } },
+            privileges,
+        };
+
+        await _harness.PublishAsync(AppsControlAreas.Security, new Change(AppsControlChangeTypes.User, user, ChangeOperation.Create, Payload(
+        [
+            new { companyCode = "*", resourceCode = AppsControlResources.Classes, actions = Array.Empty<string>(), deniedActions = new[] { "EDIT" }, effectiveFrom = (DateOnly?)null, effectiveTo = (DateOnly?)null },
+            new { companyCode = "*", resourceCode = AppsControlResources.Menus, actions = new[] { "VIEW" }, deniedActions = Array.Empty<string>(), effectiveFrom = (DateOnly?)today.AddDays(5), effectiveTo = (DateOnly?)null },
+            new { companyCode = "*", resourceCode = AppsControlResources.Lovs, actions = new[] { "VIEW" }, deniedActions = Array.Empty<string>(), effectiveFrom = (DateOnly?)today.AddDays(-5), effectiveTo = (DateOnly?)today.AddDays(-1) },
+        ])));
+
+        var access = await _harness.AccessAsync(user);
+        access.Can(AppsControlResources.Classes, PrivilegeActions.View).ShouldBeTrue("the role's other actions stay");
+        access.Can(AppsControlResources.Classes, PrivilegeActions.Edit).ShouldBeFalse("taken away from this person");
+        access.Can(AppsControlResources.Menus, PrivilegeActions.View).ShouldBeFalse("starts in five days");
+        access.Can(AppsControlResources.Lovs, PrivilegeActions.View).ShouldBeFalse("ended yesterday");
+
+        (await Should.ThrowAsync<ChangeValidationException>(() => _harness.DraftAsync(AppsControlAreas.Security, new Change(AppsControlChangeTypes.User, user, ChangeOperation.Update, Payload(
+        [
+            new { companyCode = "*", resourceCode = AppsControlResources.Classes, actions = new[] { "EDIT" }, deniedActions = new[] { "EDIT" }, effectiveFrom = (DateOnly?)today, effectiveTo = (DateOnly?)today.AddDays(-1) },
+        ]))))).Errors.Keys.ShouldBe(["privileges[0].deniedActions", "privileges[0].effectiveTo"], ignoreOrder: true);
+    }
 }

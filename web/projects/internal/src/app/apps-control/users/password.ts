@@ -7,7 +7,13 @@ const SYMBOLS = '@#$%&*!?';
 export function temporaryPassword(random: (max: number) => number = secureRandom): string {
   const pick = (set: string) => set[random(set.length)];
   const all = UPPER + LOWER + DIGITS + SYMBOLS;
-  const chars = [pick(UPPER), pick(LOWER), pick(DIGITS), pick(SYMBOLS), ...Array.from({ length: 10 }, () => pick(all))];
+  const chars = [
+    pick(UPPER),
+    pick(LOWER),
+    pick(DIGITS),
+    pick(SYMBOLS),
+    ...Array.from({ length: 10 }, () => pick(all)),
+  ];
   for (let i = chars.length - 1; i > 0; i--) {
     const j = random(i + 1);
     [chars[i], chars[j]] = [chars[j], chars[i]];

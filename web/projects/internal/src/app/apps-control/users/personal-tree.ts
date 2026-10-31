@@ -17,6 +17,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import {
   AppsControlApi,
   ConfigRow,
@@ -31,11 +32,25 @@ import { ScreenList, actionLabel, screenLists } from '../roles/role-models';
 import { GrantValues } from '../roles/screen-data';
 import {
   ALL,
+  HeldRole,
   PersonalGrant,
   PersonalPrivilege,
+  RoleContents,
+  RoleGiven,
+  roleAccess,
   setPersonalActions,
+  setPersonalDenied,
   setPersonalGrant,
+  setPersonalPeriod,
 } from './access-model';
+
+/** What the person's roles contain, to show what they already give on each screen. */
+export interface RoleSource {
+  held: HeldRole[];
+  roles: Map<string, RoleContents>;
+  /** Menu item code → the screen it opens. */
+  menuScreens: Map<string, string>;
+}
 
 /** A tree to load: a Dynamic Cube channel (internal system, portal, field app) or an app with its own menus. */
 interface AppChoice {
@@ -57,6 +72,7 @@ interface AppChoice {
     MatIconModule,
     MatProgressBarModule,
     MatSelectModule,
+    MatTooltipModule,
     GrantValues,
     LocalizePipe,
     TranslatePipe,
@@ -100,6 +116,12 @@ interface AppChoice {
       </mat-form-field>
     </div>
 
+    <p class="dc-pt__legend dc-muted">
+      <span class="dc-pt__key dc-pt__key--role"></span>{{ 'access.legendRole' | dcTranslate }}
+      <span class="dc-pt__key dc-pt__key--personal"></span
+      >{{ 'access.legendPersonal' | dcTranslate }}
+      <span class="dc-pt__key dc-pt__key--denied"></span>{{ 'access.legendDenied' | dcTranslate }}
+    </p>
     @if (tree.isLoading()) {
       <mat-progress-bar mode="indeterminate" />
     }
@@ -156,11 +178,15 @@ interface AppChoice {
           @if (screenOf(node); as screen) {
             <span class="dc-pt__actions" [attr.data-screen]="screen">
               @for (action of actionsOf(screen); track action) {
+                @let state = stateOf(screen, action);
                 <mat-checkbox
-                  [checked]="has(screen, action)"
-                  (change)="setAction(screen, action, $event.checked)"
+                  [checked]="state === 'role' || state === 'personal'"
+                  [class]="'dc-pt__action dc-pt__action--' + state"
+                  (change)="toggleAction(screen, action)"
                   [disabled]="readonly()"
+                  [matTooltip]="tipOf(screen, action, state)"
                   [attr.data-testid]="'personal-action-' + action"
+                  [attr.data-state]="state"
                   >{{ actionName(action) | dcLocalize }}</mat-checkbox
                 >
               }
@@ -246,7 +272,10 @@ interface AppChoice {
             <th>{{ 'access.company' | dcTranslate }}</th>
             <th>{{ 'access.screen' | dcTranslate }}</th>
             <th>{{ 'access.actions' | dcTranslate }}</th>
+            <th>{{ 'access.removed' | dcTranslate }}</th>
             <th>{{ 'access.data' | dcTranslate }}</th>
+            <th>{{ 'access.from' | dcTranslate }}</th>
+            <th>{{ 'access.to' | dcTranslate }}</th>
             <th></th>
           </tr>
         </thead>
@@ -263,6 +292,11 @@ interface AppChoice {
                   {{ actionName(a) | dcLocalize }}{{ last ? '' : '، ' }}
                 }
               </td>
+              <td class="dc-pt__removed">
+                @for (a of p.deniedActions; track a; let last = $last) {
+                  {{ actionName(a) | dcLocalize }}{{ last ? '' : '، ' }}
+                }
+              </td>
               <td>
                 @for (g of p.grants; track g.lovCode; let last = $last) {
                   <span class="mono" dir="ltr">{{ g.lovCode }}</span
@@ -273,6 +307,28 @@ interface AppChoice {
                       : g.grantedValues.join(', ')
                   }}{{ last ? '' : '؛ ' }}
                 }
+              </td>
+              <td>
+                <input
+                  type="date"
+                  class="dc-pt__date"
+                  [value]="p.effectiveFrom ?? ''"
+                  [disabled]="readonly()"
+                  (change)="setPeriod(p, $any($event.target).value || null, p.effectiveTo)"
+                  [attr.aria-label]="'access.from' | dcTranslate"
+                  data-testid="personal-from"
+                />
+              </td>
+              <td>
+                <input
+                  type="date"
+                  class="dc-pt__date"
+                  [value]="p.effectiveTo ?? ''"
+                  [disabled]="readonly()"
+                  (change)="setPeriod(p, p.effectiveFrom, $any($event.target).value || null)"
+                  [attr.aria-label]="'access.to' | dcTranslate"
+                  data-testid="personal-to"
+                />
               </td>
               <td>
                 @if (!readonly()) {
@@ -370,6 +426,51 @@ interface AppChoice {
     .dc-pt__data-button--on {
       font-weight: 600;
     }
+    .dc-pt__legend {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 4px 8px;
+      margin: 0 0 8px;
+      font-size: 13px;
+    }
+    .dc-pt__key {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      margin-inline-start: 8px;
+    }
+    .dc-pt__key--role {
+      background: var(--dga-gray-500, #6c737f);
+    }
+    .dc-pt__key--personal {
+      background: var(--mat-sys-primary, #b08d3c);
+    }
+    .dc-pt__key--denied {
+      border: 2px solid var(--dga-red-600, #d92d20);
+    }
+    /* Given by roles: grey tick; given to the person: the primary colour; removed: crossed out in red. */
+    .dc-pt__action--role {
+      --mat-checkbox-selected-icon-color: var(--dga-gray-500, #6c737f);
+      --mat-checkbox-selected-focus-icon-color: var(--dga-gray-500, #6c737f);
+      --mat-checkbox-selected-hover-icon-color: var(--dga-gray-500, #6c737f);
+    }
+    .dc-pt__action--denied {
+      color: var(--dga-red-600, #d92d20);
+      text-decoration: line-through;
+      --mat-checkbox-unselected-icon-color: var(--dga-red-600, #d92d20);
+    }
+    .dc-pt__removed {
+      color: var(--dga-red-600, #d92d20);
+    }
+    .dc-pt__date {
+      max-width: 9.5rem;
+      padding: 4px 6px;
+      border: 1px solid var(--dga-gray-300);
+      border-radius: 6px;
+      font: inherit;
+    }
     .dc-pt__data {
       display: grid;
       gap: 6px;
@@ -429,6 +530,8 @@ export class PersonalTree {
   readonly resources = input<ConfigRow[]>([]);
   readonly lovs = input<ConfigRow[]>([]);
   readonly readonly = input(false);
+  /** The person's roles, to show what they already give (and let them be removed for this person). */
+  readonly roleSource = input<RoleSource | null>(null);
 
   private readonly api = inject(AppsControlApi);
   private readonly i18n = inject(I18nService);
@@ -573,14 +676,65 @@ export class PersonalTree {
     );
   }
 
-  protected has(screen: string, action: string): boolean {
-    return this.privilegeOf(screen)?.actions.includes(action) ?? false;
+  /** What the roles give in the chosen company, per screen. */
+  private readonly given = computed(() => {
+    const source = this.roleSource();
+    return source
+      ? roleAccess(this.company(), source.held, source.roles, source.menuScreens)
+      : new Map<string, RoleGiven>();
+  });
+
+  /** An action's state: given by roles, given to the person, removed from the person, or none. */
+  protected stateOf(screen: string, action: string): 'role' | 'personal' | 'denied' | 'none' {
+    const privilege = this.privilegeOf(screen);
+    if (privilege?.deniedActions.includes(action)) return 'denied';
+    if (this.given().get(screen)?.actions.has(action)) return 'role';
+    return privilege?.actions.includes(action) ? 'personal' : 'none';
   }
 
-  protected setAction(screen: string, action: string, on: boolean): void {
-    const current = this.privilegeOf(screen)?.actions ?? [];
-    const actions = on ? [...new Set([...current, action])] : current.filter((a) => a !== action);
-    this.value.set(setPersonalActions(this.value(), this.company(), screen, actions));
+  protected tipOf(screen: string, action: string, state: string): string {
+    const roles = (this.given().get(screen)?.roles ?? [])
+      .map((r) => this.i18n.localize({ ar: r.nameAr, en: r.nameEn }))
+      .join('، ');
+    switch (state) {
+      case 'role':
+        return `${this.i18n.translate('access.tipRole')} ${roles}`;
+      case 'denied':
+        return this.i18n.translate('access.tipDenied') + (roles ? ` (${roles})` : '');
+      case 'personal':
+        return this.i18n.translate('access.tipPersonal');
+      default:
+        return '';
+    }
+  }
+
+  /** Roles' actions are removed for the person (or given back); other actions are given to the person (or taken back). */
+  protected toggleAction(screen: string, action: string): void {
+    const privilege = this.privilegeOf(screen);
+    const fromRoles = this.given().get(screen)?.actions.has(action) ?? false;
+    const denied = privilege?.deniedActions ?? [];
+    if (denied.includes(action)) {
+      this.value.set(
+        setPersonalDenied(
+          this.value(),
+          this.company(),
+          screen,
+          denied.filter((a) => a !== action),
+        ),
+      );
+    } else if (fromRoles) {
+      this.value.set(setPersonalDenied(this.value(), this.company(), screen, [...denied, action]));
+    } else {
+      const current = privilege?.actions ?? [];
+      const actions = current.includes(action)
+        ? current.filter((a) => a !== action)
+        : [...current, action];
+      this.value.set(setPersonalActions(this.value(), this.company(), screen, actions));
+    }
+  }
+
+  protected setPeriod(privilege: PersonalPrivilege, from: string | null, to: string | null): void {
+    this.value.set(setPersonalPeriod(this.value(), privilege, from, to));
   }
 
   /** The lists shown on a screen: those bound to its fields or to its sub-resources'. */

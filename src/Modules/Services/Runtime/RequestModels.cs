@@ -13,7 +13,7 @@ public sealed record CatalogEntry(
     string NameEn,
     string? DescriptionAr,
     string? DescriptionEn,
-    ServiceArchetype Archetype,
+    string Archetype,
     string? CategoryCode,
     string? Icon,
     IReadOnlyList<PartyKind> PartyKinds,

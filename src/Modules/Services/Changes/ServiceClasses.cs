@@ -22,13 +22,6 @@ public static class ServiceClasses
         [],
         "تجمع الخدمات في دليل البوابة (تبويبات الصفحة الرئيسية وتصفية البحث).",
         "Group services in the portal catalog (home page tabs and the search filter)."),
-        new("SVC_ARCHETYPE", "أنماط الخدمات", "Service archetypes", [],
-        [
-            new("ISSUANCE", "إصدار", "Issuance"),
-            new("AMENDMENT", "تعديل", "Amendment"),
-            new("VISIT_REQUEST", "طلب زيارة", "Visit request"),
-            new("ATTESTATION", "تصديق", "Attestation"),
-        ]),
         new("SVC_QUESTION_TYPE", "أنواع الإجابات", "Answer types", [],
         [
             new("TEXT", "نص", "Text"),

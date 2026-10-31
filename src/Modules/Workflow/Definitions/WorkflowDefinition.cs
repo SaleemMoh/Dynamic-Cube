@@ -54,6 +54,13 @@ public enum NodeType
     /// can go its own way (<c>outcomes</c>), others take <c>next</c>; a cancelled visit takes <c>cancelled</c>.
     /// </summary>
     Visit,
+
+    /// <summary>
+    /// Calls an Integration Manager operation (e.g. checks a licence with another agency); its outputs are kept as
+    /// <c>integrations.&lt;result&gt;</c> for later rules and steps. A failed call takes <c>failed</c> (or stops the step
+    /// with the provider's message when there is none).
+    /// </summary>
+    Integration,
     End,
 }
 
@@ -165,6 +172,15 @@ public sealed class NodeDefinition
 
     /// <summary>Visit: where a cancelled visit goes.</summary>
     public string? Cancelled { get; set; }
+
+    /// <summary>Integration: the Integration Manager operation to call.</summary>
+    public string? Operation { get; set; }
+
+    /// <summary>Integration: operation parameter → JSONLogic over the workflow facts.</summary>
+    public Dictionary<string, JsonNode?> Parameters { get; set; } = [];
+
+    /// <summary>Integration: where a failed call goes (none: the step stops with the provider's message).</summary>
+    public string? Failed { get; set; }
 }
 
 public enum DocumentTarget

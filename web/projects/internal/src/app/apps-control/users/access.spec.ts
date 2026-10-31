@@ -7,9 +7,12 @@ import {
   personalPayload,
   pickWithAll,
   readPersonal,
+  roleAccess,
   rowProblems,
   setPersonalActions,
+  setPersonalDenied,
   setPersonalGrant,
+  setPersonalPeriod,
 } from './access-model';
 import { planRoles } from './bulk-roles-dialog';
 
@@ -112,7 +115,10 @@ describe('personal privileges', () => {
       companyCode: 'MAIN',
       resourceCode: 'cases',
       actions: ['VIEW'],
+      deniedActions: [],
       grants: [{ lovCode: 'REGIONS', grantType: 'VALUES', grantedValues: ['RIYADH'] }],
+      effectiveFrom: null,
+      effectiveTo: null,
     });
     list = setPersonalActions(list, ALL, 'reports', []);
     expect(list.map((p) => p.resourceCode)).toEqual(['cases']);
@@ -136,9 +142,71 @@ describe('personal privileges', () => {
         companyCode: 'MAIN',
         resourceCode: 'cases',
         actions: [],
+        deniedActions: [],
         grants: [{ lovCode: 'REGIONS', grantType: 'ALL', grantedValues: [] }],
+        effectiveFrom: null,
+        effectiveTo: null,
       },
     ]);
+  });
+
+  it('removes an action for one person, never both giving and removing it, and keeps a period', () => {
+    let list = setPersonalActions([], ALL, 'cases', ['EDIT', 'EXPORT']);
+    list = setPersonalDenied(list, ALL, 'cases', ['EDIT']);
+    expect(list[0].actions).toEqual(['EXPORT']);
+    expect(list[0].deniedActions).toEqual(['EDIT']);
+    list = setPersonalActions(list, ALL, 'cases', ['EXPORT', 'EDIT']);
+    expect(list[0].deniedActions).toEqual([]);
+    list = setPersonalPeriod(list, list[0], '2026-11-01', '2026-12-31');
+    expect(list[0]).toMatchObject({ effectiveFrom: '2026-11-01', effectiveTo: '2026-12-31' });
+    // Removing only (no action given) is still a personal privilege.
+    expect(setPersonalDenied([], 'MAIN', 'cases', ['DELETE'])).toHaveLength(1);
+  });
+});
+
+describe('what roles give', () => {
+  const role = (code: string, extra: object) => ({ code, nameAr: code, nameEn: code, ...extra });
+  const roles = new Map([
+    [
+      'CLERK',
+      role('CLERK', {
+        privileges: [{ resourceCode: 'cases', actions: ['VIEW', 'EDIT'] }],
+        menus: ['M_REPORTS'],
+      }),
+    ],
+    [
+      'MANAGER',
+      role('MANAGER', {
+        privileges: [{ resourceCode: 'cases', actions: ['APPROVE'] }],
+        overrides: [
+          {
+            companyCode: 'SUB',
+            privileges: [{ resourceCode: 'audit', actions: ['VIEW'] }],
+            menus: [],
+          },
+        ],
+      }),
+    ],
+  ]);
+  const menus = new Map([['M_REPORTS', 'reports']]);
+  const held = [
+    { roleCode: 'CLERK', company: ALL },
+    { roleCode: 'MANAGER', company: 'SUB' },
+  ];
+
+  it('counts roles held in all companies everywhere and others only in their company', () => {
+    const everywhere = roleAccess(ALL, held, roles, menus);
+    expect([...everywhere.get('cases')!.actions]).toEqual(['VIEW', 'EDIT']);
+    expect(everywhere.get('reports')!.actions.has('VIEW')).toBe(true);
+    expect(everywhere.has('audit')).toBe(false);
+  });
+
+  it("uses the company's version of a role that differs there", () => {
+    const sub = roleAccess('SUB', held, roles, menus);
+    expect([...sub.get('cases')!.actions]).toEqual(['VIEW', 'EDIT']);
+    expect(sub.get('audit')!.roles.map((r) => r.code)).toEqual(['MANAGER']);
+    const main = roleAccess('MAIN', held, roles, menus);
+    expect(main.get('cases')!.actions.has('APPROVE')).toBe(false);
   });
 });
 

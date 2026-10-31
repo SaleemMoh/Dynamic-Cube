@@ -21,8 +21,8 @@ public sealed record FormCheck(IReadOnlyList<FieldError> Errors, JsonObject Data
 /// <summary>
 /// Validates answers the way the wizard does, so a modified client cannot get around it: section and question visibility
 /// and conditional requirements are evaluated on the answers, then types, options, LOV grants, limits, patterns and the
-/// version's cross-field rules. Answers to hidden or unknown questions are dropped; read-only prefilled answers are reset
-/// to the party's data.
+/// version's cross-field rules. Answers to hidden or unknown questions are dropped; read-only prefilled answers (and those
+/// the applicant may not change) are reset to the party's data.
 /// </summary>
 internal sealed class FormValidator(JsonLogicEvaluator evaluator, ILovValidator lovs)
 {
@@ -36,7 +36,7 @@ internal sealed class FormValidator(JsonLogicEvaluator evaluator, ILovValidator 
         {
             var question = version.Questions[code];
             var value = data[code]?.DeepClone();
-            if (info.Readonly && question.Prefill is not null)
+            if ((info.Readonly || question.Locked) && question.Prefill is not null)
             {
                 value = JsonPaths.Read(context, question.Prefill);
             }

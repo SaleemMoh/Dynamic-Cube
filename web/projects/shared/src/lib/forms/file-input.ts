@@ -5,7 +5,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { TranslatePipe } from '../i18n/translate.pipe';
+import { LocalizePipe, TranslatePipe } from '../i18n/translate.pipe';
+import { LocalizedText } from '../i18n/language';
 
 /** A file kept for a field (uploaded to the server, or held by a preview). */
 export interface UploadedFile {
@@ -50,7 +51,7 @@ export function fileProblem(file: { name: string; size: number }, accept: string
  */
 @Component({
   selector: 'dc-file-input',
-  imports: [DecimalPipe, MatButtonModule, MatIconModule, MatProgressBarModule, MatTooltipModule, TranslatePipe],
+  imports: [DecimalPipe, MatButtonModule, MatIconModule, MatProgressBarModule, MatTooltipModule, LocalizePipe, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => FileInput), multi: true }],
   template: `
@@ -102,7 +103,9 @@ export function fileProblem(file: { name: string; size: number }, accept: string
       @if (!uploader()) {
         <small class="dc-file__note">{{ 'files.noUploader' | dcTranslate }}</small>
       }
-      @if (error()) {
+      @if (serverError(); as reason) {
+        <small class="dc-file__error" role="alert">{{ reason | dcLocalize }}</small>
+      } @else if (error()) {
         <small class="dc-file__error" role="alert">{{ error()! | dcTranslate }}</small>
       }
     </div>
@@ -194,6 +197,8 @@ export class FileInput implements ControlValueAccessor {
   protected readonly busy = signal(false);
   protected readonly over = signal(false);
   protected readonly error = signal<string | null>(null);
+  /** Why the server refused a file (type, size, count…), when it said so. */
+  protected readonly serverError = signal<LocalizedText | null>(null);
   protected readonly extensions = computed(() => (this.accept()?.length ? this.accept()! : DEFAULT_FILE_EXTENSIONS));
   protected readonly acceptAttr = computed(() =>
     this.extensions()
@@ -246,6 +251,7 @@ export class FileInput implements ControlValueAccessor {
     const uploader = this.uploader();
     if (!uploader || !files.length) return;
     this.error.set(null);
+    this.serverError.set(null);
     this.onTouched();
     // One file: the new one replaces the answer; several: up to the limit.
     const room = this.limit() === 1 ? 1 : this.limit() - this.ids().length;
@@ -261,8 +267,9 @@ export class FileInput implements ControlValueAccessor {
         const uploaded = await uploader.upload(this.field(), file);
         this.ids.set(this.limit() === 1 ? [uploaded.id] : [...this.ids(), uploaded.id]);
         this.onChange(this.ids());
-      } catch {
+      } catch (failure) {
         this.error.set('files.failed');
+        this.serverError.set(refusal(failure));
       } finally {
         this.busy.set(false);
       }
@@ -277,10 +284,18 @@ export class FileInput implements ControlValueAccessor {
       await uploader.remove(this.field(), id);
       this.ids.set(this.ids().filter((i) => i !== id));
       this.onChange(this.ids());
-    } catch {
+    } catch (failure) {
       this.error.set('files.failed');
+      this.serverError.set(refusal(failure));
     } finally {
       this.busy.set(false);
     }
   }
+}
+
+/** The server's own reason for refusing a file (its bilingual field error), if it gave one. */
+function refusal(failure: unknown): LocalizedText | null {
+  const errors = (failure as { error?: { errors?: unknown } } | null)?.error?.errors;
+  const first = Array.isArray(errors) ? (errors[0] as { messageAr?: string; messageEn?: string } | undefined) : undefined;
+  return first?.messageAr || first?.messageEn ? { ar: first.messageAr ?? first.messageEn ?? '', en: first.messageEn ?? first.messageAr ?? '' } : null;
 }

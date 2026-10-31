@@ -37,6 +37,7 @@ public static class ServicesModule
 
         AddApplier<ServiceDefinitionApplier>(services);
         AddApplier<QuestionApplier>(services);
+        AddApplier<ArchetypeApplier>(services);
         AddApplier<ServiceVersionApplier>(services);
         services.AddScoped<IChangeSetPublishHook<ServicesDbContext>, VersionCompiler>();
         services.AddScoped<IChangeSetPublishHook<ServicesDbContext>, ServiceWorkflowProvisioner>();
@@ -47,6 +48,7 @@ public static class ServicesModule
         services.AddScoped<FeeCalculator>();
         services.AddScoped<FormValidator>();
         services.AddScoped<RequestService>();
+        services.AddScoped<RequestIntegrations>();
         services.AddScoped<IWorkflowSubject, RequestSubject>();
         services.AddScoped<RequestAdminService>();
         services.AddScoped<PortalCatalogService>();

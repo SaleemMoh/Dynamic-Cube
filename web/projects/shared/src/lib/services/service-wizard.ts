@@ -138,6 +138,26 @@ export interface WizardMove {
             <dc-request-answers [version]="version()" [data]="data()" [files]="uploader()?.files() ?? []" (openFile)="uploader()?.open($event.id)" />
             <ng-container *ngTemplateOutlet="nav" />
           }
+          @case ('INTEGRATION') {
+            <div class="dc-integration" data-testid="integration-step">
+              <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">sync_alt</mat-icon>
+              <div>
+                @if (s.textAr || s.textEn) {
+                  <p>{{ { ar: s.textAr ?? '', en: s.textEn ?? '' } | dcLocalize }}</p>
+                }
+                <p class="dc-muted">{{ (s.integration?.required === false ? 'wizard.integrationOptional' : 'wizard.integrationHint') | dcTranslate }}</p>
+                @if (fetched(s).length) {
+                  <dl class="dc-integration__values">
+                    @for (f of fetched(s); track f.code) {
+                      <dt>{{ f.label | dcLocalize }}</dt>
+                      <dd>{{ f.value }}</dd>
+                    }
+                  </dl>
+                }
+              </div>
+            </div>
+            <ng-container *ngTemplateOutlet="nav" />
+          }
           @case ('DECLARATION') {
             <p class="dc-declaration">{{ { ar: s.textAr ?? '', en: s.textEn ?? '' } | dcLocalize }}</p>
             <mat-checkbox [(ngModel)]="accepted" data-testid="declaration-accept">{{ 'wizard.accept' | dcTranslate }}</mat-checkbox>
@@ -181,6 +201,31 @@ export interface WizardMove {
     </ng-template>
   `,
   styles: `
+    .dc-integration {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 14px 16px;
+      border: 1px solid var(--dga-gray-200, #e5e7eb);
+      border-radius: 10px;
+      margin-bottom: 12px;
+    }
+    .dc-integration p {
+      margin: 0 0 6px;
+    }
+    .dc-integration__values {
+      display: grid;
+      grid-template-columns: max-content 1fr;
+      gap: 4px 16px;
+      margin: 8px 0 0;
+    }
+    .dc-integration__values dt {
+      color: var(--dga-gray-600, #4d5761);
+    }
+    .dc-integration__values dd {
+      margin: 0;
+      font-weight: 600;
+    }
     .dc-steps {
       display: flex;
       flex-wrap: wrap;
@@ -307,6 +352,22 @@ export class ServiceWizard {
   protected label(code: string): string | null {
     const q = this.version().questions[code];
     return q ? this.i18n.localize({ ar: q.labelAr, en: q.labelEn }) : null;
+  }
+
+  /** Answers an integration step fetched so far (its outputs), to show the applicant. */
+  protected fetched(step: StepDefinition): { code: string; label: { ar: string; en: string }; value: string }[] {
+    const data = this.data();
+    return (step.integration?.outputs ?? [])
+      .filter((o) => data[o.question] !== undefined && data[o.question] !== null && data[o.question] !== '')
+      .map((o) => {
+        const q = this.version().questions[o.question];
+        const value = data[o.question];
+        return {
+          code: o.question,
+          label: q ? { ar: q.labelAr, en: q.labelEn } : { ar: o.question, en: o.question },
+          value: typeof value === 'object' ? JSON.stringify(value) : String(value),
+        };
+      });
   }
 
   protected levelTotal(lines: FeeLine[]): number {

@@ -406,6 +406,13 @@ public sealed class UserPrivilegePayload
     /// <summary>Actions on the screen; may be empty when <see cref="Grants"/> gives data on it.</summary>
     public List<string> Actions { get; set; } = [];
 
+    /// <summary>Actions the person's roles give on the screen that this person must not have.</summary>
+    public List<string> DeniedActions { get; set; } = [];
+
+    public DateOnly? EffectiveFrom { get; set; }
+
+    public DateOnly? EffectiveTo { get; set; }
+
     /// <summary>Values of the screen's lists the person may see, besides those of their roles.</summary>
     public List<UserGrantPayload> Grants { get; set; } = [];
 }
@@ -552,14 +559,29 @@ internal sealed class UserApplier(AppsControlDbContext db) : ConfigApplier<UserA
                 ? await refs.Context.Resources.AsNoTracking().Where(r => r.Id == rid).Select(r => r.AvailableActions).SingleOrDefaultAsync(cancellationToken)
                 : null;
 
-            var actions = p.Actions.Where(a => !string.IsNullOrWhiteSpace(a)).Select(a => a.Trim().ToUpperInvariant()).Distinct(StringComparer.Ordinal).ToList();
-            if (actions.Count == 0 && p.Grants.Count == 0)
+            var actions = Actions(p.Actions);
+            var denied = Actions(p.DeniedActions);
+            if (actions.Count == 0 && denied.Count == 0 && p.Grants.Count == 0)
             {
-                errors.Add(field + ".actions", "Choose at least one action, or data on the screen.");
+                errors.Add(field + ".actions", "Give or remove at least one action, or give data on the screen.");
             }
-            else if (available is not null && actions.Except(available, StringComparer.Ordinal).ToList() is { Count: > 0 } unknown)
+
+            foreach (var (list, name) in new[] { (actions, "actions"), (denied, "deniedActions") })
             {
-                errors.Add(field + ".actions", $"{string.Join(", ", unknown)} is not an action of {p.ResourceCode}.");
+                if (available is not null && list.Except(available, StringComparer.Ordinal).ToList() is { Count: > 0 } unknown)
+                {
+                    errors.Add($"{field}.{name}", $"{string.Join(", ", unknown)} is not an action of {p.ResourceCode}.");
+                }
+            }
+
+            if (actions.Intersect(denied, StringComparer.Ordinal).ToList() is { Count: > 0 } both)
+            {
+                errors.Add(field + ".deniedActions", $"{string.Join(", ", both)} cannot be both given and removed.");
+            }
+
+            if (p.EffectiveTo < p.EffectiveFrom)
+            {
+                errors.Add(field + ".effectiveTo", "Must not be before the start date.");
             }
 
             var privilege = new UserPrivilege
@@ -568,6 +590,9 @@ internal sealed class UserApplier(AppsControlDbContext db) : ConfigApplier<UserA
                 CompanyCode = CheckCompany(p.CompanyCode, companies, refs, field, errors),
                 ResourceId = resourceId ?? Guid.Empty,
                 Actions = actions,
+                DeniedActions = denied,
+                EffectiveFrom = p.EffectiveFrom,
+                EffectiveTo = p.EffectiveTo,
             };
             ChildSync.RequireUnique(p.Grants, g => g.LovCode, field + ".grants", errors);
             foreach (var (g, j) in p.Grants.Select((g, j) => (g, j)))
@@ -618,6 +643,9 @@ internal sealed class UserApplier(AppsControlDbContext db) : ConfigApplier<UserA
         ChildSync.Sync(entity.Privileges, privileges, p => (p.CompanyCode, p.ResourceId), (from, to) =>
         {
             to.Actions = from.Actions;
+            to.DeniedActions = from.DeniedActions;
+            to.EffectiveFrom = from.EffectiveFrom;
+            to.EffectiveTo = from.EffectiveTo;
             ChildSync.Sync(to.Grants, from.Grants, g => g.LovId, (grantFrom, grantTo) =>
             {
                 grantTo.GrantType = grantFrom.GrantType;
@@ -664,12 +692,18 @@ internal sealed class UserApplier(AppsControlDbContext db) : ConfigApplier<UserA
                     CompanyCode = p.CompanyCode,
                     ResourceCode = p.Resource?.Code ?? string.Empty,
                     Actions = p.Actions,
+                    DeniedActions = p.DeniedActions,
+                    EffectiveFrom = p.EffectiveFrom,
+                    EffectiveTo = p.EffectiveTo,
                     Grants = [.. p.Grants
                         .OrderBy(g => g.Lov?.Code, StringComparer.Ordinal)
                         .Select(g => new UserGrantPayload { LovCode = g.Lov?.Code ?? string.Empty, GrantType = g.GrantType, GrantedValues = g.GrantedValues })],
                 })
                 .ToList(),
         });
+
+    private static List<string> Actions(IEnumerable<string> values) =>
+        [.. values.Where(a => !string.IsNullOrWhiteSpace(a)).Select(a => a.Trim().ToUpperInvariant()).Distinct(StringComparer.Ordinal)];
 
     /// <summary>
     /// The company: required, "*" for all companies (an empty choice is not "all", ADR-0036); otherwise it must exist or be

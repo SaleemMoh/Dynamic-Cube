@@ -1,3 +1,4 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AppsControlApi, ConfigRow, LocalizedText, RuleVariable } from '@dynamic-cube/shared';
@@ -11,6 +12,15 @@ export interface BankQuestion {
   options: { value: string; label: LocalizedText }[];
   lov: string | null;
   prefill: string | null;
+  /** The service the question belongs to; null for a shared bank question. */
+  serviceCode: string | null;
+}
+
+/** A path an integration input can take its value from, with its name. */
+export interface FillSource {
+  code: string;
+  nameAr: string;
+  nameEn: string;
 }
 
 /** What the builder offers: the question bank, profile fields, document statuses and the service's workflow. */
@@ -25,6 +35,17 @@ export class BuilderReferences {
   private readonly questionRows = signal<ConfigRow[]>([]);
   private readonly profileRows = this.list('party.profile-field');
   readonly workflows = this.list('wf.workflow');
+  /** Integration Manager operations (for integration steps). */
+  readonly operations = this.list('integ.operation');
+  /** Service archetypes, with the template a service without versions starts from. */
+  readonly archetypes = this.list('svc.archetype');
+  /** Where integration inputs can take their values from: the party's data and the answers. */
+  readonly fillSources = toSignal(
+    inject(HttpClient)
+      .get<FillSource[]>('/api/services/v1/admin/fill-sources')
+      .pipe(catchError(() => of([] as FillSource[]))),
+    { initialValue: [] as FillSource[] },
+  );
   readonly workflowVersions = this.list('wf.workflow-version');
 
   constructor() {
@@ -54,6 +75,7 @@ export class BuilderReferences {
         options: opts.map((o) => ({ value: o.value, label: { ar: o.labelAr, en: o.labelEn } })),
         lov: (q['lov'] as string | null) ?? null,
         prefill: (q['prefill'] as string | null) ?? null,
+        serviceCode: q['serviceCode'] && q['serviceCode'] !== '*' ? (q['serviceCode'] as string) : null,
       };
     }),
   );

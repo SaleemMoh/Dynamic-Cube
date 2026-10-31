@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using DynamicCube.Modules.Services.Definitions;
 using DynamicCube.Modules.Services.Domain;
@@ -37,7 +38,8 @@ public sealed class ServicePayload : ConfigPayload
 
     public string? DescriptionEn { get; set; }
 
-    public ServiceArchetype Archetype { get; set; }
+    /// <summary>The archetype's code (a declared <c>svc.archetype</c>).</summary>
+    public string? Archetype { get; set; }
 
     public string? CategoryCode { get; set; }
 
@@ -98,9 +100,13 @@ internal sealed partial class ServiceDefinitionApplier(ServicesDbContext db, ISe
             errors.Add("numberPrefix", "Up to 20 upper-case letters, digits, _ or -.");
         }
 
+        // Packages from before archetypes were declared may leave it out: they were issuance services.
+        var archetype = Blank(payload.Archetype)?.ToUpperInvariant() ?? "ISSUANCE";
+        await refs.ResolveAsync(refs.Context.Archetypes, ServiceChangeTypes.Archetype, archetype, "archetype", errors, cancellationToken);
+
         entity.DescriptionAr = Blank(payload.DescriptionAr);
         entity.DescriptionEn = Blank(payload.DescriptionEn);
-        entity.Archetype = payload.Archetype;
+        entity.Archetype = archetype;
         entity.CategoryCode = Blank(payload.CategoryCode);
         entity.Icon = Blank(payload.Icon);
         entity.DisplayOrder = payload.DisplayOrder;
@@ -143,6 +149,127 @@ internal sealed partial class ServiceDefinitionApplier(ServicesDbContext db, ISe
     private static partial Regex Prefix();
 }
 
+public sealed class ArchetypePayload : ConfigPayload
+{
+    public string? DescriptionAr { get; set; }
+
+    public string? DescriptionEn { get; set; }
+
+    public string? Icon { get; set; }
+
+    public int DisplayOrder { get; set; }
+
+    /// <summary>The service template: the version a new service of this archetype starts from.</summary>
+    public VersionDefinition? Template { get; set; }
+
+    /// <summary>On save, the template becomes a copy of this service's latest version.</summary>
+    public string? TemplateFrom { get; set; }
+
+    /// <summary>The default workflow: the definition a new service's workflow starts from.</summary>
+    public JsonNode? Workflow { get; set; }
+
+    /// <summary>On save, the default workflow becomes a copy of this workflow's latest published version.</summary>
+    public string? WorkflowFrom { get; set; }
+}
+
+/// <summary>
+/// Service archetypes (declarations): a kind of service with its service template and default workflow, each set by
+/// copying an existing service or workflow (or as JSON). A new service takes its archetype's workflow when it is first
+/// published and the builder opens its template.
+/// </summary>
+internal sealed class ArchetypeApplier(ServicesDbContext db, IServiceProvider services) : ServiceApplier<Archetype, ArchetypePayload>(db)
+{
+    public override string EntityType => ServiceChangeTypes.Archetype;
+
+    protected override IQueryable<Archetype> Query(ServicesDbContext context) => context.Archetypes;
+
+    protected override IQueryable<Archetype> ListQuery(ServicesDbContext context, string? parent) =>
+        Query(context).OrderBy(a => a.DisplayOrder).ThenBy(a => a.Code);
+
+    protected override async Task ApplyAsync(Archetype entity, ArchetypePayload payload, ConfigRefs<ServicesDbContext> refs, ValidationErrors errors, Archetype? existing, CancellationToken cancellationToken)
+    {
+        errors.MaxLength("descriptionAr", payload.DescriptionAr, 2000);
+        errors.MaxLength("descriptionEn", payload.DescriptionEn, 2000);
+        entity.DescriptionAr = Blank(payload.DescriptionAr);
+        entity.DescriptionEn = Blank(payload.DescriptionEn);
+        entity.Icon = Blank(payload.Icon);
+        entity.DisplayOrder = payload.DisplayOrder;
+
+        // The service template: copied from a service's latest version, or as given.
+        var template = payload.Template;
+        if (Blank(payload.TemplateFrom) is { } from)
+        {
+            var latest = await refs.Context.Versions.Where(v => v.Service!.Code == from).OrderByDescending(v => v.Number).Select(v => v.Definition).FirstOrDefaultAsync(cancellationToken);
+            if (latest is null)
+            {
+                errors.Add("templateFrom", $"Service '{from}' has no version to copy.");
+            }
+            else
+            {
+                template = JsonSerializer.Deserialize<VersionDefinition>(latest, ChangeJson.Options);
+            }
+        }
+
+        if (template is not null)
+        {
+            template.Workflow = null;
+            // A template serves any service: it may use shared questions only.
+            var questions = template.Steps.SelectMany(s => s.Sections).SelectMany(s => s.Questions).Select(q => q.Code).Distinct().ToList();
+            var shared = await refs.Context.Questions.Where(q => questions.Contains(q.Code) && q.ServiceCode == null).Select(q => q.Code).ToListAsync(cancellationToken);
+            foreach (var code in questions.Except(shared).Where(c => !refs.IsPendingCreate(ServiceChangeTypes.Question, c)))
+            {
+                errors.Add("template", $"Question '{code}' is not a shared bank question; a template uses shared questions only.");
+            }
+        }
+
+        entity.Template = template is null ? null : ChangeJson.Serialize(template);
+
+        // The default workflow: copied from a workflow's latest published version, or as given; it must be able to run.
+        var workflow = payload.Workflow?.ToJsonString();
+        var workflows = services.GetService<IServiceWorkflows>();
+        if (Blank(payload.WorkflowFrom) is { } source && workflows is not null)
+        {
+            workflow = await workflows.LatestDefinitionAsync(source, cancellationToken);
+            if (workflow is null)
+            {
+                errors.Add("workflowFrom", $"Workflow '{source}' has no published version to copy.");
+            }
+        }
+
+        if (workflow is not null && workflows is not null)
+        {
+            foreach (var (field, messages) in workflows.Check(workflow))
+            {
+                foreach (var message in messages)
+                {
+                    errors.Add("workflow." + field, message);
+                }
+            }
+        }
+
+        entity.Workflow = workflow;
+    }
+
+    protected override Task<ArchetypePayload> ToPayloadAsync(ServicesDbContext context, Archetype entity, CancellationToken cancellationToken) =>
+        Task.FromResult(new ArchetypePayload
+        {
+            DescriptionAr = entity.DescriptionAr,
+            DescriptionEn = entity.DescriptionEn,
+            Icon = entity.Icon,
+            DisplayOrder = entity.DisplayOrder,
+            Template = entity.Template is null ? null : JsonSerializer.Deserialize<VersionDefinition>(entity.Template, ChangeJson.Options),
+            Workflow = entity.Workflow is null ? null : JsonNode.Parse(entity.Workflow),
+        });
+
+    protected override async Task BeforeDeleteAsync(ServicesDbContext context, Archetype entity, CancellationToken cancellationToken)
+    {
+        if (await context.Services.AnyAsync(s => s.Archetype == entity.Code, cancellationToken))
+        {
+            throw new ChangeSetException($"Services of archetype '{entity.Code}' exist; deactivate it instead.");
+        }
+    }
+}
+
 public sealed class QuestionPayload : ConfigPayload
 {
     public QuestionType Type { get; set; }
@@ -161,7 +288,17 @@ public sealed class QuestionPayload : ConfigPayload
 
     public QuestionValidation Validation { get; set; } = new();
 
+    /// <summary>The service the question belongs to (a service-level question), or "*" for a shared bank question.</summary>
+    public string? ServiceCode { get; set; }
+
+    /// <summary>Where the first answer comes from (packages from before this field: PARTY when a prefill path is given).</summary>
+    public QuestionFill? Fill { get; set; }
+
     public string? Prefill { get; set; }
+
+    public IntegrationFill? Integration { get; set; }
+
+    public bool AllowManualEntry { get; set; } = true;
 }
 
 internal sealed class QuestionApplier(ServicesDbContext db) : ServiceApplier<Question, QuestionPayload>(db)
@@ -254,10 +391,43 @@ internal sealed class QuestionApplier(ServicesDbContext db) : ServiceApplier<Que
             }
         }
 
-        var prefill = Blank(payload.Prefill);
-        if (prefill is not null && !JsonPaths.IsValid(prefill))
+        // The first answer: typed by the applicant, from the party's data, or from an integration call.
+        var fill = payload.Fill ?? (Blank(payload.Prefill) is null ? QuestionFill.None : QuestionFill.Party);
+        var prefill = fill == QuestionFill.Party ? Blank(payload.Prefill) : null;
+        var integration = fill == QuestionFill.Integration ? payload.Integration ?? new IntegrationFill() : null;
+        if (fill != QuestionFill.None && payload.Type == QuestionType.File)
         {
-            errors.Add("prefill", "Use a path such as party.profile.CR_CAPITAL or party.identifiers.CR_NUMBER.");
+            errors.Add("fill", "File questions are answered by the applicant.");
+        }
+
+        if (fill == QuestionFill.Party && (prefill is null || !JsonPaths.IsValid(prefill)))
+        {
+            errors.Add("prefill", "Choose a field of the party's data, e.g. party.profile.CR_CAPITAL or party.identifiers.CR_NUMBER.");
+        }
+
+        if (integration is not null)
+        {
+            integration.Operation = integration.Operation?.Trim() ?? string.Empty;
+            integration.Output = integration.Output?.Trim() ?? string.Empty;
+            errors.Required("integration.operation", integration.Operation);
+            if (!JsonPaths.IsValid(integration.Output))
+            {
+                errors.Add("integration.output", "Give an output of the operation, or a path in its result such as data.capital.");
+            }
+
+            IntegrationInputs.Check(integration.Inputs, "integration.inputs", errors);
+        }
+
+        // "*" (or none): a shared bank question.
+        var serviceCode = Blank(payload.ServiceCode) is { } owner && owner != "*" ? owner : null;
+        if (serviceCode is not null)
+        {
+            await refs.ResolveAsync(refs.Context.Services, ServiceChangeTypes.Service, serviceCode, "serviceCode", errors, cancellationToken);
+        }
+
+        if (existing is not null && existing.ServiceCode != serviceCode && await UsedByOtherServicesAsync(refs.Context, entity.Code, serviceCode, cancellationToken))
+        {
+            errors.Add("serviceCode", "Versions of other services use this question; it can only stay shared.");
         }
 
         entity.Type = payload.Type;
@@ -268,7 +438,23 @@ internal sealed class QuestionApplier(ServicesDbContext db) : ServiceApplier<Que
         entity.Options = payload.Options;
         entity.Multiple = payload.Multiple;
         entity.Validation = validation;
+        entity.ServiceCode = serviceCode;
+        entity.Fill = fill;
         entity.Prefill = prefill;
+        entity.Integration = integration;
+        entity.AllowManualEntry = fill == QuestionFill.None || payload.AllowManualEntry;
+    }
+
+    /// <summary>Whether versions of a service other than <paramref name="owner"/> use the question (any when it would be shared).</summary>
+    private static async Task<bool> UsedByOtherServicesAsync(ServicesDbContext context, string code, string? owner, CancellationToken cancellationToken)
+    {
+        if (owner is null)
+        {
+            return false;
+        }
+
+        var usage = $$"""{"steps":[{"sections":[{"questions":[{"code":"{{code}}"}]}]}]}""";
+        return await context.Versions.AnyAsync(v => v.Service!.Code != owner && EF.Functions.JsonContains(v.Definition, usage), cancellationToken);
     }
 
     protected override Task<QuestionPayload> ToPayloadAsync(ServicesDbContext context, Question entity, CancellationToken cancellationToken) =>
@@ -282,7 +468,11 @@ internal sealed class QuestionApplier(ServicesDbContext db) : ServiceApplier<Que
             Options = entity.Options,
             Multiple = entity.Multiple,
             Validation = entity.Validation,
+            ServiceCode = entity.ServiceCode ?? "*",
+            Fill = entity.Fill,
             Prefill = entity.Prefill,
+            Integration = entity.Integration,
+            AllowManualEntry = entity.AllowManualEntry,
         });
 
     protected override async Task BeforeDeleteAsync(ServicesDbContext context, Question entity, CancellationToken cancellationToken)
@@ -362,9 +552,14 @@ internal sealed partial class ServiceVersionApplier(ServicesDbContext db, JsonLo
             errors.Add("code", $"The next version of {serviceCode} is {latest + 1 + pendingBefore}.");
         }
 
-        var known = await refs.Context.Questions.Select(q => q.Code).ToListAsync(cancellationToken);
-        var available = new HashSet<string>(known, StringComparer.Ordinal);
+        // Shared bank questions and the service's own (service-level) questions; another service's questions are not usable.
+        var known = await refs.Context.Questions.Select(q => new { q.Code, q.ServiceCode }).ToListAsync(cancellationToken);
+        var available = known.Where(q => q.ServiceCode is null || q.ServiceCode == serviceCode).Select(q => q.Code).ToHashSet(StringComparer.Ordinal);
         DefinitionValidator.Validate(definition, code => available.Contains(code) || refs.IsPendingCreate(ServiceChangeTypes.Question, code), evaluator, errors);
+        foreach (var other in known.Where(q => q.ServiceCode is not null && q.ServiceCode != serviceCode && definition.Steps.Any(s => s.Sections.Any(x => x.Questions.Any(u => u.Code == q.Code)))))
+        {
+            errors.Add("definition.steps", $"Question '{other.Code}' belongs to service {other.ServiceCode}.");
+        }
 
         if (definition.Availability is not null && !await ActsOnDocumentAsync(refs, serviceCode, cancellationToken))
         {

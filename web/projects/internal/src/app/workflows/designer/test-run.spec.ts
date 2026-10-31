@@ -84,6 +84,27 @@ describe('designer test run', () => {
     expect(choose(visit, run, run.tokens[0].id, 'CANCELLED').outcome).toBe('CLOSED');
   });
 
+  it('an integration call is marked succeeded or failed; a failure without a way stops', () => {
+    const call: WorkflowDraft = {
+      nodes: [
+        { code: 'START', type: 'START', nameAr: 's', nameEn: 's', next: 'CHECK' },
+        { code: 'CHECK', type: 'INTEGRATION', nameAr: 'c', nameEn: 'c', operation: 'LICENSE', result: 'license', next: 'YES', failed: 'NO' },
+        { code: 'YES', type: 'END', nameAr: 'y', nameEn: 'y', outcome: 'APPROVED' },
+        { code: 'NO', type: 'END', nameAr: 'n', nameEn: 'n', outcome: 'REJECTED' },
+      ],
+    };
+    const run = startRun(call, {}, null);
+    expect(waiting(call, run).map((w) => w.node.code)).toEqual(['CHECK']);
+    const ok = choose(call, run, run.tokens[0].id, 'SUCCEEDED');
+    expect(ok.outcome).toBe('APPROVED');
+    expect(ok.facts['integrations']).toEqual({ license: { success: true, outputs: {} } });
+    expect(choose(call, run, run.tokens[0].id, 'FAILED').outcome).toBe('REJECTED');
+    const strict = { nodes: call.nodes.map((n) => (n.code === 'CHECK' ? { ...n, failed: null } : n)) };
+    const stopped = choose(strict, startRun(strict, {}, null), 1, 'FAILED');
+    expect(stopped.failed).toBe(true);
+    expect(stopped.log.at(-1)?.key).toBe('designer.test.callStops');
+  });
+
   it('an unpaid bill takes the expired way', () => {
     let run = startRun(def, { __feeTotal: 100 }, null);
     run = choose(def, run, run.tokens[0].id, 'UNPAID');

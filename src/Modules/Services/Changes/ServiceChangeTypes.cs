@@ -7,6 +7,7 @@ public static class ServiceChangeTypes
     public const string Category = "svc.category";
     public const string Question = "svc.question";
     public const string Version = "svc.service-version";
+    public const string Archetype = "svc.archetype";
 
     /// <summary>Categories, services, the question bank and service versions (one area so a version can use new questions).</summary>
     public const string Area = "svc.services";

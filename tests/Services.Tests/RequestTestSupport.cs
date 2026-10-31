@@ -38,13 +38,14 @@ internal sealed class Applicant : IAsyncDisposable
 
     public static string NationalId() => "1" + Next();
 
-    public static async Task<Applicant> CreateAsync(DatabaseFixture fixture, string relationship = "OWNER", List<string>? services = null)
+    public static async Task<Applicant> CreateAsync(DatabaseFixture fixture, string relationship = "OWNER", List<string>? services = null, Action<IServiceCollection>? configure = null)
     {
         var identity = new TestApplicant { NationalId = NationalId(), Name = "مقدم الطلب" };
         var host = new TestHost(fixture.RequireConnectionString(), s =>
         {
             s.AddSingleton(identity);
             s.AddScoped<IApplicantIdentity>(sp => sp.GetRequiredService<TestApplicant>());
+            configure?.Invoke(s);
         });
         var applicant = new Applicant(host, identity);
         applicant.IndividualId = await host.AsAsync("applicant", async sp => (await sp.GetRequiredService<ContextService>().CurrentIndividualAsync(CancellationToken.None)).Id);

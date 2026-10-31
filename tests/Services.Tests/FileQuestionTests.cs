@@ -82,7 +82,7 @@ public sealed class FileQuestionTests(DatabaseFixture fixture) : IAsyncLifetime
             {
                 NameAr = "خدمة بمرفقات",
                 NameEn = "Service with attachments",
-                Archetype = ServiceArchetype.Issuance,
+                Archetype = "ISSUANCE",
                 PartyKinds = [PartyKind.Establishment],
                 NumberPrefix = "FIL",
             }),

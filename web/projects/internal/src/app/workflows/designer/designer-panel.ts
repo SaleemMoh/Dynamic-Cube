@@ -135,6 +135,19 @@ export class DesignerPanel {
         });
       }
     }
+    for (const c of this.nodes().filter((n) => n.type === 'INTEGRATION')) {
+      const name = c.result || c.code;
+      list.push({
+        path: `integrations.${name}.success`,
+        label: t(`نجح الاستدعاء: ${c.nameAr}`, `Call succeeded: ${c.nameEn}`),
+        type: 'boolean',
+        options: [{ value: 'true', label: t('نعم', 'Yes') }],
+      });
+      list.push({ path: `integrations.${name}.code`, label: t(`رمز نتيجة: ${c.nameAr}`, `Result code: ${c.nameEn}`) });
+      for (const output of this.refs.operation(c.operation).outputs) {
+        list.push({ path: `integrations.${name}.outputs.${output}`, label: t(`${output} (${c.nameAr})`, `${output} (${c.nameEn})`) });
+      }
+    }
     list.push({ path: 'feeTotal', label: t('إجمالي الرسوم', 'Total fees'), type: 'number' });
     list.push({ path: 'party.id', label: t('معرّف المستفيد', 'Beneficiary id') });
     list.push({
@@ -279,6 +292,7 @@ export class DesignerPanel {
       case 'default':
       case 'expired':
       case 'cancelled':
+      case 'failed':
         change[outlet.kind] = to;
         break;
       case 'outcome':
@@ -298,6 +312,15 @@ export class DesignerPanel {
         break;
     }
     this.store.apply((def: WorkflowDraft) => replaceNode(def, from.code, { ...from, ...change }));
+  }
+
+  /** Adds the selected integration step's operation parameters that have no value yet (each to be given a rule). */
+  protected addOperationParameters(): void {
+    const n = this.node();
+    if (!n) return;
+    const current = n.parameters ?? {};
+    const missing = this.refs.operation(n.operation).parameters.filter((p) => !(p in current));
+    if (missing.length) this.patch({ parameters: { ...current, ...Object.fromEntries(missing.map((p) => [p, null])) } });
   }
 
   /** The condition of the selected route arrow. */

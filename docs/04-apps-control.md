@@ -168,7 +168,9 @@ is held once per company (and unit). Empty never means all (ADR-0036 "All is cho
 
 **`user_privilege`** — `user_id`, `company_code` (required: a company or `*`), `resource_id`, `actions` (text[], within
 the screen's available actions; may be empty when the row only gives data): screens and actions given to one person
-besides their roles. **`user_privilege_grant`** — `user_privilege_id`, `lov_id`, `grant_type` (`ALL` | `VALUES`),
+besides their roles; `denied_actions` (text[]): actions taken away from this person on that screen even though their
+roles give them (removing wins; an action cannot be both given and removed); `effective_from`, `effective_to` (dates,
+optional): the period the row holds (outside it, it neither gives nor removes anything). **`user_privilege_grant`** — `user_privilege_id`, `lov_id`, `grant_type` (`ALL` | `VALUES`),
 `granted_values`: values of a list on that screen given to the person; they add to what the roles give (a list the
 person's roles leave open stays open).
 
@@ -184,8 +186,11 @@ together as one change:
     the unit.
   - **Personal privileges:** choose an app (Dynamic Cube apps: internal system, portal, field app; or a connected
     system) and a company (or all); its menu tree loads, each screen with its actions to tick and *Data*: the lists on
-    the screen (bound to its fields or its sub-screens') with *as the roles give*, *all values* or *some values*. A
-    summary lists every personal privilege in every app and company, to review and remove.
+    the screen (bound to its fields or its sub-screens') with *as the roles give*, *all values* or *some values*.
+    Actions the person's roles already give show as grey ticks (the tooltip names the roles); clicking one removes it
+    for this person only (shown struck through in red), clicking again gives it back. A summary lists every personal
+    privilege in every app and company with what is removed and its period (*From* / *To*, empty: no limit), to review
+    and remove.
 
 **Add or remove roles** (Users list, after ticking rows) adds or removes roles in a company and branches for every
 ticked user. A review first lists, per person, the roles added or removed and those left as they were (already held

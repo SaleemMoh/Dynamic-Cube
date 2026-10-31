@@ -60,6 +60,14 @@ internal static partial class DefinitionValidator
                     errors.Required(field + ".textAr", step.TextAr);
                     errors.Required(field + ".textEn", step.TextEn);
                     break;
+                case StepType.Integration:
+                    IntegrationStep(definition, step, field, errors);
+                    break;
+            }
+
+            if (step.Type != StepType.Integration && step.Integration is not null)
+            {
+                errors.Add(field + ".integration", "Only integration steps call an operation.");
             }
 
             if (step.Type != StepType.Form && step.Display is not null)
@@ -111,6 +119,34 @@ internal static partial class DefinitionValidator
         Fees(definition, evaluator, errors);
         Card(definition.Card, errors);
         Availability(definition.Availability, errors);
+    }
+
+    /// <summary>An integration step names an operation, its inputs, and outputs into questions the version asks.</summary>
+    private static void IntegrationStep(VersionDefinition definition, StepDefinition step, string field, ValidationErrors errors)
+    {
+        if (step.Integration is not { } call)
+        {
+            errors.Add(field + ".integration", "Choose the operation the step calls.");
+            return;
+        }
+
+        call.Operation = call.Operation?.Trim() ?? string.Empty;
+        errors.Required(field + ".integration.operation", call.Operation);
+        IntegrationInputs.Check(call.Inputs, field + ".integration.inputs", errors);
+        var asked = definition.Steps.SelectMany(s => s.Sections).SelectMany(s => s.Questions).Select(q => q.Code).ToHashSet(StringComparer.Ordinal);
+        Unique(call.Outputs.Select(o => o.Question), field + ".integration.outputs", errors);
+        foreach (var (output, i) in call.Outputs.Select((o, i) => (o, i)))
+        {
+            if (!Platform.Integration.JsonPaths.IsValid(output.Output))
+            {
+                errors.Add($"{field}.integration.outputs[{i}].output", "Give an output of the operation, or a path in its result.");
+            }
+
+            if (!asked.Contains(output.Question))
+            {
+                errors.Add($"{field}.integration.outputs[{i}].question", $"Question '{output.Question}' is not asked by this version.");
+            }
+        }
     }
 
     private static readonly string[] DocumentStatuses = ["ACTIVE", "EXPIRED", "SUSPENDED"];

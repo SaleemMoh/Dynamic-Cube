@@ -1,5 +1,6 @@
 using DynamicCube.Modules.Services.Changes;
 using DynamicCube.Modules.Services.Domain;
+using DynamicCube.Modules.Services.Persistence;
 using DynamicCube.Modules.Services.Runtime;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Parties;
@@ -8,6 +9,8 @@ using DynamicCube.Platform.Workflow;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DynamicCube.Modules.Services.Endpoints;
 
@@ -76,6 +79,14 @@ internal static class ServiceEndpoints
             var (content, contentType, name) = await admin.OpenFileAsync(id, fileId, ct);
             return Results.File(content, contentType, name);
         }).RequirePrivilege(ServiceResources.Requests, CatalogActions.View).WithName("GetSubmittedRequestFile");
+        // Where integration inputs can come from: the party's data (when the registry is installed) and the bank's questions.
+        group.MapGet("/admin/fill-sources", async (IServiceProvider services, ServicesDbContext context, CancellationToken ct) =>
+        {
+            var party = services.GetService<IPartyFactFields>() is { } fields ? await fields.ListAsync(ct) : [];
+            var questions = await context.Questions.AsNoTracking().OrderBy(q => q.Code)
+                .Select(q => new FactField("data." + q.Code, "إجابة: " + q.NameAr, "Answer: " + q.NameEn)).ToListAsync(ct);
+            return TypedResults.Ok(party.Concat(questions).ToList());
+        }).RequirePrivilege(ServiceResources.Config, CatalogActions.View).WithName("GetFillSources");
         group.MapGet("/admin/versions/{service}/{number:int}", async (string service, int number, RequestAdminService admin, CancellationToken ct) => TypedResults.Ok(await admin.VersionAsync(service, number, ct)))
             .RequirePrivilege(ServiceResources.Config, CatalogActions.View).WithName("GetResolvedVersion");
         group.MapPost("/admin/versions/preview", async (PreviewRequest request, RequestAdminService admin, CancellationToken ct) => TypedResults.Ok(await admin.PreviewAsync(request, ct)))

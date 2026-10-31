@@ -27,12 +27,15 @@ export interface TestState {
   nextId: number;
 }
 
-/** Steps that wait for the person trying the workflow: tasks (an action), payments (paid or not), visits (an outcome). */
+/**
+ * Steps that wait for the person trying the workflow: tasks (an action), payments (paid or not), visits (an outcome), integration
+ * calls (succeeded or failed: nothing is called in a test run).
+ */
 export function waiting(def: WorkflowDraft, state: TestState): { token: TestToken; node: NodeDef }[] {
   const byCode = new Map(def.nodes.map((n) => [n.code, n]));
   return state.tokens
     .map((token) => ({ token, node: byCode.get(token.node)! }))
-    .filter((t) => t.node && (t.node.type === 'HUMAN_TASK' || t.node.type === 'PAYMENT' || t.node.type === 'VISIT'));
+    .filter((t) => t.node && (t.node.type === 'HUMAN_TASK' || t.node.type === 'PAYMENT' || t.node.type === 'VISIT' || t.node.type === 'INTEGRATION'));
 }
 
 /** Starts a run at START with sample facts and lets it go as far as it can on its own. */
@@ -52,6 +55,7 @@ export function startRun(def: WorkflowDraft, data: Record<string, JsonValue>, le
       documents: {},
       payments: {},
       visits: {},
+      integrations: {},
       feeTotal,
     },
     log: [],
@@ -64,7 +68,10 @@ export function startRun(def: WorkflowDraft, data: Record<string, JsonValue>, le
   return advance(def, state);
 }
 
-/** The person takes an action on a task, settles a bill (`PAID` / `UNPAID`), or ends a visit (an outcome / `CANCELLED`). */
+/**
+ * The person takes an action on a task, settles a bill (`PAID` / `UNPAID`), ends a visit (an outcome / `CANCELLED`), or says how an
+ * integration call went (`SUCCEEDED` / `FAILED`).
+ */
 export function choose(def: WorkflowDraft, state: TestState, tokenId: number, choice: string): TestState {
   const next = structuredClone(state);
   const token = next.tokens.find((t) => t.id === tokenId);
@@ -77,6 +84,18 @@ export function choose(def: WorkflowDraft, state: TestState, tokenId: number, ch
     };
     next.log.push({ node: node.code, key: paid ? 'designer.test.paid' : 'designer.test.unpaid' });
     return move(def, next, token, paid ? node.next : node.expired);
+  }
+  if (node.type === 'INTEGRATION') {
+    const success = choice === 'SUCCEEDED';
+    (next.facts['integrations'] as Record<string, JsonValue>)[node.result || node.code] = { success, outputs: {} };
+    next.log.push({ node: node.code, key: success ? 'designer.test.called' : 'designer.test.callFailed', params: { operation: node.operation ?? '?' } });
+    if (!success && !node.failed) {
+      next.log.push({ node: node.code, key: 'designer.test.callStops', error: true });
+      next.failed = true;
+      next.tokens = next.tokens.filter((t) => t.id !== token.id);
+      return next;
+    }
+    return move(def, next, token, success ? node.next : node.failed);
   }
   if (node.type === 'VISIT') {
     const cancelled = choice === 'CANCELLED';
@@ -158,6 +177,7 @@ function advance(def: WorkflowDraft, state: TestState): TestState {
           break;
         case 'HUMAN_TASK':
         case 'VISIT':
+        case 'INTEGRATION':
           break;
         case 'PAYMENT': {
           const fees = Number(state.facts['feeTotal'] ?? 0);

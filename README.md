@@ -101,6 +101,11 @@ docker compose -f deploy/docker/docker-compose.yml up --build
 
 Gotenberg (PDF printing) runs with the rest; add `--profile full` to also start ClamAV (upload scanning).
 
+To update after pulling new code, run `docker compose -f deploy/docker/docker-compose.yml up -d --build` (data is
+kept). Uploads and printed files live in the `files` volume. A one-off `files-permissions` step makes it writable by the
+APIs (they run as a non-root user) before the migrator starts, and `/health/ready` reports `file-storage` if it still
+is not writable.
+
 **Demo data.** A new installation starts with the NHC Innovation classification demo (organization, company and
 branches, staff, three services, workflows, grading rules, certificate, notifications, portal content) — see
 [deploy/demo-data](deploy/demo-data/README.md) for what it holds, the sign-in accounts and how to start again

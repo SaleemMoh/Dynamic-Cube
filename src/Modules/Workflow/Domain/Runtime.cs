@@ -256,6 +256,8 @@ public static class WorkflowEventTypes
     public const string VisitRequested = "VISIT_REQUESTED";
     public const string VisitCompleted = "VISIT_COMPLETED";
     public const string VisitCancelled = "VISIT_CANCELLED";
+    public const string IntegrationCalled = "INTEGRATION_CALLED";
+    public const string IntegrationFailed = "INTEGRATION_FAILED";
 }
 
 /// <summary>Out of office: the delegate works on the delegator's assigned tasks between the dates.</summary>

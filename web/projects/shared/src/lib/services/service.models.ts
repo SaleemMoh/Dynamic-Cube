@@ -2,7 +2,7 @@ import { JsonLogicRule } from '../expressions/jsonlogic';
 import { PartyKind } from '../party/party.models';
 
 export type QuestionType = 'TEXT' | 'TEXTAREA' | 'NUMBER' | 'DATE' | 'SELECT' | 'CHECKBOX' | 'FILE';
-export type StepType = 'FORM' | 'LEVEL' | 'FEES' | 'REVIEW' | 'DECLARATION';
+export type StepType = 'FORM' | 'LEVEL' | 'FEES' | 'REVIEW' | 'DECLARATION' | 'INTEGRATION';
 export type StatusCategory =
   'DRAFT' | 'SUBMITTED' | 'IN_PROGRESS' | 'PENDING_CUSTOMER' | 'PENDING_EXTERNAL' | 'PENDING_PAYMENT' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'CLOSED';
 
@@ -28,6 +28,15 @@ export interface QuestionSnapshot {
     maxFiles?: number | null;
   };
   prefill: string | null;
+  /** Answered by an integration call (when the draft starts). */
+  integration?: { operation: string; inputs: IntegrationInput[]; output: string } | null;
+  /** False: the answer is always the filled value (shown read-only). */
+  allowManualEntry?: boolean | null;
+}
+
+/** The applicant may not type or change the answer: it is always the value filled from the party's data or an integration. */
+export function isLocked(question: QuestionSnapshot): boolean {
+  return question.allowManualEntry === false && (!!question.prefill || !!question.integration);
 }
 
 export interface QuestionUse {
@@ -58,8 +67,27 @@ export interface StepDefinition {
   sections: SectionDefinition[];
   /** Form steps: STACKED (default), TABS or ACCORDION. */
   display?: 'STACKED' | 'TABS' | 'ACCORDION' | null;
+  /** Declaration text, or what an integration step does. */
   textAr?: string | null;
   textEn?: string | null;
+  /** Integration steps: the operation called when the applicant moves on, and where its outputs go. */
+  integration?: IntegrationStep | null;
+}
+
+/** A parameter of an integration call and where its value comes from (a path such as party.identifiers.CR_NUMBER or data.X). */
+export interface IntegrationInput {
+  parameter: string;
+  from: string;
+}
+
+/** The call of an integration step. */
+export interface IntegrationStep {
+  operation: string;
+  inputs: IntegrationInput[];
+  /** An output of the operation (or a path in its result) and the question whose answer it becomes. */
+  outputs: { output: string; question: string }[];
+  /** The applicant cannot continue (or submit) until the call succeeds. */
+  required: boolean;
 }
 
 export interface ServiceLevelDefinition {

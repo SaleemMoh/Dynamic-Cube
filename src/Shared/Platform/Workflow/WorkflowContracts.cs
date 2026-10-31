@@ -67,8 +67,17 @@ public interface IServiceWorkflows
     /// <summary>The code of the service's workflow, or null when it has none.</summary>
     Task<string?> WorkflowOfAsync(string serviceCode, CancellationToken cancellationToken);
 
-    /// <summary>Gives the service its default workflow (start → completed) unless it already has one; runs in the caller's unit of work.</summary>
-    Task EnsureAsync(string serviceCode, string nameAr, string nameEn, CancellationToken cancellationToken);
+    /// <summary>
+    /// Gives the service its workflow unless it already has one: the given definition (JSON, e.g. its archetype's default
+    /// workflow) when it is valid, else the default one (start → completed). Runs in the caller's unit of work.
+    /// </summary>
+    Task EnsureAsync(string serviceCode, string nameAr, string nameEn, CancellationToken cancellationToken, string? definition = null);
+
+    /// <summary>The definition (JSON) of a workflow's latest published version, or null.</summary>
+    Task<string?> LatestDefinitionAsync(string workflowCode, CancellationToken cancellationToken);
+
+    /// <summary>What is wrong with a workflow definition (JSON), as field → message; empty when it can run.</summary>
+    IReadOnlyDictionary<string, string[]> Check(string definition);
 
     /// <summary>Whether a workflow of that code exists (owned by a service or not).</summary>
     Task<bool> ExistsAsync(string workflowCode, CancellationToken cancellationToken);

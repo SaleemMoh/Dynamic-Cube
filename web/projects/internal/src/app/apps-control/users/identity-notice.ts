@@ -15,7 +15,11 @@ import { Observable, catchError, of } from 'rxjs';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (kind(); as k) {
-      <aside class="dc-idn" [class.dc-idn--managed]="k === 'managed'" [attr.data-testid]="'identity-notice-' + k">
+      <aside
+        class="dc-idn"
+        [class.dc-idn--managed]="k === 'managed'"
+        [attr.data-testid]="'identity-notice-' + k"
+      >
         <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">{{
           k === 'managed' ? 'manage_accounts' : k === 'federated' ? 'hub' : 'info'
         }}</mat-icon>
@@ -66,9 +70,14 @@ export class IdentityNotice {
   private readonly capabilities = rxResource({
     params: () => this.audience(),
     stream: ({ params }): Observable<AccountCapabilities | null> =>
-      (params === 'portal' ? this.api.portalAccountCapabilities() : this.api.accountCapabilities()).pipe(catchError(() => of(null))),
+      (params === 'portal'
+        ? this.api.portalAccountCapabilities()
+        : this.api.accountCapabilities()
+      ).pipe(catchError(() => of(null))),
   });
-  protected readonly caps = computed(() => (this.capabilities.hasValue() ? this.capabilities.value() : null));
+  protected readonly caps = computed(() =>
+    this.capabilities.hasValue() ? this.capabilities.value() : null,
+  );
   protected readonly kind = computed<'managed' | 'federated' | 'none' | null>(() => {
     const caps = this.caps();
     if (!caps) return null;

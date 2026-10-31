@@ -98,7 +98,10 @@ export class ConfigEditor {
         f.ref
           ? this.api.list(f.ref).pipe(map(coded))
           : f.optionsUrl
-            ? this.http.get<{ code: string; nameAr: string; nameEn: string }[]>(f.optionsUrl).pipe(map(coded))
+            ? this.http.get<{ code: string; nameAr: string; nameEn: string }[]>(f.optionsUrl).pipe(
+                map(coded),
+                catchError(() => of([] as FormOption[])),
+              )
             : // A class's values; the field's own options stand in when the class has none or cannot be read.
               this.api.classDomains(f.refDomains!).pipe(
                 map((rows) => rows.map((r): FormOption => ({ value: r.code, label: { ar: r.nameAr, en: r.nameEn } }))),
@@ -108,12 +111,14 @@ export class ConfigEditor {
       );
       // Columns of nested data whose options are rows of another type or values of a class.
       const columns = fields.flatMap((f) => lookupColumns(f.structure));
-      const columnKey = (c: StructuredColumn) => (c.ref ? 'ref:' + c.ref : 'class:' + c.refDomains);
+      const columnKey = (c: StructuredColumn) => (c.ref ? 'ref:' + c.ref : c.optionsUrl ? 'url:' + c.optionsUrl : 'class:' + c.refDomains);
       const columnKeys = [...new Set(columns.map(columnKey))];
       const columnSources = columnKeys.map((key) =>
         key.startsWith('ref:')
           ? this.api.list(key.slice(4)).pipe(map(coded), catchError(() => of([] as FormOption[])))
-          : this.api.classDomains(key.slice(6)).pipe(
+          : key.startsWith('url:')
+            ? this.http.get<{ code: string; nameAr: string; nameEn: string }[]>(key.slice(4)).pipe(map(coded), catchError(() => of([] as FormOption[])))
+            : this.api.classDomains(key.slice(6)).pipe(
               map((rows) => rows.map((r): FormOption => ({ value: r.code, label: { ar: r.nameAr, en: r.nameEn } }))),
               catchError(() => of([] as FormOption[])),
             ),

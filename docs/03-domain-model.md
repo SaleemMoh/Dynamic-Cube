@@ -81,7 +81,7 @@ A Service Version contains:
 
 | Part | Description |
 |---|---|
-| **Archetype** | Issuance · Amendment · Visit Request · Attestation |
+| **Archetype** | A declared kind of service (seeded: Issuance · Amendment · Visit Request · Attestation), each with a default service template and workflow ([ADR-0037](adr/0037-archetypes-question-fill-integration-steps.md)) |
 | **Target document type** | For Amendment/Attestation: which Issued Document type it acts on (e.g. Classification Certificate) |
 | **Eligibility rules** | JSONLogic conditions over party profile, credentials, sanctions and integration results; each failure has a bilingual reason |
 | **Availability rules** | For document-based services: allowed document statuses + **date window** relative to issue/expiry (e.g. renewal = last 90 days before expiry). Drives "available now / locked" cards and countdowns in the external system |
@@ -105,16 +105,29 @@ result.
 
 - **Service** — names, archetype, who may apply (individuals, establishments), catalog listing, draft
   policy (expiry days; on a new version drafts *continue* or *restart*), request number prefix.
+- **Archetype** `svc.archetype` — a declared kind of service (code, names, description, icon, order) with a default
+  **service template** (a version definition using shared questions only) and a default **workflow** (a workflow
+  definition, or none for straight-through). A new service of the archetype opens its template in the Service Builder,
+  and gets the archetype's workflow when it is first published. Either can be copied from an existing service
+  (*template from* / *workflow from*). Seeded: `ISSUANCE`, `AMENDMENT`, `VISIT_REQUEST` (review by role
+  `SERVICE_REVIEWER`) and `ATTESTATION` (no review). An archetype in use cannot be deleted.
 - **Question bank** — typed questions (text, long text, number, date, choice with options or an Apps
   Control LOV with a parent question, yes/no, file upload), limits (min, max, length, pattern; for files the
-  accepted extensions, largest size up to 25 MB and, with *multiple*, how many files) and a *prefill* path
-  into the applicant's facts (`party.identifiers.CR_NUMBER`, `party.profile.CR_CITY`).
+  accepted extensions, largest size up to 25 MB and, with *multiple*, how many files) and how it is **filled**:
+  *none*, *from the party* (a field picked from the party registry's list: `party.identifiers.CR_NUMBER`,
+  `party.profile.CR_CITY`, …) or *through an integration* (an Integration Manager operation, its inputs taken from
+  the party, the applicant or other answers, and the output to use). *Allow manual entry* off locks the answer: the
+  applicant sees it read-only and the server takes it from the source again on every save.
+- **Shared and service-level questions** — a question is shared (every service may use it) or belongs to one service
+  (`serviceCode`); a version may use shared questions and its own service's, never another service's. The Service
+  Builder's *New question for this service* creates one.
 - **Request files** — files uploaded to a draft for a file question (stored through the file abstraction, with
   name, size, SHA-256 and the content type of the extension); the answer is the list of their ids. A file
   required only for some answers is a file question with *required-when* (and usually *visible-when*) on the
   other answer. Staff open the files of submitted requests (ADR-0034).
 - **Service version** `SERVICE/N` — the definition: levels (SLA working days), steps (`FORM`, `LEVEL`,
-  `FEES`, `REVIEW`, `DECLARATION`), sections shown by JSONLogic over the answers, question uses
+  `FEES`, `INTEGRATION`, `REVIEW`, `DECLARATION`; an integration step calls an operation when the applicant moves on,
+  shows its result, can copy its outputs into answers, and when *required* stops the applicant on a failure), sections shown by JSONLogic over the answers, question uses
   (required, required-when, visible-when, read-only), eligibility and validation rules with bilingual
   messages, fees (fixed, formula or bracket table by any value, VAT included or added). Numbers are
   consecutive; publishing stores the version with **snapshots of its questions**, and afterwards only
@@ -239,7 +252,7 @@ once published; instances stay on their version.
 | **Human task** | Assigned by routing target; offers configured actions |
 | **Parallel split / join** | Concurrent branches (e.g. governance, projects, financial reviews); join = all / any / N |
 | **Exclusive gateway** | Route by JSONLogic condition |
-| **Integration** | Inquire or push via an Integration Manager operation |
+| **Integration** | Inquire or push via an Integration Manager operation (implemented: `INTEGRATION`, see below) |
 | **Decision** | Invoke the Decisions module |
 | **Fee / payment wait** | Create bill, wait for payment confirmation |
 | **Visit** | Schedule and wait for visit outcome (§3.6) |
@@ -255,6 +268,13 @@ waits; paid → `next`, expired or cancelled → `expired` (required), nothing t
 the facts as `payments.{step}` (number, provider number, total, status). Bills, providers and notifications are
 described in [ADR-0022](adr/0022-payments.md): a bill has the platform's number (`BILL-YYYY-000001`) and the
 provider's, lines with net, VAT and total, a due date, a status (PENDING, PAID, EXPIRED, CANCELLED) and a history.
+
+**Integration step (`INTEGRATION`):** calls the step's Integration Manager `operation` with `parameters` (each a
+JSONLogic rule over the facts, e.g. `data.LICENSE_NO`, `party.identifiers.CR_NUMBER`) and keeps the outcome as
+`integrations.{result}` (default: the step's code): `success`, `code`, `messageAr`, `messageEn`, `outputs`, `data`.
+Success → `next`; failure → `failed`, or, without a `failed` route, the step stops with the provider's message.
+In the designer: an *Integration call* step with two exits (✓ success, ✗ failed); the test run asks whether the call
+succeeded.
 
 ### Action catalog (configurable per human task)
 

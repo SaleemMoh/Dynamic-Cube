@@ -44,7 +44,14 @@ import {
   usedQuestions,
 } from './builder-model';
 
-const STEP_ICONS: Record<StepType, string> = { FORM: 'dynamic_form', LEVEL: 'workspace_premium', FEES: 'payments', REVIEW: 'fact_check', DECLARATION: 'gavel' };
+const STEP_ICONS: Record<StepType, string> = {
+  FORM: 'dynamic_form',
+  LEVEL: 'workspace_premium',
+  FEES: 'payments',
+  REVIEW: 'fact_check',
+  DECLARATION: 'gavel',
+  INTEGRATION: 'sync_alt',
+};
 const CODE = /^[A-Z][A-Z0-9_-]{0,50}$/;
 
 /**
@@ -88,10 +95,13 @@ export class FormTab {
   /** Ids of every question list, so a question can be dragged into any section. */
   protected readonly listIds = computed(() => ['bank', ...this.steps().flatMap((s, i) => s.sections.map((_, j) => `q-${i}-${j}`))]);
   protected readonly used = computed(() => new Set(usedQuestions(this.store.definition())));
+  /** Shared bank questions and this service's own questions (another service's are not offered). */
   protected readonly bank = computed(() => {
     const term = this.search().trim().toLowerCase();
+    const service = this.store.service();
     return this.refs
       .questions()
+      .filter((q) => !q.serviceCode || q.serviceCode === service)
       .filter((q) => !term || q.code.toLowerCase().includes(term) || q.label.ar.includes(term) || q.label.en.toLowerCase().includes(term));
   });
   /** What section and question rules can read: the answers, by question code. */
@@ -241,13 +251,56 @@ export class FormTab {
     await this.editQuestion(null);
   }
 
-  protected async editQuestion(code: string | null): Promise<void> {
+  /** A new question of this service alone (a service-level question). */
+  protected async newServiceQuestion(): Promise<void> {
+    await this.editQuestion(null, { serviceCode: this.store.service() });
+  }
+
+  protected async editQuestion(code: string | null, defaults?: Record<string, unknown>): Promise<void> {
     const type = SERVICE_SECTIONS.flatMap((s) => s.types).find((t) => t.entityType === 'svc.question');
     if (!type) return;
     const row = code ? ((await firstValueFrom(this.refs.row(code))) ?? null) : null;
     const saved = await firstValueFrom(
-      this.dialog.open<ConfigEditor, ConfigEditorData, boolean>(ConfigEditor, { data: { type, row }, width: '48rem', maxWidth: '95vw' }).afterClosed(),
+      this.dialog
+        .open<ConfigEditor, ConfigEditorData, boolean>(ConfigEditor, { data: { type, row, defaults }, width: '48rem', maxWidth: '95vw' })
+        .afterClosed(),
     );
     if (saved) this.refs.loadQuestions();
+  }
+
+  /** Questions the version asks (where an integration step's outputs can go). */
+  protected readonly askedQuestions = computed(() => usedQuestions(this.store.definition()));
+
+  protected integration(index: number, change: Partial<NonNullable<StepDefinition['integration']>>): void {
+    const current = this.store.definition().steps[index]?.integration ?? { operation: '', inputs: [], outputs: [], required: true };
+    this.step(index, { integration: { ...current, ...change } });
+  }
+
+  protected addInput(index: number): void {
+    const current = this.store.definition().steps[index]?.integration?.inputs ?? [];
+    this.integration(index, { inputs: [...current, { parameter: '', from: '' }] });
+  }
+
+  protected setInput(index: number, row: number, change: Partial<{ parameter: string; from: string }>): void {
+    const inputs = (this.store.definition().steps[index]?.integration?.inputs ?? []).map((x, i) => (i === row ? { ...x, ...change } : x));
+    this.integration(index, { inputs });
+  }
+
+  protected removeInput(index: number, row: number): void {
+    this.integration(index, { inputs: (this.store.definition().steps[index]?.integration?.inputs ?? []).filter((_, i) => i !== row) });
+  }
+
+  protected addOutput(index: number): void {
+    const current = this.store.definition().steps[index]?.integration?.outputs ?? [];
+    this.integration(index, { outputs: [...current, { output: '', question: '' }] });
+  }
+
+  protected setOutput(index: number, row: number, change: Partial<{ output: string; question: string }>): void {
+    const outputs = (this.store.definition().steps[index]?.integration?.outputs ?? []).map((x, i) => (i === row ? { ...x, ...change } : x));
+    this.integration(index, { outputs });
+  }
+
+  protected removeOutput(index: number, row: number): void {
+    this.integration(index, { outputs: (this.store.definition().steps[index]?.integration?.outputs ?? []).filter((_, i) => i !== row) });
   }
 }

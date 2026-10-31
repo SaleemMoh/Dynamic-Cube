@@ -70,6 +70,12 @@ public enum StepType
 
     /// <summary>A pledge the applicant must accept before submitting.</summary>
     Declaration,
+
+    /// <summary>
+    /// Calls an Integration Manager operation when the applicant moves on (e.g. verifying the commercial registration) and
+    /// puts its outputs into answers; a required one must succeed to continue.
+    /// </summary>
+    Integration,
 }
 
 /// <summary>How a form step shows its sections.</summary>
@@ -108,10 +114,35 @@ public sealed class StepDefinition
     /// <summary>Form steps: how their sections are laid out (default: one below the other).</summary>
     public SectionDisplay? Display { get; set; }
 
-    /// <summary>Declaration text.</summary>
+    /// <summary>Declaration text, or what an integration step does (shown to the applicant).</summary>
     public string? TextAr { get; set; }
 
     public string? TextEn { get; set; }
+
+    /// <summary>Integration steps: the operation called and where its outputs go.</summary>
+    public IntegrationStepDefinition? Integration { get; set; }
+}
+
+/// <summary>The call of an integration step: operation, inputs from the request, outputs into answers.</summary>
+public sealed class IntegrationStepDefinition
+{
+    public string Operation { get; set; } = string.Empty;
+
+    public List<Domain.IntegrationInput> Inputs { get; set; } = [];
+
+    public List<IntegrationOutput> Outputs { get; set; } = [];
+
+    /// <summary>The applicant cannot continue (or submit) until the call succeeds.</summary>
+    public bool Required { get; set; } = true;
+}
+
+/// <summary>An output of an integration step and the question whose answer it becomes.</summary>
+public sealed class IntegrationOutput
+{
+    /// <summary>An output of the operation (its configured name) or a path in its result.</summary>
+    public string Output { get; set; } = string.Empty;
+
+    public string Question { get; set; } = string.Empty;
 }
 
 /// <summary>

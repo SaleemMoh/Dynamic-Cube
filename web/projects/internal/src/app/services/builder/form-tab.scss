@@ -177,3 +177,24 @@
 .cdk-drag-placeholder {
   opacity: 0.35;
 }
+
+.dc-ft__sub {
+  margin: 12px 0 4px;
+  font-size: 14px;
+}
+
+.dc-ft__pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) 40px;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.dc-ft__own {
+  margin-inline-start: 6px;
+  padding: 0 6px;
+  border-radius: 8px;
+  background: var(--dga-primary-100, #fdf3d7);
+  font-size: 11px;
+}

@@ -127,6 +127,21 @@ internal static partial class DefinitionValidator
 
                 Target(node.Next, field + ".next", nodes, errors, required: true);
                 break;
+            case NodeType.Integration:
+                errors.Required(field + ".operation", node.Operation);
+                if (node.Result is not null && !ResultName().IsMatch(node.Result))
+                {
+                    errors.Add(field + ".result", "Use letters, digits and _.");
+                }
+
+                foreach (var (name, rule) in node.Parameters)
+                {
+                    CheckRule(rule, $"{field}.parameters.{name}", evaluator, errors);
+                }
+
+                Target(node.Next, field + ".next", nodes, errors, required: true);
+                Target(node.Failed, field + ".failed", nodes, errors, required: false);
+                break;
             case NodeType.Payment:
                 CheckRule(node.Amount, field + ".amount", evaluator, errors);
                 if (node.VatRate is < 0 or > 1)
@@ -370,7 +385,7 @@ internal static partial class DefinitionValidator
     }
 
     internal static IEnumerable<string> Targets(NodeDefinition node) =>
-        new[] { node.Next, node.Default, node.Expired, node.Cancelled }
+        new[] { node.Next, node.Default, node.Expired, node.Cancelled, node.Failed }
             .Concat(node.Branches)
             .Concat(node.Outcomes.Values)
             .Concat(node.Routes.Select(r => r.To))

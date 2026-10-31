@@ -120,14 +120,22 @@ public sealed partial class AccessResolver(
             .Select(m => m.Code);
         privilegeRows.AddRange(menuScreens.Select(code => new { Code = code, Actions = new List<string> { PrivilegeActions.View } }));
 
-        // Personal privileges: screens and actions given to this person alone.
-        privilegeRows.AddRange(await context.UserPrivileges.AsNoTracking()
-            .Where(p => p.UserId == user.Id && p.Resource!.IsActive)
-            .Select(p => new { p.Resource!.Code, p.Actions })
-            .ToListAsync(cancellationToken));
+        // Personal privileges in their period: screens and actions given to this person alone, and actions taken away from
+        // them (which win over what roles give).
+        var personal = await context.UserPrivileges.AsNoTracking()
+            .Where(p => p.UserId == user.Id && p.Resource!.IsActive
+                && (p.EffectiveFrom == null || p.EffectiveFrom <= today) && (p.EffectiveTo == null || p.EffectiveTo >= today))
+            .Select(p => new { p.Resource!.Code, p.Actions, p.DeniedActions })
+            .ToListAsync(cancellationToken);
+        privilegeRows.AddRange(personal.Select(p => new { p.Code, p.Actions }));
+        var denied = personal.Where(p => p.DeniedActions.Count > 0)
+            .GroupBy(p => p.Code, StringComparer.Ordinal)
+            .ToDictionary(g => g.Key, g => g.SelectMany(p => p.DeniedActions).ToHashSet(StringComparer.Ordinal), StringComparer.Ordinal);
         var privileges = privilegeRows
             .GroupBy(p => p.Code, StringComparer.Ordinal)
-            .ToDictionary(g => g.Key, g => (IReadOnlySet<string>)g.SelectMany(p => p.Actions).ToHashSet(StringComparer.Ordinal), StringComparer.Ordinal);
+            .Select(g => (g.Key, Actions: g.SelectMany(p => p.Actions).Where(a => !(denied.TryGetValue(g.Key, out var off) && off.Contains(a))).ToHashSet(StringComparer.Ordinal)))
+            .Where(p => p.Actions.Count > 0)
+            .ToDictionary(p => p.Key, p => (IReadOnlySet<string>)p.Actions, StringComparer.Ordinal);
 
         var assignments = await context.UserAssignments.AsNoTracking()
             .Where(a => a.UserId == user.Id && a.OrgUnit!.IsActive

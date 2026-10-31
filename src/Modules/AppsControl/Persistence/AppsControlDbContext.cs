@@ -184,6 +184,7 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
             b.HasOne(e => e.Resource).WithMany().HasForeignKey(e => e.ResourceId).OnDelete(DeleteBehavior.Restrict);
             b.Property(e => e.CompanyCode).HasMaxLength(100).IsRequired();
             b.Property(e => e.Actions).HasColumnType("text[]");
+            b.Property(e => e.DeniedActions).HasColumnType("text[]");
             b.HasMany(e => e.Grants).WithOne().HasForeignKey(g => g.UserPrivilegeId).OnDelete(DeleteBehavior.Cascade);
         });
         modelBuilder.Entity<UserPrivilegeGrant>(b =>

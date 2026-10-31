@@ -13,8 +13,16 @@ import {
   TranslatePipe,
 } from '@dynamic-cube/shared';
 import { catchError, forkJoin, of } from 'rxjs';
-import { ALL, AccessRow, PersonalPrivilege, departmentRoles, pickWithAll } from './access-model';
-import { PersonalTree } from './personal-tree';
+import {
+  ALL,
+  AccessRow,
+  HeldRole,
+  PersonalPrivilege,
+  RoleContents,
+  departmentRoles,
+  pickWithAll,
+} from './access-model';
+import { PersonalTree, RoleSource } from './personal-tree';
 
 /**
  * A person's access (ADR-0036), the Access tab of the user editor: roles by company and branches ("all" is an option
@@ -152,6 +160,7 @@ import { PersonalTree } from './personal-tree';
         [companies]="companies()"
         [resources]="lists.value().resources"
         [lovs]="lists.value().lovs"
+        [roleSource]="roleSource()"
         [readonly]="readonly()"
       />
     }
@@ -211,6 +220,7 @@ export class UserAccess {
         units: list('apps.org-unit'),
         resources: list('apps.resource'),
         lovs: list('apps.lov'),
+        menus: list('apps.menu'),
       });
     },
   });
@@ -225,6 +235,50 @@ export class UserAccess {
           lists.branches,
         )
       : [];
+  });
+
+  /** Roles the person holds as edited here (and from their departments), with where they hold them. */
+  private readonly held = computed<HeldRole[]>(
+    () => [
+      ...this.rows().flatMap((row) =>
+        row.company ? row.roles.map((roleCode) => ({ roleCode, company: row.company! })) : [],
+      ),
+      ...this.department().flatMap((d) =>
+        d.roles.map((roleCode) => ({
+          roleCode,
+          company: (d.branch?.['companyCode'] as string | undefined) ?? ALL,
+        })),
+      ),
+    ],
+    { equal: (a, b) => JSON.stringify(a) === JSON.stringify(b) },
+  );
+  /** Full rows of the held roles (lists leave out their contents). */
+  private readonly roleRows = rxResource({
+    params: () => [...new Set(this.held().map((h) => h.roleCode))].sort(),
+    stream: ({ params }) =>
+      params.length
+        ? forkJoin(
+            params.map((code) => this.api.get('apps.role', code).pipe(catchError(() => of(null)))),
+          )
+        : of([] as (ConfigRow | null)[]),
+  });
+  protected readonly roleSource = computed<RoleSource | null>(() => {
+    const lists = this.lists.value();
+    const rows = this.roleRows.value();
+    if (!lists || !rows) return null;
+    return {
+      held: this.held(),
+      roles: new Map(
+        rows
+          .filter((r): r is ConfigRow => !!r)
+          .map((r) => [r.code, r as unknown as RoleContents] as const),
+      ),
+      menuScreens: new Map(
+        lists.menus
+          .filter((m) => m['resourceCode'])
+          .map((m) => [m.code, m['resourceCode'] as string] as const),
+      ),
+    };
   });
 
   protected name(row: ConfigRow): LocalizedText {

@@ -18,7 +18,8 @@ export interface QuestionRef {
 }
 
 /**
- * What the side panel offers to pick from: roles, employees, rule sets, document types, payment providers, visit types, and the
+ * What the side panel offers to pick from: roles, employees, rule sets, document types, payment providers, visit types, integration
+ * operations, and the
  * service's levels and questions (from its latest version). A list that cannot be read is simply empty.
  */
 @Injectable()
@@ -41,6 +42,7 @@ export class DesignerReferences {
   private readonly userRows = this.list('apps.user');
   private readonly orgUnitRows = this.list('apps.org-unit');
   private readonly positionRows = this.list('apps.position');
+  private readonly operationRows = this.list('integ.operation');
   private readonly service = signal<string | null>(null);
   /** The step types as class WF_STEP_TYPE (Class/Domain) names them: active ones, in their order. */
   private readonly stepRows = toSignal(this.api.classDomains('WF_STEP_TYPE').pipe(catchError(() => of([] as DomainItem[]))), {
@@ -80,6 +82,14 @@ export class DesignerReferences {
   readonly visitTypes = computed(() => options(this.visitTypeRows()));
   readonly orgUnits = computed(() => options(this.orgUnitRows().filter((u) => u.isActive !== false)));
   readonly positions = computed(() => options(this.positionRows().filter((p) => p.isActive !== false)));
+  readonly operations = computed(() => options(this.operationRows().filter((o) => o.isActive !== false)));
+
+  /** An Integration Manager operation's parameter and output names. */
+  operation(code: string | null | undefined): { parameters: string[]; outputs: string[] } {
+    const row = this.operationRows().find((r) => r.code === code);
+    const names = (key: string) => ((row?.[key] as { name: string }[] | undefined) ?? []).map((x) => x.name).filter(Boolean);
+    return { parameters: names('parameters'), outputs: names('outputs') };
+  }
 
   /** A visit type's outcomes and form fields, for routing on its result. */
   visitType(code: string | null | undefined): { outcomes: RefOption[]; fields: QuestionRef[] } {

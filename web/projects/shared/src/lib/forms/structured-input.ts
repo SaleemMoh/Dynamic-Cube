@@ -34,13 +34,15 @@ export interface StructuredColumn {
   ref?: string;
   /** The options are the values of a class, filled in by the screen that shows the field. */
   refDomains?: string;
+  /** The options come from an API returning `{ code, nameAr, nameEn }[]`, filled in by the screen that shows the field. */
+  optionsUrl?: string;
 }
 
 /** Columns of a shape (nested tables included) whose options come from `ref` or `refDomains`. */
 export function lookupColumns(shape: StructuredShape | undefined): StructuredColumn[] {
   if (!shape) return [];
   const own = shape.kind === 'table' ? shape.columns : shape.kind === 'object' ? shape.properties : [];
-  return own.flatMap((c) => [...(c.ref || c.refDomains ? [c] : []), ...(c.columns ? lookupColumns({ kind: 'table', columns: c.columns }) : [])]);
+  return own.flatMap((c) => [...(c.ref || c.refDomains || c.optionsUrl ? [c] : []), ...(c.columns ? lookupColumns({ kind: 'table', columns: c.columns }) : [])]);
 }
 
 /** The shape with the options of its lookup columns filled in (by `ref` or `refDomains`). */
@@ -48,7 +50,7 @@ export function withColumnOptions(shape: StructuredShape, options: (column: Stru
   const fill = (columns: StructuredColumn[]): StructuredColumn[] =>
     columns.map((c) => ({
       ...c,
-      options: (c.ref || c.refDomains ? options(c) : undefined) ?? c.options,
+      options: (c.ref || c.refDomains || c.optionsUrl ? options(c) : undefined) ?? c.options,
       columns: c.columns ? fill(c.columns) : undefined,
     }));
   return shape.kind === 'table'

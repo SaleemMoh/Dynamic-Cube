@@ -48,6 +48,15 @@ services:
     ports:
       - "8080:8080"
 
+  # Gives the files volume to the app user (uid 1654 of the .NET images). Volumes created before the images made the
+  # folder theirs belong to root, so uploads and issued documents could not be written ("the file could not be uploaded").
+  files-permissions:
+    image: busybox:1.37
+    command: ["sh", "-c", "chown -R 1654:1654 /data/files"]
+    volumes:
+      - files:/data/files
+    restart: "no"
+
   migrator:
     build:
       context: ../..
@@ -65,6 +74,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      files-permissions:
+        condition: service_completed_successfully
     restart: "no"
 
   internal-api:

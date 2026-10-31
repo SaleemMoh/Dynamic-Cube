@@ -21,6 +21,8 @@ RUN printf '#!/bin/sh\nexec dotnet /app/%s "$@"\n' "$ASSEMBLY" > /entrypoint.sh 
 ENV ASPNETCORE_HTTP_PORTS=8080 \
     DOTNET_RUNNING_IN_CONTAINER=true \
     FileStorage__RootPath=/data/files
+# Uploaded and issued files: the folder belongs to the app user, so a new volume mounted there is writable.
+RUN mkdir -p /data/files && chown "$APP_UID" /data/files
 # Non-root user provided by the .NET base images.
 USER $APP_UID
 EXPOSE 8080

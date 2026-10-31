@@ -62,6 +62,10 @@ public sealed partial class ValidationErrors
         }
     }
 
+    /// <summary>The problems as field → messages.</summary>
+    public IReadOnlyDictionary<string, string[]> ToDictionary() =>
+        _errors.ToDictionary(e => e.Key, e => e.Value.ToArray(), StringComparer.Ordinal);
+
     public void ThrowIfAny()
     {
         if (HasErrors)
