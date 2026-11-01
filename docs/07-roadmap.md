@@ -564,7 +564,8 @@ The owner chose to start Phase 4 with the report builder and come back to Phase 
   themselves on both; colour by a column) in a **visual chart designer** (drag fields onto the axes, live preview). NHC demo: requests by service, status and
   branch; overdue tasks; certificates by grade; abandoned drafts by step; a weekly delivery of overdue tasks to the
   branch managers.
-  Later (round 2): dashboards of several reports, charts in the Excel export, PDF through the print template designer, drill-down from a group to
+  The Excel file carries the charts as native Excel charts beside their data.
+  Later (round 2): dashboards of several reports, PDF through the print template designer, drill-down from a group to
   its rows, conditional totals (e.g. approved of all), report subscriptions chosen by users themselves.
 - Pixel-perfect reports.
 - Public Apps Control API for other products (the partner API is ADR-0042).

@@ -122,7 +122,8 @@ internal sealed partial class ReportScheduler(
             var arabic = schedule.Language != "EN";
             var (result, inputs) = await reports.ResultAsync(report, schedule.FilterValues, viewer, resource, ReportExports.MaxRows, 0, withSummary: true, cancellationToken);
             var at = options.Value.Now(clock);
-            var file = ReportExports.Write(report, result, inputs, schedule.Format, arabic, at);
+            var charts = schedule.Format == ReportFormats.Csv ? [] : await reports.ChartsAsync(report, inputs, viewer, resource, cancellationToken);
+            var file = ReportExports.Write(report, result, inputs, schedule.Format, arabic, at, charts);
             var name = arabic ? report.NameAr : report.NameEn;
             var person = arabic ? member.NameAr : member.NameEn;
             var rows = result.Rows.Count.ToString(CultureInfo.InvariantCulture);

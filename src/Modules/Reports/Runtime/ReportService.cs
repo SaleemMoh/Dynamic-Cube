@@ -178,12 +178,15 @@ internal sealed class ReportService(ReportsDbContext context, IReportQueries que
         return await ChartAsync(request.Report.Query?.ToJsonString() ?? "{}", chart, values, ReportViewer.Current, null, cancellationToken);
     }
 
-    /// <summary>The report's rows (up to <see cref="ReportExports.MaxRows"/>) as Excel or CSV, in the user's language.</summary>
+    /// <summary>The report's rows (up to <see cref="ReportExports.MaxRows"/>) as Excel (with its charts) or CSV, in the user's language.</summary>
     public async Task<ReportFile> ExportAsync(string code, Dictionary<string, string?>? filters, string format, bool arabic, CancellationToken cancellationToken)
     {
         var report = await OpenAsync(code, "EXPORT", cancellationToken);
-        var (result, inputs) = await ResultAsync(report, filters, ReportViewer.Current, ReportResources.Of(report.Code), ReportExports.MaxRows, 0, withSummary: true, cancellationToken);
-        return ReportExports.Write(report, result, inputs, string.Equals(format, ReportFormats.Csv, StringComparison.OrdinalIgnoreCase) ? ReportFormats.Csv : ReportFormats.Xlsx, arabic, options.Value.Now(clock));
+        var resource = ReportResources.Of(report.Code);
+        var (result, inputs) = await ResultAsync(report, filters, ReportViewer.Current, resource, ReportExports.MaxRows, 0, withSummary: true, cancellationToken);
+        var csv = string.Equals(format, ReportFormats.Csv, StringComparison.OrdinalIgnoreCase);
+        var charts = csv ? [] : await ChartsAsync(report, inputs, ReportViewer.Current, resource, cancellationToken);
+        return ReportExports.Write(report, result, inputs, csv ? ReportFormats.Csv : ReportFormats.Xlsx, arabic, options.Value.Now(clock), charts);
     }
 
     public async Task<SavedFilterView> SaveFilterAsync(string code, SaveFilterRequest request, CancellationToken cancellationToken)
@@ -240,11 +243,7 @@ internal sealed class ReportService(ReportsDbContext context, IReportQueries que
         var size = Math.Clamp(request.PageSize ?? report.PageSize, 1, 500);
         var page = Math.Max(1, request.Page);
         var (result, inputs) = await ResultAsync(report, request.Filters, viewer, resource, size, (page - 1) * size, withSummary: true, cancellationToken);
-        var charts = new List<ChartData>();
-        foreach (var chart in report.Charts)
-        {
-            charts.Add(await ChartAsync(report.Query, chart, inputs, viewer, resource, cancellationToken));
-        }
+        var charts = await ChartsAsync(report, inputs, viewer, resource, cancellationToken);
 
         return new ReportRun(
             [.. result.Columns.Select(col => report.Columns.FirstOrDefault(d => d.Name == col.Name) is { } def
@@ -259,6 +258,18 @@ internal sealed class ReportService(ReportsDbContext context, IReportQueries que
             [.. report.Tiles.Select(t => new TileValue(t.Name, t.LabelAr, t.LabelEn, result.Tiles?[t.Name]?.DeepClone()))],
             charts,
             inputs);
+    }
+
+    /// <summary>Every chart of the report for the viewer (the viewer's page, the Excel export and scheduled files).</summary>
+    internal async Task<IReadOnlyList<ChartData>> ChartsAsync(ReportDefinition report, IReadOnlyDictionary<string, string?> inputs, ReportViewer viewer, string? resource, CancellationToken cancellationToken)
+    {
+        var charts = new List<ChartData>();
+        foreach (var chart in report.Charts)
+        {
+            charts.Add(await ChartAsync(report.Query, chart, inputs, viewer, resource, cancellationToken));
+        }
+
+        return charts;
     }
 
     /// <summary>A chart's rows for the viewer: the filtered rows grouped by its axes (or as they are), in its order, up to its limit.</summary>

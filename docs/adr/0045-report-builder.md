@@ -66,6 +66,11 @@ values and public endpoints (ADR-0042).
   with its totals row, and
   **export** to Excel (title, filters used, header, rows, totals, right-to-left for Arabic, auto-filter) or CSV (UTF-8
   with BOM; values starting with `=`, `+`, `-`, `@` are guarded against formula injection) — export needs EXPORT.
+  The Excel file (downloaded or sent on a schedule) also holds the **charts**, on a sheet of their own: each chart's
+  data as the viewer draws it (the points, one column per series) with a **native Excel chart** beside it — bars up or
+  across, lines, areas, points, a pie, series stacked, in the app's colours, titled and with axis titles — so it can be
+  edited and redrawn in Excel. A line or area grouped down the Y axis, which Excel cannot draw, becomes horizontal
+  bars; points over categories become a line chart without lines. CSV files hold the rows only.
 - **Designer.** Tabs for the data, columns and totals, filters, tiles, charts (the chart designer) and details, with problems counted per
   tab, and a **preview** running the unsaved report with the designer's own access (`/admin/preview`).
 - **Scheduled delivery** (`rpt.schedule`, resource `reports.schedules`): a report, daily / weekly (a day) / monthly
@@ -87,7 +92,7 @@ values and public endpoints (ADR-0042).
   role like any screen.
 - Reports read only registered tables and views; a table must be registered (with its columns) before a report reads it.
 - Reports are read-only and bounded (timeout, row caps); an export stops at 50,000 rows.
-- Not yet: dashboards of several reports, PDF output, drilling down from a group to its rows, conditional totals (such
+- Not yet: dashboards of several reports, PDF output (the Excel file carries the charts), drilling down from a group to its rows, conditional totals (such
   as "approved of all"), totals of totals across groups other than the totals row, user-chosen subscriptions.
 - The NHC demo (`22-reports.json`) registers the requests, services, workflow tasks and document values tables, a list
   of services, four reports (requests by service, status and branch; overdue tasks; certificates by grade; abandoned

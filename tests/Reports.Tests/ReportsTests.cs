@@ -1,6 +1,8 @@
 using System.Text;
 using System.Text.Json.Nodes;
 using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Validation;
 using DynamicCube.Modules.AppsControl.Changes;
 using DynamicCube.Modules.AppsControl.Persistence;
 using DynamicCube.Modules.Reports.Changes;
@@ -279,6 +281,76 @@ public sealed class ReportsTests(DatabaseFixture fixture) : IAsyncLifetime
         }), ChangeOperation.Update);
         var legacy = (await AsAdmin(r => r.ViewAsync(_report, CancellationToken.None))).Charts.ShouldHaveSingleItem();
         (legacy.Type, legacy.X.Single().Column, legacy.Y.Single().Column, legacy.Y.Single().Aggregate).ShouldBe((ReportChartTypes.Pie, "s.parent_code", "s.staff", ReportAggregates.Sum));
+    }
+
+    [Fact]
+    public async Task The_excel_file_holds_each_chart_as_a_native_chart_beside_its_data()
+    {
+        await PublishAsync(Payload(p =>
+        {
+            p.Charts[0].Width = ReportChartWidths.Full;
+            p.Charts.Add(new ReportChartDef
+            {
+                Name = "across",
+                TitleAr = "أفقي",
+                TitleEn = "Across",
+                Type = ReportChartTypes.Bar,
+                Y = [new ReportChartField { Column = "s.parent_code", LabelEn = "Parent" }],
+                X = [new ReportChartField { Column = "s.staff", Aggregate = ReportAggregates.Avg, LabelEn = "Average" }],
+            });
+            p.Charts.Add(new ReportChartDef
+            {
+                Name = "points",
+                TitleAr = "نقاط",
+                TitleEn = "Points",
+                Type = ReportChartTypes.Scatter,
+                X = [new ReportChartField { Column = "s.staff" }],
+                Y = [new ReportChartField { Column = "s.staff" }],
+                Series = new ReportChartField { Column = "s.parent_code" },
+            });
+            p.Charts.Add(new ReportChartDef
+            {
+                Name = "pie",
+                TitleAr = "دائري",
+                TitleEn = "Pie",
+                Type = ReportChartTypes.Pie,
+                X = [new ReportChartField { Column = "s.parent_code" }],
+                Y = [new ReportChartField { Aggregate = ReportAggregates.Count }],
+            });
+        }));
+
+        var excel = await AsAdmin(r => r.ExportAsync(_report, null, "xlsx", arabic: false, CancellationToken.None));
+        using (var book = new XLWorkbook(new MemoryStream(excel.Content)))
+        {
+            book.Worksheets.Select(w => w.Name).ShouldBe(["Report", "Charts"]);
+            var sheet = book.Worksheet("Charts");
+            sheet.Cell(1, 1).GetString().ShouldBe("Staff by parent");
+            sheet.Cell(2, 1).GetString().ShouldBe("Parent");
+            sheet.Cell(2, 2).GetString().ShouldBe("Staff");
+            sheet.Cell(3, 1).GetString().ShouldBe("ICT");
+            sheet.Cell(3, 2).GetValue<double>().ShouldBe(60);
+        }
+
+        using var document = SpreadsheetDocument.Open(new MemoryStream(excel.Content), isEditable: false);
+        var charts = document.WorkbookPart!.WorksheetParts.SelectMany(w => w.DrawingsPart?.ChartParts ?? []).ToList();
+        charts.Count.ShouldBe(4);
+        var xml = charts.Select(c => c.ChartSpace.OuterXml).ToList();
+        xml[0].ShouldContain("<c:barDir val=\"col\" />");
+        xml[0].ShouldContain("'Charts'!$B$3:$B$4");
+        xml[1].ShouldContain("<c:barDir val=\"bar\" />", customMessage: "grouped down the Y axis: horizontal bars");
+        xml[2].ShouldContain("<c:scatterChart>");
+        xml[2].ShouldContain("ICT", customMessage: "a series per parent");
+        xml[3].ShouldContain("<c:pieChart>");
+
+        // The charts and their drawing follow the Open XML schema.
+        var problems = new OpenXmlValidator().Validate(document, TestContext.Current.CancellationToken)
+            .Where(e => e.Part is ChartPart or DrawingsPart)
+            .Select(e => $"{e.Part?.Uri} {e.Path?.XPath}: {e.Description}")
+            .ToList();
+        problems.ShouldBeEmpty();
+
+        var csv = await AsAdmin(r => r.ExportAsync(_report, null, "csv", arabic: false, CancellationToken.None));
+        Encoding.UTF8.GetString(csv.Content).ShouldNotContain("Points", customMessage: "a CSV file holds the rows only");
     }
 
     [Fact]

@@ -11,17 +11,18 @@ namespace DynamicCube.Modules.Reports.Runtime;
 /// <summary>A file of a report: its name, media type and content.</summary>
 public sealed record ReportFile(string FileName, string ContentType, byte[] Content);
 
-/// <summary>Writes a report's rows as Excel (a title, the filters, the columns, the totals row; right to left in Arabic) or CSV.</summary>
+/// <summary>Writes a report's rows as Excel (a title, the filters, the columns, the totals row; right to left in Arabic; its charts on a sheet of their own) or CSV.</summary>
 internal static class ReportExports
 {
     public const int MaxRows = 50_000;
 
-    public static ReportFile Write(ReportDefinition report, ReportResult result, IReadOnlyDictionary<string, string?> filters, string format, bool arabic, DateTimeOffset at)
+    /// <summary>The report as a file; an Excel file also holds the report's charts (native charts beside their data).</summary>
+    public static ReportFile Write(ReportDefinition report, ReportResult result, IReadOnlyDictionary<string, string?> filters, string format, bool arabic, DateTimeOffset at, IReadOnlyList<ChartData>? charts = null)
     {
         var name = $"{report.Code}-{at:yyyyMMdd-HHmm}";
         return format == ReportFormats.Csv
             ? new ReportFile(name + ".csv", "text/csv; charset=utf-8", Csv(report, result, arabic))
-            : new ReportFile(name + ".xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", Xlsx(report, result, filters, arabic, at));
+            : new ReportFile(name + ".xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", Xlsx(report, result, filters, arabic, at, charts ?? []));
     }
 
     private static byte[] Csv(ReportDefinition report, ReportResult result, bool arabic)
@@ -42,7 +43,7 @@ internal static class ReportExports
         return [.. Encoding.UTF8.GetPreamble(), .. Encoding.UTF8.GetBytes(text.ToString())];
     }
 
-    private static byte[] Xlsx(ReportDefinition report, ReportResult result, IReadOnlyDictionary<string, string?> filters, bool arabic, DateTimeOffset at)
+    private static byte[] Xlsx(ReportDefinition report, ReportResult result, IReadOnlyDictionary<string, string?> filters, bool arabic, DateTimeOffset at, IReadOnlyList<ChartData> charts)
     {
         using var book = new XLWorkbook();
         var sheet = book.Worksheets.Add(arabic ? "التقرير" : "Report");
@@ -91,9 +92,10 @@ internal static class ReportExports
         }
 
         sheet.Columns(1, result.Columns.Count).AdjustToContents(header, Math.Min(header + 500, r));
+        var placed = ReportExcelCharts.WriteData(book, charts, arabic);
         using var stream = new MemoryStream();
         book.SaveAs(stream);
-        return stream.ToArray();
+        return ReportExcelCharts.AddCharts(stream.ToArray(), placed, arabic);
     }
 
     private static void Write(IXLWorksheet sheet, int row, IReadOnlyList<ReportResultColumn> columns, JsonObject values)
