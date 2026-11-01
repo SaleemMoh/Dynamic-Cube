@@ -26,7 +26,12 @@ and classes safely, and the modules already know how to answer their own questio
     also the most a caller may ask) or **one row** (404 when none). The query runs read-only with the query builder's
     time limit; parameters are only ever bound as values.
   - **System function** — a read-only function a module contributes (`IApiFunction`), each input given a parameter or a
-    fixed value: **CLASS_VALUES** (Apps Control: a class's values in effect, optionally the children of a value),
+    fixed value; an **optional input may be left empty** (not given), which is how "get all or get some" works: an
+    optional input bound to an optional parameter means *all* when the caller leaves it out and *only those* when the
+    caller sends codes (separated by commas, or the parameter repeated). Functions: **CLASSES** (Apps Control: classes
+    and their values — every active class when no codes are given, or only those asked for, in that order; `values`
+    `false` leaves the values out; an unknown class is refused), **CLASS_VALUES** (Apps Control: a class's values in
+    effect, optionally the children of a value, and optionally only the values whose codes are given),
     **LOOKUPS** (Apps Control: several classes and several lists of values in one call — codes separated by commas or
     repeated parameters, at most 20 of each; only lists marked **public**, the ones the portal serves without sign-in,
     for the client's companies; an unknown class or a list that is not public is refused),

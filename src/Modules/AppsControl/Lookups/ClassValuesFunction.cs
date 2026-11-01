@@ -7,8 +7,9 @@ using Microsoft.EntityFrameworkCore;
 namespace DynamicCube.Modules.AppsControl.Lookups;
 
 /// <summary>
-/// The values of a class (ADR-0042): active and in effect today, serving the caller's companies, in display order, and
-/// optionally only the children of a parent value. An unknown class is not found.
+/// The values of a class (ADR-0042): active and in effect today, serving the caller's companies, in display order —
+/// get all or get some: optionally only the children of a parent value, and only the values whose codes are given
+/// (separated by commas). An unknown class is not found.
 /// </summary>
 internal sealed class ClassValuesFunction(AppsControlDbContext context, ILookupDirectory lookups) : IApiFunction
 {
@@ -23,6 +24,7 @@ internal sealed class ClassValuesFunction(AppsControlDbContext context, ILookupD
         [
             new("class", true, "رمز التصنيف (مثل REGIONS)", "The class code (e.g. REGIONS)"),
             new("parent", false, "رمز القيمة الأب لعرض أبنائها فقط", "A parent value's code, to list only its children"),
+            new("codes", false, "رموز القيم المطلوبة مفصولة بفواصل؛ فارغ: كل القيم", "The codes of the values wanted, separated by commas; empty: all values"),
         ],
         new JsonArray(
             new JsonObject { ["code"] = "RIYADH", ["nameAr"] = "الرياض", ["nameEn"] = "Riyadh", ["parentCode"] = null, ["detailsAr"] = null, ["detailsEn"] = null },
@@ -44,9 +46,11 @@ internal sealed class ClassValuesFunction(AppsControlDbContext context, ILookupD
         }
 
         var parent = inputs.GetValueOrDefault("parent")?.Trim();
+        var codes = LookupsFunction.Codes(inputs.GetValueOrDefault("codes"));
         var values = (await lookups.ValuesAsync(classCode, cancellationToken))
             .Where(v => caller.Companies is null || caller.Companies.Any(v.Serves))
-            .Where(v => string.IsNullOrEmpty(parent) || string.Equals(v.ParentCode, parent, StringComparison.Ordinal));
+            .Where(v => string.IsNullOrEmpty(parent) || string.Equals(v.ParentCode, parent, StringComparison.Ordinal))
+            .Where(v => codes.Count == 0 || codes.Contains(v.Code));
         return new ApiFunctionResult(new JsonArray([.. values.Select(v => (JsonNode)new JsonObject
         {
             ["code"] = v.Code,

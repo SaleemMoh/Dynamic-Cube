@@ -523,7 +523,8 @@ Read-only public endpoints for partner systems on the external host: OAuth2 clie
 rows over registered tables and classes or call read-only system functions (class values, a request's status with its
 place in the workflow, a document check), API clients with their companies, branches and rate limit, a call log with
 masked parameters, and an OpenAPI description per client. The NHC demo publishes `/regions` (the regions class),
-`/lookups` (several classes and public lists in one call), `/requests/{number}/status` and `/certificates/{number}`
+`/lookups` (several classes and public lists in one call), `/classes` (all classes, or only those asked for — "get all
+or get some" with optional function inputs left empty), `/requests/{number}/status` and `/certificates/{number}`
 for the sample partner `dc-api-partner-demo`.
 
 Later: writes for partners (submitting a request on an applicant's behalf), webhooks to partners on events, a shared

@@ -328,10 +328,13 @@ export function endpointPayload(
     function: isQuery ? null : def.function,
     functionInputs: isQuery
       ? []
-      : def.functionInputs.map((b) => ({
-          input: b.input,
-          parameter: b.parameter || null,
-          value: b.parameter ? null : b.value?.trim() || null,
-        })),
+      : def.functionInputs
+          // An input left empty is not given (an optional input then means "all").
+          .filter((b) => !!b.parameter || !!b.value?.trim())
+          .map((b) => ({
+            input: b.input,
+            parameter: b.parameter || null,
+            value: b.parameter ? null : b.value?.trim() || null,
+          })),
   };
 }

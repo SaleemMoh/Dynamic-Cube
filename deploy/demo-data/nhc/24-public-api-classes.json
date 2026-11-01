@@ -1,0 +1,84 @@
+{
+  "title": "NHC — public API: all classes or some (demo)",
+  "items": [
+    {
+      "entityType": "integ.api-endpoint",
+      "entityCode": "CLASSES",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "التصنيفات",
+        "nameEn": "Classes",
+        "descriptionAr": "التصنيفات وقيمها: كل التصنيفات إذا لم يُرسل codes، أو المحددة فقط (مثل ?codes=REGION,SVC_CATEGORY أو تكرار المعامل). values=false يُرجع التصنيفات دون قيمها.",
+        "descriptionEn": "Classes and their values: every class when codes is not sent, or only those given (e.g. ?codes=REGION,SVC_CATEGORY or the parameter repeated). values=false returns the classes without their values.",
+        "path": "/classes",
+        "kind": "FUNCTION",
+        "parameters": [
+          {
+            "name": "codes",
+            "location": "QUERY",
+            "type": "TEXT",
+            "isRequired": false,
+            "isMasked": false,
+            "descriptionAr": "رموز التصنيفات مفصولة بفواصل؛ فارغ: الكل",
+            "descriptionEn": "Class codes separated by commas; empty: all",
+            "sample": "REGION"
+          },
+          {
+            "name": "values",
+            "location": "QUERY",
+            "type": "TEXT",
+            "isRequired": false,
+            "isMasked": false,
+            "descriptionAr": "false لإرجاع التصنيفات دون قيمها",
+            "descriptionEn": "false to leave the values out",
+            "sample": null
+          }
+        ],
+        "query": null,
+        "fields": [],
+        "singleRow": false,
+        "pageSize": 50,
+        "function": "CLASSES",
+        "functionInputs": [
+          {
+            "input": "classes",
+            "parameter": "codes",
+            "value": null
+          },
+          {
+            "input": "values",
+            "parameter": "values",
+            "value": null
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "integ.api-client",
+      "entityCode": "PARTNER_DEMO",
+      "operation": "UPSERT",
+      "payload": {
+        "nameAr": "شريك تجريبي",
+        "nameEn": "Partner demo",
+        "descriptionAr": "نظام شريك تجريبي يستدعي الواجهة العامة ببيانات عميله (dc-api-partner-demo / dev-api-partner-secret في بيئة التطوير).",
+        "descriptionEn": "A sample partner system calling the public API with its client's credentials (dc-api-partner-demo / dev-api-partner-secret in development).",
+        "clientId": "dc-api-partner-demo",
+        "endpoints": [
+          "REGIONS",
+          "REQUEST_STATUS",
+          "CERTIFICATE_CHECK",
+          "LOOKUPS",
+          "CLASSES"
+        ],
+        "companies": [
+          "MAIN"
+        ],
+        "branches": [
+          "*"
+        ],
+        "rateLimitPerMinute": 60,
+        "contactEmail": "partner@example.com"
+      }
+    }
+  ]
+}

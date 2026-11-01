@@ -342,7 +342,10 @@
           ><b dir="ltr">{{ input.name }}{{ input.required ? ' *' : '' }}</b>
           <small>{{
             { ar: input.descriptionAr, en: input.descriptionEn } | dcLocalize
-          }}</small></span
+          }}</small>
+          @if (!input.required) {
+            <small class="ed-optional">{{ 'pa.input.optional' | dcTranslate }}</small>
+          }</span
         >
         <select
           class="ed-cell"

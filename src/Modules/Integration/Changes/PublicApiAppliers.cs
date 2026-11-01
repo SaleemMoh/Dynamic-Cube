@@ -201,9 +201,16 @@ internal sealed partial class ApiEndpointApplier(IntegrationDbContext db, IDataQ
 
             var fromParameter = !string.IsNullOrWhiteSpace(binding.Parameter);
             var fixedValue = !string.IsNullOrWhiteSpace(binding.Value);
-            if (fromParameter == fixedValue)
+            if (!fromParameter && !fixedValue)
             {
-                add(field + ".parameter", "Give the input one of the endpoint's parameters or a fixed value.");
+                // Left empty: the input is not given (an optional input then means "all"; a required one is reported below).
+                bound.Remove(binding.Input);
+                continue;
+            }
+
+            if (fromParameter && fixedValue)
+            {
+                add(field + ".parameter", "Give the input one of the endpoint's parameters or a fixed value, not both.");
             }
             else if (fromParameter && !parameters.Contains(binding.Parameter!))
             {
@@ -239,7 +246,7 @@ internal sealed partial class ApiEndpointApplier(IntegrationDbContext db, IDataQ
         entity.SingleRow = isQuery && payload.SingleRow;
         entity.PageSize = isQuery ? payload.PageSize : 50;
         entity.Function = isQuery ? null : payload.Function;
-        entity.FunctionInputs = isQuery ? [] : payload.FunctionInputs;
+        entity.FunctionInputs = isQuery ? [] : [.. payload.FunctionInputs.Where(b => !string.IsNullOrWhiteSpace(b.Parameter) || !string.IsNullOrWhiteSpace(b.Value))];
     }
 
     protected override Task<ApiEndpointPayload> ToPayloadAsync(IntegrationDbContext context, ApiEndpoint entity, CancellationToken cancellationToken) =>

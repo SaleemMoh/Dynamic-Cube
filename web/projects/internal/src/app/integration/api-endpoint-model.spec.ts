@@ -113,11 +113,15 @@ describe('api endpoint model', () => {
       nameAr: ' م ',
       nameEn: 'S',
     };
-    def.functionInputs = [{ input: 'number', parameter: '', value: ' X ' }];
+    def.functionInputs = [
+      { input: 'number', parameter: '', value: ' X ' },
+      { input: 'lang', parameter: null, value: '  ' },
+    ];
     def.fields = [{ name: 'code', column: 'a.code' }];
     const payload = endpointPayload('STATUS', def, fromQuery(null));
     expect(payload.fields).toEqual([]);
     expect(payload.query).toBeNull();
+    // An input left empty is not given.
     expect(payload.functionInputs).toEqual([{ input: 'number', parameter: null, value: 'X' }]);
     expect(payload.nameAr).toBe('م');
   });

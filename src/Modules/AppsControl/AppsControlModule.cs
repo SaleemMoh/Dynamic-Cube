@@ -178,6 +178,7 @@ public static class AppsControlModule
         services.AddScoped<IResourceRegistry, ResourceRegistry>();
         services.AddScoped<IApiFunction, ClassValuesFunction>();
         services.AddScoped<IApiFunction, LookupsFunction>();
+        services.AddScoped<IApiFunction, ClassesFunction>();
         return services;
     }
 

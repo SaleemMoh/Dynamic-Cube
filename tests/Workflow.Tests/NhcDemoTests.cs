@@ -109,7 +109,7 @@ public sealed class NhcDemoTests
                 var db = sp.GetRequiredService<Integration.Persistence.IntegrationDbContext>();
                 var endpoint = await db.ApiEndpoints.SingleAsync(e => e.Code == "REGIONS");
                 var client = await db.ApiClients.SingleAsync(c => c.Code == "PARTNER_DEMO");
-                client.Endpoints.ShouldBe(["REGIONS", "REQUEST_STATUS", "CERTIFICATE_CHECK", "LOOKUPS"]);
+                client.Endpoints.ShouldBe(["REGIONS", "REQUEST_STATUS", "CERTIFICATE_CHECK", "LOOKUPS", "CLASSES"]);
                 var caller = new DynamicCube.Platform.PublicApi.ApiCaller(client.Code, client.Companies, null);
                 var runner = sp.GetRequiredService<Integration.Runtime.PublicApiRunner>();
                 var all = await runner.RunAsync(endpoint, new Dictionary<string, string>(), new Dictionary<string, string?>(), caller, false, CancellationToken.None);

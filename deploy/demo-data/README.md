@@ -35,6 +35,7 @@ Built from the customer journey study (V05), the classification rules workbook (
 | 21-yakeen-soap | **A SOAP service** (ADR-0044): provider *Elm — Yakeen (mock)*, connection `YAKEEN` (WS-Security UsernameToken with a password digest, secret `YAKEEN`) and two SOAP operations — `YAKEEN_CITIZEN_INFO` (national ID and date of birth → names, gender, dates of birth, nationality, ID status; faults `PersonNotFound`, `DateOfBirthMismatch`, `InvalidNin` mapped to bilingual messages) and `YAKEEN_CITIZEN_ADDRESS` (the addresses as lists). Try `1000000001` with `1410-09`; the WSDL at http://localhost:5090/soap/yakeen?wsdl can be imported on the Operations screen | Integrations → Connections, Operations (designer: *SOAP*), Test console, Call log |
 | 22-reports | **Reports** (ADR-0045): registered tables *Service requests*, *Services*, *Workflow tasks* and *Document values* (the certificates' values, one row each), the list *Services (for reports)*, four reports — *Requests by service, status and branch* (bar chart, tiles, filters by date, service and branch), *Overdue tasks* (as of a date), *Certificates by grade* (pie) and *Abandoned drafts by step* (not touched for 7 days) — the schedule *Overdue tasks — weekly* (Sundays 07:30, Excel in Arabic, to the branch managers and the audit manager, each with their own branches) and the reports granted to the *Branch requests manager* and *Audit manager* roles | Reports; Reports → Report design (designer, preview), Report schedules (*Send now*), Scheduled deliveries; emails in Mailpit (http://localhost:8025) |
 | 23-report-charts | **A report with several charts** (ADR-0045): *Requests over time* — requests per month by status (line), the average fee over the months with the months **down the Y axis** and the average across (bars), requests by branch (pie) and each request's fee by its date (points, coloured by service); granted to the branch managers and the audit manager | Reports → Requests over time; Reports → Report design → *Charts* tab (the chart designer) |
+| 24-public-api-classes | `/classes` for the partner demo — **get all or get some**: every class with its values when `codes` is not sent, only those given otherwise (`?codes=REGION,SVC_CATEGORY` or `codes` repeated); `values=false` leaves the values out | Integrations → API endpoints |
 
 **Tracks:** *normal* — free, up to 60 working days; *fast (NHC)* — paid, 5 working days. The fast-track fee
 (5,000 / 10,000 / 20,000 / 30,000 SAR by annual revenue) is an assumption; change it in the service's Fees tab.
@@ -121,6 +122,8 @@ TOKEN=$(curl -s http://localhost:8080/realms/dynamic-cube-external/protocol/open
   | sed -E 's/.*"access_token":"([^"]+)".*/\1/')
 curl -s -H "Authorization: Bearer $TOKEN" "http://localhost:5081/api/public/v1/regions?name=mak"
 curl -s -H "Authorization: Bearer $TOKEN" "http://localhost:5081/api/public/v1/lookups?classes=REGION,SVC_CATEGORY&lovs=REGIONS"
+curl -s -H "Authorization: Bearer $TOKEN" "http://localhost:5081/api/public/v1/classes"                # all classes
+curl -s -H "Authorization: Bearer $TOKEN" "http://localhost:5081/api/public/v1/classes?codes=REGION"   # only REGION
 curl -s -H "Authorization: Bearer $TOKEN" http://localhost:5081/api/public/v1/requests/CLS-2026-000001/status
 curl -s -H "Authorization: Bearer $TOKEN" http://localhost:5081/api/public/v1/openapi.json
 ```

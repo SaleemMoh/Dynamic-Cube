@@ -96,3 +96,7 @@ h3 {
   color: #e2e8f0;
   white-space: pre-wrap;
 }
+
+.ed-input .ed-optional {
+  color: var(--dga-success-700, #067647);
+}

@@ -279,6 +279,72 @@ public sealed class PublicApiTests(DatabaseFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Get_all_or_get_some_with_optional_inputs_left_empty()
+    {
+        fixture.RequireConnectionString();
+        var ct = TestContext.Current.CancellationToken;
+        var (classes, some, client) = (TestHost.Unique("CLASSES"), TestHost.Unique("SOME"), TestHost.Unique("PARTNER"));
+        var clientId = "dc-api-c-" + _suffix;
+
+        // Optional inputs left empty are not given; a required one left empty is refused.
+        var allClasses = new ApiEndpointPayload
+        {
+            NameAr = "التصنيفات",
+            NameEn = "Classes",
+            Path = Path("/classes"),
+            Kind = ApiEndpointKind.Function,
+            Function = "CLASSES",
+            Parameters = [new ApiEndpointParameter { Name = "codes", Location = ApiParameterLocation.Query }],
+            FunctionInputs = [new ApiFunctionBinding { Input = "classes", Parameter = "codes" }, new ApiFunctionBinding { Input = "values" }],
+        };
+        var someValues = ClassEndpoint();
+        someValues.Path = Path("/regions/some");
+        someValues.Parameters.Add(new ApiEndpointParameter { Name = "codes", Location = ApiParameterLocation.Query });
+        someValues.FunctionInputs = [new ApiFunctionBinding { Input = "class", Value = _class }, new ApiFunctionBinding { Input = "parent", Value = " " }, new ApiFunctionBinding { Input = "codes", Parameter = "codes" }];
+        var noClass = ClassEndpoint();
+        noClass.FunctionInputs = [new ApiFunctionBinding { Input = "class" }];
+        (await Should.ThrowAsync<ChangeValidationException>(() => _host.PublishAsync(IntegrationChangeTypes.Area,
+            new Change(IntegrationChangeTypes.ApiEndpoint, TestHost.Unique("E"), ChangeOperation.Create, noClass)))).Errors.Keys.ShouldBe(["functionInputs"]);
+        await _host.PublishAsync(
+            IntegrationChangeTypes.Area,
+            new Change(IntegrationChangeTypes.ApiEndpoint, classes, ChangeOperation.Create, allClasses),
+            new Change(IntegrationChangeTypes.ApiEndpoint, some, ChangeOperation.Create, someValues),
+            new Change(IntegrationChangeTypes.ApiClient, client, ChangeOperation.Create, Client(clientId, [classes, some], [_companyA])));
+
+        using var api = _external.CreateClient();
+        async Task<(HttpStatusCode Status, JsonNode? Body)> Get(string rest)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, "/api/public/v1" + Path(rest));
+            request.Headers.Add(PublicTokenHandler.UserHeader, "service-account-" + clientId);
+            request.Headers.Add(PublicTokenHandler.ClientHeader, clientId);
+            request.Headers.Add(PublicTokenHandler.AudienceHeader, Audience);
+            var response = await api.SendAsync(request, ct);
+            var text = await response.Content.ReadAsStringAsync(ct);
+            return (response.StatusCode, text.Length == 0 ? null : JsonNode.Parse(text));
+        }
+
+        static string[] Codes(JsonNode? list) => [.. list!.AsArray().Select(v => v!["code"]!.GetValue<string>())];
+
+        // Get all: every active class, each with the values serving the client's company.
+        var all = await Get("/classes");
+        all.Status.ShouldBe(HttpStatusCode.OK);
+        Codes(all.Body).ShouldContain(_class);
+        Codes(all.Body).Length.ShouldBeGreaterThan(1);
+        Codes(all.Body!.AsArray().Single(c => c!["code"]!.GetValue<string>() == _class)!["values"]).ShouldBe(["R1", "R2"], ignoreOrder: true);
+
+        // Get some: only the classes asked for, in the order asked (commas or the parameter repeated).
+        var one = await Get($"/classes?codes={_class}");
+        Codes(one.Body).ShouldBe([_class]);
+        Codes((await Get($"/classes?codes={_class}&codes={_class}")).Body).ShouldBe([_class], "the parameter repeated reads as a list, each class once");
+        (await Get("/classes?codes=NO_SUCH_CLASS")).Status.ShouldBe(HttpStatusCode.BadRequest);
+
+        // A class's values: all, or only the codes asked for.
+        Codes((await Get("/regions/some")).Body).ShouldBe(["R1", "R2"], ignoreOrder: true);
+        Codes((await Get("/regions/some?codes=R2")).Body).ShouldBe(["R2"]);
+        Codes((await Get("/regions/some?codes=R1,R3")).Body).ShouldBe(["R1"], "R3 serves another company");
+    }
+
+    [Fact]
     public async Task Administrators_try_unsaved_endpoints_list_functions_and_hand_out_descriptions()
     {
         fixture.RequireConnectionString();
@@ -287,7 +353,7 @@ public sealed class PublicApiTests(DatabaseFixture fixture) : IAsyncLifetime
         admin.DefaultRequestHeaders.Add(TestAuthHandler.Header, "admin");
 
         var functions = await admin.GetFromJsonAsync<JsonElement>("/api/integration/v1/public-api/functions", ct);
-        functions.EnumerateArray().Select(f => f.GetProperty("code").GetString()).ShouldBe(["CLASS_VALUES", "DOCUMENT_VERIFY", "LOOKUPS", "REQUEST_STATUS"]);
+        functions.EnumerateArray().Select(f => f.GetProperty("code").GetString()).ShouldBe(["CLASSES", "CLASS_VALUES", "DOCUMENT_VERIFY", "LOOKUPS", "REQUEST_STATUS"]);
 
         var info = await admin.GetFromJsonAsync<JsonElement>("/api/integration/v1/public-api/info", ct);
         info.GetProperty("apiUrl").GetString().ShouldBe("https://api.example.gov.sa/api/public/v1");

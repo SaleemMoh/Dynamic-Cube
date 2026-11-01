@@ -150,6 +150,6 @@ internal sealed class LookupsFunction(AppsControlDbContext context, ILookupDirec
     }
 
     /// <summary>Codes separated by commas, trimmed, each once, in the order given.</summary>
-    private static List<string> Codes(string? text) =>
+    internal static List<string> Codes(string? text) =>
         [.. (text ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Distinct(StringComparer.Ordinal)];
 }
