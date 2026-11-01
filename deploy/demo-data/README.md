@@ -34,6 +34,7 @@ Built from the customer journey study (V05), the classification rules workbook (
 | 20-individual-nafath | *Version 2* of the professional qualification service asks the applicant to **confirm the request with Nafath** before it is submitted (ADR-0043): on submit the portal shows a number; pick it on the mock Nafath app page (below) | Portal → the individual service; Services → Service Builder → *Rules* → *Submitting* |
 | 21-yakeen-soap | **A SOAP service** (ADR-0044): provider *Elm — Yakeen (mock)*, connection `YAKEEN` (WS-Security UsernameToken with a password digest, secret `YAKEEN`) and two SOAP operations — `YAKEEN_CITIZEN_INFO` (national ID and date of birth → names, gender, dates of birth, nationality, ID status; faults `PersonNotFound`, `DateOfBirthMismatch`, `InvalidNin` mapped to bilingual messages) and `YAKEEN_CITIZEN_ADDRESS` (the addresses as lists). Try `1000000001` with `1410-09`; the WSDL at http://localhost:5090/soap/yakeen?wsdl can be imported on the Operations screen | Integrations → Connections, Operations (designer: *SOAP*), Test console, Call log |
 | 22-reports | **Reports** (ADR-0045): registered tables *Service requests*, *Services*, *Workflow tasks* and *Document values* (the certificates' values, one row each), the list *Services (for reports)*, four reports — *Requests by service, status and branch* (bar chart, tiles, filters by date, service and branch), *Overdue tasks* (as of a date), *Certificates by grade* (pie) and *Abandoned drafts by step* (not touched for 7 days) — the schedule *Overdue tasks — weekly* (Sundays 07:30, Excel in Arabic, to the branch managers and the audit manager, each with their own branches) and the reports granted to the *Branch requests manager* and *Audit manager* roles | Reports; Reports → Report design (designer, preview), Report schedules (*Send now*), Scheduled deliveries; emails in Mailpit (http://localhost:8025) |
+| 23-report-charts | **A report with several charts** (ADR-0045): *Requests over time* — requests per month by status (line), the average fee over the months with the months **down the Y axis** and the average across (bars), requests by branch (pie) and each request's fee by its date (points, coloured by service); granted to the branch managers and the audit manager | Reports → Requests over time; Reports → Report design → *Charts* tab (the chart designer) |
 
 **Tracks:** *normal* — free, up to 60 working days; *fast (NHC)* — paid, 5 working days. The fast-track fee
 (5,000 / 10,000 / 20,000 / 30,000 SAR by annual revenue) is an assumption; change it in the service's Fees tab.
@@ -65,11 +66,13 @@ by hand); any other number is not found. NIC data exists for `1000000001` (and `
 ### Reports
 
 Open *Reports* in the side menu: the reports open to you, grouped as *Classification reports*. Each report has its
-filters (a list filter shows the list's values), tiles, a chart and the table with a totals row; *Export* gives Excel or
+filters (a list filter shows the list's values), tiles, its charts and the table with a totals row; *Export* gives Excel or
 CSV and *Saved filters* keeps filter values under a name (one may apply when the report opens). Rows always follow the
 viewer's company and branches — sign in as `ruh.manager` to see only the Riyadh branch's requests. *Report schedules* →
 *Send now* on *Overdue tasks — weekly* sends it at once: each recipient gets the file with their own rows (Mailpit), and
-*Scheduled deliveries* shows who got it and who was skipped and why.
+*Scheduled deliveries* shows who got it and who was skipped and why. In *Report design*, open a report and its *Charts*
+tab: drag fields from the list onto the X axis, the Y axis or *Colour by*, change a value's total (or set it back to *as
+it is*), give a date its period, swap the axes, and watch the chart redraw.
 
 ### Nafath (mock)
 

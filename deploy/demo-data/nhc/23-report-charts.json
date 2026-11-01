@@ -1,0 +1,394 @@
+{
+  "title": "NHC — a report with several charts (demo)",
+  "items": [
+    {
+      "entityType": "rpt.report",
+      "entityCode": "REQUESTS_OVER_TIME",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الطلبات عبر الزمن",
+        "nameEn": "Requests over time",
+        "descriptionAr": "اتجاه الطلبات المقدّمة والرسوم: شهريًا حسب الحالة، ومتوسط الرسوم عبر الأشهر، والتوزيع على الفروع، ورسوم كل طلب.",
+        "descriptionEn": "How submitted requests and fees move: monthly by status, the average fee over the months, the share of each branch and each request's fee.",
+        "categoryAr": "تقارير التصنيف",
+        "categoryEn": "Classification reports",
+        "icon": "monitoring",
+        "query": {
+          "from": {
+            "kind": "DATA_OBJECT",
+            "code": "REQUESTS",
+            "alias": "r"
+          },
+          "joins": [
+            {
+              "kind": "DATA_OBJECT",
+              "code": "SERVICES",
+              "alias": "s",
+              "type": "LEFT",
+              "on": [
+                {
+                  "left": "r.service_code",
+                  "right": "s.code"
+                }
+              ]
+            },
+            {
+              "kind": "DATA_OBJECT",
+              "code": "BRANCHES",
+              "alias": "b",
+              "type": "LEFT",
+              "on": [
+                {
+                  "left": "r.branch_code",
+                  "right": "b.code"
+                }
+              ]
+            }
+          ],
+          "where": {
+            "match": "ALL",
+            "conditions": [
+              {
+                "column": "r.status_category",
+                "op": "NE",
+                "value": "Draft"
+              },
+              {
+                "column": "r.submitted_at",
+                "op": "GE",
+                "param": "from"
+              }
+            ],
+            "groups": []
+          },
+          "sort": [],
+          "distinct": false
+        },
+        "columns": [
+          {
+            "name": "service",
+            "labelAr": "الخدمة",
+            "labelEn": "Service",
+            "column": "s.name_ar",
+            "aggregate": null
+          },
+          {
+            "name": "requests",
+            "labelAr": "عدد الطلبات",
+            "labelEn": "Requests",
+            "column": "r.service_code",
+            "aggregate": "COUNT"
+          },
+          {
+            "name": "averageFee",
+            "labelAr": "متوسط الرسوم",
+            "labelEn": "Average fee",
+            "column": "r.fee_total",
+            "aggregate": "AVG"
+          }
+        ],
+        "filters": [
+          {
+            "name": "from",
+            "labelAr": "مقدّمة منذ",
+            "labelEn": "Submitted since",
+            "type": "DATE",
+            "lov": null,
+            "multiple": false,
+            "required": false,
+            "default": "YEAR_START"
+          }
+        ],
+        "tiles": [
+          {
+            "name": "requests",
+            "labelAr": "الطلبات",
+            "labelEn": "Requests",
+            "column": null,
+            "aggregate": "COUNT"
+          },
+          {
+            "name": "averageFee",
+            "labelAr": "متوسط الرسوم",
+            "labelEn": "Average fee",
+            "column": "r.fee_total",
+            "aggregate": "AVG"
+          }
+        ],
+        "sort": [
+          {
+            "column": "requests",
+            "descending": true
+          }
+        ],
+        "totals": true,
+        "charts": [
+          {
+            "name": "monthlyByStatus",
+            "titleAr": "الطلبات شهريًا حسب الحالة",
+            "titleEn": "Requests per month by status",
+            "type": "LINE",
+            "x": [
+              {
+                "column": "r.submitted_at",
+                "aggregate": null,
+                "bucket": "MONTH",
+                "labelAr": "الشهر",
+                "labelEn": "Month"
+              }
+            ],
+            "y": [
+              {
+                "column": null,
+                "aggregate": "COUNT",
+                "bucket": null,
+                "labelAr": "عدد الطلبات",
+                "labelEn": "Requests"
+              }
+            ],
+            "series": {
+              "column": "r.display_status",
+              "aggregate": null,
+              "bucket": null,
+              "labelAr": "الحالة",
+              "labelEn": "Status"
+            },
+            "stacked": false,
+            "sort": "X_ASC",
+            "limit": 50,
+            "width": "FULL"
+          },
+          {
+            "name": "averageFeeOverTime",
+            "titleAr": "متوسط الرسوم عبر الأشهر",
+            "titleEn": "Average fee over the months",
+            "type": "BAR",
+            "x": [
+              {
+                "column": "r.fee_total",
+                "aggregate": "AVG",
+                "bucket": null,
+                "labelAr": "متوسط الرسوم",
+                "labelEn": "Average fee"
+              }
+            ],
+            "y": [
+              {
+                "column": "r.submitted_at",
+                "aggregate": null,
+                "bucket": "MONTH",
+                "labelAr": "الشهر",
+                "labelEn": "Month"
+              }
+            ],
+            "series": null,
+            "stacked": false,
+            "sort": "Y_ASC",
+            "limit": 50,
+            "width": "HALF"
+          },
+          {
+            "name": "byBranch",
+            "titleAr": "الطلبات حسب الفرع",
+            "titleEn": "Requests by branch",
+            "type": "PIE",
+            "x": [
+              {
+                "column": "b.name_ar",
+                "aggregate": null,
+                "bucket": null,
+                "labelAr": "الفرع",
+                "labelEn": "Branch"
+              }
+            ],
+            "y": [
+              {
+                "column": null,
+                "aggregate": "COUNT",
+                "bucket": null,
+                "labelAr": "عدد الطلبات",
+                "labelEn": "Requests"
+              }
+            ],
+            "series": null,
+            "stacked": false,
+            "sort": "Y_DESC",
+            "limit": 50,
+            "width": "HALF"
+          },
+          {
+            "name": "feePerRequest",
+            "titleAr": "رسوم كل طلب",
+            "titleEn": "Each request's fee",
+            "type": "SCATTER",
+            "x": [
+              {
+                "column": "r.submitted_at",
+                "aggregate": null,
+                "bucket": null,
+                "labelAr": "تاريخ التقديم",
+                "labelEn": "Submitted"
+              }
+            ],
+            "y": [
+              {
+                "column": "r.fee_total",
+                "aggregate": null,
+                "bucket": null,
+                "labelAr": "الرسوم",
+                "labelEn": "Fee"
+              }
+            ],
+            "series": {
+              "column": "s.name_ar",
+              "aggregate": null,
+              "bucket": null,
+              "labelAr": "الخدمة",
+              "labelEn": "Service"
+            },
+            "stacked": false,
+            "sort": "X_ASC",
+            "limit": 500,
+            "width": "FULL"
+          }
+        ],
+        "pageSize": 50,
+        "businessApps": [
+          "CLASSIFICATION"
+        ]
+      }
+    },
+    {
+      "entityType": "apps.role",
+      "entityCode": "CLS_REQUEST_MANAGER",
+      "operation": "UPSERT",
+      "payload": {
+        "nameAr": "مدير طلبات الفرع",
+        "nameEn": "Branch requests manager",
+        "appCode": "INTERNAL",
+        "businessApp": "CLASSIFICATION",
+        "privileges": [
+          {
+            "resourceCode": "action-center",
+            "actions": [
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "services.requests",
+            "actions": [
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "action-center.supervision",
+            "actions": [
+              "VIEW",
+              "EDIT"
+            ]
+          },
+          {
+            "resourceCode": "reports",
+            "actions": [
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "reports.r.requests_by_service",
+            "actions": [
+              "VIEW",
+              "EXPORT"
+            ]
+          },
+          {
+            "resourceCode": "reports.r.overdue_tasks",
+            "actions": [
+              "VIEW",
+              "EXPORT"
+            ]
+          },
+          {
+            "resourceCode": "reports.r.abandoned_drafts",
+            "actions": [
+              "VIEW",
+              "EXPORT"
+            ]
+          },
+          {
+            "resourceCode": "reports.r.requests_over_time",
+            "actions": [
+              "VIEW",
+              "EXPORT"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "apps.role",
+      "entityCode": "CLS_AUDIT_MANAGER",
+      "operation": "UPSERT",
+      "payload": {
+        "nameAr": "مدير التدقيق",
+        "nameEn": "Audit manager",
+        "appCode": "INTERNAL",
+        "businessApp": "CLASSIFICATION",
+        "privileges": [
+          {
+            "resourceCode": "action-center",
+            "actions": [
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "services.requests",
+            "actions": [
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "reports",
+            "actions": [
+              "VIEW"
+            ]
+          },
+          {
+            "resourceCode": "reports.r.requests_by_service",
+            "actions": [
+              "VIEW",
+              "EXPORT"
+            ]
+          },
+          {
+            "resourceCode": "reports.r.overdue_tasks",
+            "actions": [
+              "VIEW",
+              "EXPORT"
+            ]
+          },
+          {
+            "resourceCode": "reports.r.certificates_by_grade",
+            "actions": [
+              "VIEW",
+              "EXPORT"
+            ]
+          },
+          {
+            "resourceCode": "reports.r.abandoned_drafts",
+            "actions": [
+              "VIEW",
+              "EXPORT"
+            ]
+          },
+          {
+            "resourceCode": "reports.r.requests_over_time",
+            "actions": [
+              "VIEW",
+              "EXPORT"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

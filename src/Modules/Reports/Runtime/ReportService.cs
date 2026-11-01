@@ -4,6 +4,7 @@ using DynamicCube.Modules.Reports.Domain;
 using DynamicCube.Modules.Reports.Persistence;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Configuration;
+using DynamicCube.Platform.PublicApi;
 using DynamicCube.Platform.Reports;
 using DynamicCube.Platform.Security;
 using Microsoft.EntityFrameworkCore;
@@ -29,7 +30,7 @@ public sealed class ReportsOptions
 /// <summary>A report in the reports list.</summary>
 public sealed record ReportSummary(string Code, string NameAr, string NameEn, string? DescriptionAr, string? DescriptionEn, string? CategoryAr, string? CategoryEn, string? Icon);
 
-/// <summary>What the viewer needs to show a report: its texts, filters, columns, tiles, chart, page size and the user's saved filters.</summary>
+/// <summary>What the viewer needs to show a report: its texts, filters, columns, tiles, charts, page size and the user's saved filters.</summary>
 public sealed record ReportView(
     string Code,
     string NameAr,
@@ -39,7 +40,7 @@ public sealed record ReportView(
     IReadOnlyList<ReportFilterDef> Filters,
     IReadOnlyList<ReportColumnDef> Columns,
     IReadOnlyList<ReportTileDef> Tiles,
-    ReportChartDef? Chart,
+    IReadOnlyList<ReportChartDef> Charts,
     int PageSize,
     bool CanExport,
     IReadOnlyList<SavedFilterView> SavedFilters);
@@ -55,8 +56,30 @@ public sealed record PreviewReportRequest(ReportPayload Report, Dictionary<strin
 /// <summary>A tile with its labels and value.</summary>
 public sealed record TileValue(string Name, string LabelAr, string LabelEn, JsonNode? Value);
 
-/// <summary>The chart's rows: up to 100 rows of the report (for a grouped report, the groups) in its sort.</summary>
-public sealed record ChartData(string Type, string Category, IReadOnlyList<string> Values, IReadOnlyList<JsonObject> Rows);
+/// <summary>An unsaved report's chart previewed in the designer, with the filter values to try it with.</summary>
+public sealed record PreviewChartRequest(ReportPayload Report, string Chart, Dictionary<string, string?>? Filters);
+
+/// <summary>
+/// A chart with its rows, one per point (and series): the X fields in <c>x0</c>, <c>x1</c>, …, the Y fields in
+/// <c>y0</c>, <c>y1</c>, …, the series in <c>s</c>, in the chart's order. <paramref name="Category"/> names the axis the
+/// rows are grouped by (<c>X</c> or <c>Y</c>), or <c>ROWS</c> when the rows themselves are drawn.
+/// </summary>
+public sealed record ChartData(
+    string Name,
+    string TitleAr,
+    string TitleEn,
+    string Type,
+    bool Stacked,
+    string Width,
+    string Category,
+    IReadOnlyList<ChartFieldData> X,
+    IReadOnlyList<ChartFieldData> Y,
+    ChartFieldData? Series,
+    IReadOnlyList<JsonObject> Rows,
+    bool HasMore);
+
+/// <summary>A field of a chart: its key in the rows, labels, the kind of value, its total and the period of a date.</summary>
+public sealed record ChartFieldData(string Name, string LabelAr, string LabelEn, string Type, string? Aggregate, string? Bucket);
 
 /// <summary>A page of a report: the columns (labels, kinds), rows, the number of rows, totals, tiles and the chart's data.</summary>
 public sealed record ReportRun(
@@ -68,7 +91,7 @@ public sealed record ReportRun(
     bool HasMore,
     JsonObject? Totals,
     IReadOnlyList<TileValue> Tiles,
-    ChartData? Chart,
+    IReadOnlyList<ChartData> Charts,
     IReadOnlyDictionary<string, string?> Filters);
 
 public sealed record RunColumn(string Name, string LabelAr, string LabelEn, string Type, string? Aggregate);
@@ -83,7 +106,6 @@ public sealed class ReportForbiddenException(string code) : Exception($"You may 
 /// <summary>Reports for the signed-in user (ADR-0045): the list they may open, a report's view, runs, exports and saved filters.</summary>
 internal sealed class ReportService(ReportsDbContext context, IReportQueries queries, ICurrentUser user, TimeProvider clock, Microsoft.Extensions.Options.IOptions<ReportsOptions> options)
 {
-    public const int ChartRows = 100;
 
     public async Task<IReadOnlyList<ReportSummary>> MineAsync(CancellationToken cancellationToken)
     {
@@ -117,7 +139,7 @@ internal sealed class ReportService(ReportsDbContext context, IReportQueries que
             report.Filters,
             report.Columns,
             report.Tiles,
-            report.Chart,
+            report.Charts,
             report.PageSize,
             await queries.CanAsync(ReportViewer.Current, ReportResources.Of(report.Code), "EXPORT", cancellationToken),
             saved);
@@ -140,6 +162,20 @@ internal sealed class ReportService(ReportsDbContext context, IReportQueries que
         var report = new ReportDefinition { Code = "PREVIEW", NameAr = request.Report.NameAr, NameEn = request.Report.NameEn };
         ReportApplier.Fill(report, request.Report);
         return await RunAsync(report, new RunReportRequest(request.Filters, 1, Math.Min(report.PageSize, 50)), ReportViewer.Current, null, cancellationToken);
+    }
+
+    /// <summary>One chart of an unsaved report (the designer's live preview): its query and the chart checked, run within the designer's access.</summary>
+    public async Task<ChartData> PreviewChartAsync(PreviewChartRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var chart = ReportApplier.ChartsOf(request.Report).FirstOrDefault(c => c.Name == request.Chart)
+            ?? throw new ChangeValidationException(new Dictionary<string, string[]> { ["chart"] = ["The report has no such chart."] });
+        var errors = new ValidationErrors();
+        var inputs = request.Report.Filters.Select(f => f.Name).ToList();
+        await ReportApplier.CheckChartsAsync([chart], request.Report.Query, inputs, errors, queries, cancellationToken);
+        errors.ThrowIfAny();
+        var values = ReportFilters.Resolve(request.Report.Filters, request.Filters, Today);
+        return await ChartAsync(request.Report.Query?.ToJsonString() ?? "{}", chart, values, ReportViewer.Current, null, cancellationToken);
     }
 
     /// <summary>The report's rows (up to <see cref="ReportExports.MaxRows"/>) as Excel or CSV, in the user's language.</summary>
@@ -204,29 +240,10 @@ internal sealed class ReportService(ReportsDbContext context, IReportQueries que
         var size = Math.Clamp(request.PageSize ?? report.PageSize, 1, 500);
         var page = Math.Max(1, request.Page);
         var (result, inputs) = await ResultAsync(report, request.Filters, viewer, resource, size, (page - 1) * size, withSummary: true, cancellationToken);
-        ChartData? chart = null;
-        if (report.Chart is { } c)
+        var charts = new List<ChartData>();
+        foreach (var chart in report.Charts)
         {
-            // Grouped by more than the chart's column: the chart groups by its column alone (each total recomputed, so an
-            // average stays an average); otherwise it draws the report's own first rows.
-            var regroup = report.Columns.Any(x => !string.IsNullOrWhiteSpace(x.Aggregate))
-                && report.Columns.Any(x => string.IsNullOrWhiteSpace(x.Aggregate) && x.Name != c.Category);
-            IReadOnlyList<JsonObject> rows;
-            if (regroup)
-            {
-                var columns = report.Columns.Where(x => x.Name == c.Category || c.Values.Contains(x.Name)).ToList();
-                var sort = report.Sort.Where(s => columns.Any(x => x.Name == s.Column)).ToList();
-                var shape = ReportShapes.Of(columns, [], sort, totals: false);
-                rows = (await queries.RunAsync(JsonNode.Parse(report.Query), shape, inputs, viewer, resource, ChartRows, 0, withSummary: false, cancellationToken)).Rows;
-            }
-            else
-            {
-                rows = page == 1 && size >= ChartRows
-                    ? [.. result.Rows.Take(ChartRows)]
-                    : (await queries.RunAsync(JsonNode.Parse(report.Query), ReportShapes.Of(report), inputs, viewer, resource, ChartRows, 0, withSummary: false, cancellationToken)).Rows;
-            }
-
-            chart = new ChartData(c.Type, c.Category, c.Values, [.. rows.Select(r => r.DeepClone().AsObject())]);
+            charts.Add(await ChartAsync(report.Query, chart, inputs, viewer, resource, cancellationToken));
         }
 
         return new ReportRun(
@@ -240,9 +257,47 @@ internal sealed class ReportService(ReportsDbContext context, IReportQueries que
             result.HasMore,
             result.Totals,
             [.. report.Tiles.Select(t => new TileValue(t.Name, t.LabelAr, t.LabelEn, result.Tiles?[t.Name]?.DeepClone()))],
-            chart,
+            charts,
             inputs);
     }
+
+    /// <summary>A chart's rows for the viewer: the filtered rows grouped by its axes (or as they are), in its order, up to its limit.</summary>
+    private async Task<ChartData> ChartAsync(string query, ReportChartDef chart, IReadOnlyDictionary<string, string?> inputs, ReportViewer viewer, string? resource, CancellationToken cancellationToken)
+    {
+        var (shape, _) = ReportShapes.Chart(chart);
+        var result = await queries.RunAsync(JsonNode.Parse(query), shape, inputs, viewer, resource, Math.Clamp(chart.Limit, 1, 500), 0, withSummary: false, cancellationToken);
+        ChartFieldData Field(string name, ReportChartField field)
+        {
+            var column = Tail(field.Column);
+            var fallbackAr = string.IsNullOrEmpty(column) ? "العدد" : column;
+            var fallbackEn = string.IsNullOrEmpty(column) ? "Count" : column;
+            return new ChartFieldData(
+                name,
+                string.IsNullOrWhiteSpace(field.LabelAr) ? fallbackAr : field.LabelAr,
+                string.IsNullOrWhiteSpace(field.LabelEn) ? fallbackEn : field.LabelEn,
+                result.Columns.FirstOrDefault(c => c.Name == name)?.Type ?? DataTypes.Text,
+                Blank(field.Aggregate),
+                Blank(field.Bucket));
+        }
+
+        return new ChartData(
+            chart.Name,
+            chart.TitleAr,
+            chart.TitleEn,
+            chart.Type,
+            chart.Stacked,
+            chart.Width,
+            ReportShapes.CategoryAxis(chart) ?? ReportShapes.Rows,
+            [.. chart.X.Select((f, i) => Field($"x{i}", f))],
+            [.. chart.Y.Select((f, i) => Field($"y{i}", f))],
+            chart.Series is { } s ? Field("s", s) : null,
+            result.Rows,
+            result.HasMore);
+    }
+
+    private static string Tail(string? column) => column is null ? string.Empty : column[(column.IndexOf('.', StringComparison.Ordinal) + 1)..];
+
+    private static string? Blank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     internal async Task<(ReportResult Result, Dictionary<string, string?> Inputs)> ResultAsync(
         ReportDefinition report, IReadOnlyDictionary<string, string?>? filters, ReportViewer viewer, string? resource, int limit, int offset, bool withSummary, CancellationToken cancellationToken)

@@ -94,7 +94,7 @@ internal sealed class ReportQueries(LovQueryService queries, AccessResolver acce
               ?? throw new ReportAccessException($"User '{viewer.UserName}' does not exist or is not active.");
 
     private static LovReportSpec Spec(ReportShape shape) => new(
-        [.. shape.Columns.Select(c => new LovReportColumn(c.Name, c.Column, c.Aggregate))],
+        [.. shape.Columns.Select(c => new LovReportColumn(c.Name, c.Column, c.Aggregate, c.Bucket))],
         [.. shape.Tiles.Select(t => new LovReportTile(t.Name, t.Column, t.Aggregate))],
         [.. shape.Sort.Select(s => (s.Column, s.Descending))],
         shape.Totals);

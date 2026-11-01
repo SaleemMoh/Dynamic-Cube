@@ -497,16 +497,37 @@
           }
         ],
         "totals": true,
-        "chart": {
-          "type": "BAR",
-          "category": "service",
-          "values": [
-            "requests"
-          ]
-        },
         "pageSize": 50,
         "businessApps": [
           "CLASSIFICATION"
+        ],
+        "charts": [
+          {
+            "name": "chart1",
+            "titleAr": "الطلبات حسب الخدمة والحالة والفرع",
+            "titleEn": "Requests by service, status and branch",
+            "type": "BAR",
+            "x": [
+              {
+                "column": "s.name_ar",
+                "labelAr": "الخدمة",
+                "labelEn": "Service"
+              }
+            ],
+            "y": [
+              {
+                "column": "r.service_code",
+                "aggregate": "COUNT",
+                "labelAr": "عدد الطلبات",
+                "labelEn": "Requests"
+              }
+            ],
+            "series": null,
+            "stacked": false,
+            "sort": "Y_DESC",
+            "limit": 20,
+            "width": "HALF"
+          }
         ]
       }
     },
@@ -648,16 +669,37 @@
           }
         ],
         "totals": true,
-        "chart": {
-          "type": "BAR",
-          "category": "step",
-          "values": [
-            "tasks"
-          ]
-        },
         "pageSize": 50,
         "businessApps": [
           "CLASSIFICATION"
+        ],
+        "charts": [
+          {
+            "name": "chart1",
+            "titleAr": "المهام المتأخرة عن موعدها",
+            "titleEn": "Overdue tasks",
+            "type": "BAR",
+            "x": [
+              {
+                "column": "t.name_ar",
+                "labelAr": "الخطوة",
+                "labelEn": "Step"
+              }
+            ],
+            "y": [
+              {
+                "column": "t.node_code",
+                "aggregate": "COUNT",
+                "labelAr": "عدد المهام",
+                "labelEn": "Tasks"
+              }
+            ],
+            "series": null,
+            "stacked": false,
+            "sort": "Y_DESC",
+            "limit": 20,
+            "width": "HALF"
+          }
         ]
       }
     },
@@ -758,16 +800,37 @@
           }
         ],
         "totals": true,
-        "chart": {
-          "type": "PIE",
-          "category": "grade",
-          "values": [
-            "certificates"
-          ]
-        },
         "pageSize": 50,
         "businessApps": [
           "CLASSIFICATION"
+        ],
+        "charts": [
+          {
+            "name": "chart1",
+            "titleAr": "الشهادات حسب الدرجة",
+            "titleEn": "Certificates by grade",
+            "type": "PIE",
+            "x": [
+              {
+                "column": "d.value",
+                "labelAr": "الدرجة",
+                "labelEn": "Grade"
+              }
+            ],
+            "y": [
+              {
+                "column": "d.number",
+                "aggregate": "COUNT",
+                "labelAr": "عدد الشهادات",
+                "labelEn": "Certificates"
+              }
+            ],
+            "series": null,
+            "stacked": false,
+            "sort": "Y_DESC",
+            "limit": 20,
+            "width": "HALF"
+          }
         ]
       }
     },
@@ -880,16 +943,37 @@
           }
         ],
         "totals": true,
-        "chart": {
-          "type": "BAR",
-          "category": "step",
-          "values": [
-            "drafts"
-          ]
-        },
         "pageSize": 50,
         "businessApps": [
           "CLASSIFICATION"
+        ],
+        "charts": [
+          {
+            "name": "chart1",
+            "titleAr": "المسودات المتروكة حسب الخطوة",
+            "titleEn": "Abandoned drafts by step",
+            "type": "BAR",
+            "x": [
+              {
+                "column": "r.current_step",
+                "labelAr": "الخطوة",
+                "labelEn": "Step"
+              }
+            ],
+            "y": [
+              {
+                "column": "r.service_code",
+                "aggregate": "COUNT",
+                "labelAr": "عدد المسودات",
+                "labelEn": "Drafts"
+              }
+            ],
+            "series": null,
+            "stacked": false,
+            "sort": "Y_DESC",
+            "limit": 20,
+            "width": "HALF"
+          }
         ]
       }
     },

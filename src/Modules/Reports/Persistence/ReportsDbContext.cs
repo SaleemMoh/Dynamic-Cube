@@ -32,7 +32,7 @@ public sealed class ReportsDbContext(DbContextOptions<ReportsDbContext> options)
             b.Property(e => e.Filters).HasJsonColumn();
             b.Property(e => e.Tiles).HasJsonColumn();
             b.Property(e => e.Sort).HasJsonColumn();
-            b.Property(e => e.Chart).HasJsonColumn();
+            b.Property(e => e.Charts).HasJsonColumn();
         });
         modelBuilder.Entity<SavedReportFilter>(b =>
         {

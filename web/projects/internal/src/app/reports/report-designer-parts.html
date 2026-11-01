@@ -557,7 +557,7 @@
     </button>
   }
 
-  @case ('chart') {
+  @case ('tiles') {
     <h3>{{ 'rp.tiles' | dcTranslate }}</h3>
     <p class="ed-muted">{{ 'rp.tiles.hint' | dcTranslate }}</p>
     @for (t of def().tiles; track $index; let i = $index) {
@@ -627,45 +627,5 @@
     >
       <mat-icon fontSet="material-symbols-outlined">add</mat-icon>{{ 'rp.addTile' | dcTranslate }}
     </button>
-
-    <h3>{{ 'rp.chart' | dcTranslate }}</h3>
-    <p class="ed-muted">{{ 'rp.chart.hint' | dcTranslate }}</p>
-    <mat-button-toggle-group
-      class="ed-kind"
-      [value]="def().chart?.type ?? ''"
-      (change)="setChartType($event.value)"
-      data-testid="rp-chart-type"
-    >
-      <mat-button-toggle value="">{{ 'rp.chart.none' | dcTranslate }}</mat-button-toggle>
-      @for (t of chartTypes; track t) {
-        <mat-button-toggle [value]="t">{{ 'rp.chartType.' + t | dcTranslate }}</mat-button-toggle>
-      }
-    </mat-button-toggle-group>
-    @if (def().chart; as chart) {
-      <div class="ed-row">
-        <span>{{ 'rp.chart.category' | dcTranslate }}</span>
-        <select
-          class="ed-cell ed-grow"
-          [ngModel]="chart.category"
-          (ngModelChange)="setChart({ category: $event })"
-          [attr.aria-label]="'rp.chart.category' | dcTranslate"
-        >
-          <option value="">—</option>
-          @for (c of def().columns; track $index) {
-            <option [value]="c.name">{{ label(c) }}</option>
-          }
-        </select>
-      </div>
-      <div class="ed-row ed-wrap">
-        <span>{{ 'rp.chart.values' | dcTranslate }}</span>
-        @for (c of numbers(); track c.name) {
-          <mat-checkbox
-            [ngModel]="chart.values.includes(c.name)"
-            (ngModelChange)="toggleValue(c.name, $event)"
-            >{{ label(c) }}</mat-checkbox
-          >
-        }
-      </div>
-    }
   }
 }

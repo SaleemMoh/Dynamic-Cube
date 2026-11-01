@@ -177,4 +177,39 @@ public sealed class ReportQueryTests(AppsControlFixture fixture) : IAsyncLifetim
         (await Codes(new ReportViewer("admin", company))).ShouldBe(["A", "B", "C"], "the company they work in, all its branches");
         (await Codes(new ReportViewer("admin", other))).ShouldBe(["D"]);
     }
+
+    [Fact]
+    public async Task A_date_groups_by_a_period_and_rows_count_without_a_column()
+    {
+        var table = Harness.Unique("rpt_day").ToLowerInvariant();
+        await _harness.AsAsync("admin", async sp => await Sql.QueryAsync(
+            sp.GetRequiredService<Persistence.AppsControlDbContext>(),
+            $"CREATE TABLE apps.{table} (code text, submitted_at timestamptz, fee numeric); "
+            + $"INSERT INTO apps.{table} VALUES ('A', '2026-01-05T10:00:00Z', 100), ('B', '2026-01-20T10:00:00Z', 300), ('C', '2026-03-02T10:00:00Z', 50), ('D', NULL, 10)"));
+        var dataObject = "APPS_" + table.ToUpperInvariant();
+        await _harness.PublishAsync(AppsControlAreas.Lovs, new Change(AppsControlChangeTypes.DataObject, dataObject, ChangeOperation.Create, new
+        {
+            nameAr = "أيام",
+            nameEn = "Days",
+            businessApp = "",
+            dbSchema = "apps",
+            dbObject = table,
+            objectType = "TABLE",
+            columns = new[] { new { name = "code", dataType = "TEXT" }, new { name = "submitted_at", dataType = "TIMESTAMPTZ" }, new { name = "fee", dataType = "NUMERIC" } },
+        }));
+
+        var query = JsonNode.Parse(System.Text.Json.JsonSerializer.Serialize(new { from = new { kind = "DATA_OBJECT", code = dataObject, alias = "d" } }))!;
+        var shape = new ReportShape(
+            [new("month", "d.submitted_at", null, ReportBuckets.Month), new("requests", "", ReportAggregates.Count), new("average", "d.fee", ReportAggregates.Avg)],
+            [], [new("month")], Totals: false);
+        (await CheckAsync(query, shape)).ShouldBeEmpty();
+        var result = await RunAsync(query, shape);
+        result.Columns[0].Type.ShouldBe("DATE");
+        result.Rows.Select(r => (r["month"]?.ToString(), r["requests"]!.GetValue<decimal>(), r["average"]!.GetValue<decimal>()))
+            .ShouldBe([("2026-01-01", 2m, 200m), ("2026-03-01", 1m, 50m), (null, 1m, 10m)], "by month, every row counted");
+
+        var bad = await CheckAsync(query, new ReportShape(
+            [new("code", "d.code", null, ReportBuckets.Month), new("fee", "d.fee", ReportAggregates.Sum, ReportBuckets.Year), new("x", "d.submitted_at", null, "DECADE")], [], [], false));
+        bad.Keys.ShouldBe(["columns[0].bucket", "columns[1].bucket", "columns[2].bucket"], ignoreOrder: true);
+    }
 }

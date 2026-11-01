@@ -6,10 +6,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import {
   I18nService,
-  REPORT_CHART_TYPES,
   REPORT_FILTER_TYPES,
   ReportAggregate,
-  ReportChartType,
   ReportColumnDef,
   ReportDefinition,
   ReportFilterDef,
@@ -34,7 +32,6 @@ import {
   isGrouped,
   newFilter,
   newTile,
-  numberColumns,
   removeColumn,
   renameColumn,
   uniqueName,
@@ -49,7 +46,7 @@ export interface LovOption {
 
 /**
  * The editing parts of the report designer (ADR-0045): the data (source, joins, conditions on values, filters or the
- * user's data), the columns with their totals and sort, the filters users fill, and the tiles and chart.
+ * user's data), the columns with their totals and sort, the filters users fill and the tiles (charts have their own designer).
  */
 @Component({
   selector: 'dc-report-designer-parts',
@@ -77,7 +74,6 @@ export class ReportDesignerParts {
   protected readonly facts = USER_FACTS;
   protected readonly conditionSources: ConditionSource[] = ['VALUE', 'PARAM', 'USER'];
   protected readonly filterTypes = REPORT_FILTER_TYPES;
-  protected readonly chartTypes = REPORT_CHART_TYPES;
   protected readonly dateDefaults = DATE_DEFAULTS;
   protected readonly maxFilters = MAX_FILTERS;
   protected readonly maxTiles = MAX_TILES;
@@ -88,7 +84,6 @@ export class ReportDesignerParts {
       .filters.map((f) => f.name)
       .filter(Boolean),
   );
-  protected readonly numbers = computed(() => numberColumns(this.def(), this.columns()));
   protected readonly groupedBy = computed(() => {
     const def = this.def();
     if (!isGrouped(def.columns)) return '';
@@ -157,7 +152,7 @@ export class ReportDesignerParts {
       columns: [],
       sort: [],
       tiles: this.def().tiles.filter((t) => !t.column),
-      chart: null,
+      charts: [],
     });
   }
 
@@ -356,7 +351,7 @@ export class ReportDesignerParts {
     this.setDef({ filters: this.def().filters.filter((_, i) => i !== index) });
   }
 
-  // ------------------------------------------------------------------ tiles and chart
+  // ------------------------------------------------------------------ tiles
 
   protected addTile(): void {
     this.setDef({ tiles: [...this.def().tiles, newTile(this.def().tiles)] });
@@ -377,39 +372,5 @@ export class ReportDesignerParts {
 
   protected removeTile(index: number): void {
     this.setDef({ tiles: this.def().tiles.filter((_, i) => i !== index) });
-  }
-
-  protected setChartType(type: ReportChartType | ''): void {
-    if (!type) {
-      this.setDef({ chart: null });
-      return;
-    }
-    const current = this.def().chart;
-    const def = this.def();
-    const category = current?.category || def.columns.find((c) => !c.aggregate)?.name || '';
-    const values = current?.values.length
-      ? current.values
-      : this.numbers()
-          .slice(0, 1)
-          .map((c) => c.name);
-    this.setDef({
-      chart: { type, category, values: type === 'PIE' ? values.slice(0, 1) : values },
-    });
-  }
-
-  protected setChart(change: Partial<NonNullable<ReportDefinition['chart']>>): void {
-    const chart = this.def().chart;
-    if (chart) this.setDef({ chart: { ...chart, ...change } });
-  }
-
-  protected toggleValue(name: string, on: boolean): void {
-    const chart = this.def().chart;
-    if (!chart) return;
-    const values = on
-      ? chart.type === 'PIE'
-        ? [name]
-        : [...chart.values.filter((v) => v !== name), name]
-      : chart.values.filter((v) => v !== name);
-    this.setChart({ values });
   }
 }

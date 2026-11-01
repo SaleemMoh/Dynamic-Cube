@@ -96,4 +96,66 @@ internal static class ReportShapes
         totals);
 
     public static ReportShape Of(ReportDefinition report) => Of(report.Columns, report.Tiles, report.Sort, report.Totals);
+
+    /// <summary>A chart drawing its rows themselves (no totals on either axis).</summary>
+    public const string Rows = "ROWS";
+
+    private static bool Totalled(ReportChartField field) => !string.IsNullOrWhiteSpace(field.Aggregate);
+
+    /// <summary>
+    /// The axis holding the column the rows are grouped by: <c>X</c> or <c>Y</c> (one field, not totalled, while every
+    /// field of the other axis is totalled), <see cref="Rows"/> (one field on each axis, neither totalled), or null when
+    /// the axes fit neither.
+    /// </summary>
+    public static string? CategoryAxis(ReportChartDef chart)
+    {
+        bool Plain(List<ReportChartField> axis) => axis.Count == 1 && !Totalled(axis[0]);
+        bool Totals(List<ReportChartField> axis) => axis.Count > 0 && axis.All(Totalled);
+        return (Plain(chart.X), Plain(chart.Y)) switch
+        {
+            (true, true) => Rows,
+            (true, false) when Totals(chart.Y) => "X",
+            (false, true) when Totals(chart.X) => "Y",
+            _ => null,
+        };
+    }
+
+    /// <summary>
+    /// A chart as the query engine's shape: the X fields (<c>x0</c>, <c>x1</c>, …), the Y fields (<c>y0</c>, …) and the
+    /// series (<c>s</c>), grouped by the fields not totalled (none totalled: the rows as they are), in the chart's order;
+    /// with the field each column stands for.
+    /// </summary>
+    public static (ReportShape Shape, IReadOnlyList<string> Paths) Chart(ReportChartDef chart)
+    {
+        static string? Text(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        var columns = new List<ReportColumn>();
+        var paths = new List<string>();
+        foreach (var (field, i) in chart.X.Select((f, i) => (f, i)))
+        {
+            columns.Add(new($"x{i}", field.Column ?? string.Empty, Text(field.Aggregate), Text(field.Bucket)));
+            paths.Add($"x[{i}]");
+        }
+
+        foreach (var (field, i) in chart.Y.Select((f, i) => (f, i)))
+        {
+            columns.Add(new($"y{i}", field.Column ?? string.Empty, Text(field.Aggregate), Text(field.Bucket)));
+            paths.Add($"y[{i}]");
+        }
+
+        if (chart.Series is { } series)
+        {
+            columns.Add(new("s", series.Column ?? string.Empty, Text(series.Aggregate), Text(series.Bucket)));
+            paths.Add("series");
+        }
+
+        var sort = chart.Sort switch
+        {
+            ReportChartSorts.XDescending => new Platform.Reports.ReportSort("x0", true),
+            ReportChartSorts.YAscending => new Platform.Reports.ReportSort("y0"),
+            ReportChartSorts.YDescending => new Platform.Reports.ReportSort("y0", true),
+            _ => new Platform.Reports.ReportSort("x0"),
+        };
+        List<Platform.Reports.ReportSort> order = chart.Series is null ? [sort] : [sort, new("s")];
+        return (new ReportShape(columns, [], order, Totals: false), paths);
+    }
 }

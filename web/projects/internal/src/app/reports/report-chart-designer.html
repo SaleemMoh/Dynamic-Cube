@@ -1,0 +1,314 @@
+<div class="cd">
+  <aside
+    class="cd-fields"
+    cdkDropList
+    id="cd-fields"
+    [cdkDropListConnectedTo]="['cd-x', 'cd-y', 'cd-series']"
+    cdkDropListSortingDisabled
+    data-testid="cd-fields"
+  >
+    <h4>{{ 'rp.cd.fields' | dcTranslate }}</h4>
+    <p class="cd-muted">{{ 'rp.cd.fieldsHint' | dcTranslate }}</p>
+    <div class="cd-field cd-field--count" cdkDrag [cdkDragData]="rowCount" data-field="__rows__">
+      <mat-icon fontSet="material-symbols-outlined">functions</mat-icon>
+      <span>{{ 'rp.cd.rows' | dcTranslate }}</span>
+    </div>
+    @for (f of fields(); track f.ref) {
+      <div class="cd-field" cdkDrag [cdkDragData]="f.ref" [attr.data-field]="f.ref">
+        <mat-icon fontSet="material-symbols-outlined">{{ categoryIcon(f.category) }}</mat-icon>
+        <span>{{ fieldLabel(f) }}</span>
+        <code dir="ltr">{{ f.ref }}</code>
+      </div>
+    } @empty {
+      <p class="cd-muted">{{ 'rp.cd.noFields' | dcTranslate }}</p>
+    }
+  </aside>
+
+  <section class="cd-main">
+    <div class="cd-tabs">
+      @for (c of def().charts; track $index; let i = $index) {
+        <button
+          type="button"
+          class="cd-tab"
+          [class.cd-tab--on]="i === selected()"
+          (click)="select(i)"
+          [attr.data-testid]="'cd-chart-' + i"
+        >
+          <mat-icon fontSet="material-symbols-outlined">{{ typeIcons[c.type] }}</mat-icon>
+          {{ chartTitle(c, i) }}
+        </button>
+      }
+      <button
+        matButton
+        type="button"
+        (click)="addChart()"
+        [disabled]="def().charts.length >= maxCharts"
+        data-testid="cd-add-chart"
+      >
+        <mat-icon fontSet="material-symbols-outlined">add_chart</mat-icon
+        >{{ 'rp.cd.add' | dcTranslate }}
+      </button>
+    </div>
+
+    @if (chart(); as c) {
+      <div class="cd-head">
+        <input
+          class="cd-cell cd-grow"
+          dir="rtl"
+          [placeholder]="'rp.cd.titleAr' | dcTranslate"
+          [ngModel]="c.titleAr"
+          (ngModelChange)="set({ titleAr: $event })"
+          [attr.aria-label]="'rp.cd.titleAr' | dcTranslate"
+          data-testid="cd-title-ar"
+        />
+        <input
+          class="cd-cell cd-grow"
+          dir="ltr"
+          [placeholder]="'rp.cd.titleEn' | dcTranslate"
+          [ngModel]="c.titleEn"
+          (ngModelChange)="set({ titleEn: $event })"
+          [attr.aria-label]="'rp.cd.titleEn' | dcTranslate"
+          data-testid="cd-title-en"
+        />
+        <button
+          matIconButton
+          type="button"
+          (click)="move(-1)"
+          [disabled]="selected() === 0"
+          [matTooltip]="'rp.cd.moveUp' | dcTranslate"
+        >
+          <mat-icon fontSet="material-symbols-outlined">arrow_back</mat-icon>
+        </button>
+        <button
+          matIconButton
+          type="button"
+          (click)="move(1)"
+          [disabled]="selected() === def().charts.length - 1"
+          [matTooltip]="'rp.cd.moveDown' | dcTranslate"
+        >
+          <mat-icon fontSet="material-symbols-outlined">arrow_forward</mat-icon>
+        </button>
+        <button
+          matIconButton
+          type="button"
+          (click)="duplicate()"
+          [disabled]="def().charts.length >= maxCharts"
+          [matTooltip]="'rp.cd.duplicate' | dcTranslate"
+        >
+          <mat-icon fontSet="material-symbols-outlined">content_copy</mat-icon>
+        </button>
+        <button
+          matIconButton
+          type="button"
+          (click)="removeChart()"
+          [matTooltip]="'rp.remove' | dcTranslate"
+          data-testid="cd-remove-chart"
+        >
+          <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
+        </button>
+      </div>
+
+      <div class="cd-row">
+        <mat-button-toggle-group
+          [value]="c.type"
+          (change)="set({ type: $event.value })"
+          data-testid="cd-type"
+        >
+          @for (t of types; track t) {
+            <mat-button-toggle [value]="t" [matTooltip]="'rp.chartType.' + t | dcTranslate">
+              <mat-icon fontSet="material-symbols-outlined">{{ typeIcons[t] }}</mat-icon>
+            </mat-button-toggle>
+          }
+        </mat-button-toggle-group>
+        <mat-button-toggle-group [value]="c.width" (change)="set({ width: $event.value })">
+          <mat-button-toggle value="HALF">{{ 'rp.cd.width.HALF' | dcTranslate }}</mat-button-toggle>
+          <mat-button-toggle value="FULL">{{ 'rp.cd.width.FULL' | dcTranslate }}</mat-button-toggle>
+        </mat-button-toggle-group>
+        <span class="cd-mode" data-testid="cd-mode">{{ modeText() }}</span>
+      </div>
+
+      <!-- The chart's frame: Y up the side, X along the bottom, the live preview inside. -->
+      <div class="cd-frame">
+        <div
+          class="cd-zone cd-zone--y"
+          cdkDropList
+          id="cd-y"
+          (cdkDropListDropped)="drop('y', $event)"
+          data-testid="cd-zone-y"
+        >
+          <span class="cd-zone__label">{{ 'rp.cd.y' | dcTranslate }}</span>
+          @for (f of c.y; track $index; let i = $index) {
+            <ng-container *ngTemplateOutlet="chip; context: { $implicit: f, zone: 'y', i: i }" />
+          }
+          <ng-container *ngTemplateOutlet="adder; context: { zone: 'y' }" />
+        </div>
+        <div class="cd-canvas" data-testid="cd-preview">
+          @if (previewing()) {
+            <mat-progress-bar mode="indeterminate" />
+          }
+          @if (problems().length) {
+            <ul class="cd-problems" data-testid="cd-problems">
+              @for (p of problems(); track $index) {
+                <li>{{ p }}</li>
+              }
+            </ul>
+          } @else if (previewErrors().length) {
+            <ul class="dc-errors">
+              @for (e of previewErrors(); track $index) {
+                <li>{{ e }}</li>
+              }
+            </ul>
+          } @else if (preview(); as p) {
+            <dc-report-chart [chart]="p" [showTitle]="false" [size]="960" />
+          } @else {
+            <p class="cd-muted">{{ 'rp.cd.previewHint' | dcTranslate }}</p>
+          }
+        </div>
+        <button
+          matIconButton
+          type="button"
+          class="cd-swap"
+          (click)="swap()"
+          [matTooltip]="'rp.cd.swap' | dcTranslate"
+          data-testid="cd-swap"
+        >
+          <mat-icon fontSet="material-symbols-outlined">swap_vert</mat-icon>
+        </button>
+        <div
+          class="cd-zone cd-zone--x"
+          cdkDropList
+          id="cd-x"
+          cdkDropListOrientation="horizontal"
+          (cdkDropListDropped)="drop('x', $event)"
+          data-testid="cd-zone-x"
+        >
+          <span class="cd-zone__label">{{ 'rp.cd.x' | dcTranslate }}</span>
+          @for (f of c.x; track $index; let i = $index) {
+            <ng-container *ngTemplateOutlet="chip; context: { $implicit: f, zone: 'x', i: i }" />
+          }
+          <ng-container *ngTemplateOutlet="adder; context: { zone: 'x' }" />
+        </div>
+      </div>
+
+      <div class="cd-row">
+        <div
+          class="cd-zone cd-zone--series"
+          cdkDropList
+          id="cd-series"
+          cdkDropListOrientation="horizontal"
+          (cdkDropListDropped)="drop('series', $event)"
+          data-testid="cd-zone-series"
+        >
+          <span class="cd-zone__label">{{ 'rp.cd.series' | dcTranslate }}</span>
+          @if (c.series; as s) {
+            <ng-container
+              *ngTemplateOutlet="chip; context: { $implicit: s, zone: 'series', i: 0 }"
+            />
+          } @else {
+            <ng-container *ngTemplateOutlet="adder; context: { zone: 'series' }" />
+          }
+        </div>
+        @if (c.type === 'BAR' || c.type === 'AREA') {
+          <mat-checkbox [ngModel]="c.stacked" (ngModelChange)="set({ stacked: $event })">{{
+            'rp.cd.stacked' | dcTranslate
+          }}</mat-checkbox>
+        }
+        <label class="cd-opt">
+          {{ 'rp.cd.sort' | dcTranslate }}
+          <select class="cd-cell" [ngModel]="c.sort" (ngModelChange)="set({ sort: $event })">
+            @for (s of sorts; track s) {
+              <option [value]="s">{{ 'rp.cd.sort.' + s | dcTranslate }}</option>
+            }
+          </select>
+        </label>
+        <label class="cd-opt">
+          {{ 'rp.cd.limit' | dcTranslate }}
+          <input
+            class="cd-cell cd-num"
+            type="number"
+            min="1"
+            max="500"
+            [ngModel]="c.limit"
+            (ngModelChange)="set({ limit: +$event })"
+          />
+        </label>
+      </div>
+      <p class="cd-muted">{{ 'rp.cd.hint' | dcTranslate }}</p>
+    } @else {
+      <p class="cd-empty">{{ 'rp.cd.none' | dcTranslate }}</p>
+    }
+  </section>
+</div>
+
+<!-- A field on an axis: its label, how it is totalled (or as it is), a date's period, labels, remove. -->
+<ng-template #chip let-f let-zone="zone" let-i="i">
+  <div class="cd-chip" [class.cd-chip--total]="f.aggregate" [attr.data-chip]="zone + i">
+    <mat-icon fontSet="material-symbols-outlined">{{
+      f.aggregate ? 'functions' : categoryIcon(categoryOf(f.column))
+    }}</mat-icon>
+    <input
+      class="cd-chip__label"
+      [ngModel]="i18n.language() === 'ar' ? f.labelAr : f.labelEn"
+      (ngModelChange)="
+        setOn(zone, i, i18n.language() === 'ar' ? { labelAr: $event } : { labelEn: $event }, f)
+      "
+      [placeholder]="chipLabel(f)"
+      [attr.aria-label]="'rp.cd.label' | dcTranslate"
+    />
+    @if (zone !== 'series') {
+      <select
+        class="cd-chip__select"
+        [ngModel]="f.aggregate ?? ''"
+        (ngModelChange)="setOn(zone, i, { aggregate: $event || null }, f)"
+        [attr.aria-label]="'rp.column.aggregate' | dcTranslate"
+      >
+        @if (f.column) {
+          <option value="">{{ 'rp.cd.asIs' | dcTranslate }}</option>
+        }
+        @for (a of aggregatesOf(f); track a) {
+          <option [value]="a">{{ 'rp.aggregate.' + a | dcTranslate }}</option>
+        }
+      </select>
+    }
+    @if (!f.aggregate && categoryOf(f.column) === 'DATE') {
+      <select
+        class="cd-chip__select"
+        [ngModel]="f.bucket ?? ''"
+        (ngModelChange)="setOn(zone, i, { bucket: $event || null }, f)"
+        [attr.aria-label]="'rp.cd.bucket' | dcTranslate"
+      >
+        <option value="">{{ 'rp.cd.bucket.none' | dcTranslate }}</option>
+        @for (b of buckets; track b) {
+          <option [value]="b">{{ 'rp.cd.bucket.' + b | dcTranslate }}</option>
+        }
+      </select>
+    }
+    <button
+      type="button"
+      class="cd-chip__x"
+      (click)="remove(zone, i)"
+      [attr.aria-label]="'rp.remove' | dcTranslate"
+    >
+      ×
+    </button>
+  </div>
+</ng-template>
+
+<!-- Adding a field by choosing it (the same as dragging it here). -->
+<ng-template #adder let-zone="zone">
+  <select
+    #pick
+    class="cd-add"
+    (change)="add(zone, pick.value); pick.value = ''"
+    [attr.aria-label]="'rp.cd.addField' | dcTranslate"
+    [attr.data-testid]="'cd-add-' + zone"
+  >
+    <option value="">+ {{ 'rp.cd.addField' | dcTranslate }}</option>
+    @if (zone !== 'series') {
+      <option [value]="rowCount">{{ 'rp.cd.rows' | dcTranslate }}</option>
+    }
+    @for (f of fields(); track f.ref) {
+      <option [value]="f.ref">{{ fieldLabel(f) }} ({{ f.ref }})</option>
+    }
+  </select>
+</ng-template>

@@ -28,8 +28,27 @@ values and public endpoints (ADR-0042).
     or yes/no, optionally required, with a default — for dates also `TODAY`, `TODAY-n`, `TODAY+n`, `MONTH_START`,
     `LAST_MONTH_START`, `LAST_MONTH_END`, `YEAR_START`, resolved on each run in the installation's time zone. An empty
     filter is not applied;
-  - up to 8 **tiles** (an aggregate over all the filtered rows, or their number) and an optional **chart** — bars, lines
-    or a pie — drawing number columns along one column, over the first 100 rows (groups).
+  - up to 8 **tiles** (an aggregate over all the filtered rows, or their number) and up to 6 **charts** (below).
+- **Charts** (asked for by the owner after the first round: several charts, the X and Y axes chosen freely, a visual
+  designer). Each chart groups the report's filtered rows its own way, independently of the table's columns:
+  - **What is on X runs across, what is on Y runs up.** Either axis may hold the column the rows are grouped by — a
+    status, a branch, or a **date grouped by a period** (day, week, month, quarter, year) — and the other one or more
+    **totalled values** (count, distinct count, sum, average, minimum, maximum, or the number of rows). Time down the Y
+    axis with the average across is as valid as months across with counts up: bars, lines and areas follow the axes.
+  - **The rows themselves:** one field *as it is* on each axis draws each row (a scatter of each request's date and fee,
+    a trend of records), up to 500 points.
+  - **Colour by** a column splits the values into series (one colour each; stacked or side by side for bars and areas).
+  - Each chart has its title, type (bars, line, area, points, pie), width (half or full row), order (by X or Y, either
+    way) and the most points drawn (1–500). A pie draws one totalled value per group.
+  - The engine gained date periods (`date_trunc`) for columns grouped by and counting rows without a column. A chart is
+    one more parameterised, read-only query of the report; its rows follow the viewer's data permissions, company and
+    branches like the table. Reports saved with the single chart of the first round were converted (migration
+    `ReportCharts`; older packages are read the same way).
+  - **Chart designer:** the data's columns listed as fields (with their kind) to **drag onto the X axis, the Y axis or
+    "colour by"** around a **live preview** of the unsaved chart (`/admin/preview-chart`), or to choose from each zone's
+    list. A field dropped next to the axis grouped by is totalled (numbers summed, others counted) and its total can be
+    changed or set back to *as it is*; a date gets a period; a button swaps the axes. Charts are added, duplicated,
+    reordered and removed as tabs.
 - **The query engine** is Apps Control's query compiler in a report mode, behind the kernel contract `IReportQueries`:
   an inner query of the chosen columns and an outer one grouping and totalling, plus a count, totals and tiles query, all
   parameterised, read-only, with a statement timeout and a row cap (100,000 for a run, 50,000 for an export).
@@ -43,10 +62,11 @@ values and public endpoints (ADR-0042).
   `/reports/view/{code}`. Deleting or deactivating the report retires the resource. The **reports list** shows the
   reports the user may view, grouped by their category.
 - **Viewer.** Filters (list filters show their list's values), the user's **saved filters** (one may be their default,
-  applied on opening), tiles, the chart (drawn as SVG, no chart library), the paged table with its totals row, and
+  applied on opening), tiles, the charts (drawn as SVG, no chart library, two to a row or full width), the paged table
+  with its totals row, and
   **export** to Excel (title, filters used, header, rows, totals, right-to-left for Arabic, auto-filter) or CSV (UTF-8
   with BOM; values starting with `=`, `+`, `-`, `@` are guarded against formula injection) — export needs EXPORT.
-- **Designer.** Tabs for the data, columns and totals, filters, tiles and chart, and details, with problems counted per
+- **Designer.** Tabs for the data, columns and totals, filters, tiles, charts (the chart designer) and details, with problems counted per
   tab, and a **preview** running the unsaved report with the designer's own access (`/admin/preview`).
 - **Scheduled delivery** (`rpt.schedule`, resource `reports.schedules`): a report, daily / weekly (a day) / monthly
   (day 1–28) at a local time, a file format and language, filter values (empty: the report's defaults) and the

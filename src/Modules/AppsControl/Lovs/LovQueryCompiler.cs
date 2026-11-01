@@ -18,7 +18,7 @@ public sealed record LovCompiledQuery(string Sql, IReadOnlyDictionary<string, ob
 public sealed record LovQueryField(string Name, string Column);
 
 /// <summary>A report's column (ADR-0045): its name, the column it reads and its aggregate (none: the rows are grouped by it).</summary>
-public sealed record LovReportColumn(string Name, string Column, string? Aggregate);
+public sealed record LovReportColumn(string Name, string Column, string? Aggregate, string? Bucket = null);
 
 /// <summary>A report's tile: an aggregate over all filtered rows (no column: the number of rows).</summary>
 public sealed record LovReportTile(string Name, string? Column, string Aggregate);
@@ -507,11 +507,20 @@ public static partial class LovQueryCompiler
                     problems.Add(new($"{path}.name", $"'{column.Name}' is used twice."));
                 }
 
+                // Counting rows needs no column: every row counts.
+                if (string.IsNullOrWhiteSpace(column.Column) && string.Equals(column.Aggregate?.Trim(), ReportAggregates.Count, StringComparison.OrdinalIgnoreCase))
+                {
+                    result.Add((column.Name ?? string.Empty, "1", LovColumnCategory.Number, ReportAggregates.Count));
+                    continue;
+                }
+
                 var resolved = Column(column.Column, $"{path}.column");
                 var aggregate = Aggregate(column.Aggregate, resolved?.Column.Category, $"{path}.aggregate", allowNone: true);
-                if (resolved is not null && aggregate != "-")
+                var bucket = Bucket(column.Bucket, resolved?.Column.Category, aggregate, $"{path}.bucket");
+                if (resolved is not null && aggregate != "-" && bucket != "-")
                 {
-                    result.Add((column.Name ?? string.Empty, resolved.Value.Sql, ResultCategory(resolved.Value.Column.Category, aggregate), aggregate));
+                    var sql = bucket is null ? resolved.Value.Sql : $"(date_trunc('{bucket.ToLowerInvariant()}', {resolved.Value.Sql}))::date";
+                    result.Add((column.Name ?? string.Empty, sql, ResultCategory(resolved.Value.Column.Category, aggregate), aggregate));
                 }
             }
 
@@ -610,6 +619,36 @@ public static partial class LovQueryCompiler
             }
 
             return aggregate;
+        }
+
+        /// <summary>A date column grouped by day, week, month, quarter or year (upper case); null for none; "-" when it does not fit (reported).</summary>
+        private string? Bucket(string? given, LovColumnCategory? category, string? aggregate, string path)
+        {
+            var bucket = string.IsNullOrWhiteSpace(given) ? null : given.Trim().ToUpperInvariant();
+            if (bucket is null)
+            {
+                return null;
+            }
+
+            if (!ReportBuckets.All.Contains(bucket))
+            {
+                problems.Add(new(path, "Day, week, month, quarter or year."));
+                return "-";
+            }
+
+            if (aggregate is not null and not "-")
+            {
+                problems.Add(new(path, "Only a column the rows are grouped by takes a period."));
+                return "-";
+            }
+
+            if (category is not null && category != LovColumnCategory.Date)
+            {
+                problems.Add(new(path, "Only date columns are grouped by a period."));
+                return "-";
+            }
+
+            return bucket;
         }
 
         private static LovColumnCategory ResultCategory(LovColumnCategory category, string? aggregate) => aggregate switch

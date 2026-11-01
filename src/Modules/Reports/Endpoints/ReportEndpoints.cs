@@ -59,6 +59,8 @@ internal static class ReportEndpoints
         // The designer's preview: an unsaved report run within the designer's own access.
         group.MapPost("/admin/preview", async (PreviewReportRequest request, ReportService reports, CancellationToken ct) =>
             TypedResults.Ok(await reports.PreviewAsync(request, ct))).RequirePrivilege(ReportResources.Config, CatalogActions.Create).WithName("PreviewReport");
+        group.MapPost("/admin/preview-chart", async (PreviewChartRequest request, ReportService reports, CancellationToken ct) =>
+            TypedResults.Ok(await reports.PreviewChartAsync(request, ct))).RequirePrivilege(ReportResources.Config, CatalogActions.Create).WithName("PreviewReportChart");
     }
 
     /// <summary>Maps report exceptions to problem responses.</summary>

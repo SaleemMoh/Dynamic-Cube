@@ -15,8 +15,23 @@ public static class ReportAggregates
     public static IReadOnlyList<string> All { get; } = [Count, CountDistinct, Sum, Avg, Min, Max];
 }
 
-/// <summary>A column of a report: its name in the result, the column (<c>alias.column</c>) it reads and how it is totalled.</summary>
-public sealed record ReportColumn(string Name, string Column, string? Aggregate = null);
+/// <summary>Periods a date column is grouped by (a chart's X axis: requests per month).</summary>
+public static class ReportBuckets
+{
+    public const string Day = "DAY";
+    public const string Week = "WEEK";
+    public const string Month = "MONTH";
+    public const string Quarter = "QUARTER";
+    public const string Year = "YEAR";
+
+    public static IReadOnlyList<string> All { get; } = [Day, Week, Month, Quarter, Year];
+}
+
+/// <summary>
+/// A column of a report: its name in the result, the column (<c>alias.column</c>) it reads, how it is totalled, and for a
+/// date column grouped by, the period it is grouped by (<see cref="ReportBuckets"/>). Counting rows needs no column.
+/// </summary>
+public sealed record ReportColumn(string Name, string Column, string? Aggregate = null, string? Bucket = null);
 
 /// <summary>A number shown above the report: an aggregate over all the rows the filters keep (no column: the number of rows).</summary>
 public sealed record ReportTile(string Name, string? Column, string Aggregate);

@@ -13,10 +13,18 @@ import {
   fromQuery,
   toQuery,
 } from '../integration/api-endpoint-model';
+import { chartPayload, checkCharts } from './report-chart-model';
 
 /** The parts of the report designer, each with its own problems. */
-export type ReportPart = 'data' | 'columns' | 'filters' | 'chart' | 'details';
-export const REPORT_PARTS: ReportPart[] = ['data', 'columns', 'filters', 'chart', 'details'];
+export type ReportPart = 'data' | 'columns' | 'filters' | 'tiles' | 'charts' | 'details';
+export const REPORT_PARTS: ReportPart[] = [
+  'data',
+  'columns',
+  'filters',
+  'tiles',
+  'charts',
+  'details',
+];
 
 export interface ReportProblem {
   part: ReportPart;
@@ -58,7 +66,7 @@ export function emptyReport(): ReportDefinition {
     tiles: [],
     sort: [],
     totals: true,
-    chart: null,
+    charts: [],
     pageSize: 50,
   };
 }
@@ -80,7 +88,12 @@ export function normalizeReport(row: Record<string, unknown>): ReportDefinition 
     })),
     tiles: (def.tiles ?? []).map((t) => ({ ...t, column: t.column || null })),
     sort: (def.sort ?? []).map((s) => ({ ...s })),
-    chart: def.chart ? { ...def.chart, values: [...(def.chart.values ?? [])] } : null,
+    charts: (def.charts ?? []).map((c) => ({
+      ...c,
+      x: (c.x ?? []).map((f) => ({ ...f })),
+      y: (c.y ?? []).map((f) => ({ ...f })),
+      series: c.series ? { ...c.series } : null,
+    })),
     pageSize: def.pageSize || 50,
   };
 }
@@ -129,7 +142,7 @@ export function reportPayload(def: ReportDefinition, query: EndpointQuery): Repo
       column: text(t.column),
     })),
     sort: def.sort.filter((s) => s.column),
-    chart: def.chart?.category ? { ...def.chart, values: def.chart.values.filter(Boolean) } : null,
+    charts: def.charts.map(chartPayload),
   };
 }
 
@@ -225,37 +238,19 @@ export function newTile(existing: ReportTileDef[]): ReportTileDef {
   return { name, labelAr: 'العدد', labelEn: 'Rows', column: null, aggregate: 'COUNT' };
 }
 
-/** Renames a column everywhere the report refers to it (sort and chart). */
+/** Renames a column everywhere the report refers to it (the sort; charts read the data's columns, not the report's). */
 export function renameColumn(def: ReportDefinition, from: string, to: string): ReportDefinition {
   if (from === to) return def;
-  return {
-    ...def,
-    sort: def.sort.map((s) => (s.column === from ? { ...s, column: to } : s)),
-    chart: def.chart
-      ? {
-          ...def.chart,
-          category: def.chart.category === from ? to : def.chart.category,
-          values: def.chart.values.map((v) => (v === from ? to : v)),
-        }
-      : null,
-  };
+  return { ...def, sort: def.sort.map((s) => (s.column === from ? { ...s, column: to } : s)) };
 }
 
-/** Removes a column and what refers to it (sort and chart). */
+/** Removes a column and what refers to it (the sort). */
 export function removeColumn(def: ReportDefinition, index: number): ReportDefinition {
   const name = def.columns[index]?.name;
-  const chart = def.chart
-    ? {
-        ...def.chart,
-        category: def.chart.category === name ? '' : def.chart.category,
-        values: def.chart.values.filter((v) => v !== name),
-      }
-    : null;
   return {
     ...def,
     columns: def.columns.filter((_, i) => i !== index),
     sort: def.sort.filter((s) => s.column !== name),
-    chart,
   };
 }
 
@@ -334,26 +329,20 @@ export function checkReport(
     if (!defaultFits(f)) p('filters', 'rp.problem.filterDefault', { n });
   });
 
-  if (def.tiles.length > MAX_TILES) p('chart', 'rp.problem.tileCount', { max: MAX_TILES });
+  if (def.tiles.length > MAX_TILES) p('tiles', 'rp.problem.tileCount', { max: MAX_TILES });
   const tileNames = new Set<string>();
   def.tiles.forEach((t, i) => {
     const n = i + 1;
-    if (!NAME.test(t.name)) p('chart', 'rp.problem.tileName', { n });
-    else if (tileNames.has(t.name)) p('chart', 'rp.problem.tileTwice', { name: t.name });
+    if (!NAME.test(t.name)) p('tiles', 'rp.problem.tileName', { n });
+    else if (tileNames.has(t.name)) p('tiles', 'rp.problem.tileTwice', { name: t.name });
     tileNames.add(t.name);
-    if (!t.labelAr?.trim() || !t.labelEn?.trim()) p('chart', 'rp.problem.tileLabels', { n });
-    if (t.aggregate !== 'COUNT' && !t.column) p('chart', 'rp.problem.tileColumn', { n });
+    if (!t.labelAr?.trim() || !t.labelEn?.trim()) p('tiles', 'rp.problem.tileLabels', { n });
+    if (t.aggregate !== 'COUNT' && !t.column) p('tiles', 'rp.problem.tileColumn', { n });
     const category = sourceColumns.find((s) => s.ref === t.column)?.category;
     if (t.column && !aggregatesFor(category).includes(t.aggregate))
-      p('chart', 'rp.problem.tileAggregate', { n });
+      p('tiles', 'rp.problem.tileAggregate', { n });
   });
-  if (def.chart) {
-    if (!names.has(def.chart.category)) p('chart', 'rp.problem.chartCategory');
-    const numbers = new Set(numberColumns(def, sourceColumns).map((c) => c.name));
-    const values = def.chart.values.filter(Boolean);
-    if (!values.length || values.some((v) => !numbers.has(v))) p('chart', 'rp.problem.chartValues');
-    if (def.chart.type === 'PIE' && values.length > 1) p('chart', 'rp.problem.pieOne');
-  }
+  for (const c of checkCharts(def.charts)) p('charts', c.key, { n: c.chart + 1 });
   return problems;
 }
 

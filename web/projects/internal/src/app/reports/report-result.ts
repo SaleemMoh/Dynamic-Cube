@@ -6,7 +6,7 @@ import { I18nService, ReportRun, ReportRunColumn, TranslatePipe } from '@dynamic
 import { ReportChart } from './report-chart';
 import { formatValue } from './report-model';
 
-/** A page of a report: its tiles, its chart, the table with a totals row and the page buttons. */
+/** A page of a report: its tiles, its charts (half or full width), the table with a totals row and the page buttons. */
 @Component({
   selector: 'dc-report-result',
   imports: [MatButtonModule, MatIconModule, MatTableModule, ReportChart, TranslatePipe],
@@ -24,13 +24,17 @@ import { formatValue } from './report-model';
           }
         </div>
       }
-      @if (r.chart && r.chart.rows.length) {
-        <dc-report-chart
-          class="rr-chart"
-          [chart]="r.chart"
-          [columns]="r.columns"
-          data-testid="report-chart"
-        />
+      @if (r.charts.length) {
+        <div class="rr-charts" data-testid="report-charts">
+          @for (c of r.charts; track c.name) {
+            <dc-report-chart
+              class="rr-chart"
+              [class.rr-chart--full]="c.width === 'FULL'"
+              [chart]="c"
+              [attr.data-chart]="c.name"
+            />
+          }
+        </div>
       }
       <p class="rr-count">{{ count() }}</p>
       <div class="rr-scroll">
@@ -112,6 +116,19 @@ import { formatValue } from './report-model';
     .rr-tile__value {
       font-size: 22px;
       font-weight: 600;
+    }
+    .rr-charts {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .rr-chart--full {
+      grid-column: 1 / -1;
+    }
+    @media (max-width: 900px) {
+      .rr-charts {
+        grid-template-columns: minmax(0, 1fr);
+      }
     }
     .rr-chart {
       padding: 12px;

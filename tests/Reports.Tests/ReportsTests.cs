@@ -68,7 +68,19 @@ public sealed class ReportsTests(DatabaseFixture fixture) : IAsyncLifetime
             Tiles = [new() { Name = "count", LabelAr = "العدد", LabelEn = "Count", Aggregate = ReportAggregates.Count }],
             Sort = [new() { Column = "staff", Descending = true }],
             Totals = true,
-            Chart = new ReportChartDef { Type = ReportChartTypes.Bar, Category = "parent", Values = ["staff"] },
+            Charts =
+            [
+                new ReportChartDef
+                {
+                    Name = "staffByParent",
+                    TitleAr = "الموظفون حسب القطاع الأعلى",
+                    TitleEn = "Staff by parent",
+                    Type = ReportChartTypes.Bar,
+                    X = [new ReportChartField { Column = "s.parent_code", LabelEn = "Parent" }],
+                    Y = [new ReportChartField { Column = "s.staff", Aggregate = ReportAggregates.Sum, LabelEn = "Staff" }],
+                    Sort = ReportChartSorts.YDescending,
+                },
+            ],
             PageSize = 10,
         };
         change?.Invoke(payload);
@@ -88,8 +100,11 @@ public sealed class ReportsTests(DatabaseFixture fixture) : IAsyncLifetime
 
         var run = await AsAdmin(r => r.RunAsync(_report, new RunReportRequest(null), CancellationToken.None));
         run.Rows.Count.ShouldBe(3, "a row per parent and sector");
-        run.Chart!.Rows.Select(r => (r["parent"]!.GetValue<string>(), r["staff"]!.GetValue<decimal>())).ShouldBe([("ICT", 60m), ("BUILD", 30m)], "a bar per parent, in the report's sort");
-        run.Chart.Rows[0].ContainsKey("sector").ShouldBeFalse();
+        var chart = run.Charts.ShouldHaveSingleItem();
+        chart.Category.ShouldBe("X");
+        chart.Rows.Select(r => (r["x0"]!.GetValue<string>(), r["y0"]!.GetValue<decimal>())).ShouldBe([("ICT", 60m), ("BUILD", 30m)], "a bar per parent, the most staff first");
+        chart.Rows[0].ContainsKey("s").ShouldBeFalse();
+        (chart.X[0].LabelEn, chart.X[0].LabelAr, chart.Y[0].LabelEn).ShouldBe(("Parent", "parent_code", "Staff"), "a label left out is the column's name");
     }
 
     [Fact]
@@ -112,7 +127,7 @@ public sealed class ReportsTests(DatabaseFixture fixture) : IAsyncLifetime
         run.Total.ShouldBe(2);
         run.Totals!["staff"]!.GetValue<decimal>().ShouldBe(70m);
         run.Tiles.ShouldHaveSingleItem().Value!.GetValue<decimal>().ShouldBe(2m);
-        run.Chart!.Rows.Count.ShouldBe(2);
+        run.Charts.ShouldHaveSingleItem().Rows.Count.ShouldBe(2);
         run.Filters["minStaff"].ShouldBe("25");
         (await AsAdmin(r => r.RunAsync(_report, new RunReportRequest(null), CancellationToken.None))).Totals!["staff"]!.GetValue<decimal>().ShouldBe(90m, "the default filter: at least 10");
 
@@ -159,14 +174,37 @@ public sealed class ReportsTests(DatabaseFixture fixture) : IAsyncLifetime
             p.Columns[1].LabelEn = string.Empty;
             p.Filters.Add(new() { Name = "when", LabelAr = "متى", LabelEn = "When", Type = ReportFilterTypes.Date, Default = "SOMEDAY" });
             p.Filters.Add(new() { Name = "kind", LabelAr = "نوع", LabelEn = "Kind", Type = ReportFilterTypes.List });
-            p.Chart = new ReportChartDef { Type = ReportChartTypes.Pie, Category = "nope", Values = ["parent"] };
+            p.Charts =
+            [
+                new ReportChartDef
+                {
+                    Name = "pie",
+                    TitleEn = "Pie",
+                    Type = ReportChartTypes.Pie,
+                    X = [new ReportChartField { Column = "s.parent_code" }],
+                    Y = [new ReportChartField { Column = "s.staff", Aggregate = ReportAggregates.Sum }, new ReportChartField { Aggregate = ReportAggregates.Count }],
+                },
+                new ReportChartDef
+                {
+                    Name = "bad",
+                    TitleAr = "سيئ",
+                    TitleEn = "Bad",
+                    X = [new ReportChartField { Column = "s.nope", Bucket = "MONTH" }],
+                    Y = [new ReportChartField { Column = "s.name_en", Aggregate = ReportAggregates.Avg }],
+                    Limit = 0,
+                },
+            ];
             p.PageSize = 5;
         })))).Errors.Keys.ToList();
         errors.ShouldContain(k => k.EndsWith("columns[1].aggregate", StringComparison.Ordinal));
         errors.ShouldContain(k => k.EndsWith("columns[1].labelEn", StringComparison.Ordinal));
         errors.ShouldContain(k => k.EndsWith("filters[1].default", StringComparison.Ordinal));
         errors.ShouldContain(k => k.EndsWith("filters[2].lov", StringComparison.Ordinal));
-        errors.ShouldContain(k => k.EndsWith("chart.category", StringComparison.Ordinal));
+        errors.ShouldContain(k => k.EndsWith("charts[0].titleAr", StringComparison.Ordinal));
+        errors.ShouldContain(k => k.EndsWith("charts[0].type", StringComparison.Ordinal), "a pie draws one value");
+        errors.ShouldContain(k => k.EndsWith("charts[1].limit", StringComparison.Ordinal));
+        errors.ShouldContain(k => k.EndsWith("charts[1].x[0].column", StringComparison.Ordinal));
+        errors.ShouldContain(k => k.EndsWith("charts[1].y[0].aggregate", StringComparison.Ordinal), "text is not averaged");
         errors.ShouldContain(k => k.EndsWith("pageSize", StringComparison.Ordinal));
 
         var preview = await AsAdmin(r => r.PreviewAsync(new PreviewReportRequest(Payload(), new() { ["minStaff"] = "35" }), CancellationToken.None));
@@ -175,6 +213,72 @@ public sealed class ReportsTests(DatabaseFixture fixture) : IAsyncLifetime
         await PublishAsync(Payload());
         (await Should.ThrowAsync<ReportInputException>(() => AsAdmin(r => r.RunAsync(_report, new RunReportRequest(new() { ["minStaff"] = "lots", ["other"] = "x" }), CancellationToken.None))))
             .Errors.Keys.ShouldBe(["other", "minStaff"], ignoreOrder: true);
+    }
+
+    [Fact]
+    public async Task Several_charts_put_anything_on_either_axis_a_chart_previews_alone_and_an_older_chart_is_read()
+    {
+        await PublishAsync(Payload(p =>
+        {
+            // The groups down the Y axis, a count and an average across: horizontal bars.
+            p.Charts.Add(new ReportChartDef
+            {
+                Name = "sectors",
+                TitleAr = "القطاعات",
+                TitleEn = "Sectors",
+                Type = ReportChartTypes.Bar,
+                Y = [new ReportChartField { Column = "s.parent_code" }],
+                X = [new ReportChartField { Aggregate = ReportAggregates.Count }, new ReportChartField { Column = "s.staff", Aggregate = ReportAggregates.Avg }],
+                Sort = ReportChartSorts.YAscending,
+                Width = ReportChartWidths.Full,
+            });
+
+            // No totals on either axis: each row is a point.
+            p.Charts.Add(new ReportChartDef
+            {
+                Name = "points",
+                TitleAr = "النقاط",
+                TitleEn = "Points",
+                Type = ReportChartTypes.Scatter,
+                X = [new ReportChartField { Column = "s.code" }],
+                Y = [new ReportChartField { Column = "s.staff" }],
+                Series = new ReportChartField { Column = "s.parent_code" },
+                Sort = ReportChartSorts.YDescending,
+            });
+        }));
+
+        var view = await AsAdmin(r => r.ViewAsync(_report, CancellationToken.None));
+        view.Charts.Select(c => c.Name).ShouldBe(["staffByParent", "sectors", "points"]);
+        var run = await AsAdmin(r => r.RunAsync(_report, new RunReportRequest(null), CancellationToken.None));
+        var sectors = run.Charts[1];
+        (sectors.Category, sectors.Width, sectors.X[0].LabelEn, sectors.X[1].Type).ShouldBe(("Y", ReportChartWidths.Full, "Count", "NUMBER"));
+        sectors.Rows.Select(r => (r["y0"]!.GetValue<string>(), r["x0"]!.GetValue<decimal>(), r["x1"]!.GetValue<decimal>()))
+            .ShouldBe([("BUILD", 1m, 30m), ("ICT", 2m, 30m)], "the rows counted and the staff averaged per parent, down the Y axis");
+        var points = run.Charts[2];
+        points.Category.ShouldBe("ROWS");
+        points.Rows.Select(r => (r["x0"]!.GetValue<string>(), r["y0"]!.GetValue<decimal>(), r["s"]!.GetValue<string>()))
+            .ShouldBe([("SOFTWARE", 40m, "ICT"), ("ROADS", 30m, "BUILD"), ("NETWORKS", 20m, "ICT")], "each sector with a parent, the most staff first");
+
+        // Totals on both axes, or several fields on the axis grouped by, fit neither way.
+        var both = (await Should.ThrowAsync<ChangeValidationException>(() => PublishAsync(Payload(p => p.Charts[0].X[0].Aggregate = ReportAggregates.Count), ChangeOperation.Update))).Errors.Keys;
+        both.ShouldContain(k => k.EndsWith("charts[0].y", StringComparison.Ordinal));
+
+        // The designer's live preview of one chart of the unsaved report.
+        var payload = Payload();
+        payload.Charts[0].Limit = 1;
+        var preview = await AsAdmin(r => r.PreviewChartAsync(new PreviewChartRequest(payload, "staffByParent", new() { ["minStaff"] = "10" }), CancellationToken.None));
+        preview.Rows.ShouldHaveSingleItem()["x0"]!.GetValue<string>().ShouldBe("ICT");
+        preview.HasMore.ShouldBeTrue();
+        await Should.ThrowAsync<ChangeValidationException>(() => AsAdmin(r => r.PreviewChartAsync(new PreviewChartRequest(payload, "nope", null), CancellationToken.None)));
+
+        // A package written before several charts: its chart is read as the first one.
+        await PublishAsync(Payload(p =>
+        {
+            p.Charts.Clear();
+            p.Chart = new LegacyReportChart { Type = ReportChartTypes.Pie, Category = "parent", Values = ["staff"] };
+        }), ChangeOperation.Update);
+        var legacy = (await AsAdmin(r => r.ViewAsync(_report, CancellationToken.None))).Charts.ShouldHaveSingleItem();
+        (legacy.Type, legacy.X.Single().Column, legacy.Y.Single().Column, legacy.Y.Single().Aggregate).ShouldBe((ReportChartTypes.Pie, "s.parent_code", "s.staff", ReportAggregates.Sum));
     }
 
     [Fact]

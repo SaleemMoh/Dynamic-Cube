@@ -154,7 +154,24 @@ describe('report model', () => {
           default: null,
         },
       ],
-      chart: { type: 'PIE', category: 'missing', values: ['service', 'other'] },
+      charts: [
+        {
+          name: 'pie',
+          titleAr: 'دائري',
+          titleEn: '',
+          type: 'PIE',
+          x: [{ column: 'r.status', aggregate: null, bucket: null, labelAr: null, labelEn: null }],
+          y: [
+            { column: null, aggregate: 'COUNT', bucket: null, labelAr: null, labelEn: null },
+            { column: 'r.fee', aggregate: 'SUM', bucket: null, labelAr: null, labelEn: null },
+          ],
+          series: null,
+          stacked: false,
+          sort: 'X_ASC',
+          limit: 50,
+          width: 'HALF',
+        },
+      ],
       pageSize: 5,
     });
     const q = {
@@ -181,9 +198,8 @@ describe('report model', () => {
       'columns:rp.problem.sort',
       'columns:rp.problem.pageSize',
       'filters:rp.problem.filterLov',
-      'chart:rp.problem.chartCategory',
-      'chart:rp.problem.chartValues',
-      'chart:rp.problem.pieOne',
+      'charts:rp.problem.chartTitles',
+      'charts:rp.problem.chartPie',
     ]);
     expect(
       checkReport('X', report({ columns: [] }), emptyEndpointQuery(), false, sources).map(
@@ -214,19 +230,12 @@ describe('report model', () => {
     expect(f('YES_NO', 'yes')).toBe(false);
   });
 
-  it('renames and removes a column where the sort and the chart refer to it', () => {
-    const def = report({
-      sort: [{ column: 'fees', descending: true }],
-      chart: { type: 'BAR', category: 'service', values: ['requests', 'fees'] },
-    });
-    const renamed = renameColumn(def, 'fees', 'amount');
-    expect(renamed.sort[0].column).toBe('amount');
-    expect(renamed.chart!.values).toEqual(['requests', 'amount']);
+  it('renames and removes a column where the sort refers to it', () => {
+    const def = report({ sort: [{ column: 'fees', descending: true }] });
+    expect(renameColumn(def, 'fees', 'amount').sort[0].column).toBe('amount');
     const removed = removeColumn(def, 2);
     expect(removed.columns.map((c) => c.name)).toEqual(['service', 'requests']);
     expect(removed.sort).toEqual([]);
-    expect(removed.chart!.values).toEqual(['requests']);
-    expect(removeColumn(def, 0).chart!.category).toBe('');
   });
 
   it('builds the payload from the builder and reads a stored row back', () => {
@@ -245,7 +254,31 @@ describe('report model', () => {
             default: ' TODAY-30 ',
           },
         ],
-        chart: { type: 'BAR', category: '', values: [] },
+        charts: [
+          {
+            name: 'c1',
+            titleAr: ' ع ',
+            titleEn: 'E',
+            type: 'LINE',
+            x: [
+              {
+                column: 'r.submitted_at',
+                aggregate: null,
+                bucket: 'MONTH',
+                labelAr: ' ',
+                labelEn: null,
+              },
+            ],
+            y: [
+              { column: 'r.fee', aggregate: 'AVG', bucket: 'YEAR', labelAr: null, labelEn: null },
+            ],
+            series: null,
+            stacked: true,
+            sort: 'X_ASC',
+            limit: 50,
+            width: 'FULL',
+          },
+        ],
       }),
       { ...query(), sort: [{ column: 'r.fee', direction: 'ASC' }] },
     );
@@ -260,7 +293,16 @@ describe('report model', () => {
       required: false,
       default: 'TODAY-30',
     });
-    expect(payload.chart).toBeNull();
+    expect(payload.charts[0].titleAr).toBe('ع');
+    expect(payload.charts[0].x[0]).toEqual({
+      column: 'r.submitted_at',
+      aggregate: null,
+      bucket: 'MONTH',
+      labelAr: null,
+      labelEn: null,
+    });
+    expect(payload.charts[0].y[0].bucket).toBeNull();
+    expect(payload.charts[0].stacked).toBe(false);
     expect(payload.query!['from']).toEqual({ kind: 'DATA_OBJECT', code: 'REQUESTS', alias: 'r' });
     expect(payload.query!['sort']).toEqual([]);
 

@@ -44,9 +44,10 @@ namespace DynamicCube.Modules.Reports.Persistence.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("category_en");
 
-                    b.Property<string>("Chart")
+                    b.Property<string>("Charts")
+                        .IsRequired()
                         .HasColumnType("jsonb")
-                        .HasColumnName("chart");
+                        .HasColumnName("charts");
 
                     b.Property<string>("Code")
                         .IsRequired()

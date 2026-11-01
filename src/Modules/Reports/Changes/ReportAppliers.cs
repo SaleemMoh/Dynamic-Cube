@@ -34,7 +34,10 @@ public sealed class ReportPayload : ConfigPayload
 
     public bool Totals { get; set; }
 
-    public ReportChartDef? Chart { get; set; }
+    public List<ReportChartDef> Charts { get; set; } = [];
+
+    /// <summary>The single chart of packages written before several charts; read as the first chart.</summary>
+    public LegacyReportChart? Chart { get; set; }
 
     public int PageSize { get; set; } = 50;
 }
@@ -134,34 +137,151 @@ internal sealed partial class ReportApplier(ReportsDbContext db, IReportQueries 
             }
         }
 
-        // The chart draws number columns along one of the report's columns.
-        if (payload.Chart is { } chart)
+        // Charts: each groups the filtered rows its own way (X axis, series, values).
+        await CheckChartsAsync(ChartsOf(payload), payload.Query, inputs, errors, queries, cancellationToken);
+    }
+
+    public const int MaxCharts = 6;
+
+    /// <summary>The checks of a report's charts (also made before one chart is previewed).</summary>
+    internal static async Task CheckChartsAsync(IReadOnlyList<ReportChartDef> charts, JsonNode? query, IReadOnlyCollection<string> inputs, ValidationErrors errors, IReportQueries queries, CancellationToken cancellationToken)
+    {
+        if (charts.Count > MaxCharts)
         {
+            errors.Add("charts", $"Use at most {MaxCharts} charts.");
+        }
+
+        ChildSync.RequireUnique(charts, c => c.Name, "charts", errors);
+        foreach (var (chart, i) in charts.Select((c, i) => (c, i)))
+        {
+            var path = $"charts[{i}]";
+            if (!FilterName().IsMatch(chart.Name ?? string.Empty))
+            {
+                errors.Add($"{path}.name", "Use a name of English letters, digits and _, starting with a letter.");
+            }
+
+            errors.Required($"{path}.titleAr", chart.TitleAr);
+            errors.Required($"{path}.titleEn", chart.TitleEn);
             if (!ReportChartTypes.All.Contains(chart.Type))
             {
-                errors.Add("chart.type", "Bars, a line or a pie.");
+                errors.Add($"{path}.type", "Bars, horizontal bars, lines, areas or a pie.");
             }
 
-            var names = payload.Columns.Select(c => c.Name).ToHashSet(StringComparer.Ordinal);
-            if (!names.Contains(chart.Category))
+            if (!ReportChartWidths.All.Contains(chart.Width))
             {
-                errors.Add("chart.category", "Choose one of the report's columns.");
+                errors.Add($"{path}.width", "Half or full width.");
             }
 
-            if (chart.Values.Count == 0 || (chart.Type == ReportChartTypes.Pie && chart.Values.Count > 1))
+            if (!ReportChartSorts.All.Contains(chart.Sort))
             {
-                errors.Add("chart.values", chart.Type == ReportChartTypes.Pie ? "A pie draws one number column." : "Choose the number columns to draw.");
+                errors.Add($"{path}.sort", "Along the X axis or by the value, ascending or descending.");
             }
 
-            if (problems.Count == 0)
+            if (chart.Limit is < 1 or > 500)
             {
-                var types = (await queries.DescribeAsync(payload.Query, shape, inputs, cancellationToken)).ToDictionary(c => c.Name, c => c.Type, StringComparer.Ordinal);
-                foreach (var value in chart.Values.Where(v => types.GetValueOrDefault(v) != DataTypes.Number))
+                errors.Add($"{path}.limit", "Between 1 and 500 points.");
+            }
+
+            if (chart.X.Count == 0 || chart.Y.Count == 0)
+            {
+                errors.Add($"{path}.{(chart.X.Count == 0 ? "x" : "y")}", "Put a field on each axis.");
+                continue;
+            }
+
+            if (ReportShapes.CategoryAxis(chart) is not { } category)
+            {
+                errors.Add($"{path}.y", "One axis takes one column the rows are grouped by and the other the totalled values, or each axis one column with no totals (the rows themselves).");
+                continue;
+            }
+
+            var values = category == "X" ? chart.Y : chart.X;
+            var raw = category == ReportShapes.Rows;
+            if (values.Count > MaxCharts)
+            {
+                errors.Add($"{path}.{(category == "X" ? "y" : "x")}", $"Draw at most {MaxCharts} values.");
+                continue;
+            }
+
+            if (chart.Type == ReportChartTypes.Pie && (raw || values.Count > 1 || chart.Series is not null))
+            {
+                errors.Add($"{path}.type", "A pie draws one totalled value per group, without series.");
+                continue;
+            }
+
+            if (chart.Series is { } series)
+            {
+                if (string.IsNullOrWhiteSpace(series.Column) || !string.IsNullOrWhiteSpace(series.Aggregate))
                 {
-                    errors.Add("chart.values", $"'{value}' is not a number column of the report.");
+                    errors.Add($"{path}.series.column", "Choose the column splitting the values (not totalled).");
+                    continue;
+                }
+
+                if (!raw && values.Count > 1)
+                {
+                    errors.Add($"{path}.series", "A chart split into series draws one value.");
+                    continue;
+                }
+            }
+
+            var (shape, paths) = ReportShapes.Chart(chart);
+            var problems = await queries.CheckAsync(query, shape, inputs, cancellationToken);
+            foreach (var (field, messages) in problems.Where(p => p.Key.StartsWith("columns", StringComparison.Ordinal)))
+            {
+                var key = ChartPath(field, paths, path);
+                foreach (var message in messages)
+                {
+                    errors.Add(key, message);
                 }
             }
         }
+    }
+
+    /// <summary>A problem of the chart's shape (<c>columns[2].aggregate</c>) as the chart's own field (<c>charts[0].y[1].aggregate</c>).</summary>
+    private static string ChartPath(string field, IReadOnlyList<string> paths, string chart)
+    {
+        var open = field.IndexOf('[', StringComparison.Ordinal);
+        var close = field.IndexOf(']', StringComparison.Ordinal);
+        if (open < 0 || close < open || !int.TryParse(field[(open + 1)..close], out var index) || index >= paths.Count)
+        {
+            return chart;
+        }
+
+        return $"{chart}.{paths[index]}{field[(close + 1)..]}";
+    }
+
+    /// <summary>The payload's charts, the chart of an older package read as the first one.</summary>
+    internal static List<ReportChartDef> ChartsOf(ReportPayload payload)
+    {
+        if (payload.Charts.Count > 0 || payload.Chart is not { } legacy)
+        {
+            return payload.Charts;
+        }
+
+        var category = payload.Columns.FirstOrDefault(c => c.Name == legacy.Category);
+        return
+        [
+            new ReportChartDef
+            {
+                Name = "chart1",
+                TitleAr = payload.NameAr,
+                TitleEn = payload.NameEn,
+                Type = legacy.Type,
+                X = [new ReportChartField { Column = category?.Column, LabelAr = category?.LabelAr, LabelEn = category?.LabelEn }],
+                Y =
+                [
+                    .. legacy.Values.Select(v => payload.Columns.FirstOrDefault(c => c.Name == v)).Where(c => c is not null).Select(c => new ReportChartField
+                    {
+                        Column = c!.Column,
+                        Aggregate = string.IsNullOrWhiteSpace(c.Aggregate) ? ReportAggregates.Sum : c.Aggregate,
+                        LabelAr = c.LabelAr,
+                        LabelEn = c.LabelEn,
+                    }),
+                ],
+                Sort = ReportChartSorts.YDescending,
+                Limit = 20,
+                Width = ReportChartWidths.Full,
+            },
+        ];
     }
 
     internal static void Fill(ReportDefinition entity, ReportPayload payload)
@@ -177,7 +297,7 @@ internal sealed partial class ReportApplier(ReportsDbContext db, IReportQueries 
         entity.Tiles = payload.Tiles;
         entity.Sort = payload.Sort;
         entity.Totals = payload.Totals;
-        entity.Chart = payload.Chart;
+        entity.Charts = ChartsOf(payload);
         entity.PageSize = payload.PageSize;
     }
 
@@ -195,7 +315,7 @@ internal sealed partial class ReportApplier(ReportsDbContext db, IReportQueries 
             Tiles = entity.Tiles,
             Sort = entity.Sort,
             Totals = entity.Totals,
-            Chart = entity.Chart,
+            Charts = entity.Charts,
             PageSize = entity.PageSize,
         });
 

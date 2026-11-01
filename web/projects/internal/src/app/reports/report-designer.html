@@ -134,6 +134,13 @@
                 />
               </mat-form-field>
             </div>
+          } @else if (p === 'charts') {
+            <dc-report-chart-designer
+              [(def)]="def"
+              [payload]="payload()"
+              [query]="query()"
+              [sources]="sources()"
+            />
           } @else {
             <dc-report-designer-parts
               [part]="p"

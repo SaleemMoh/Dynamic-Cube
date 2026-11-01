@@ -6,7 +6,9 @@ export const REPORTS_API = '/api/reports/v1';
 
 export type ReportAggregate = 'COUNT' | 'COUNT_DISTINCT' | 'SUM' | 'AVG' | 'MIN' | 'MAX';
 export type ReportFilterType = 'TEXT' | 'NUMBER' | 'DATE' | 'LIST' | 'YES_NO';
-export type ReportChartType = 'BAR' | 'LINE' | 'PIE';
+export type ReportChartType = 'BAR' | 'LINE' | 'AREA' | 'SCATTER' | 'PIE';
+export type ReportBucket = 'DAY' | 'WEEK' | 'MONTH' | 'QUARTER' | 'YEAR';
+export type ReportChartSort = 'X_ASC' | 'X_DESC' | 'Y_ASC' | 'Y_DESC';
 export type ReportFormat = 'XLSX' | 'CSV';
 
 export const REPORT_AGGREGATES: ReportAggregate[] = [
@@ -18,7 +20,9 @@ export const REPORT_AGGREGATES: ReportAggregate[] = [
   'MAX',
 ];
 export const REPORT_FILTER_TYPES: ReportFilterType[] = ['TEXT', 'NUMBER', 'DATE', 'LIST', 'YES_NO'];
-export const REPORT_CHART_TYPES: ReportChartType[] = ['BAR', 'LINE', 'PIE'];
+export const REPORT_CHART_TYPES: ReportChartType[] = ['BAR', 'LINE', 'AREA', 'SCATTER', 'PIE'];
+export const REPORT_BUCKETS: ReportBucket[] = ['DAY', 'WEEK', 'MONTH', 'QUARTER', 'YEAR'];
+export const REPORT_CHART_SORTS: ReportChartSort[] = ['X_ASC', 'X_DESC', 'Y_ASC', 'Y_DESC'];
 
 /** A column of a report: the column it reads (alias.column) and how it is totalled (none: the rows are grouped by it). */
 export interface ReportColumnDef {
@@ -56,11 +60,34 @@ export interface ReportSortDef {
   descending: boolean;
 }
 
-/** A chart of the report's rows: its kind, the column along the axis and the number columns drawn. */
+/**
+ * A field on a chart axis: a column (alias.column) as it is — the rows are grouped by it, a date by a period — or
+ * totalled (an aggregate; counting rows needs no column).
+ */
+export interface ReportChartField {
+  column: string | null;
+  aggregate: ReportAggregate | null;
+  bucket: ReportBucket | null;
+  labelAr: string | null;
+  labelEn: string | null;
+}
+
+/**
+ * A chart of the report's filtered rows. What is on X runs across and what is on Y runs up: one axis holds the column
+ * the rows are grouped by and the other the totalled values — or each axis one column with no totals (the rows).
+ */
 export interface ReportChartDef {
+  name: string;
+  titleAr: string;
+  titleEn: string;
   type: ReportChartType;
-  category: string;
-  values: string[];
+  x: ReportChartField[];
+  y: ReportChartField[];
+  series: ReportChartField | null;
+  stacked: boolean;
+  sort: ReportChartSort;
+  limit: number;
+  width: 'HALF' | 'FULL';
 }
 
 /** A report as it is designed (the payload of an rpt.report change). */
@@ -78,7 +105,7 @@ export interface ReportDefinition {
   tiles: ReportTileDef[];
   sort: ReportSortDef[];
   totals: boolean;
-  chart: ReportChartDef | null;
+  charts: ReportChartDef[];
   pageSize: number;
 }
 
@@ -111,7 +138,7 @@ export interface ReportView {
   filters: ReportFilterDef[];
   columns: ReportColumnDef[];
   tiles: ReportTileDef[];
-  chart: ReportChartDef | null;
+  charts: ReportChartDef[];
   pageSize: number;
   canExport: boolean;
   savedFilters: SavedReportFilter[];
@@ -132,11 +159,30 @@ export interface ReportTileValue {
   value: unknown;
 }
 
+/** A field of a chart's data: its key in the rows (x0, y0, s), labels, the kind of value, total and period. */
+export interface ReportChartFieldData {
+  name: string;
+  labelAr: string;
+  labelEn: string;
+  type: string;
+  aggregate: ReportAggregate | null;
+  bucket: ReportBucket | null;
+}
+
+/** A chart with its rows; category names the axis grouped by (X or Y), or ROWS when the rows themselves are drawn. */
 export interface ReportChartData {
+  name: string;
+  titleAr: string;
+  titleEn: string;
   type: ReportChartType;
-  category: string;
-  values: string[];
+  stacked: boolean;
+  width: 'HALF' | 'FULL';
+  category: 'X' | 'Y' | 'ROWS';
+  x: ReportChartFieldData[];
+  y: ReportChartFieldData[];
+  series: ReportChartFieldData | null;
   rows: Record<string, unknown>[];
+  hasMore: boolean;
 }
 
 /** A page of a report with the number of rows, the totals row, the tiles and the chart's rows. */
@@ -149,7 +195,7 @@ export interface ReportRun {
   hasMore: boolean;
   totals: Record<string, unknown> | null;
   tiles: ReportTileValue[];
-  chart: ReportChartData | null;
+  charts: ReportChartData[];
   /** The filter values applied (defaults filled in). */
   filters: Record<string, string | null>;
 }
@@ -241,6 +287,19 @@ export class ReportsApi {
   /** Runs an unsaved report within the designer's own access (first page). */
   preview(report: ReportDefinition, filters: Record<string, string | null>): Observable<ReportRun> {
     return this.http.post<ReportRun>(`${REPORTS_API}/admin/preview`, { report, filters });
+  }
+
+  /** One chart of an unsaved report (the chart designer's live preview). */
+  previewChart(
+    report: ReportDefinition,
+    chart: string,
+    filters: Record<string, string | null>,
+  ): Observable<ReportChartData> {
+    return this.http.post<ReportChartData>(`${REPORTS_API}/admin/preview-chart`, {
+      report,
+      chart,
+      filters,
+    });
   }
 
   deliveries(

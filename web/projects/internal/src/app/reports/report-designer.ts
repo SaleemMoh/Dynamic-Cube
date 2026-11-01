@@ -27,6 +27,7 @@ import { LOV_BUILDER_TRANSLATIONS } from '../apps-control/lovs/lov-builder-trans
 import { SubmitButton } from '../apps-control/submit-button';
 import { EndpointQuery } from '../integration/api-endpoint-model';
 import { PUBLIC_API_TRANSLATIONS } from '../integration/public-api-translations';
+import { ReportChartDesigner } from './report-chart-designer';
 import { LovOption, ReportDesignerParts } from './report-designer-parts';
 import {
   REPORT_PARTS,
@@ -57,6 +58,7 @@ import { REPORT_TRANSLATIONS } from './report-translations';
     MatInputModule,
     MatProgressBarModule,
     MatTabsModule,
+    ReportChartDesigner,
     ReportDesignerParts,
     ReportResult,
     SubmitButton,

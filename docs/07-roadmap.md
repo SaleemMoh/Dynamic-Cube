@@ -559,10 +559,12 @@ The owner chose to start Phase 4 with the report builder and come back to Phase 
   line or pie chart, filters users fill (text, number, date with relative defaults, a list of values, yes/no) and saved
   filters; each report a screen roles grant and menus open; Excel and CSV export; **scheduled email delivery** (daily,
   weekly, monthly) to users and role holders, each recipient getting the report with their own access, with a delivery
-  log. Data permissions and the viewer's company and branches always apply. NHC demo: requests by service, status and
+  log. Data permissions and the viewer's company and branches always apply. **Several charts** per report with the X and
+  Y axes chosen freely (the column grouped by on either axis, dates by period, totalled values on the other, or the rows
+  themselves on both; colour by a column) in a **visual chart designer** (drag fields onto the axes, live preview). NHC demo: requests by service, status and
   branch; overdue tasks; certificates by grade; abandoned drafts by step; a weekly delivery of overdue tasks to the
   branch managers.
-  Later (round 2): dashboards of several reports, PDF through the print template designer, drill-down from a group to
+  Later (round 2): dashboards of several reports, charts in the Excel export, PDF through the print template designer, drill-down from a group to
   its rows, conditional totals (e.g. approved of all), report subscriptions chosen by users themselves.
 - Pixel-perfect reports.
 - Public Apps Control API for other products (the partner API is ADR-0042).

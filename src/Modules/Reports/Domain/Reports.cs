@@ -19,9 +19,31 @@ public static class ReportChartTypes
 {
     public const string Bar = "BAR";
     public const string Line = "LINE";
+    public const string Area = "AREA";
+    public const string Scatter = "SCATTER";
     public const string Pie = "PIE";
 
-    public static IReadOnlyList<string> All { get; } = [Bar, Line, Pie];
+    public static IReadOnlyList<string> All { get; } = [Bar, Line, Area, Scatter, Pie];
+}
+
+/// <summary>How wide a chart is drawn in the report: half the row or the whole row.</summary>
+public static class ReportChartWidths
+{
+    public const string Half = "HALF";
+    public const string Full = "FULL";
+
+    public static IReadOnlyList<string> All { get; } = [Half, Full];
+}
+
+/// <summary>A chart's order: by the first field of the X axis or of the Y axis, either way.</summary>
+public static class ReportChartSorts
+{
+    public const string XAscending = "X_ASC";
+    public const string XDescending = "X_DESC";
+    public const string YAscending = "Y_ASC";
+    public const string YDescending = "Y_DESC";
+
+    public static IReadOnlyList<string> All { get; } = [XAscending, XDescending, YAscending, YDescending];
 }
 
 /// <summary>
@@ -55,7 +77,8 @@ public sealed class ReportDefinition : ConfigEntity
 
     public bool Totals { get; set; }
 
-    public ReportChartDef? Chart { get; set; }
+    /// <summary>The report's charts (up to <c>6</c>), each grouping the filtered rows its own way.</summary>
+    public List<ReportChartDef> Charts { get; set; } = [];
 
     public int PageSize { get; set; } = 50;
 }
@@ -119,8 +142,63 @@ public sealed class ReportSortDef
     public bool Descending { get; set; }
 }
 
-/// <summary>A chart of the report's rows: its kind, the column along the axis and the number columns drawn.</summary>
+/// <summary>
+/// A chart of the report's filtered rows. Whatever is put on the X axis runs across and whatever is put on the Y axis
+/// runs up: either axis may hold the column the rows are grouped by (a date grouped by a period, a status, a branch) and
+/// the other the values drawn (aggregates, or the number of rows) — time down the Y axis with averages across is as good
+/// as the other way round. With no totals on either axis the rows themselves are drawn (one X and one Y field: a scatter
+/// or a trend of the records). Optionally a column splits the values into series (a colour each). Drawn as bars, lines,
+/// areas, points or a pie, half or full width.
+/// </summary>
 public sealed class ReportChartDef
+{
+    public string Name { get; set; } = string.Empty;
+
+    public string TitleAr { get; set; } = string.Empty;
+
+    public string TitleEn { get; set; } = string.Empty;
+
+    public string Type { get; set; } = ReportChartTypes.Bar;
+
+    /// <summary>The fields along the horizontal axis.</summary>
+    public List<ReportChartField> X { get; set; } = [];
+
+    /// <summary>The fields along the vertical axis.</summary>
+    public List<ReportChartField> Y { get; set; } = [];
+
+    /// <summary>Splits the values into series (one colour each), e.g. requests per month by status.</summary>
+    public ReportChartField? Series { get; set; }
+
+    /// <summary>Series stacked on each other instead of side by side (bars and areas).</summary>
+    public bool Stacked { get; set; }
+
+    public string Sort { get; set; } = ReportChartSorts.XAscending;
+
+    /// <summary>The most points drawn (1–500).</summary>
+    public int Limit { get; set; } = 50;
+
+    public string Width { get; set; } = ReportChartWidths.Half;
+}
+
+/// <summary>
+/// A field on an axis: a column (<c>alias.column</c>) as it is (the rows are grouped by it; a date by a period), or
+/// totalled (an aggregate; counting rows needs no column), with its labels (default: the column).
+/// </summary>
+public sealed class ReportChartField
+{
+    public string? Column { get; set; }
+
+    public string? Aggregate { get; set; }
+
+    public string? Bucket { get; set; }
+
+    public string? LabelAr { get; set; }
+
+    public string? LabelEn { get; set; }
+}
+
+/// <summary>The single chart of reports saved before several charts (ADR-0045): number columns of the report along one of its columns.</summary>
+public sealed class LegacyReportChart
 {
     public string Type { get; set; } = ReportChartTypes.Bar;
 
