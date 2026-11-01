@@ -70,19 +70,31 @@ public sealed class PublicApiDocument(IDataQueries queries, IEnumerable<IApiFunc
         var list = endpoint.Kind == ApiEndpointKind.Query && !endpoint.SingleRow;
         if (list)
         {
-            parameters.Add(Parameter("limit", "query", false, $"Rows per page (1–{endpoint.PageSize}, default {endpoint.PageSize}).", new JsonObject { ["type"] = "integer" }, null));
-            parameters.Add(Parameter("offset", "query", false, "Rows to skip (default 0).", new JsonObject { ["type"] = "integer" }, null));
+            parameters.Add(Parameter(
+                "limit",
+                "query",
+                false,
+                $"Rows per page (1–{endpoint.PageSize}, default {endpoint.PageSize}).",
+                new JsonObject { ["type"] = "integer", ["minimum"] = 1, ["maximum"] = endpoint.PageSize, ["default"] = endpoint.PageSize },
+                endpoint.PageSize.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+            parameters.Add(Parameter(
+                "offset",
+                "query",
+                false,
+                "Rows to skip (default 0).",
+                new JsonObject { ["type"] = "integer", ["minimum"] = 0, ["default"] = 0 },
+                "0"));
         }
 
         // Whose access applies: the company of the call, and on some endpoints a registered person the client acts for.
-        parameters.Add(Parameter(ApiHeaders.Company, "header", false, "The company the call works in; needed when the client works in several.", new JsonObject { ["type"] = "string" }, null));
+        parameters.Add(Parameter(ApiHeaders.Company, "header", false, "The company the call works in (its code); needed only when the client works in several. Leave it empty otherwise.", new JsonObject { ["type"] = "string" }, null));
         if (endpoint.ActsForUser)
         {
             parameters.Add(Parameter(
                 ApiHeaders.ActingUser,
                 "header",
                 false,
-                "A person registered with the platform (username, national ID or email) whose roles and data then apply; someone not registered gets the client's own access.",
+                "A person registered with the platform (username, national ID or email) whose roles and data then apply; someone not registered gets the client's own access. Leave it empty to call as the client.",
                 new JsonObject { ["type"] = "string" },
                 null));
         }
@@ -187,6 +199,16 @@ public sealed class PublicApiDocument(IDataQueries queries, IEnumerable<IApiFunc
         if (!string.IsNullOrWhiteSpace(sample))
         {
             parameter["example"] = sample;
+        }
+        else if (!required)
+        {
+            // An optional value left empty is not given: tools that fill in examples (Postman, Swagger UI) leave it blank
+            // instead of sending a placeholder such as "string".
+            parameter["example"] = string.Empty;
+            if (schema["type"]?.GetValue<string>() == "string")
+            {
+                schema["default"] = string.Empty;
+            }
         }
 
         return parameter;

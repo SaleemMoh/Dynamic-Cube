@@ -318,6 +318,10 @@ public sealed class PublicApiTests(DatabaseFixture fixture) : IAsyncLifetime
         description.Status.ShouldBe(HttpStatusCode.OK);
         description.Body!["paths"]!.AsObject().Select(p => p.Key).ShouldBe([Path("/regions"), Path("/values"), Path("/values/{code}")], ignoreOrder: true);
         description.Body!["paths"]![Path("/values")]!["get"]!["responses"]!["200"]!["content"]!["application/json"]!["schema"]!["properties"]!["items"]!["items"]!["properties"]!["code"]!["type"]!.GetValue<string>().ShouldBe("string");
+        var parameters = description.Body!["paths"]![Path("/values")]!["get"]!["parameters"]!.AsArray().ToDictionary(p => p!["name"]!.GetValue<string>(), p => p!);
+        parameters["limit"]!["schema"]!["default"]!.GetValue<int>().ShouldBe(2, "tools fill in the page size, not a made-up number");
+        parameters[ApiHeaders.Company]!["example"]!.GetValue<string>().ShouldBeEmpty("left empty, the header is not sent as a placeholder");
+        parameters["prefix"]!["example"]!.GetValue<string>().ShouldBeEmpty();
 
         // Every call is logged; masked parameters are not.
         using var admin = _internal.CreateClient();

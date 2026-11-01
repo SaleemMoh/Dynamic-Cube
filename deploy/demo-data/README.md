@@ -131,6 +131,14 @@ curl -s -H "Authorization: Bearer $TOKEN" http://localhost:5081/api/public/v1/re
 curl -s -H "Authorization: Bearer $TOKEN" http://localhost:5081/api/public/v1/openapi.json
 ```
 
+**In Postman:** import `http://localhost:5081/api/public/v1/openapi.json` (or the file from *Sign-in and credentials*).
+On the collection's *Authorization* tab choose **OAuth 2.0**, grant type **Client Credentials** (not Authorization
+Code), access token URL `http://localhost:8080/realms/dynamic-cube-external/protocol/openid-connect/token`, client ID
+`dc-api-partner-demo`, client secret `dev-api-partner-secret` (or the secret *Sign-in and credentials* showed, if you
+made a new one), then **Get New Access Token** → **Use Token**. The secret itself is not a token: sending it as
+`Bearer` answers 401. Leave `X-Company` and `X-Acting-User` empty unless you mean them (`X-Company: MAIN`,
+`X-Acting-User: ruh.manager`).
+
 Each call shows under **Integrations → API calls** (with the person acted for). A request number that is not the
 partner's company's, or that does not exist, answers 404; the same token on an endpoint its account's roles do not give
 answers 403. Take a role away from `svc-partner-demo` on *Users* and its calls stop the same way a person's screens
