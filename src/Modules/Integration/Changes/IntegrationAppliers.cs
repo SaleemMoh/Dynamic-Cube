@@ -293,6 +293,13 @@ internal sealed partial class OperationApplier(IntegrationDbContext db) : Integr
         errors.Required("connectionCode", payload.ConnectionCode);
         entity.ConnectionId = await refs.ConnectionAsync(payload.ConnectionCode, "connectionCode", errors, cancellationToken) ?? Guid.Empty;
         entity.EnvelopeProfileId = await refs.EnvelopeProfileAsync(payload.EnvelopeProfileCode, "envelopeProfileCode", errors, cancellationToken);
+        Check(payload, errors);
+        Fill(entity, payload);
+    }
+
+    /// <summary>The checks of an operation's own fields (also made before an unsaved definition is tried).</summary>
+    internal static void Check(OperationPayload payload, ValidationErrors errors)
+    {
         errors.MaxLength("descriptionAr", payload.DescriptionAr, 2000);
         errors.MaxLength("descriptionEn", payload.DescriptionEn, 2000);
 
@@ -350,7 +357,13 @@ internal sealed partial class OperationApplier(IntegrationDbContext db) : Integr
 
         EnvelopeProfileApplier.ResponseCodes(errors, payload.ResponseCodes);
         ConnectionApplier.Range(errors, "cacheSeconds", payload.CacheSeconds, 0, 7 * 24 * 3600);
+    }
 
+    /// <summary>Copies a checked payload onto the operation.</summary>
+    internal static void Fill(Operation entity, OperationPayload payload)
+    {
+        var method = payload.Method?.Trim().ToUpperInvariant() ?? string.Empty;
+        var template = payload.PathTemplate?.Trim() ?? string.Empty;
         entity.DescriptionAr = payload.DescriptionAr;
         entity.DescriptionEn = payload.DescriptionEn;
         entity.Method = method;

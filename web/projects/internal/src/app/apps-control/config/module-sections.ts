@@ -211,6 +211,9 @@ export const INTEGRATION_SECTIONS: ConfigSection[] = [
         title: t('العمليات', 'Operations'),
         key: 'code',
         columns: ['connectionCode', 'method', 'pathTemplate'],
+        // The operation designer is the way in (ADR-0041); the import reads OpenAPI / Swagger descriptions.
+        editor: () => import('../../integration/operation-designer').then((m) => m.OperationDesigner),
+        intro: () => import('../../integration/openapi-intro').then((m) => m.OpenApiIntro),
         fields: [
           {
             code: 'connectionCode',

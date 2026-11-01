@@ -118,6 +118,26 @@ public sealed class ApiTests(DatabaseFixture fixture) : IAsyncLifetime
         var callId = logs.GetProperty("items")[0].GetProperty("id").GetString();
         var log = await checker.GetFromJsonAsync<JsonElement>($"/api/integration/v1/call-logs/{callId}", ct);
         log.GetProperty("url").GetString().ShouldEndWith("/***");
+
+        // The designer tries an unsaved change of the operation (ADR-0041); problems come back per field.
+        var draft = MomrahSamples.CrByIdNumber(connection, envelope);
+        draft.Outputs.RemoveAt(0);
+        var tried = await maker.PostAsJsonAsync("/api/integration/v1/operations/try", new { operation = draft, inputs = new { idNumber = "1003721519" } }, ct);
+        tried.EnsureSuccessStatusCode();
+        var triedResult = await tried.Content.ReadFromJsonAsync<JsonElement>(ct);
+        triedResult.GetProperty("outcome").GetString().ShouldBe("SUCCESS");
+        triedResult.GetProperty("outputs").TryGetProperty("crNumbers", out _).ShouldBeFalse();
+        draft.PathTemplate = "/v1/{other}";
+        var invalid = await maker.PostAsJsonAsync("/api/integration/v1/operations/try", new { operation = draft, inputs = new { idNumber = "1" } }, ct);
+        invalid.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await invalid.Content.ReadFromJsonAsync<JsonElement>(ct)).GetProperty("errors").TryGetProperty("pathTemplate", out _).ShouldBeTrue();
+
+        // Reading an API description saves nothing and needs the right to create integrations.
+        var read = await maker.PostAsJsonAsync("/api/integration/v1/openapi/read", new { text = OpenApiImportTests.CommerceYaml }, ct);
+        read.EnsureSuccessStatusCode();
+        (await read.Content.ReadFromJsonAsync<JsonElement>(ct)).GetProperty("operations").GetArrayLength().ShouldBe(2);
+        (await maker.PostAsJsonAsync("/api/integration/v1/openapi/read", new { text = "nope" }, ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await checker.PostAsJsonAsync("/api/integration/v1/openapi/read", new { text = OpenApiImportTests.CommerceYaml }, ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
     [Fact]

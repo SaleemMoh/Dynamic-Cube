@@ -1,0 +1,131 @@
+openapi: 3.0.3
+info:
+  title: MoMRAH API gateway (mock)
+  version: '1.0'
+  description: >-
+    The development stand-in for the MoMRAH API gateway: MCI commercial registrations, NIC person data and SCE
+    memberships. Every answer has the gateway's envelope; the data is under data.result. Import it in the internal
+    system (Integrations → Operations → Import from OpenAPI) to see the import at work.
+servers:
+  - url: http://localhost:5090
+components:
+  securitySchemes:
+    gateway:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: /oauth/v1/token
+          scopes: {}
+  schemas:
+    Status:
+      type: object
+      properties:
+        code: { type: integer, example: 200 }
+        message: { type: string, example: Ok }
+    Named:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+    License:
+      type: object
+      properties:
+        Commercial_NO: { type: string, example: '1010000001' }
+        Commercial_Name: { type: string }
+        LicenseType: { $ref: '#/components/schemas/Named' }
+        Source_Name: { type: string }
+        Status: { type: string, example: Active }
+    Registration:
+      type: object
+      properties:
+        crNumber: { type: string }
+        crName: { type: string }
+        crEntityNumber: { type: string }
+        status: { $ref: '#/components/schemas/Named' }
+        issueDate: { type: string }
+        expiryDate: { type: string }
+        location: { $ref: '#/components/schemas/Named' }
+        capital: { type: number }
+        activities: { type: array, items: { $ref: '#/components/schemas/Named' } }
+    Person:
+      type: object
+      properties:
+        nameAr: { type: string }
+        nameEn: { type: string }
+        birthDate: { type: string, format: date }
+        nationality: { type: object, properties: { code: { type: string }, name: { type: string } } }
+        idStatus: { type: object, properties: { code: { type: string }, name: { type: string } } }
+        idExpiryDate: { type: string }
+        city: { type: string }
+security:
+  - gateway: []
+paths:
+  /v1/MCI-DIP/cr-information-id-number/{idNumber}:
+    get:
+      operationId: crsByIdNumber
+      summary: Commercial registrations of a person by ID number
+      tags: [MCI]
+      parameters:
+        - { name: idNumber, in: path, required: true, schema: { type: string }, example: '1000000001' }
+      responses:
+        '200':
+          description: The gateway envelope; the licenses are under data.result.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusDetails: { type: array, items: { $ref: '#/components/schemas/Status' } }
+                  data:
+                    type: object
+                    properties:
+                      responseCode: { type: string, example: '1' }
+                      responseMessage: { type: string }
+                      result:
+                        type: object
+                        properties:
+                          Licenses: { type: array, items: { $ref: '#/components/schemas/License' } }
+  /v1/MCI-DIP/CR-Information/{crNumber}:
+    get:
+      operationId: crInformation
+      summary: Commercial registration by CR number
+      tags: [MCI]
+      parameters:
+        - { name: crNumber, in: path, required: true, schema: { type: string }, example: '1010000001' }
+      responses:
+        '200':
+          description: The gateway envelope; the registration is under data.result.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusDetails: { type: array, items: { $ref: '#/components/schemas/Status' } }
+                  data:
+                    type: object
+                    properties:
+                      responseCode: { type: string }
+                      responseMessage: { type: string }
+                      result: { $ref: '#/components/schemas/Registration' }
+  /v1/NIC/person-information/{idNumber}:
+    get:
+      operationId: personInformation
+      summary: A person's identity data by ID number
+      tags: [NIC]
+      parameters:
+        - { name: idNumber, in: path, required: true, schema: { type: string }, example: '1000000001' }
+      responses:
+        '200':
+          description: The gateway envelope; the person is under data.result.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusDetails: { type: array, items: { $ref: '#/components/schemas/Status' } }
+                  data:
+                    type: object
+                    properties:
+                      responseCode: { type: string }
+                      responseMessage: { type: string }
+                      result: { $ref: '#/components/schemas/Person' }

@@ -3,6 +3,7 @@ using DynamicCube.Modules.Integration.Changes;
 using DynamicCube.Modules.Integration.Domain;
 using DynamicCube.Modules.Integration.Persistence;
 using DynamicCube.Modules.Integration.Runtime;
+using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Integration;
 using DynamicCube.Platform.Security;
 using Microsoft.AspNetCore.Builder;
@@ -14,6 +15,12 @@ using Microsoft.EntityFrameworkCore;
 namespace DynamicCube.Modules.Integration.Endpoints;
 
 public sealed record TestOperationRequest(Dictionary<string, string?>? Inputs);
+
+/// <summary>An operation as edited in the designer (not saved yet) and the inputs to try it with.</summary>
+public sealed record TryOperationRequest(OperationPayload Operation, Dictionary<string, string?>? Inputs);
+
+/// <summary>An OpenAPI or Swagger description, as JSON or YAML text.</summary>
+public sealed record ReadOpenApiRequest(string Text);
 
 public sealed record TestOperationResponse(
     IntegrationOutcome Outcome,
@@ -49,6 +56,17 @@ internal static class IntegrationEndpoints
             var (result, trace) = await gateway.TestAsync(code, request.Inputs ?? [], ct);
             return TypedResults.Ok(new TestOperationResponse(result.Outcome, result.Code, result.MessageAr, result.MessageEn, result.Outputs, result.Data, result.CallId, trace));
         }).RequirePrivilege(IntegrationResources.TestConsole, CatalogActions.Execute).WithName("TestIntegrationOperation");
+
+        // The operation designer's "Try it": an operation that is not saved yet, on its published connection (ADR-0041).
+        group.MapPost("/operations/try", async (TryOperationRequest request, IntegrationGateway gateway, CancellationToken ct) =>
+        {
+            var (result, trace) = await gateway.TryAsync(request.Operation, request.Inputs ?? [], ct);
+            return TypedResults.Ok(new TestOperationResponse(result.Outcome, result.Code, result.MessageAr, result.MessageEn, result.Outputs, result.Data, result.CallId, trace));
+        }).RequirePrivilege(IntegrationResources.TestConsole, CatalogActions.Execute).WithName("TryIntegrationOperation");
+
+        // Reads an OpenAPI / Swagger description into a provider, connection and operations to review (nothing is saved).
+        group.MapPost("/openapi/read", (ReadOpenApiRequest request) => TypedResults.Ok(OpenApiImport.Read(request.Text ?? string.Empty)))
+            .RequirePrivilege(IntegrationResources.Config, CatalogActions.Create).WithName("ReadOpenApiDescription");
 
         group.MapGet("/call-logs", async (
             string? operation,
@@ -109,6 +127,14 @@ internal static class IntegrationEndpoints
         catch (IntegrationOperationNotFoundException ex)
         {
             return Results.Problem(statusCode: StatusCodes.Status404NotFound, detail: ex.Message);
+        }
+        catch (ChangeValidationException ex)
+        {
+            return Results.ValidationProblem(ex.Errors.ToDictionary(e => e.Key, e => e.Value), title: "The operation is invalid.");
+        }
+        catch (OpenApiImportException ex)
+        {
+            return Results.Problem(statusCode: StatusCodes.Status400BadRequest, title: "The description cannot be read.", detail: ex.Message);
         }
     }
 }

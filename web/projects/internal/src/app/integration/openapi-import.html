@@ -1,0 +1,403 @@
+<header class="oi-head">
+  <mat-icon fontSet="material-symbols-outlined" class="oi-head__icon" aria-hidden="true"
+    >upload_file</mat-icon
+  >
+  <div class="oi-head__text">
+    <h2>{{ 'oi.title' | dcTranslate }}</h2>
+    <p>{{ 'oi.subtitle' | dcTranslate }}</p>
+  </div>
+  <button
+    matIconButton
+    type="button"
+    (click)="close()"
+    [attr.aria-label]="'od.cancel' | dcTranslate"
+  >
+    <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+  </button>
+</header>
+
+@if (reading() || saving()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+<mat-dialog-content class="oi-body">
+  @if (errors().length) {
+    <ul class="dc-errors" role="alert" data-testid="oi-errors">
+      @for (e of errors(); track $index) {
+        <li>{{ e }}</li>
+      }
+    </ul>
+  }
+
+  <section class="oi-card">
+    <h3>1. {{ 'oi.source' | dcTranslate }}</h3>
+    <textarea
+      class="oi-source"
+      dir="ltr"
+      rows="8"
+      [placeholder]="'oi.paste' | dcTranslate"
+      [ngModel]="text()"
+      (ngModelChange)="text.set($event)"
+      data-testid="oi-text"
+    ></textarea>
+    <div class="oi-row">
+      <label class="oi-file">
+        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">attach_file</mat-icon
+        >{{ 'oi.file' | dcTranslate }}
+        <input
+          type="file"
+          accept=".json,.yaml,.yml,application/json,text/yaml"
+          (change)="readFile($event)"
+          data-testid="oi-file"
+        />
+      </label>
+      <button
+        matButton="filled"
+        type="button"
+        (click)="readText()"
+        [disabled]="!text().trim() || reading()"
+        data-testid="oi-read"
+      >
+        <mat-icon fontSet="material-symbols-outlined">manage_search</mat-icon
+        >{{ 'oi.read' | dcTranslate }}
+      </button>
+      @if (read(); as r) {
+        <span class="oi-done" data-testid="oi-done"
+          ><mat-icon fontSet="material-symbols-outlined" aria-hidden="true">task_alt</mat-icon
+          >{{ doneText(r) }}</span
+        >
+      }
+    </div>
+    @if (read()?.warnings?.length) {
+      <details class="oi-warnings">
+        <summary>{{ 'oi.warnings' | dcTranslate }} ({{ read()!.warnings.length }})</summary>
+        <ul>
+          @for (w of read()!.warnings; track $index) {
+            <li dir="ltr">{{ w }}</li>
+          }
+        </ul>
+      </details>
+    }
+  </section>
+
+  @if (choices(); as c) {
+    <div class="oi-pair">
+      <section class="oi-card" data-testid="oi-provider">
+        <h3>2. {{ 'oi.provider' | dcTranslate }}</h3>
+        <mat-button-toggle-group
+          [value]="c.provider.mode"
+          (change)="setProvider({ mode: $event.value })"
+        >
+          <mat-button-toggle value="new">{{ 'oi.newProvider' | dcTranslate }}</mat-button-toggle>
+          <mat-button-toggle value="existing">{{
+            'oi.existingProvider' | dcTranslate
+          }}</mat-button-toggle>
+        </mat-button-toggle-group>
+        @if (c.provider.mode === 'new') {
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>{{ 'od.code' | dcTranslate }}</mat-label>
+            <input
+              matInput
+              dir="ltr"
+              [ngModel]="c.provider.code"
+              (ngModelChange)="setProvider({ code: $event.toUpperCase() })"
+              data-testid="oi-provider-code"
+            />
+          </mat-form-field>
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>{{ 'od.nameAr' | dcTranslate }}</mat-label>
+            <input
+              matInput
+              dir="rtl"
+              [ngModel]="c.provider.nameAr"
+              (ngModelChange)="setProvider({ nameAr: $event })"
+            />
+          </mat-form-field>
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>{{ 'od.nameEn' | dcTranslate }}</mat-label>
+            <input
+              matInput
+              dir="ltr"
+              [ngModel]="c.provider.nameEn"
+              (ngModelChange)="setProvider({ nameEn: $event })"
+            />
+          </mat-form-field>
+        } @else {
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>{{ 'oi.existingProvider' | dcTranslate }}</mat-label>
+            <mat-select [value]="c.provider.code" (selectionChange)="chooseProvider($event.value)">
+              @for (p of providers(); track p.code) {
+                <mat-option [value]="p.code"
+                  >{{ { ar: p.nameAr, en: p.nameEn } | dcLocalize }} ({{ p.code }})</mat-option
+                >
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+      </section>
+
+      <section class="oi-card" data-testid="oi-connection">
+        <h3>3. {{ 'oi.connection' | dcTranslate }}</h3>
+        <mat-button-toggle-group
+          [value]="c.connection.mode"
+          (change)="setConnection({ mode: $event.value })"
+        >
+          <mat-button-toggle value="new">{{ 'oi.newConnection' | dcTranslate }}</mat-button-toggle>
+          <mat-button-toggle value="existing">{{
+            'oi.existingConnection' | dcTranslate
+          }}</mat-button-toggle>
+        </mat-button-toggle-group>
+        @if (c.connection.mode === 'new') {
+          <div class="oi-grid">
+            <mat-form-field subscriptSizing="dynamic">
+              <mat-label>{{ 'od.code' | dcTranslate }}</mat-label>
+              <input
+                matInput
+                dir="ltr"
+                [ngModel]="c.connection.code"
+                (ngModelChange)="setConnection({ code: $event.toUpperCase() })"
+                data-testid="oi-connection-code"
+              />
+            </mat-form-field>
+            <mat-form-field subscriptSizing="dynamic">
+              <mat-label>{{ 'oi.baseUrl' | dcTranslate }}</mat-label>
+              <input
+                matInput
+                dir="ltr"
+                [ngModel]="c.connection.baseUrl"
+                (ngModelChange)="setConnection({ baseUrl: $event })"
+                data-testid="oi-base-url"
+              />
+              @if (read()!.servers.length > 1) {
+                <mat-hint dir="ltr">{{ read()!.servers.join(' · ') }}</mat-hint>
+              }
+            </mat-form-field>
+            <mat-form-field subscriptSizing="dynamic">
+              <mat-label>{{ 'od.nameAr' | dcTranslate }}</mat-label>
+              <input
+                matInput
+                dir="rtl"
+                [ngModel]="c.connection.nameAr"
+                (ngModelChange)="setConnection({ nameAr: $event })"
+              />
+            </mat-form-field>
+            <mat-form-field subscriptSizing="dynamic">
+              <mat-label>{{ 'od.nameEn' | dcTranslate }}</mat-label>
+              <input
+                matInput
+                dir="ltr"
+                [ngModel]="c.connection.nameEn"
+                (ngModelChange)="setConnection({ nameEn: $event })"
+              />
+            </mat-form-field>
+            <mat-form-field subscriptSizing="dynamic">
+              <mat-label>{{ 'oi.auth' | dcTranslate }}</mat-label>
+              <mat-select
+                [value]="c.connection.authType"
+                (selectionChange)="setConnection({ authType: $event.value })"
+              >
+                @for (a of authTypes; track a) {
+                  <mat-option [value]="a">{{ a }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            @if (c.connection.authType !== 'NONE') {
+              <mat-form-field subscriptSizing="dynamic">
+                <mat-label>{{ 'oi.secret' | dcTranslate }}</mat-label>
+                <input
+                  matInput
+                  dir="ltr"
+                  [ngModel]="c.connection.secretName"
+                  (ngModelChange)="setConnection({ secretName: $event })"
+                />
+                <mat-hint>{{ 'oi.secretHint' | dcTranslate }}</mat-hint>
+              </mat-form-field>
+            }
+            @if (c.connection.authType === 'OAUTH2_CLIENT_CREDENTIALS') {
+              <mat-form-field subscriptSizing="dynamic">
+                <mat-label>{{ 'oi.tokenUrl' | dcTranslate }}</mat-label>
+                <input
+                  matInput
+                  dir="ltr"
+                  [ngModel]="c.connection.tokenUrl"
+                  (ngModelChange)="setConnection({ tokenUrl: $event })"
+                />
+              </mat-form-field>
+            }
+            @if (c.connection.authType === 'API_KEY') {
+              <mat-form-field subscriptSizing="dynamic">
+                <mat-label>{{ 'oi.apiKeyHeader' | dcTranslate }}</mat-label>
+                <input
+                  matInput
+                  dir="ltr"
+                  [ngModel]="c.connection.apiKeyHeader"
+                  (ngModelChange)="setConnection({ apiKeyHeader: $event })"
+                />
+              </mat-form-field>
+            }
+          </div>
+          @for (a of read()!.authentication; track a.name) {
+            @if (a.note) {
+              <p class="oi-note" dir="ltr">{{ a.name }}: {{ a.note }}</p>
+            }
+          }
+        } @else {
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>{{ 'oi.existingConnection' | dcTranslate }}</mat-label>
+            <mat-select
+              [value]="c.connection.code"
+              (selectionChange)="setConnection({ code: $event.value })"
+              data-testid="oi-connection-select"
+            >
+              @for (x of connections(); track x.code) {
+                <mat-option [value]="x.code"
+                  >{{ { ar: x.nameAr, en: x.nameEn } | dcLocalize }} ({{ x.code }})</mat-option
+                >
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'od.envelope' | dcTranslate }}</mat-label>
+          <mat-select [value]="c.envelopeProfileCode" (selectionChange)="setEnvelope($event.value)">
+            <mat-option [value]="null">{{ 'od.none' | dcTranslate }}</mat-option>
+            @for (e of envelopes(); track e.code) {
+              <mat-option [value]="e.code"
+                >{{ { ar: e.nameAr, en: e.nameEn } | dcLocalize }} ({{ e.code }})</mat-option
+              >
+            }
+          </mat-select>
+        </mat-form-field>
+        @if (c.resultPath) {
+          <p class="oi-done">{{ 'od.resultFrom' | dcTranslate }} <code dir="ltr">{{ c.resultPath }}</code></p>
+        }
+      </section>
+    </div>
+
+    <section class="oi-card" data-testid="oi-operations">
+      <h3>
+        4. {{ 'oi.operations' | dcTranslate }}
+        <small>{{ count('oi.selected', { count: selectedCount() }) }}</small>
+      </h3>
+      <div class="oi-row">
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'oi.prefix' | dcTranslate }}</mat-label>
+          <input
+            matInput
+            dir="ltr"
+            [ngModel]="prefix()"
+            (ngModelChange)="setPrefix($event)"
+            data-testid="oi-prefix"
+          />
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic" class="oi-grow">
+          <mat-icon matPrefix fontSet="material-symbols-outlined">search</mat-icon>
+          <mat-label>{{ 'oi.search' | dcTranslate }}</mat-label>
+          <input matInput [ngModel]="filter()" (ngModelChange)="filter.set($event)" />
+        </mat-form-field>
+        <button matButton type="button" (click)="selectAll(true)">
+          {{ 'oi.selectAll' | dcTranslate }}
+        </button>
+      </div>
+      @for (o of shown(); track o.source.code) {
+        <div class="oi-op" [class.oi-op--off]="!o.selected" [attr.data-op]="o.source.code">
+          <div class="oi-op__line">
+            <mat-checkbox
+              [checked]="o.selected"
+              (change)="setOperation(indexOf(o), { selected: $event.checked })"
+              [attr.aria-label]="o.name"
+            />
+            <span class="oi-method" [attr.data-method]="o.source.method">{{
+              o.source.method
+            }}</span>
+            <code class="oi-path" dir="ltr">{{ o.source.pathTemplate }}</code>
+            <input
+              class="oi-cell oi-code"
+              dir="ltr"
+              [ngModel]="o.code"
+              (ngModelChange)="setOperation(indexOf(o), { code: $event.toUpperCase() })"
+              [attr.aria-label]="'od.code' | dcTranslate"
+            />
+            <input
+              class="oi-cell oi-name"
+              [ngModel]="o.name"
+              (ngModelChange)="setOperation(indexOf(o), { name: $event })"
+              [attr.aria-label]="'od.nameEn' | dcTranslate"
+            />
+            @if (usedCodes().has(o.code)) {
+              <span class="oi-bad">{{ 'oi.exists' | dcTranslate }}</span>
+            }
+            <button
+              matIconButton
+              type="button"
+              (click)="open.set(open() === o.source.code ? null : o.source.code)"
+              [attr.aria-expanded]="open() === o.source.code"
+              [attr.aria-label]="'oi.chooseOutputs' | dcTranslate"
+            >
+              <mat-icon fontSet="material-symbols-outlined">{{
+                open() === o.source.code ? 'expand_less' : 'expand_more'
+              }}</mat-icon>
+            </button>
+          </div>
+          <div class="oi-op__meta">
+            {{ count('oi.inputs', { count: o.source.parameters.length }) }} ·
+            {{ count('oi.outputs', { count: o.outputs.size, total: fields(o).length }) }}
+            @for (w of o.source.warnings; track $index) {
+              <span class="oi-warn" dir="ltr">{{ w }}</span>
+            }
+          </div>
+          @if (open() === o.source.code) {
+            <div class="oi-fields">
+              @for (f of fields(o); track f.path) {
+                <mat-checkbox
+                  [checked]="o.outputs.has(f.path)"
+                  (change)="toggleOutput(o, f.path, $event.checked)"
+                >
+                  <code dir="ltr">{{ f.path }}</code>
+                  <small dir="ltr">{{ f.name }} · {{ f.type }}</small>
+                </mat-checkbox>
+              }
+              @for (p of o.source.parameters; track p.name) {
+                <span class="oi-param" dir="ltr"
+                  >{{ p.location }} {{ p.name }}
+                  @if (p.target) {
+                    → {{ p.target }}
+                  }
+                  @if (p.isRequired) {
+                    *
+                  }
+                </span>
+              }
+            </div>
+          }
+        </div>
+      }
+    </section>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions class="oi-actions">
+  @if (choices() && problems().length) {
+    <span class="oi-bad">{{ problems()[0] | dcTranslate }}</span>
+  }
+  <span class="oi-grow"></span>
+  <button matButton type="button" (click)="close()">{{ 'od.cancel' | dcTranslate }}</button>
+  <button
+    matButton="outlined"
+    type="button"
+    (click)="save(false)"
+    [disabled]="!choices() || saving()"
+    data-testid="oi-save"
+  >
+    <mat-icon fontSet="material-symbols-outlined">save</mat-icon>{{ 'oi.addToDraft' | dcTranslate }}
+  </button>
+  <button
+    matButton="filled"
+    type="button"
+    (click)="save(true)"
+    [disabled]="!choices() || saving()"
+    data-testid="oi-submit"
+  >
+    <mat-icon fontSet="material-symbols-outlined">send</mat-icon>{{ 'oi.submit' | dcTranslate }}
+  </button>
+</mat-dialog-actions>

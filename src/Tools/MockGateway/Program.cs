@@ -18,6 +18,9 @@ var app = builder.Build();
 var samples = JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "samples", "mci.json")))!;
 var tokens = new ConcurrentDictionary<string, DateTimeOffset>();
 
+// An OpenAPI description of the gateway, to try the Integration Manager's import (ADR-0041).
+app.MapGet("/openapi.yaml", () => Results.File(Path.Combine(AppContext.BaseDirectory, "samples", "openapi.yaml"), "application/yaml"));
+
 app.MapPost("/oauth/v1/token", (HttpRequest request) =>
 {
     var authorization = request.Headers.Authorization.ToString();

@@ -50,9 +50,14 @@ This confirms the design below: a shared connection and envelope, many operation
 
 ## 5.4 Tooling
 
-- **Test console** — run an operation with sample input against staging; see raw and mapped
-  output.
-- **Import** — from OpenAPI/WSDL where available; manual definition otherwise.
+- **Operation designer** (ADR-0041) — the way into every operation: the request (path placeholders become inputs; query,
+  header and JSON-body inputs; a preview of the URL and body), **Try it** on the unsaved operation through its published
+  connection, the response as a tree whose fields become outputs with one click, the provider's codes and the details.
+- **Test console** — run a published operation with sample input against staging; see raw and mapped output.
+- **Import from OpenAPI** (ADR-0041) — paste or choose an OpenAPI 3.x / Swagger 2.0 description (JSON or YAML): it
+  suggests the provider, the connection (base URL, authentication, the credentials' name only) and the operations with
+  their inputs and response fields; the ticked ones, with the outputs chosen, are imported as a configuration package
+  for review. WSDL import comes with SOAP support.
 - **API Endpoint Builder** — expose selected platform data/operations as REST endpoints for
   other parties (later phase), with the same auth and data-scope rules.
 
@@ -118,6 +123,11 @@ operation's cache seconds (keyed by inputs). Publishing integration configuratio
 **Use from other modules**: the kernel interface `IIntegrationGateway.InvokeAsync(operation, inputs)`
 returns the outcome, code, bilingual message, mapped outputs and the result data — never URLs or
 credentials. The Party Registry uses it for acting contexts and profile fields.
+
+**Designer and import endpoints**: `POST /api/integration/v1/operations/try` runs an operation that is not saved (checked
+as saving would; test console privilege); `POST /api/integration/v1/openapi/read` reads a description into suggestions
+and saves nothing (create privilege on integrations). The mock gateway serves its description at
+`http://localhost:5090/openapi.yaml`.
 
 **Configuration packages**: `deploy/config-packages/momrah-mci.json` holds the MCI connectors (two
 operations with the guide's business codes and messages) plus the Party Registry settings that use them;

@@ -5,10 +5,12 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using DynamicCube.Modules.Integration.Changes;
 using DynamicCube.Modules.Integration.Domain;
 using DynamicCube.Modules.Integration.Persistence;
 using DynamicCube.Platform.Integration;
 using DynamicCube.Platform.Security;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -49,10 +51,57 @@ internal sealed partial class IntegrationGateway(
     public Task<(IntegrationResult Result, IntegrationTrace Trace)> TestAsync(string operationCode, IReadOnlyDictionary<string, string?> inputs, CancellationToken cancellationToken) =>
         RunAsync(operationCode, inputs, useCache: false, cancellationToken);
 
+    /// <summary>
+    /// Calls an operation that is not saved yet (the operation designer's <em>Try it</em>): its fields are checked as saving
+    /// would check them, and it runs on the published connection and envelope it names, without the response cache.
+    /// </summary>
+    public async Task<(IntegrationResult Result, IntegrationTrace Trace)> TryAsync(OperationPayload payload, IReadOnlyDictionary<string, string?> inputs, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(payload);
+        var errors = new ValidationErrors();
+        errors.Required("connectionCode", payload.ConnectionCode);
+        OperationApplier.Check(payload, errors);
+        var connection = string.IsNullOrWhiteSpace(payload.ConnectionCode)
+            ? null
+            : await context.Connections.AsNoTracking().Include(c => c.Provider).FirstOrDefaultAsync(c => c.Code == payload.ConnectionCode, cancellationToken);
+        if (!string.IsNullOrWhiteSpace(payload.ConnectionCode) && connection is null)
+        {
+            errors.Add("connectionCode", $"Connection '{payload.ConnectionCode}' is not published yet.");
+        }
+
+        var envelope = string.IsNullOrWhiteSpace(payload.EnvelopeProfileCode)
+            ? null
+            : await context.EnvelopeProfiles.AsNoTracking().FirstOrDefaultAsync(e => e.Code == payload.EnvelopeProfileCode, cancellationToken);
+        if (!string.IsNullOrWhiteSpace(payload.EnvelopeProfileCode) && envelope is null)
+        {
+            errors.Add("envelopeProfileCode", $"Response envelope '{payload.EnvelopeProfileCode}' is not published yet.");
+        }
+
+        errors.ThrowIfAny();
+        var operation = new Operation
+        {
+            Code = string.IsNullOrWhiteSpace(payload.Code) ? "DRAFT" : payload.Code.Trim(),
+            NameAr = payload.NameAr,
+            NameEn = payload.NameEn,
+            Connection = connection,
+            ConnectionId = connection!.Id,
+            EnvelopeProfile = envelope,
+            EnvelopeProfileId = envelope?.Id,
+        };
+        OperationApplier.Fill(operation, payload);
+        operation.CacheSeconds = 0;
+        return await RunAsync(operation, inputs, useCache: false, cancellationToken);
+    }
+
     private async Task<(IntegrationResult Result, IntegrationTrace Trace)> RunAsync(string operationCode, IReadOnlyDictionary<string, string?> inputs, bool useCache, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(inputs);
         var operation = await definitions.GetAsync(context, operationCode, cancellationToken) ?? throw new IntegrationOperationNotFoundException(operationCode);
+        return await RunAsync(operation, inputs, useCache, cancellationToken);
+    }
+
+    private async Task<(IntegrationResult Result, IntegrationTrace Trace)> RunAsync(Operation operation, IReadOnlyDictionary<string, string?> inputs, bool useCache, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(inputs);
         var connection = operation.Connection!;
         ValidateInputs(operation, inputs);
 

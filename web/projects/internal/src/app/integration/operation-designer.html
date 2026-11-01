@@ -1,0 +1,550 @@
+<header class="od-head">
+  <mat-icon fontSet="material-symbols-outlined" class="od-head__icon" aria-hidden="true"
+    >api</mat-icon
+  >
+  <div class="od-head__text">
+    <h2>{{ 'od.title' | dcTranslate }}</h2>
+    <p>{{ 'od.subtitle' | dcTranslate }}</p>
+  </div>
+  <button
+    matIconButton
+    type="button"
+    (click)="close()"
+    [attr.aria-label]="'od.cancel' | dcTranslate"
+  >
+    <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+  </button>
+</header>
+
+<div class="od-identity">
+  <mat-form-field subscriptSizing="dynamic">
+    <mat-label>{{ 'od.code' | dcTranslate }}</mat-label>
+    <input
+      matInput
+      dir="ltr"
+      [ngModel]="code()"
+      (ngModelChange)="code.set($event.toUpperCase())"
+      [disabled]="!isNew"
+      data-testid="od-code"
+    />
+  </mat-form-field>
+  <mat-form-field subscriptSizing="dynamic">
+    <mat-label>{{ 'od.nameAr' | dcTranslate }}</mat-label>
+    <input
+      matInput
+      dir="rtl"
+      [ngModel]="def().nameAr"
+      (ngModelChange)="set({ nameAr: $event })"
+      data-testid="od-name-ar"
+    />
+  </mat-form-field>
+  <mat-form-field subscriptSizing="dynamic">
+    <mat-label>{{ 'od.nameEn' | dcTranslate }}</mat-label>
+    <input
+      matInput
+      dir="ltr"
+      [ngModel]="def().nameEn"
+      (ngModelChange)="set({ nameEn: $event })"
+      data-testid="od-name-en"
+    />
+  </mat-form-field>
+</div>
+
+@if (saving()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+@if (errors().length) {
+  <ul class="dc-errors od-errors" role="alert" data-testid="od-errors">
+    @for (e of errors(); track $index) {
+      <li>{{ e }}</li>
+    }
+  </ul>
+}
+
+<mat-dialog-content class="od-body">
+  <div class="od-layout">
+    <section class="od-main">
+      <mat-tab-group
+        [selectedIndex]="part()"
+        (selectedIndexChange)="part.set($event)"
+        mat-stretch-tabs="false"
+        animationDuration="0ms"
+      >
+        @for (p of parts; track p; let i = $index) {
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <span class="od-tab" [attr.data-testid]="'od-tab-' + p">
+                <span class="od-tab__n">{{ i + 1 }}</span>
+                {{ 'od.part.' + p | dcTranslate }}
+                @if (partProblems()[i]) {
+                  <span class="od-tab__bad">{{ partProblems()[i] }}</span>
+                }
+              </span>
+            </ng-template>
+
+            <div class="od-pane">
+              @switch (p) {
+                <!-- 1. Request -->
+                @case ('request') {
+                  <div class="od-pair">
+                    <mat-form-field subscriptSizing="dynamic">
+                      <mat-label>{{ 'od.connection' | dcTranslate }}</mat-label>
+                      <mat-select
+                        [ngModel]="def().connectionCode"
+                        (ngModelChange)="set({ connectionCode: $event })"
+                        data-testid="od-connection"
+                      >
+                        @for (c of connections(); track c.code) {
+                          <mat-option [value]="c.code">{{ rowName(c) }}</mat-option>
+                        }
+                      </mat-select>
+                      @if (connection(); as c) {
+                        <mat-hint dir="ltr">{{ c['baseUrl'] }} · {{ c['authType'] }}</mat-hint>
+                      }
+                    </mat-form-field>
+                    <mat-form-field subscriptSizing="dynamic">
+                      <mat-label>{{ 'od.envelope' | dcTranslate }}</mat-label>
+                      <mat-select
+                        [ngModel]="def().envelopeProfileCode"
+                        (ngModelChange)="set({ envelopeProfileCode: $event })"
+                        data-testid="od-envelope"
+                      >
+                        <mat-option [value]="null">{{ 'od.none' | dcTranslate }}</mat-option>
+                        @for (e of envelopes(); track e.code) {
+                          <mat-option [value]="e.code">{{ rowName(e) }}</mat-option>
+                        }
+                      </mat-select>
+                      <mat-hint>{{ 'od.envelopeHint' | dcTranslate }}</mat-hint>
+                    </mat-form-field>
+                  </div>
+
+                  <div class="od-url">
+                    <mat-button-toggle-group
+                      [value]="def().method"
+                      (change)="setMethod($event.value)"
+                      [attr.aria-label]="'od.method' | dcTranslate"
+                      data-testid="od-method"
+                    >
+                      @for (m of methods; track m) {
+                        <mat-button-toggle [value]="m">{{ m }}</mat-button-toggle>
+                      }
+                    </mat-button-toggle-group>
+                    <mat-form-field subscriptSizing="dynamic" class="od-grow">
+                      <mat-label>{{ 'od.path' | dcTranslate }}</mat-label>
+                      <input
+                        matInput
+                        dir="ltr"
+                        class="od-mono"
+                        [ngModel]="def().pathTemplate"
+                        (ngModelChange)="setPath($event)"
+                        data-testid="od-path"
+                      />
+                      <mat-hint>{{ 'od.pathHint' | dcTranslate }}</mat-hint>
+                    </mat-form-field>
+                  </div>
+                  @if (placeholders().length) {
+                    <div class="od-chips" [attr.aria-label]="'od.placeholders' | dcTranslate">
+                      @for (name of placeholders(); track $index) {
+                        <span class="od-chip" dir="ltr">{{ '{' + name + '}' }}</span>
+                      }
+                    </div>
+                  }
+                  <p class="od-preview" dir="ltr" data-testid="od-url-preview">
+                    <b>{{ def().method }}</b> {{ urlPreview() || '—' }}
+                  </p>
+
+                  <h3>{{ 'od.inputs' | dcTranslate }}</h3>
+                  <p class="od-muted">{{ 'od.inputsHint' | dcTranslate }}</p>
+                  @if (def().parameters.length) {
+                    <div class="od-table" role="table">
+                      <div class="od-table__head" role="row">
+                        <span>{{ 'od.param.name' | dcTranslate }}</span>
+                        <span>{{ 'od.param.location' | dcTranslate }}</span>
+                        <span>{{ 'od.param.target' | dcTranslate }}</span>
+                        <span>{{ 'od.param.sample' | dcTranslate }}</span>
+                        <span>{{ 'od.param.required' | dcTranslate }}</span>
+                        <span>{{ 'od.param.masked' | dcTranslate }}</span>
+                        <span></span>
+                      </div>
+                      @for (param of def().parameters; track $index; let i = $index) {
+                        <div class="od-table__row" role="row" [attr.data-param]="param.name">
+                          <input
+                            class="od-cell od-mono"
+                            dir="ltr"
+                            [ngModel]="param.name"
+                            (ngModelChange)="setParameter(i, { name: $event })"
+                            [ngModelOptions]="{ updateOn: 'blur' }"
+                            [attr.aria-label]="'od.param.name' | dcTranslate"
+                          />
+                          <select
+                            class="od-cell"
+                            [ngModel]="param.location"
+                            (ngModelChange)="setParameter(i, { location: $event })"
+                            [disabled]="param.location === 'PATH'"
+                            [attr.aria-label]="'od.param.location' | dcTranslate"
+                          >
+                            @for (l of locations; track l) {
+                              <option
+                                [value]="l"
+                                [disabled]="
+                                  (l === 'PATH' && param.location !== 'PATH') ||
+                                  (l === 'BODY' && def().method === 'GET')
+                                "
+                              >
+                                {{ 'od.location.' + l | dcTranslate }}
+                              </option>
+                            }
+                          </select>
+                          <input
+                            class="od-cell od-mono"
+                            dir="ltr"
+                            [ngModel]="param.target ?? ''"
+                            (ngModelChange)="setParameter(i, { target: $event || null })"
+                            [disabled]="param.location === 'PATH'"
+                            [placeholder]="
+                              param.location === 'BODY' ? 'person.idNumber' : param.name
+                            "
+                            [attr.aria-label]="'od.param.target' | dcTranslate"
+                          />
+                          <input
+                            class="od-cell"
+                            dir="ltr"
+                            [ngModel]="param.sampleValue ?? ''"
+                            (ngModelChange)="setParameter(i, { sampleValue: $event || null })"
+                            [attr.aria-label]="'od.param.sample' | dcTranslate"
+                          />
+                          <mat-checkbox
+                            [checked]="param.isRequired"
+                            (change)="setParameter(i, { isRequired: $event.checked })"
+                            [disabled]="param.location === 'PATH'"
+                            [attr.aria-label]="'od.param.required' | dcTranslate"
+                          />
+                          <mat-checkbox
+                            [checked]="param.isMasked"
+                            (change)="setParameter(i, { isMasked: $event.checked })"
+                            [attr.aria-label]="'od.param.masked' | dcTranslate"
+                          />
+                          <button
+                            matIconButton
+                            type="button"
+                            (click)="removeParameter(i)"
+                            [matTooltip]="'od.remove' | dcTranslate"
+                          >
+                            <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  }
+                  <div class="od-row">
+                    <button
+                      matButton
+                      type="button"
+                      (click)="addParameter('QUERY')"
+                      data-testid="od-add-query"
+                    >
+                      <mat-icon fontSet="material-symbols-outlined">add</mat-icon
+                      >{{ 'od.addQuery' | dcTranslate }}
+                    </button>
+                    <button matButton type="button" (click)="addParameter('HEADER')">
+                      <mat-icon fontSet="material-symbols-outlined">add</mat-icon
+                      >{{ 'od.addHeader' | dcTranslate }}
+                    </button>
+                    <button
+                      matButton
+                      type="button"
+                      (click)="addParameter('BODY')"
+                      [disabled]="def().method === 'GET'"
+                      data-testid="od-add-body"
+                    >
+                      <mat-icon fontSet="material-symbols-outlined">add</mat-icon
+                      >{{ 'od.addBody' | dcTranslate }}
+                    </button>
+                  </div>
+                  @if (bodyPreview(); as body) {
+                    <h3>{{ 'od.bodyPreview' | dcTranslate }}</h3>
+                    <pre class="od-code" dir="ltr" data-testid="od-body-preview">{{
+                      body | json
+                    }}</pre>
+                  }
+                }
+
+                <!-- 2. Response and outputs -->
+                @case ('response') {
+                  <p class="od-muted">{{ 'od.responseHint' | dcTranslate }}</p>
+                  @if (envelope(); as e) {
+                    <p class="od-note">
+                      {{ 'od.resultFrom' | dcTranslate }}
+                      <code dir="ltr">{{ e['resultPath'] || '—' }}</code>
+                    </p>
+                  }
+                  <div class="od-split">
+                    <div class="od-tree" data-testid="od-tree">
+                      <h3>{{ 'od.response' | dcTranslate }}</h3>
+                      <dc-response-tree
+                        [value]="response()"
+                        [picked]="outputPaths()"
+                        (pick)="pick($event)"
+                      />
+                      <details class="od-sample">
+                        <summary>{{ 'od.pasteSample' | dcTranslate }}</summary>
+                        <textarea
+                          class="od-code od-textarea"
+                          dir="ltr"
+                          rows="6"
+                          [ngModel]="sampleText()"
+                          (ngModelChange)="sampleText.set($event)"
+                          data-testid="od-sample"
+                        ></textarea>
+                        @if (sampleError()) {
+                          <p class="dc-errors">{{ 'od.sampleInvalid' | dcTranslate }}</p>
+                        }
+                        <button
+                          matButton="outlined"
+                          type="button"
+                          (click)="useSample()"
+                          data-testid="od-use-sample"
+                        >
+                          {{ 'od.useSample' | dcTranslate }}
+                        </button>
+                      </details>
+                    </div>
+                    <div class="od-outputs" data-testid="od-outputs">
+                      <h3>{{ 'od.outputs' | dcTranslate }}</h3>
+                      <p class="od-muted">{{ 'od.outputsHint' | dcTranslate }}</p>
+                      @for (o of def().outputs; track $index; let i = $index) {
+                        <div class="od-output" [attr.data-output]="o.name">
+                          <input
+                            class="od-cell od-mono"
+                            dir="ltr"
+                            [ngModel]="o.name"
+                            (ngModelChange)="setOutput(i, { name: $event })"
+                            [ngModelOptions]="{ updateOn: 'blur' }"
+                            [attr.aria-label]="'od.outputName' | dcTranslate"
+                          />
+                          <input
+                            class="od-cell od-mono"
+                            dir="ltr"
+                            [ngModel]="o.path"
+                            (ngModelChange)="setOutput(i, { path: $event })"
+                            [ngModelOptions]="{ updateOn: 'blur' }"
+                            [attr.aria-label]="'od.outputPath' | dcTranslate"
+                          />
+                          <button
+                            matIconButton
+                            type="button"
+                            (click)="removeOutput(i)"
+                            [matTooltip]="'od.remove' | dcTranslate"
+                          >
+                            <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
+                          </button>
+                          @if (outputValue(o.name); as v) {
+                            <span class="od-output__value" dir="ltr">{{ v }}</span>
+                          }
+                        </div>
+                      } @empty {
+                        <p class="od-empty">{{ 'od.noOutputs' | dcTranslate }}</p>
+                      }
+                      <button matButton type="button" (click)="addBlankOutput()">
+                        <mat-icon fontSet="material-symbols-outlined">add</mat-icon
+                        >{{ 'od.addOutput' | dcTranslate }}
+                      </button>
+                    </div>
+                  </div>
+                }
+
+                <!-- 3. Codes -->
+                @case ('codes') {
+                  <p class="od-muted">{{ 'od.codesHint' | dcTranslate }}</p>
+                  @if (envelope(); as e) {
+                    <p class="od-note">
+                      {{ 'od.envelopeReads' | dcTranslate }}
+                      <code dir="ltr">{{
+                        e['businessCodePath'] || e['statusCodePath'] || '—'
+                      }}</code>
+                    </p>
+                  }
+                  @for (c of def().responseCodes; track $index; let i = $index) {
+                    <div class="od-code-row" [attr.data-code]="c.code">
+                      <input
+                        class="od-cell od-mono"
+                        dir="ltr"
+                        [ngModel]="c.code"
+                        (ngModelChange)="setCode(i, { code: $event })"
+                        [placeholder]="'od.codePlaceholder' | dcTranslate"
+                        [attr.aria-label]="'od.codeValue' | dcTranslate"
+                      />
+                      <select
+                        class="od-cell"
+                        [ngModel]="c.outcome"
+                        (ngModelChange)="setCode(i, { outcome: $event })"
+                        [attr.aria-label]="'od.outcome' | dcTranslate"
+                      >
+                        @for (o of outcomes; track o) {
+                          <option [value]="o">{{ 'od.outcome.' + o | dcTranslate }}</option>
+                        }
+                      </select>
+                      <input
+                        class="od-cell"
+                        dir="rtl"
+                        [ngModel]="c.messageAr ?? ''"
+                        (ngModelChange)="setCode(i, { messageAr: $event || null })"
+                        [placeholder]="'od.messageAr' | dcTranslate"
+                      />
+                      <input
+                        class="od-cell"
+                        dir="ltr"
+                        [ngModel]="c.messageEn ?? ''"
+                        (ngModelChange)="setCode(i, { messageEn: $event || null })"
+                        [placeholder]="'od.messageEn' | dcTranslate"
+                      />
+                      <button
+                        matIconButton
+                        type="button"
+                        (click)="removeCode(i)"
+                        [matTooltip]="'od.remove' | dcTranslate"
+                      >
+                        <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
+                      </button>
+                    </div>
+                  } @empty {
+                    <p class="od-empty">{{ 'od.noCodes' | dcTranslate }}</p>
+                  }
+                  <button matButton type="button" (click)="addCode()" data-testid="od-add-code">
+                    <mat-icon fontSet="material-symbols-outlined">add</mat-icon
+                    >{{ 'od.addCode' | dcTranslate }}
+                  </button>
+                }
+
+                <!-- 4. Details -->
+                @case ('details') {
+                  <div class="od-pair">
+                    <mat-form-field subscriptSizing="dynamic">
+                      <mat-label>{{ 'od.descriptionAr' | dcTranslate }}</mat-label>
+                      <textarea
+                        matInput
+                        dir="rtl"
+                        rows="2"
+                        [ngModel]="def().descriptionAr ?? ''"
+                        (ngModelChange)="set({ descriptionAr: $event || null })"
+                      ></textarea>
+                    </mat-form-field>
+                    <mat-form-field subscriptSizing="dynamic">
+                      <mat-label>{{ 'od.descriptionEn' | dcTranslate }}</mat-label>
+                      <textarea
+                        matInput
+                        dir="ltr"
+                        rows="2"
+                        [ngModel]="def().descriptionEn ?? ''"
+                        (ngModelChange)="set({ descriptionEn: $event || null })"
+                      ></textarea>
+                    </mat-form-field>
+                  </div>
+                  <div class="od-pair">
+                    <mat-form-field subscriptSizing="dynamic">
+                      <mat-label>{{ 'od.entity' | dcTranslate }}</mat-label>
+                      <mat-select
+                        [value]="entityCode()"
+                        (selectionChange)="entityCode.set($event.value)"
+                      >
+                        <mat-option [value]="null">{{ 'od.allEntities' | dcTranslate }}</mat-option>
+                        @for (e of entities(); track e.code) {
+                          <mat-option [value]="e.code">{{
+                            { ar: e.nameAr, en: e.nameEn } | dcLocalize
+                          }}</mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+                    <mat-form-field subscriptSizing="dynamic">
+                      <mat-label>{{ 'od.apps' | dcTranslate }}</mat-label>
+                      <mat-select
+                        multiple
+                        [value]="businessApps()"
+                        (selectionChange)="businessApps.set($event.value)"
+                      >
+                        @for (a of apps(); track a.code) {
+                          <mat-option [value]="a.code">{{
+                            { ar: a.nameAr, en: a.nameEn } | dcLocalize
+                          }}</mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+                  <div class="od-pair">
+                    <mat-form-field subscriptSizing="dynamic">
+                      <mat-label>{{ 'od.cache' | dcTranslate }}</mat-label>
+                      <input
+                        matInput
+                        type="number"
+                        min="0"
+                        [ngModel]="def().cacheSeconds"
+                        (ngModelChange)="set({ cacheSeconds: +$event || 0 })"
+                      />
+                      <mat-hint>{{ 'od.cacheHint' | dcTranslate }}</mat-hint>
+                    </mat-form-field>
+                    <mat-form-field subscriptSizing="dynamic">
+                      <mat-label>{{ 'od.retry' | dcTranslate }}</mat-label>
+                      <mat-select [value]="retryValue()" (selectionChange)="setRetry($event.value)">
+                        <mat-option value="DEFAULT">{{
+                          'od.retry.DEFAULT' | dcTranslate
+                        }}</mat-option>
+                        <mat-option value="YES">{{ 'od.retry.YES' | dcTranslate }}</mat-option>
+                        <mat-option value="NO">{{ 'od.retry.NO' | dcTranslate }}</mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+                  <mat-form-field subscriptSizing="dynamic" class="od-full">
+                    <mat-label>{{ 'od.maskFields' | dcTranslate }}</mat-label>
+                    <input
+                      matInput
+                      dir="ltr"
+                      [ngModel]="def().maskFields.join(', ')"
+                      (ngModelChange)="setMaskFields($event)"
+                      [ngModelOptions]="{ updateOn: 'blur' }"
+                    />
+                    <mat-hint>{{ 'od.maskFieldsHint' | dcTranslate }}</mat-hint>
+                  </mat-form-field>
+                }
+              }
+            </div>
+          </mat-tab>
+        }
+      </mat-tab-group>
+    </section>
+
+    <dc-operation-try
+      class="od-try"
+      data-testid="od-try"
+      [definition]="trial()"
+      [disabled]="!canTry() || partProblems()[0] > 0"
+      (tried)="tried($event)"
+      (pickOutputs)="part.set(1)"
+    />
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions class="od-actions">
+  <span class="od-status" [class.od-status--bad]="problems().length > 0" data-testid="od-status">
+    <mat-icon fontSet="material-symbols-outlined">{{
+      problems().length ? 'error' : 'check_circle'
+    }}</mat-icon>
+    {{
+      problems().length
+        ? problems().length + ' ' + ('od.problems' | dcTranslate)
+        : ('od.noProblems' | dcTranslate)
+    }}
+  </span>
+  <span class="od-grow"></span>
+  <button matButton type="button" (click)="close()">{{ 'od.cancel' | dcTranslate }}</button>
+  <dc-submit-button [entityType]="entityType" [disabled]="saving()" (submitted)="save(true)" />
+  <button
+    matButton="filled"
+    type="button"
+    (click)="save()"
+    [disabled]="saving()"
+    data-testid="od-save"
+  >
+    <mat-icon fontSet="material-symbols-outlined">save</mat-icon>
+    {{ drafts.saveLabel(entityType) | dcTranslate }}
+  </button>
+</mat-dialog-actions>

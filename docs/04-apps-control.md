@@ -352,7 +352,7 @@ may be registered (`AppsControl:DataObjectSchemas`: `apps`, `party`, `svc`, `wf`
 | `query` | When `QUERY`: the query definition (jsonb), below |
 | `class_id` | When `CLASS` |
 | `data_object_id` | When `DATA_OBJECT` |
-| `integration_operation_code` | When `INTEGRATION` (cached) |
+| `integration_operation_code` | When `INTEGRATION` (cached) — defined, not served yet: such a list returns no values |
 | `sql_text` | When `SQL` — **restricted** (see below) |
 | `value_column`, `display_ar_column`, `display_en_column` | Both languages returned; client chooses |
 | `static_filter` | JSONLogic / structured filter |
@@ -424,6 +424,10 @@ global). Resolved grants are cached per session.
 The query layer (EF Core global filters and the report query builder) appends the user's grant
 predicate to every query on a bound object. The same rule therefore governs dropdowns, inboxes,
 searches, reports, exports and APIs.
+
+*Today* the bindings are applied where lists read data objects (a `QUERY` list over a bound object shows each user only
+their granted values); requests, tasks and documents are limited by the user's company and branches (ADR-0036 step 6).
+Applying bindings to those screens, reports and exports comes with the report builder.
 
 ## 4.10 Settings and UI texts
 

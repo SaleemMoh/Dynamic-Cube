@@ -510,6 +510,12 @@ builder's preview.
 Later: a **configurable classification engine** usable by any business (not only NHC) — tracks, criteria, bands,
 gates and adjustments configured rather than written as rule sets; the panel's live result will show its results.
 
+## Integration Manager review (ADR-0041)
+
+The owner chose, of (a) visual operation designer, (b) SOAP, (c) OpenAPI import, (d) Nafath, (e) API Endpoint Builder:
+**(a) and (c)** ✅ — operations are designed visually and tried before they are saved, and OpenAPI / Swagger
+descriptions are imported as reviewed packages. Still to choose: SOAP/WSDL, Nafath, the API Endpoint Builder.
+
 ## Phase 4 — Extended capabilities
 
 - Report builder; pixel-perfect reports.

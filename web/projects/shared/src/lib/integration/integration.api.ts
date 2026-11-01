@@ -28,6 +28,94 @@ export interface TestOperationResult {
   trace: IntegrationTrace;
 }
 
+export type ParameterLocation = 'PATH' | 'QUERY' | 'HEADER' | 'BODY';
+export type AuthType = 'NONE' | 'BASIC' | 'API_KEY' | 'OAUTH2_CLIENT_CREDENTIALS';
+
+/** An input of an operation: where it goes (path, query, header or a dot path in the JSON body) and how it is logged. */
+export interface OperationParameterDef {
+  name: string;
+  location: ParameterLocation;
+  /** The name at the provider (query, header) or the dot path in the body, when different from the name. */
+  target?: string | null;
+  isRequired: boolean;
+  isMasked: boolean;
+  sampleValue?: string | null;
+}
+
+/** An output: a name and the dot path of its value in the provider's response (e.g. Licenses[*].Commercial_NO). */
+export interface OperationOutputDef {
+  name: string;
+  path: string;
+}
+
+export interface ResponseCodeDef {
+  code: string;
+  outcome: IntegrationOutcome;
+  messageAr?: string | null;
+  messageEn?: string | null;
+}
+
+/** An operation as stored (the change payload of integ.operation). */
+export interface OperationDefinition {
+  code?: string | null;
+  nameAr: string;
+  nameEn: string;
+  isActive?: boolean;
+  connectionCode: string | null;
+  envelopeProfileCode: string | null;
+  descriptionAr?: string | null;
+  descriptionEn?: string | null;
+  method: string;
+  pathTemplate: string;
+  parameters: OperationParameterDef[];
+  outputs: OperationOutputDef[];
+  responseCodes: ResponseCodeDef[];
+  maskFields: string[];
+  cacheSeconds: number;
+  isIdempotent?: boolean | null;
+  [key: string]: unknown;
+}
+
+/** A security scheme of an API description and the connection settings it suggests. */
+export interface OpenApiAuthSuggestion {
+  name: string;
+  authType: AuthType;
+  tokenUrl: string | null;
+  apiKeyHeader: string | null;
+  note: string | null;
+}
+
+/** A field of an operation's success response, as an output it may become. */
+export interface ImportedField {
+  name: string;
+  path: string;
+  type: string;
+}
+
+export interface ImportedOperation {
+  code: string;
+  method: string;
+  pathTemplate: string;
+  name: string;
+  description: string | null;
+  tag: string | null;
+  parameters: OperationParameterDef[];
+  fields: ImportedField[];
+  warnings: string[];
+}
+
+/** What an OpenAPI / Swagger description holds, ready to review (ADR-0041). */
+export interface OpenApiReadResult {
+  title: string;
+  version: string | null;
+  description: string | null;
+  suggestedProviderCode: string;
+  servers: string[];
+  authentication: OpenApiAuthSuggestion[];
+  operations: ImportedOperation[];
+  warnings: string[];
+}
+
 export interface CallLogSummary {
   id: string;
   operationCode: string;
@@ -69,6 +157,16 @@ export class IntegrationApi {
 
   test(operationCode: string, inputs: Record<string, string | null>): Observable<TestOperationResult> {
     return this.http.post<TestOperationResult>(`${INTEGRATION_API}/operations/${encodeURIComponent(operationCode)}/test`, { inputs });
+  }
+
+  /** Runs an operation that is not saved yet on its published connection (the operation designer's "Try it"). */
+  tryOperation(operation: OperationDefinition, inputs: Record<string, string | null>): Observable<TestOperationResult> {
+    return this.http.post<TestOperationResult>(`${INTEGRATION_API}/operations/try`, { operation, inputs });
+  }
+
+  /** Reads an OpenAPI 3.x or Swagger 2.0 description (JSON or YAML); nothing is saved. */
+  readOpenApi(text: string): Observable<OpenApiReadResult> {
+    return this.http.post<OpenApiReadResult>(`${INTEGRATION_API}/openapi/read`, { text });
   }
 
   callLogs(query: CallLogQuery): Observable<{ items: CallLogSummary[]; total: number }> {
