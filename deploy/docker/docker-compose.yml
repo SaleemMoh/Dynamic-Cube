@@ -46,8 +46,9 @@ services:
       KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
       # Keycloak keeps no data here: raising this recreates it, which imports the realms again after they change
       # (2: connected apps — the account service account manages sign-in clients; the sample app's client;
-      # 3: public API — its audience, the sample partner's client, the portal service account manages clients).
-      DC_REALM_REVISION: "3"
+      # 3: public API — its audience, the sample partner's client, the portal service account manages clients;
+      # 4: Nafath — the identity provider through the platform's sign-in bridge, and its first sign-in flow).
+      DC_REALM_REVISION: "4"
     volumes:
       - ../keycloak/realms:/opt/keycloak/data/import:ro
       - ../keycloak/themes/dynamic-cube:/opt/keycloak/themes/dynamic-cube:ro
@@ -132,6 +133,14 @@ services:
       Authentication__External__Authority: http://keycloak:8080/realms/dynamic-cube-external
       Authentication__External__RequireHttpsMetadata: "false"
       Documents__GotenbergUrl: http://gotenberg:3000
+      # Nafath (ADR-0043): the mock gateway stands in for Elm's Rabet API in development; real credentials come from the
+      # secret store. The sign-in bridge is the identity provider Keycloak's portal realm signs applicants in with.
+      Nafath__BaseUrl: ${NAFATH_BASE_URL:-http://mock-gateway:8080/nafath}
+      Nafath__Bridge__Issuer: http://localhost:5081/api/nafath/v1/oidc
+      Nafath__Bridge__RedirectUris__0: http://localhost:8080/realms/dynamic-cube-external/broker/nafath/endpoint
+      Secrets__NAFATH__appId: ${NAFATH_APP_ID:-dev-nafath-app}
+      Secrets__NAFATH__appKey: ${NAFATH_APP_KEY:-dev-nafath-key}
+      Secrets__NAFATH_BRIDGE__clientSecret: ${NAFATH_BRIDGE_SECRET:-dev-nafath-bridge-secret}
     volumes:
       - files:/data/files
     depends_on:
@@ -163,6 +172,11 @@ services:
       ConnectedApp__TokenUrl: http://keycloak:8080/realms/dynamic-cube-internal
       ConnectedApp__ApiUrl: http://internal-api:8080
       ConnectedApp__ClientSecret: ${PMS_CLIENT_SECRET:-dev-connected-app-secret}
+      # The Nafath stand-in (ADR-0043): its sign-in page at http://localhost:5090/nafath/portal sends the browser back to the
+      # external API; its app page at http://localhost:5090/nafath/app posts signed answers to the external API.
+      Nafath__PublicUrl: http://localhost:5090
+      Nafath__WebCallbackUrl: http://localhost:5081/api/nafath/v1/oidc/callback
+      Nafath__MfaCallbackUrl: http://external-api:8080/api/nafath/v1/callbacks/mfa
     ports:
       - "5090:8080"
 

@@ -64,6 +64,8 @@ export interface ServiceDraft {
   card: ServiceCardDefinition;
   /** The panel beside the applicant's form (ADR-0040); absent: none. */
   panel?: PanelDefinition | null;
+  /** The applicant confirms the request in their Nafath app before it is submitted (ADR-0043). */
+  confirmWithNafath?: boolean;
   [key: string]: unknown;
 }
 

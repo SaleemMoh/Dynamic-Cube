@@ -209,4 +209,13 @@ export class RulesTab {
     const current = this.def().availability?.[which] ?? { of: 'EXPIRES', days: 0 };
     this.availability({ [which]: change === null ? null : { ...current, ...change } });
   }
+
+  // Submitting: the applicant confirms in their Nafath app (ADR-0043); left out of the definition when off.
+  protected confirmWithNafath(on: boolean): void {
+    this.store.apply((def) => {
+      const next = { ...def };
+      delete next.confirmWithNafath;
+      return on ? { ...next, confirmWithNafath: true } : next;
+    });
+  }
 }

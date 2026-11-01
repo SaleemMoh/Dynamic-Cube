@@ -66,6 +66,12 @@ This confirms the design below: a shared connection and envelope, many operation
   endpoints given, the companies and branches seen and a rate limit; every call is logged with masked parameters and
   each client gets an OpenAPI description. Screens: *API endpoints* (designer with *Try it*), *API clients* (*Sign-in
   and credentials*), *API calls*.
+- **Nafath** (ADR-0043) — applicants **sign in** to the portal with Nafath (Keycloak's identity provider *نفاذ*, through
+  a sign-in bridge on the external host that sends them to Nafath's sign-in page and back) and **confirm a request** in
+  their Nafath app before submitting it, where the service version asks for it (the number shown in the portal, the
+  signed answer posted to the platform's callback). Settings `Nafath` (Rabet's address, the server's address),
+  credentials `Secrets:NAFATH` and `Secrets:NAFATH_BRIDGE`; the mock gateway stands in for Nafath in development
+  (`http://localhost:5090/nafath/portal` and `/nafath/app?id={nationalId}`).
 
 ## 5.5 Initial connectors for the reference service
 

@@ -243,6 +243,9 @@ app.MapPost("/cis/inspections/{id}", async (string id, HttpRequest form, IHttpCl
 // A sample connected app that signs in through the platform and uses its connected-app API (ADR-0036 step 7).
 DynamicCube.MockGateway.ConnectedAppSample.Map(app);
 
+// A Nafath stand-in (ADR-0043): Elm's Rabet API, Nafath's sign-in page and a page standing in for the Nafath app.
+DynamicCube.MockGateway.NafathMock.Map(app, people);
+
 app.Run();
 
 static JsonObject InspectionResult(Inspection inspection, string? result) => new()

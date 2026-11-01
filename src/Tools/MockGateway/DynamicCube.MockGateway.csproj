@@ -5,6 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="samples\*.json;samples\*.yaml" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 

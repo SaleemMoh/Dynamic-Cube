@@ -24,6 +24,8 @@ public sealed class IntegrationDbContext(DbContextOptions<IntegrationDbContext> 
 
     public DbSet<ApiCall> ApiCalls => Set<ApiCall>();
 
+    public DbSet<NafathRequest> NafathRequests => Set<NafathRequest>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -105,6 +107,29 @@ public sealed class IntegrationDbContext(DbContextOptions<IntegrationDbContext> 
             b.Property(e => e.ClientIp).HasMaxLength(64);
             b.HasIndex(e => e.StartedAt);
             b.HasIndex(e => new { e.ClientCode, e.StartedAt });
+        });
+
+        modelBuilder.Entity<NafathRequest>(b =>
+        {
+            b.ToTable("nafath_request", Schema);
+            b.HasKey(e => e.Id);
+            b.Property(e => e.Kind).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.Service).HasMaxLength(50);
+            b.Property(e => e.SubjectType).HasMaxLength(50).IsRequired();
+            b.Property(e => e.ProtectedNationalId).HasMaxLength(1000);
+            b.Property(e => e.TransId).HasMaxLength(100);
+            b.Property(e => e.Random).HasMaxLength(10);
+            b.Property(e => e.ProtectedState).HasMaxLength(4000);
+            b.Property(e => e.HashedState).HasMaxLength(100);
+            b.Property(e => e.ClientRedirectUri).HasMaxLength(1000);
+            b.Property(e => e.ClientState).HasMaxLength(1000);
+            b.Property(e => e.ClientNonce).HasMaxLength(1000);
+            b.Property(e => e.CodeHash).HasMaxLength(100);
+            b.Property(e => e.ProtectedPerson).HasMaxLength(8000);
+            b.HasIndex(e => e.HashedState);
+            b.HasIndex(e => e.CodeHash);
+            b.HasIndex(e => new { e.SubjectType, e.SubjectId });
         });
 
         modelBuilder.Entity<CallLog>(b =>

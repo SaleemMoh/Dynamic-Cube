@@ -659,6 +659,14 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("level_code");
 
+                    b.Property<Guid?>("NafathCheckId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("nafath_check_id");
+
+                    b.Property<DateTimeOffset?>("NafathConfirmedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("nafath_confirmed_at");
+
                     b.Property<string>("Number")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")

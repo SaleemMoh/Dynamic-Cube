@@ -15,7 +15,7 @@ Delivered:
   abstraction, bilingual text, JSONLogic evaluation — identical in .NET and Angular, verified by shared cases.
 - `Internal.Api` / `External.Api` (health, OpenAPI, Keycloak JWT per realm), `Worker` (outbox), `Migrator`.
 - Keycloak realms (internal / external) with development users; external tokens carry `national_id`
-  (stand-in for Nafath until the identity provider is connected).
+  (Nafath is connected as an identity provider since ADR-0043).
 - Angular 22 workspace (`internal`, `external`, `field`, `shared`) on Angular Material: Arabic-first RTL shell,
   language switching, Material 3 theme, bundled fonts/icons, schema-driven `DynamicForm` with JSONLogic rules.
 - Container images for every process, Nginx SPA image with API reverse proxy, Docker Compose for local / small sites.
@@ -514,7 +514,8 @@ gates and adjustments configured rather than written as rule sets; the panel's l
 
 The owner chose, of (a) visual operation designer, (b) SOAP, (c) OpenAPI import, (d) Nafath, (e) API Endpoint Builder:
 **(a) and (c)** ✅ — operations are designed visually and tried before they are saved, and OpenAPI / Swagger
-descriptions are imported as reviewed packages. Still to choose: SOAP/WSDL, Nafath.
+descriptions are imported as reviewed packages. Then **(e)** ✅ (ADR-0042) and **(d)** ✅ (ADR-0043); **(b)** SOAP with
+WSDL import is next.
 
 ## API Endpoint Builder (ADR-0042) ✅
 
@@ -527,6 +528,17 @@ for the sample partner `dc-api-partner-demo`.
 
 Later: writes for partners (submitting a request on an applicant's behalf), webhooks to partners on events, a shared
 rate limit across instances, more system functions as partners ask.
+
+## Nafath (ADR-0043) ✅
+
+Applicants sign in to the portal with Nafath through Keycloak (a sign-in bridge on the external host following Nafath's
+web sign-in with its redirection), and confirm a request in their Nafath app before submitting it where the service
+version asks for it (Service Builder → *Rules* → *Submitting*). Answers are checked with Nafath's signing keys and must
+name the applicant. A mock Nafath in the mock gateway stands in for Elm's Rabet API; the NHC demo's individual service
+asks for the confirmation in its version 2.
+
+Later: confirming a workflow step with Nafath (an employee or a delegate), a rate limit on the bridge, Nafath for
+staff accounts if wanted.
 
 ## Phase 4 — Extended capabilities
 

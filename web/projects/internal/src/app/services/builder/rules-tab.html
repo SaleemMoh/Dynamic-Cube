@@ -332,4 +332,14 @@
       }
     </section>
   }
+
+  <section class="dc-card">
+    <header class="dc-rt__head">
+      <h2>{{ 'builder.submitting' | dcTranslate }}</h2>
+    </header>
+    <mat-checkbox [ngModel]="def().confirmWithNafath === true" (ngModelChange)="confirmWithNafath($event)" data-testid="confirm-with-nafath">{{
+      'builder.confirmWithNafath' | dcTranslate
+    }}</mat-checkbox>
+    <p class="dc-rt__muted">{{ 'builder.confirmWithNafathHint' | dcTranslate }}</p>
+  </section>
 </div>

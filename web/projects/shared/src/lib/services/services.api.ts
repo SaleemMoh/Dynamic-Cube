@@ -4,6 +4,8 @@ import { Observable } from 'rxjs';
 import {
   CatalogEntry,
   FollowUpService,
+  NafathChallenge,
+  NafathCheck,
   PortalCatalog,
   PortalStatistics,
   RequestDetail,
@@ -73,8 +75,19 @@ export class ServicesApi {
     return this.http.put<RequestView>(`${SERVICES_API}/requests/${id}`, body, options.keepalive ? { keepalive: true } : {});
   }
 
-  submit(id: string, declarationAccepted: boolean): Observable<RequestView> {
-    return this.http.post<RequestView>(`${SERVICES_API}/requests/${id}/submit`, { declarationAccepted });
+  /** Submits a draft; `nafathCheckId` is the Nafath confirmation of versions that ask for one (ADR-0043). */
+  submit(id: string, declarationAccepted: boolean, nafathCheckId: string | null = null): Observable<RequestView> {
+    return this.http.post<RequestView>(`${SERVICES_API}/requests/${id}/submit`, { declarationAccepted, nafathCheckId });
+  }
+
+  /** Sends the applicant's Nafath app a request to confirm the draft: the number to choose there and until when. */
+  startNafath(id: string): Observable<NafathChallenge> {
+    return this.http.post<NafathChallenge>(`${SERVICES_API}/requests/${id}/nafath`, {});
+  }
+
+  /** Where the applicant's Nafath confirmation stands. */
+  nafathStatus(id: string, checkId: string): Observable<NafathCheck> {
+    return this.http.get<NafathCheck>(`${SERVICES_API}/requests/${id}/nafath/${checkId}`);
   }
 
   /** Uploads a file for a file question of a draft (or a request returned for correction); it is added to the answer. */

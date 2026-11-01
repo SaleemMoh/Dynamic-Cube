@@ -84,6 +84,11 @@ public sealed class ServiceRequest : IAuditable, IHasAuditColumns
 
     public string? SourceDocumentNumber { get; set; }
 
+    /// <summary>The Nafath verification the applicant confirmed the request with (versions that ask for one).</summary>
+    public Guid? NafathCheckId { get; set; }
+
+    public DateTimeOffset? NafathConfirmedAt { get; set; }
+
     public DateTimeOffset? SubmittedAt { get; set; }
 
     public DateTimeOffset? ClosedAt { get; set; }
@@ -150,6 +155,7 @@ public static class RequestEventTypes
     public const string Cancelled = "CANCELLED";
     public const string Expired = "EXPIRED";
     public const string Resubmitted = "RESUBMITTED";
+    public const string NafathConfirmed = "NAFATH_CONFIRMED";
 }
 
 /// <summary>Counters for request numbers (one row per prefix and year).</summary>

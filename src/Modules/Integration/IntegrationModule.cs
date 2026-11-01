@@ -1,10 +1,12 @@
 using DynamicCube.Modules.Integration.Changes;
 using DynamicCube.Modules.Integration.Endpoints;
+using DynamicCube.Modules.Integration.Nafath;
 using DynamicCube.Modules.Integration.Persistence;
 using DynamicCube.Modules.Integration.Runtime;
 using DynamicCube.Platform;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Integration;
+using DynamicCube.Platform.Nafath;
 using DynamicCube.Platform.PublicApi;
 using DynamicCube.Platform.Security;
 using Microsoft.AspNetCore.Builder;
@@ -57,6 +59,16 @@ public static class IntegrationModule
         services.AddScoped<PublicApiRunner>();
         services.AddScoped<PublicApiDocument>();
         services.AddScoped<ApiClientSignIns>();
+
+        // Nafath (ADR-0043): signing in through Keycloak's bridge, and verifications in the person's app.
+        services.Configure<NafathOptions>(configuration.GetSection(NafathOptions.Section));
+        services.AddDataProtection();
+        services.AddHttpClient(NafathClient.HttpClientName, client => client.Timeout = TimeSpan.FromSeconds(30));
+        services.AddScoped<NafathClient>();
+        services.AddSingleton<NafathBridgeKeys>();
+        services.AddScoped<NafathSignIn>();
+        services.AddScoped<NafathVerifications>();
+        services.AddScoped<INafathVerifications>(sp => sp.GetRequiredService<NafathVerifications>());
         return services;
     }
 
@@ -74,6 +86,7 @@ public static class IntegrationModule
     {
         var api = endpoints.MapGroup(PublicApiSettings.Path).RequireAuthorization(PublicApiAuthorization.Policy).WithTags("Public API");
         PublicApiEndpoints.MapPublic(api);
+        NafathEndpoints.Map(endpoints.MapGroup(NafathEndpoints.Path).AllowAnonymous().WithTags("Nafath"));
         return endpoints;
     }
 

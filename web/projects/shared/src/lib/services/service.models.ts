@@ -138,6 +138,25 @@ export interface VersionDefinition {
   card?: ServiceCardDefinition;
   /** The panel beside the applicant's form: assistant, readiness check, summary and live result (ADR-0040). */
   panel?: PanelDefinition | null;
+  /** The applicant confirms the request in their Nafath app before it is submitted (ADR-0043). */
+  confirmWithNafath?: boolean;
+}
+
+/** A request sent to the applicant's Nafath app: the number to choose there and until when. */
+export interface NafathChallenge {
+  checkId: string;
+  random: string;
+  expiresAt: string;
+}
+
+export type NafathStatus = 'WAITING' | 'VERIFIED' | 'REJECTED' | 'EXPIRED';
+
+/** Where a Nafath confirmation stands. */
+export interface NafathCheck {
+  checkId: string;
+  status: NafathStatus;
+  random: string;
+  expiresAt: string;
 }
 
 export type ServiceChannel = 'PORTAL' | 'MOBILE_APP' | 'BRANCH' | 'CALL_CENTER';

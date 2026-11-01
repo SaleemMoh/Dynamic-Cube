@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Router, RouterLink } from '@angular/router';
@@ -33,6 +34,7 @@ import {
 import { firstValueFrom } from 'rxjs';
 import { RequestDocuments } from '../documents/request-documents';
 import { ContactCard } from '../portal/contact-card';
+import { confirmWithNafath } from './nafath-confirm';
 
 /** Statuses in which the applicant edits the answers. */
 const EDITABLE = ['DRAFT', 'PENDING_CUSTOMER'];
@@ -350,6 +352,9 @@ export class RequestPage {
   readonly id = input.required<string>();
   private readonly api = inject(ServicesApi);
   private readonly router = inject(Router);
+  private readonly dialog = inject(MatDialog);
+  /** The Nafath confirmation given on this page, used again if the submit fails for another reason (it counts for 15 minutes). */
+  private nafathCheckId: string | null = null;
   protected readonly view = signal<RequestView | null>(null);
   /** The request's files (answers of file questions); uploads add to them. */
   private readonly files = signal<RequestFileInfo[]>([]);
@@ -449,11 +454,31 @@ export class RequestPage {
     void this.move(v, { data: draft.data, levelCode: draft.levelCode, from, to: step, forward: steps.indexOf(step) > steps.indexOf(from) });
   }
 
+  /**
+   * Submits the request. A version that asks for a Nafath confirmation (ADR-0043) is checked by the server first; only when
+   * the confirmation is all that is missing does the applicant confirm in their Nafath app, and the request is sent again.
+   */
   protected async submit(v: RequestView, declarationAccepted: boolean): Promise<void> {
     this.autosave.discard();
+    const nafath = v.version.definition.confirmWithNafath === true && v.request.status === 'DRAFT';
     await this.run(async () => {
       await this.autosave.flush();
-      this.view.set(await firstValueFrom(this.api.submit(v.request.id, declarationAccepted)));
+      let submitted: RequestView;
+      try {
+        submitted = await firstValueFrom(this.api.submit(v.request.id, declarationAccepted, nafath ? this.nafathCheckId : null));
+      } catch (error) {
+        const errors = requestErrors(error);
+        if (!nafath || !errors.some((e) => e.field === 'nafath')) throw error;
+        if (errors.length > 1) {
+          this.errors.set(errors.filter((e) => e.field !== 'nafath'));
+          return;
+        }
+        const checkId = await firstValueFrom(confirmWithNafath(this.dialog, v.request.id));
+        if (!checkId) return;
+        this.nafathCheckId = checkId;
+        submitted = await firstValueFrom(this.api.submit(v.request.id, declarationAccepted, checkId));
+      }
+      this.view.set(submitted);
       this.justSubmitted.set(v.request.status === 'PENDING_CUSTOMER' ? 'RESUBMITTED' : 'SUBMITTED');
       window.scrollTo({ top: 0 });
     });

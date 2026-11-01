@@ -1,0 +1,596 @@
+{
+  "title": "NHC — individuals: version 2 of the professional qualification service asks the applicant to confirm the request with Nafath before it is submitted",
+  "items": [
+    {
+      "entityType": "svc.service-version",
+      "entityCode": "IND_QUALIFY/2",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 2 — التأكيد عبر نفاذ",
+        "nameEn": "Version 2 — confirmed with Nafath",
+        "definition": {
+          "levels": [
+            {
+              "code": "STANDARD",
+              "nameAr": "المسار العادي",
+              "nameEn": "Standard",
+              "descriptionAr": "بدون رسوم — خلال 10 أيام عمل",
+              "descriptionEn": "Free of charge — within 10 working days",
+              "slaWorkingDays": 10
+            },
+            {
+              "code": "EXPRESS",
+              "nameAr": "المسار العاجل",
+              "nameEn": "Express",
+              "descriptionAr": "برسوم 500 ريال — خلال يومي عمل من السداد",
+              "descriptionEn": "SAR 500 — within 2 working days of payment",
+              "slaWorkingDays": 2
+            }
+          ],
+          "eligibility": [
+            {
+              "code": "CITIZEN",
+              "rule": {
+                "!=": [
+                  {
+                    "var": "party.identifiers.NATIONAL_ID"
+                  },
+                  null
+                ]
+              },
+              "messageAr": "الخدمة متاحة لحاملي الهوية الوطنية.",
+              "messageEn": "The service is for holders of a national ID."
+            },
+            {
+              "code": "ID_VALID",
+              "rule": {
+                "!=": [
+                  {
+                    "var": "party.profile.ID_STATUS"
+                  },
+                  "منتهية"
+                ]
+              },
+              "messageAr": "هويتك منتهية لدى مركز المعلومات الوطني؛ جدّدها ثم تقدّم.",
+              "messageEn": "Your ID has expired at the National Information Center; renew it, then apply."
+            }
+          ],
+          "validations": [
+            {
+              "code": "ENGINEER_DEGREE",
+              "step": "QUALIFICATION",
+              "rule": {
+                "or": [
+                  {
+                    "!=": [
+                      {
+                        "var": "data.IND_PROFESSION"
+                      },
+                      "ENGINEER"
+                    ]
+                  },
+                  {
+                    "in": [
+                      {
+                        "var": "data.IND_DEGREE"
+                      },
+                      ["BACHELOR", "MASTER", "PHD"]
+                    ]
+                  }
+                ]
+              },
+              "messageAr": "يحتاج المهندس مؤهل بكالوريوس على الأقل.",
+              "messageEn": "An engineer needs at least a bachelor's degree."
+            },
+            {
+              "code": "CRAFTSMAN_TEST",
+              "step": "QUALIFICATION",
+              "rule": {
+                "or": [
+                  {
+                    "!=": [
+                      {
+                        "var": "data.IND_PROFESSION"
+                      },
+                      "CRAFTSMAN"
+                    ]
+                  },
+                  {
+                    "==": [
+                      {
+                        "var": "data.IND_SKILL_TEST"
+                      },
+                      true
+                    ]
+                  }
+                ]
+              },
+              "messageAr": "يجب أن يجتاز الحرفي اختبار المهارات المهنية المعتمد.",
+              "messageEn": "A craftsman must have passed the accredited skills test."
+            }
+          ],
+          "fees": [
+            {
+              "code": "EXPRESS_FEE",
+              "nameAr": "رسوم المسار العاجل",
+              "nameEn": "Express fee",
+              "levels": ["EXPRESS"],
+              "fixed": 500,
+              "vatRate": 0.15,
+              "vatIncluded": true
+            }
+          ],
+          "steps": [
+            {
+              "code": "LEVEL",
+              "type": "LEVEL",
+              "titleAr": "مسار الخدمة",
+              "titleEn": "Track",
+              "sections": []
+            },
+            {
+              "code": "IDENTITY",
+              "type": "INTEGRATION",
+              "titleAr": "التحقق من الهوية",
+              "titleEn": "Identity check",
+              "sections": [],
+              "textAr": "نتحقق من بيانات هويتك لدى مركز المعلومات الوطني ونعبئ بها النموذج.",
+              "textEn": "We check your identity data with the National Information Center and fill the form with it.",
+              "integration": {
+                "operation": "NIC_PERSON_INFO",
+                "inputs": [
+                  {
+                    "parameter": "idNumber",
+                    "from": "party.identifiers.NATIONAL_ID"
+                  }
+                ],
+                "required": true,
+                "showResult": true,
+                "outputs": [
+                  {
+                    "output": "nationality",
+                    "question": "IND_NATIONALITY"
+                  }
+                ],
+                "display": [
+                  {
+                    "output": "nameAr",
+                    "labelAr": "الاسم",
+                    "labelEn": "Name"
+                  },
+                  {
+                    "output": "birthDateHijri",
+                    "labelAr": "تاريخ الميلاد (هجري)",
+                    "labelEn": "Date of birth (Hijri)"
+                  },
+                  {
+                    "output": "nationality",
+                    "labelAr": "الجنسية",
+                    "labelEn": "Nationality"
+                  },
+                  {
+                    "output": "idStatus",
+                    "labelAr": "حالة الهوية",
+                    "labelEn": "ID status"
+                  },
+                  {
+                    "output": "idExpiry",
+                    "labelAr": "انتهاء الهوية",
+                    "labelEn": "ID expiry"
+                  }
+                ]
+              }
+            },
+            {
+              "code": "PERSONAL",
+              "type": "FORM",
+              "titleAr": "البيانات الشخصية",
+              "titleEn": "Personal details",
+              "sections": [
+                {
+                  "code": "IDENTITY_DATA",
+                  "titleAr": "بيانات الهوية",
+                  "titleEn": "Identity",
+                  "columns": 2,
+                  "questions": [
+                    {
+                      "code": "IND_ID_NUMBER",
+                      "required": true,
+                      "readonly": true
+                    },
+                    {
+                      "code": "IND_FULL_NAME",
+                      "required": true,
+                      "readonly": true
+                    },
+                    {
+                      "code": "IND_BIRTH_DATE",
+                      "required": false,
+                      "readonly": true
+                    },
+                    {
+                      "code": "IND_NATIONALITY",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ]
+                },
+                {
+                  "code": "CONTACT",
+                  "titleAr": "التواصل والعنوان",
+                  "titleEn": "Contact and address",
+                  "columns": 2,
+                  "questions": [
+                    {
+                      "code": "IND_MOBILE",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "IND_EMAIL",
+                      "required": false,
+                      "readonly": false
+                    },
+                    {
+                      "code": "IND_REGION",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "IND_ADDRESS",
+                      "required": false,
+                      "readonly": false,
+                      "width": "FULL"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "QUALIFICATION",
+              "type": "FORM",
+              "titleAr": "المهنة والمؤهل",
+              "titleEn": "Profession and qualification",
+              "sections": [
+                {
+                  "code": "PROFESSION",
+                  "titleAr": "المهنة",
+                  "titleEn": "Profession",
+                  "questions": [
+                    {
+                      "code": "IND_PROFESSION",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ]
+                },
+                {
+                  "code": "ENGINEER",
+                  "titleAr": "بيانات المهندس",
+                  "titleEn": "Engineer",
+                  "columns": 2,
+                  "visibleWhen": {
+                    "==": [
+                      {
+                        "var": "IND_PROFESSION"
+                      },
+                      "ENGINEER"
+                    ]
+                  },
+                  "questions": [
+                    {
+                      "code": "IND_ENG_SPECIALTY",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "IND_PROFESSION"
+                          },
+                          "ENGINEER"
+                        ]
+                      }
+                    },
+                    {
+                      "code": "IND_SCE_NUMBER",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "IND_PROFESSION"
+                          },
+                          "ENGINEER"
+                        ]
+                      }
+                    },
+                    {
+                      "code": "IND_SCE_CARD",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "IND_PROFESSION"
+                          },
+                          "ENGINEER"
+                        ]
+                      },
+                      "width": "FULL"
+                    }
+                  ]
+                },
+                {
+                  "code": "TECHNICIAN",
+                  "titleAr": "بيانات الفني",
+                  "titleEn": "Technician",
+                  "columns": 2,
+                  "visibleWhen": {
+                    "==": [
+                      {
+                        "var": "IND_PROFESSION"
+                      },
+                      "TECHNICIAN"
+                    ]
+                  },
+                  "questions": [
+                    {
+                      "code": "IND_TECH_FIELD",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "IND_PROFESSION"
+                          },
+                          "TECHNICIAN"
+                        ]
+                      }
+                    },
+                    {
+                      "code": "IND_TECH_CERT",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "IND_PROFESSION"
+                          },
+                          "TECHNICIAN"
+                        ]
+                      },
+                      "width": "FULL"
+                    }
+                  ]
+                },
+                {
+                  "code": "CRAFTSMAN",
+                  "titleAr": "بيانات الحرفي",
+                  "titleEn": "Craftsman",
+                  "visibleWhen": {
+                    "==": [
+                      {
+                        "var": "IND_PROFESSION"
+                      },
+                      "CRAFTSMAN"
+                    ]
+                  },
+                  "questions": [
+                    {
+                      "code": "IND_CRAFTS",
+                      "required": false,
+                      "readonly": false,
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "IND_PROFESSION"
+                          },
+                          "CRAFTSMAN"
+                        ]
+                      }
+                    },
+                    {
+                      "code": "IND_SKILL_TEST",
+                      "required": false,
+                      "readonly": false
+                    }
+                  ]
+                },
+                {
+                  "code": "EDUCATION",
+                  "titleAr": "المؤهل العلمي",
+                  "titleEn": "Qualification",
+                  "columns": 2,
+                  "questions": [
+                    {
+                      "code": "IND_DEGREE",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "IND_GRAD_DATE",
+                      "required": false,
+                      "readonly": false,
+                      "visibleWhen": {
+                        "!=": [
+                          {
+                            "var": "IND_DEGREE"
+                          },
+                          "HIGH_SCHOOL"
+                        ]
+                      }
+                    },
+                    {
+                      "code": "IND_DEGREE_CERT",
+                      "required": true,
+                      "readonly": false,
+                      "width": "FULL"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "EXPERIENCE",
+              "type": "FORM",
+              "titleAr": "الخبرة والمرفقات",
+              "titleEn": "Experience and attachments",
+              "display": "TABS",
+              "sections": [
+                {
+                  "code": "WORK",
+                  "titleAr": "الخبرة",
+                  "titleEn": "Experience",
+                  "columns": 2,
+                  "questions": [
+                    {
+                      "code": "IND_YEARS",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "IND_EMPLOYER",
+                      "required": false,
+                      "readonly": false
+                    },
+                    {
+                      "code": "IND_JOB_START",
+                      "required": false,
+                      "readonly": false
+                    },
+                    {
+                      "code": "IND_HOUSING_PROJECTS",
+                      "required": false,
+                      "readonly": false,
+                      "width": "FULL"
+                    },
+                    {
+                      "code": "IND_PROJECTS_DESC",
+                      "required": false,
+                      "readonly": false,
+                      "width": "FULL",
+                      "visibleWhen": {
+                        "==": [
+                          {
+                            "var": "IND_HOUSING_PROJECTS"
+                          },
+                          true
+                        ]
+                      },
+                      "requiredWhen": {
+                        "==": [
+                          {
+                            "var": "IND_HOUSING_PROJECTS"
+                          },
+                          true
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "code": "ATTACHMENTS",
+                  "titleAr": "المرفقات",
+                  "titleEn": "Attachments",
+                  "questions": [
+                    {
+                      "code": "IND_CV",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "IND_TRAINING",
+                      "required": false,
+                      "readonly": false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "FEES",
+              "type": "FEES",
+              "titleAr": "الرسوم",
+              "titleEn": "Fees",
+              "sections": []
+            },
+            {
+              "code": "REVIEW",
+              "type": "REVIEW",
+              "titleAr": "مراجعة الطلب",
+              "titleEn": "Review",
+              "sections": []
+            },
+            {
+              "code": "DECLARATION",
+              "type": "DECLARATION",
+              "titleAr": "الإقرار",
+              "titleEn": "Declaration",
+              "sections": [],
+              "textAr": "أُقرّ بأن جميع البيانات والمرفقات المقدمة صحيحة وتخصني، وأوافق على التحقق منها لدى الجهات المختصة، وأعلم أن تقديم بيانات غير صحيحة يُلغي الطلب والبطاقة.",
+              "textEn": "I declare that all data and attachments are true and mine, I agree to their verification with the authorities concerned, and I understand that false data cancels the request and the card."
+            }
+          ],
+          "card": {
+            "audienceAr": "المهندسون والفنيون والحرفيون العاملون في مشاريع الإسكان",
+            "audienceEn": "Engineers, technicians and craftsmen working on housing projects",
+            "steps": [
+              {
+                "textAr": "الدخول عبر النفاذ الوطني والتقديم عن نفسك",
+                "textEn": "Sign in with Nafath and apply for yourself"
+              },
+              {
+                "textAr": "اختيار المسار: العادي (مجاناً) أو العاجل (500 ريال)",
+                "textEn": "Choose the track: standard (free) or express (SAR 500)"
+              },
+              {
+                "textAr": "التحقق من الهوية تلقائياً، ثم تعبئة المهنة والمؤهل والخبرة وإرفاق المستندات",
+                "textEn": "Your identity is checked automatically; then fill in the profession, qualification and experience and attach the documents"
+              },
+              {
+                "textAr": "مراجعة الفرع والتقييم المهني (والتحقق من عضوية الهيئة للمهندسين)",
+                "textEn": "Branch review and professional evaluation (and the SCE membership check for engineers)"
+              },
+              {
+                "textAr": "استلام بطاقة التأهيل المهني في البوابة",
+                "textEn": "Receive the professional qualification card in the portal"
+              }
+            ],
+            "termsAr": "أن يكون المتقدم من حاملي الهوية الوطنية وهويته سارية.\nالمهندس: مؤهل بكالوريوس على الأقل وعضوية سارية في الهيئة السعودية للمهندسين.\nالحرفي: اجتياز اختبار المهارات المهنية المعتمد.\n10 سنوات خبرة فأكثر: درجة خبير باعتماد المدير العام.",
+            "termsEn": "The applicant holds a valid national ID.\nEngineers: at least a bachelor's degree and an active Saudi Council of Engineers membership.\nCraftsmen: the accredited professional skills test passed.\n10 years of experience or more: expert grade, approved by the general manager.",
+            "requiredDocuments": [
+              {
+                "nameAr": "السيرة الذاتية",
+                "nameEn": "CV",
+                "noteAr": "PDF",
+                "noteEn": "PDF"
+              },
+              {
+                "nameAr": "شهادة المؤهل العلمي",
+                "nameEn": "Qualification certificate",
+                "noteAr": "PDF",
+                "noteEn": "PDF"
+              },
+              {
+                "nameAr": "بطاقة عضوية الهيئة السعودية للمهندسين",
+                "nameEn": "SCE membership card",
+                "noteAr": "للمهندسين",
+                "noteEn": "Engineers"
+              },
+              {
+                "nameAr": "شهادة التدريب التقني",
+                "nameEn": "Technical training certificate",
+                "noteAr": "للفنيين",
+                "noteEn": "Technicians"
+              }
+            ],
+            "channels": ["PORTAL"],
+            "phone": "199040",
+            "email": "qualification@nhci.example"
+          },
+          "confirmWithNafath": true
+        }
+      }
+    }
+  ]
+}

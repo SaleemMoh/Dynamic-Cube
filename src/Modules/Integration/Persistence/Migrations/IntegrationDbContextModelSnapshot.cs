@@ -746,6 +746,116 @@ namespace DynamicCube.Modules.Integration.Persistence.Migrations
                     b.ToTable("envelope_profile", "integ");
                 });
 
+            modelBuilder.Entity("DynamicCube.Modules.Integration.Domain.NafathRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("ClientNonce")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("client_nonce");
+
+                    b.Property<string>("ClientRedirectUri")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("client_redirect_uri");
+
+                    b.Property<string>("ClientState")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("client_state");
+
+                    b.Property<string>("CodeHash")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("code_hash");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<string>("HashedState")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("hashed_state");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("ProtectedNationalId")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("protected_national_id");
+
+                    b.Property<string>("ProtectedPerson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("character varying(8000)")
+                        .HasColumnName("protected_person");
+
+                    b.Property<string>("ProtectedState")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)")
+                        .HasColumnName("protected_state");
+
+                    b.Property<string>("Random")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("random");
+
+                    b.Property<string>("Service")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("service");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid?>("SubjectId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("subject_id");
+
+                    b.Property<string>("SubjectType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("subject_type");
+
+                    b.Property<string>("TransId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("trans_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_nafath_request");
+
+                    b.HasIndex("CodeHash")
+                        .HasDatabaseName("ix_nafath_request_code_hash");
+
+                    b.HasIndex("HashedState")
+                        .HasDatabaseName("ix_nafath_request_hashed_state");
+
+                    b.HasIndex("SubjectType", "SubjectId")
+                        .HasDatabaseName("ix_nafath_request_subject_type_subject_id");
+
+                    b.ToTable("nafath_request", "integ");
+                });
+
             modelBuilder.Entity("DynamicCube.Modules.Integration.Domain.Operation", b =>
                 {
                     b.Property<Guid>("Id")

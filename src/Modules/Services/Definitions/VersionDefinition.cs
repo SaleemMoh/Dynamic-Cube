@@ -37,6 +37,12 @@ public sealed class VersionDefinition
     public PanelDefinition? Panel { get; set; }
 
     /// <summary>
+    /// The applicant confirms the request with Nafath before it is submitted (ADR-0043): a request in their Nafath app,
+    /// answered by picking the number shown, whose signed answer must name them.
+    /// </summary>
+    public bool ConfirmWithNafath { get; set; }
+
+    /// <summary>
     /// Read only, from versions published before 1f: the workflow they named. Requests are now processed by the service's
     /// own workflow, so new versions leave it out.
     /// </summary>

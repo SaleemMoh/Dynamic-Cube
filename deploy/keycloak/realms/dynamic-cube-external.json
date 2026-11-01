@@ -227,5 +227,105 @@
       "serviceAccountClientId": "dc-api-partner-demo"
     }
   ],
-  "loginTheme": "dynamic-cube"
+  "loginTheme": "dynamic-cube",
+  "identityProviders": [
+    {
+      "alias": "nafath",
+      "displayName": "نفاذ (Nafath)",
+      "providerId": "oidc",
+      "enabled": true,
+      "trustEmail": false,
+      "storeToken": false,
+      "addReadTokenRoleOnCreate": false,
+      "authenticateByDefault": false,
+      "linkOnly": false,
+      "hideOnLogin": false,
+      "firstBrokerLoginFlowAlias": "nafath first login",
+      "config": {
+        "authorizationUrl": "http://localhost:5081/api/nafath/v1/oidc/authorize",
+        "tokenUrl": "http://external-api:8080/api/nafath/v1/oidc/token",
+        "jwksUrl": "http://external-api:8080/api/nafath/v1/oidc/jwks",
+        "issuer": "http://localhost:5081/api/nafath/v1/oidc",
+        "useJwksUrl": "true",
+        "validateSignature": "true",
+        "clientId": "keycloak",
+        "clientSecret": "dev-nafath-bridge-secret",
+        "clientAuthMethod": "client_secret_post",
+        "defaultScope": "openid",
+        "syncMode": "FORCE",
+        "disableUserInfo": "true",
+        "pkceEnabled": "false",
+        "backchannelSupported": "false",
+        "guiOrder": "1"
+      }
+    }
+  ],
+  "identityProviderMappers": [
+    {
+      "name": "username",
+      "identityProviderAlias": "nafath",
+      "identityProviderMapper": "oidc-username-idp-mapper",
+      "config": {
+        "syncMode": "INHERIT",
+        "template": "${CLAIM.preferred_username}"
+      }
+    },
+    {
+      "name": "national ID",
+      "identityProviderAlias": "nafath",
+      "identityProviderMapper": "oidc-user-attribute-idp-mapper",
+      "config": {
+        "syncMode": "INHERIT",
+        "claim": "national_id",
+        "user.attribute": "national_id"
+      }
+    },
+    {
+      "name": "first name",
+      "identityProviderAlias": "nafath",
+      "identityProviderMapper": "oidc-user-attribute-idp-mapper",
+      "config": {
+        "syncMode": "INHERIT",
+        "claim": "given_name",
+        "user.attribute": "firstName"
+      }
+    },
+    {
+      "name": "last name",
+      "identityProviderAlias": "nafath",
+      "identityProviderMapper": "oidc-user-attribute-idp-mapper",
+      "config": {
+        "syncMode": "INHERIT",
+        "claim": "family_name",
+        "user.attribute": "lastName"
+      }
+    }
+  ],
+  "authenticationFlows": [
+    {
+      "alias": "nafath first login",
+      "description": "Nafath sign-in: the first time, create the account (user name = national ID) or use the existing account of that national ID.",
+      "providerId": "basic-flow",
+      "topLevel": true,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "idp-create-user-if-unique",
+          "authenticatorFlow": false,
+          "requirement": "ALTERNATIVE",
+          "priority": 10,
+          "autheticatorFlow": false,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticator": "idp-auto-link",
+          "authenticatorFlow": false,
+          "requirement": "ALTERNATIVE",
+          "priority": 20,
+          "autheticatorFlow": false,
+          "userSetupAllowed": false
+        }
+      ]
+    }
+  ]
 }

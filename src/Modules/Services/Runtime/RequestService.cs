@@ -360,6 +360,17 @@ internal sealed class RequestService(
             errors.Add(new FieldError("declaration", "REQUIRED", "يجب الموافقة على الإقرار.", "You must accept the declaration.", declaration.Code));
         }
 
+        // Versions that ask for it: the applicant confirmed the request with Nafath, as themselves, a moment ago.
+        Platform.Nafath.NafathCheck? nafath = null;
+        if (version.Definition.ConfirmWithNafath)
+        {
+            nafath = await NafathConfirmationAsync(entity, acting, request.NafathCheckId, cancellationToken);
+            if (nafath is null)
+            {
+                errors.Add(new FieldError("nafath", "REQUIRED", "يجب تأكيد الطلب عبر نفاذ.", "Confirm the request with Nafath.", null));
+            }
+        }
+
         // Required integration steps must have succeeded.
         var runs = JsonNode.Parse(entity.Integrations) as JsonObject;
         foreach (var step in version.Definition.Steps.Where(s => s is { Type: StepType.Integration, Integration.Required: true }))
@@ -395,6 +406,13 @@ internal sealed class RequestService(
         entity.SubmittedAt = now;
         entity.DraftExpiresAt = null;
         entity.CurrentStep = null;
+        if (nafath is not null)
+        {
+            entity.NafathCheckId = nafath.Id;
+            entity.NafathConfirmedAt = nafath.CompletedAt;
+            AddEvent(entity, RequestEventTypes.NafathConfirmed, StatusCategory.Draft, StatusCategory.Draft, null);
+        }
+
         AddEvent(entity, RequestEventTypes.Submitted, StatusCategory.Draft, StatusCategory.Submitted, null);
         RequestNotifications.Raise(context, clock, RequestNotifications.Submitted, entity, service.NameAr, service.NameEn, null);
 
@@ -413,6 +431,64 @@ internal sealed class RequestService(
 
         return await ViewAsync(entity, service, version, facts, acting, null, cancellationToken, document);
     }
+
+    /// <summary>Sends the applicant's Nafath app a request to confirm this draft (versions that ask for it, ADR-0043).</summary>
+    public async Task<NafathChallengeView> StartNafathAsync(Guid id, string? userIp, CancellationToken cancellationToken)
+    {
+        var (entity, acting) = await LoadMineAsync(id, cancellationToken);
+        RequireDraft(entity);
+        var version = await cache.GetAsync(context, entity.ServiceVersionId, cancellationToken);
+        if (!version.Definition.ConfirmWithNafath)
+        {
+            throw new RequestConflictException("This service does not ask for a Nafath confirmation.");
+        }
+
+        var nafath = Nafath();
+        var challenge = await nafath.StartAsync(await ApplicantIdAsync(acting, cancellationToken), null, RequestSubject.Type, entity.Id, userIp, cancellationToken);
+        return new NafathChallengeView(challenge.Id, challenge.Random, challenge.ExpiresAt);
+    }
+
+    /// <summary>Where the applicant's Nafath confirmation of this request stands.</summary>
+    public async Task<NafathCheckView> NafathStatusAsync(Guid id, Guid checkId, string? userIp, CancellationToken cancellationToken)
+    {
+        var (entity, _) = await LoadMineAsync(id, cancellationToken);
+        var check = await Nafath().CheckAsync(checkId, userIp, cancellationToken);
+        return check is null || check.SubjectId != entity.Id || check.SubjectType != RequestSubject.Type
+            ? throw new RequestNotFoundException($"There is no Nafath confirmation {checkId} of this request.")
+            : new NafathCheckView(check.Id, check.Status.ToString().ToUpperInvariant(), check.Random, check.ExpiresAt);
+    }
+
+    /// <summary>The verification, when it confirms this request, by its applicant, within the last fifteen minutes.</summary>
+    private async Task<Platform.Nafath.NafathCheck?> NafathConfirmationAsync(ServiceRequest entity, ActingParty acting, Guid? checkId, CancellationToken cancellationToken)
+    {
+        if (checkId is null || services.GetService<Platform.Nafath.INafathVerifications>() is not { } nafath)
+        {
+            return null;
+        }
+
+        var check = await nafath.CheckAsync(checkId.Value, null, cancellationToken);
+        if (check is not { Status: Platform.Nafath.NafathStatus.Verified, Person: not null, CompletedAt: not null }
+            || check.SubjectId != entity.Id || check.SubjectType != RequestSubject.Type
+            || clock.GetUtcNow() - check.CompletedAt > TimeSpan.FromMinutes(15))
+        {
+            return null;
+        }
+
+        return string.Equals(check.Person.Identifier, await ApplicantIdAsync(acting, cancellationToken), StringComparison.Ordinal) ? check : null;
+    }
+
+    /// <summary>The national ID (or iqama) of the individual filling in the request.</summary>
+    private async Task<string> ApplicantIdAsync(ActingParty acting, CancellationToken cancellationToken)
+    {
+        var individual = await partyFacts.GetAsync(acting.IndividualId, false, cancellationToken);
+        return individual?.Identifiers.GetValueOrDefault("NATIONAL_ID") ?? individual?.Identifiers.GetValueOrDefault("IQAMA")
+            ?? throw new RequestConflictException("A Nafath confirmation needs the applicant's national ID or iqama.");
+    }
+
+    private Platform.Nafath.INafathVerifications Nafath() =>
+        services.GetService<Platform.Nafath.INafathVerifications>() is { IsConfigured: true } nafath
+            ? nafath
+            : throw new RequestConflictException("Nafath is not set up on this installation.");
 
     /// <summary>Sends a request returned for correction back: the answers are checked again and the workflow resumes.</summary>
     private async Task<RequestView> ResubmitAsync(ServiceRequest entity, ActingParty acting, CancellationToken cancellationToken)

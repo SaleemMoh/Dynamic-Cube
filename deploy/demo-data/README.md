@@ -31,6 +31,7 @@ Built from the customer journey study (V05), the classification rules workbook (
 | 17-classification-panel | **Side panel** (ADR-0040) on *version 2* of the new-classification service: *وكيل التصنيف* with a greeting and notes per step (with their rule under *Why?*) and five questions it answers, the readiness check, the request summary (with the CR number, domains and employees) and the live result — the grading step's best grade on the 1–5 scale (*غير مصنف* when none) with the size, the points and a card per domain showing its technical, performance, governance and financial grades | Portal → new classification request (side column); Services → Service Builder → *Side panel* tab |
 | 18-public-api | **Public API** (ADR-0042) for the sample partner *Partner demo* (`PARTNER_DEMO`, sign-in client `dc-api-partner-demo`, company NHC Innovation, 60 calls a minute): `/regions` reads the regions class (optional `name` filter), `/requests/{number}/status` a request's status and its place in the workflow, `/certificates/{number}` checks a classification certificate | Integrations → API endpoints, API clients, API calls |
 | 19-public-api-lookups | `/lookups` for the partner demo: several classes and public lists of values in one call (`?classes=REGION,SVC_CATEGORY&lovs=REGIONS`) | Integrations → API endpoints |
+| 20-individual-nafath | *Version 2* of the professional qualification service asks the applicant to **confirm the request with Nafath** before it is submitted (ADR-0043): on submit the portal shows a number; pick it on the mock Nafath app page (below) | Portal → the individual service; Services → Service Builder → *Rules* → *Submitting* |
 
 **Tracks:** *normal* — free, up to 60 working days; *fast (NHC)* — paid, 5 working days. The fast-track fee
 (5,000 / 10,000 / 20,000 / 30,000 SAR by annual revenue) is an assumption; change it in the service's Fees tab.
@@ -58,6 +59,20 @@ Who works on it: the branch requests manager of the request's branch (`ruh.manag
 the projects analysts (`prj.analyst1`, `prj.analyst2`) and the general manager (`nhc.gm`). SCE membership numbers in
 the mock gateway: `123456` and `654321` (active), `111111` (expired: the automatic check fails and the branch checks it
 by hand); any other number is not found. NIC data exists for `1000000001` (and `1000000003`).
+
+### Nafath (mock)
+
+The mock gateway stands in for Nafath (ADR-0043); nothing reaches Elm.
+
+- **Sign in with Nafath:** on the portal's sign-in page choose *نفاذ (Nafath)*. The mock Nafath page
+  (http://localhost:5090/nafath/portal) asks for a national ID — type `1000000001` (or any ID; names come from the NIC
+  sample when known) and approve: you are back in the portal, signed in as that person (an existing account with that
+  user name is linked; otherwise one is created).
+- **Confirm a request with Nafath:** start *Professional qualification for housing-sector practitioners* as
+  `1000000001` and submit it. When everything else is in order the portal shows a number; open
+  http://localhost:5090/nafath/app?id=1000000001 (the mock Nafath app), pick the same number and the request is
+  submitted. Picking another number or *reject* rejects it; *Send a new request* tries again. A draft started on
+  version 1 before this file was loaded does not ask.
 
 ### Sign-in (password `Dev@12345`)
 

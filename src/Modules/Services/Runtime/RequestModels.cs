@@ -98,7 +98,14 @@ public sealed record CreateRequest(string ServiceCode, Guid? DocumentId = null);
 /// <param name="ValidateStep">The step being left: its problems are returned and the request stays on it while there are any.</param>
 public sealed record SaveRequest(JsonObject? Data, string? LevelCode, string? CurrentStep, string? ValidateStep = null);
 
-public sealed record SubmitRequest(bool DeclarationAccepted);
+/// <param name="NafathCheckId">The Nafath verification the applicant confirmed the request with, when the version asks for one.</param>
+public sealed record SubmitRequest(bool DeclarationAccepted, Guid? NafathCheckId = null);
+
+/// <summary>A Nafath request sent to the applicant's app: the number to pick and until when (ADR-0043).</summary>
+public sealed record NafathChallengeView(Guid CheckId, string Random, DateTimeOffset ExpiresAt);
+
+/// <summary>Where the applicant's Nafath confirmation stands: <c>WAITING</c>, <c>VERIFIED</c>, <c>REJECTED</c> or <c>EXPIRED</c>.</summary>
+public sealed record NafathCheckView(Guid CheckId, string Status, string Random, DateTimeOffset ExpiresAt);
 
 public sealed class RequestNotFoundException(string message) : Exception(message);
 

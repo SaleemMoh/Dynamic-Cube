@@ -37,6 +37,12 @@ internal static class ServiceEndpoints
         group.MapPost("/requests/{id:guid}/live-result", async (Guid id, LiveResultRequest request, RequestService service, CancellationToken ct) =>
             TypedResults.Ok(await service.LiveResultAsync(id, request, ct))).WithName("GetLiveResult");
         group.MapPost("/requests/{id:guid}/submit", async (Guid id, SubmitRequest request, RequestService service, CancellationToken ct) => TypedResults.Ok(await service.SubmitAsync(id, request, ct))).WithName("SubmitRequest");
+
+        // Confirming a draft with Nafath before submitting it (ADR-0043): the number to pick in the app, then where it stands.
+        group.MapPost("/requests/{id:guid}/nafath", async (Guid id, HttpContext http, RequestService service, CancellationToken ct) =>
+            TypedResults.Ok(await service.StartNafathAsync(id, http.Connection.RemoteIpAddress?.ToString(), ct))).WithName("StartNafathConfirmation");
+        group.MapGet("/requests/{id:guid}/nafath/{checkId:guid}", async (Guid id, Guid checkId, HttpContext http, RequestService service, CancellationToken ct) =>
+            TypedResults.Ok(await service.NafathStatusAsync(id, checkId, http.Connection.RemoteIpAddress?.ToString(), ct))).WithName("GetNafathConfirmation");
         group.MapDelete("/requests/{id:guid}", async (Guid id, RequestService service, CancellationToken ct) =>
         {
             await service.CancelAsync(id, ct);
@@ -126,6 +132,10 @@ internal static class ServiceEndpoints
         catch (RequestValidationException ex)
         {
             return Results.Json(new { title = "The request cannot be submitted as it is.", status = 400, errors = ex.Errors }, statusCode: StatusCodes.Status400BadRequest);
+        }
+        catch (DynamicCube.Platform.Nafath.NafathException ex)
+        {
+            return Results.Problem(statusCode: StatusCodes.Status409Conflict, title: "Nafath", detail: ex.Message);
         }
         catch (NotEligibleException ex)
         {
