@@ -85,6 +85,43 @@ public sealed class EngineTests(DatabaseFixture fixture)
     }
 
     [Fact]
+    public async Task Progress_shows_the_current_step_and_how_the_run_ended()
+    {
+        await using var host = new WorkflowHost(fixture);
+        var analyst = User("ana");
+        var roles = await host.RolesAsync("ANALYST");
+        await host.UsersAsync((analyst, roles));
+        var workflow = await host.WorkflowAsync(
+        [
+            Start("ANALYSIS"),
+            Human("ANALYSIS", Role(roles[0]), [Act("APPROVE", "OK", "APPROVE")], sla: new { workingDays = 2 }),
+            End("OK", "APPROVED"),
+        ]);
+        Task<WorkflowProgress?> Progress(Guid subject) =>
+            host.Host.AsAsync("admin", sp => sp.GetRequiredService<IWorkflowProgress>().ProgressAsync(TestSubject.Type, subject, CancellationToken.None));
+
+        (await Progress(Guid.CreateVersion7())).ShouldBeNull("no run, no progress");
+        var subject = await host.StartAsync(workflow);
+        var running = (await Progress(subject)).ShouldNotBeNull();
+        running.Status.ShouldBe("RUNNING");
+        running.WorkflowCode.ShouldBe(workflow);
+        var step = running.CurrentSteps.ShouldHaveSingleItem();
+        (step.Code, step.NameEn).ShouldBe(("ANALYSIS", "Task ANALYSIS"));
+        step.DueAt.ShouldNotBeNull("a task's deadline is its step's");
+        running.StepsDone.ShouldBe(1, "the start");
+
+        var task = (await host.OpenTasksAsync(subject)).ShouldHaveSingleItem();
+        await host.AsAsync(analyst, c => c.ClaimAsync(task.Id, CancellationToken.None));
+        await host.AsAsync(analyst, c => c.ActAsync(task.Id, new ActRequest("APPROVE", null), CancellationToken.None));
+        var done = (await Progress(subject)).ShouldNotBeNull();
+        done.Status.ShouldBe("COMPLETED");
+        done.Outcome.ShouldBe("APPROVED");
+        done.CompletedAt.ShouldNotBeNull();
+        done.CurrentSteps.ShouldBeEmpty();
+        done.StepsDone.ShouldBe(3);
+    }
+
+    [Fact]
     public async Task A_join_of_all_branches_waits_for_every_branch()
     {
         await using var host = new WorkflowHost(fixture);

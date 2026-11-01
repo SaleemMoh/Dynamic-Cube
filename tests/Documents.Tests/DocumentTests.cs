@@ -7,6 +7,7 @@ using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Documents;
 using DynamicCube.Platform.Files;
 using DynamicCube.Platform.Outbox;
+using DynamicCube.Platform.PublicApi;
 using DynamicCube.Tests.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -136,6 +137,27 @@ public sealed class DocumentTests(DatabaseFixture fixture)
         });
         (await host.RegistryAsync("admin", r => r.PdfAsync(issued.Id, 1, null, CancellationToken.None))).FileName.ShouldBe($"{issued.Number}-v1.pdf");
         host.Pdf.Printed.Count.ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task The_public_api_checks_a_document_by_number_with_its_public_fields_only()
+    {
+        await using var host = new DocumentHost(fixture);
+        var type = await host.TypeAsync();
+        var issued = await host.IssueAsync(type, Guid.CreateVersion7(), "Riyadh", ("CONSTRUCTION", 2));
+        Task<ApiFunctionResult> VerifyAsync(string number, ApiCaller caller) => host.Host.AsAsync("admin", sp =>
+            sp.GetServices<IApiFunction>().Single(f => f.Info.Code == "DOCUMENT_VERIFY")
+                .InvokeAsync(new Dictionary<string, string?> { ["number"] = number }, caller, CancellationToken.None));
+
+        var document = (await VerifyAsync(issued.Number, ApiCaller.Unlimited)).Data.ShouldBeOfType<JsonObject>();
+        document["number"]!.GetValue<string>().ShouldBe(issued.Number);
+        document["status"]!.GetValue<string>().ShouldBe("ACTIVE");
+        document["type"]!["code"]!.GetValue<string>().ShouldBe(type);
+        document["fields"]!.AsObject().Select(f => f.Key).ShouldBe(["city"], "only the type's public fields");
+        document["fields"]!["city"]!.GetValue<string>().ShouldBe("Riyadh");
+
+        (await VerifyAsync(issued.Number, new ApiCaller("P", ["SOME_COMPANY"], null))).Found.ShouldBeFalse("outside the caller's companies");
+        (await VerifyAsync("NO-SUCH", ApiCaller.Unlimited)).Found.ShouldBeFalse();
     }
 
     [Fact]

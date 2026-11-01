@@ -103,3 +103,27 @@ public interface IServiceWorkflows
 /// request is not taken, and the message says what to fix.
 /// </summary>
 public sealed class WorkflowConfigurationException(string message, Exception? inner = null) : Exception(message, inner);
+
+/// <summary>A step a subject is at now: its code and names, since when, and its deadline when it is a task.</summary>
+public sealed record WorkflowStepNow(string Code, string NameAr, string NameEn, DateTimeOffset Since, DateTimeOffset? DueAt);
+
+/// <summary>
+/// Where a subject stands in its workflow: the run's status (<c>RUNNING</c>, <c>WAITING_CUSTOMER</c>, <c>COMPLETED</c>,
+/// <c>CANCELLED</c>), when it started and finished, its deadline and how it ended, and the steps it is at now.
+/// </summary>
+public sealed record WorkflowProgress(
+    string WorkflowCode,
+    string Status,
+    DateTimeOffset StartedAt,
+    DateTimeOffset? CompletedAt,
+    DateTimeOffset? DueAt,
+    string? Outcome,
+    IReadOnlyList<WorkflowStepNow> CurrentSteps,
+    int StepsDone);
+
+/// <summary>Reads where subjects stand in their workflows (implemented by the Workflow module).</summary>
+public interface IWorkflowProgress
+{
+    /// <summary>The latest run of the subject's workflow, or null when none started.</summary>
+    Task<WorkflowProgress?> ProgressAsync(string subjectType, Guid subjectId, CancellationToken cancellationToken);
+}

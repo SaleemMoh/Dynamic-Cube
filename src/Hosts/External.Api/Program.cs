@@ -11,13 +11,15 @@ using DynamicCube.Modules.Services;
 using DynamicCube.Modules.Visits;
 using DynamicCube.Modules.Workflow;
 
-// External API: applicant-facing endpoints only (apply, track, pay, verify). Internet-facing, deployed in the DMZ.
+// External API: applicant-facing endpoints (apply, track, pay, verify) and the public API partners call (ADR-0042).
+// Internet-facing, deployed in the DMZ.
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddDynamicCubeApi(new ApiHostOptions
 {
     AppCode = "EXTERNAL",
     AuthenticationSection = "Authentication:External",
+    PublicApi = true,
 });
 builder.Services.AddAppsControl(builder.Configuration, managesUsers: false);
 builder.Services.AddIntegration(builder.Configuration);
@@ -34,6 +36,7 @@ builder.Services.AddContent(builder.Configuration);
 var app = builder.Build();
 app.MapDynamicCubeDefaults();
 app.MapAppsControlExternal();
+app.MapIntegrationExternal();
 app.MapPartiesExternal();
 app.MapServicesExternal();
 app.MapDocumentsExternal();

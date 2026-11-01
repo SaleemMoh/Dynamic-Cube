@@ -329,6 +329,37 @@ public sealed class ConnectedAppTests(AppsControlFixture fixture) : IAsyncLifeti
     }
 }
 
+/// <summary>Partner systems' sign-in clients for the public API (ADR-0042): service accounts only, with the public API's audience.</summary>
+public sealed class PartnerClientTests
+{
+    [Fact]
+    public async Task A_partner_client_gets_client_credentials_only_and_the_public_audience()
+    {
+        var keycloak = new FakeKeycloakClients();
+        var clients = new PartnerClients(new KeycloakSignInClients(
+            new FakeClients(keycloak),
+            Options.Create(new IdentityOptions { Provider = "Keycloak", BaseUrl = $"http://kc-{Guid.NewGuid():N}", Realm = "r" }),
+            new FakeSecrets(),
+            TimeProvider.System));
+        var audience = DynamicCube.Platform.PublicApi.PublicApiAuthorization.DefaultAudience;
+
+        (await clients.FindAsync("dc-api-partner", audience, CancellationToken.None)).ShouldBeNull();
+        (await clients.SaveAsync("dc-api-partner", "Partner (PARTNER)", audience, CancellationToken.None)).ShouldBeTrue();
+        (await clients.SecretAsync("dc-api-partner", CancellationToken.None)).ShouldBe("secret-1");
+        (await clients.SaveAsync("dc-api-partner", "Partner (PARTNER)", audience, CancellationToken.None)).ShouldBeFalse("updated, not created again");
+        (await clients.NewSecretAsync("dc-api-partner", CancellationToken.None)).ShouldBe("secret-2");
+
+        var client = keycloak.Clients.Values.Single();
+        client["standardFlowEnabled"]!.GetValue<bool>().ShouldBeFalse("no one signs in with it");
+        client["serviceAccountsEnabled"]!.GetValue<bool>().ShouldBeTrue();
+        client["redirectUris"]!.AsArray().ShouldBeEmpty();
+        client["protocolMappers"]!.AsArray().Single()!["config"]!["included.custom.audience"]!.GetValue<string>().ShouldBe(audience);
+        var found = (await clients.FindAsync("dc-api-partner", audience, CancellationToken.None)).ShouldNotBeNull();
+        (found.Enabled, found.ServiceAccount, found.HasAudience).ShouldBe((true, true, true));
+        (await clients.TokenUrlAsync(CancellationToken.None)).ShouldBe("https://sso.example.gov.sa/realms/r/protocol/openid-connect/token");
+    }
+}
+
 /// <summary>A test identity from headers: the user, the client the token was issued to (<c>azp</c>) and its audience.</summary>
 internal sealed class TokenAuthHandler(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder)
     : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)

@@ -11,7 +11,8 @@ namespace DynamicCube.Modules.AppsControl.ConnectedApps;
 
 /// <summary>What a connected app's sign-in client should be (ADR-0036 step 7).</summary>
 /// <param name="Audience">Added to the tokens the client obtains, so the platform's connected-app API accepts them.</param>
-public sealed record SignInClientSpec(string ClientId, string Name, IReadOnlyList<string> RedirectUris, IReadOnlyList<string> WebOrigins, string Audience);
+/// <param name="ServiceOnly">A partner system calling the public API (ADR-0042): client credentials only, no users signing in.</param>
+public sealed record SignInClientSpec(string ClientId, string Name, IReadOnlyList<string> RedirectUris, IReadOnlyList<string> WebOrigins, string Audience, bool ServiceOnly = false);
 
 /// <summary>A sign-in client as the identity provider holds it.</summary>
 public sealed record SignInClient(string ClientId, bool Enabled, IReadOnlyList<string> RedirectUris, IReadOnlyList<string> WebOrigins, bool ServiceAccount, bool HasAudience);
@@ -91,12 +92,12 @@ internal sealed class KeycloakSignInClients(IHttpClientFactory httpClients, IOpt
             {
                 ClientId = spec.ClientId,
                 Name = spec.Name,
-                Description = "Connected app registered in Dynamic Cube Apps Control.",
+                Description = spec.ServiceOnly ? "Partner system calling the Dynamic Cube public API." : "Connected app registered in Dynamic Cube Apps Control.",
                 Enabled = true,
                 Protocol = "openid-connect",
                 PublicClient = false,
                 ClientAuthenticatorType = "client-secret",
-                StandardFlowEnabled = true,
+                StandardFlowEnabled = !spec.ServiceOnly,
                 DirectAccessGrantsEnabled = false,
                 ImplicitFlowEnabled = false,
                 ServiceAccountsEnabled = true,
@@ -113,7 +114,7 @@ internal sealed class KeycloakSignInClients(IHttpClientFactory httpClients, IOpt
         existing.Name = spec.Name;
         existing.Enabled = true;
         existing.PublicClient = false;
-        existing.StandardFlowEnabled = true;
+        existing.StandardFlowEnabled = !spec.ServiceOnly;
         existing.ServiceAccountsEnabled = true;
         existing.RedirectUris = [.. spec.RedirectUris];
         existing.WebOrigins = [.. spec.WebOrigins];

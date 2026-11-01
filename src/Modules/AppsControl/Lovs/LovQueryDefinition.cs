@@ -73,8 +73,9 @@ public sealed class LovQueryGroup
 }
 
 /// <summary>
-/// A condition on a column: compared with a fixed <see cref="Value"/>, or with a fact of the signed-in user
-/// (<see cref="User"/>: their company, branches, organization units, user name, app or roles).
+/// A condition on a column: compared with a fixed <see cref="Value"/>, with a fact of the signed-in user
+/// (<see cref="User"/>: their company, branches, organization units, user name, app or roles), or with an input of a public
+/// endpoint (<see cref="Param"/>; a condition whose input is not given is left out, ADR-0042).
 /// </summary>
 public sealed class LovQueryCondition
 {
@@ -85,6 +86,8 @@ public sealed class LovQueryCondition
     public JsonNode? Value { get; set; }
 
     public string? User { get; set; }
+
+    public string? Param { get; set; }
 }
 
 public sealed class LovQuerySort
@@ -124,6 +127,10 @@ public sealed record LovSourceColumn(string Name, string DataType, LovColumnCate
 public sealed record LovQuerySourceInfo(string Kind, string Code, string NameAr, string NameEn, string Schema, string DbObject, IReadOnlyList<LovSourceColumn> Columns, string? ObjectType = null);
 
 /// <summary>Facts of the signed-in user a condition may compare with; null where the user has every value (all branches).</summary>
+/// <param name="Companies">
+/// A caller working for several companies (a public API client): its companies, or null with <paramref name="AllCompanies"/>
+/// when it has all of them; <paramref name="Company"/> is then not used.
+/// </param>
 public sealed record LovUserFacts(
     string? Company,
     IReadOnlyList<string>? Branches,
@@ -132,14 +139,16 @@ public sealed record LovUserFacts(
     IReadOnlyList<string> SubtreeOrgUnits,
     string UserName,
     string App,
-    IReadOnlyList<string> Roles)
+    IReadOnlyList<string> Roles,
+    IReadOnlyList<string>? Companies = null,
+    bool AllCompanies = false)
 {
     public static readonly string[] Names = ["COMPANY", "BRANCHES", "ORG_UNIT", "ORG_UNITS", "SUBTREE_ORG_UNITS", "USERNAME", "APP", "ROLES"];
 
     /// <summary>The user's values of a fact, or null when they have all of them.</summary>
     public IReadOnlyList<string>? Get(string name) => name switch
     {
-        "COMPANY" => Company is null ? [] : [Company],
+        "COMPANY" => AllCompanies ? null : Companies ?? (Company is null ? [] : [Company]),
         "BRANCHES" => Branches,
         "ORG_UNIT" => OrgUnit is null ? [] : [OrgUnit],
         "ORG_UNITS" => OrgUnits,

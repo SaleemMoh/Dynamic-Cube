@@ -5,6 +5,7 @@ using DynamicCube.Modules.Integration.Runtime;
 using DynamicCube.Platform;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Integration;
+using DynamicCube.Platform.PublicApi;
 using DynamicCube.Platform.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -37,6 +38,8 @@ public static class IntegrationModule
         AddApplier<ConnectionApplier>(services);
         AddApplier<EnvelopeProfileApplier>(services);
         AddApplier<OperationApplier>(services);
+        AddApplier<ApiEndpointApplier>(services);
+        AddApplier<ApiClientApplier>(services);
         services.AddScoped<IChangeSetPublishHook<IntegrationDbContext>, DefinitionCacheInvalidator>();
 
         services.AddSingleton<DefinitionCache>();
@@ -44,6 +47,15 @@ public static class IntegrationModule
         services.AddScoped<TokenProvider>();
         services.AddScoped<IntegrationGateway>();
         services.AddScoped<IIntegrationGateway>(sp => sp.GetRequiredService<IntegrationGateway>());
+
+        // The public API (ADR-0042): read-only endpoints partners call on the external host with their own tokens.
+        services.AddSingleton(new PublicApiSettings(
+            configuration["PublicApi:Audience"] is { Length: > 0 } audience ? audience : PublicApiAuthorization.DefaultAudience,
+            configuration["PublicApi:BaseUrl"] is { Length: > 0 } baseUrl ? baseUrl : null));
+        services.AddSingleton<PublicApiRateLimits>();
+        services.AddScoped<PublicApiRunner>();
+        services.AddScoped<PublicApiDocument>();
+        services.AddScoped<ApiClientSignIns>();
         return services;
     }
 
@@ -52,6 +64,15 @@ public static class IntegrationModule
     {
         var group = endpoints.MapGroup(ApiPrefix).RequireAuthorization().AddEndpointFilter(IntegrationEndpoints.Errors).WithTags("Integration");
         IntegrationEndpoints.Map(group);
+        PublicApiEndpoints.MapAdmin(group.MapGroup(string.Empty).AddEndpointFilter(PublicApiEndpoints.Errors));
+        return endpoints;
+    }
+
+    /// <summary>External host: the public API, for API clients' tokens only (ADR-0042).</summary>
+    public static IEndpointRouteBuilder MapIntegrationExternal(this IEndpointRouteBuilder endpoints)
+    {
+        var api = endpoints.MapGroup(PublicApiSettings.Path).RequireAuthorization(PublicApiAuthorization.Policy).WithTags("Public API");
+        PublicApiEndpoints.MapPublic(api);
         return endpoints;
     }
 
@@ -79,6 +100,7 @@ internal static class IntegrationCatalog
             new(IntegrationResources.TestConsole, "تجربة العمليات", "Test console", "INTERNAL", IntegrationResources.Root, [CatalogActions.View, CatalogActions.Execute],
                 RoleActions: new Dictionary<string, string[]> { [BuiltInRoles.ConfigChecker] = [CatalogActions.View, CatalogActions.Execute] }),
             new(IntegrationResources.CallLog, "سجل الاستدعاءات", "Call log", "INTERNAL", IntegrationResources.Root, [CatalogActions.View]),
+            new(IntegrationResources.ApiCalls, "سجل الواجهة العامة", "Public API calls", "INTERNAL", IntegrationResources.Root, [CatalogActions.View]),
         ],
         MenuGroup = new CatalogMenuGroup(MenuGroup, "التكاملات", "Integrations", "INTERNAL", "hub", 800),
         Menus =
@@ -89,6 +111,9 @@ internal static class IntegrationCatalog
             new("integration.envelopes", "أنماط الاستجابة", "Response envelopes", "/integration/envelopes", IntegrationResources.Config, "mail", 30),
             new("integration.providers", "الجهات المزودة", "Providers", "/integration/providers", IntegrationResources.Config, "corporate_fare", 40),
             new("integration.call-log", "سجل الاستدعاءات", "Call log", "/integration/call-log", IntegrationResources.CallLog, "history", 50),
+            new("integration.api-endpoints", "نقاط الواجهة العامة", "API endpoints", "/integration/api-endpoints", IntegrationResources.Config, "webhook", 60),
+            new("integration.api-clients", "عملاء الواجهة العامة", "API clients", "/integration/api-clients", IntegrationResources.Config, "key", 70),
+            new("integration.api-calls", "سجل الواجهة العامة", "API calls", "/integration/api-calls", IntegrationResources.ApiCalls, "receipt_long", 80),
         ],
     };
 }

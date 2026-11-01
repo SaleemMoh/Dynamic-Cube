@@ -7,6 +7,7 @@ using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Communication;
 using DynamicCube.Platform.Documents;
 using DynamicCube.Platform.Lookups;
+using DynamicCube.Platform.PublicApi;
 using DynamicCube.Platform.Security;
 using DynamicCube.Platform.Templates;
 using Microsoft.AspNetCore.Builder;
@@ -46,6 +47,7 @@ public static class DocumentsModule
         services.AddScoped<IDocumentIssuer>(sp => sp.GetRequiredService<DocumentIssuer>());
         services.AddScoped<IDocumentDirectory, DocumentDirectory>();
         services.AddScoped<DocumentRegistry>();
+        services.AddScoped<IApiFunction, DocumentVerifyFunction>();
         services.AddScoped<DocumentDates>();
         services.AddScoped<RenderDocumentHandler>();
         services.AddOutboxHandler<RenderDocumentMessage, RenderDocumentHandler>();

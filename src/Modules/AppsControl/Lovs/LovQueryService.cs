@@ -139,7 +139,48 @@ public sealed class LovQueryService(AppsControlDbContext context, DataScopeServi
         return LovQueryCompiler.Compile(query, (kind, code) => sources.GetValueOrDefault((kind, code)), run with { Scopes = scoped });
     }
 
-    private async Task<List<LovItem>> RunAsync(LovCompiledQuery compiled, CancellationToken cancellationToken)
+    /// <summary>Problems of a public endpoint's query over the registered sources (ADR-0042).</summary>
+    public async Task<IReadOnlyList<LovQueryProblem>> CheckRowsAsync(LovQueryDefinition? query, IReadOnlyList<LovQueryField> fields, IReadOnlyCollection<string> inputs, CancellationToken cancellationToken)
+    {
+        var sources = await LoadAsync(cancellationToken);
+        return LovQueryCompiler.CheckRows(query, (kind, code) => kind == LovQueryKinds.Table ? null : sources.GetValueOrDefault((kind, code)), fields, inputs);
+    }
+
+    /// <summary>The kind of value each field of a public endpoint's query returns, or null when the query has problems.</summary>
+    public async Task<IReadOnlyList<(string Name, LovColumnCategory Category)>?> DescribeRowsAsync(
+        LovQueryDefinition? query, IReadOnlyList<LovQueryField> fields, IReadOnlyCollection<string> inputs, CancellationToken cancellationToken)
+    {
+        var sources = await LoadAsync(cancellationToken);
+        return LovQueryCompiler.DescribeRows(query, (kind, code) => kind == LovQueryKinds.Table ? null : sources.GetValueOrDefault((kind, code)), fields, inputs);
+    }
+
+    /// <summary>
+    /// One page of a public endpoint's rows for a caller: its facts (companies, branches) answer the conditions on the user's
+    /// data, its inputs the conditions on inputs. Data scopes, which follow roles, do not apply: the endpoint's query decides.
+    /// </summary>
+    public async Task<(List<System.Text.Json.Nodes.JsonObject>? Rows, IReadOnlyList<LovQueryProblem> Problems)> RowsAsync(
+        LovQueryDefinition? query, IReadOnlyList<LovQueryField> fields, LovQueryRun run, CancellationToken cancellationToken)
+    {
+        var sources = await LoadAsync(cancellationToken);
+        var (compiled, problems) = LovQueryCompiler.CompileRows(query, (kind, code) => kind == LovQueryKinds.Table ? null : sources.GetValueOrDefault((kind, code)), fields, run);
+        if (compiled is null)
+        {
+            return (null, problems);
+        }
+
+        var names = compiled.Fields!;
+        return (await ExecuteAsync(compiled, reader => DataRowReader.Read(reader, names), cancellationToken), []);
+    }
+
+    private Task<List<LovItem>> RunAsync(LovCompiledQuery compiled, CancellationToken cancellationToken) =>
+        ExecuteAsync(compiled, reader => new LovItem(
+            reader.IsDBNull(0) ? string.Empty : reader.GetString(0),
+            reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
+            reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
+            reader.IsDBNull(3) ? null : reader.GetString(3)), cancellationToken);
+
+    /// <summary>Runs compiled SQL in a read-only transaction with the statement timeout, reading each row.</summary>
+    private async Task<List<T>> ExecuteAsync<T>(LovCompiledQuery compiled, Func<DbDataReader, T> read, CancellationToken cancellationToken)
     {
         var connection = context.Database.GetDbConnection();
         var opened = connection.State != ConnectionState.Open;
@@ -173,16 +214,12 @@ public sealed class LovQueryService(AppsControlDbContext context, DataScopeServi
                 command.Parameters.Add(parameter);
             }
 
-            var items = new List<LovItem>();
+            var items = new List<T>();
             await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
             {
                 while (await reader.ReadAsync(cancellationToken))
                 {
-                    items.Add(new LovItem(
-                        reader.IsDBNull(0) ? string.Empty : reader.GetString(0),
-                        reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
-                        reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
-                        reader.IsDBNull(3) ? null : reader.GetString(3)));
+                    items.Add(read(reader));
                 }
             }
 

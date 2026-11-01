@@ -7,6 +7,8 @@ public static class IntegrationChangeTypes
     public const string Connection = "integ.connection";
     public const string EnvelopeProfile = "integ.envelope-profile";
     public const string Operation = "integ.operation";
+    public const string ApiEndpoint = "integ.api-endpoint";
+    public const string ApiClient = "integ.api-client";
 
     /// <summary>All Integration Manager configuration: providers, connections, envelopes and operations.</summary>
     public const string Area = "integ.integrations";
@@ -18,4 +20,7 @@ public static class IntegrationResources
     public const string Config = "integration.config";
     public const string TestConsole = "integration.test-console";
     public const string CallLog = "integration.call-log";
+
+    /// <summary>Public API calls (ADR-0042): who called which endpoint, when and how it ended.</summary>
+    public const string ApiCalls = "integration.api-calls";
 }

@@ -7,6 +7,7 @@ using DynamicCube.Modules.Workflow.Changes;
 using DynamicCube.Modules.Workflow.Persistence;
 using DynamicCube.Modules.Workflow.Runtime;
 using DynamicCube.Platform.ChangeSets;
+using DynamicCube.Platform.PublicApi;
 using DynamicCube.Tests.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -114,6 +115,33 @@ public sealed class WorkflowRequestTests(DatabaseFixture fixture) : IAsyncLifeti
         returnedEvent.Facts["request"]!["serviceNameEn"]!.GetValue<string>().ShouldBe(approved.Request.ServiceNameEn);
         returnedEvent.SubjectNumber.ShouldBe(approved.Request.Number);
         raised.Select(e => e.Code).ShouldContain("TASK_CREATED");
+    }
+
+    [Fact]
+    public async Task The_public_api_reads_a_requests_status_and_its_place_in_the_workflow()
+    {
+        var id = await SubmitAsync();
+        var request = await Requests(s => s.GetAsync(id, CancellationToken.None));
+        var number = request.Request.Number!;
+        Task<ApiFunctionResult> StatusAsync(string? value, ApiCaller caller) => _applicant.Host.AsAsync("admin", sp =>
+            sp.GetServices<IApiFunction>().Single(f => f.Info.Code == "REQUEST_STATUS")
+                .InvokeAsync(new Dictionary<string, string?> { ["number"] = value }, caller, CancellationToken.None));
+
+        var status = (await StatusAsync(number, ApiCaller.Unlimited)).Data.ShouldBeOfType<JsonObject>();
+        status["number"]!.GetValue<string>().ShouldBe(number);
+        status["status"]!.GetValue<string>().ShouldBe("IN_PROGRESS");
+        status["displayStatus"]!.GetValue<string>().ShouldBe("UNDER_REVIEW");
+        status["service"]!["code"]!.GetValue<string>().ShouldBe(_sample.Service);
+        var step = status["workflow"]!["currentSteps"]!.AsArray().ShouldHaveSingleItem()!;
+        step["code"]!.GetValue<string>().ShouldBe("REVIEW");
+        step["nameEn"]!.GetValue<string>().ShouldBe("Review");
+        status["workflow"]!["status"]!.GetValue<string>().ShouldBe("RUNNING");
+        status["timeline"]!.AsArray().Select(e => e!["type"]!.GetValue<string>()).ShouldBe(["SUBMITTED", "STATUS_CHANGED"]);
+        status.ToJsonString().ShouldNotContain("comment", Case.Insensitive, "comments and people stay inside");
+
+        (await StatusAsync(number, new ApiCaller("P", ["OTHER_COMPANY"], null))).Found.ShouldBeFalse("another company's request is not found");
+        (await StatusAsync("NO-SUCH-NUMBER", ApiCaller.Unlimited)).Found.ShouldBeFalse();
+        (await Should.ThrowAsync<ApiInputException>(() => StatusAsync(" ", ApiCaller.Unlimited))).Errors.Keys.ShouldBe(["number"]);
     }
 
     [Fact]

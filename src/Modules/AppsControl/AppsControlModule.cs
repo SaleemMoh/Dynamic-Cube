@@ -12,6 +12,7 @@ using DynamicCube.Platform.Calendars;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Lookups;
 using DynamicCube.Platform.Lovs;
+using DynamicCube.Platform.PublicApi;
 using DynamicCube.Platform.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -158,6 +159,22 @@ public static class AppsControlModule
         }
 
         services.AddScoped<ConnectedAppService>();
+
+        // Partner systems calling the public API (ADR-0042): service-account clients in the portal realm, which the
+        // external host trusts. Read data endpoints run on the query builder; class values are a system function.
+        if (string.Equals(portal.Provider, "Keycloak", StringComparison.OrdinalIgnoreCase))
+        {
+            services.AddKeyedScoped<ISignInClients>(PartnerClients.Key, (sp, _) => new KeycloakSignInClients(
+                sp.GetRequiredService<IHttpClientFactory>(), Options.Create(portal), sp.GetRequiredService<ISecretStore>(), sp.GetRequiredService<TimeProvider>()));
+        }
+        else
+        {
+            services.AddKeyedScoped<ISignInClients, UnmanagedSignInClients>(PartnerClients.Key);
+        }
+
+        services.AddScoped<IServiceClients>(sp => new PartnerClients(sp.GetRequiredKeyedService<ISignInClients>(PartnerClients.Key)));
+        services.AddScoped<IDataQueries, DataQueries>();
+        services.AddScoped<IApiFunction, ClassValuesFunction>();
         return services;
     }
 

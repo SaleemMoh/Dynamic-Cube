@@ -49,6 +49,7 @@ public static class WorkflowModule
         services.AddScoped<ServiceWorkflows>();
         services.AddScoped<IServiceWorkflows>(sp => sp.GetRequiredService<ServiceWorkflows>());
         services.AddScoped<IRuleSetUsage, RuleSetUsage>();
+        services.AddScoped<IWorkflowProgress, WorkflowProgressReader>();
         services.AddCommunicationEvents(TaskNotifications.Types);
         return services;
     }

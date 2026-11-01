@@ -6,6 +6,7 @@ using DynamicCube.Platform;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Communication;
 using DynamicCube.Platform.Lookups;
+using DynamicCube.Platform.PublicApi;
 using DynamicCube.Platform.Security;
 using DynamicCube.Platform.Services;
 using DynamicCube.Platform.Workflow;
@@ -55,6 +56,7 @@ public static class ServicesModule
         services.AddScoped<RequestAdminService>();
         services.AddScoped<PortalCatalogService>();
         services.AddScoped<PortalChannel>();
+        services.AddScoped<IApiFunction, RequestStatusFunction>();
         services.AddCommunicationEvents(RequestNotifications.Types);
         return services;
     }

@@ -10,7 +10,11 @@ namespace DynamicCube.Modules.AppsControl.Lovs;
 public sealed record LovQueryProblem(string Field, string Message);
 
 /// <summary>SQL with its bound parameters. Identifiers in it are quoted registered names; values are all parameters.</summary>
-public sealed record LovCompiledQuery(string Sql, IReadOnlyDictionary<string, object?> Parameters);
+/// <param name="Fields">For a query of chosen columns (a public endpoint): their names and how each reads, in order.</param>
+public sealed record LovCompiledQuery(string Sql, IReadOnlyDictionary<string, object?> Parameters, IReadOnlyList<(string Name, LovColumnCategory Category)>? Fields = null);
+
+/// <summary>A column a public endpoint returns: its name in the response and the column (<c>alias.column</c>) it reads.</summary>
+public sealed record LovQueryField(string Name, string Column);
 
 /// <summary>What a run adds to the definition: the parent and search typed in, the user's grant, the page.</summary>
 public sealed record LovQueryRun(
@@ -20,7 +24,8 @@ public sealed record LovQueryRun(
     GrantSet? Grant = null,
     int Limit = 50,
     int Offset = 0,
-    IReadOnlyDictionary<string, IReadOnlyList<DataScopeFilter>>? Scopes = null);
+    IReadOnlyDictionary<string, IReadOnlyList<DataScopeFilter>>? Scopes = null,
+    IReadOnlyDictionary<string, string?>? Inputs = null);
 
 /// <summary>
 /// Checks a <see cref="LovQueryDefinition"/> against the registered sources and turns it into one SELECT returning
@@ -39,6 +44,9 @@ public static partial class LovQueryCompiler
 
     private static readonly string[] UserOperators = ["EQ", "NE", "IN", "NOT_IN"];
 
+    /// <summary>Most columns a public endpoint returns.</summary>
+    public const int MaxFields = 60;
+
     /// <summary>Problems of the definition; empty when it can run.</summary>
     public static IReadOnlyList<LovQueryProblem> Check(LovQueryDefinition? query, Func<string, string, LovQuerySourceInfo?> source)
     {
@@ -56,7 +64,40 @@ public static partial class LovQueryCompiler
         return problems.Count == 0 ? (compiled, problems) : (null, problems);
     }
 
-    private static LovCompiledQuery? Build(LovQueryDefinition? query, Func<string, string, LovQuerySourceInfo?> source, LovQueryRun? run, List<LovQueryProblem> problems)
+    /// <summary>Problems of a public endpoint's query (ADR-0042): chosen <paramref name="fields"/> instead of a value and labels; conditions may use the <paramref name="inputs"/>.</summary>
+    public static IReadOnlyList<LovQueryProblem> CheckRows(LovQueryDefinition? query, Func<string, string, LovQuerySourceInfo?> source, IReadOnlyList<LovQueryField> fields, IReadOnlyCollection<string> inputs)
+    {
+        var problems = new List<LovQueryProblem>();
+        _ = Build(query, source, null, problems, fields, inputs);
+        return problems;
+    }
+
+    /// <summary>The kind of value each chosen field returns (for the endpoint's OpenAPI document); null when the query has problems.</summary>
+    public static IReadOnlyList<(string Name, LovColumnCategory Category)>? DescribeRows(
+        LovQueryDefinition? query, Func<string, string, LovQuerySourceInfo?> source, IReadOnlyList<LovQueryField> fields, IReadOnlyCollection<string> inputs)
+    {
+        var problems = new List<LovQueryProblem>();
+        var compiled = Build(query, source, null, problems, fields, inputs);
+        return problems.Count == 0 ? compiled?.Fields : null;
+    }
+
+    /// <summary>The SQL of a public endpoint's query for one run (its inputs, caller and page), or the problems that prevent it.</summary>
+    public static (LovCompiledQuery? Query, IReadOnlyList<LovQueryProblem> Problems) CompileRows(
+        LovQueryDefinition? query, Func<string, string, LovQuerySourceInfo?> source, IReadOnlyList<LovQueryField> fields, LovQueryRun run)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+        var problems = new List<LovQueryProblem>();
+        var compiled = Build(query, source, run, problems, fields, run.Inputs?.Keys.ToList());
+        return problems.Count == 0 ? (compiled, problems) : (null, problems);
+    }
+
+    private static LovCompiledQuery? Build(
+        LovQueryDefinition? query,
+        Func<string, string, LovQuerySourceInfo?> source,
+        LovQueryRun? run,
+        List<LovQueryProblem> problems,
+        IReadOnlyList<LovQueryField>? fields = null,
+        IReadOnlyCollection<string>? inputs = null)
     {
         if (query is null)
         {
@@ -64,9 +105,12 @@ public static partial class LovQueryCompiler
             return null;
         }
 
-        var builder = new Builder(source, run, problems);
+        var builder = new Builder(source, run, problems, fields, inputs);
         return builder.Compile(query);
     }
+
+    [GeneratedRegex("^[A-Za-z][A-Za-z0-9_]{0,63}$")]
+    private static partial Regex FieldPattern();
 
     [GeneratedRegex("^[a-z][a-z0-9_]{0,19}$")]
     private static partial Regex AliasPattern();
@@ -101,7 +145,12 @@ public static partial class LovQueryCompiler
             : LovColumnCategory.Text;
     }
 
-    private sealed class Builder(Func<string, string, LovQuerySourceInfo?> resolve, LovQueryRun? run, List<LovQueryProblem> problems)
+    private sealed class Builder(
+        Func<string, string, LovQuerySourceInfo?> resolve,
+        LovQueryRun? run,
+        List<LovQueryProblem> problems,
+        IReadOnlyList<LovQueryField>? fields,
+        IReadOnlyCollection<string>? inputs)
     {
         private readonly Dictionary<string, (LovQuerySourceInfo Info, Dictionary<string, LovSourceColumn> Columns)> _aliases = new(StringComparer.Ordinal);
 
@@ -156,10 +205,12 @@ public static partial class LovQueryCompiler
                 }
             }
 
-            var value = MapColumn(query.Map.Value, "query.map.value", required: true, "Choose the column that holds the value.");
-            var labelAr = MapColumn(query.Map.LabelAr, "query.map.labelAr", required: true, "Choose the column that holds the Arabic label.");
-            var labelEn = MapColumn(query.Map.LabelEn, "query.map.labelEn", required: true, "Choose the column that holds the English label.");
-            var parent = MapColumn(query.Map.Parent, "query.map.parent", required: false, null);
+            // A public endpoint returns chosen columns; a list returns a value, its labels and its parent.
+            var selected = fields is null ? null : Fields(fields);
+            var value = fields is null ? MapColumn(query.Map.Value, "query.map.value", required: true, "Choose the column that holds the value.") : null;
+            var labelAr = fields is null ? MapColumn(query.Map.LabelAr, "query.map.labelAr", required: true, "Choose the column that holds the Arabic label.") : null;
+            var labelEn = fields is null ? MapColumn(query.Map.LabelEn, "query.map.labelEn", required: true, "Choose the column that holds the English label.") : null;
+            var parent = fields is null ? MapColumn(query.Map.Parent, "query.map.parent", required: false, null) : null;
 
             var where = new List<string>();
             if (from is not null)
@@ -209,6 +260,11 @@ public static partial class LovQueryCompiler
                 {
                     sorts.Add((column.Value.Sql, direction == "DESC"));
                 }
+            }
+
+            if (selected is not null)
+            {
+                return problems.Count > 0 || fromSql is null ? null : Rows(query, selected, sorts, fromSql, joinSql.ToString(), where);
             }
 
             if (problems.Count > 0 || fromSql is null || value is null || labelAr is null || labelEn is null)
@@ -270,6 +326,75 @@ public static partial class LovQueryCompiler
             return new LovCompiledQuery(sql.ToString(), _parameters);
         }
 
+        /// <summary>The chosen columns of a public endpoint, checked: valid names, used once, registered columns.</summary>
+        private List<(string Name, string Sql, LovColumnCategory Category)>? Fields(IReadOnlyList<LovQueryField> chosen)
+        {
+            if (chosen.Count == 0)
+            {
+                problems.Add(new("fields", "Choose the columns the endpoint returns."));
+                return null;
+            }
+
+            if (chosen.Count > MaxFields)
+            {
+                problems.Add(new("fields", $"Return at most {MaxFields} columns."));
+                return null;
+            }
+
+            var result = new List<(string, string, LovColumnCategory)>();
+            var names = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var (field, i) in chosen.Select((f, i) => (f, i)))
+            {
+                if (!FieldPattern().IsMatch(field.Name ?? string.Empty))
+                {
+                    problems.Add(new($"fields[{i}].name", "Use a name of English letters, digits and _, starting with a letter."));
+                }
+                else if (!names.Add(field.Name!))
+                {
+                    problems.Add(new($"fields[{i}].name", $"'{field.Name}' is used twice."));
+                }
+
+                var column = Column(field.Column, $"fields[{i}].column");
+                if (column is not null)
+                {
+                    result.Add((field.Name ?? string.Empty, column.Value.Sql, column.Value.Column.Category));
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>The chosen columns, filtered and sorted, one page of them (sorted by the first column when no sort is set).</summary>
+        private LovCompiledQuery Rows(LovQueryDefinition query, List<(string Name, string Sql, LovColumnCategory Category)> selected, List<(string Sql, bool Descending)> sorts, string fromSql, string joinSql, List<string> where)
+        {
+            var sql = new StringBuilder("SELECT ");
+            sql.Append(string.Join(", ", selected.Select((_, i) => $"q.f{i.ToString(CultureInfo.InvariantCulture)}")));
+            sql.Append(" FROM (SELECT ").Append(query.Distinct ? "DISTINCT " : string.Empty);
+            sql.Append(string.Join(", ", selected.Select((f, i) => $"{f.Sql} AS f{i.ToString(CultureInfo.InvariantCulture)}")));
+            for (var i = 0; i < sorts.Count; i++)
+            {
+                sql.Append(", ").Append(sorts[i].Sql).Append(" AS s").Append(i.ToString(CultureInfo.InvariantCulture));
+            }
+
+            sql.Append(" FROM ").Append(fromSql).Append(joinSql);
+            if (where.Count > 0)
+            {
+                sql.Append(" WHERE ").Append(string.Join(" AND ", where.Select(w => "(" + w + ")")));
+            }
+
+            sql.Append(") AS q ORDER BY ");
+            sql.Append(sorts.Count == 0
+                ? "q.f0"
+                : string.Join(", ", sorts.Select((s, i) => $"q.s{i.ToString(CultureInfo.InvariantCulture)}{(s.Descending ? " DESC" : string.Empty)} NULLS LAST")));
+            if (run is not null)
+            {
+                sql.Append(" LIMIT ").Append(Math.Clamp(run.Limit, 1, 1001).ToString(CultureInfo.InvariantCulture))
+                    .Append(" OFFSET ").Append(Math.Max(0, run.Offset).ToString(CultureInfo.InvariantCulture));
+            }
+
+            return new LovCompiledQuery(sql.ToString(), _parameters, [.. selected.Select(f => (f.Name, f.Category))]);
+        }
+
         private LovQuerySourceInfo? Source(LovQuerySource source, string path)
         {
             var alias = source.Alias ?? string.Empty;
@@ -328,7 +453,12 @@ public static partial class LovQueryCompiler
                 $"({a}.effective_from IS NULL OR {a}.effective_from <= CURRENT_DATE)",
                 $"({a}.effective_to IS NULL OR {a}.effective_to >= CURRENT_DATE)",
             };
-            if (company is not null)
+            if (run?.User is { AllCompanies: false, Companies: { } companies })
+            {
+                // A caller of several companies (a public API client): values serving any of them.
+                conditions.Add($"(cardinality({a}.companies) = 0 OR '*' = ANY({a}.companies) OR {a}.companies && {Parameter(companies.ToArray())}::text[])");
+            }
+            else if (company is not null && run?.User.AllCompanies != true)
             {
                 conditions.Add($"(cardinality({a}.companies) = 0 OR '*' = ANY({a}.companies) OR {Parameter(company)}::text = ANY({a}.companies))");
             }
@@ -453,6 +583,33 @@ public static partial class LovQueryCompiler
                 return UserCondition(condition.User, op, sql, path);
             }
 
+            // Compared with an endpoint's input: checked against the inputs while saving; left out when not given.
+            var value = condition.Value;
+            var valuePath = $"{path}.value";
+            if (!string.IsNullOrWhiteSpace(condition.Param))
+            {
+                if (inputs is null || !inputs.Contains(condition.Param, StringComparer.Ordinal))
+                {
+                    problems.Add(new($"{path}.param", inputs is null ? "Only a public endpoint's query compares with inputs." : $"There is no input '{condition.Param}'."));
+                    return null;
+                }
+
+                if (op is "IS_EMPTY" or "IS_NOT_EMPTY")
+                {
+                    problems.Add(new($"{path}.op", "Compare an input with equals, greater or less than, contains, one of…"));
+                    return null;
+                }
+
+                var given = run?.Inputs?.GetValueOrDefault(condition.Param);
+                if (run is null || string.IsNullOrWhiteSpace(given))
+                {
+                    return run is null && info.Category == LovColumnCategory.Json ? JsonInput(path) : "TRUE";
+                }
+
+                value = JsonValue.Create(given.Trim());
+                valuePath = $"inputs.{condition.Param}";
+            }
+
             if (info.Category == LovColumnCategory.Json && op is not ("IS_EMPTY" or "IS_NOT_EMPTY"))
             {
                 problems.Add(new($"{path}.op", "A list or JSON column can only be checked for being empty."));
@@ -466,7 +623,7 @@ public static partial class LovQueryCompiler
                 case "IS_NOT_EMPTY":
                     return info.Category == LovColumnCategory.Text ? $"({sql} IS NOT NULL AND {sql}::text <> '')" : $"{sql} IS NOT NULL";
                 case "IN" or "NOT_IN":
-                    var values = Values(condition.Value, $"{path}.value");
+                    var values = Values(value, valuePath);
                     if (values is null)
                     {
                         return null;
@@ -475,7 +632,7 @@ public static partial class LovQueryCompiler
                     var list = Parameter(values);
                     return op == "IN" ? $"{sql}::text = ANY({list}::text[])" : $"({sql} IS NULL OR NOT ({sql}::text = ANY({list}::text[])))";
                 case "CONTAINS" or "STARTS_WITH" or "ENDS_WITH":
-                    var text = Text(condition.Value, $"{path}.value");
+                    var text = Text(value, valuePath);
                     if (text is null)
                     {
                         return null;
@@ -491,7 +648,7 @@ public static partial class LovQueryCompiler
                         return null;
                     }
 
-                    var typed = Typed(condition.Value, info.Category, $"{path}.value");
+                    var typed = Typed(value, info.Category, valuePath);
                     if (typed is null)
                     {
                         return null;
@@ -514,6 +671,12 @@ public static partial class LovQueryCompiler
                     };
                     return op == "NE" ? $"({sql} IS NULL OR {left} {symbol} {Parameter(typed)}{cast})" : $"{left} {symbol} {Parameter(typed)}{cast}";
             }
+        }
+
+        private string? JsonInput(string path)
+        {
+            problems.Add(new($"{path}.op", "A list or JSON column can only be checked for being empty."));
+            return null;
         }
 
         /// <summary>The column compared with one of the user's facts; a fact the user holds in full (all branches) passes.</summary>

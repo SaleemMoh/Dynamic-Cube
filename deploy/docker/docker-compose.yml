@@ -5,6 +5,8 @@ name: dynamic-cube
 
 x-dotnet-env: &dotnet-env
   ConnectionStrings__DynamicCube: Host=postgres;Database=dynamic_cube;Username=dynamic_cube;Password=${POSTGRES_PASSWORD:-dynamic_cube}
+  # Where partner systems call the public API (ADR-0042): the external API's address as they reach it.
+  PublicApi__BaseUrl: ${PUBLIC_API_BASE_URL:-http://localhost:5081}
 
 # Credentials of the MoMRAH gateway connection (development values for the mock gateway; real ones come from the secret store).
 x-gateway-secrets: &gateway-secrets
