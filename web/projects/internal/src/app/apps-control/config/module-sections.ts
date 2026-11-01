@@ -329,10 +329,17 @@ export const INTEGRATION_SECTIONS: ConfigSection[] = [
         entityType: 'integ.api-client',
         title: t('عملاء الواجهة العامة', 'API clients'),
         key: 'code',
-        columns: ['clientId', 'endpoints', 'companies', 'rateLimitPerMinute'],
+        columns: ['clientId', 'account', 'rateLimitPerMinute'],
         intro: () => import('../../integration/api-endpoints-intro').then((m) => m.ApiEndpointsIntro),
+        // What the client may call and see is its service account's (ADR-0042): the same user is edited here and on Users.
         // The partner's sign-in client (client credentials only) and its OpenAPI description.
         rowActions: [
+          {
+            icon: 'admin_panel_settings',
+            label: t('الأدوار والصلاحيات (الحساب الخدمي)', 'Roles and privileges (service account)'),
+            testId: 'api-client-access',
+            dialog: () => import('../../integration/api-client-access').then((m) => m.ApiClientAccessDialog),
+          },
           {
             icon: 'key',
             label: t('الدخول وبيانات الربط', 'Sign-in and credentials'),
@@ -349,29 +356,14 @@ export const INTEGRATION_SECTIONS: ConfigSection[] = [
             hint: t('يُترك فارغًا ليُقترح من الرمز (dc-api-…)', 'Leave empty to use one from the code (dc-api-…)'),
           },
           {
-            code: 'endpoints',
-            type: 'select',
-            multiple: true,
-            label: t('النقاط التي يستدعيها', 'Endpoints it calls'),
-            ref: 'integ.api-endpoint',
-          },
-          {
-            code: 'companies',
-            type: 'select',
-            multiple: true,
-            label: t('الشركات التي يرى بياناتها', 'Companies whose data it sees'),
-            ref: 'apps.company',
-            required: true,
-            allOption: t('كل الشركات', 'All companies'),
-          },
-          {
-            code: 'branches',
-            type: 'select',
-            multiple: true,
-            label: t('الفروع', 'Branches'),
-            ref: 'apps.branch',
-            required: true,
-            allOption: t('كل الفروع', 'All branches'),
+            code: 'account',
+            type: 'text',
+            label: t('الحساب الخدمي', 'Service account'),
+            hint: t(
+              'يُترك فارغًا ليُنشأ حسابه (svc-…)؛ أدواره تحدد النقاط والشركات والفروع والبيانات',
+              'Leave empty to create its own (svc-…); its roles give the endpoints, companies, branches and data',
+            ),
+            lockedOnEdit: true,
           },
           number('rateLimitPerMinute', t('استدعاءات في الدقيقة', 'Calls per minute'), 60),
           { code: 'contactEmail', type: 'text', label: t('بريد التواصل', 'Contact email') },

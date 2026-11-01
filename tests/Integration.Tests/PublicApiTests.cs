@@ -26,7 +26,8 @@ namespace DynamicCube.Modules.Integration.Tests;
 
 /// <summary>
 /// The public API (ADR-0042): endpoints and API clients are checked when saved; partners call endpoints on the external host
-/// with tokens that reach nothing else, see only their companies' data, are rate limited and logged.
+/// with tokens that reach nothing else, as their service account — whose roles give the endpoints, companies, branches and
+/// data — or as a registered person on endpoints that allow it; calls are rate limited and logged.
 /// </summary>
 public sealed class PublicApiTests(DatabaseFixture fixture) : IAsyncLifetime
 {
@@ -133,16 +134,38 @@ public sealed class PublicApiTests(DatabaseFixture fixture) : IAsyncLifetime
         PageSize = 2,
     };
 
-    private static ApiClientPayload Client(string clientId, string[] endpoints, string[] companies, int rate = 1000) => new()
+    private static ApiClientPayload Client(string clientId, int rate = 1000, string? account = null) => new()
     {
         NameAr = "شريك",
         NameEn = "Partner",
         ClientId = clientId,
-        Endpoints = [.. endpoints],
-        Companies = [.. companies],
-        Branches = ["*"],
+        Account = account,
         RateLimitPerMinute = rate,
     };
+
+    /// <summary>The service account an API client acts as unless another is named.</summary>
+    private static string AccountOf(string client) => "svc-" + client.ToLowerInvariant().Replace('_', '-');
+
+    /// <summary>Gives the client's service account a role of its own that opens the endpoints, held where given.</summary>
+    private Task<Guid> GiveAsync(string client, string[] endpoints, params (string Company, string[] Branches)[] holdings)
+    {
+        var role = TestHost.Unique("API");
+        return _host.PublishAsync(
+            AppsControlAreas.Security,
+            new Change(AppsControlChangeTypes.Role, role, ChangeOperation.Create, new
+            {
+                nameAr = "واجهة",
+                nameEn = "API",
+                privileges = endpoints.Select(e => new { resourceCode = ApiResources.Of(e), actions = new[] { "VIEW" } }).ToArray(),
+            }),
+            new Change(AppsControlChangeTypes.User, AccountOf(client), ChangeOperation.Update, new
+            {
+                nameAr = "شريك",
+                nameEn = "Partner",
+                kind = "SERVICE",
+                roles = holdings.Select(h => new { roleCode = role, companyCode = h.Company, branches = h.Branches }).ToArray(),
+            }));
+    }
 
     [Fact]
     public async Task Endpoints_and_clients_are_checked_when_saved()
@@ -180,12 +203,26 @@ public sealed class PublicApiTests(DatabaseFixture fixture) : IAsyncLifetime
         await _host.PublishAsync(IntegrationChangeTypes.Area, new Change(IntegrationChangeTypes.ApiEndpoint, first, ChangeOperation.Create, RowsEndpoint(Path("/one/{code}"), single: true)));
         (await Problems(IntegrationChangeTypes.ApiEndpoint, RowsEndpoint(Path("/ONE/{other}"), single: true))).ShouldContain("path");
 
-        (await Problems(IntegrationChangeTypes.ApiClient, Client("dc-api-x-" + _suffix, [first, "NO_SUCH"], []))).ShouldBe(["endpoints[1]", "companies"], ignoreOrder: true);
-        (await Problems(IntegrationChangeTypes.ApiClient, Client("bad id!", [first], ["NOWHERE"]))).ShouldBe(["clientId", "companies[0]"], ignoreOrder: true);
+        // A client acts as a service account: its own (created with it), or a named one — never a person's, never another client's.
+        var person = "p." + _suffix;
+        await _host.PublishAsync(AppsControlAreas.Security, new Change(AppsControlChangeTypes.User, person, ChangeOperation.Create, new { nameAr = "شخص", nameEn = "Person" }));
+        (await Problems(IntegrationChangeTypes.ApiClient, Client("bad id!"))).ShouldBe(["clientId"]);
+        (await Problems(IntegrationChangeTypes.ApiClient, Client("dc-api-x-" + _suffix, account: person))).ShouldBe(["account"], "a person's account");
+        (await Problems(IntegrationChangeTypes.ApiClient, Client("dc-api-x-" + _suffix, account: "svc-nobody-" + _suffix))).ShouldBe(["account"], "no such service account");
         var client = TestHost.Unique("C");
-        await _host.PublishAsync(IntegrationChangeTypes.Area, new Change(IntegrationChangeTypes.ApiClient, client, ChangeOperation.Create, Client("dc-api-y-" + _suffix, [first], ["*"])));
-        (await Problems(IntegrationChangeTypes.ApiClient, Client("dc-api-y-" + _suffix, [first], ["*"]))).ShouldBe(["clientId"], "a sign-in client belongs to one API client");
-        await Should.ThrowAsync<ChangeSetException>(() => _host.PublishAsync(IntegrationChangeTypes.Area, new Change(IntegrationChangeTypes.ApiEndpoint, first, ChangeOperation.Delete, null)));
+        await _host.PublishAsync(IntegrationChangeTypes.Area, new Change(IntegrationChangeTypes.ApiClient, client, ChangeOperation.Create, Client("dc-api-y-" + _suffix)));
+        var account = await _host.AsAsync("admin", sp => sp.GetRequiredService<DynamicCube.Platform.Security.IServiceAccounts>().FindAsync(AccountOf(client), CancellationToken.None));
+        account.ShouldNotBeNull("the client's own service account is created with it");
+        account.NameEn.ShouldBe("Partner");
+        (await Problems(IntegrationChangeTypes.ApiClient, Client("dc-api-y-" + _suffix))).ShouldBe(["clientId"], "a sign-in client belongs to one API client");
+        (await Problems(IntegrationChangeTypes.ApiClient, Client("dc-api-z-" + _suffix, account: AccountOf(client)))).ShouldBe(["account"], "a service account belongs to one API client");
+
+        // A service account never gets a sign-in account, and stays a service account.
+        (await Should.ThrowAsync<ChangeValidationException>(() => _host.PublishAsync(AppsControlAreas.Security,
+            new Change(AppsControlChangeTypes.User, AccountOf(client), ChangeOperation.Update, new { nameAr = "شريك", nameEn = "Partner", kind = "PERSON" })))).Errors.Keys.ShouldBe(["kind"]);
+
+        // An endpoint is a resource roles give; deleting it retires the resource.
+        await _host.PublishAsync(IntegrationChangeTypes.Area, new Change(IntegrationChangeTypes.ApiEndpoint, first, ChangeOperation.Delete, null));
     }
 
     [Fact]
@@ -194,18 +231,21 @@ public sealed class PublicApiTests(DatabaseFixture fixture) : IAsyncLifetime
         fixture.RequireConnectionString();
         var ct = TestContext.Current.CancellationToken;
         var (classEndpoint, rows, one) = (TestHost.Unique("REGIONS"), TestHost.Unique("VALUES"), TestHost.Unique("VALUE"));
-        var (partner, limited) = (TestHost.Unique("PARTNER"), TestHost.Unique("LIMITED"));
-        var (partnerId, limitedId) = ("dc-api-p-" + _suffix, "dc-api-l-" + _suffix);
+        var (partner, limited, wide) = (TestHost.Unique("PARTNER"), TestHost.Unique("LIMITED"), TestHost.Unique("WIDE"));
+        var (partnerId, limitedId, wideId) = ("dc-api-p-" + _suffix, "dc-api-l-" + _suffix, "dc-api-w-" + _suffix);
         await _host.PublishAsync(
             IntegrationChangeTypes.Area,
             new Change(IntegrationChangeTypes.ApiEndpoint, classEndpoint, ChangeOperation.Create, ClassEndpoint()),
             new Change(IntegrationChangeTypes.ApiEndpoint, rows, ChangeOperation.Create, RowsEndpoint()),
             new Change(IntegrationChangeTypes.ApiEndpoint, one, ChangeOperation.Create, RowsEndpoint(Path("/values/{code}"), single: true)),
-            new Change(IntegrationChangeTypes.ApiClient, partner, ChangeOperation.Create, Client(partnerId, [classEndpoint, rows, one], [_companyA])),
-            new Change(IntegrationChangeTypes.ApiClient, limited, ChangeOperation.Create, Client(limitedId, [classEndpoint], ["*"], rate: 2)));
+            new Change(IntegrationChangeTypes.ApiClient, partner, ChangeOperation.Create, Client(partnerId)),
+            new Change(IntegrationChangeTypes.ApiClient, limited, ChangeOperation.Create, Client(limitedId, rate: 2)),
+            new Change(IntegrationChangeTypes.ApiClient, wide, ChangeOperation.Create, Client(wideId)));
+        await GiveAsync(partner, [classEndpoint, rows, one], (_companyA, ["*"]));
+        await GiveAsync(limited, [classEndpoint], (_companyB, ["*"]));
 
         using var api = _external.CreateClient();
-        async Task<(HttpStatusCode Status, JsonNode? Body, HttpResponseMessage Response)> Get(string path, string? client, string audience = Audience)
+        async Task<(HttpStatusCode Status, JsonNode? Body, HttpResponseMessage Response)> Get(string path, string? client, string audience = Audience, string? company = null)
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, path);
             if (client is not null)
@@ -213,6 +253,11 @@ public sealed class PublicApiTests(DatabaseFixture fixture) : IAsyncLifetime
                 request.Headers.Add(PublicTokenHandler.UserHeader, "service-account-" + client);
                 request.Headers.Add(PublicTokenHandler.ClientHeader, client);
                 request.Headers.Add(PublicTokenHandler.AudienceHeader, audience);
+            }
+
+            if (company is not null)
+            {
+                request.Headers.Add(ApiHeaders.Company, company);
             }
 
             var response = await api.SendAsync(request, ct);
@@ -244,10 +289,19 @@ public sealed class PublicApiTests(DatabaseFixture fixture) : IAsyncLifetime
         (await Get(Url("/values/R2"), partnerId)).Body!["name"]!.GetValue<string>().ShouldBe("Region R2");
         (await Get(Url("/values/R3"), partnerId)).Status.ShouldBe(HttpStatusCode.NotFound);
 
-        // Who may call what.
+        // Who may call what: the endpoints the service account's roles give, in the companies they are held in.
         (await Get(Url("/regions"), null)).Status.ShouldBe(HttpStatusCode.Unauthorized);
         (await Get(Url("/regions"), "dc-api-unknown-" + _suffix)).Status.ShouldBe(HttpStatusCode.Forbidden);
-        (await Get(Url("/values"), limitedId)).Status.ShouldBe(HttpStatusCode.Forbidden);
+        (await Get(Url("/values"), limitedId)).Status.ShouldBe(HttpStatusCode.Forbidden, "its roles do not give it this endpoint");
+        (await Get(Url("/regions"), wideId)).Status.ShouldBe(HttpStatusCode.Forbidden, "its service account holds no role yet");
+        (await Get(Url("/regions"), partnerId, company: _companyB)).Status.ShouldBe(HttpStatusCode.Forbidden, "it does not work in company B");
+
+        // Held in every company: the call names the company it works in.
+        await GiveAsync(wide, [classEndpoint], ("*", ["*"]));
+        var unnamed = await Get(Url("/regions"), wideId);
+        unnamed.Status.ShouldBe(HttpStatusCode.BadRequest);
+        unnamed.Body!["detail"]!.GetValue<string>().ShouldContain(ApiHeaders.Company);
+        Codes((await Get(Url("/regions"), wideId, company: _companyB)).Body).ShouldBe(["R1", "R3"], ignoreOrder: true);
         (await Get(Url("/nothing-here"), partnerId)).Status.ShouldBe(HttpStatusCode.NotFound);
         (await Get(Url("/regions"), partnerId, audience: "dynamic-cube-external-api")).Status.ShouldBe(HttpStatusCode.Forbidden, "a portal token is not an API client's token");
         (await Get("/api/me", partnerId)).Status.ShouldBe(HttpStatusCode.Forbidden, "an API client's token reaches only the public API");
@@ -309,7 +363,8 @@ public sealed class PublicApiTests(DatabaseFixture fixture) : IAsyncLifetime
             IntegrationChangeTypes.Area,
             new Change(IntegrationChangeTypes.ApiEndpoint, classes, ChangeOperation.Create, allClasses),
             new Change(IntegrationChangeTypes.ApiEndpoint, some, ChangeOperation.Create, someValues),
-            new Change(IntegrationChangeTypes.ApiClient, client, ChangeOperation.Create, Client(clientId, [classes, some], [_companyA])));
+            new Change(IntegrationChangeTypes.ApiClient, client, ChangeOperation.Create, Client(clientId)));
+        await GiveAsync(client, [classes, some], (_companyA, ["*"]));
 
         using var api = _external.CreateClient();
         async Task<(HttpStatusCode Status, JsonNode? Body)> Get(string rest)
@@ -345,6 +400,81 @@ public sealed class PublicApiTests(DatabaseFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Clients_act_for_registered_people_on_endpoints_that_allow_it()
+    {
+        fixture.RequireConnectionString();
+        var ct = TestContext.Current.CancellationToken;
+        var (regions, plain, client, list, role) = (TestHost.Unique("REGIONS"), TestHost.Unique("PLAIN"), TestHost.Unique("PARTNER"), TestHost.Unique("LIST"), TestHost.Unique("R2_ONLY"));
+        var clientId = "dc-api-a-" + _suffix;
+        var (person, away, gone) = ("p1." + _suffix, "p2." + _suffix, "p3." + _suffix);
+
+        var acting = ClassEndpoint();
+        acting.Path = Path("/people/regions");
+        acting.ActsForUser = true;
+        var notActing = ClassEndpoint();
+        notActing.Path = Path("/plain/regions");
+        await _host.PublishAsync(
+            IntegrationChangeTypes.Area,
+            new Change(IntegrationChangeTypes.ApiEndpoint, regions, ChangeOperation.Create, acting),
+            new Change(IntegrationChangeTypes.ApiEndpoint, plain, ChangeOperation.Create, notActing),
+            new Change(IntegrationChangeTypes.ApiClient, client, ChangeOperation.Create, Client(clientId)));
+        await GiveAsync(client, [regions, plain], (_companyA, ["*"]));
+
+        // A list of the class limits who sees which values: a person whose role is given R2 only.
+        await _host.PublishAsync(AppsControlAreas.Lovs, new Change(AppsControlChangeTypes.Lov, list, ChangeOperation.Create, new { nameAr = "قائمة", nameEn = "List", sourceType = "CLASS", classCode = _class }));
+        await _host.PublishAsync(
+            AppsControlAreas.Security,
+            new Change(AppsControlChangeTypes.Role, role, ChangeOperation.Create, new { nameAr = "دور", nameEn = "Role", grants = new[] { new { lovCode = list, grantType = "VALUES", grantedValues = new[] { "R2" } } } }),
+            new Change(AppsControlChangeTypes.User, person, ChangeOperation.Create, new { nameAr = "شخص", nameEn = "Person", email = $"Person.{_suffix}@Example.com", roles = new[] { new { roleCode = role, companyCode = _companyA, branches = new[] { "*" } } } }),
+            new Change(AppsControlChangeTypes.User, away, ChangeOperation.Create, new { nameAr = "شخص", nameEn = "Away", roles = new[] { new { roleCode = role, companyCode = _companyB, branches = new[] { "*" } } } }),
+            new Change(AppsControlChangeTypes.User, gone, ChangeOperation.Create, new { nameAr = "شخص", nameEn = "Gone", status = "DISABLED", roles = new[] { new { roleCode = role, companyCode = _companyA, branches = new[] { "*" } } } }));
+
+        using var api = _external.CreateClient();
+        async Task<(HttpStatusCode Status, JsonNode? Body)> Get(string rest, string? actingUser)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, "/api/public/v1" + Path(rest));
+            request.Headers.Add(PublicTokenHandler.UserHeader, "service-account-" + clientId);
+            request.Headers.Add(PublicTokenHandler.ClientHeader, clientId);
+            request.Headers.Add(PublicTokenHandler.AudienceHeader, Audience);
+            if (actingUser is not null)
+            {
+                request.Headers.Add(ApiHeaders.ActingUser, actingUser);
+            }
+
+            var response = await api.SendAsync(request, ct);
+            var text = await response.Content.ReadAsStringAsync(ct);
+            return (response.StatusCode, text.Length == 0 ? null : JsonNode.Parse(text));
+        }
+
+        static string[] Codes(JsonNode? list) => [.. list!.AsArray().Select(v => v!["code"]!.GetValue<string>())];
+
+        // The service account: no grant on the list, so every value of its company.
+        Codes((await Get("/people/regions", null)).Body).ShouldBe(["R1", "R2"], ignoreOrder: true);
+
+        // Acting for the person (by username or email): their roles and data apply.
+        Codes((await Get("/people/regions", person)).Body).ShouldBe(["R2"]);
+        Codes((await Get("/people/regions", $"person.{_suffix}@example.com")).Body).ShouldBe(["R2"], "the email matches whatever its case");
+
+        // Someone not registered here: the service account's own access.
+        Codes((await Get("/people/regions", "nobody-" + _suffix)).Body).ShouldBe(["R1", "R2"], ignoreOrder: true);
+
+        // Refused: an inactive person, a person who does not work in the call's company, an endpoint that acts for nobody.
+        (await Get("/people/regions", gone)).Status.ShouldBe(HttpStatusCode.Forbidden);
+        (await Get("/people/regions", away)).Status.ShouldBe(HttpStatusCode.Forbidden);
+        (await Get("/plain/regions", person)).Status.ShouldBe(HttpStatusCode.BadRequest);
+
+        // The call log tells whom the client acted for.
+        using var admin = _internal.CreateClient();
+        admin.DefaultRequestHeaders.Add(TestAuthHandler.Header, "admin");
+        var calls = await admin.GetFromJsonAsync<JsonElement>($"/api/integration/v1/public-api/calls?client={client}&take=50", ct);
+        calls.GetProperty("items").EnumerateArray()
+            .Where(c => c.GetProperty("actingFor").ValueKind == JsonValueKind.String)
+            .Select(c => c.GetProperty("actingFor").GetString())
+            .Distinct()
+            .ShouldBe([person]);
+    }
+
+    [Fact]
     public async Task Administrators_try_unsaved_endpoints_list_functions_and_hand_out_descriptions()
     {
         fixture.RequireConnectionString();
@@ -359,13 +489,14 @@ public sealed class PublicApiTests(DatabaseFixture fixture) : IAsyncLifetime
         info.GetProperty("apiUrl").GetString().ShouldBe("https://api.example.gov.sa/api/public/v1");
         info.GetProperty("audience").GetString().ShouldBe(Audience);
 
-        // As a partner of company B would get it, before it is saved.
+        // As a partner of company B would get it (its service account's companies and data), before it is saved.
         var client = TestHost.Unique("C");
         var endpoint = TestHost.Unique("E");
         await _host.PublishAsync(
             IntegrationChangeTypes.Area,
             new Change(IntegrationChangeTypes.ApiEndpoint, endpoint, ChangeOperation.Create, ClassEndpoint()),
-            new Change(IntegrationChangeTypes.ApiClient, client, ChangeOperation.Create, Client("dc-api-t-" + _suffix, [endpoint], [_companyB])));
+            new Change(IntegrationChangeTypes.ApiClient, client, ChangeOperation.Create, Client("dc-api-t-" + _suffix)));
+        await GiveAsync(client, [endpoint], (_companyB, ["*"]));
         var tried = await admin.PostAsJsonAsync("/api/integration/v1/public-api/endpoints/try", new { endpoint = RowsEndpoint(), inputs = new { prefix = "R" }, client }, ct);
         tried.EnsureSuccessStatusCode();
         var result = await tried.Content.ReadFromJsonAsync<JsonElement>(ct);

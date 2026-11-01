@@ -139,7 +139,7 @@ public sealed class WorkflowRequestTests(DatabaseFixture fixture) : IAsyncLifeti
         status["timeline"]!.AsArray().Select(e => e!["type"]!.GetValue<string>()).ShouldBe(["SUBMITTED", "STATUS_CHANGED"]);
         status.ToJsonString().ShouldNotContain("comment", Case.Insensitive, "comments and people stay inside");
 
-        (await StatusAsync(number, new ApiCaller("P", ["OTHER_COMPANY"], null))).Found.ShouldBeFalse("another company's request is not found");
+        (await StatusAsync(number, new ApiCaller("P", null, "OTHER_COMPANY", null))).Found.ShouldBeFalse("another company's request is not found");
         (await StatusAsync("NO-SUCH-NUMBER", ApiCaller.Unlimited)).Found.ShouldBeFalse();
         (await Should.ThrowAsync<ApiInputException>(() => StatusAsync(" ", ApiCaller.Unlimited))).Errors.Keys.ShouldBe(["number"]);
     }

@@ -230,13 +230,21 @@ public sealed class LovQueryService(AppsControlDbContext context, DataScopeServi
     }
 
     /// <summary>
-    /// One page of a public endpoint's rows for a caller: its facts (companies, branches) answer the conditions on the user's
-    /// data, its inputs the conditions on inputs. Data scopes, which follow roles, do not apply: the endpoint's query decides.
+    /// One page of a public endpoint's rows for the account a call runs as (ADR-0042): its facts answer the conditions on the
+    /// user's data, its inputs the conditions on inputs, its data scopes (for the endpoint's resource) filter the data
+    /// objects read, and a table's rows are those of its company and branches. Without an account (the designer's try as
+    /// administrator) nothing is filtered.
     /// </summary>
     public async Task<(List<System.Text.Json.Nodes.JsonObject>? Rows, IReadOnlyList<LovQueryProblem> Problems)> RowsAsync(
-        LovQueryDefinition? query, IReadOnlyList<LovQueryField> fields, LovQueryRun run, CancellationToken cancellationToken)
+        LovQueryDefinition? query, IReadOnlyList<LovQueryField> fields, LovQueryRun run, AccessSnapshot? access, string? resource, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(run);
         var sources = await LoadAsync(cancellationToken);
+        if (access is not null)
+        {
+            run = run with { Scopes = await ScopesAsync(query, access, resource, cancellationToken) };
+        }
+
         var (compiled, problems) = LovQueryCompiler.CompileRows(query, (kind, code) => kind == LovQueryKinds.Table ? null : sources.GetValueOrDefault((kind, code)), fields, run);
         if (compiled is null)
         {

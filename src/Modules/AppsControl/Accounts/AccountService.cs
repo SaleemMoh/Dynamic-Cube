@@ -16,7 +16,7 @@ internal sealed class AccountService(IAccountDirectory directory, AppsControlDbC
 
     public Task<AccountView> GetAsync(string userName, CancellationToken cancellationToken) => directory.GetAsync(userName, cancellationToken);
 
-    public Task<AccountView> CreateAsync(NewAccountRequest request, CancellationToken cancellationToken)
+    public async Task<AccountView> CreateAsync(NewAccountRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
         if (string.IsNullOrWhiteSpace(request.UserName) || !Platform.Configuration.ValidationErrors.UserName().IsMatch(request.UserName.Trim()))
@@ -24,7 +24,14 @@ internal sealed class AccountService(IAccountDirectory directory, AppsControlDbC
             throw new AccountException("A user name: letters, digits and . _ - @.", AccountProblem.Invalid, "userName");
         }
 
-        return directory.CreateAsync(request, cancellationToken);
+        // A service account never signs in (ADR-0042): it gets no sign-in account.
+        var userName = request.UserName.Trim();
+        if (await db.Users.AsNoTracking().AnyAsync(u => u.Code == userName && u.Kind == UserKind.Service, cancellationToken))
+        {
+            throw new AccountException($"{userName} is a service account: it never signs in.", AccountProblem.Invalid, "userName");
+        }
+
+        return await directory.CreateAsync(request, cancellationToken);
     }
 
     public async Task SetEnabledAsync(string userName, bool enabled, CancellationToken cancellationToken)

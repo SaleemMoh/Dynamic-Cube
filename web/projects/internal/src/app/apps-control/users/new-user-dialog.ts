@@ -31,6 +31,8 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  * Adds an employee: the sign-in account (when Apps Control maintains accounts) with a temporary password or an email
  * link, and the Apps Control user with names, contact details and roles, which goes through the users change set. When
  * accounts come from a directory or identity provider, only the user is added and the account is linked on first sign-in.
+ * Or adds a service account (ADR-0042): a user that systems act as, which never signs in and gets its roles on its Access
+ * tab.
  */
 @Component({
   selector: 'dc-new-user-dialog',
@@ -56,7 +58,25 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       @if (busy()) {
         <mat-progress-bar mode="indeterminate" />
       }
-      @if (caps(); as c) {
+      <mat-button-toggle-group
+        [ngModel]="kind()"
+        (ngModelChange)="kind.set($event)"
+        [attr.aria-label]="'newUser.kind' | dcTranslate"
+        data-testid="new-user-kind"
+      >
+        <mat-button-toggle value="PERSON">{{
+          'newUser.kind.PERSON' | dcTranslate
+        }}</mat-button-toggle>
+        <mat-button-toggle value="SERVICE">{{
+          'newUser.kind.SERVICE' | dcTranslate
+        }}</mat-button-toggle>
+      </mat-button-toggle-group>
+      @if (service()) {
+        <p class="dc-nu__note" data-testid="new-user-service-note">
+          <mat-icon fontSet="material-symbols-outlined">smart_toy</mat-icon>
+          {{ 'newUser.serviceNote' | dcTranslate }}
+        </p>
+      } @else if (caps(); as c) {
         @if (!c.canCreate) {
           <p class="dc-nu__note" data-testid="new-user-federated">
             <mat-icon fontSet="material-symbols-outlined">info</mat-icon>
@@ -79,17 +99,19 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           />
           <mat-hint>{{ 'newUser.userNameHint' | dcTranslate }}</mat-hint>
         </mat-form-field>
-        <mat-form-field subscriptSizing="dynamic">
-          <mat-label>{{ 'newUser.email' | dcTranslate }}</mat-label>
-          <input
-            matInput
-            dir="ltr"
-            type="email"
-            [ngModel]="email()"
-            (ngModelChange)="email.set($event)"
-            data-testid="new-user-email"
-          />
-        </mat-form-field>
+        @if (!service()) {
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>{{ 'newUser.email' | dcTranslate }}</mat-label>
+            <input
+              matInput
+              dir="ltr"
+              type="email"
+              [ngModel]="email()"
+              (ngModelChange)="email.set($event)"
+              data-testid="new-user-email"
+            />
+          </mat-form-field>
+        }
         <mat-form-field subscriptSizing="dynamic">
           <mat-label>{{ 'config.nameAr' | dcTranslate }}</mat-label>
           <input
@@ -110,22 +132,26 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             data-testid="new-user-name-en"
           />
         </mat-form-field>
-        <mat-form-field subscriptSizing="dynamic">
-          <mat-label>{{ 'newUser.mobile' | dcTranslate }}</mat-label>
-          <input matInput dir="ltr" [ngModel]="mobile()" (ngModelChange)="mobile.set($event)" />
-        </mat-form-field>
+        @if (!service()) {
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>{{ 'newUser.mobile' | dcTranslate }}</mat-label>
+            <input matInput dir="ltr" [ngModel]="mobile()" (ngModelChange)="mobile.set($event)" />
+          </mat-form-field>
+        }
       </div>
-      <section class="dc-nu__roles">
-        <h3>{{ 'newUser.roles' | dcTranslate }}</h3>
-        <dc-dual-list
-          [ngModel]="roles()"
-          (ngModelChange)="roles.set($event)"
-          [options]="roleChoices()"
-          testId="new-user-roles"
-        />
-      </section>
+      @if (!service()) {
+        <section class="dc-nu__roles">
+          <h3>{{ 'newUser.roles' | dcTranslate }}</h3>
+          <dc-dual-list
+            [ngModel]="roles()"
+            (ngModelChange)="roles.set($event)"
+            [options]="roleChoices()"
+            testId="new-user-roles"
+          />
+        </section>
+      }
 
-      @if (caps()?.canCreate) {
+      @if (caps()?.canCreate && !service()) {
         <section class="dc-nu__section" data-testid="new-user-account">
           <h3>{{ 'newUser.account' | dcTranslate }}</h3>
           <mat-button-toggle-group
@@ -194,7 +220,10 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         (click)="save()"
         data-testid="new-user-save"
       >
-        {{ (caps()?.canCreate ? 'newUser.saveWithAccount' : 'newUser.save') | dcTranslate }}
+        {{
+          (caps()?.canCreate && !service() ? 'newUser.saveWithAccount' : 'newUser.save')
+            | dcTranslate
+        }}
       </button>
     </mat-dialog-actions>
   `,
@@ -278,6 +307,9 @@ export class NewUserDialog {
     })),
   );
 
+  /** A person, or a service account (no sign-in account, no contact details; roles on its Access tab). */
+  protected readonly kind = signal<'PERSON' | 'SERVICE'>('PERSON');
+  protected readonly service = computed(() => this.kind() === 'SERVICE');
   protected readonly userName = signal('');
   protected readonly email = signal('');
   protected readonly nameAr = signal('');
@@ -293,6 +325,7 @@ export class NewUserDialog {
   protected readonly problem = computed(() => {
     if (!USER_NAME.test(this.userName().trim())) return 'newUser.problem.userName';
     if (!this.nameAr().trim() || !this.nameEn().trim()) return 'newUser.problem.names';
+    if (this.service()) return null;
     if (this.email().trim() && !EMAIL.test(this.email().trim())) return 'newUser.problem.email';
     if (this.caps()?.canCreate) {
       if (this.mode() === 'temporary' && this.password().length < 8)
@@ -306,8 +339,9 @@ export class NewUserDialog {
     this.busy.set(true);
     this.errors.set([]);
     const userName = this.userName().trim().toLowerCase();
+    const service = this.service();
     try {
-      if (this.caps()?.canCreate) {
+      if (this.caps()?.canCreate && !service) {
         const [firstName, ...rest] = this.nameEn().trim().split(/\s+/);
         await firstValueFrom(
           this.api.createAccount({
@@ -328,10 +362,11 @@ export class NewUserDialog {
           nameAr: this.nameAr().trim(),
           nameEn: this.nameEn().trim(),
           isActive: true,
-          email: this.email().trim() || null,
-          mobile: this.mobile().trim() || null,
+          kind: this.kind(),
+          email: service ? null : this.email().trim() || null,
+          mobile: service ? null : this.mobile().trim() || null,
           status: 'ACTIVE',
-          roles: this.roles().map((roleCode) => ({ roleCode })),
+          roles: service ? [] : this.roles().map((roleCode) => ({ roleCode })),
           assignments: [],
         },
         { submit },

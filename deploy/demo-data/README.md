@@ -36,6 +36,7 @@ Built from the customer journey study (V05), the classification rules workbook (
 | 22-reports | **Reports** (ADR-0045): registered tables *Service requests*, *Services*, *Workflow tasks* and *Document values* (the certificates' values, one row each), the list *Services (for reports)*, four reports — *Requests by service, status and branch* (bar chart, tiles, filters by date, service and branch), *Overdue tasks* (as of a date), *Certificates by grade* (pie) and *Abandoned drafts by step* (not touched for 7 days) — the schedule *Overdue tasks — weekly* (Sundays 07:30, Excel in Arabic, to the branch managers and the audit manager, each with their own branches) and the reports granted to the *Branch requests manager* and *Audit manager* roles | Reports; Reports → Report design (designer, preview), Report schedules (*Send now*), Scheduled deliveries; emails in Mailpit (http://localhost:8025) |
 | 23-report-charts | **A report with several charts** (ADR-0045): *Requests over time* — requests per month by status (line), the average fee over the months with the months **down the Y axis** and the average across (bars), requests by branch (pie) and each request's fee by its date (points, coloured by service); granted to the branch managers and the audit manager | Reports → Requests over time; Reports → Report design → *Charts* tab (the chart designer) |
 | 24-public-api-classes | `/classes` for the partner demo — **get all or get some**: every class with its values when `codes` is not sent, only those given otherwise (`?codes=REGION,SVC_CATEGORY` or `codes` repeated); `values=false` leaves the values out | Integrations → API endpoints |
+| 25-api-service-account | **The partner's service account** (ADR-0042): `svc-partner-demo` (kind *Service account*) holds the role *Public API — partner demo*, which gives the five endpoints in NHC Innovation; `/classes` **may act for a person**; the Riyadh requests manager (`ruh.manager`) gets the role *Riyadh region data* (the REGIONS list limited to Riyadh), so acting for them returns only the Riyadh region | Apps Control → Users (`svc-partner-demo`, *Access* tab); Integrations → API clients → *Roles and privileges*; API endpoints → *Classes* → *Details* |
 
 **Tracks:** *normal* — free, up to 60 working days; *fast (NHC)* — paid, 5 working days. The fast-track fee
 (5,000 / 10,000 / 20,000 / 30,000 SAR by annual revenue) is an assumption; change it in the service's Fees tab.
@@ -114,7 +115,7 @@ How they get their access (edit a user, *Access* tab):
 ### Calling the public API as the partner demo
 
 The sample partner `dc-api-partner-demo` (development secret `dev-api-partner-secret`) gets a token with client
-credentials and calls the endpoints given to it on the external API:
+credentials and calls, on the external API, the endpoints its service account `svc-partner-demo` is given by its role:
 
 ```bash
 TOKEN=$(curl -s http://localhost:8080/realms/dynamic-cube-external/protocol/openid-connect/token \
@@ -124,12 +125,16 @@ curl -s -H "Authorization: Bearer $TOKEN" "http://localhost:5081/api/public/v1/r
 curl -s -H "Authorization: Bearer $TOKEN" "http://localhost:5081/api/public/v1/lookups?classes=REGION,SVC_CATEGORY&lovs=REGIONS"
 curl -s -H "Authorization: Bearer $TOKEN" "http://localhost:5081/api/public/v1/classes"                # all classes
 curl -s -H "Authorization: Bearer $TOKEN" "http://localhost:5081/api/public/v1/classes?codes=REGION"   # only REGION
+curl -s -H "Authorization: Bearer $TOKEN" -H "X-Acting-User: ruh.manager" \
+  "http://localhost:5081/api/public/v1/classes?codes=REGION"                                            # as the Riyadh manager: Riyadh only
 curl -s -H "Authorization: Bearer $TOKEN" http://localhost:5081/api/public/v1/requests/CLS-2026-000001/status
 curl -s -H "Authorization: Bearer $TOKEN" http://localhost:5081/api/public/v1/openapi.json
 ```
 
-Each call shows under **Integrations → API calls**. A request number that is not the partner's company's, or that does
-not exist, answers 404; the same token on any other endpoint answers 403.
+Each call shows under **Integrations → API calls** (with the person acted for). A request number that is not the
+partner's company's, or that does not exist, answers 404; the same token on an endpoint its account's roles do not give
+answers 403. Take a role away from `svc-partner-demo` on *Users* and its calls stop the same way a person's screens
+would.
 
 ### Update without losing data
 

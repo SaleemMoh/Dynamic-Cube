@@ -160,6 +160,7 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
             b.HasIndex(e => e.IdpSubject).IsUnique();
             b.Property(e => e.IdpSubject).HasMaxLength(128);
             b.Property(e => e.AuthSource).HasMaxLength(32);
+            b.Property(e => e.Kind).HasMaxLength(16);
             b.Property(e => e.Email).HasMaxLength(256);
             b.Property(e => e.Mobile).HasMaxLength(32);
             b.Property(e => e.NationalId).HasMaxLength(32);

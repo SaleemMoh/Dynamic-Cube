@@ -521,11 +521,14 @@ descriptions are imported as reviewed packages. Then **(e)** ✅ (ADR-0042), **(
 
 Read-only public endpoints for partner systems on the external host: OAuth2 client credentials, endpoints that read
 rows over registered tables and classes or call read-only system functions (class values, a request's status with its
-place in the workflow, a document check), API clients with their companies, branches and rate limit, a call log with
-masked parameters, and an OpenAPI description per client. The NHC demo publishes `/regions` (the regions class),
+place in the workflow, a document check), API clients with their rate limit, a call log with masked parameters, and an
+OpenAPI description per client. ✅ Each API client acts as a **service account** — a user of kind SERVICE kept on
+*Users* (and opened from the client), whose roles give the endpoints (each endpoint is a resource), the companies and
+branches (`X-Company` when several) and the data grants and scopes; on endpoints that allow it the client may act for a
+registered person (`X-Acting-User`), whose roles then apply. The NHC demo publishes `/regions` (the regions class),
 `/lookups` (several classes and public lists in one call), `/classes` (all classes, or only those asked for — "get all
-or get some" with optional function inputs left empty), `/requests/{number}/status` and `/certificates/{number}`
-for the sample partner `dc-api-partner-demo`.
+or get some" with optional function inputs left empty; may act for a person), `/requests/{number}/status` and
+`/certificates/{number}` for the sample partner `dc-api-partner-demo` (service account `svc-partner-demo`).
 
 Later: writes for partners (submitting a request on an applicant's behalf), webhooks to partners on events, a shared
 rate limit across instances, more system functions as partners ask.

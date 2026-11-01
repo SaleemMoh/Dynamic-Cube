@@ -88,9 +88,8 @@ public sealed class IntegrationDbContext(DbContextOptions<IntegrationDbContext> 
             b.Property(e => e.DescriptionAr).HasMaxLength(2000);
             b.Property(e => e.DescriptionEn).HasMaxLength(2000);
             b.Property(e => e.ContactEmail).HasMaxLength(200);
-            b.Property(e => e.Endpoints).HasJsonColumn();
-            b.Property(e => e.Companies).HasJsonColumn();
-            b.Property(e => e.Branches).HasJsonColumn();
+            b.Property(e => e.Account).HasMaxLength(256).IsRequired();
+            b.Property(e => e.PendingAccess).HasColumnType("jsonb");
             b.HasIndex(e => e.ClientId).IsUnique();
         });
 
@@ -106,6 +105,7 @@ public sealed class IntegrationDbContext(DbContextOptions<IntegrationDbContext> 
             b.Property(e => e.Error).HasMaxLength(4000);
             b.Property(e => e.CorrelationId).HasMaxLength(64);
             b.Property(e => e.ClientIp).HasMaxLength(64);
+            b.Property(e => e.ActingFor).HasMaxLength(256);
             b.HasIndex(e => e.StartedAt);
             b.HasIndex(e => new { e.ClientCode, e.StartedAt });
         });

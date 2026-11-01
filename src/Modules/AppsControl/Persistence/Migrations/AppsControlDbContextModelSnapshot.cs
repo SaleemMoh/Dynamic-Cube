@@ -2955,6 +2955,12 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_active");
 
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("kind");
+
                     b.Property<string>("LastCompanyCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")

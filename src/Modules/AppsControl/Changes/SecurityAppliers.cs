@@ -444,9 +444,15 @@ public sealed class UserGrantPayload
     public List<string> GrantedValues { get; set; } = [];
 }
 
-/// <summary>An employee account. The entity code is the username; sign-in links the identity-provider subject.</summary>
+/// <summary>
+/// An employee account, or a service account that systems act as (ADR-0042). The entity code is the username; sign-in links
+/// the identity-provider subject.
+/// </summary>
 public sealed class UserPayload : ConfigPayload
 {
+    /// <summary>PERSON (default) or SERVICE; set when the account is created.</summary>
+    public UserKind Kind { get; set; } = UserKind.Person;
+
     public string? Email { get; set; }
 
     public string? Mobile { get; set; }
@@ -505,6 +511,18 @@ internal sealed class UserApplier(AppsControlDbContext db) : ConfigApplier<UserA
             errors.Add("preferredLanguage", "Use 'ar' or 'en'.");
         }
 
+        // A person stays a person and a service account a service account; a service account is placed in no unit.
+        if (existing is not null && existing.Kind != payload.Kind)
+        {
+            errors.Add("kind", "An account's kind cannot be changed: create another account.");
+        }
+
+        if (payload.Kind == UserKind.Service && payload.Assignments.Count > 0)
+        {
+            errors.Add("assignments", "A service account is placed in no unit.");
+        }
+
+        entity.Kind = payload.Kind;
         entity.Email = payload.Email;
         entity.Mobile = payload.Mobile;
         entity.NationalId = payload.NationalId;
@@ -674,6 +692,7 @@ internal sealed class UserApplier(AppsControlDbContext db) : ConfigApplier<UserA
     protected override Task<UserPayload> ToPayloadAsync(AppsControlDbContext context, UserAccount entity, CancellationToken cancellationToken) =>
         Task.FromResult(new UserPayload
         {
+            Kind = entity.Kind,
             Email = entity.Email,
             Mobile = entity.Mobile,
             NationalId = entity.NationalId,

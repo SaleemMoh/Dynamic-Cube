@@ -3,18 +3,86 @@ using System.Text.Json.Nodes;
 namespace DynamicCube.Platform.PublicApi;
 
 /// <summary>
-/// A system calling the platform's public API (ADR-0042): the API client it signed in as and the data it may see — the
-/// companies and branches given to it (null: all of them).
+/// A system calling the platform's public API (ADR-0042): the API client it signed in as and whose access applies — the
+/// client's service account, or the person it acts for on an endpoint that allows it — with the company the call works in
+/// and the branches of it (null: all of them), as that account's roles give them.
 /// </summary>
-public sealed record ApiCaller(string ClientCode, IReadOnlyList<string>? Companies, IReadOnlyList<string>? Branches)
+/// <param name="UserName">The account whose roles, privileges and data grants apply; null only for <see cref="Unlimited"/>.</param>
+/// <param name="Resource">The endpoint's resource (<c>integration.api.{code}</c>), whose data grants apply.</param>
+/// <param name="ActingFor">The person the client acts for, when it does.</param>
+public sealed record ApiCaller(
+    string ClientCode,
+    string? UserName,
+    string? Company,
+    IReadOnlyList<string>? Branches,
+    string? Resource = null,
+    string? ActingFor = null)
 {
     /// <summary>A caller limited to nothing (the endpoint designer trying an endpoint as the administrator).</summary>
-    public static ApiCaller Unlimited { get; } = new("ADMIN", null, null);
+    public static ApiCaller Unlimited { get; } = new("ADMIN", null, null, null);
+
+    /// <summary>No account applies: every company, branch and value is seen.</summary>
+    public bool IsUnlimited => UserName is null;
 
     /// <summary>Whether a row of that company and branch is visible to the caller.</summary>
     public bool Sees(string? company, string? branch) =>
-        (Companies is null || (company is not null && Companies.Contains(company, StringComparer.Ordinal)))
+        (Company is null || string.Equals(company, Company, StringComparison.Ordinal))
         && (Branches is null || (branch is not null && Branches.Contains(branch, StringComparer.Ordinal)));
+}
+
+/// <summary>
+/// A call to check: the API client, its service account, the endpoint's resource, and what the call names in its headers —
+/// the company (<c>X-Company</c>) and the person it acts for (<c>X-Acting-User</c>).
+/// </summary>
+/// <param name="MayActForUser">Whether the endpoint lets the client name a person whose access then applies.</param>
+public sealed record ApiAccessRequest(string ClientCode, string Account, string Resource, string? Company, string? ActingUser, bool MayActForUser)
+{
+    /// <summary>
+    /// The endpoint designer's try with a client: an unsaved endpoint has no resource yet, so whether the account may call
+    /// it is not checked (its companies, branches and data still apply).
+    /// </summary>
+    public bool MayCallAnyEndpoint { get; init; }
+}
+
+/// <summary>The caller when the call may go on; otherwise the status (400 or 403) and why.</summary>
+public sealed record ApiAccessResult(ApiCaller? Caller, int Status, string? Error)
+{
+    public static ApiAccessResult Allowed(ApiCaller caller) => new(caller, 200, null);
+
+    public static ApiAccessResult Refused(int status, string error) => new(null, status, error);
+}
+
+/// <summary>
+/// An API client's access (ADR-0042, implemented by Apps Control): its service account holds roles and privileges like any
+/// user — the endpoints it may call (VIEW on each endpoint's resource), the companies and branches it works in, and its
+/// data grants. On an endpoint that allows it, the client may name a registered person: that person's access then applies.
+/// </summary>
+public interface IApiAccess
+{
+    /// <summary>Who the call runs as, or why it may not go on.</summary>
+    Task<ApiAccessResult> ResolveAsync(ApiAccessRequest request, CancellationToken cancellationToken);
+
+    /// <summary>The resources the account may call (VIEW) in any of its companies; empty when it is missing or inactive.</summary>
+    Task<IReadOnlySet<string>> CallableAsync(string account, CancellationToken cancellationToken);
+}
+
+/// <summary>The resources of public endpoints (ADR-0042): roles give VIEW on an endpoint's resource to call it.</summary>
+public static class ApiResources
+{
+    /// <summary>The parent of every endpoint's resource.</summary>
+    public const string Root = "integration.api";
+
+    public static string Of(string endpointCode) => $"{Root}.{endpointCode}";
+}
+
+/// <summary>Headers a caller may send to the public API.</summary>
+public static class ApiHeaders
+{
+    /// <summary>The company the call works in, when the client works in several.</summary>
+    public const string Company = "X-Company";
+
+    /// <summary>The person the client acts for (username, national ID or email), on endpoints that allow it.</summary>
+    public const string ActingUser = "X-Acting-User";
 }
 
 /// <summary>An input of a system function, as the endpoint designer offers it.</summary>

@@ -156,7 +156,7 @@ public sealed class DocumentTests(DatabaseFixture fixture)
         document["fields"]!.AsObject().Select(f => f.Key).ShouldBe(["city"], "only the type's public fields");
         document["fields"]!["city"]!.GetValue<string>().ShouldBe("Riyadh");
 
-        (await VerifyAsync(issued.Number, new ApiCaller("P", ["SOME_COMPANY"], null))).Found.ShouldBeFalse("outside the caller's companies");
+        (await VerifyAsync(issued.Number, new ApiCaller("P", null, "SOME_COMPANY", null))).Found.ShouldBeFalse("outside the caller's companies");
         (await VerifyAsync("NO-SUCH", ApiCaller.Unlimited)).Found.ShouldBeFalse();
     }
 

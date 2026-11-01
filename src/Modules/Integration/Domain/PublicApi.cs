@@ -100,13 +100,20 @@ public sealed class ApiEndpoint : ConfigEntity
     /// <summary>The system function of a function endpoint (e.g. <c>REQUEST_STATUS</c>).</summary>
     public string? Function { get; set; }
 
+    /// <summary>
+    /// Whether a client may name, in the <c>X-Acting-User</c> header, a person registered in Apps Control whose roles and data
+    /// then apply instead of its service account's (ADR-0042).
+    /// </summary>
+    public bool ActsForUser { get; set; }
+
     public List<ApiFunctionBinding> FunctionInputs { get; set; } = [];
 }
 
 /// <summary>
 /// A partner system allowed to call the public API: its sign-in client (OAuth2 client credentials in the realm the external
-/// host trusts), the endpoints it may call, the companies and branches whose data it sees, and its rate limit. The
-/// secret is the identity provider's and is never stored.
+/// host trusts), the service account it acts as and its rate limit. The service account — a user of kind SERVICE in Apps
+/// Control — holds the client's roles and privileges like any user: the endpoints it may call, the companies and branches
+/// it works in, and its data grants (ADR-0042). The secret is the identity provider's and is never stored.
 /// </summary>
 public sealed class ApiClient : ConfigEntity
 {
@@ -117,19 +124,19 @@ public sealed class ApiClient : ConfigEntity
 
     public string? DescriptionEn { get; set; }
 
-    /// <summary>Codes of the endpoints it may call.</summary>
-    public List<string> Endpoints { get; set; } = [];
-
-    /// <summary>Companies whose data it sees; <c>*</c> for all of them.</summary>
-    public List<string> Companies { get; set; } = [];
-
-    /// <summary>Branches whose data it sees; <c>*</c> for all of them.</summary>
-    public List<string> Branches { get; set; } = [];
+    /// <summary>The username of the service account it acts as (created with the client when it does not exist).</summary>
+    public string Account { get; set; } = string.Empty;
 
     public int RateLimitPerMinute { get; set; } = 60;
 
     /// <summary>Who to contact about the integration (shown to administrators).</summary>
     public string? ContactEmail { get; set; }
+
+    /// <summary>
+    /// The endpoints, companies and branches the client was given before it had a service account (JSON), kept by the
+    /// migration until the migrator moves them to the account's own role; then empty.
+    /// </summary>
+    public string? PendingAccess { get; set; }
 }
 
 /// <summary>Every call of the public API, with masked parameters. Not configuration; written by the public API.</summary>
@@ -163,6 +170,9 @@ public sealed class ApiCall
     public string? CorrelationId { get; set; }
 
     public string? ClientIp { get; set; }
+
+    /// <summary>The registered person the client acted for (<c>X-Acting-User</c>), whose access applied (ADR-0042).</summary>
+    public string? ActingFor { get; set; }
 
     /// <summary>Tried by an administrator in the endpoint designer, not called by a partner.</summary>
     public bool IsTry { get; set; }

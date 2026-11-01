@@ -118,14 +118,14 @@ public sealed class DataQueryTests(AppsControlFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task A_limited_caller_sees_the_class_values_of_its_companies()
+    public async Task A_limited_caller_sees_the_class_values_of_its_company()
     {
         var fields = new DataField[] { new("code", "b.code") };
         var query = JsonNode.Parse(System.Text.Json.JsonSerializer.Serialize(new { from = new { kind = "CLASS", code = _banks, alias = "b" }, sort = new[] { new { column = "b.code", direction = "ASC" } } }))!;
-        (await RunAsync(query, fields, new Dictionary<string, string?>(), new ApiCaller("P", [_main], null), 10, 0))
+        (await RunAsync(query, fields, new Dictionary<string, string?>(), new ApiCaller("P", null, _main, null), 10, 0))
             .Rows.Select(r => r["code"]!.GetValue<string>()).ShouldBe(["MAIN_ONLY", "SHARED"]);
-        (await RunAsync(query, fields, new Dictionary<string, string?>(), new ApiCaller("P", [_main, _sub], null), 10, 0))
-            .Rows.Select(r => r["code"]!.GetValue<string>()).ShouldBe(["MAIN_ONLY", "SHARED", "SUB_ONLY"]);
+        (await RunAsync(query, fields, new Dictionary<string, string?>(), new ApiCaller("P", null, _sub, null), 10, 0))
+            .Rows.Select(r => r["code"]!.GetValue<string>()).ShouldBe(["SHARED", "SUB_ONLY"]);
         (await RunAsync(query, fields, new Dictionary<string, string?>(), ApiCaller.Unlimited, 10, 0)).Rows.Count.ShouldBe(3);
     }
 
@@ -140,7 +140,7 @@ public sealed class DataQueryTests(AppsControlFixture fixture) : IAsyncLifetime
         var children = await InvokeAsync(new Dictionary<string, string?> { ["class"] = _sector, ["parent"] = "ICT" }, ApiCaller.Unlimited);
         children.Data.ShouldBeOfType<JsonArray>().ShouldHaveSingleItem()!["code"]!.GetValue<string>().ShouldBe("SOFTWARE");
 
-        var banks = await InvokeAsync(new Dictionary<string, string?> { ["class"] = _banks }, new ApiCaller("P", [_sub], null));
+        var banks = await InvokeAsync(new Dictionary<string, string?> { ["class"] = _banks }, new ApiCaller("P", null, _sub, null));
         banks.Data.ShouldBeOfType<JsonArray>().Select(v => v!["code"]!.GetValue<string>()).ShouldBe(["SHARED", "SUB_ONLY"], ignoreOrder: true);
 
         (await InvokeAsync(new Dictionary<string, string?> { ["class"] = Harness.Unique("NONE") }, ApiCaller.Unlimited)).Found.ShouldBeFalse();
@@ -162,15 +162,15 @@ public sealed class DataQueryTests(AppsControlFixture fixture) : IAsyncLifetime
         });
         await _harness.PublishAsync(AppsControlAreas.Lovs, Lov(open, _banks, true), Lov(closed, _sector, false));
 
-        var both = await LookupsAsync(new Dictionary<string, string?> { ["classes"] = $"{_sector}, {_banks}", ["lovs"] = open }, new ApiCaller("P", [_sub], null));
+        var both = await LookupsAsync(new Dictionary<string, string?> { ["classes"] = $"{_sector}, {_banks}", ["lovs"] = open }, new ApiCaller("P", null, _sub, null));
         var data = both.Data.ShouldBeOfType<JsonObject>();
         data["classes"]!.AsObject().Select(c => c.Key).ShouldBe([_sector, _banks]);
         data["classes"]![_sector]!.AsArray().Count.ShouldBe(4);
         data["classes"]![_banks]!.AsArray().Select(v => v!["code"]!.GetValue<string>()).ShouldBe(["SHARED", "SUB_ONLY"], ignoreOrder: true);
         data["lovs"]![open]!.AsArray().Select(v => v!["value"]!.GetValue<string>()).ShouldBe(["SHARED", "SUB_ONLY"], ignoreOrder: true, "every page of the list, for the client's company");
 
-        var all = await LookupsAsync(new Dictionary<string, string?> { ["lovs"] = open }, new ApiCaller("P", [_main, _sub], null));
-        all.Data!["lovs"]![open]!.AsArray().Count.ShouldBe(3, "each value once across the client's companies");
+        var all = await LookupsAsync(new Dictionary<string, string?> { ["lovs"] = open }, ApiCaller.Unlimited);
+        all.Data!["lovs"]![open]!.AsArray().Count.ShouldBe(3, "as the portal serves them to anyone, every company's");
         all.Data!.AsObject().ContainsKey("classes").ShouldBeFalse();
 
         var refused = await Should.ThrowAsync<ApiInputException>(() => LookupsAsync(

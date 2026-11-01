@@ -9,6 +9,18 @@ public enum UserStatus
     Disabled,
 }
 
+/// <summary>Who an account is: a person who signs in, or a system that acts as the account (ADR-0042).</summary>
+public enum UserKind
+{
+    Person,
+
+    /// <summary>
+    /// A service account, e.g. an API client's: it holds roles, privileges and data grants like a person, but never signs in
+    /// and has no sign-in account.
+    /// </summary>
+    Service,
+}
+
 /// <summary>
 /// An employee known to Apps Control. Authentication stays in Keycloak; the account is linked by <see cref="IdpSubject"/>
 /// and created on first sign-in. <see cref="ConfigEntity.Code"/> holds the username.
@@ -16,6 +28,9 @@ public enum UserStatus
 public sealed class UserAccount : ConfigEntity
 {
     public string? IdpSubject { get; set; }
+
+    /// <summary>A person, or a service account that systems act as (it never signs in).</summary>
+    public UserKind Kind { get; set; } = UserKind.Person;
 
     public string AuthSource { get; set; } = "IDP";
 

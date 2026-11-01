@@ -33,6 +33,18 @@
   font-size: 13px;
 }
 
+.ad-acting {
+  display: grid;
+  gap: 2px;
+}
+
+.ad-hint {
+  margin: 0;
+  padding-inline-start: 40px;
+  color: var(--dga-text-3, #6c737f);
+  font-size: 12px;
+}
+
 .ad-identity {
   display: grid;
   grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr) minmax(0, 1fr);

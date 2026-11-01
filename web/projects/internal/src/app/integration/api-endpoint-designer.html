@@ -211,6 +211,15 @@
                     (ngModelChange)="set({ descriptionEn: $event })"
                   ></textarea>
                 </mat-form-field>
+                <div class="ad-acting">
+                  <mat-checkbox
+                    [ngModel]="!!def().actsForUser"
+                    (ngModelChange)="set({ actsForUser: $event })"
+                    data-testid="pa-acts-for-user"
+                    >{{ 'pa.actsForUser' | dcTranslate }}</mat-checkbox
+                  >
+                  <p class="ad-hint">{{ 'pa.actsForUserHint' | dcTranslate }}</p>
+                </div>
               }
             }
           </div>

@@ -176,6 +176,10 @@ public static class AppsControlModule
         services.AddScoped<IDataQueries, DataQueries>();
         services.AddScoped<DynamicCube.Platform.Reports.IReportQueries, ReportQueries>();
         services.AddScoped<IResourceRegistry, ResourceRegistry>();
+        services.AddScoped<IServiceAccounts, ServiceAccounts>();
+        services.AddScoped<ApiAccess>();
+        services.AddScoped<IApiAccess>(sp => sp.GetRequiredService<ApiAccess>());
+        services.AddScoped<ApiClassValues>();
         services.AddScoped<IApiFunction, ClassValuesFunction>();
         services.AddScoped<IApiFunction, LookupsFunction>();
         services.AddScoped<IApiFunction, ClassesFunction>();

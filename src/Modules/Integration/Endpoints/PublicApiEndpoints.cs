@@ -18,9 +18,18 @@ namespace DynamicCube.Modules.Integration.Endpoints;
 /// <summary>Where partners call the public API and get tokens, and whether sign-in clients are maintained from here.</summary>
 public sealed record PublicApiInfo(string ApiUrl, string Audience, string? TokenUrl, bool Managed);
 
-/// <summary>An endpoint as edited in the designer (not saved yet), the parameter values to try it with and whose limits apply.</summary>
-/// <param name="Client">An API client whose companies and branches limit the try; none: no limits.</param>
-public sealed record TryEndpointRequest(ApiEndpointPayload Endpoint, Dictionary<string, string?>? Inputs, string? Client, int? Limit, int? Offset);
+/// <summary>An endpoint as edited in the designer (not saved yet), the parameter values to try it with and whose access applies.</summary>
+/// <param name="Client">An API client whose service account's access applies (as if the endpoint were given to it); none: no limits.</param>
+/// <param name="Company">The company the try works in (<c>X-Company</c>), when the client works in several.</param>
+/// <param name="ActingUser">A person the client acts for (<c>X-Acting-User</c>), when the endpoint allows it.</param>
+public sealed record TryEndpointRequest(
+    ApiEndpointPayload Endpoint,
+    Dictionary<string, string?>? Inputs,
+    string? Client,
+    int? Limit,
+    int? Offset,
+    string? Company = null,
+    string? ActingUser = null);
 
 /// <summary>What the endpoint answered, as a partner would get it, and the call as it would be made.</summary>
 public sealed record TryEndpointResponse(int Status, JsonNode? Body, int? Rows, int DurationMs, string Url);
@@ -38,7 +47,8 @@ public sealed record ApiCallSummary(
     int? Rows,
     string? Error,
     string? ClientIp,
-    bool IsTry);
+    bool IsTry,
+    string? ActingFor = null);
 
 public sealed record ApiCallPage(IReadOnlyList<ApiCallSummary> Items, int Total);
 
@@ -51,7 +61,7 @@ internal static class PublicApiEndpoints
 {
     public static void MapPublic(RouteGroupBuilder api)
     {
-        api.MapGet("/openapi.json", async (HttpContext http, IntegrationDbContext db, PublicApiDocument document, ApiClientSignIns signIns, PublicApiSettings settings, CancellationToken ct) =>
+        api.MapGet("/openapi.json", async (HttpContext http, IntegrationDbContext db, IApiAccess access, PublicApiDocument document, ApiClientSignIns signIns, PublicApiSettings settings, CancellationToken ct) =>
         {
             var client = await ClientAsync(http, db, ct);
             if (client is not { IsActive: true })
@@ -59,7 +69,7 @@ internal static class PublicApiEndpoints
                 return Answer(http, ApiAnswer.Problem(StatusCodes.Status403Forbidden, "This client may not call the API.", "The token's client is not an active API client."));
             }
 
-            var endpoints = await EndpointsOfAsync(db, client, ct);
+            var endpoints = await EndpointsOfAsync(db, access, client, ct);
             var baseUrl = settings.BaseUrl ?? $"{http.Request.Scheme}://{http.Request.Host}";
             return Results.Json(await document.BuildAsync($"{client.NameEn} — public API", endpoints, baseUrl, await signIns.TokenUrlAsync(ct), ct));
         }).WithName("GetPublicApiDescription");
@@ -87,11 +97,11 @@ internal static class PublicApiEndpoints
         api.MapPost("/clients/{code}/secret", (string code, ApiClientSignIns signIns, CancellationToken ct) => signIns.NewSecretAsync(code, ct))
             .RequirePrivilege(IntegrationResources.Config, CatalogActions.Edit).WithName("NewApiClientSecret");
 
-        api.MapGet("/clients/{code}/openapi.json", async (string code, IntegrationDbContext db, PublicApiDocument document, ApiClientSignIns signIns, PublicApiSettings settings, CancellationToken ct) =>
+        api.MapGet("/clients/{code}/openapi.json", async (string code, IntegrationDbContext db, IApiAccess access, PublicApiDocument document, ApiClientSignIns signIns, PublicApiSettings settings, CancellationToken ct) =>
         {
             var client = await db.ApiClients.AsNoTracking().SingleOrDefaultAsync(c => c.Code == code, ct)
                 ?? throw new ApiClientNotFoundException($"There is no published API client {code}.");
-            return Results.Json(await document.BuildAsync($"{client.NameEn} — public API", await EndpointsOfAsync(db, client, ct), settings.BaseUrl, await signIns.TokenUrlAsync(ct), ct));
+            return Results.Json(await document.BuildAsync($"{client.NameEn} — public API", await EndpointsOfAsync(db, access, client, ct), settings.BaseUrl, await signIns.TokenUrlAsync(ct), ct));
         }).RequirePrivilege(IntegrationResources.Config, CatalogActions.View).WithName("GetApiClientDescription");
 
         api.MapGet("/calls", async (
@@ -140,7 +150,7 @@ internal static class PublicApiEndpoints
             var items = await query.OrderByDescending(c => c.StartedAt)
                 .Skip(Math.Max(0, skip ?? 0))
                 .Take(Math.Clamp(take ?? 50, 1, 200))
-                .Select(c => new ApiCallSummary(c.Id, c.ClientCode, c.ClientId, c.EndpointCode, c.Method, c.Path, c.StartedAt, c.DurationMs, c.Status, c.Rows, c.Error, c.ClientIp, c.IsTry))
+                .Select(c => new ApiCallSummary(c.Id, c.ClientCode, c.ClientId, c.EndpointCode, c.Method, c.Path, c.StartedAt, c.DurationMs, c.Status, c.Rows, c.Error, c.ClientIp, c.IsTry, c.ActingFor))
                 .ToListAsync(ct);
             return TypedResults.Ok(new ApiCallPage(items, total));
         }).RequirePrivilege(IntegrationResources.ApiCalls, CatalogActions.View).WithName("ListPublicApiCalls");
@@ -167,6 +177,7 @@ internal static class PublicApiEndpoints
         string? path,
         HttpContext http,
         IntegrationDbContext db,
+        IApiAccess access,
         PublicApiRunner runner,
         PublicApiRateLimits limits,
         TimeProvider clock,
@@ -186,7 +197,7 @@ internal static class PublicApiEndpoints
             call.Path = call.Path[..300];
         }
 
-        var answer = await AnswerAsync(http, db, runner, limits, call, ct);
+        var answer = await AnswerAsync(http, db, access, runner, limits, call, ct);
         call.Status = answer.Status;
         call.Rows = answer.Rows;
         call.Error = answer.IsProblem ? Cut(answer.Error, 4000) : null;
@@ -196,7 +207,7 @@ internal static class PublicApiEndpoints
         return Answer(http, answer);
     }
 
-    private static async Task<ApiAnswer> AnswerAsync(HttpContext http, IntegrationDbContext db, PublicApiRunner runner, PublicApiRateLimits limits, ApiCall call, CancellationToken ct)
+    private static async Task<ApiAnswer> AnswerAsync(HttpContext http, IntegrationDbContext db, IApiAccess access, PublicApiRunner runner, PublicApiRateLimits limits, ApiCall call, CancellationToken ct)
     {
         var client = await ClientAsync(http, db, ct);
         if (client is null)
@@ -218,11 +229,17 @@ internal static class PublicApiEndpoints
 
         call.EndpointCode = endpoint.Code;
         call.Path = PublicApiPaths.Logged(endpoint, pathValues.ToDictionary(p => p.Key, p => (string?)p.Value, StringComparer.Ordinal), null, null);
-        if (!client.Endpoints.Contains(endpoint.Code, StringComparer.Ordinal))
+        // Whose access applies (ADR-0042): the client's service account — the endpoints, companies, branches and data its roles
+        // give — or the registered person it acts for on an endpoint that allows it.
+        var resolved = await access.ResolveAsync(
+            new ApiAccessRequest(client.Code, client.Account, ApiResources.Of(endpoint.Code), Header(http, ApiHeaders.Company), Header(http, ApiHeaders.ActingUser), endpoint.ActsForUser),
+            ct);
+        if (resolved.Caller is not { } caller)
         {
-            return ApiAnswer.Problem(StatusCodes.Status403Forbidden, "This client may not call this endpoint.", $"Endpoint {endpoint.Code} is not given to API client {client.Code}.");
+            return ApiAnswer.Problem(resolved.Status, resolved.Status == StatusCodes.Status403Forbidden ? "This client may not make this call." : "The call cannot be made as sent.", resolved.Error);
         }
 
+        call.ActingFor = caller.ActingFor;
         if (!limits.TryAcquire(client.Code, client.RateLimitPerMinute, out var wait))
         {
             http.Response.Headers.RetryAfter = Math.Max(1, (int)Math.Ceiling(wait.TotalSeconds)).ToString(CultureInfo.InvariantCulture);
@@ -235,7 +252,7 @@ internal static class PublicApiEndpoints
             query.TryAdd(key, value.ToString());
         }
 
-        var (answer, values, limit, offset) = await runner.RunAsync(endpoint, pathValues, query, Caller(client), false, ct);
+        var (answer, values, limit, offset) = await runner.RunAsync(endpoint, pathValues, query, caller, false, ct);
         call.Path = PublicApiPaths.Logged(endpoint, values, limit, offset);
         return answer;
     }
@@ -246,6 +263,7 @@ internal static class PublicApiEndpoints
         IntegrationDbContext db,
         IDataQueries queries,
         IEnumerable<IApiFunction> functions,
+        IApiAccess access,
         PublicApiRunner runner,
         ICurrentUser user,
         TimeProvider clock,
@@ -276,7 +294,22 @@ internal static class PublicApiEndpoints
         query["offset"] = request.Offset?.ToString(CultureInfo.InvariantCulture);
 
         var watch = Stopwatch.StartNew();
-        var (answer, values, limit, offset) = await runner.RunAsync(endpoint, pathValues, query, client is null ? ApiCaller.Unlimited : Caller(client), true, ct);
+        var caller = ApiCaller.Unlimited;
+        ApiAnswer? refused = null;
+        if (client is not null)
+        {
+            // As the client's service account would call it, were the endpoint given to its roles (an unsaved endpoint has no
+            // resource yet): its companies, branches and data — or the person it acts for.
+            var resolved = await access.ResolveAsync(
+                new ApiAccessRequest(client.Code, client.Account, ApiResources.Of(endpoint.Code), request.Company, request.ActingUser, endpoint.ActsForUser) { MayCallAnyEndpoint = true },
+                ct);
+            caller = resolved.Caller ?? caller;
+            refused = resolved.Caller is null ? ApiAnswer.Problem(resolved.Status, "The client could not make this call.", resolved.Error) : null;
+        }
+
+        var (answer, values, limit, offset) = refused is not null
+            ? (refused, new Dictionary<string, string?>(StringComparer.Ordinal), (int?)null, (int?)null)
+            : await runner.RunAsync(endpoint, pathValues, query, caller, true, ct);
         var duration = (int)watch.ElapsedMilliseconds;
         var path = PublicApiPaths.Logged(endpoint, values, limit, offset);
         db.ApiCalls.Add(new ApiCall
@@ -291,6 +324,7 @@ internal static class PublicApiEndpoints
             Rows = answer.Rows,
             Error = answer.IsProblem ? Cut(answer.Error, 4000) : null,
             CorrelationId = Activity.Current?.TraceId.ToString() ?? http.TraceIdentifier,
+            ActingFor = caller.ActingFor,
             IsTry = true,
         });
         await db.SaveChangesAsync(CancellationToken.None);
@@ -305,12 +339,15 @@ internal static class PublicApiEndpoints
             : db.ApiClients.AsNoTracking().SingleOrDefaultAsync(c => c.ClientId == clientId, ct);
     }
 
-    private static async Task<List<ApiEndpoint>> EndpointsOfAsync(IntegrationDbContext db, ApiClient client, CancellationToken ct) =>
-        (await db.ApiEndpoints.AsNoTracking().Where(e => e.IsActive).ToListAsync(ct)).Where(e => client.Endpoints.Contains(e.Code, StringComparer.Ordinal)).ToList();
+    /// <summary>The active endpoints the client's service account may call (VIEW on their resources) in any of its companies.</summary>
+    private static async Task<List<ApiEndpoint>> EndpointsOfAsync(IntegrationDbContext db, IApiAccess access, ApiClient client, CancellationToken ct)
+    {
+        var callable = await access.CallableAsync(client.Account, ct);
+        return (await db.ApiEndpoints.AsNoTracking().Where(e => e.IsActive).ToListAsync(ct)).Where(e => callable.Contains(ApiResources.Of(e.Code))).ToList();
+    }
 
-    /// <summary>The caller an API client is: its companies and branches (<c>*</c>: all of them).</summary>
-    internal static ApiCaller Caller(ApiClient client) =>
-        new(client.Code, client.Companies.Contains("*") ? null : client.Companies, client.Branches.Contains("*") ? null : client.Branches);
+    private static string? Header(HttpContext http, string name) =>
+        http.Request.Headers.TryGetValue(name, out var value) && !string.IsNullOrWhiteSpace(value.ToString()) ? value.ToString().Trim() : null;
 
     private static IResult Answer(HttpContext http, ApiAnswer answer) =>
         Results.Json(answer.Body, statusCode: answer.Status, contentType: answer.IsProblem ? "application/problem+json" : "application/json");

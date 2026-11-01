@@ -283,7 +283,7 @@ public static partial class LovQueryCompiler
             if (from is not null)
             {
                 where.AddRange(BuiltIn(from, query.From.Alias));
-                if (report is not null)
+                if (report is not null || fields is not null)
                 {
                     where.AddRange(WorkScope(from, query.From.Alias));
                 }
@@ -829,7 +829,8 @@ public static partial class LovQueryCompiler
         }
 
         /// <summary>
-        /// A report's rows of a table are those of the viewer's company and branches (ADR-0045): a table with a
+        /// A report's (or a public endpoint's) rows of a table are those of the viewer's company and branches (ADR-0045,
+        /// ADR-0042): a table with a
         /// <c>company_code</c> column keeps the viewer's company (or companies), one with a <c>branch_code</c> column their
         /// branches (rows without a branch belong to the whole company). A viewer of all companies or branches passes.
         /// </summary>

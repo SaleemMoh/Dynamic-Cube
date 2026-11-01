@@ -1,6 +1,5 @@
 using System.Text.Json.Nodes;
 using DynamicCube.Modules.AppsControl.Persistence;
-using DynamicCube.Platform.Lookups;
 using DynamicCube.Platform.PublicApi;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,9 +8,10 @@ namespace DynamicCube.Modules.AppsControl.Lookups;
 /// <summary>
 /// Classes and their values (ADR-0042) — get all or get some: with no class codes, every active class; with codes
 /// (separated by commas, or the parameter repeated), only those, in the order asked. Each class with its names and, unless
-/// <c>values</c> is <c>false</c>, its values in effect today that serve the caller's companies. An unknown class is refused.
+/// <c>values</c> is <c>false</c>, its values in effect today that serve the call's company and that the caller's data
+/// grants allow (<see cref="ApiClassValues"/>). An unknown class is refused.
 /// </summary>
-internal sealed class ClassesFunction(AppsControlDbContext context, ILookupDirectory lookups) : IApiFunction
+internal sealed class ClassesFunction(AppsControlDbContext context, ApiClassValues classValues) : IApiFunction
 {
     public const string Code = "CLASSES";
 
@@ -19,8 +19,8 @@ internal sealed class ClassesFunction(AppsControlDbContext context, ILookupDirec
         Code,
         "التصنيفات",
         "Classes",
-        "التصنيفات وقيمها: كلها إذا لم تُحدد رموز، أو المحددة فقط. القيم الفعالة اليوم والتي تخدم جهات العميل.",
-        "Classes and their values: all of them when no codes are given, or only those given. Values in effect today that serve the client's companies.",
+        "التصنيفات وقيمها: كلها إذا لم تُحدد رموز، أو المحددة فقط. القيم الفعالة اليوم في شركة الاستدعاء والتي تسمح بها صلاحيات بيانات العميل.",
+        "Classes and their values: all of them when no codes are given, or only those given. Values in effect today that serve the company of the call and that the client's data permissions allow.",
         [
             new("classes", false, "رموز التصنيفات مفصولة بفواصل؛ فارغ: كل التصنيفات", "Class codes separated by commas; empty: all classes"),
             new("values", false, "false لإرجاع التصنيفات دون قيمها", "false to return the classes without their values"),
@@ -60,7 +60,7 @@ internal sealed class ClassesFunction(AppsControlDbContext context, ILookupDirec
             var item = new JsonObject { ["code"] = c.Code, ["nameAr"] = c.NameAr, ["nameEn"] = c.NameEn };
             if (withValues)
             {
-                var values = (await lookups.ValuesAsync(c.Code, cancellationToken)).Where(v => caller.Companies is null || caller.Companies.Any(v.Serves));
+                var values = await classValues.ValuesAsync(c.Code, caller, cancellationToken);
                 item["values"] = new JsonArray([.. values.Select(v => (JsonNode)new JsonObject
                 {
                     ["code"] = v.Code,

@@ -53,6 +53,8 @@ export interface ApiEndpointDefinition {
   pageSize: number;
   function: string | null;
   functionInputs: ApiFunctionBinding[];
+  /** A client may name a registered person (X-Acting-User) whose roles and data then apply (ADR-0042). */
+  actsForUser?: boolean;
   [key: string]: unknown;
 }
 
@@ -124,6 +126,8 @@ export interface ApiCallSummary {
   error: string | null;
   clientIp: string | null;
   isTry: boolean;
+  /** The registered person the client acted for, whose access applied (ADR-0042). */
+  actingFor?: string | null;
 }
 
 export interface ApiCallQuery {
@@ -158,6 +162,8 @@ export class PublicApiAdmin {
     client: string | null,
     limit: number | null,
     offset: number | null,
+    company: string | null = null,
+    actingUser: string | null = null,
   ): Observable<TryEndpointResult> {
     return this.http.post<TryEndpointResult>(`${this.base}/endpoints/try`, {
       endpoint,
@@ -165,6 +171,8 @@ export class PublicApiAdmin {
       client,
       limit,
       offset,
+      company,
+      actingUser,
     });
   }
 

@@ -113,6 +113,11 @@ import { PUBLIC_API_TRANSLATIONS } from './public-api-translations';
           @if (row.isTry) {
             <span class="dc-pill">{{ 'pa.calls.try' | dcTranslate }}</span>
           }
+          @if (row.actingFor) {
+            <small class="ac-acting" [attr.title]="'pa.calls.actingFor' | dcTranslate"
+              >↳ {{ row.actingFor }}</small
+            >
+          }
         </td>
       </ng-container>
       <ng-container matColumnDef="path">
@@ -159,6 +164,11 @@ import { PUBLIC_API_TRANSLATIONS } from './public-api-translations';
       margin: 2px 0 0;
       color: var(--dga-text-3, #6c737f);
       font-size: 13px;
+    }
+    .ac-acting {
+      display: block;
+      color: var(--dga-text-3, #6c737f);
+      font-size: 12px;
     }
     .ac-path {
       max-width: 32rem;

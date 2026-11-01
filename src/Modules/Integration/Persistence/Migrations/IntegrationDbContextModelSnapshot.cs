@@ -29,6 +29,11 @@ namespace DynamicCube.Modules.Integration.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("ActingFor")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("acting_for");
+
                     b.Property<string>("ClientCode")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -111,10 +116,11 @@ namespace DynamicCube.Modules.Integration.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<string>("Branches")
+                    b.Property<string>("Account")
                         .IsRequired()
-                        .HasColumnType("jsonb")
-                        .HasColumnName("branches");
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("account");
 
                     b.Property<string>("BusinessApp")
                         .HasMaxLength(100)
@@ -132,11 +138,6 @@ namespace DynamicCube.Modules.Integration.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("code");
-
-                    b.Property<string>("Companies")
-                        .IsRequired()
-                        .HasColumnType("jsonb")
-                        .HasColumnName("companies");
 
                     b.Property<string>("ContactEmail")
                         .HasMaxLength(200)
@@ -162,11 +163,6 @@ namespace DynamicCube.Modules.Integration.Persistence.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)")
                         .HasColumnName("description_en");
-
-                    b.Property<string>("Endpoints")
-                        .IsRequired()
-                        .HasColumnType("jsonb")
-                        .HasColumnName("endpoints");
 
                     b.Property<string>("EntityCode")
                         .HasMaxLength(100)
@@ -194,6 +190,10 @@ namespace DynamicCube.Modules.Integration.Persistence.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)")
                         .HasColumnName("owner");
+
+                    b.Property<string>("PendingAccess")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("pending_access");
 
                     b.Property<int>("RateLimitPerMinute")
                         .HasColumnType("integer")
@@ -238,6 +238,10 @@ namespace DynamicCube.Modules.Integration.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
                         .HasColumnName("id");
+
+                    b.Property<bool>("ActsForUser")
+                        .HasColumnType("boolean")
+                        .HasColumnName("acts_for_user");
 
                     b.Property<string>("BusinessApp")
                         .HasMaxLength(100)

@@ -117,6 +117,9 @@ export function scopeOf(type: ConfigType): 'full' | 'entity' | 'none' {
 const t = (ar: string, en: string): LocalizedText => ({ ar, en });
 const opt = (value: string, ar: string, en: string): FormOption => ({ value, label: t(ar, en) });
 
+/** Shown for a person's account, not for a service account (ADR-0042). */
+const person: JsonLogicRule = { '!=': [{ var: 'kind' }, 'SERVICE'] };
+
 /** The product channel a row belongs to (internal system, portal, field app). */
 const appRef: ConfigField = {
   code: 'appCode',
@@ -463,7 +466,7 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
         entityType: 'apps.user',
         title: t('المستخدمون', 'Users'),
         key: 'code',
-        columns: ['status', 'email'],
+        columns: ['kind', 'status', 'email'],
         createDialog: () => import('../users/new-user-dialog').then((m) => m.NewUserDialog),
         // Details and access (roles by company, department roles, personal privileges) in one editor.
         editor: () => import('../users/user-editor').then((m) => m.UserEditor),
@@ -474,6 +477,8 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
             label: t('حساب الدخول', 'Sign-in account'),
             testId: 'account',
             dialog: () => import('../users/account-dialog').then((m) => m.AccountDialog),
+            // A service account never signs in (ADR-0042).
+            when: (row) => row['kind'] !== 'SERVICE',
           },
         ],
         bulkActions: [
@@ -485,9 +490,21 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
           },
         ],
         fields: [
-          { code: 'email', type: 'text', label: t('البريد الإلكتروني', 'Email') },
-          { code: 'mobile', type: 'text', label: t('الجوال', 'Mobile') },
-          { code: 'nationalId', type: 'text', label: t('رقم الهوية', 'National ID') },
+          {
+            code: 'kind',
+            type: 'select',
+            label: t('نوع الحساب', 'Account kind'),
+            options: [
+              opt('PERSON', 'شخص', 'Person'),
+              opt('SERVICE', 'حساب خدمي (لنظام، لا يسجل الدخول)', 'Service account (a system; never signs in)'),
+            ],
+            required: true,
+            defaultValue: 'PERSON',
+            lockedOnEdit: true,
+          },
+          { code: 'email', type: 'text', label: t('البريد الإلكتروني', 'Email'), visibleWhen: person },
+          { code: 'mobile', type: 'text', label: t('الجوال', 'Mobile'), visibleWhen: person },
+          { code: 'nationalId', type: 'text', label: t('رقم الهوية', 'National ID'), visibleWhen: person },
           {
             code: 'status',
             type: 'select',
@@ -501,12 +518,14 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
             type: 'select',
             label: t('اللغة', 'Language'),
             options: [opt('ar', 'العربية', 'Arabic'), opt('en', 'الإنجليزية', 'English')],
+            visibleWhen: person,
           },
           {
             code: 'assignments',
             type: 'json',
             label: t('التكليفات (الوحدة والمسمى)', 'Assignments (unit and position)'),
             defaultValue: [],
+            visibleWhen: person,
             structure: {
               kind: 'table',
               columns: [

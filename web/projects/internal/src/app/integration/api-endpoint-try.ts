@@ -18,8 +18,8 @@ import { catchError, firstValueFrom, of } from 'rxjs';
 
 /**
  * Calls the endpoint as it is being designed (not saved) the way a partner would (ADR-0042): with the inputs typed here
- * (their samples by default), within an API client's companies and branches or with no limits, and shows the status,
- * the URL called and the body returned.
+ * (their samples by default), as an API client's service account (its companies, branches and data; optionally in a named
+ * company, or for a person the client acts for) or with no limits, and shows the status, the URL called and the body.
  */
 @Component({
   selector: 'dc-api-endpoint-try',
@@ -88,6 +88,30 @@ import { catchError, firstValueFrom, of } from 'rxjs';
         }
       </select>
     </label>
+    @if (client()) {
+      <div class="et-pair">
+        <label class="et-input"
+          ><span>{{ 'pa.tryCompany' | dcTranslate }}</span>
+          <input
+            dir="ltr"
+            [placeholder]="'pa.tryCompanyHint' | dcTranslate"
+            [ngModel]="company()"
+            (ngModelChange)="company.set($event)"
+            data-testid="pa-try-company"
+        /></label>
+        @if (definition().actsForUser) {
+          <label class="et-input"
+            ><span>{{ 'pa.tryActingUser' | dcTranslate }}</span>
+            <input
+              dir="ltr"
+              [placeholder]="'pa.tryActingUserHint' | dcTranslate"
+              [ngModel]="actingUser()"
+              (ngModelChange)="actingUser.set($event)"
+              data-testid="pa-try-acting-user"
+          /></label>
+        }
+      </div>
+    }
     <button
       matButton="filled"
       type="button"
@@ -232,6 +256,9 @@ export class ApiEndpointTry {
     () => this.definition().kind === 'QUERY' && !this.definition().singleRow,
   );
   protected readonly client = signal<string | null>(null);
+  /** The company (X-Company) and the person acted for (X-Acting-User) the try sends with a client. */
+  protected readonly company = signal('');
+  protected readonly actingUser = signal('');
   protected readonly limit = signal<number | null>(null);
   protected readonly offset = signal<number | null>(null);
   protected readonly busy = signal(false);
@@ -263,6 +290,10 @@ export class ApiEndpointTry {
             this.client(),
             paged ? this.limit() || null : null,
             paged ? this.offset() || null : null,
+            this.client() ? this.company().trim() || null : null,
+            this.client() && this.definition().actsForUser
+              ? this.actingUser().trim() || null
+              : null,
           ),
         ),
       );

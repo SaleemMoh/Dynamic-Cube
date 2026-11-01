@@ -253,6 +253,13 @@ public sealed partial class AccessResolver(
         var user = await context.Users.Include(u => u.Roles).SingleOrDefaultAsync(u => u.IdpSubject == subject, cancellationToken)
             ?? await context.Users.Include(u => u.Roles).SingleOrDefaultAsync(u => u.Code == username, cancellationToken);
 
+        // A service account never signs in (ADR-0042), whatever the identity provider holds under its name.
+        if (user is { Kind: UserKind.Service })
+        {
+            LogServiceAccountSignIn(logger, username);
+            throw new IdentityMismatchException(username);
+        }
+
         var changed = false;
         if (user is not null && user.IdpSubject is not null && user.IdpSubject != subject)
         {
@@ -330,6 +337,9 @@ public sealed partial class AccessResolver(
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Sign-in refused: account {UserName} is linked to another identity-provider subject")]
     private static partial void LogSubjectMismatch(ILogger logger, string userName);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Sign-in refused: {UserName} is a service account")]
+    private static partial void LogServiceAccountSignIn(ILogger logger, string userName);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Account {UserName} relinked to a new identity-provider subject")]
     private static partial void LogRelinked(ILogger logger, string userName);

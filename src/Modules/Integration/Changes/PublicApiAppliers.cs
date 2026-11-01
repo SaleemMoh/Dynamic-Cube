@@ -33,6 +33,9 @@ public sealed class ApiEndpointPayload : ConfigPayload
     public string? Function { get; set; }
 
     public List<ApiFunctionBinding> FunctionInputs { get; set; } = [];
+
+    /// <summary>Whether a client may name a registered person (<c>X-Acting-User</c>) whose access then applies.</summary>
+    public bool ActsForUser { get; set; }
 }
 
 /// <summary>
@@ -247,6 +250,7 @@ internal sealed partial class ApiEndpointApplier(IntegrationDbContext db, IDataQ
         entity.PageSize = isQuery ? payload.PageSize : 50;
         entity.Function = isQuery ? null : payload.Function;
         entity.FunctionInputs = isQuery ? [] : [.. payload.FunctionInputs.Where(b => !string.IsNullOrWhiteSpace(b.Parameter) || !string.IsNullOrWhiteSpace(b.Value))];
+        entity.ActsForUser = payload.ActsForUser;
     }
 
     protected override Task<ApiEndpointPayload> ToPayloadAsync(IntegrationDbContext context, ApiEndpoint entity, CancellationToken cancellationToken) =>
@@ -263,17 +267,8 @@ internal sealed partial class ApiEndpointApplier(IntegrationDbContext db, IDataQ
             PageSize = entity.PageSize,
             Function = entity.Function,
             FunctionInputs = entity.FunctionInputs,
+            ActsForUser = entity.ActsForUser,
         });
-
-    protected override async Task BeforeDeleteAsync(IntegrationDbContext context, ApiEndpoint entity, CancellationToken cancellationToken)
-    {
-        var users = (await context.ApiClients.AsNoTracking().Select(c => new { c.Code, c.Endpoints }).ToListAsync(cancellationToken))
-            .Where(c => c.Endpoints.Contains(entity.Code)).Select(c => c.Code).ToList();
-        if (users.Count > 0)
-        {
-            throw new ChangeSetException($"Endpoint '{entity.Code}' is still given to API clients: {string.Join(", ", users)}.");
-        }
-    }
 
     /// <summary>The path's shape: placeholders count as one (<c>/requests/{number}</c> and <c>/requests/{id}</c> are the same path).</summary>
     internal static string Shape(string path) => PlaceholderPattern().Replace(path.Trim().ToLowerInvariant(), "{}");
@@ -314,11 +309,8 @@ public sealed class ApiClientPayload : ConfigPayload
 
     public string? DescriptionEn { get; set; }
 
-    public List<string> Endpoints { get; set; } = [];
-
-    public List<string> Companies { get; set; } = [];
-
-    public List<string> Branches { get; set; } = [];
+    /// <summary>The service account it acts as; empty: its own (<c>svc-{code}</c>), created with the client.</summary>
+    public string? Account { get; set; }
 
     public int RateLimitPerMinute { get; set; } = 60;
 
@@ -326,10 +318,12 @@ public sealed class ApiClientPayload : ConfigPayload
 }
 
 /// <summary>
-/// API clients (ADR-0042): a sign-in client id used by no other client, endpoints that exist, companies and branches chosen
-/// explicitly (<c>*</c> for all) and a rate limit.
+/// API clients (ADR-0042): a sign-in client id used by no other client, a service account used by no other client and a
+/// rate limit. The account is a service account of Apps Control (or one created in the same change set); when none is
+/// named the client gets its own, created when the client is published. What the client may call and see is given to that
+/// account as roles, like to any user.
 /// </summary>
-internal sealed partial class ApiClientApplier(IntegrationDbContext db, IOrganizationDirectory organization)
+internal sealed partial class ApiClientApplier(IntegrationDbContext db, IServiceAccounts accounts)
     : IntegrationApplier<ApiClient, ApiClientPayload>(db)
 {
     public const int MaxRateLimit = 6000;
@@ -347,11 +341,13 @@ internal sealed partial class ApiClientApplier(IntegrationDbContext db, IOrganiz
             errors.Add("clientId", "Use letters, digits, - and _ (up to 100).");
         }
         else if (await refs.Context.ApiClients.AsNoTracking().AnyAsync(c => c.ClientId == clientId && c.Code != code, cancellationToken)
-            || refs.Draft?.Items.Any(i => i.EntityType == IntegrationChangeTypes.ApiClient && i.EntityCode != code && i.After is not null
-                && JsonNode.Parse(i.After)?["clientId"]?.GetValue<string>() == clientId) == true)
+            || OtherPending(refs, code, "clientId", clientId))
         {
             errors.Add("clientId", $"Another API client signs in as {clientId}.");
         }
+
+        var account = string.IsNullOrWhiteSpace(payload.Account) ? DefaultAccount(code ?? string.Empty) : payload.Account.Trim();
+        await CheckAccountAsync(refs, code, account, named: !string.IsNullOrWhiteSpace(payload.Account), errors, cancellationToken);
 
         errors.MaxLength("descriptionAr", payload.DescriptionAr, 2000);
         errors.MaxLength("descriptionEn", payload.DescriptionEn, 2000);
@@ -362,61 +358,66 @@ internal sealed partial class ApiClientApplier(IntegrationDbContext db, IOrganiz
 
         ConnectionApplier.Range(errors, "rateLimitPerMinute", payload.RateLimitPerMinute, 1, MaxRateLimit);
 
-        ChildSync.RequireUnique(payload.Endpoints, e => e, "endpoints", errors);
-        var known = (await refs.Context.ApiEndpoints.AsNoTracking().Select(e => e.Code).ToListAsync(cancellationToken)).ToHashSet(StringComparer.Ordinal);
-        foreach (var item in refs.Draft?.Items.Where(i => i.EntityType == IntegrationChangeTypes.ApiEndpoint && i.Operation == ChangeOperation.Create) ?? [])
-        {
-            known.Add(item.EntityCode);
-        }
-
-        foreach (var (endpoint, i) in payload.Endpoints.Select((e, i) => (e, i)))
-        {
-            if (!known.Contains(endpoint))
-            {
-                errors.Add($"endpoints[{i}]", $"There is no endpoint {endpoint}.");
-            }
-        }
-
-        var companies = (await organization.CompaniesAsync(cancellationToken)).Select(c => c.Code).ToHashSet(StringComparer.Ordinal);
-        var branches = await organization.BranchesAsync(cancellationToken);
-        Scope(payload.Companies, "companies", companies, errors);
-        var chosen = payload.Companies.Contains("*") ? companies : payload.Companies.ToHashSet(StringComparer.Ordinal);
-        Scope(payload.Branches, "branches", branches.Where(b => chosen.Contains(b.CompanyCode)).Select(b => b.Code).ToHashSet(StringComparer.Ordinal), errors);
-
         entity.ClientId = clientId;
+        entity.Account = account;
         entity.DescriptionAr = payload.DescriptionAr;
         entity.DescriptionEn = payload.DescriptionEn;
-        entity.Endpoints = [.. payload.Endpoints.Distinct(StringComparer.Ordinal)];
-        entity.Companies = payload.Companies.Contains("*") ? ["*"] : [.. payload.Companies.Distinct(StringComparer.Ordinal)];
-        entity.Branches = payload.Branches.Contains("*") ? ["*"] : [.. payload.Branches.Distinct(StringComparer.Ordinal)];
         entity.RateLimitPerMinute = payload.RateLimitPerMinute;
         entity.ContactEmail = string.IsNullOrWhiteSpace(payload.ContactEmail) ? null : payload.ContactEmail.Trim();
     }
 
-    /// <summary>The client id a new API client signs in as unless one is given.</summary>
-    internal static string DefaultClientId(string code) => "dc-api-" + code.ToLowerInvariant().Replace('_', '-');
-
-    private static void Scope(List<string> values, string field, HashSet<string> known, ValidationErrors errors)
+    /// <summary>
+    /// The account: a username no other client acts as, that is no person's; a named one must be a service account (or one
+    /// created in the same change set), while the client's own is created with it when missing.
+    /// </summary>
+    private async Task CheckAccountAsync(IntegrationRefs refs, string? code, string account, bool named, ValidationErrors errors, CancellationToken cancellationToken)
     {
-        if (values.Count == 0)
+        if (!ValidationErrors.UserName().IsMatch(account))
         {
-            errors.Add(field, "Choose the ones whose data the client sees, or all of them (*).");
+            errors.Add("account", "A username: letters, digits and . _ - @.");
             return;
         }
 
-        if (values.Contains("*"))
+        if (await refs.Context.ApiClients.AsNoTracking().AnyAsync(c => c.Account == account && c.Code != code, cancellationToken) || OtherPending(refs, code, "account", account))
         {
+            errors.Add("account", $"Another API client acts as {account}.");
             return;
         }
 
-        foreach (var (value, i) in values.Select((v, i) => (v, i)))
+        var pending = refs.Draft?.Items.LastOrDefault(i => i.EntityType == UserChangeType && i.EntityCode == account && i.After is not null);
+        if (pending is not null)
         {
-            if (!known.Contains(value))
+            if (!string.Equals(JsonNode.Parse(pending.After!)?["kind"]?.GetValue<string>(), "SERVICE", StringComparison.OrdinalIgnoreCase))
             {
-                errors.Add($"{field}[{i}]", $"'{value}' is not an active one{(field == "branches" ? " of the chosen companies" : string.Empty)}.");
+                errors.Add("account", $"{account} is a person's account: choose a service account.");
             }
+
+            return;
+        }
+
+        if (await accounts.IsPersonAsync(account, cancellationToken))
+        {
+            errors.Add("account", $"{account} is a person's account: choose a service account.");
+        }
+        else if (named && await accounts.FindAsync(account, cancellationToken) is null)
+        {
+            errors.Add("account", $"There is no service account {account}: leave it empty to create the client's own.");
         }
     }
+
+    /// <summary>Whether another API client in the change set has the same value of a field.</summary>
+    private static bool OtherPending(IntegrationRefs refs, string? code, string field, string value) =>
+        refs.Draft?.Items.Any(i => i.EntityType == IntegrationChangeTypes.ApiClient && i.EntityCode != code && i.After is not null
+            && JsonNode.Parse(i.After)?[field]?.GetValue<string>() is { } other && string.Equals(other.Trim(), value, StringComparison.Ordinal)) == true;
+
+    /// <summary>The change type of Apps Control users (a service account may be created in the same change set).</summary>
+    internal const string UserChangeType = "apps.user";
+
+    /// <summary>The service account a client acts as unless one is named.</summary>
+    internal static string DefaultAccount(string code) => "svc-" + code.ToLowerInvariant().Replace('_', '-');
+
+    /// <summary>The client id a new API client signs in as unless one is given.</summary>
+    internal static string DefaultClientId(string code) => "dc-api-" + code.ToLowerInvariant().Replace('_', '-');
 
     protected override Task<ApiClientPayload> ToPayloadAsync(IntegrationDbContext context, ApiClient entity, CancellationToken cancellationToken) =>
         Task.FromResult(new ApiClientPayload
@@ -424,9 +425,7 @@ internal sealed partial class ApiClientApplier(IntegrationDbContext db, IOrganiz
             ClientId = entity.ClientId,
             DescriptionAr = entity.DescriptionAr,
             DescriptionEn = entity.DescriptionEn,
-            Endpoints = entity.Endpoints,
-            Companies = entity.Companies,
-            Branches = entity.Branches,
+            Account = entity.Account,
             RateLimitPerMinute = entity.RateLimitPerMinute,
             ContactEmail = entity.ContactEmail,
         });

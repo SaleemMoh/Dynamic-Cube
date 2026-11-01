@@ -197,6 +197,11 @@ export const UX_TRANSLATIONS: TranslationDictionary = {
     'newUser.roles': 'الأدوار',
     'newUser.account': 'حساب الدخول',
     'newUser.save': 'إضافة المستخدم',
+    'newUser.kind': 'نوع الحساب',
+    'newUser.kind.PERSON': 'شخص',
+    'newUser.kind.SERVICE': 'حساب خدمي',
+    'newUser.serviceNote':
+      'حساب لنظام (مثل عميل الواجهة العامة) لا يسجل الدخول ولا يُنشأ له حساب دخول. أعطه أدواره وبياناته من تبويب الصلاحيات بعد إضافته، كأي مستخدم.',
     'newUser.saveWithAccount': 'إنشاء الحساب وإضافة المستخدم',
     'newUser.problem.userName': 'اسم المستخدم مطلوب: أحرف إنجليزية وأرقام و . _ - @',
     'newUser.problem.names': 'الاسم بالعربية والإنجليزية مطلوب.',
@@ -402,6 +407,11 @@ export const UX_TRANSLATIONS: TranslationDictionary = {
     'newUser.roles': 'Roles',
     'newUser.account': 'Sign-in account',
     'newUser.save': 'Add the user',
+    'newUser.kind': 'Account kind',
+    'newUser.kind.PERSON': 'Person',
+    'newUser.kind.SERVICE': 'Service account',
+    'newUser.serviceNote':
+      'An account for a system (such as a public API client): it never signs in and gets no sign-in account. Give it roles and data on its Access tab once added, like any user.',
     'newUser.saveWithAccount': 'Create the account and add the user',
     'newUser.problem.userName': 'A user name is required: letters, digits and . _ - @',
     'newUser.problem.names': 'Arabic and English names are required.',

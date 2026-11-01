@@ -2,19 +2,18 @@ using System.Text.Json.Nodes;
 using DynamicCube.Modules.AppsControl.Access;
 using DynamicCube.Modules.AppsControl.Lovs;
 using DynamicCube.Modules.AppsControl.Persistence;
-using DynamicCube.Platform.Lookups;
 using DynamicCube.Platform.PublicApi;
 using Microsoft.EntityFrameworkCore;
 
 namespace DynamicCube.Modules.AppsControl.Lookups;
 
 /// <summary>
-/// Several classes and lists of values in one call (ADR-0042): each class's values in effect today that serve the caller's
-/// companies, and the values of each list marked public (the lists the portal serves without sign-in), for those
-/// companies. Codes come separated by commas (or as repeated parameters); an unknown class or a list that is not public
-/// is refused.
+/// Several classes and lists of values in one call (ADR-0042): each class's values in effect today that serve the call's
+/// company and that the caller's data grants allow, and the values of each list marked public (the lists the portal serves
+/// without sign-in) for that company, as the caller's data grants allow them. Codes come separated by commas (or as
+/// repeated parameters); an unknown class or a list that is not public is refused.
 /// </summary>
-internal sealed class LookupsFunction(AppsControlDbContext context, ILookupDirectory lookups, LovService lovs) : IApiFunction
+internal sealed class LookupsFunction(AppsControlDbContext context, ApiClassValues classValues, ApiAccess access, LovService lovs) : IApiFunction
 {
     public const string Code = "LOOKUPS";
 
@@ -28,8 +27,8 @@ internal sealed class LookupsFunction(AppsControlDbContext context, ILookupDirec
         Code,
         "قيم تصنيفات وقوائم",
         "Classes and lists",
-        "قيم عدة تصنيفات (الفعالة اليوم ولشركات العميل) وقيم عدة قوائم عامة في استدعاء واحد.",
-        "The values of several classes (in effect today, for the client's companies) and of several public lists of values, in one call.",
+        "قيم عدة تصنيفات (الفعالة اليوم في شركة الاستدعاء وبحسب صلاحيات بيانات العميل) وقيم عدة قوائم عامة في استدعاء واحد.",
+        "The values of several classes (in effect today, in the company of the call, as the client's data permissions allow) and of several public lists of values, in one call.",
         [
             new("classes", false, "رموز التصنيفات مفصولة بفواصل (مثل REGION,SVC_CATEGORY)", "Class codes separated by commas (e.g. REGION,SVC_CATEGORY)"),
             new("lovs", false, "رموز القوائم العامة مفصولة بفواصل (مثل REGIONS)", "Public list codes separated by commas (e.g. REGIONS)"),
@@ -89,7 +88,7 @@ internal sealed class LookupsFunction(AppsControlDbContext context, ILookupDirec
         var classes = new JsonObject();
         foreach (var code in classCodes)
         {
-            var values = (await lookups.ValuesAsync(code, cancellationToken)).Where(v => caller.Companies is null || caller.Companies.Any(v.Serves));
+            var values = await classValues.ValuesAsync(code, caller, cancellationToken);
             classes[code] = new JsonArray([.. values.Select(v => (JsonNode)new JsonObject
             {
                 ["code"] = v.Code,
@@ -127,22 +126,22 @@ internal sealed class LookupsFunction(AppsControlDbContext context, ILookupDirec
         return new ApiFunctionResult(result);
     }
 
-    /// <summary>A public list's values as the portal serves them, for each of the caller's companies (all: no company), once each.</summary>
+    /// <summary>
+    /// A public list's values as the portal serves them, in the call's company, with the caller's data grants (the designer's
+    /// try as administrator: as the portal serves them to anyone, in every company).
+    /// </summary>
     private async Task<List<LovItem>> ListValuesAsync(string code, ApiCaller caller, CancellationToken cancellationToken)
     {
         var items = new List<LovItem>();
         var seen = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var company in caller.Companies is null ? [null] : caller.Companies.Select(c => (string?)c))
+        var snapshot = await access.SnapshotAsync(caller, cancellationToken) ?? AccessSnapshot.Anonymous("API", caller.Company);
+        for (var page = 1; items.Count < MaxListValues; page++)
         {
-            var access = AccessSnapshot.Anonymous("API", company);
-            for (var page = 1; items.Count < MaxListValues; page++)
+            var values = await lovs.GetValuesAsync(code, snapshot, new LovQuery(Page: page), publicOnly: true, cancellationToken);
+            items.AddRange(values.Items.Where(i => seen.Add(i.Value)));
+            if (!values.HasMore || values.Items.Count == 0)
             {
-                var values = await lovs.GetValuesAsync(code, access, new LovQuery(Page: page), publicOnly: true, cancellationToken);
-                items.AddRange(values.Items.Where(i => seen.Add(i.Value)));
-                if (!values.HasMore || values.Items.Count == 0)
-                {
-                    break;
-                }
+                break;
             }
         }
 

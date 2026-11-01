@@ -80,6 +80,7 @@ export function emptyEndpoint(): ApiEndpointDefinition {
     pageSize: 50,
     function: null,
     functionInputs: [],
+    actsForUser: false,
   };
 }
 
@@ -93,6 +94,7 @@ export function normalizeEndpoint(row: Record<string, unknown>): ApiEndpointDefi
     fields: (def.fields ?? []).map((f) => ({ ...f })),
     functionInputs: (def.functionInputs ?? []).map((b) => ({ ...b })),
     pageSize: def.pageSize || 50,
+    actsForUser: !!def.actsForUser,
   };
 }
 

@@ -92,6 +92,19 @@ try
         }
     }
 
+    // Public API (ADR-0042): endpoints are resources, and API clients from before service accounts get theirs.
+    using (var scope = host.Services.CreateScope())
+    {
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+        await using var work = await unitOfWork.BeginAsync(CancellationToken.None);
+        var moved = await IntegrationModule.BackfillPublicApiAccessAsync(scope.ServiceProvider, CancellationToken.None);
+        await work.CommitAsync(CancellationToken.None);
+        if (moved > 0 && logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("{Count} API client(s) given their service account", moved);
+        }
+    }
+
     logger.LogInformation("All migrations applied");
 
     // Demo data (DemoData:Name, e.g. "nhc"): loaded once, into an installation that does not have it yet.

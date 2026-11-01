@@ -43,6 +43,7 @@ public static class IntegrationModule
         AddApplier<ApiEndpointApplier>(services);
         AddApplier<ApiClientApplier>(services);
         services.AddScoped<IChangeSetPublishHook<IntegrationDbContext>, DefinitionCacheInvalidator>();
+        services.AddScoped<IChangeSetPublishHook<IntegrationDbContext>, PublicApiAccessSync>();
 
         services.AddSingleton<DefinitionCache>();
         services.AddSingleton<CircuitBreakers>();
@@ -59,6 +60,7 @@ public static class IntegrationModule
         services.AddScoped<PublicApiRunner>();
         services.AddScoped<PublicApiDocument>();
         services.AddScoped<ApiClientSignIns>();
+        services.AddScoped<PublicApiBackfill>();
 
         // Nafath (ADR-0043): signing in through Keycloak's bridge, and verifications in the person's app.
         services.Configure<NafathOptions>(configuration.GetSection(NafathOptions.Section));
@@ -90,6 +92,13 @@ public static class IntegrationModule
         return endpoints;
     }
 
+    /// <summary>
+    /// Run by the migrator: every public endpoint has its resource, and API clients from before service accounts get theirs
+    /// with the endpoints, companies and branches they had (ADR-0042). Returns how many clients moved.
+    /// </summary>
+    public static Task<int> BackfillPublicApiAccessAsync(IServiceProvider services, CancellationToken cancellationToken) =>
+        services.GetRequiredService<PublicApiBackfill>().RunAsync(cancellationToken);
+
     private static void AddApplier<T>(IServiceCollection services)
         where T : class, IConfigApplier, IChangeApplier<IntegrationDbContext>
     {
@@ -115,6 +124,11 @@ internal static class IntegrationCatalog
                 RoleActions: new Dictionary<string, string[]> { [BuiltInRoles.ConfigChecker] = [CatalogActions.View, CatalogActions.Execute] }),
             new(IntegrationResources.CallLog, "سجل الاستدعاءات", "Call log", "INTERNAL", IntegrationResources.Root, [CatalogActions.View]),
             new(IntegrationResources.ApiCalls, "سجل الواجهة العامة", "Public API calls", "INTERNAL", IntegrationResources.Root, [CatalogActions.View]),
+
+            // The public API's endpoints (ADR-0042): one resource per endpoint below this one; roles give VIEW on an endpoint to
+            // the service accounts that may call it. People need none of them.
+            new(ApiResources.Root, "نقاط الواجهة العامة", "Public API endpoints", "INTERNAL", IntegrationResources.Root, [CatalogActions.View], CatalogResourceTypes.Api,
+                RoleActions: new Dictionary<string, string[]> { [BuiltInRoles.ConfigMaker] = [], [BuiltInRoles.ConfigChecker] = [] }),
         ],
         MenuGroup = new CatalogMenuGroup(MenuGroup, "التكاملات", "Integrations", "INTERNAL", "hub", 800),
         Menus =

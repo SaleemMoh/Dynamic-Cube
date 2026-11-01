@@ -2,6 +2,7 @@ using System.Data.Common;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using DynamicCube.Modules.AppsControl.Access;
 using DynamicCube.Platform.Configuration;
 using DynamicCube.Platform.PublicApi;
 
@@ -49,7 +50,7 @@ internal static class DataRowReader
 }
 
 /// <summary>Public endpoints' read-data queries (ADR-0042), on the visual query builder's compiler and its read-only runs.</summary>
-internal sealed class DataQueries(LovQueryService queries) : IDataQueries
+internal sealed class DataQueries(LovQueryService queries, ApiAccess access) : IDataQueries
 {
     public async Task<IReadOnlyDictionary<string, string[]>> CheckAsync(JsonNode? query, IReadOnlyList<DataField> fields, IReadOnlyCollection<string> inputs, CancellationToken cancellationToken)
     {
@@ -91,18 +92,15 @@ internal sealed class DataQueries(LovQueryService queries) : IDataQueries
     {
         ArgumentNullException.ThrowIfNull(caller);
         var definition = Parse(query, out var parseError) ?? throw new InvalidOperationException(parseError ?? "The endpoint has no query.");
-        var facts = new LovUserFacts(
-            null,
-            caller.Branches,
-            null,
-            [],
-            [],
-            "api:" + caller.ClientCode,
-            "API",
-            [],
-            caller.Companies,
-            AllCompanies: caller.Companies is null);
-        var (rows, problems) = await queries.RowsAsync(definition, Fields(fields), new LovQueryRun(facts, Limit: limit + 1, Offset: offset, Inputs: inputs), cancellationToken);
+
+        // The account the call runs as (the client's service account, or the person it acts for): its facts, company and
+        // branches, and its data scopes on the endpoint's resource. Without an account only the caller's company and branches
+        // apply (none at all for the designer's try as administrator).
+        var snapshot = await access.SnapshotAsync(caller, cancellationToken);
+        var facts = snapshot is null
+            ? new LovUserFacts(caller.Company, caller.Branches, null, [], [], "api:" + caller.ClientCode, "API", [], AllCompanies: caller.Company is null)
+            : LovQueryService.Facts(snapshot) with { Branches = caller.Branches };
+        var (rows, problems) = await queries.RowsAsync(definition, Fields(fields), new LovQueryRun(facts, Limit: limit + 1, Offset: offset, Inputs: inputs), snapshot, caller.Resource, cancellationToken);
         if (rows is null)
         {
             // Problems at an input are the caller's (400); any other means the endpoint no longer fits the tables.

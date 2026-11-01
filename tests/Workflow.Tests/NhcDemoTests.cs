@@ -1,8 +1,10 @@
 using System.Text.Json.Nodes;
 using DynamicCube.Modules.Documents.Persistence;
+using DynamicCube.Modules.Integration.Runtime;
 using DynamicCube.Modules.Workflow.Domain;
 using DynamicCube.Modules.Workflow.Runtime;
 using DynamicCube.Platform.ChangeSets;
+using DynamicCube.Platform.PublicApi;
 using DynamicCube.Platform.Workflow;
 using DynamicCube.Tests.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -103,14 +105,20 @@ public sealed class NhcDemoTests
             cardData["grade"]!.GetValue<string>().ShouldBe("خبير");
             cardData["region"]!.GetValue<string>().ShouldBe("منطقة مكة المكرمة");
 
-            // The public API (ADR-0042): the regions endpoint as the partner demo client calls it.
+            // The public API (ADR-0042): the regions endpoint as the partner demo client calls it — as its service account, whose
+            // role gives it the endpoints in company MAIN.
             var regions = await host.Host.AsAsync("admin", async sp =>
             {
                 var db = sp.GetRequiredService<Integration.Persistence.IntegrationDbContext>();
+                var access = sp.GetRequiredService<IApiAccess>();
                 var endpoint = await db.ApiEndpoints.SingleAsync(e => e.Code == "REGIONS");
                 var client = await db.ApiClients.SingleAsync(c => c.Code == "PARTNER_DEMO");
-                client.Endpoints.ShouldBe(["REGIONS", "REQUEST_STATUS", "CERTIFICATE_CHECK", "LOOKUPS", "CLASSES"]);
-                var caller = new DynamicCube.Platform.PublicApi.ApiCaller(client.Code, client.Companies, null);
+                client.Account.ShouldBe("svc-partner-demo");
+                (await access.CallableAsync(client.Account, CancellationToken.None)).ShouldBe(
+                    new[] { "REGIONS", "REQUEST_STATUS", "CERTIFICATE_CHECK", "LOOKUPS", "CLASSES" }.Select(ApiResources.Of), ignoreOrder: true);
+                var caller = (await access.ResolveAsync(new ApiAccessRequest(client.Code, client.Account, ApiResources.Of("REGIONS"), null, null, false), CancellationToken.None)).Caller;
+                caller.ShouldNotBeNull();
+                caller.Company.ShouldBe("MAIN");
                 var runner = sp.GetRequiredService<Integration.Runtime.PublicApiRunner>();
                 var all = await runner.RunAsync(endpoint, new Dictionary<string, string>(), new Dictionary<string, string?>(), caller, false, CancellationToken.None);
                 var makkah = await runner.RunAsync(endpoint, new Dictionary<string, string>(), new Dictionary<string, string?> { ["name"] = "mak" }, caller, false, CancellationToken.None);
@@ -121,17 +129,23 @@ public sealed class NhcDemoTests
             regions.Item2.Body!["items"]!.AsArray().Select(r => r!["code"]!.GetValue<string>()).ShouldBe(["MAKKAH"]);
 
             // Several classes and the public regions list in one call.
-            var lookups = await host.Host.AsAsync("admin", async sp =>
+            async Task<ApiAnswer> CallAsync(string code, Dictionary<string, string?> query, string? actingUser = null) => await host.Host.AsAsync("admin", async sp =>
             {
                 var db = sp.GetRequiredService<Integration.Persistence.IntegrationDbContext>();
-                var endpoint = await db.ApiEndpoints.SingleAsync(e => e.Code == "LOOKUPS");
-                var caller = new DynamicCube.Platform.PublicApi.ApiCaller("PARTNER_DEMO", ["MAIN"], null);
-                return (await sp.GetRequiredService<Integration.Runtime.PublicApiRunner>().RunAsync(
-                    endpoint, new Dictionary<string, string>(), new Dictionary<string, string?> { ["classes"] = "REGION,SVC_CATEGORY", ["lovs"] = "REGIONS" }, caller, false, CancellationToken.None)).Answer;
+                var endpoint = await db.ApiEndpoints.SingleAsync(e => e.Code == code);
+                var caller = (await sp.GetRequiredService<IApiAccess>().ResolveAsync(
+                    new ApiAccessRequest("PARTNER_DEMO", "svc-partner-demo", ApiResources.Of(code), null, actingUser, endpoint.ActsForUser), CancellationToken.None)).Caller!;
+                return (await sp.GetRequiredService<Integration.Runtime.PublicApiRunner>().RunAsync(endpoint, new Dictionary<string, string>(), query, caller, false, CancellationToken.None)).Answer;
             });
+            var lookups = await CallAsync("LOOKUPS", new Dictionary<string, string?> { ["classes"] = "REGION,SVC_CATEGORY", ["lovs"] = "REGIONS" });
             lookups.Status.ShouldBe(200);
             lookups.Body!["classes"]!.AsObject().Select(c => c.Key).ShouldBe(["REGION", "SVC_CATEGORY"]);
             lookups.Body!["lovs"]!["REGIONS"]!.AsArray().Count.ShouldBe(13);
+
+            // Acting for the Riyadh requests manager, whose role gives the Riyadh region only.
+            string[] Regions(ApiAnswer answer) => [.. answer.Body!.AsArray().Single(c => c!["code"]!.GetValue<string>() == "REGION")!["values"]!.AsArray().Select(v => v!["code"]!.GetValue<string>())];
+            Regions(await CallAsync("CLASSES", new Dictionary<string, string?> { ["codes"] = "REGION" })).Length.ShouldBe(13);
+            Regions(await CallAsync("CLASSES", new Dictionary<string, string?> { ["codes"] = "REGION" }, "ruh.manager")).ShouldBe(["RIYADH"]);
         }
         finally
         {

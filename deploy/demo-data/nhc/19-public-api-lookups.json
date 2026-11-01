@@ -50,32 +50,6 @@
           }
         ]
       }
-    },
-    {
-      "entityType": "integ.api-client",
-      "entityCode": "PARTNER_DEMO",
-      "operation": "UPSERT",
-      "payload": {
-        "nameAr": "شريك تجريبي",
-        "nameEn": "Partner demo",
-        "descriptionAr": "نظام شريك تجريبي يستدعي الواجهة العامة ببيانات عميله (dc-api-partner-demo / dev-api-partner-secret في بيئة التطوير).",
-        "descriptionEn": "A sample partner system calling the public API with its client's credentials (dc-api-partner-demo / dev-api-partner-secret in development).",
-        "clientId": "dc-api-partner-demo",
-        "endpoints": [
-          "REGIONS",
-          "REQUEST_STATUS",
-          "CERTIFICATE_CHECK",
-          "LOOKUPS"
-        ],
-        "companies": [
-          "MAIN"
-        ],
-        "branches": [
-          "*"
-        ],
-        "rateLimitPerMinute": 60,
-        "contactEmail": "partner@example.com"
-      }
     }
   ]
 }

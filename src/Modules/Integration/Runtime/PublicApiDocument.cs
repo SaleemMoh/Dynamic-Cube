@@ -74,6 +74,19 @@ public sealed class PublicApiDocument(IDataQueries queries, IEnumerable<IApiFunc
             parameters.Add(Parameter("offset", "query", false, "Rows to skip (default 0).", new JsonObject { ["type"] = "integer" }, null));
         }
 
+        // Whose access applies: the company of the call, and on some endpoints a registered person the client acts for.
+        parameters.Add(Parameter(ApiHeaders.Company, "header", false, "The company the call works in; needed when the client works in several.", new JsonObject { ["type"] = "string" }, null));
+        if (endpoint.ActsForUser)
+        {
+            parameters.Add(Parameter(
+                ApiHeaders.ActingUser,
+                "header",
+                false,
+                "A person registered with the platform (username, national ID or email) whose roles and data then apply; someone not registered gets the client's own access.",
+                new JsonObject { ["type"] = "string" },
+                null));
+        }
+
         var responses = new JsonObject { ["200"] = new JsonObject { ["description"] = "OK", ["content"] = Json(await ResultAsync(endpoint, cancellationToken)) } };
         foreach (var (status, text) in Problems(endpoint))
         {
