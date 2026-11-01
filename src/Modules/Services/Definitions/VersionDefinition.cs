@@ -27,6 +27,19 @@ public sealed class VersionDefinition
     /// </summary>
     public AvailabilityDefinition? Availability { get; set; }
 
+    /// <summary>
+    /// What the applicant must already have before starting or submitting (3f): a request of another service in some
+    /// statuses (e.g. an approved classification), or a document of a type in some statuses — each with its own message and,
+    /// optionally, the service to start to meet it.
+    /// </summary>
+    public List<PrerequisiteDefinition> Prerequisites { get; set; } = [];
+
+    /// <summary>
+    /// Services requested together with this one (3f): when the request is submitted, a request of each (the required ones,
+    /// and the optional ones the applicant ticked) is made for the same applicant with the answers both share, linked to it.
+    /// </summary>
+    public List<BundledServiceDefinition> Bundle { get; set; } = [];
+
     /// <summary>The service card of the portal: steps, terms of use, required documents, audience, channels and contacts.</summary>
     public ServiceCardDefinition Card { get; set; } = new();
 
@@ -336,6 +349,63 @@ public enum DocumentDate
 {
     Issued,
     Expires,
+}
+
+/// <summary>What a prerequisite asks for: a request of a service, or a document of a type.</summary>
+public enum PrerequisiteKind
+{
+    Request,
+    Document,
+}
+
+/// <summary>
+/// One condition the applicant (the request's beneficiary) must meet: a request of <see cref="Service"/> in one of
+/// <see cref="Statuses"/> (default APPROVED), made or closed in the last <see cref="WithinDays"/> days; or a document of
+/// <see cref="DocumentType"/> in one of <see cref="Statuses"/> (default ACTIVE), valid at least <see cref="ValidForDays"/>
+/// more days. When it is not met the applicant sees the message and, when there is one, a link to start the service that
+/// meets it.
+/// </summary>
+public sealed class PrerequisiteDefinition
+{
+    public string Code { get; set; } = string.Empty;
+
+    public PrerequisiteKind Kind { get; set; }
+
+    /// <summary>Requests: the service whose request is needed.</summary>
+    public string? Service { get; set; }
+
+    /// <summary>Documents: the type of document needed.</summary>
+    public string? DocumentType { get; set; }
+
+    /// <summary>Request statuses (APPROVED, SUBMITTED, IN_PROGRESS…) or document statuses (ACTIVE, EXPIRED, SUSPENDED).</summary>
+    public List<string> Statuses { get; set; } = [];
+
+    /// <summary>Requests: made (or closed) no more than this many days ago.</summary>
+    public int? WithinDays { get; set; }
+
+    /// <summary>Documents: still valid at least this many days from today.</summary>
+    public int? ValidForDays { get; set; }
+
+    /// <summary>The service the applicant can start to meet it (requests: the required service unless another is given).</summary>
+    public string? StartService { get; set; }
+
+    public string MessageAr { get; set; } = string.Empty;
+
+    public string MessageEn { get; set; } = string.Empty;
+}
+
+/// <summary>A service requested together with this one, required or offered to the applicant to tick.</summary>
+public sealed class BundledServiceDefinition
+{
+    public string Service { get; set; } = string.Empty;
+
+    /// <summary>Always requested; otherwise the applicant chooses it when submitting.</summary>
+    public bool Required { get; set; }
+
+    /// <summary>What the applicant reads beside it (the service's name when empty).</summary>
+    public string? NoteAr { get; set; }
+
+    public string? NoteEn { get; set; }
 }
 
 /// <summary>A number of days before (negative) or after a date of the document.</summary>

@@ -238,7 +238,8 @@ interface DrawnEdge {
     .dc-canvas__box--DOCUMENT,
     .dc-canvas__box--PAYMENT,
     .dc-canvas__box--VISIT,
-    .dc-canvas__box--INTEGRATION {
+    .dc-canvas__box--INTEGRATION,
+    .dc-canvas__box--SUB_REQUEST {
       fill: #f0f6ff;
       stroke: #84adff;
     }

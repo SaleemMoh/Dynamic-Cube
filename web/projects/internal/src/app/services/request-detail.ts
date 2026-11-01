@@ -7,6 +7,7 @@ import {
   BillCard,
   VisitCard,
   FeeTable,
+  LinkedRequests,
   LocalizePipe,
   RequestAnswers,
   UploadedFile,
@@ -32,6 +33,7 @@ import { GraphDefinition, WorkflowGraph } from '../workflows/workflow-graph';
     MatProgressBarModule,
     RouterLink,
     FeeTable,
+    LinkedRequests,
     LocalizePipe,
     RequestAnswers,
     TranslatePipe,
@@ -99,6 +101,7 @@ import { GraphDefinition, WorkflowGraph } from '../workflows/workflow-graph';
           @for (visit of d.view.visits ?? []; track visit.id) {
             <a class="dc-request-visit" [routerLink]="['/visits', visit.id]"><dc-visit-card [visit]="visit" /></a>
           }
+          <dc-linked-requests [links]="d.view.links ?? []" base="/services/requests" />
           <section class="dc-card">
             <h2>{{ 'requests.timeline' | dcTranslate }}</h2>
             <ol class="dc-timeline" data-testid="timeline">

@@ -155,6 +155,31 @@ internal sealed partial class WorkflowVersionApplier(WorkflowDbContext db, JsonL
         if (refs.IsValidating)
         {
             await CheckRuleSetsAsync(definition, refs, errors, cancellationToken);
+            await CheckChildServicesAsync(definition, refs, errors, cancellationToken);
+        }
+    }
+
+    /// <summary>Sub-request steps (3f) name an active service (or one created in the same change set).</summary>
+    private async Task CheckChildServicesAsync(WorkflowDefinition definition, ConfigRefs<WorkflowDbContext> refs, ValidationErrors errors, CancellationToken cancellationToken)
+    {
+        if (services.GetService<Platform.Services.IRequestSpawner>() is not { } spawner)
+        {
+            return;
+        }
+
+        for (var i = 0; i < definition.Nodes.Count; i++)
+        {
+            var code = definition.Nodes[i].ChildService;
+            if (definition.Nodes[i].Type != NodeType.SubRequest || string.IsNullOrWhiteSpace(code))
+            {
+                continue;
+            }
+
+            var pending = refs.Draft?.Items.Any(item => item.EntityType == "svc.service" && item.EntityCode == code && item.Operation == ChangeOperation.Create) == true;
+            if (!pending && !await spawner.ServiceExistsAsync(code, cancellationToken))
+            {
+                errors.Add($"definition.nodes[{i}].childService", $"There is no active service {code}.");
+            }
         }
     }
 

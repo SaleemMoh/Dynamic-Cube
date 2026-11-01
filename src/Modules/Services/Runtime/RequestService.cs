@@ -41,6 +41,7 @@ internal sealed class RequestService(
     IFileStorage storage,
     PortalChannel portal,
     RequestIntegrations integrations,
+    Prerequisites prerequisites,
     TimeProvider clock)
 {
     private static readonly StatusCategory[] OpenStatuses = [StatusCategory.Draft, StatusCategory.Submitted, StatusCategory.InProgress, StatusCategory.PendingCustomer, StatusCategory.PendingExternal, StatusCategory.PendingPayment];
@@ -342,6 +343,25 @@ internal sealed class RequestService(
             failures.Add(closed);
         }
 
+        failures.AddRange(await prerequisites.CheckAsync(version.Definition, acting.PartyId, cancellationToken));
+
+        // The services requested with this one: the required ones and those the applicant ticked, each open to them now.
+        var bundled = new List<(Service Service, Guid VersionId, ResolvedVersion Version)>();
+        foreach (var item in version.Definition.Bundle.Where(b => b.Required || (request.Bundle ?? []).Contains(b.Service, StringComparer.Ordinal)))
+        {
+            var (other, otherVersionId) = await CurrentAsync(item.Service, cancellationToken);
+            var otherVersion = await cache.GetAsync(context, otherVersionId, cancellationToken);
+            var otherFailures = eligibility.Check(other, otherVersion, facts, acting, Context(facts, acting, data, null)).ToList();
+            otherFailures.AddRange(await prerequisites.CheckAsync(otherVersion.Definition, acting.PartyId, cancellationToken));
+            if (!acting.Covers(other.Code))
+            {
+                otherFailures.Add(new("NOT_COVERED", "لا تغطي صلاحيتك هذه الخدمة.", "Your relationship does not cover this service."));
+            }
+
+            failures.AddRange(otherFailures.Select(f => f with { Code = $"BUNDLE_{other.Code}_{f.Code}", MessageAr = $"{other.NameAr}: {f.MessageAr}", MessageEn = $"{other.NameEn}: {f.MessageEn}" }));
+            bundled.Add((other, otherVersionId, otherVersion));
+        }
+
         if (failures.Count > 0)
         {
             throw new NotEligibleException(failures);
@@ -426,10 +446,141 @@ internal sealed class RequestService(
                     service.Code, entity.LevelCode, level?.SlaWorkingDays, entity.CompanyCode, entity.BranchCode),
                 cancellationToken);
 
+            // The bundle, with the same answers: submitted when they are complete, otherwise drafts for the applicant.
+            foreach (var (other, otherVersionId, otherVersion) in bundled)
+            {
+                await CreateLinkedAsync(other, otherVersionId, otherVersion, facts, acting, entity, RequestLinkKind.Bundled, null, [], submit: true, null, cancellationToken);
+            }
+
             await work.CommitAsync(cancellationToken);
         }
 
         return await ViewAsync(entity, service, version, facts, acting, null, cancellationToken, document);
+    }
+
+    /// <summary>
+    /// A request a workflow step asks for (3f): for the parent's applicant, with the parent's shared answers and the step's
+    /// data; submitted at once when the step says so and its answers are complete, otherwise a draft for the applicant.
+    /// </summary>
+    public async Task<ServiceRequest> SpawnAsync(Platform.Services.SpawnRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var parent = await context.Requests.SingleOrDefaultAsync(r => r.Id == request.ParentId, cancellationToken)
+            ?? throw new InvalidOperationException($"There is no request {request.ParentId}.");
+        var service = await context.Services.AsNoTracking().SingleOrDefaultAsync(s => s.Code == request.ServiceCode && s.IsActive, cancellationToken)
+            ?? throw new InvalidOperationException($"There is no active service {request.ServiceCode}.");
+        var versionId = await CurrentVersionIdAsync(service.Id, cancellationToken)
+            ?? throw new InvalidOperationException($"Service {request.ServiceCode} has no published version.");
+        var version = await cache.GetAsync(context, versionId, cancellationToken);
+        var facts = await FactsAsync(parent.BeneficiaryPartyId, cancellationToken);
+        var acting = new ActingParty(parent.SubmitterPartyId, parent.BeneficiaryPartyId, facts.Kind, facts.NameAr, facts.NameEn, null, []);
+        return await CreateLinkedAsync(service, versionId, version, facts, acting, parent, RequestLinkKind.Spawned, request.Step, request.Data, request.Submit, request.RequestId, cancellationToken);
+    }
+
+    /// <summary>Whether steps may make requests of the service: it exists and is active.</summary>
+    public Task<bool> ServiceExistsAsync(string code, CancellationToken cancellationToken) =>
+        context.Services.AsNoTracking().AnyAsync(s => s.Code == code && s.IsActive, cancellationToken);
+
+    /// <summary>
+    /// A request made with or from another (3f), for the same applicant: the party's prefilled answers, the parent's answers
+    /// to the questions both forms share, then <paramref name="extra"/>. With <paramref name="submit"/> it is submitted when
+    /// nothing is left for the applicant (answers complete and valid, no level to choose, no declaration, no Nafath
+    /// confirmation, no required integration step); otherwise it is a draft the applicant is told to complete.
+    /// </summary>
+    private async Task<ServiceRequest> CreateLinkedAsync(
+        Service service,
+        Guid versionId,
+        ResolvedVersion version,
+        PartyFacts facts,
+        ActingParty acting,
+        ServiceRequest parent,
+        RequestLinkKind kind,
+        string? step,
+        JsonObject extra,
+        bool submit,
+        Guid? id,
+        CancellationToken cancellationToken)
+    {
+        var data = Prefill(version, facts, acting);
+        foreach (var (key, value) in JsonNode.Parse(parent.Data)!.AsObject().Where(p => version.Questions.ContainsKey(p.Key)))
+        {
+            data[key] = value?.DeepClone();
+        }
+
+        foreach (var (key, value) in extra)
+        {
+            data[key] = value?.DeepClone();
+        }
+
+        await integrations.FillAsync(version, Context(facts, acting, data, null), data, lockedOnly: false, cancellationToken);
+        var now = clock.GetUtcNow();
+        var entity = new ServiceRequest
+        {
+            ServiceId = service.Id,
+            ServiceCode = service.Code,
+            ServiceVersionId = versionId,
+            VersionNumber = version.Number,
+            SubmitterPartyId = parent.SubmitterPartyId,
+            SubmitterName = parent.SubmitterName,
+            BeneficiaryPartyId = parent.BeneficiaryPartyId,
+            BeneficiaryNameAr = parent.BeneficiaryNameAr,
+            BeneficiaryNameEn = parent.BeneficiaryNameEn,
+            StatusCategory = StatusCategory.Draft,
+            DisplayStatus = "DRAFT",
+            Data = data.ToJsonString(),
+            LevelCode = version.Definition.Levels.Count == 1 ? version.Definition.Levels[0].Code : null,
+            CurrentStep = version.Definition.Steps.FirstOrDefault()?.Code,
+            DraftExpiresAt = now.AddDays(Math.Max(1, service.DraftExpiryDays)),
+            ParentRequestId = parent.Id,
+            LinkKind = kind,
+            ParentStep = step,
+        };
+        if (id is { } given)
+        {
+            entity.Id = given;
+        }
+
+        var (company, branch) = await PlaceAsync(service, data, cancellationToken);
+        (entity.CompanyCode, entity.BranchCode) = (company ?? parent.CompanyCode, branch ?? parent.BranchCode);
+        context.Requests.Add(entity);
+        AddEvent(entity, RequestEventTypes.Created, null, StatusCategory.Draft, parent.Number);
+
+        var ruleContext = Context(facts, acting, data, entity.LevelCode);
+        var check = await validator.CheckAsync(version, data, ruleContext, null, cancellationToken);
+        var complete = submit
+            && check.Errors.Count == 0
+            && (version.Definition.Levels.Count == 0 || entity.LevelCode is not null)
+            && version.Definition.Steps.All(s => s.Type != StepType.Declaration && s is not { Type: StepType.Integration, Integration.Required: true })
+            && !version.Definition.ConfirmWithNafath;
+        var workflow = complete ? await serviceWorkflows.WorkflowOfAsync(service.Code, cancellationToken) : null;
+        if (workflow is null || !await workflows.CanStartAsync(workflow, cancellationToken))
+        {
+            // The applicant completes it: it waits in their requests, and they are told.
+            await context.SaveChangesAsync(cancellationToken);
+            RequestNotifications.Raise(context, clock, RequestNotifications.Opened, entity, service.NameAr, service.NameEn, parent.Number);
+            await context.SaveChangesAsync(cancellationToken);
+            return entity;
+        }
+
+        var lines = fees.Compute(version.Definition, entity.LevelCode, Context(facts, acting, check.Data, entity.LevelCode));
+        entity.Data = check.Data.ToJsonString();
+        entity.Fees = [.. lines];
+        entity.FeeTotal = lines.Sum(l => l.Total);
+        entity.Number = await NextNumberAsync(service.NumberPrefix, now, cancellationToken);
+        entity.StatusCategory = StatusCategory.Submitted;
+        entity.DisplayStatus = "SUBMITTED";
+        entity.SubmittedAt = now;
+        entity.DraftExpiresAt = null;
+        entity.CurrentStep = null;
+        AddEvent(entity, RequestEventTypes.Submitted, StatusCategory.Draft, StatusCategory.Submitted, parent.Number);
+        RequestNotifications.Raise(context, clock, RequestNotifications.Submitted, entity, service.NameAr, service.NameEn, null);
+        await context.SaveChangesAsync(cancellationToken);
+        var level = version.Definition.Levels.FirstOrDefault(l => l.Code == entity.LevelCode);
+        await workflows.StartAsync(
+            new WorkflowStart(workflow, RequestSubject.Type, entity.Id, entity.Number, service.NameAr, service.NameEn, entity.BeneficiaryNameAr, entity.BeneficiaryNameEn,
+                service.Code, entity.LevelCode, level?.SlaWorkingDays, entity.CompanyCode, entity.BranchCode),
+            cancellationToken);
+        return entity;
     }
 
     /// <summary>Sends the applicant's Nafath app a request to confirm this draft (versions that ask for it, ADR-0043).</summary>
@@ -635,7 +786,10 @@ internal sealed class RequestService(
         entity.DisplayStatus = "CANCELLED";
         entity.ClosedAt = clock.GetUtcNow();
         AddEvent(entity, RequestEventTypes.Cancelled, StatusCategory.Draft, StatusCategory.Cancelled, null);
+        await using var work = await unitOfWork.BeginAsync(cancellationToken);
         await context.SaveChangesAsync(cancellationToken);
+        await RequestLinks.TellParentAsync(services, entity, clock, cancellationToken);
+        await work.CommitAsync(cancellationToken);
     }
 
     private async Task<RequestView> ViewAsync(
@@ -675,7 +829,55 @@ internal sealed class RequestService(
         {
             Integrations = runs,
             Changes = changes ?? [],
+            Links = await LinksAsync(context, entity, cancellationToken),
+            Bundle = entity.StatusCategory == StatusCategory.Draft ? await BundleOptionsAsync(version, facts, acting, data, cancellationToken) : [],
         };
+    }
+
+    /// <summary>The request it came from and the requests that came from it (3f), newest last.</summary>
+    internal static async Task<IReadOnlyList<LinkedRequest>> LinksAsync(ServicesDbContext context, ServiceRequest entity, CancellationToken cancellationToken)
+    {
+        var rows = await context.Requests.AsNoTracking()
+            .Where(r => r.Id == entity.ParentRequestId || r.ParentRequestId == entity.Id)
+            .OrderBy(r => r.CreatedAt)
+            .Join(context.Services, r => r.ServiceId, s => s.Id, (r, s) => new { Request = r, s.NameAr, s.NameEn })
+            .ToListAsync(cancellationToken);
+        return [.. rows.Select(row => new LinkedRequest(
+            row.Request.Id,
+            row.Request.Number,
+            row.Request.ServiceCode,
+            row.NameAr,
+            row.NameEn,
+            row.Request.StatusCategory,
+            row.Request.DisplayStatus,
+            row.Request.Id == entity.ParentRequestId ? "PARENT" : row.Request.LinkKind == RequestLinkKind.Spawned ? "SPAWNED" : "BUNDLED",
+            row.Request.Id == entity.ParentRequestId ? entity.ParentStep : row.Request.ParentStep))];
+    }
+
+    /// <summary>A draft's bundled services, each checked for the applicant as it will be on submitting.</summary>
+    private async Task<IReadOnlyList<BundleOption>> BundleOptionsAsync(ResolvedVersion version, PartyFacts facts, ActingParty acting, JsonObject data, CancellationToken cancellationToken)
+    {
+        var options = new List<BundleOption>();
+        foreach (var item in version.Definition.Bundle)
+        {
+            Service other;
+            ResolvedVersion otherVersion;
+            try
+            {
+                var (found, otherVersionId) = await CurrentAsync(item.Service, cancellationToken);
+                (other, otherVersion) = (found, await cache.GetAsync(context, otherVersionId, cancellationToken));
+            }
+            catch (RequestNotFoundException)
+            {
+                continue;
+            }
+
+            var reasons = eligibility.Check(other, otherVersion, facts, acting, Context(facts, acting, data, null)).ToList();
+            reasons.AddRange(await prerequisites.CheckAsync(otherVersion.Definition, acting.PartyId, cancellationToken));
+            options.Add(new BundleOption(other.Code, other.NameAr, other.NameEn, item.Required, item.NoteAr, item.NoteEn, reasons.Count == 0, reasons));
+        }
+
+        return options;
     }
 
     /// <summary>Expires a draft past its date, or moves it to the current version when the service says so. True when expired.</summary>
@@ -687,7 +889,10 @@ internal sealed class RequestService(
             entity.DisplayStatus = "EXPIRED";
             entity.ClosedAt = clock.GetUtcNow();
             AddEvent(entity, RequestEventTypes.Expired, StatusCategory.Draft, StatusCategory.Cancelled, null);
+            await using var work = await unitOfWork.BeginAsync(cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
+            await RequestLinks.TellParentAsync(services, entity, clock, cancellationToken);
+            await work.CommitAsync(cancellationToken);
             return true;
         }
 
@@ -855,6 +1060,7 @@ internal sealed class RequestService(
     private async Task<List<EligibilityFailure>> FailuresAsync(Service service, ResolvedVersion version, PartyFacts facts, ActingParty acting, JsonObject ruleContext, List<DocumentOption> options, CancellationToken cancellationToken)
     {
         var failures = eligibility.Check(service, version, facts, acting, ruleContext).ToList();
+        failures.AddRange(await prerequisites.CheckAsync(version.Definition, acting.PartyId, cancellationToken));
         if (service.DocumentType is null)
         {
             return failures;

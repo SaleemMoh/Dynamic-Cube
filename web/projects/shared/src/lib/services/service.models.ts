@@ -261,6 +261,33 @@ export interface EligibilityFailure {
   code: string;
   messageAr: string;
   messageEn: string;
+  /** An unmet prerequisite: the service the applicant can start to meet it (3f). */
+  startService?: string | null;
+}
+
+/** A request linked to another (3f): the one it came from (PARENT), or one bundled with it or made by one of its steps. */
+export interface LinkedRequest {
+  id: string;
+  number: string | null;
+  serviceCode: string;
+  serviceNameAr: string;
+  serviceNameEn: string;
+  status: StatusCategory;
+  displayStatus: string;
+  relation: 'PARENT' | 'BUNDLED' | 'SPAWNED';
+  step: string | null;
+}
+
+/** A service bundled with a draft's (3f): always requested, or the applicant's choice; open to them now or not. */
+export interface BundleOption {
+  service: string;
+  nameAr: string;
+  nameEn: string;
+  required: boolean;
+  noteAr: string | null;
+  noteEn: string | null;
+  isEligible: boolean;
+  reasons: EligibilityFailure[];
 }
 
 export interface CatalogEntry {
@@ -369,6 +396,10 @@ export interface RequestView {
   integrations?: Record<string, IntegrationStepRun> | null;
   /** Answers that changed when the draft's integrations were read again on opening it. */
   changes?: AnswerChange[] | null;
+  /** Requests linked to this one (3f): the one it came from, and those bundled with it or made by its steps. */
+  links?: LinkedRequest[] | null;
+  /** A draft's bundled services (3f). */
+  bundle?: BundleOption[] | null;
 }
 
 export type VisitStatus = 'PENDING' | 'SCHEDULED' | 'IN_PROGRESS' | 'SENT' | 'COMPLETED' | 'CANCELLED';

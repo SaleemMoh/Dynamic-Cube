@@ -119,6 +119,8 @@ internal static partial class DefinitionValidator
         Fees(definition, evaluator, errors);
         Card(definition.Card, errors);
         Availability(definition.Availability, errors);
+        Prerequisites(definition.Prerequisites, errors);
+        Bundle(definition.Bundle, errors);
         Panel(definition, evaluator, errors);
     }
 
@@ -266,6 +268,53 @@ internal static partial class DefinitionValidator
     }
 
     private static readonly string[] DocumentStatuses = ["ACTIVE", "EXPIRED", "SUSPENDED"];
+
+    /// <summary>Request statuses a prerequisite may ask for.</summary>
+    internal static readonly string[] RequestStatuses = ["SUBMITTED", "IN_PROGRESS", "PENDING_CUSTOMER", "PENDING_EXTERNAL", "PENDING_PAYMENT", "APPROVED", "REJECTED", "CLOSED"];
+
+    /// <summary>Each prerequisite: a code, what it asks for, known statuses, sensible days and a message in both languages.</summary>
+    private static void Prerequisites(List<PrerequisiteDefinition> prerequisites, ValidationErrors errors)
+    {
+        Unique(prerequisites.Select(p => p.Code), "definition.prerequisites", errors);
+        foreach (var (prerequisite, i) in prerequisites.Select((p, i) => (p, i)))
+        {
+            var field = $"definition.prerequisites[{i}]";
+            CheckCode(prerequisite.Code, field + ".code", errors);
+            errors.Required(field + ".messageAr", prerequisite.MessageAr);
+            errors.Required(field + ".messageEn", prerequisite.MessageEn);
+            var known = prerequisite.Kind == PrerequisiteKind.Request ? RequestStatuses : DocumentStatuses;
+            foreach (var status in prerequisite.Statuses.Where(s => !known.Contains(s, StringComparer.Ordinal)))
+            {
+                errors.Add(field + ".statuses", $"'{status}' is not a status here; use {string.Join(", ", known)}.");
+            }
+
+            if (prerequisite.Kind == PrerequisiteKind.Request)
+            {
+                errors.Required(field + ".service", prerequisite.Service);
+                if (prerequisite.WithinDays is < 1 or > 3650)
+                {
+                    errors.Add(field + ".withinDays", "Must be between 1 and 3650.");
+                }
+            }
+            else
+            {
+                errors.Required(field + ".documentType", prerequisite.DocumentType);
+                if (prerequisite.ValidForDays is < 0 or > 3650)
+                {
+                    errors.Add(field + ".validForDays", "Must be between 0 and 3650.");
+                }
+            }
+        }
+    }
+
+    private static void Bundle(List<BundledServiceDefinition> bundle, ValidationErrors errors)
+    {
+        Unique(bundle.Select(b => b.Service), "definition.bundle", errors);
+        foreach (var (item, i) in bundle.Select((b, i) => (b, i)))
+        {
+            errors.Required($"definition.bundle[{i}].service", item.Service);
+        }
+    }
 
     private static void Availability(AvailabilityDefinition? availability, ValidationErrors errors)
     {

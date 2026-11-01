@@ -84,6 +84,18 @@ public sealed class ServiceRequest : IAuditable, IHasAuditColumns
 
     public string? SourceDocumentNumber { get; set; }
 
+    /// <summary>
+    /// The request this one was made with or from (3f): the main request of a bundle, or the request whose workflow step
+    /// spawned it. Null for requests the applicant started on their own.
+    /// </summary>
+    public Guid? ParentRequestId { get; set; }
+
+    /// <summary>How the request came from its parent.</summary>
+    public RequestLinkKind? LinkKind { get; set; }
+
+    /// <summary>The workflow step of the parent that spawned it (spawned requests).</summary>
+    public string? ParentStep { get; set; }
+
     /// <summary>The Nafath verification the applicant confirmed the request with (versions that ask for one).</summary>
     public Guid? NafathCheckId { get; set; }
 
@@ -100,6 +112,16 @@ public sealed class ServiceRequest : IAuditable, IHasAuditColumns
     public DateTimeOffset? UpdatedAt { get; set; }
 
     public string? UpdatedBy { get; set; }
+}
+
+/// <summary>How a request came from its parent (3f).</summary>
+public enum RequestLinkKind
+{
+    /// <summary>Requested together with the parent, when the parent was submitted.</summary>
+    Bundled,
+
+    /// <summary>Created by a step of the parent's workflow.</summary>
+    Spawned,
 }
 
 /// <summary>The request's timeline: every transition, action and comment.</summary>

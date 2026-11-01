@@ -12,6 +12,7 @@ import {
   VisitCard,
   FeeTable,
   FieldError,
+  LinkedRequests,
   LiveResultFeed,
   LocalizePipe,
   PanelReadiness,
@@ -56,6 +57,7 @@ const EDITABLE = ['DRAFT', 'PENDING_CUSTOMER'];
     MatProgressBarModule,
     RouterLink,
     FeeTable,
+    LinkedRequests,
     LocalizePipe,
     PanelReadiness,
     RequestAnswers,
@@ -105,6 +107,7 @@ const EDITABLE = ['DRAFT', 'PENDING_CUSTOMER'];
           @for (visit of v.visits ?? []; track visit.id) {
             <dc-visit-card [visit]="visit" />
           }
+          <dc-linked-requests [links]="v.links ?? []" />
           @if (v.request.status === 'PENDING_CUSTOMER') {
             <div class="dc-card dc-request__returned" role="status" data-testid="returned-banner">
               <mat-icon fontSet="material-symbols-outlined">edit_note</mat-icon>
@@ -138,6 +141,41 @@ const EDITABLE = ['DRAFT', 'PENDING_CUSTOMER'];
               (edited)="edited($event)"
               (submitted)="submit(v, $event)"
             />
+            @if (v.request.status === 'DRAFT' && v.bundle?.length) {
+              <section class="dc-card dc-request__bundle" data-testid="bundle">
+                <h2>{{ 'portal.bundle' | dcTranslate }}</h2>
+                <p class="dc-muted">{{ 'portal.bundleHint' | dcTranslate }}</p>
+                <ul>
+                  @for (b of v.bundle; track b.service) {
+                    <li [attr.data-bundle]="b.service">
+                      <label>
+                        <input
+                          type="checkbox"
+                          [checked]="b.required || bundled().includes(b.service)"
+                          [disabled]="b.required || !b.isEligible || busy()"
+                          (change)="toggleBundle(b.service, $any($event.target).checked)"
+                        />
+                        {{ { ar: b.nameAr, en: b.nameEn } | dcLocalize }}
+                      </label>
+                      @if (b.required) {
+                        <span class="dc-badge">{{ 'portal.bundleRequired' | dcTranslate }}</span>
+                      }
+                      @if (b.noteAr || b.noteEn) {
+                        <p class="dc-muted" dir="auto">{{ { ar: b.noteAr ?? '', en: b.noteEn ?? '' } | dcLocalize }}</p>
+                      }
+                      @if (!b.isEligible) {
+                        <p class="dc-muted">{{ 'portal.bundleNotOpen' | dcTranslate }}</p>
+                        <ul class="dc-request__bundle-reasons">
+                          @for (r of b.reasons; track r.code) {
+                            <li dir="auto">{{ { ar: r.messageAr, en: r.messageEn } | dcLocalize }}</li>
+                          }
+                        </ul>
+                      }
+                    </li>
+                  }
+                </ul>
+              </section>
+            }
             <div class="dc-request__secondary">
               <span class="dc-request__saved" [class.dc-request__saved--failed]="autosave.failed()" data-testid="autosave-status" aria-live="polite">
                 @if (autosave.saving()) {
@@ -285,6 +323,31 @@ const EDITABLE = ['DRAFT', 'PENDING_CUSTOMER'];
     .dc-request__saved--failed {
       color: var(--dga-error-600, #d92d20);
     }
+    .dc-request__bundle h2 {
+      margin: 0 0 4px;
+      font-size: 16px;
+    }
+    .dc-request__bundle > ul {
+      display: grid;
+      gap: 10px;
+      margin: 8px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    .dc-request__bundle label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+    }
+    .dc-request__bundle p {
+      margin: 2px 0 0;
+    }
+    .dc-request__bundle-reasons {
+      margin: 2px 0 0;
+      padding-inline-start: 20px;
+      font-size: 13px;
+    }
     .dc-request__secondary {
       display: flex;
       flex-wrap: wrap;
@@ -365,6 +428,8 @@ export class RequestPage {
   protected readonly busy = signal(false);
   /** Set right after sending: SUBMITTED or RESUBMITTED. */
   protected readonly justSubmitted = signal<string | null>(null);
+  /** The optional bundled services the applicant ticked (3f); required ones are always sent by the server. */
+  protected readonly bundled = signal<string[]>([]);
   /** The answers and level as the applicant has them on screen (typed, not yet saved); null: as saved. */
   private readonly typed = signal<WizardDraft | null>(null);
   protected readonly onScreen = computed<WizardDraft>(() => {
@@ -465,7 +530,7 @@ export class RequestPage {
       await this.autosave.flush();
       let submitted: RequestView;
       try {
-        submitted = await firstValueFrom(this.api.submit(v.request.id, declarationAccepted, nafath ? this.nafathCheckId : null));
+        submitted = await firstValueFrom(this.api.submit(v.request.id, declarationAccepted, nafath ? this.nafathCheckId : null, this.bundled()));
       } catch (error) {
         const errors = requestErrors(error);
         if (!nafath || !errors.some((e) => e.field === 'nafath')) throw error;
@@ -476,12 +541,16 @@ export class RequestPage {
         const checkId = await firstValueFrom(confirmWithNafath(this.dialog, v.request.id));
         if (!checkId) return;
         this.nafathCheckId = checkId;
-        submitted = await firstValueFrom(this.api.submit(v.request.id, declarationAccepted, checkId));
+        submitted = await firstValueFrom(this.api.submit(v.request.id, declarationAccepted, checkId, this.bundled()));
       }
       this.view.set(submitted);
       this.justSubmitted.set(v.request.status === 'PENDING_CUSTOMER' ? 'RESUBMITTED' : 'SUBMITTED');
       window.scrollTo({ top: 0 });
     });
+  }
+
+  protected toggleBundle(service: string, ticked: boolean): void {
+    this.bundled.update((codes) => (ticked ? [...codes.filter((c) => c !== service), service] : codes.filter((c) => c !== service)));
   }
 
   protected openFile(v: RequestView, file: UploadedFile): void {

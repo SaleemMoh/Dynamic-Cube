@@ -86,7 +86,22 @@ public sealed record RequestView(
 
     /// <summary>Answers that changed when the draft's integrations were read again on opening it (from → to).</summary>
     public IReadOnlyList<AnswerChange> Changes { get; init; } = [];
+
+    /// <summary>The requests linked to this one (3f): the one it came from, and those bundled with it or made by its steps.</summary>
+    public IReadOnlyList<LinkedRequest> Links { get; init; } = [];
+
+    /// <summary>A draft's bundled services: required or offered, each open to the applicant now or not (with why).</summary>
+    public IReadOnlyList<BundleOption> Bundle { get; init; } = [];
 }
+
+/// <summary>
+/// A request linked to another (3f). <paramref name="Relation"/>: <c>PARENT</c> (the request it came from), <c>BUNDLED</c>
+/// (requested with it) or <c>SPAWNED</c> (made by one of its steps, <paramref name="Step"/>).
+/// </summary>
+public sealed record LinkedRequest(Guid Id, string? Number, string ServiceCode, string ServiceNameAr, string ServiceNameEn, StatusCategory Status, string DisplayStatus, string Relation, string? Step);
+
+/// <summary>A service bundled with a draft's: whether it is always requested, and whether the applicant may have it now.</summary>
+public sealed record BundleOption(string Service, string NameAr, string NameEn, bool Required, string? NoteAr, string? NoteEn, bool IsEligible, IReadOnlyList<EligibilityFailure> Reasons);
 
 public sealed record TimelineEntry(DateTimeOffset At, string UserId, string Type, StatusCategory? FromStatus, StatusCategory? ToStatus, string? Comment);
 
@@ -99,7 +114,8 @@ public sealed record CreateRequest(string ServiceCode, Guid? DocumentId = null);
 public sealed record SaveRequest(JsonObject? Data, string? LevelCode, string? CurrentStep, string? ValidateStep = null);
 
 /// <param name="NafathCheckId">The Nafath verification the applicant confirmed the request with, when the version asks for one.</param>
-public sealed record SubmitRequest(bool DeclarationAccepted, Guid? NafathCheckId = null);
+/// <param name="Bundle">The optional bundled services the applicant ticked (the required ones are always requested).</param>
+public sealed record SubmitRequest(bool DeclarationAccepted, Guid? NafathCheckId = null, IReadOnlyList<string>? Bundle = null);
 
 /// <summary>A Nafath request sent to the applicant's app: the number to pick and until when (ADR-0043).</summary>
 public sealed record NafathChallengeView(Guid CheckId, string Random, DateTimeOffset ExpiresAt);

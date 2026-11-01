@@ -592,6 +592,8 @@ internal sealed partial class ServiceVersionApplier(ServicesDbContext db, JsonLo
             errors.Add("definition.availability", $"Service '{serviceCode}' does not act on a document; give it a document type first.");
         }
 
+        await CheckLinkedServicesAsync(definition, serviceCode, refs, errors, cancellationToken);
+
         // No version without a workflow to process its requests. A service created in the same change set gets its default
         // workflow when the change set is published; a named workflow becomes the service's when it is published. A named
         // workflow that does not exist yet may come in another change set of the same package: publishing checks it.
@@ -623,6 +625,59 @@ internal sealed partial class ServiceVersionApplier(ServicesDbContext db, JsonLo
             Definition = JsonSerializer.Deserialize<VersionDefinition>(entity.Definition, ChangeJson.Options),
             PublishedAt = entity.PublishedAt,
         });
+
+    /// <summary>
+    /// The services prerequisites and the bundle name exist (or are created in the same change set); a bundled service is
+    /// another service, not requested for a document; a document type a prerequisite asks for exists.
+    /// </summary>
+    private async Task CheckLinkedServicesAsync(VersionDefinition definition, string serviceCode, ConfigRefs<ServicesDbContext> refs, ValidationErrors errors, CancellationToken cancellationToken)
+    {
+        async Task<bool> ExistsAsync(string? code) =>
+            !string.IsNullOrWhiteSpace(code) && (await refs.Context.Services.AnyAsync(s => s.Code == code, cancellationToken) || refs.IsPendingCreate(ServiceChangeTypes.Service, code));
+
+        var documents = services.GetService<IDocumentDirectory>();
+        foreach (var (prerequisite, i) in definition.Prerequisites.Select((p, i) => (p, i)))
+        {
+            var field = $"definition.prerequisites[{i}]";
+            if (prerequisite.Kind == PrerequisiteKind.Request && !string.IsNullOrWhiteSpace(prerequisite.Service) && !await ExistsAsync(prerequisite.Service))
+            {
+                errors.Add(field + ".service", $"There is no service {prerequisite.Service}.");
+            }
+
+            if (prerequisite.Kind == PrerequisiteKind.Request && prerequisite.Service == serviceCode)
+            {
+                errors.Add(field + ".service", "A service cannot need a request of itself.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(prerequisite.StartService) && !await ExistsAsync(prerequisite.StartService))
+            {
+                errors.Add(field + ".startService", $"There is no service {prerequisite.StartService}.");
+            }
+
+            if (prerequisite.Kind == PrerequisiteKind.Document && !string.IsNullOrWhiteSpace(prerequisite.DocumentType) && documents is not null
+                && await documents.TypeAsync(prerequisite.DocumentType, cancellationToken) is null)
+            {
+                errors.Add(field + ".documentType", $"There is no document type {prerequisite.DocumentType}.");
+            }
+        }
+
+        foreach (var (item, i) in definition.Bundle.Select((b, i) => (b, i)))
+        {
+            var field = $"definition.bundle[{i}].service";
+            if (item.Service == serviceCode)
+            {
+                errors.Add(field, "A service cannot be bundled with itself.");
+            }
+            else if (!string.IsNullOrWhiteSpace(item.Service) && !await ExistsAsync(item.Service))
+            {
+                errors.Add(field, $"There is no service {item.Service}.");
+            }
+            else if (await refs.Context.Services.AnyAsync(s => s.Code == item.Service && s.DocumentType != null, cancellationToken))
+            {
+                errors.Add(field, $"Service {item.Service} is requested for a document; it cannot be bundled.");
+            }
+        }
+    }
 
     /// <summary>Whether the service has a document type, as published or as created or changed in the same change set.</summary>
     private static async Task<bool> ActsOnDocumentAsync(ConfigRefs<ServicesDbContext> refs, string serviceCode, CancellationToken cancellationToken)

@@ -61,6 +61,14 @@ public enum NodeType
     /// with the provider's message when there is none).
     /// </summary>
     Integration,
+
+    /// <summary>
+    /// Makes a request of another service for the same applicant (3f), with the answers both forms share and the step's
+    /// <c>parameters</c>; submitted at once when complete (<c>submitChild</c>), otherwise a draft the applicant completes.
+    /// With <c>wait</c> the branch waits for it: approved takes <c>next</c>, anything else <c>failed</c>; without it the
+    /// branch carries on at once. The request is kept as <c>subrequests.&lt;step&gt;</c>.
+    /// </summary>
+    SubRequest,
     End,
 }
 
@@ -179,8 +187,20 @@ public sealed class NodeDefinition
     /// <summary>Integration: operation parameter → JSONLogic over the workflow facts.</summary>
     public Dictionary<string, JsonNode?> Parameters { get; set; } = [];
 
-    /// <summary>Integration: where a failed call goes (none: the step stops with the provider's message).</summary>
+    /// <summary>
+    /// Integration: where a failed call goes (none: the step stops with the provider's message). Sub-request (waiting): where a
+    /// request that is not approved goes.
+    /// </summary>
     public string? Failed { get; set; }
+
+    /// <summary>Sub-request: the service of the request to make.</summary>
+    public string? ChildService { get; set; }
+
+    /// <summary>Sub-request: the branch waits for the request to finish; otherwise it carries on at once.</summary>
+    public bool Wait { get; set; }
+
+    /// <summary>Sub-request: submit the request at once when its answers are complete (otherwise the applicant completes it).</summary>
+    public bool SubmitChild { get; set; }
 }
 
 public enum DocumentTarget

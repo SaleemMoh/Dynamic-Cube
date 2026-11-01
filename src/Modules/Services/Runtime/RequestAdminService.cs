@@ -67,7 +67,10 @@ internal sealed class RequestAdminService(ServicesDbContext context, ServiceCata
             JsonNode.Parse(entity.Data)!.AsObject(), entity.Fees, new Dictionary<string, IReadOnlyList<FeeLine>>(), version, [], timeline,
             services.GetService<IPayments>() is { } payments ? await payments.OfSubjectAsync(RequestSubject.Type, entity.Id, cancellationToken) : [],
             services.GetService<IVisits>() is { } visits ? await visits.OfSubjectAsync(RequestSubject.Type, entity.Id, cancellationToken) : [],
-            await RequestFiles.ListAsync(context, entity.Id, cancellationToken));
+            await RequestFiles.ListAsync(context, entity.Id, cancellationToken))
+        {
+            Links = await RequestService.LinksAsync(context, entity, cancellationToken),
+        };
         return new RequestDetail(view, entity.SubmitterPartyId, entity.SubmitterName, entity.BeneficiaryPartyId, timeline);
     }
 

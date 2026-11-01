@@ -54,6 +54,28 @@ export interface AvailabilityDef {
 }
 
 /** A service version's definition as the builder edits it (what the server stores, field for field). */
+/** What the applicant must already have (3f): a request of a service, or a document of a type. */
+export interface PrerequisiteDef {
+  code: string;
+  kind: 'REQUEST' | 'DOCUMENT';
+  service?: string | null;
+  documentType?: string | null;
+  statuses: string[];
+  withinDays?: number | null;
+  validForDays?: number | null;
+  startService?: string | null;
+  messageAr: string;
+  messageEn: string;
+}
+
+/** A service requested together with this one (3f): always, or when the applicant ticks it. */
+export interface BundleDef {
+  service: string;
+  required: boolean;
+  noteAr?: string | null;
+  noteEn?: string | null;
+}
+
 export interface ServiceDraft {
   levels: ServiceLevelDefinition[];
   steps: StepDefinition[];
@@ -61,6 +83,8 @@ export interface ServiceDraft {
   validations: RuleDef[];
   fees: FeeDef[];
   availability?: AvailabilityDef | null;
+  prerequisites?: PrerequisiteDef[];
+  bundle?: BundleDef[];
   card: ServiceCardDefinition;
   /** The panel beside the applicant's form (ADR-0040); absent: none. */
   panel?: PanelDefinition | null;
@@ -113,6 +137,8 @@ export function normalize(definition: Partial<ServiceDraft> | null | undefined):
     validations: d.validations ?? [],
     fees: (d.fees ?? []).map((f) => ({ ...f, levels: f.levels ?? [], vatRate: f.vatRate ?? 0.15, vatIncluded: f.vatIncluded ?? true })),
     availability: d.availability ?? null,
+    prerequisites: (d.prerequisites ?? []).map((x) => ({ ...x, statuses: x.statuses ?? [] })),
+    bundle: d.bundle ?? [],
     card: { ...EMPTY_CARD, ...(d.card ?? {}) },
     ...(d.panel ? { panel: normalizePanel(d.panel) } : {}),
   };
@@ -348,6 +374,19 @@ export function check(def: ServiceDraft, bank: ReadonlySet<string>): Problem[] {
     if (!d.nameAr?.trim() || !d.nameEn?.trim()) p('card', 'builder.problem.cardDocument', { n: i + 1 });
   });
   if (def.panel) checkPanel(def, def.panel, stepCodes, p);
+  // Prerequisites and bundled services (3f).
+  const prerequisiteCodes = new Set<string>();
+  (def.prerequisites ?? []).forEach((x, i) => {
+    if (!CODE.test(x.code) || prerequisiteCodes.has(x.code)) p('rules', 'builder.problem.prerequisiteCode', { n: i + 1 });
+    prerequisiteCodes.add(x.code);
+    if (x.kind === 'REQUEST' ? !x.service : !x.documentType) p('rules', 'builder.problem.prerequisiteTarget', { n: i + 1 });
+    if (!x.messageAr?.trim() || !x.messageEn?.trim()) p('rules', 'builder.problem.prerequisiteMessage', { n: i + 1 });
+  });
+  const bundled = new Set<string>();
+  (def.bundle ?? []).forEach((b, i) => {
+    if (!b.service || bundled.has(b.service)) p('rules', 'builder.problem.bundleService', { n: i + 1 });
+    bundled.add(b.service);
+  });
   return problems;
 }
 

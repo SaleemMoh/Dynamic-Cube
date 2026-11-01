@@ -96,6 +96,9 @@ public enum TokenStatus
 
     /// <summary>At a visit step: waits for the visit's result (the deadline keeps running: the visit is the entity's work).</summary>
     WaitingVisit,
+
+    /// <summary>At a sub-request step that waits: waits for the request it made to finish (3f).</summary>
+    WaitingChild,
 }
 
 /// <summary>An open split a token belongs to: its id, the split node and how many branches it started.</summary>
@@ -271,6 +274,8 @@ public static class WorkflowEventTypes
     public const string VisitRequested = "VISIT_REQUESTED";
     public const string VisitCompleted = "VISIT_COMPLETED";
     public const string VisitCancelled = "VISIT_CANCELLED";
+    public const string SubRequestCreated = "SUB_REQUEST_CREATED";
+    public const string SubRequestFinished = "SUB_REQUEST_FINISHED";
     public const string IntegrationCalled = "INTEGRATION_CALLED";
     public const string IntegrationFailed = "INTEGRATION_FAILED";
 }

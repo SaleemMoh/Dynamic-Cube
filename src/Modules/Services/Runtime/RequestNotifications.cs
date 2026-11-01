@@ -17,6 +17,9 @@ internal static class RequestNotifications
     public const string Rejected = "REQUEST_REJECTED";
     public const string Closed = "REQUEST_CLOSED";
 
+    /// <summary>A request was made for the applicant to complete: bundled with theirs, or asked for by a step (3f).</summary>
+    public const string Opened = "REQUEST_OPENED";
+
     public static CommunicationEventType[] Types { get; } =
     [
         Type(Submitted, "تقديم طلب", "Request submitted"),
@@ -25,6 +28,7 @@ internal static class RequestNotifications
         Type(Approved, "اكتمال الطلب بالموافقة", "Request approved"),
         Type(Rejected, "رفض الطلب", "Request rejected"),
         Type(Closed, "إغلاق الطلب", "Request closed"),
+        Type(Opened, "فتح طلب مرتبط لاستكماله", "Linked request opened to complete"),
     ];
 
     /// <summary>The event that a move to <paramref name="to"/> raises, if any.</summary>

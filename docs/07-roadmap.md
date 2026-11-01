@@ -280,7 +280,7 @@ Delivered in slices. Each designer covers what the runtime can run today; node t
 | **3c** | Notification rule builder; Portal Content Manager (banner, categories, tiles, FAQs, help links, pages) | ✅ |
 | **3d** | Configuration packages: export from any screen, import with a diff preview | ✅ |
 | **3e** | Visits: field app (offline PWA), external inspection integration, manual entry | ✅ |
-| 3f | Sub-requests: prerequisite, bundled, spawned | Next |
+| **3f** | Sub-requests: prerequisite, bundled, spawned | ✅ |
 
 **3a delivered** ([ADR-0023](adr/0023-workflow-designer.md)):
 
@@ -453,6 +453,24 @@ workflow graph), carrying branding images in a package, and comparing two enviro
 
 Still open from 3e: automatic assignment and inspectors' calendars and routes, follow-up visits created from a
 result, push notifications to the field app, and offline maps.
+
+**3f delivered** ([ADR-0046](adr/0046-sub-requests.md)):
+
+- **Prerequisites** (Service Builder → *Rules*): a request of a service in chosen statuses (made within N days), or a
+  document of a type in chosen statuses (valid for N more days), each with its message and the service to start. The
+  portal shows the message with a *Start that service* link; they are checked on opening, starting and submitting.
+- **Bundled services** (Service Builder → *Rules*): required ones always go, optional ones are ticked on the draft. Each
+  must be open to the applicant; on submit one request is made per service from the shared answers, submitted when
+  complete, otherwise kept as a draft and the applicant notified.
+- **Workflow `SUB_REQUEST` step** (designer): opens a request of another service for the same applicant, submitted when
+  complete; the workflow **waits** (*Awaiting a sub-request*; *child approved* / *child not approved* ways) or carries on.
+  The child is in the facts as `subrequests.<step>`. The test run lets you pick the child's outcome.
+- **Linked requests** on the portal and internal request pages: made from, bundled, sub-request, with status and link.
+- **Demo** `26-sub-requests`: supplier registration (needs a classification certificate), tender alerts (bundled) and
+  the supplier financial statement (opened by the workflow, waited for).
+
+Still open from 3f: several children from one step, cancelling waiting children with their parent, prerequisites on
+profile rules.
 
 Scope of the slices:
 

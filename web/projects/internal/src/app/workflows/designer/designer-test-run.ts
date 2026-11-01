@@ -76,6 +76,13 @@ import { TestLogEntry, TestState, choose, startRun, waiting } from './test-run';
                   <button matButton="outlined" type="button" (click)="pick(w.token.id, 'FAILED')" data-testid="test-call-failed">
                     {{ 'designer.test.markCallFailed' | dcTranslate }}
                   </button>
+                } @else if (w.node.type === 'SUB_REQUEST') {
+                  <button matButton="outlined" type="button" (click)="pick(w.token.id, 'APPROVED')" data-testid="test-child-approved">
+                    {{ 'designer.test.markChildApproved' | dcTranslate }}
+                  </button>
+                  <button matButton="outlined" type="button" (click)="pick(w.token.id, 'REJECTED')" data-testid="test-child-rejected">
+                    {{ 'designer.test.markChildRejected' | dcTranslate }}
+                  </button>
                 } @else if (w.node.type === 'VISIT') {
                   @for (o of visitOutcomes(w.node); track o.value) {
                     <button matButton="outlined" type="button" (click)="pick(w.token.id, o.value)" [attr.data-testid]="'test-outcome-' + o.value">

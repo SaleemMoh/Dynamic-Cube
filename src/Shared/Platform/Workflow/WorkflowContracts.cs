@@ -42,6 +42,9 @@ public enum SubjectStatus
 
     /// <summary>A bill was issued; processing continues once it is paid.</summary>
     PendingPayment,
+
+    /// <summary>Waiting for something outside the workflow, e.g. a request a step made (3f).</summary>
+    PendingExternal,
     Approved,
     Rejected,
     Closed,

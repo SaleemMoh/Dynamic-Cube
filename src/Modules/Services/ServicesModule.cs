@@ -46,6 +46,8 @@ public static class ServicesModule
         services.AddScoped<IDomainRules, ServiceCategoryRules>();
         services.AddSingleton<ServiceCatalogCache>();
         services.AddScoped<Eligibility>();
+        services.AddScoped<Prerequisites>();
+        services.AddScoped<IRequestSpawner, RequestSpawner>();
         services.AddScoped<FeeCalculator>();
         services.AddScoped<FormValidator>();
         services.AddScoped<RequestService>();

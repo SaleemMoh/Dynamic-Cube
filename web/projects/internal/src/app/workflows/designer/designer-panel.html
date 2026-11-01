@@ -574,6 +574,38 @@
       </mat-form-field>
     }
 
+    @case ('SUB_REQUEST') {
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'designer.field.childService' | dcTranslate }}</mat-label>
+        <mat-select [ngModel]="n.childService ?? null" (ngModelChange)="patch({ childService: $event })" data-testid="sub-request-service">
+          @for (o of refs.services(); track o.value) {
+            <mat-option [value]="o.value">{{ o.label | dcLocalize }} ({{ o.value }})</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-checkbox [ngModel]="!!n.wait" (ngModelChange)="patch({ wait: $event, failed: $event ? (n.failed ?? null) : null })" data-testid="sub-request-wait">{{
+        'designer.field.wait' | dcTranslate
+      }}</mat-checkbox>
+      <p class="dc-panel__hint">{{ (n.wait ? 'designer.waitHint' : 'designer.carryOnHint') | dcTranslate }}</p>
+      <mat-checkbox [ngModel]="!!n.submitChild" (ngModelChange)="patch({ submitChild: $event })" data-testid="sub-request-submit">{{
+        'designer.field.submitChild' | dcTranslate
+      }}</mat-checkbox>
+      <p class="dc-panel__hint">{{ 'designer.submitChildHint' | dcTranslate }}</p>
+      <h3>{{ 'designer.section.childAnswers' | dcTranslate }}</h3>
+      <p class="dc-panel__hint">{{ 'designer.childAnswersHint' | dcTranslate }}</p>
+      <dc-mapping-editor [mapping]="n.parameters ?? {}" [variables]="variables()" (mappingChange)="patch({ parameters: $event })" />
+      @if (n.wait) {
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'designer.field.childNotApproved' | dcTranslate }}</mat-label>
+          <mat-select [ngModel]="n.failed ?? null" (ngModelChange)="patch({ failed: $event })" data-testid="sub-request-failed">
+            @for (t of targets(); track t.code) {
+              <mat-option [value]="t.code">{{ name(t) }} ({{ t.code }})</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+    }
+
     @case ('DOCUMENT') {
       <mat-form-field subscriptSizing="dynamic">
         <mat-label>{{ 'designer.field.documentType' | dcTranslate }}</mat-label>
@@ -855,7 +887,8 @@
     n.type === 'DOCUMENT' ||
     n.type === 'PAYMENT' ||
     n.type === 'VISIT' ||
-    n.type === 'INTEGRATION'
+    n.type === 'INTEGRATION' ||
+    n.type === 'SUB_REQUEST'
   ) {
     <mat-form-field subscriptSizing="dynamic">
       <mat-label>{{
@@ -865,7 +898,9 @@
             ? 'designer.field.visitedNext'
             : n.type === 'INTEGRATION'
               ? 'designer.field.calledNext'
-              : 'designer.field.next'
+              : n.type === 'SUB_REQUEST' && n.wait
+                ? 'designer.field.childApprovedNext'
+                : 'designer.field.next'
         ) | dcTranslate
       }}</mat-label>
       <mat-select [ngModel]="n.next ?? null" (ngModelChange)="patch({ next: $event })" data-testid="node-next">

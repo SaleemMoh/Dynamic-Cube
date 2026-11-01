@@ -44,6 +44,7 @@ public static class WorkflowModule
         services.AddScoped<IWorkflowRuntime>(sp => sp.GetRequiredService<WorkflowEngine>());
         services.AddScoped<IPaymentListener, PaymentContinuation>();
         services.AddScoped<IVisitListener, VisitContinuation>();
+        services.AddScoped<DynamicCube.Platform.Services.IChildRequestListener, ChildRequestContinuation>();
         services.AddScoped<ActionCenter>();
         services.AddScoped<SlaMonitor>();
         services.AddScoped<ServiceWorkflows>();

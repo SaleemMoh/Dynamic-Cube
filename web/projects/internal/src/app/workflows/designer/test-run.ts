@@ -29,13 +29,13 @@ export interface TestState {
 
 /**
  * Steps that wait for the person trying the workflow: tasks (an action), payments (paid or not), visits (an outcome), integration
- * calls (succeeded or failed: nothing is called in a test run).
+ * calls (succeeded or failed: nothing is called in a test run), sub-requests that wait (approved or not: nothing is requested).
  */
 export function waiting(def: WorkflowDraft, state: TestState): { token: TestToken; node: NodeDef }[] {
   const byCode = new Map(def.nodes.map((n) => [n.code, n]));
   return state.tokens
     .map((token) => ({ token, node: byCode.get(token.node)! }))
-    .filter((t) => t.node && (t.node.type === 'HUMAN_TASK' || t.node.type === 'PAYMENT' || t.node.type === 'VISIT' || t.node.type === 'INTEGRATION'));
+    .filter((t) => t.node && (t.node.type === 'HUMAN_TASK' || t.node.type === 'PAYMENT' || t.node.type === 'VISIT' || t.node.type === 'INTEGRATION' || (t.node.type === 'SUB_REQUEST' && !!t.node.wait)));
 }
 
 /** Starts a run at START with sample facts and lets it go as far as it can on its own. */
@@ -56,6 +56,7 @@ export function startRun(def: WorkflowDraft, data: Record<string, JsonValue>, le
       payments: {},
       visits: {},
       integrations: {},
+      subrequests: {},
       feeTotal,
     },
     log: [],
@@ -84,6 +85,12 @@ export function choose(def: WorkflowDraft, state: TestState, tokenId: number, ch
     };
     next.log.push({ node: node.code, key: paid ? 'designer.test.paid' : 'designer.test.unpaid' });
     return move(def, next, token, paid ? node.next : node.expired);
+  }
+  if (node.type === 'SUB_REQUEST') {
+    const approved = choice === 'APPROVED';
+    (next.facts['subrequests'] as Record<string, JsonValue>)[node.code] = { status: choice, approved };
+    next.log.push({ node: node.code, key: approved ? 'designer.test.childApproved' : 'designer.test.childNotApproved', params: { service: node.childService ?? '?' } });
+    return move(def, next, token, approved ? node.next : node.failed);
   }
   if (node.type === 'INTEGRATION') {
     const success = choice === 'SUCCEEDED';
@@ -178,6 +185,13 @@ function advance(def: WorkflowDraft, state: TestState): TestState {
         case 'HUMAN_TASK':
         case 'VISIT':
         case 'INTEGRATION':
+          break;
+        case 'SUB_REQUEST':
+          if (!node.wait) {
+            (state.facts['subrequests'] as Record<string, JsonValue>)[node.code] = { status: 'SUBMITTED' };
+            state.log.push({ node: node.code, key: 'designer.test.childCarriedOn', params: { service: node.childService ?? '?' } });
+            go(node.next);
+          }
           break;
         case 'PAYMENT': {
           const fees = Number(state.facts['feeTotal'] ?? 0);

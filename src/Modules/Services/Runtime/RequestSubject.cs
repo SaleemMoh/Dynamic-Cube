@@ -60,6 +60,7 @@ internal sealed class RequestSubject(ServicesDbContext context, IPartyFacts part
         {
             SubjectStatus.PendingCustomer => StatusCategory.PendingCustomer,
             SubjectStatus.PendingPayment => StatusCategory.PendingPayment,
+            SubjectStatus.PendingExternal => StatusCategory.PendingExternal,
             SubjectStatus.Approved => StatusCategory.Approved,
             SubjectStatus.Rejected => StatusCategory.Rejected,
             SubjectStatus.Closed => StatusCategory.Closed,
@@ -86,6 +87,11 @@ internal sealed class RequestSubject(ServicesDbContext context, IPartyFacts part
         }
 
         await context.SaveChangesAsync(cancellationToken);
+        if (from != to)
+        {
+            // A request a step made has finished: the step waiting for it moves on (3f).
+            await RequestLinks.TellParentAsync(services, request, clock, cancellationToken);
+        }
     }
 
     private async Task<ServiceRequest> LoadAsync(Guid id, CancellationToken cancellationToken) =>

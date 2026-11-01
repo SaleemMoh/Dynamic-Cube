@@ -659,6 +659,11 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("level_code");
 
+                    b.Property<string>("LinkKind")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("link_kind");
+
                     b.Property<Guid?>("NafathCheckId")
                         .HasColumnType("uuid")
                         .HasColumnName("nafath_check_id");
@@ -671,6 +676,15 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
                         .HasColumnName("number");
+
+                    b.Property<Guid?>("ParentRequestId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("parent_request_id");
+
+                    b.Property<string>("ParentStep")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("parent_step");
 
                     b.Property<uint>("RowVersion")
                         .IsConcurrencyToken()
@@ -740,6 +754,9 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
                     b.HasIndex("Number")
                         .IsUnique()
                         .HasDatabaseName("ix_request_number");
+
+                    b.HasIndex("ParentRequestId")
+                        .HasDatabaseName("ix_request_parent_request_id");
 
                     b.HasIndex("ServiceVersionId")
                         .HasDatabaseName("ix_request_service_version_id");

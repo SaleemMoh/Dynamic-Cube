@@ -53,6 +53,7 @@ export * from './lib/services/fee-table';
 export * from './lib/services/bill-card';
 export * from './lib/payments/payments.api';
 export * from './lib/services/visit-card';
+export * from './lib/services/linked-requests';
 export * from './lib/visits/visits.api';
 export * from './lib/visits/auth-image';
 export * from './lib/visits/visit-fields';

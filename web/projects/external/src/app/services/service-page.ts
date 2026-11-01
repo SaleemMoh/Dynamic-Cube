@@ -73,7 +73,14 @@ type ServiceTab = 'steps' | 'terms' | 'documents' | 'levels';
             } @else {
               <ul class="dc-errors" role="alert" data-testid="not-eligible">
                 @for (r of v.service.reasons; track r.code) {
-                  <li>{{ { ar: r.messageAr, en: r.messageEn } | dcLocalize }}</li>
+                  <li>
+                    {{ { ar: r.messageAr, en: r.messageEn } | dcLocalize }}
+                    @if (r.startService) {
+                      <a [routerLink]="['/services', r.startService]" class="dc-prerequisite-link" [attr.data-testid]="'start-prerequisite-' + r.startService">{{
+                        'portal.startPrerequisite' | dcTranslate
+                      }}</a>
+                    }
+                  </li>
                 }
               </ul>
             }

@@ -43,6 +43,7 @@ export class DesignerReferences {
   private readonly orgUnitRows = this.list('apps.org-unit');
   private readonly positionRows = this.list('apps.position');
   private readonly operationRows = this.list('integ.operation');
+  private readonly serviceRows = this.list('svc.service');
   private readonly service = signal<string | null>(null);
   /** The step types as class WF_STEP_TYPE (Class/Domain) names them: active ones, in their order. */
   private readonly stepRows = toSignal(this.api.classDomains('WF_STEP_TYPE').pipe(catchError(() => of([] as DomainItem[]))), {
@@ -78,6 +79,8 @@ export class DesignerReferences {
   readonly roles = computed(() => options(this.roleRows()));
   readonly ruleSets = computed(() => options(this.ruleSetRows()));
   readonly documentTypes = computed(() => options(this.documentTypeRows()));
+  /** Services a sub-request step can make requests of (3f). */
+  readonly services = computed(() => options(this.serviceRows().filter((s) => s.isActive !== false)));
   readonly providers = computed(() => options(this.providerRows()));
   readonly visitTypes = computed(() => options(this.visitTypeRows()));
   readonly orgUnits = computed(() => options(this.orgUnitRows().filter((u) => u.isActive !== false)));

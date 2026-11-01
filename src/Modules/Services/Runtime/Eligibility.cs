@@ -6,8 +6,8 @@ using DynamicCube.Platform.Parties;
 
 namespace DynamicCube.Modules.Services.Runtime;
 
-/// <summary>Why an applicant may not use a service.</summary>
-public sealed record EligibilityFailure(string Code, string MessageAr, string MessageEn);
+/// <summary>Why an applicant may not use a service; for an unmet prerequisite, the service to start to meet it (3f).</summary>
+public sealed record EligibilityFailure(string Code, string MessageAr, string MessageEn, string? StartService = null);
 
 /// <summary>
 /// Built-in checks (who may apply, relationship scope, blocking sanctions) followed by the version's eligibility rules.

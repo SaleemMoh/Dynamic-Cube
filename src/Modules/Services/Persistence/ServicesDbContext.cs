@@ -91,6 +91,8 @@ public sealed class ServicesDbContext(DbContextOptions<ServicesDbContext> option
             b.Property(e => e.CurrentStep).HasMaxLength(100);
             b.Property(e => e.Integrations).HasColumnType("jsonb").IsRequired();
             b.Property(e => e.SourceDocumentNumber).HasMaxLength(50);
+            b.Property(e => e.ParentStep).HasMaxLength(100);
+            b.HasIndex(e => e.ParentRequestId);
             b.Property(e => e.Fees).HasJsonColumn();
             b.Property(e => e.FeeTotal).HasPrecision(18, 2);
             b.Property(e => e.CreatedBy).HasMaxLength(128);

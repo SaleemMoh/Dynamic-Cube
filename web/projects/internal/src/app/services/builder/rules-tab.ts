@@ -11,6 +11,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { JsonLogicRule, RuleEditor, RuleVariable, ServiceLevelDefinition, TranslatePipe } from '@dynamic-cube/shared';
 import { BuilderReferences } from './builder-references';
 import { BuilderStore } from './builder-store';
+import { LinkedServices } from './linked-services';
 import { AvailabilityDef, DateBound, FeeDef, RuleDef, ServiceDraft, freeCode, move, usedQuestions } from './builder-model';
 
 type FeeKind = 'fixed' | 'formula' | 'bracket';
@@ -30,6 +31,7 @@ type FeeKind = 'fixed' | 'formula' | 'bracket';
     MatTooltipModule,
     TranslatePipe,
     RuleEditor,
+    LinkedServices,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './rules-tab.html',

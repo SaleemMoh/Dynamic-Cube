@@ -76,8 +76,9 @@ export class ServicesApi {
   }
 
   /** Submits a draft; `nafathCheckId` is the Nafath confirmation of versions that ask for one (ADR-0043). */
-  submit(id: string, declarationAccepted: boolean, nafathCheckId: string | null = null): Observable<RequestView> {
-    return this.http.post<RequestView>(`${SERVICES_API}/requests/${id}/submit`, { declarationAccepted, nafathCheckId });
+  /** @param bundle The optional bundled services the applicant ticked (3f); the required ones are always requested. */
+  submit(id: string, declarationAccepted: boolean, nafathCheckId: string | null = null, bundle: string[] | null = null): Observable<RequestView> {
+    return this.http.post<RequestView>(`${SERVICES_API}/requests/${id}/submit`, { declarationAccepted, nafathCheckId, bundle });
   }
 
   /** Sends the applicant's Nafath app a request to confirm the draft: the number to choose there and until when. */

@@ -1,0 +1,650 @@
+{
+  "title": "NHC — supplier registration: a prerequisite (a valid classification certificate), a bundled service (tender alerts) and a sub-request its workflow opens (financial statement)",
+  "items": [
+    {
+      "entityType": "svc.category",
+      "entityCode": "SUPPLIERS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "خدمات الموردين",
+        "nameEn": "Supplier services",
+        "descriptionAr": "التسجيل موردًا لدى الشركة الوطنية للإسكان وما يرتبط به من طلبات",
+        "descriptionEn": "Registering as a National Housing Company supplier and the requests linked to it",
+        "icon": "local_shipping",
+        "displayOrder": 30
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "SUP_CONTACT_NAME",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "اسم مسؤول التواصل",
+        "nameEn": "Contact person",
+        "type": "TEXT",
+        "validation": {
+          "maxLength": 120
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "SUP_CONTACT_MOBILE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "جوال مسؤول التواصل",
+        "nameEn": "Contact mobile",
+        "type": "TEXT",
+        "hintAr": "مثال: 0512345678",
+        "hintEn": "e.g. 0512345678",
+        "validation": {
+          "pattern": "^05[0-9]{8}$"
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "SUP_EMAIL",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "البريد الإلكتروني للمراسلات",
+        "nameEn": "Email for correspondence",
+        "type": "TEXT",
+        "validation": {
+          "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+          "maxLength": 120
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "SUP_SUPPLY_TYPES",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "ما تقدمه المنشأة",
+        "nameEn": "What the establishment supplies",
+        "type": "SELECT",
+        "multiple": true,
+        "options": [
+          {
+            "value": "MATERIALS",
+            "labelAr": "مواد بناء",
+            "labelEn": "Building materials"
+          },
+          {
+            "value": "WORKS",
+            "labelAr": "أعمال مقاولات",
+            "labelEn": "Contracting works"
+          },
+          {
+            "value": "SERVICES",
+            "labelAr": "خدمات",
+            "labelEn": "Services"
+          }
+        ],
+        "validation": {}
+      }
+    },
+    {
+      "entityType": "svc.service",
+      "entityCode": "SUPPLIER_REG",
+      "operation": "CREATE",
+      "payload": {
+        "partyKinds": [
+          "ESTABLISHMENT"
+        ],
+        "draftsAllowed": true,
+        "draftExpiryDays": 30,
+        "onNewVersion": "CONTINUE",
+        "businessApp": "CLASSIFICATION",
+        "categoryCode": "SUPPLIERS",
+        "archetype": "ISSUANCE",
+        "nameAr": "التسجيل موردًا",
+        "nameEn": "Supplier registration",
+        "descriptionAr": "تسجيل المنشأة المصنفة موردًا لدى الشركة؛ يُطلب معه بيان مالي تكمله المنشأة بعد المراجعة.",
+        "descriptionEn": "Registers a classified establishment as a supplier; after review a financial statement request is opened for the establishment to complete.",
+        "icon": "how_to_reg",
+        "displayOrder": 10,
+        "isListed": true,
+        "numberPrefix": "SUP"
+      }
+    },
+    {
+      "entityType": "svc.service",
+      "entityCode": "SUP_TENDER_ALERTS",
+      "operation": "CREATE",
+      "payload": {
+        "partyKinds": [
+          "ESTABLISHMENT"
+        ],
+        "draftsAllowed": true,
+        "draftExpiryDays": 30,
+        "onNewVersion": "CONTINUE",
+        "businessApp": "CLASSIFICATION",
+        "categoryCode": "SUPPLIERS",
+        "archetype": "ISSUANCE",
+        "nameAr": "الاشتراك في تنبيهات المنافسات",
+        "nameEn": "Tender alerts subscription",
+        "descriptionAr": "تنبيهات بالبريد عند طرح منافسات تناسب ما تقدمه المنشأة.",
+        "descriptionEn": "Email alerts when tenders that match what the establishment supplies are published.",
+        "icon": "notifications_active",
+        "displayOrder": 20,
+        "isListed": true,
+        "numberPrefix": "ALR"
+      }
+    },
+    {
+      "entityType": "svc.service",
+      "entityCode": "SUP_FINANCIAL",
+      "operation": "CREATE",
+      "payload": {
+        "partyKinds": [
+          "ESTABLISHMENT"
+        ],
+        "draftsAllowed": true,
+        "draftExpiryDays": 30,
+        "onNewVersion": "CONTINUE",
+        "businessApp": "CLASSIFICATION",
+        "categoryCode": "SUPPLIERS",
+        "archetype": "ISSUANCE",
+        "nameAr": "البيان المالي للمورد",
+        "nameEn": "Supplier financial statement",
+        "descriptionAr": "يُفتح من طلب التسجيل موردًا لتكمله المنشأة؛ لا يُطلب منفردًا.",
+        "descriptionEn": "Opened by a supplier registration for the establishment to complete; not applied for on its own.",
+        "icon": "account_balance",
+        "displayOrder": 30,
+        "isListed": false,
+        "numberPrefix": "SFS"
+      }
+    },
+    {
+      "entityType": "svc.service-version",
+      "entityCode": "SUPPLIER_REG/1",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 1",
+        "nameEn": "Version 1",
+        "definition": {
+          "levels": [
+            {
+              "code": "NORMAL",
+              "nameAr": "عادي",
+              "nameEn": "Normal",
+              "slaWorkingDays": 5
+            }
+          ],
+          "steps": [
+            {
+              "code": "DETAILS",
+              "type": "FORM",
+              "titleAr": "بيانات المورد",
+              "titleEn": "Supplier details",
+              "sections": [
+                {
+                  "code": "CONTACT",
+                  "titleAr": "التواصل",
+                  "titleEn": "Contact",
+                  "columns": 2,
+                  "questions": [
+                    {
+                      "code": "SUP_CONTACT_NAME",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "SUP_CONTACT_MOBILE",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "SUP_EMAIL",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ]
+                },
+                {
+                  "code": "SUPPLY",
+                  "titleAr": "ما تقدمه المنشأة",
+                  "titleEn": "What you supply",
+                  "columns": 1,
+                  "questions": [
+                    {
+                      "code": "SUP_SUPPLY_TYPES",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "REVIEW",
+              "type": "REVIEW",
+              "titleAr": "المراجعة",
+              "titleEn": "Review",
+              "sections": []
+            },
+            {
+              "code": "DECLARATION",
+              "type": "DECLARATION",
+              "titleAr": "الإقرار",
+              "titleEn": "Declaration",
+              "sections": [],
+              "textAr": "أقر بأن جميع البيانات والمرفقات المقدمة صحيحة وأتحمل المسؤولية عن أي بيانات غير صحيحة.",
+              "textEn": "I confirm that all the data and attachments given are correct and I am responsible for any incorrect data."
+            }
+          ],
+          "eligibility": [],
+          "validations": [],
+          "fees": [],
+          "prerequisites": [
+            {
+              "code": "VALID_CERTIFICATE",
+              "kind": "DOCUMENT",
+              "documentType": "CLS_CERTIFICATE",
+              "statuses": [
+                "ACTIVE"
+              ],
+              "validForDays": 30,
+              "startService": "CLS_NEW",
+              "messageAr": "يلزم أن تكون لدى المنشأة شهادة تصنيف سارية لثلاثين يومًا على الأقل.",
+              "messageEn": "The establishment needs a classification certificate valid for at least 30 more days."
+            }
+          ],
+          "bundle": [
+            {
+              "service": "SUP_TENDER_ALERTS",
+              "required": false,
+              "noteAr": "يُقدَّم بالبريد وما تقدمه المنشأة من هذا الطلب ويُعتمد فورًا.",
+              "noteEn": "Uses the email and supply types of this request and is approved at once."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "entityType": "svc.service-version",
+      "entityCode": "SUP_TENDER_ALERTS/1",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 1",
+        "nameEn": "Version 1",
+        "definition": {
+          "levels": [],
+          "steps": [
+            {
+              "code": "DETAILS",
+              "type": "FORM",
+              "titleAr": "التنبيهات",
+              "titleEn": "Alerts",
+              "sections": [
+                {
+                  "code": "MAIN",
+                  "titleAr": "بيانات الاشتراك",
+                  "titleEn": "Subscription",
+                  "columns": 1,
+                  "questions": [
+                    {
+                      "code": "SUP_EMAIL",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "SUP_SUPPLY_TYPES",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "REVIEW",
+              "type": "REVIEW",
+              "titleAr": "المراجعة",
+              "titleEn": "Review",
+              "sections": []
+            }
+          ],
+          "eligibility": [],
+          "validations": [],
+          "fees": []
+        }
+      }
+    },
+    {
+      "entityType": "svc.service-version",
+      "entityCode": "SUP_FINANCIAL/1",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 1",
+        "nameEn": "Version 1",
+        "definition": {
+          "levels": [
+            {
+              "code": "NORMAL",
+              "nameAr": "عادي",
+              "nameEn": "Normal",
+              "slaWorkingDays": 5
+            }
+          ],
+          "steps": [
+            {
+              "code": "FINANCIAL",
+              "type": "FORM",
+              "titleAr": "البيانات المالية",
+              "titleEn": "Financial data",
+              "sections": [
+                {
+                  "code": "MAIN",
+                  "titleAr": "آخر سنة مالية",
+                  "titleEn": "Last financial year",
+                  "columns": 2,
+                  "questions": [
+                    {
+                      "code": "CLS_ANNUAL_REVENUE",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_FINANCIAL_YEAR_END",
+                      "required": true,
+                      "readonly": false
+                    },
+                    {
+                      "code": "CLS_CREDIT_REPORT",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "REVIEW",
+              "type": "REVIEW",
+              "titleAr": "المراجعة",
+              "titleEn": "Review",
+              "sections": []
+            },
+            {
+              "code": "DECLARATION",
+              "type": "DECLARATION",
+              "titleAr": "الإقرار",
+              "titleEn": "Declaration",
+              "sections": [],
+              "textAr": "أقر بأن جميع البيانات والمرفقات المقدمة صحيحة وأتحمل المسؤولية عن أي بيانات غير صحيحة.",
+              "textEn": "I confirm that all the data and attachments given are correct and I am responsible for any incorrect data."
+            }
+          ],
+          "eligibility": [],
+          "validations": [],
+          "fees": []
+        }
+      }
+    },
+    {
+      "entityType": "wf.workflow",
+      "entityCode": "SUPPLIER_REG",
+      "operation": "UPDATE",
+      "payload": {
+        "nameAr": "معالجة التسجيل موردًا",
+        "nameEn": "Supplier registration processing",
+        "descriptionAr": "مراجعة مدير طلبات الفرع، ثم طلب فرعي بالبيان المالي تكمله المنشأة؛ يُعتمد التسجيل باعتماد البيان ويُرفض برفضه.",
+        "descriptionEn": "The branch requests manager reviews, then a financial statement sub-request is opened for the establishment; the registration is approved when the statement is, and rejected otherwise.",
+        "serviceCode": "SUPPLIER_REG"
+      }
+    },
+    {
+      "entityType": "wf.workflow-version",
+      "entityCode": "SUPPLIER_REG/2",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 2",
+        "nameEn": "Version 2",
+        "definition": {
+          "nodes": [
+            {
+              "code": "START",
+              "type": "START",
+              "nameAr": "تقديم الطلب",
+              "nameEn": "Submitted",
+              "next": "REVIEW",
+              "layout": {
+                "x": 340,
+                "y": 40
+              }
+            },
+            {
+              "code": "REVIEW",
+              "type": "HUMAN_TASK",
+              "nameAr": "مراجعة طلب التسجيل",
+              "nameEn": "Review the registration",
+              "assignment": {
+                "target": "ROLE",
+                "role": "CLS_REQUEST_MANAGER",
+                "mode": "QUEUE"
+              },
+              "actions": [
+                {
+                  "code": "APPROVE",
+                  "kind": "COMPLETE",
+                  "nameAr": "اعتماد",
+                  "nameEn": "Approve",
+                  "to": "FINANCIAL"
+                },
+                {
+                  "code": "RETURN",
+                  "kind": "RETURN",
+                  "nameAr": "طلب بيانات إضافية",
+                  "nameEn": "Ask for more data"
+                },
+                {
+                  "code": "REJECT",
+                  "kind": "REJECT",
+                  "nameAr": "رفض",
+                  "nameEn": "Reject",
+                  "to": "REJECTED"
+                }
+              ],
+              "sla": {
+                "byLevel": {
+                  "NORMAL": 3
+                }
+              },
+              "layout": {
+                "x": 340,
+                "y": 150
+              }
+            },
+            {
+              "code": "FINANCIAL",
+              "type": "SUB_REQUEST",
+              "nameAr": "البيان المالي",
+              "nameEn": "Financial statement",
+              "childService": "SUP_FINANCIAL",
+              "wait": true,
+              "submitChild": true,
+              "next": "APPROVED",
+              "failed": "REJECTED",
+              "layout": {
+                "x": 340,
+                "y": 270
+              }
+            },
+            {
+              "code": "APPROVED",
+              "type": "END",
+              "nameAr": "مورد معتمد",
+              "nameEn": "Supplier approved",
+              "outcome": "APPROVED",
+              "layout": {
+                "x": 200,
+                "y": 400
+              }
+            },
+            {
+              "code": "REJECTED",
+              "type": "END",
+              "nameAr": "مرفوض",
+              "nameEn": "Rejected",
+              "outcome": "REJECTED",
+              "layout": {
+                "x": 620,
+                "y": 270
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "entityType": "wf.workflow",
+      "entityCode": "SUP_TENDER_ALERTS",
+      "operation": "UPDATE",
+      "payload": {
+        "nameAr": "الاشتراك في التنبيهات",
+        "nameEn": "Alerts subscription",
+        "descriptionAr": "يُعتمد الاشتراك فور تقديمه.",
+        "descriptionEn": "The subscription is approved as soon as it is submitted.",
+        "serviceCode": "SUP_TENDER_ALERTS"
+      }
+    },
+    {
+      "entityType": "wf.workflow-version",
+      "entityCode": "SUP_TENDER_ALERTS/2",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 2",
+        "nameEn": "Version 2",
+        "definition": {
+          "nodes": [
+            {
+              "code": "START",
+              "type": "START",
+              "nameAr": "تقديم الطلب",
+              "nameEn": "Submitted",
+              "next": "APPROVED",
+              "layout": {
+                "x": 340,
+                "y": 40
+              }
+            },
+            {
+              "code": "APPROVED",
+              "type": "END",
+              "nameAr": "مشترك",
+              "nameEn": "Subscribed",
+              "outcome": "APPROVED",
+              "layout": {
+                "x": 340,
+                "y": 170
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "entityType": "wf.workflow",
+      "entityCode": "SUP_FINANCIAL",
+      "operation": "UPDATE",
+      "payload": {
+        "nameAr": "مراجعة البيان المالي",
+        "nameEn": "Financial statement review",
+        "descriptionAr": "يراجع المحلل المالي البيان؛ نتيجته تعود إلى طلب التسجيل موردًا.",
+        "descriptionEn": "The financial analyst reviews the statement; the outcome goes back to the supplier registration.",
+        "serviceCode": "SUP_FINANCIAL"
+      }
+    },
+    {
+      "entityType": "wf.workflow-version",
+      "entityCode": "SUP_FINANCIAL/2",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 2",
+        "nameEn": "Version 2",
+        "definition": {
+          "nodes": [
+            {
+              "code": "START",
+              "type": "START",
+              "nameAr": "تقديم البيان",
+              "nameEn": "Submitted",
+              "next": "REVIEW",
+              "layout": {
+                "x": 340,
+                "y": 40
+              }
+            },
+            {
+              "code": "REVIEW",
+              "type": "HUMAN_TASK",
+              "nameAr": "مراجعة البيان المالي",
+              "nameEn": "Review the statement",
+              "assignment": {
+                "target": "ROLE",
+                "role": "CLS_FIN_ANALYST",
+                "mode": "QUEUE"
+              },
+              "actions": [
+                {
+                  "code": "APPROVE",
+                  "kind": "COMPLETE",
+                  "nameAr": "اعتماد",
+                  "nameEn": "Approve",
+                  "to": "APPROVED"
+                },
+                {
+                  "code": "RETURN",
+                  "kind": "RETURN",
+                  "nameAr": "طلب بيانات إضافية",
+                  "nameEn": "Ask for more data"
+                },
+                {
+                  "code": "REJECT",
+                  "kind": "REJECT",
+                  "nameAr": "رفض",
+                  "nameEn": "Reject",
+                  "to": "REJECTED"
+                }
+              ],
+              "sla": {
+                "byLevel": {
+                  "NORMAL": 3
+                }
+              },
+              "layout": {
+                "x": 340,
+                "y": 150
+              }
+            },
+            {
+              "code": "APPROVED",
+              "type": "END",
+              "nameAr": "معتمد",
+              "nameEn": "Approved",
+              "outcome": "APPROVED",
+              "layout": {
+                "x": 200,
+                "y": 280
+              }
+            },
+            {
+              "code": "REJECTED",
+              "type": "END",
+              "nameAr": "مرفوض",
+              "nameEn": "Rejected",
+              "outcome": "REJECTED",
+              "layout": {
+                "x": 480,
+                "y": 280
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

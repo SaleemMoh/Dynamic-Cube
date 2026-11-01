@@ -12,6 +12,7 @@ using DynamicCube.Platform.Integration;
 using DynamicCube.Platform.Payments;
 using DynamicCube.Platform.Persistence;
 using DynamicCube.Platform.Security;
+using DynamicCube.Platform.Services;
 using DynamicCube.Platform.Visits;
 using DynamicCube.Platform.Workflow;
 using Microsoft.EntityFrameworkCore;
@@ -265,6 +266,10 @@ internal sealed class WorkflowEngine(
             case NodeType.Integration:
                 token.NodeCode = await CallAsync(run, node, cancellationToken) ? node.Next! : node.Failed!;
                 await AdvanceAsync(run, token, cancellationToken);
+                break;
+
+            case NodeType.SubRequest:
+                await SpawnAsync(run, token, node, cancellationToken);
                 break;
 
             case NodeType.End:
@@ -628,6 +633,88 @@ internal sealed class WorkflowEngine(
         await work.CommitAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// Asks for a request of the step's service for the applicant (3f), with the step's parameters as answers; it is made
+    /// when this operation is saved. A waiting step parks its branch until the request finishes; otherwise the branch carries
+    /// on. The request is kept as <c>subrequests.&lt;step&gt;</c>.
+    /// </summary>
+    private async Task SpawnAsync(Run run, WorkflowToken token, NodeDefinition node, CancellationToken cancellationToken)
+    {
+        var facts = await RuleContextAsync(run, cancellationToken);
+        var instance = run.Instance;
+        var id = Guid.CreateVersion7();
+        SetFact(run, "subrequests", node.Code, new JsonObject
+        {
+            ["requestId"] = id.ToString(),
+            ["service"] = node.ChildService,
+            ["status"] = "CREATING",
+            ["wait"] = node.Wait,
+        });
+        run.Spawns.Add(new SpawnRequest(id, instance.SubjectType, instance.SubjectId, node.ChildService!, Map(node.Parameters, facts), node.SubmitChild, node.Code));
+        run.Event(WorkflowEventTypes.SubRequestCreated, null, null, node.ChildService, visible: true, node: node.Code);
+        if (node.Wait)
+        {
+            token.Status = TokenStatus.WaitingChild;
+            run.Update(SubjectStatus.PendingExternal, node.DisplayStatus ?? "AWAITING_SUB_REQUEST", WorkflowEventTypes.SubRequestCreated, null);
+            return;
+        }
+
+        token.NodeCode = node.Next!;
+        await AdvanceAsync(run, token, cancellationToken);
+    }
+
+    /// <summary>
+    /// A request a step made has finished (3f): the branch waiting for it moves on — to <c>next</c> when it was approved, to
+    /// <c>failed</c> otherwise. Requests of steps that did not wait, or of other subjects, change only the facts.
+    /// </summary>
+    public async Task ChildClosedAsync(ChildRequestClosed closed, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(closed);
+        var id = await context.Instances.Where(i => i.SubjectType == closed.ParentType && i.SubjectId == closed.ParentId && i.Status != InstanceStatus.Completed && i.Status != InstanceStatus.Cancelled)
+            .Select(i => (Guid?)i.Id).SingleOrDefaultAsync(cancellationToken);
+        if (id is null)
+        {
+            return;
+        }
+
+        await using var work = await unitOfWork.BeginAsync(cancellationToken);
+        var run = await LoadAsync(id.Value, System, null, cancellationToken);
+        var facts = JsonNode.Parse(run.Instance.Facts)?.AsObject() ?? [];
+        var step = (facts["subrequests"] as JsonObject)?.FirstOrDefault(p => p.Value?["requestId"]?.GetValue<string>() == closed.RequestId.ToString()).Key;
+        if (step is null)
+        {
+            return;
+        }
+
+        var entry = facts["subrequests"]![step]!.AsObject();
+        entry["status"] = closed.Status;
+        entry["number"] = closed.Number;
+        entry["approved"] = closed.Approved;
+        entry["closedAt"] = closed.At.ToString("O", CultureInfo.InvariantCulture);
+        run.Instance.Facts = facts.ToJsonString();
+        var token = run.Tokens.FirstOrDefault(t => t.Status == TokenStatus.WaitingChild && t.NodeCode == step);
+        if (token is null)
+        {
+            await context.SaveChangesAsync(cancellationToken);
+            await work.CommitAsync(cancellationToken);
+            return;
+        }
+
+        var node = run.Version.Node(step);
+        run.Event(WorkflowEventTypes.SubRequestFinished, null, null, $"{closed.Number} · {closed.Status}", visible: true, node: node.Code);
+        run.Update(SubjectStatus.InProgress, closed.Approved ? "SUB_REQUEST_APPROVED" : "SUB_REQUEST_NOT_APPROVED", WorkflowEventTypes.SubRequestFinished, null);
+        token.Status = TokenStatus.Active;
+        token.NodeCode = closed.Approved ? node.Next! : node.Failed ?? node.Next!;
+        await AdvanceAsync(run, token, cancellationToken);
+        if (run.Pending is { EventType: "STATUS_CHANGED" } entered)
+        {
+            run.Pending = entered with { EventType = WorkflowEventTypes.SubRequestFinished };
+        }
+
+        await FinishAsync(run, cancellationToken);
+        await work.CommitAsync(cancellationToken);
+    }
+
     private JsonObject Map(Dictionary<string, JsonNode?> fields, JsonObject facts) =>
         new(fields.Select(f => KeyValuePair.Create(f.Key, evaluator.Evaluate(f.Value, facts)?.DeepClone())));
 
@@ -674,7 +761,7 @@ internal sealed class WorkflowEngine(
         }
 
         // Branches still running (join any / count) are no longer needed.
-        foreach (var other in run.Tokens.Where(t => (t.Status is TokenStatus.Active or TokenStatus.WaitingCustomer or TokenStatus.WaitingPayment or TokenStatus.WaitingVisit or TokenStatus.AtJoin) && t.Forks.Any(f => f.Id == fork.Id)).ToList())
+        foreach (var other in run.Tokens.Where(t => (t.Status is TokenStatus.Active or TokenStatus.WaitingCustomer or TokenStatus.WaitingPayment or TokenStatus.WaitingVisit or TokenStatus.WaitingChild or TokenStatus.AtJoin) && t.Forks.Any(f => f.Id == fork.Id)).ToList())
         {
             CancelToken(run, other);
         }
@@ -815,7 +902,7 @@ internal sealed class WorkflowEngine(
 
     private static void Complete(Run run, NodeDefinition node)
     {
-        foreach (var token in run.Tokens.Where(t => t.Status is TokenStatus.Active or TokenStatus.WaitingCustomer or TokenStatus.WaitingPayment or TokenStatus.WaitingVisit or TokenStatus.AtJoin).ToList())
+        foreach (var token in run.Tokens.Where(t => t.Status is TokenStatus.Active or TokenStatus.WaitingCustomer or TokenStatus.WaitingPayment or TokenStatus.WaitingVisit or TokenStatus.WaitingChild or TokenStatus.AtJoin).ToList())
         {
             CancelToken(run, token);
         }
@@ -872,6 +959,7 @@ internal sealed class WorkflowEngine(
         facts["payments"] = produced["payments"]?.DeepClone() ?? new JsonObject();
         facts["visits"] = produced["visits"]?.DeepClone() ?? new JsonObject();
         facts["integrations"] = produced["integrations"]?.DeepClone() ?? new JsonObject();
+        facts["subrequests"] = produced["subrequests"]?.DeepClone() ?? new JsonObject();
         return facts;
     }
 
@@ -920,6 +1008,40 @@ internal sealed class WorkflowEngine(
         {
             await Subject(instance.SubjectType).UpdateAsync(instance.SubjectId, update, cancellationToken);
         }
+
+        // Requests steps asked for are made last, once this operation is saved: one finished at once (a service whose workflow
+        // completes without review) then moves its waiting branch on as a separate operation.
+        if (run.Spawns.Count > 0)
+        {
+            var spawner = services.GetService<IRequestSpawner>() ?? throw new WorkflowConflictException("Services are not installed.");
+            foreach (var spawn in run.Spawns)
+            {
+                SpawnedRequest made;
+                try
+                {
+                    made = await spawner.SpawnAsync(spawn, cancellationToken);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    throw new WorkflowConflictException($"Step '{spawn.Step}': {ex.Message}");
+                }
+
+                var facts = JsonNode.Parse(instance.Facts)?.AsObject() ?? [];
+                if (facts["subrequests"]?[spawn.Step] is JsonObject entry && entry["requestId"]?.GetValue<string>() == made.Id.ToString())
+                {
+                    entry["number"] = made.Number;
+                    entry["status"] ??= made.Status;
+                    if (entry["status"]?.GetValue<string>() == "CREATING")
+                    {
+                        entry["status"] = made.Status;
+                    }
+
+                    instance.Facts = facts.ToJsonString();
+                }
+            }
+
+            await context.SaveChangesAsync(cancellationToken);
+        }
     }
 
     private IWorkflowSubject Subject(string type) =>
@@ -961,6 +1083,9 @@ internal sealed class WorkflowEngine(
 
         /// <summary>Visits whose waiting branches were cancelled in this operation.</summary>
         public List<Guid> CancelledVisits { get; } = [];
+
+        /// <summary>Requests sub-request steps asked for in this operation, made once it is saved (3f).</summary>
+        public List<SpawnRequest> Spawns { get; } = [];
 
         /// <summary>Tokens resumed after the applicant's correction in this operation.</summary>
         public HashSet<Guid> Resuming { get; } = [];

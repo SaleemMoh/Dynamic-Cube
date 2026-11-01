@@ -2,7 +2,7 @@ import { JsonValue, LocalizedText } from '@dynamic-cube/shared';
 import { GraphDefinition, graphEdges, layout } from '../workflow-graph';
 
 /** The node types the engine runs; the palette offers exactly these. */
-export const NODE_TYPES = ['START', 'HUMAN_TASK', 'PARALLEL_SPLIT', 'JOIN', 'GATEWAY', 'DECISION', 'DOCUMENT', 'PAYMENT', 'VISIT', 'INTEGRATION', 'END'] as const;
+export const NODE_TYPES = ['START', 'HUMAN_TASK', 'PARALLEL_SPLIT', 'JOIN', 'GATEWAY', 'DECISION', 'DOCUMENT', 'PAYMENT', 'VISIT', 'INTEGRATION', 'SUB_REQUEST', 'END'] as const;
 export type NodeType = (typeof NODE_TYPES)[number];
 
 export type JsonRule = JsonValue;
@@ -94,8 +94,14 @@ export interface NodeDef {
   operation?: string | null;
   /** Integration: operation parameter → rule over the workflow facts. */
   parameters?: Record<string, JsonRule>;
-  /** Integration: where a failed call goes (none: the step stops with the provider's message). */
+  /** Integration: where a failed call goes (none: the step stops with the provider's message). Sub-request: where a request that is not approved goes. */
   failed?: string | null;
+  /** Sub-request (3f): the service of the request to make for the applicant. */
+  childService?: string | null;
+  /** Sub-request: wait for the request to finish (otherwise carry on at once). */
+  wait?: boolean;
+  /** Sub-request: submit it at once when its answers are complete (otherwise the applicant completes it). */
+  submitChild?: boolean;
   [key: string]: unknown;
 }
 
@@ -176,6 +182,13 @@ export function handles(node: NodeDef): Handle[] {
         { kind: 'next', hint: 'designer.handle.called', mark: '✓' },
         { kind: 'failed', hint: 'designer.handle.callFailed', mark: '✗' },
       ];
+    case 'SUB_REQUEST':
+      return node.wait
+        ? [
+            { kind: 'next', hint: 'designer.handle.childApproved', mark: '✓' },
+            { kind: 'failed', hint: 'designer.handle.childNotApproved', mark: '✗' },
+          ]
+        : [{ kind: 'next', hint: 'designer.handle.next', mark: '' }];
     case 'END':
       return [];
   }
@@ -191,7 +204,15 @@ export function edges(def: WorkflowDraft): Edge[] {
         to: n.next,
         outlet: { kind: 'next' },
         label:
-          n.type === 'PAYMENT' ? 'designer.edge.paid' : n.type === 'VISIT' ? 'designer.edge.visited' : n.type === 'INTEGRATION' ? 'designer.edge.called' : '',
+          n.type === 'PAYMENT'
+            ? 'designer.edge.paid'
+            : n.type === 'VISIT'
+              ? 'designer.edge.visited'
+              : n.type === 'INTEGRATION'
+                ? 'designer.edge.called'
+                : n.type === 'SUB_REQUEST' && n.wait
+                  ? 'designer.edge.childApproved'
+                  : '',
       });
     Object.entries(n.outcomes ?? {}).forEach(([outcome, to], index) => out.push({ from: n.code, to, outlet: { kind: 'outcome', index }, label: outcome }));
     if (n.cancelled)
@@ -222,7 +243,7 @@ export function edges(def: WorkflowDraft): Edge[] {
         from: n.code,
         to: n.failed,
         outlet: { kind: 'failed' },
-        label: 'designer.edge.callFailed',
+        label: n.type === 'SUB_REQUEST' ? 'designer.edge.childNotApproved' : 'designer.edge.callFailed',
       });
     if (n.expired)
       out.push({
@@ -268,6 +289,7 @@ const PREFIX: Record<NodeType, string> = {
   PAYMENT: 'PAYMENT',
   VISIT: 'VISIT',
   INTEGRATION: 'INTEGRATION',
+  SUB_REQUEST: 'SUB_REQUEST',
   END: 'END',
 };
 
@@ -282,6 +304,7 @@ const DEFAULT_NAMES: Record<NodeType, LocalizedText> = {
   PAYMENT: { ar: 'سداد الرسوم', en: 'Payment' },
   VISIT: { ar: 'زيارة ميدانية', en: 'Site visit' },
   INTEGRATION: { ar: 'استدعاء تكامل', en: 'Integration call' },
+  SUB_REQUEST: { ar: 'طلب فرعي', en: 'Sub-request' },
   END: { ar: 'النهاية', en: 'End' },
 };
 
@@ -316,6 +339,8 @@ export function newNode(def: WorkflowDraft, type: NodeType): NodeDef {
       return { ...node, visitType: null, outcomes: {}, next: null, cancelled: null };
     case 'INTEGRATION':
       return { ...node, operation: null, parameters: {}, next: null, failed: null };
+    case 'SUB_REQUEST':
+      return { ...node, childService: null, wait: true, submitChild: true, parameters: {}, next: null, failed: null };
     default:
       return { ...node, next: null };
   }
@@ -590,6 +615,14 @@ export function check(def: WorkflowDraft): Problem[] {
           target(n, to, 'designer.problem.noVisited');
         }
         break;
+      case 'SUB_REQUEST':
+        if (!n.childService) p(n, 'designer.problem.childService');
+        target(n, n.next, 'designer.problem.noNext');
+        if (n.wait) {
+          if (n.failed) target(n, n.failed, 'designer.problem.noChildNotApproved');
+          else p(n, 'designer.problem.noChildNotApproved');
+        }
+        break;
       case 'INTEGRATION':
         if (!n.operation) p(n, 'designer.problem.operation');
         target(n, n.next, 'designer.problem.noCalled');
@@ -669,5 +702,6 @@ export const NODE_ICONS: Record<NodeType, string> = {
   PAYMENT: 'payments',
   VISIT: 'location_on',
   INTEGRATION: 'sync_alt',
+  SUB_REQUEST: 'account_tree',
   END: 'flag',
 };
