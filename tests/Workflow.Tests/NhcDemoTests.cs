@@ -102,6 +102,23 @@ public sealed class NhcDemoTests
             cardData["specialty"]!.GetValue<string>().ShouldBe("هندسة مدنية");
             cardData["grade"]!.GetValue<string>().ShouldBe("خبير");
             cardData["region"]!.GetValue<string>().ShouldBe("منطقة مكة المكرمة");
+
+            // The public API (ADR-0042): the regions endpoint as the partner demo client calls it.
+            var regions = await host.Host.AsAsync("admin", async sp =>
+            {
+                var db = sp.GetRequiredService<Integration.Persistence.IntegrationDbContext>();
+                var endpoint = await db.ApiEndpoints.SingleAsync(e => e.Code == "REGIONS");
+                var client = await db.ApiClients.SingleAsync(c => c.Code == "PARTNER_DEMO");
+                client.Endpoints.ShouldBe(["REGIONS", "REQUEST_STATUS", "CERTIFICATE_CHECK"]);
+                var caller = new DynamicCube.Platform.PublicApi.ApiCaller(client.Code, client.Companies, null);
+                var runner = sp.GetRequiredService<Integration.Runtime.PublicApiRunner>();
+                var all = await runner.RunAsync(endpoint, new Dictionary<string, string>(), new Dictionary<string, string?>(), caller, false, CancellationToken.None);
+                var makkah = await runner.RunAsync(endpoint, new Dictionary<string, string>(), new Dictionary<string, string?> { ["name"] = "mak" }, caller, false, CancellationToken.None);
+                return (all.Answer, makkah.Answer);
+            });
+            regions.Item1.Status.ShouldBe(200);
+            regions.Item1.Body!["items"]!.AsArray().Count.ShouldBe(13);
+            regions.Item2.Body!["items"]!.AsArray().Select(r => r!["code"]!.GetValue<string>()).ShouldBe(["MAKKAH"]);
         }
         finally
         {

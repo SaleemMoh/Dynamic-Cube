@@ -1,0 +1,254 @@
+<header class="ad-head">
+  <mat-icon fontSet="material-symbols-outlined" class="ad-head__icon" aria-hidden="true"
+    >webhook</mat-icon
+  >
+  <div class="ad-grow">
+    <h2>{{ 'pa.title' | dcTranslate }}</h2>
+    <p class="ad-muted">{{ 'pa.subtitle' | dcTranslate }}</p>
+  </div>
+  <button
+    matIconButton
+    type="button"
+    (click)="close()"
+    [attr.aria-label]="'pa.close' | dcTranslate"
+  >
+    <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+  </button>
+</header>
+
+<div class="ad-identity">
+  <mat-form-field subscriptSizing="dynamic">
+    <mat-label>{{ 'pa.code' | dcTranslate }}</mat-label>
+    <input
+      matInput
+      dir="ltr"
+      [ngModel]="code()"
+      (ngModelChange)="code.set($event.toUpperCase())"
+      [disabled]="!isNew"
+      data-testid="pa-code"
+    />
+  </mat-form-field>
+  <mat-form-field subscriptSizing="dynamic">
+    <mat-label>{{ 'pa.nameAr' | dcTranslate }}</mat-label>
+    <input
+      matInput
+      dir="rtl"
+      [ngModel]="def().nameAr"
+      (ngModelChange)="set({ nameAr: $event })"
+      data-testid="pa-name-ar"
+    />
+  </mat-form-field>
+  <mat-form-field subscriptSizing="dynamic">
+    <mat-label>{{ 'pa.nameEn' | dcTranslate }}</mat-label>
+    <input
+      matInput
+      dir="ltr"
+      [ngModel]="def().nameEn"
+      (ngModelChange)="set({ nameEn: $event })"
+      data-testid="pa-name-en"
+    />
+  </mat-form-field>
+</div>
+
+@if (saving()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+@if (errors().length) {
+  <ul class="dc-errors ad-errors" role="alert" data-testid="pa-errors">
+    @for (e of errors(); track $index) {
+      <li>{{ e }}</li>
+    }
+  </ul>
+}
+
+<mat-dialog-content class="ad-body">
+  <div class="ad-layout">
+    <mat-tab-group
+      [selectedIndex]="part()"
+      (selectedIndexChange)="part.set($event)"
+      mat-stretch-tabs="false"
+      animationDuration="0ms"
+    >
+      @for (p of parts; track p; let i = $index) {
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <span class="ad-tab" [attr.data-testid]="'pa-tab-' + p">
+              <span class="ad-tab__n">{{ i + 1 }}</span>
+              {{ 'pa.part.' + p | dcTranslate }}
+              @if (partProblems()[i]) {
+                <span class="ad-tab__bad">{{ partProblems()[i] }}</span>
+              }
+            </span>
+          </ng-template>
+          <div class="ad-pane">
+            @switch (p) {
+              @case ('path') {
+                <mat-form-field subscriptSizing="dynamic">
+                  <mat-label>{{ 'pa.path' | dcTranslate }}</mat-label>
+                  <input
+                    matInput
+                    dir="ltr"
+                    class="ad-mono"
+                    [ngModel]="def().path"
+                    (ngModelChange)="setPath($event)"
+                    data-testid="pa-path"
+                  />
+                  <mat-hint>{{ 'pa.pathHint' | dcTranslate }}</mat-hint>
+                </mat-form-field>
+                <p class="ad-url" dir="ltr" data-testid="pa-url"><b>GET</b> {{ url() }}</p>
+
+                <h3>{{ 'pa.params' | dcTranslate }}</h3>
+                <p class="ad-muted">{{ 'pa.paramsHint' | dcTranslate }}</p>
+                @if (def().parameters.length) {
+                  <div class="ad-table" role="table">
+                    <div class="ad-table__head" role="row">
+                      <span>{{ 'pa.param.name' | dcTranslate }}</span>
+                      <span>{{ 'pa.param.location' | dcTranslate }}</span>
+                      <span>{{ 'pa.param.type' | dcTranslate }}</span>
+                      <span>{{ 'pa.param.required' | dcTranslate }}</span>
+                      <span>{{ 'pa.param.masked' | dcTranslate }}</span>
+                      <span>{{ 'pa.param.sample' | dcTranslate }}</span>
+                      <span>{{ 'pa.param.description' | dcTranslate }}</span>
+                      <span></span>
+                    </div>
+                    @for (param of def().parameters; track $index; let i = $index) {
+                      <div class="ad-table__row" role="row" [attr.data-param]="param.name">
+                        <input
+                          class="ad-cell ad-mono"
+                          dir="ltr"
+                          [ngModel]="param.name"
+                          (ngModelChange)="setParameter(i, { name: $event })"
+                          [ngModelOptions]="{ updateOn: 'blur' }"
+                          [attr.aria-label]="'pa.param.name' | dcTranslate"
+                        />
+                        <span class="ad-chip">{{
+                          'pa.location.' + param.location | dcTranslate
+                        }}</span>
+                        <select
+                          class="ad-cell"
+                          [ngModel]="param.type"
+                          (ngModelChange)="setParameter(i, { type: $event })"
+                          [attr.aria-label]="'pa.param.type' | dcTranslate"
+                        >
+                          @for (t of types; track t) {
+                            <option [value]="t">{{ 'pa.type.' + t | dcTranslate }}</option>
+                          }
+                        </select>
+                        <mat-checkbox
+                          [ngModel]="param.isRequired || param.location === 'PATH'"
+                          [disabled]="param.location === 'PATH'"
+                          (ngModelChange)="setParameter(i, { isRequired: $event })"
+                          [attr.aria-label]="'pa.param.required' | dcTranslate"
+                        />
+                        <mat-checkbox
+                          [ngModel]="param.isMasked"
+                          (ngModelChange)="setParameter(i, { isMasked: $event })"
+                          [attr.aria-label]="'pa.param.masked' | dcTranslate"
+                        />
+                        <input
+                          class="ad-cell"
+                          dir="ltr"
+                          [ngModel]="param.sample ?? ''"
+                          (ngModelChange)="setParameter(i, { sample: $event })"
+                          [attr.aria-label]="'pa.param.sample' | dcTranslate"
+                        />
+                        <input
+                          class="ad-cell"
+                          dir="auto"
+                          [ngModel]="param.descriptionEn ?? ''"
+                          (ngModelChange)="setParameter(i, { descriptionEn: $event })"
+                          [attr.aria-label]="'pa.param.description' | dcTranslate"
+                        />
+                        <button
+                          matIconButton
+                          type="button"
+                          (click)="removeParameter(i)"
+                          [attr.aria-label]="'pa.remove' | dcTranslate"
+                        >
+                          <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+                        </button>
+                      </div>
+                    }
+                  </div>
+                }
+                <button
+                  matButton
+                  type="button"
+                  class="ad-start"
+                  (click)="addParameter()"
+                  data-testid="pa-add-param"
+                >
+                  <mat-icon fontSet="material-symbols-outlined">add</mat-icon
+                  >{{ 'pa.addParam' | dcTranslate }}
+                </button>
+              }
+              @case ('data') {
+                <dc-api-endpoint-data
+                  [(def)]="def"
+                  [(query)]="query"
+                  [sources]="sources()"
+                  [functions]="functions()"
+                />
+              }
+              @case ('details') {
+                <mat-form-field subscriptSizing="dynamic">
+                  <mat-label>{{ 'pa.descriptionAr' | dcTranslate }}</mat-label>
+                  <textarea
+                    matInput
+                    rows="3"
+                    dir="rtl"
+                    [ngModel]="def().descriptionAr ?? ''"
+                    (ngModelChange)="set({ descriptionAr: $event })"
+                  ></textarea>
+                </mat-form-field>
+                <mat-form-field subscriptSizing="dynamic">
+                  <mat-label>{{ 'pa.descriptionEn' | dcTranslate }}</mat-label>
+                  <textarea
+                    matInput
+                    rows="3"
+                    dir="ltr"
+                    [ngModel]="def().descriptionEn ?? ''"
+                    (ngModelChange)="set({ descriptionEn: $event })"
+                  ></textarea>
+                </mat-form-field>
+              }
+            }
+          </div>
+        </mat-tab>
+      }
+    </mat-tab-group>
+    @if (canTry()) {
+      <dc-api-endpoint-try
+        class="ad-try"
+        [definition]="trial()"
+        [disabled]="problems().length > 0"
+      />
+    }
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions class="ad-actions">
+  <span class="ad-status" [class.ad-status--bad]="problems().length > 0" data-testid="pa-status">
+    <mat-icon fontSet="material-symbols-outlined">{{
+      problems().length ? 'error' : 'check_circle'
+    }}</mat-icon>
+    {{
+      problems().length
+        ? problems().length + ' ' + ('pa.problems' | dcTranslate)
+        : ('pa.noProblems' | dcTranslate)
+    }}
+  </span>
+  <span class="ad-grow"></span>
+  <button matButton type="button" (click)="close()">{{ 'pa.close' | dcTranslate }}</button>
+  <dc-submit-button [entityType]="entityType" [disabled]="saving()" (submitted)="save(true)" />
+  <button
+    matButton="filled"
+    type="button"
+    (click)="save()"
+    [disabled]="saving()"
+    data-testid="pa-save"
+  >
+    <mat-icon fontSet="material-symbols-outlined">save</mat-icon>
+    {{ drafts.saveLabel(entityType) | dcTranslate }}
+  </button>
+</mat-dialog-actions>

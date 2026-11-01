@@ -51,7 +51,8 @@ public static class IntegrationModule
         // The public API (ADR-0042): read-only endpoints partners call on the external host with their own tokens.
         services.AddSingleton(new PublicApiSettings(
             configuration["PublicApi:Audience"] is { Length: > 0 } audience ? audience : PublicApiAuthorization.DefaultAudience,
-            configuration["PublicApi:BaseUrl"] is { Length: > 0 } baseUrl ? baseUrl : null));
+            configuration["PublicApi:BaseUrl"] is { Length: > 0 } baseUrl ? baseUrl : null,
+            configuration["PublicApi:TokenUrl"] is { Length: > 0 } tokenUrl ? tokenUrl : null));
         services.AddSingleton<PublicApiRateLimits>();
         services.AddScoped<PublicApiRunner>();
         services.AddScoped<PublicApiDocument>();

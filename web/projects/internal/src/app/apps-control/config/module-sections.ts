@@ -283,6 +283,93 @@ export const INTEGRATION_SECTIONS: ConfigSection[] = [
       },
     ],
   },
+  {
+    path: 'api-endpoints',
+    title: t('نقاط الواجهة العامة', 'API endpoints'),
+    resource: 'integration.config',
+    types: [
+      {
+        entityType: 'integ.api-endpoint',
+        title: t('نقاط الواجهة العامة', 'API endpoints'),
+        key: 'code',
+        columns: ['path', 'kind', 'function'],
+        // Read-only endpoints partners call on the external host (ADR-0042), designed in their own dialog.
+        editor: () => import('../../integration/api-endpoint-designer').then((m) => m.ApiEndpointDesigner),
+        intro: () => import('../../integration/api-endpoints-intro').then((m) => m.ApiEndpointsIntro),
+        fields: [
+          { code: 'path', type: 'text', label: t('المسار', 'Path'), required: true },
+          {
+            code: 'kind',
+            type: 'select',
+            label: t('ما تفعله', 'What it does'),
+            options: [opt('QUERY', 'قراءة بيانات', 'Read data'), opt('FUNCTION', 'وظيفة من النظام', 'System function')],
+          },
+          { code: 'function', type: 'text', label: t('الوظيفة', 'Function') },
+        ],
+      },
+    ],
+  },
+  {
+    path: 'api-clients',
+    title: t('عملاء الواجهة العامة', 'API clients'),
+    resource: 'integration.config',
+    types: [
+      {
+        entityType: 'integ.api-client',
+        title: t('عملاء الواجهة العامة', 'API clients'),
+        key: 'code',
+        columns: ['clientId', 'endpoints', 'companies', 'rateLimitPerMinute'],
+        intro: () => import('../../integration/api-endpoints-intro').then((m) => m.ApiEndpointsIntro),
+        // The partner's sign-in client (client credentials only) and its OpenAPI description.
+        rowActions: [
+          {
+            icon: 'key',
+            label: t('الدخول وبيانات الربط', 'Sign-in and credentials'),
+            testId: 'api-client-sign-in',
+            width: '48rem',
+            dialog: () => import('../../integration/api-client-sign-in').then((m) => m.ApiClientSignInDialog),
+          },
+        ],
+        fields: [
+          {
+            code: 'clientId',
+            type: 'text',
+            label: t('معرّف العميل (client_id)', 'Client id (client_id)'),
+            hint: t('يُترك فارغًا ليُقترح من الرمز (dc-api-…)', 'Leave empty to use one from the code (dc-api-…)'),
+          },
+          {
+            code: 'endpoints',
+            type: 'select',
+            multiple: true,
+            label: t('النقاط التي يستدعيها', 'Endpoints it calls'),
+            ref: 'integ.api-endpoint',
+          },
+          {
+            code: 'companies',
+            type: 'select',
+            multiple: true,
+            label: t('الشركات التي يرى بياناتها', 'Companies whose data it sees'),
+            ref: 'apps.company',
+            required: true,
+            allOption: t('كل الشركات', 'All companies'),
+          },
+          {
+            code: 'branches',
+            type: 'select',
+            multiple: true,
+            label: t('الفروع', 'Branches'),
+            ref: 'apps.branch',
+            required: true,
+            allOption: t('كل الفروع', 'All branches'),
+          },
+          number('rateLimitPerMinute', t('استدعاءات في الدقيقة', 'Calls per minute'), 60),
+          { code: 'contactEmail', type: 'text', label: t('بريد التواصل', 'Contact email') },
+          { code: 'descriptionAr', type: 'textarea', label: t('الوصف بالعربية', 'Arabic description') },
+          { code: 'descriptionEn', type: 'textarea', label: t('الوصف بالإنجليزية', 'English description') },
+        ],
+      },
+    ],
+  },
 ];
 
 const identifierTypes = (kind: 'INDIVIDUAL' | 'ESTABLISHMENT') =>

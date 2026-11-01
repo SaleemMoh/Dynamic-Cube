@@ -1,0 +1,177 @@
+{
+  "title": "NHC — public API for partners (demo)",
+  "items": [
+    {
+      "entityType": "integ.api-endpoint",
+      "entityCode": "REGIONS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المناطق الإدارية",
+        "nameEn": "Administrative regions",
+        "descriptionAr": "قيم تصنيف المناطق الإدارية الفعالة اليوم، بترتيب العرض.",
+        "descriptionEn": "The administrative regions class values in effect today, in display order.",
+        "path": "/regions",
+        "kind": "QUERY",
+        "parameters": [
+          {
+            "name": "name",
+            "location": "QUERY",
+            "type": "TEXT",
+            "isRequired": false,
+            "isMasked": false,
+            "descriptionEn": "Part of the English name, e.g. mak",
+            "sample": "mak"
+          }
+        ],
+        "query": {
+          "from": {
+            "kind": "CLASS",
+            "code": "REGION",
+            "alias": "r"
+          },
+          "joins": [],
+          "where": {
+            "match": "ALL",
+            "conditions": [
+              {
+                "column": "r.name_en",
+                "op": "CONTAINS",
+                "param": "name"
+              }
+            ],
+            "groups": []
+          },
+          "sort": [
+            {
+              "column": "r.display_order",
+              "direction": "ASC"
+            },
+            {
+              "column": "r.code",
+              "direction": "ASC"
+            }
+          ],
+          "distinct": false
+        },
+        "fields": [
+          {
+            "name": "code",
+            "column": "r.code",
+            "descriptionEn": "The region's code"
+          },
+          {
+            "name": "nameAr",
+            "column": "r.name_ar",
+            "descriptionEn": "Arabic name"
+          },
+          {
+            "name": "nameEn",
+            "column": "r.name_en",
+            "descriptionEn": "English name"
+          }
+        ],
+        "singleRow": false,
+        "pageSize": 50,
+        "function": null,
+        "functionInputs": []
+      }
+    },
+    {
+      "entityType": "integ.api-endpoint",
+      "entityCode": "REQUEST_STATUS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "حالة طلب",
+        "nameEn": "Request status",
+        "descriptionAr": "حالة طلب برقمه ومكانه في مسار العمل وسجله.",
+        "descriptionEn": "A request's status by its number, where it is in its workflow and its timeline.",
+        "path": "/requests/{number}/status",
+        "kind": "FUNCTION",
+        "parameters": [
+          {
+            "name": "number",
+            "location": "PATH",
+            "type": "TEXT",
+            "isRequired": true,
+            "isMasked": false,
+            "descriptionEn": "The request number, e.g. CLS-2026-000001",
+            "sample": "CLS-2026-000001"
+          }
+        ],
+        "query": null,
+        "fields": [],
+        "singleRow": false,
+        "pageSize": 50,
+        "function": "REQUEST_STATUS",
+        "functionInputs": [
+          {
+            "input": "number",
+            "parameter": "number",
+            "value": null
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "integ.api-endpoint",
+      "entityCode": "CERTIFICATE_CHECK",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "التحقق من شهادة",
+        "nameEn": "Certificate check",
+        "descriptionAr": "بيانات شهادة التصنيف برقمها كما تظهر في صفحة التحقق.",
+        "descriptionEn": "A classification certificate by its number, as the verification page shows it.",
+        "path": "/certificates/{number}",
+        "kind": "FUNCTION",
+        "parameters": [
+          {
+            "name": "number",
+            "location": "PATH",
+            "type": "TEXT",
+            "isRequired": true,
+            "isMasked": false,
+            "descriptionEn": "The certificate number",
+            "sample": null
+          }
+        ],
+        "query": null,
+        "fields": [],
+        "singleRow": false,
+        "pageSize": 50,
+        "function": "DOCUMENT_VERIFY",
+        "functionInputs": [
+          {
+            "input": "number",
+            "parameter": "number",
+            "value": null
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "integ.api-client",
+      "entityCode": "PARTNER_DEMO",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "شريك تجريبي",
+        "nameEn": "Partner demo",
+        "descriptionAr": "نظام شريك تجريبي يستدعي الواجهة العامة ببيانات عميله (dc-api-partner-demo / dev-api-partner-secret في بيئة التطوير).",
+        "descriptionEn": "A sample partner system calling the public API with its client's credentials (dc-api-partner-demo / dev-api-partner-secret in development).",
+        "clientId": "dc-api-partner-demo",
+        "endpoints": [
+          "REGIONS",
+          "REQUEST_STATUS",
+          "CERTIFICATE_CHECK"
+        ],
+        "companies": [
+          "MAIN"
+        ],
+        "branches": [
+          "*"
+        ],
+        "rateLimitPerMinute": 60,
+        "contactEmail": "partner@example.com"
+      }
+    }
+  ]
+}

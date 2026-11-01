@@ -29,6 +29,7 @@ Built from the customer journey study (V05), the classification rules workbook (
 | 15-query-lists | A list built with the visual query builder: *My branches by region* (registered table `BRANCHES` joined to the regions class; each user sees their company's branches they work in, with the region as parent) | Apps Control → Lists of values |
 | 16-connected-app | **Connected app** *Projects management system* (`PMS`): its sign-in client `dc-app-pms`, 4 screens with their actions, a menu tree of two groups, roles *Projects manager* (Fahad Al-Otaibi, Riyadh branch) and *Projects viewer* (the audit manager, all branches), and *My branches by region* shared with it. The sample app at http://localhost:5090/connected-app signs in as any of them and shows their menu, screens and the list with their grants | Apps Control → Installation & entity → Apps (Screens and actions, Sign-in and credentials); Menus; Roles |
 | 17-classification-panel | **Side panel** (ADR-0040) on *version 2* of the new-classification service: *وكيل التصنيف* with a greeting and notes per step (with their rule under *Why?*) and five questions it answers, the readiness check, the request summary (with the CR number, domains and employees) and the live result — the grading step's best grade on the 1–5 scale (*غير مصنف* when none) with the size, the points and a card per domain showing its technical, performance, governance and financial grades | Portal → new classification request (side column); Services → Service Builder → *Side panel* tab |
+| 18-public-api | **Public API** (ADR-0042) for the sample partner *Partner demo* (`PARTNER_DEMO`, sign-in client `dc-api-partner-demo`, company NHC Innovation, 60 calls a minute): `/regions` reads the regions class (optional `name` filter), `/requests/{number}/status` a request's status and its place in the workflow, `/certificates/{number}` checks a classification certificate | Integrations → API endpoints, API clients, API calls |
 
 **Tracks:** *normal* — free, up to 60 working days; *fast (NHC)* — paid, 5 working days. The fast-track fee
 (5,000 / 10,000 / 20,000 / 30,000 SAR by annual revenue) is an assumption; change it in the service's Fees tab.
@@ -78,6 +79,23 @@ How they get their access (edit a user, *Access* tab):
 - **From the department:** the governance, projects and financial evaluation departments, the general manager office
   and customer experience carry default roles, so their staff have no roles of their own.
 - **Personal:** the audit manager can also open *Task supervision*.
+
+### Calling the public API as the partner demo
+
+The sample partner `dc-api-partner-demo` (development secret `dev-api-partner-secret`) gets a token with client
+credentials and calls the endpoints given to it on the external API:
+
+```bash
+TOKEN=$(curl -s http://localhost:8080/realms/dynamic-cube-external/protocol/openid-connect/token \
+  -d grant_type=client_credentials -d client_id=dc-api-partner-demo -d client_secret=dev-api-partner-secret \
+  | sed -E 's/.*"access_token":"([^"]+)".*/\1/')
+curl -s -H "Authorization: Bearer $TOKEN" "http://localhost:5081/api/public/v1/regions?name=mak"
+curl -s -H "Authorization: Bearer $TOKEN" http://localhost:5081/api/public/v1/requests/CLS-2026-000001/status
+curl -s -H "Authorization: Bearer $TOKEN" http://localhost:5081/api/public/v1/openapi.json
+```
+
+Each call shows under **Integrations → API calls**. A request number that is not the partner's company's, or that does
+not exist, answers 404; the same token on any other endpoint answers 403.
 
 ### Update without losing data
 

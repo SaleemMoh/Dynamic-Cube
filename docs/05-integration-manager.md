@@ -58,8 +58,13 @@ This confirms the design below: a shared connection and envelope, many operation
   suggests the provider, the connection (base URL, authentication, the credentials' name only) and the operations with
   their inputs and response fields; the ticked ones, with the outputs chosen, are imported as a configuration package
   for review. WSDL import comes with SOAP support.
-- **API Endpoint Builder** — expose selected platform data/operations as REST endpoints for
-  other parties (later phase), with the same auth and data-scope rules.
+- **API Endpoint Builder** (ADR-0042) — read-only **public endpoints** partner systems call on the external host
+  (`/api/public/v1/…`) with OAuth2 client credentials: rows read over registered tables and classes (fields, conditions
+  on parameters or the client's companies and branches, paging), or read-only system functions (class values, a
+  request's status with its place in the workflow, a document check). **API clients** hold the sign-in client, the
+  endpoints given, the companies and branches seen and a rate limit; every call is logged with masked parameters and
+  each client gets an OpenAPI description. Screens: *API endpoints* (designer with *Try it*), *API clients* (*Sign-in
+  and credentials*), *API calls*.
 
 ## 5.5 Initial connectors for the reference service
 

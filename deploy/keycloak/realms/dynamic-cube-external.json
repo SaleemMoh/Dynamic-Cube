@@ -116,7 +116,7 @@
     {
       "clientId": "dynamic-cube-portal-accounts",
       "name": "Dynamic Cube portal accounts (Apps Control)",
-      "description": "Service account the internal API uses to create applicants' portal accounts, enable/disable them and set passwords. Development secret only.",
+      "description": "Service account the internal API uses to create applicants' portal accounts, enable/disable them and set passwords, and to set up partner systems' public API clients. Development secret only.",
       "enabled": true,
       "publicClient": false,
       "clientAuthenticatorType": "client-secret",
@@ -125,6 +125,39 @@
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": true,
       "protocol": "openid-connect"
+    },
+    {
+      "clientId": "dynamic-cube-public-api",
+      "name": "Public API (token audience, ADR-0042)",
+      "enabled": true,
+      "bearerOnly": true
+    },
+    {
+      "clientId": "dc-api-partner-demo",
+      "name": "Partner demo (PARTNER_DEMO)",
+      "description": "Sample partner system of the NHC demo calling the public API with client credentials. Development secret only; a real partner's client is set up from Integrations → API clients.",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "dev-api-partner-secret",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": true,
+      "protocolMappers": [
+        {
+          "name": "audience-dynamic-cube-public-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.custom.audience": "dynamic-cube-public-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
     }
   ],
   "users": [
@@ -181,9 +214,17 @@
           "view-users",
           "query-users",
           "view-realm",
-          "view-identity-providers"
+          "view-identity-providers",
+          "manage-clients",
+          "view-clients"
         ]
       }
+    },
+    {
+      "id": "8f0c2a3e-6b1d-5c7e-9a4f-2d3b5e6f7a81",
+      "username": "service-account-dc-api-partner-demo",
+      "enabled": true,
+      "serviceAccountClientId": "dc-api-partner-demo"
     }
   ],
   "loginTheme": "dynamic-cube"

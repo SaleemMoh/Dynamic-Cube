@@ -57,8 +57,9 @@ public sealed partial class ApiClientSignIns(
         return new ApiClientCredentials(await StatusAsync(client, cancellationToken), secret);
     }
 
-    /// <summary>The token address partners use, when the identity provider can tell.</summary>
-    public Task<string?> TokenUrlAsync(CancellationToken cancellationToken) => clients.TokenUrlAsync(cancellationToken);
+    /// <summary>The token address partners use: the configured one, else the identity provider's when it can tell.</summary>
+    public async Task<string?> TokenUrlAsync(CancellationToken cancellationToken) =>
+        settings.TokenUrl ?? await clients.TokenUrlAsync(cancellationToken);
 
     public string ApiUrl => (settings.BaseUrl?.TrimEnd('/') ?? string.Empty) + PublicApiSettings.Path;
 
@@ -72,7 +73,7 @@ public sealed partial class ApiClientSignIns(
 
     private async Task<ApiClientSignIn> StatusAsync(ApiClient client, CancellationToken cancellationToken)
     {
-        var tokenUrl = await clients.TokenUrlAsync(cancellationToken);
+        var tokenUrl = await TokenUrlAsync(cancellationToken);
         if (!clients.IsManaged)
         {
             return new ApiClientSignIn(client.Code, client.ClientId, false, false, false, false, tokenUrl, settings.Audience, ApiUrl);

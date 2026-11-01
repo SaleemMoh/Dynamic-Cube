@@ -5,6 +5,7 @@ export const INTEGRATION_ROUTES: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'operations' },
   { path: 'test-console', loadComponent: () => import('./test-console').then((m) => m.TestConsole) },
   { path: 'call-log', loadComponent: () => import('./call-log').then((m) => m.CallLog) },
+  { path: 'api-calls', loadComponent: () => import('./api-calls').then((m) => m.ApiCalls) },
   ...INTEGRATION_SECTIONS.map((section) => ({
     path: section.path,
     data: { section: section.path },

@@ -10,10 +10,11 @@ using Microsoft.Extensions.Logging;
 namespace DynamicCube.Modules.Integration.Runtime;
 
 /// <summary>
-/// The public API's settings (ADR-0042): the audience its tokens carry (<c>PublicApi:Audience</c>) and the external host's
-/// address partners call (<c>PublicApi:BaseUrl</c>), used in OpenAPI documents and on the API client screens.
+/// The public API's settings (ADR-0042): the audience its tokens carry (<c>PublicApi:Audience</c>), the external host's
+/// address partners call (<c>PublicApi:BaseUrl</c>) and where they get tokens (<c>PublicApi:TokenUrl</c>; else the
+/// identity provider is asked), used in OpenAPI documents and on the API client screens.
 /// </summary>
-public sealed record PublicApiSettings(string Audience, string? BaseUrl)
+public sealed record PublicApiSettings(string Audience, string? BaseUrl, string? TokenUrl = null)
 {
     public const string Path = "/api/public/v1";
 }

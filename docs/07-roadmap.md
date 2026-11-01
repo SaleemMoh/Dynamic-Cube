@@ -514,12 +514,23 @@ gates and adjustments configured rather than written as rule sets; the panel's l
 
 The owner chose, of (a) visual operation designer, (b) SOAP, (c) OpenAPI import, (d) Nafath, (e) API Endpoint Builder:
 **(a) and (c)** ✅ — operations are designed visually and tried before they are saved, and OpenAPI / Swagger
-descriptions are imported as reviewed packages. Still to choose: SOAP/WSDL, Nafath, the API Endpoint Builder.
+descriptions are imported as reviewed packages. Still to choose: SOAP/WSDL, Nafath.
+
+## API Endpoint Builder (ADR-0042) ✅
+
+Read-only public endpoints for partner systems on the external host: OAuth2 client credentials, endpoints that read
+rows over registered tables and classes or call read-only system functions (class values, a request's status with its
+place in the workflow, a document check), API clients with their companies, branches and rate limit, a call log with
+masked parameters, and an OpenAPI description per client. The NHC demo publishes `/regions` (the regions class),
+`/requests/{number}/status` and `/certificates/{number}` for the sample partner `dc-api-partner-demo`.
+
+Later: writes for partners (submitting a request on an applicant's behalf), webhooks to partners on events, a shared
+rate limit across instances, more system functions as partners ask.
 
 ## Phase 4 — Extended capabilities
 
 - Report builder; pixel-perfect reports.
-- API Endpoint Builder; public Apps Control API for other products.
+- Public Apps Control API for other products (the partner API is ADR-0042).
 - Push notifications, chat; AI assistant integration point.
 - Advanced scripting / plugin SDK.
 

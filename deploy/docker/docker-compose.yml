@@ -7,6 +7,7 @@ x-dotnet-env: &dotnet-env
   ConnectionStrings__DynamicCube: Host=postgres;Database=dynamic_cube;Username=dynamic_cube;Password=${POSTGRES_PASSWORD:-dynamic_cube}
   # Where partner systems call the public API (ADR-0042): the external API's address as they reach it.
   PublicApi__BaseUrl: ${PUBLIC_API_BASE_URL:-http://localhost:5081}
+  PublicApi__TokenUrl: ${PUBLIC_API_TOKEN_URL:-http://localhost:8080/realms/dynamic-cube-external/protocol/openid-connect/token}
 
 # Credentials of the MoMRAH gateway connection (development values for the mock gateway; real ones come from the secret store).
 x-gateway-secrets: &gateway-secrets
@@ -44,8 +45,9 @@ services:
       KC_HOSTNAME: http://localhost:8080
       KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
       # Keycloak keeps no data here: raising this recreates it, which imports the realms again after they change
-      # (2: connected apps — the account service account manages sign-in clients; the sample app's client).
-      DC_REALM_REVISION: "2"
+      # (2: connected apps — the account service account manages sign-in clients; the sample app's client;
+      # 3: public API — its audience, the sample partner's client, the portal service account manages clients).
+      DC_REALM_REVISION: "3"
     volumes:
       - ../keycloak/realms:/opt/keycloak/data/import:ro
       - ../keycloak/themes/dynamic-cube:/opt/keycloak/themes/dynamic-cube:ro
