@@ -148,6 +148,39 @@ public sealed class DataQueryTests(AppsControlFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Several_classes_and_public_lists_come_in_one_call_for_the_callers_companies()
+    {
+        var (open, closed) = (Harness.Unique("LOV"), Harness.Unique("LOV"));
+        Change Lov(string code, string classCode, bool isPublic) => new(AppsControlChangeTypes.Lov, code, ChangeOperation.Create, new
+        {
+            nameAr = "قائمة " + code,
+            nameEn = "List " + code,
+            sourceType = "CLASS",
+            classCode,
+            isPublic,
+            maxRows = 2,
+        });
+        await _harness.PublishAsync(AppsControlAreas.Lovs, Lov(open, _banks, true), Lov(closed, _sector, false));
+
+        var both = await LookupsAsync(new Dictionary<string, string?> { ["classes"] = $"{_sector}, {_banks}", ["lovs"] = open }, new ApiCaller("P", [_sub], null));
+        var data = both.Data.ShouldBeOfType<JsonObject>();
+        data["classes"]!.AsObject().Select(c => c.Key).ShouldBe([_sector, _banks]);
+        data["classes"]![_sector]!.AsArray().Count.ShouldBe(4);
+        data["classes"]![_banks]!.AsArray().Select(v => v!["code"]!.GetValue<string>()).ShouldBe(["SHARED", "SUB_ONLY"], ignoreOrder: true);
+        data["lovs"]![open]!.AsArray().Select(v => v!["value"]!.GetValue<string>()).ShouldBe(["SHARED", "SUB_ONLY"], ignoreOrder: true, "every page of the list, for the client's company");
+
+        var all = await LookupsAsync(new Dictionary<string, string?> { ["lovs"] = open }, new ApiCaller("P", [_main, _sub], null));
+        all.Data!["lovs"]![open]!.AsArray().Count.ShouldBe(3, "each value once across the client's companies");
+        all.Data!.AsObject().ContainsKey("classes").ShouldBeFalse();
+
+        var refused = await Should.ThrowAsync<ApiInputException>(() => LookupsAsync(
+            new Dictionary<string, string?> { ["classes"] = Harness.Unique("NONE"), ["lovs"] = $"{open},{closed}" }, ApiCaller.Unlimited));
+        refused.Errors.Keys.ShouldBe(["classes", "lovs"], ignoreOrder: true);
+        refused.Errors["lovs"].ShouldHaveSingleItem().ShouldContain(closed, Case.Sensitive, "a list that is not public is not served");
+        (await Should.ThrowAsync<ApiInputException>(() => LookupsAsync(new Dictionary<string, string?>(), ApiCaller.Unlimited))).Errors.Keys.ShouldBe(["classes"]);
+    }
+
+    [Fact]
     public void The_rows_compiler_reads_inputs_as_values_and_pages()
     {
         var info = new LovQuerySourceInfo("CLASS", "C", "ت", "C", "apps", "v_class_c",
@@ -177,6 +210,9 @@ public sealed class DataQueryTests(AppsControlFixture fixture) : IAsyncLifetime
 
     private Task<DataRows> RunAsync(JsonNode query, IReadOnlyList<DataField> fields, IReadOnlyDictionary<string, string?> inputs, ApiCaller caller, int limit, int offset) =>
         _harness.AsAsync("admin", sp => sp.GetRequiredService<IDataQueries>().RunAsync(query, fields, inputs, caller, limit, offset, CancellationToken.None));
+
+    private Task<ApiFunctionResult> LookupsAsync(IReadOnlyDictionary<string, string?> inputs, ApiCaller caller) =>
+        _harness.AsAsync("admin", sp => sp.GetServices<IApiFunction>().Single(f => f.Info.Code == "LOOKUPS").InvokeAsync(inputs, caller, CancellationToken.None));
 
     private Task<ApiFunctionResult> InvokeAsync(IReadOnlyDictionary<string, string?> inputs, ApiCaller caller) =>
         _harness.AsAsync("admin", sp => sp.GetServices<IApiFunction>().Single(f => f.Info.Code == "CLASS_VALUES").InvokeAsync(inputs, caller, CancellationToken.None));

@@ -27,6 +27,9 @@ and classes safely, and the modules already know how to answer their own questio
     time limit; parameters are only ever bound as values.
   - **System function** — a read-only function a module contributes (`IApiFunction`), each input given a parameter or a
     fixed value: **CLASS_VALUES** (Apps Control: a class's values in effect, optionally the children of a value),
+    **LOOKUPS** (Apps Control: several classes and several lists of values in one call — codes separated by commas or
+    repeated parameters, at most 20 of each; only lists marked **public**, the ones the portal serves without sign-in,
+    for the client's companies; an unknown class or a list that is not public is refused),
     **REQUEST_STATUS** (Services with the Workflow: the status the applicant sees, the steps the request is at now with
     their deadlines, how many it went through, the timeline — without comments or people) and **DOCUMENT_VERIFY**
     (Documents: what the QR verification page shows, public fields only). Every function applies the caller's

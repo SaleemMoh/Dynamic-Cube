@@ -109,7 +109,7 @@ public sealed class NhcDemoTests
                 var db = sp.GetRequiredService<Integration.Persistence.IntegrationDbContext>();
                 var endpoint = await db.ApiEndpoints.SingleAsync(e => e.Code == "REGIONS");
                 var client = await db.ApiClients.SingleAsync(c => c.Code == "PARTNER_DEMO");
-                client.Endpoints.ShouldBe(["REGIONS", "REQUEST_STATUS", "CERTIFICATE_CHECK"]);
+                client.Endpoints.ShouldBe(["REGIONS", "REQUEST_STATUS", "CERTIFICATE_CHECK", "LOOKUPS"]);
                 var caller = new DynamicCube.Platform.PublicApi.ApiCaller(client.Code, client.Companies, null);
                 var runner = sp.GetRequiredService<Integration.Runtime.PublicApiRunner>();
                 var all = await runner.RunAsync(endpoint, new Dictionary<string, string>(), new Dictionary<string, string?>(), caller, false, CancellationToken.None);
@@ -119,6 +119,19 @@ public sealed class NhcDemoTests
             regions.Item1.Status.ShouldBe(200);
             regions.Item1.Body!["items"]!.AsArray().Count.ShouldBe(13);
             regions.Item2.Body!["items"]!.AsArray().Select(r => r!["code"]!.GetValue<string>()).ShouldBe(["MAKKAH"]);
+
+            // Several classes and the public regions list in one call.
+            var lookups = await host.Host.AsAsync("admin", async sp =>
+            {
+                var db = sp.GetRequiredService<Integration.Persistence.IntegrationDbContext>();
+                var endpoint = await db.ApiEndpoints.SingleAsync(e => e.Code == "LOOKUPS");
+                var caller = new DynamicCube.Platform.PublicApi.ApiCaller("PARTNER_DEMO", ["MAIN"], null);
+                return (await sp.GetRequiredService<Integration.Runtime.PublicApiRunner>().RunAsync(
+                    endpoint, new Dictionary<string, string>(), new Dictionary<string, string?> { ["classes"] = "REGION,SVC_CATEGORY", ["lovs"] = "REGIONS" }, caller, false, CancellationToken.None)).Answer;
+            });
+            lookups.Status.ShouldBe(200);
+            lookups.Body!["classes"]!.AsObject().Select(c => c.Key).ShouldBe(["REGION", "SVC_CATEGORY"]);
+            lookups.Body!["lovs"]!["REGIONS"]!.AsArray().Count.ShouldBe(13);
         }
         finally
         {

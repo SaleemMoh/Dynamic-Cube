@@ -60,8 +60,9 @@ This confirms the design below: a shared connection and envelope, many operation
   for review. WSDL import comes with SOAP support.
 - **API Endpoint Builder** (ADR-0042) — read-only **public endpoints** partner systems call on the external host
   (`/api/public/v1/…`) with OAuth2 client credentials: rows read over registered tables and classes (fields, conditions
-  on parameters or the client's companies and branches, paging), or read-only system functions (class values, a
-  request's status with its place in the workflow, a document check). **API clients** hold the sign-in client, the
+  on parameters or the client's companies and branches, paging), or read-only system functions (class values; several
+  classes and public lists of values in one call; a request's status with its place in the workflow; a document
+  check). **API clients** hold the sign-in client, the
   endpoints given, the companies and branches seen and a rate limit; every call is logged with masked parameters and
   each client gets an OpenAPI description. Screens: *API endpoints* (designer with *Try it*), *API clients* (*Sign-in
   and credentials*), *API calls*.

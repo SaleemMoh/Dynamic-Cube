@@ -67,8 +67,9 @@ public sealed class AccessSnapshot(
     public bool Can(string resourceCode, string action) =>
         IsActive && Privileges.TryGetValue(resourceCode, out var actions) && actions.Contains(action);
 
-    public static AccessSnapshot Anonymous(string app) =>
-        new(UserContext.Anonymous(app), null, null, UserStatus.Active, null, [], new Dictionary<string, IReadOnlySet<string>>(), new ConfigScope(new HashSet<string>(), new HashSet<string>()));
+    /// <summary>No one signed in (the portal before sign-in; a partner system reading public lists for a company).</summary>
+    public static AccessSnapshot Anonymous(string app, string? company = null) =>
+        new(UserContext.Anonymous(app) with { Company = company }, null, null, UserStatus.Active, null, [], new Dictionary<string, IReadOnlySet<string>>(), new ConfigScope(new HashSet<string>(), new HashSet<string>()));
 }
 
 /// <summary>A role the user holds and the company whose override of it applies (none: the role's own contents).</summary>

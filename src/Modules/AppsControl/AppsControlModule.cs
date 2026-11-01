@@ -175,6 +175,7 @@ public static class AppsControlModule
         services.AddScoped<IServiceClients>(sp => new PartnerClients(sp.GetRequiredKeyedService<ISignInClients>(PartnerClients.Key)));
         services.AddScoped<IDataQueries, DataQueries>();
         services.AddScoped<IApiFunction, ClassValuesFunction>();
+        services.AddScoped<IApiFunction, LookupsFunction>();
         return services;
     }
 

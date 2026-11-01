@@ -1,0 +1,81 @@
+{
+  "title": "NHC — public API: classes and lists in one call (demo)",
+  "items": [
+    {
+      "entityType": "integ.api-endpoint",
+      "entityCode": "LOOKUPS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "التصنيفات والقوائم",
+        "nameEn": "Classes and lists",
+        "descriptionAr": "قيم عدة تصنيفات وعدة قوائم عامة في استدعاء واحد، مثل ?classes=REGION,SVC_CATEGORY&lovs=REGIONS",
+        "descriptionEn": "The values of several classes and public lists in one call, e.g. ?classes=REGION,SVC_CATEGORY&lovs=REGIONS",
+        "path": "/lookups",
+        "kind": "FUNCTION",
+        "parameters": [
+          {
+            "name": "classes",
+            "location": "QUERY",
+            "type": "TEXT",
+            "isRequired": false,
+            "isMasked": false,
+            "descriptionEn": "Class codes separated by commas",
+            "sample": "REGION,SVC_CATEGORY"
+          },
+          {
+            "name": "lovs",
+            "location": "QUERY",
+            "type": "TEXT",
+            "isRequired": false,
+            "isMasked": false,
+            "descriptionEn": "Public list codes separated by commas",
+            "sample": "REGIONS"
+          }
+        ],
+        "query": null,
+        "fields": [],
+        "singleRow": false,
+        "pageSize": 50,
+        "function": "LOOKUPS",
+        "functionInputs": [
+          {
+            "input": "classes",
+            "parameter": "classes",
+            "value": null
+          },
+          {
+            "input": "lovs",
+            "parameter": "lovs",
+            "value": null
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "integ.api-client",
+      "entityCode": "PARTNER_DEMO",
+      "operation": "UPSERT",
+      "payload": {
+        "nameAr": "شريك تجريبي",
+        "nameEn": "Partner demo",
+        "descriptionAr": "نظام شريك تجريبي يستدعي الواجهة العامة ببيانات عميله (dc-api-partner-demo / dev-api-partner-secret في بيئة التطوير).",
+        "descriptionEn": "A sample partner system calling the public API with its client's credentials (dc-api-partner-demo / dev-api-partner-secret in development).",
+        "clientId": "dc-api-partner-demo",
+        "endpoints": [
+          "REGIONS",
+          "REQUEST_STATUS",
+          "CERTIFICATE_CHECK",
+          "LOOKUPS"
+        ],
+        "companies": [
+          "MAIN"
+        ],
+        "branches": [
+          "*"
+        ],
+        "rateLimitPerMinute": 60,
+        "contactEmail": "partner@example.com"
+      }
+    }
+  ]
+}

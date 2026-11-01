@@ -287,7 +287,7 @@ public sealed class PublicApiTests(DatabaseFixture fixture) : IAsyncLifetime
         admin.DefaultRequestHeaders.Add(TestAuthHandler.Header, "admin");
 
         var functions = await admin.GetFromJsonAsync<JsonElement>("/api/integration/v1/public-api/functions", ct);
-        functions.EnumerateArray().Select(f => f.GetProperty("code").GetString()).ShouldBe(["CLASS_VALUES", "DOCUMENT_VERIFY", "REQUEST_STATUS"]);
+        functions.EnumerateArray().Select(f => f.GetProperty("code").GetString()).ShouldBe(["CLASS_VALUES", "DOCUMENT_VERIFY", "LOOKUPS", "REQUEST_STATUS"]);
 
         var info = await admin.GetFromJsonAsync<JsonElement>("/api/integration/v1/public-api/info", ct);
         info.GetProperty("apiUrl").GetString().ShouldBe("https://api.example.gov.sa/api/public/v1");

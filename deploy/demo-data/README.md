@@ -30,6 +30,7 @@ Built from the customer journey study (V05), the classification rules workbook (
 | 16-connected-app | **Connected app** *Projects management system* (`PMS`): its sign-in client `dc-app-pms`, 4 screens with their actions, a menu tree of two groups, roles *Projects manager* (Fahad Al-Otaibi, Riyadh branch) and *Projects viewer* (the audit manager, all branches), and *My branches by region* shared with it. The sample app at http://localhost:5090/connected-app signs in as any of them and shows their menu, screens and the list with their grants | Apps Control → Installation & entity → Apps (Screens and actions, Sign-in and credentials); Menus; Roles |
 | 17-classification-panel | **Side panel** (ADR-0040) on *version 2* of the new-classification service: *وكيل التصنيف* with a greeting and notes per step (with their rule under *Why?*) and five questions it answers, the readiness check, the request summary (with the CR number, domains and employees) and the live result — the grading step's best grade on the 1–5 scale (*غير مصنف* when none) with the size, the points and a card per domain showing its technical, performance, governance and financial grades | Portal → new classification request (side column); Services → Service Builder → *Side panel* tab |
 | 18-public-api | **Public API** (ADR-0042) for the sample partner *Partner demo* (`PARTNER_DEMO`, sign-in client `dc-api-partner-demo`, company NHC Innovation, 60 calls a minute): `/regions` reads the regions class (optional `name` filter), `/requests/{number}/status` a request's status and its place in the workflow, `/certificates/{number}` checks a classification certificate | Integrations → API endpoints, API clients, API calls |
+| 19-public-api-lookups | `/lookups` for the partner demo: several classes and public lists of values in one call (`?classes=REGION,SVC_CATEGORY&lovs=REGIONS`) | Integrations → API endpoints |
 
 **Tracks:** *normal* — free, up to 60 working days; *fast (NHC)* — paid, 5 working days. The fast-track fee
 (5,000 / 10,000 / 20,000 / 30,000 SAR by annual revenue) is an assumption; change it in the service's Fees tab.
@@ -90,6 +91,7 @@ TOKEN=$(curl -s http://localhost:8080/realms/dynamic-cube-external/protocol/open
   -d grant_type=client_credentials -d client_id=dc-api-partner-demo -d client_secret=dev-api-partner-secret \
   | sed -E 's/.*"access_token":"([^"]+)".*/\1/')
 curl -s -H "Authorization: Bearer $TOKEN" "http://localhost:5081/api/public/v1/regions?name=mak"
+curl -s -H "Authorization: Bearer $TOKEN" "http://localhost:5081/api/public/v1/lookups?classes=REGION,SVC_CATEGORY&lovs=REGIONS"
 curl -s -H "Authorization: Bearer $TOKEN" http://localhost:5081/api/public/v1/requests/CLS-2026-000001/status
 curl -s -H "Authorization: Bearer $TOKEN" http://localhost:5081/api/public/v1/openapi.json
 ```
