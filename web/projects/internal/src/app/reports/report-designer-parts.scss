@@ -1,0 +1,43 @@
+.rp-note {
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: var(--dga-gray-50, #f9fafb);
+  font-size: 13px;
+}
+
+.rp-grid {
+  display: grid;
+  gap: 4px;
+  overflow-x: auto;
+}
+
+.rp-grid__head,
+.rp-grid__row {
+  display: grid;
+  grid-template-columns: minmax(9rem, 1.2fr) 8rem 8rem minmax(7rem, 1fr) minmax(7rem, 1fr) 7.5rem;
+  gap: 6px;
+  align-items: center;
+  font-size: 13px;
+}
+
+.rp-grid__head {
+  color: var(--dga-text-3, #6c737f);
+  font-size: 12px;
+}
+
+.rp-acts {
+  display: inline-flex;
+}
+
+.rp-card {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--dga-gray-200, #e5e7eb);
+  border-radius: 8px;
+}
+
+.rp-short {
+  width: 7rem;
+}

@@ -113,6 +113,21 @@ public sealed class OutboundMessage
     public DateTimeOffset CreatedAt { get; set; }
 
     public DateTimeOffset? SentAt { get; set; }
+
+    /// <summary>Files sent with an email (kept in file storage), e.g. a scheduled report's file.</summary>
+    public List<MessageAttachmentRef> Attachments { get; set; } = [];
+}
+
+/// <summary>A file attached to a message: where file storage keeps it, its name and media type.</summary>
+public sealed class MessageAttachmentRef
+{
+    public string Key { get; set; } = string.Empty;
+
+    public string FileName { get; set; } = string.Empty;
+
+    public string ContentType { get; set; } = string.Empty;
+
+    public long Size { get; set; }
 }
 
 /// <summary>A notification shown in the portal (to everyone acting for the party) or in the internal system (to the user).</summary>

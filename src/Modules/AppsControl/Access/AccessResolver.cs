@@ -74,11 +74,24 @@ public sealed partial class AccessResolver(
         }
     }
 
-    private async Task<AccessSnapshot> BuildAsync(string? requestedCompany, CancellationToken cancellationToken)
+    /// <summary>
+    /// The access of a stored, active user as if they worked in <paramref name="appCode"/> in the given company (or their
+    /// usual one), without a sign-in: e.g. a scheduled report sends each recipient only what they may see. Null when the
+    /// user does not exist or is not active.
+    /// </summary>
+    public async Task<AccessSnapshot?> GetForUserAsync(string userName, string appCode, string? company, CancellationToken cancellationToken)
     {
-        var user = await ProvisionAsync(cancellationToken);
+        var user = await context.Users.AsNoTracking().SingleOrDefaultAsync(u => u.Code == userName, cancellationToken);
+        return user is not { Status: UserStatus.Active } ? null : await BuildAsync(company, user, appCode, cancellationToken);
+    }
+
+    private async Task<AccessSnapshot> BuildAsync(string? requestedCompany, CancellationToken cancellationToken) =>
+        await BuildAsync(requestedCompany, await ProvisionAsync(cancellationToken), currentUser.AppCode, cancellationToken);
+
+    private async Task<AccessSnapshot> BuildAsync(string? requestedCompany, UserAccount user, string appCode, CancellationToken cancellationToken)
+    {
         var today = DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime);
-        var app = await context.Apps.AsNoTracking().Where(a => a.Code == currentUser.AppCode).Select(a => (Guid?)a.Id).SingleOrDefaultAsync(cancellationToken);
+        var app = await context.Apps.AsNoTracking().Where(a => a.Code == appCode).Select(a => (Guid?)a.Id).SingleOrDefaultAsync(cancellationToken);
 
         // Roles in force today in any company: those held directly, and the default roles of the units the user is placed
         // in, counted in the company of the branch the unit serves (ADR-0036).
@@ -199,7 +212,7 @@ public sealed partial class AccessResolver(
         var userContext = new UserContext(
             user.Id,
             user.Code,
-            currentUser.AppCode,
+            appCode,
             roles.Select(r => r.Code).Distinct().ToList(),
             assignments.Where(a => a.PositionCode != null).Select(a => a.PositionCode!).Distinct().ToList(),
             assignments.Select(a => a.UnitCode).ToList(),

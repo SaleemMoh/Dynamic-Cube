@@ -42,6 +42,7 @@ public static class CommunicationModule
         services.TryAddEnumerable(ServiceDescriptor.Scoped<IMessageChannel, EmailChannel>());
         services.TryAddEnumerable(ServiceDescriptor.Scoped<IMessageChannel, SmsChannel>());
         services.AddScoped<CommunicationService>();
+        services.AddScoped<IDirectMessages, DirectMessages>();
         services.AddOutboxHandler<CommunicationEvent, EventDispatcher>();
         services.AddOutboxHandler<SendMessage, MessageSender>();
         return services;

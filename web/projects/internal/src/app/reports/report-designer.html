@@ -1,0 +1,222 @@
+<header class="ad-head">
+  <mat-icon fontSet="material-symbols-outlined" class="ad-head__icon" aria-hidden="true"
+    >analytics</mat-icon
+  >
+  <div class="ad-grow">
+    <h2>{{ 'rp.title' | dcTranslate }}</h2>
+    <p class="ad-muted">{{ 'rp.subtitle' | dcTranslate }}</p>
+  </div>
+  <button
+    matIconButton
+    type="button"
+    (click)="close()"
+    [attr.aria-label]="'rp.close' | dcTranslate"
+  >
+    <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+  </button>
+</header>
+
+<div class="ad-identity">
+  <mat-form-field subscriptSizing="dynamic">
+    <mat-label>{{ 'rp.code' | dcTranslate }}</mat-label>
+    <input
+      matInput
+      dir="ltr"
+      [ngModel]="code()"
+      (ngModelChange)="code.set($event.toUpperCase())"
+      [disabled]="!isNew"
+      data-testid="rp-code"
+    />
+  </mat-form-field>
+  <mat-form-field subscriptSizing="dynamic">
+    <mat-label>{{ 'rp.nameAr' | dcTranslate }}</mat-label>
+    <input
+      matInput
+      dir="rtl"
+      [ngModel]="def().nameAr"
+      (ngModelChange)="set({ nameAr: $event })"
+      data-testid="rp-name-ar"
+    />
+  </mat-form-field>
+  <mat-form-field subscriptSizing="dynamic">
+    <mat-label>{{ 'rp.nameEn' | dcTranslate }}</mat-label>
+    <input
+      matInput
+      dir="ltr"
+      [ngModel]="def().nameEn"
+      (ngModelChange)="set({ nameEn: $event })"
+      data-testid="rp-name-en"
+    />
+  </mat-form-field>
+</div>
+
+@if (saving()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+@if (errors().length) {
+  <ul class="dc-errors ad-errors" role="alert" data-testid="rp-errors">
+    @for (e of errors(); track $index) {
+      <li>{{ e }}</li>
+    }
+  </ul>
+}
+
+<mat-dialog-content class="ad-body">
+  <mat-tab-group
+    [selectedIndex]="tab()"
+    (selectedIndexChange)="tab.set($event)"
+    mat-stretch-tabs="false"
+    animationDuration="0ms"
+  >
+    @for (p of parts; track p; let i = $index) {
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <span class="ad-tab" [attr.data-testid]="'rp-tab-' + p">
+            <span class="ad-tab__n">{{ i + 1 }}</span>
+            {{ 'rp.part.' + p | dcTranslate }}
+            @if (partProblems()[i]) {
+              <span class="ad-tab__bad">{{ partProblems()[i] }}</span>
+            }
+          </span>
+        </ng-template>
+        <div class="ad-pane">
+          @if (p === 'details') {
+            <p class="ad-muted">{{ 'rp.details.hint' | dcTranslate }}</p>
+            <div class="rd-two">
+              <mat-form-field subscriptSizing="dynamic">
+                <mat-label>{{ 'rp.categoryAr' | dcTranslate }}</mat-label>
+                <input
+                  matInput
+                  dir="rtl"
+                  [ngModel]="def().categoryAr ?? ''"
+                  (ngModelChange)="set({ categoryAr: $event })"
+                />
+              </mat-form-field>
+              <mat-form-field subscriptSizing="dynamic">
+                <mat-label>{{ 'rp.categoryEn' | dcTranslate }}</mat-label>
+                <input
+                  matInput
+                  dir="ltr"
+                  [ngModel]="def().categoryEn ?? ''"
+                  (ngModelChange)="set({ categoryEn: $event })"
+                />
+              </mat-form-field>
+              <mat-form-field subscriptSizing="dynamic">
+                <mat-label>{{ 'rp.descriptionAr' | dcTranslate }}</mat-label>
+                <textarea
+                  matInput
+                  rows="3"
+                  dir="rtl"
+                  [ngModel]="def().descriptionAr ?? ''"
+                  (ngModelChange)="set({ descriptionAr: $event })"
+                ></textarea>
+              </mat-form-field>
+              <mat-form-field subscriptSizing="dynamic">
+                <mat-label>{{ 'rp.descriptionEn' | dcTranslate }}</mat-label>
+                <textarea
+                  matInput
+                  rows="3"
+                  dir="ltr"
+                  [ngModel]="def().descriptionEn ?? ''"
+                  (ngModelChange)="set({ descriptionEn: $event })"
+                ></textarea>
+              </mat-form-field>
+              <mat-form-field subscriptSizing="dynamic">
+                <mat-label>{{ 'rp.icon' | dcTranslate }}</mat-label>
+                <mat-icon matPrefix fontSet="material-symbols-outlined">{{
+                  def().icon || 'analytics'
+                }}</mat-icon>
+                <input
+                  matInput
+                  dir="ltr"
+                  [ngModel]="def().icon ?? ''"
+                  (ngModelChange)="set({ icon: $event })"
+                />
+              </mat-form-field>
+            </div>
+          } @else {
+            <dc-report-designer-parts
+              [part]="p"
+              [(def)]="def"
+              [(query)]="query"
+              [sources]="sources()"
+              [lovs]="lovs()"
+            />
+          }
+        </div>
+      </mat-tab>
+    }
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <span class="ad-tab" data-testid="rp-tab-preview">
+          <mat-icon fontSet="material-symbols-outlined">play_circle</mat-icon>
+          {{ 'rp.preview' | dcTranslate }}
+        </span>
+      </ng-template>
+      <div class="ad-pane">
+        <p class="ad-muted">{{ 'rp.preview.hint' | dcTranslate }}</p>
+        <div class="rd-filters">
+          @for (f of def().filters; track f.name) {
+            <label class="rd-filter">
+              <span>{{ i18n.language() === 'ar' ? f.labelAr : f.labelEn }}</span>
+              <input
+                class="ad-cell"
+                [type]="f.type === 'DATE' ? 'date' : f.type === 'NUMBER' ? 'number' : 'text'"
+                [placeholder]="f.default ?? ''"
+                [ngModel]="previewFilters()[f.name] ?? ''"
+                (ngModelChange)="setPreviewFilter(f.name, $event)"
+              />
+            </label>
+          }
+          <button
+            matButton="filled"
+            type="button"
+            (click)="runPreview()"
+            [disabled]="previewing()"
+            data-testid="rp-preview-run"
+          >
+            <mat-icon fontSet="material-symbols-outlined">play_arrow</mat-icon
+            >{{ 'rp.preview.run' | dcTranslate }}
+          </button>
+        </div>
+        @if (previewing()) {
+          <mat-progress-bar mode="indeterminate" />
+        }
+        @if (previewErrors().length) {
+          <ul class="dc-errors" role="alert" data-testid="rp-preview-errors">
+            @for (e of previewErrors(); track $index) {
+              <li>{{ e }}</li>
+            }
+          </ul>
+        }
+        <dc-report-result [run]="preview()" data-testid="rp-preview" />
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</mat-dialog-content>
+
+<mat-dialog-actions class="ad-actions">
+  <span class="ad-status" [class.ad-status--bad]="problems().length > 0" data-testid="rp-status">
+    <mat-icon fontSet="material-symbols-outlined">{{
+      problems().length ? 'error' : 'check_circle'
+    }}</mat-icon>
+    {{
+      problems().length
+        ? problems().length + ' ' + ('rp.problems' | dcTranslate)
+        : ('rp.noProblems' | dcTranslate)
+    }}
+  </span>
+  <span class="ad-grow"></span>
+  <button matButton type="button" (click)="close()">{{ 'rp.close' | dcTranslate }}</button>
+  <dc-submit-button [entityType]="entityType" [disabled]="saving()" (submitted)="save(true)" />
+  <button
+    matButton="filled"
+    type="button"
+    (click)="save()"
+    [disabled]="saving()"
+    data-testid="rp-save"
+  >
+    <mat-icon fontSet="material-symbols-outlined">save</mat-icon>
+    {{ drafts.saveLabel(entityType) | dcTranslate }}
+  </button>
+</mat-dialog-actions>

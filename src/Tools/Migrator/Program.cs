@@ -16,6 +16,8 @@ using DynamicCube.Modules.Parties;
 using DynamicCube.Modules.Parties.Persistence;
 using DynamicCube.Modules.Payments;
 using DynamicCube.Modules.Payments.Persistence;
+using DynamicCube.Modules.Reports;
+using DynamicCube.Modules.Reports.Persistence;
 using DynamicCube.Modules.Services;
 using DynamicCube.Modules.Services.Persistence;
 using DynamicCube.Modules.Visits;
@@ -49,6 +51,7 @@ builder.Services.AddCommunication(builder.Configuration);
 builder.Services.AddPayments(builder.Configuration);
 builder.Services.AddVisits(builder.Configuration);
 builder.Services.AddContent(builder.Configuration);
+builder.Services.AddReports(builder.Configuration);
 
 using var host = builder.Build();
 var logger = host.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Migrator");
@@ -67,6 +70,7 @@ try
     await MigrateAsync<PaymentsDbContext>(host.Services, logger);
     await MigrateAsync<VisitsDbContext>(host.Services, logger);
     await MigrateAsync<ContentDbContext>(host.Services, logger);
+    await MigrateAsync<ReportsDbContext>(host.Services, logger);
 
     // Product-owned configuration (SYSTEM rows) is inserted or refreshed on every run.
     using (var scope = host.Services.CreateScope())

@@ -15,6 +15,7 @@
     <ProjectReference Include="..\..\Modules\Payments\DynamicCube.Modules.Payments.csproj" />
     <ProjectReference Include="..\..\Modules\Visits\DynamicCube.Modules.Visits.csproj" />
     <ProjectReference Include="..\..\Modules\Content\DynamicCube.Modules.Content.csproj" />
+    <ProjectReference Include="..\..\Modules\Reports\DynamicCube.Modules.Reports.csproj" />
     <ProjectReference Include="..\..\Modules\Decisions\DynamicCube.Modules.Decisions.csproj" />
     <ProjectReference Include="..\..\Modules\Documents\DynamicCube.Modules.Documents.csproj" />
     <ProjectReference Include="..\..\Modules\Workflow\DynamicCube.Modules.Workflow.csproj" />

@@ -1,0 +1,214 @@
+<a class="rv-back" routerLink="/reports">
+  <mat-icon fontSet="material-symbols-outlined">arrow_back</mat-icon>{{ 'rp.back' | dcTranslate }}
+</a>
+@if (view.value(); as v) {
+  <header class="dc-page__header dc-page__header--actions">
+    <div>
+      <h1 data-testid="report-name">{{ name() }}</h1>
+      @if (description(); as d) {
+        <p class="dc-muted">{{ d }}</p>
+      }
+    </div>
+    <div class="rv-actions">
+      <button matButton type="button" [matMenuTriggerFor]="savedMenu" data-testid="report-saved">
+        <mat-icon fontSet="material-symbols-outlined">bookmarks</mat-icon
+        >{{ 'rp.saved' | dcTranslate }}
+      </button>
+      <mat-menu #savedMenu="matMenu">
+        @for (s of saved(); track s.id) {
+          <div class="rv-saved">
+            <button
+              mat-menu-item
+              type="button"
+              (click)="apply(s)"
+              [attr.data-testid]="'saved-' + s.name"
+            >
+              <mat-icon fontSet="material-symbols-outlined">{{
+                s.isDefault ? 'star' : 'bookmark'
+              }}</mat-icon
+              >{{ s.name }}
+            </button>
+            <button
+              matIconButton
+              type="button"
+              (click)="remove(s)"
+              [attr.aria-label]="'rp.saved.delete' | dcTranslate"
+            >
+              <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
+            </button>
+          </div>
+        } @empty {
+          <p class="rv-none">{{ 'rp.saved.none' | dcTranslate }}</p>
+        }
+        <button
+          mat-menu-item
+          type="button"
+          (click)="showSave.set(true)"
+          data-testid="report-save-filters"
+        >
+          <mat-icon fontSet="material-symbols-outlined">bookmark_add</mat-icon
+          >{{ 'rp.saved.save' | dcTranslate }}
+        </button>
+      </mat-menu>
+      @if (v.canExport) {
+        <button
+          matButton="outlined"
+          type="button"
+          [matMenuTriggerFor]="exportMenu"
+          data-testid="report-export"
+        >
+          <mat-icon fontSet="material-symbols-outlined">download</mat-icon
+          >{{ 'rp.export' | dcTranslate }}
+        </button>
+        <mat-menu #exportMenu="matMenu">
+          <button
+            mat-menu-item
+            type="button"
+            (click)="export('XLSX')"
+            data-testid="report-export-xlsx"
+          >
+            <mat-icon fontSet="material-symbols-outlined">table_view</mat-icon
+            >{{ 'rp.export.XLSX' | dcTranslate }}
+          </button>
+          <button
+            mat-menu-item
+            type="button"
+            (click)="export('CSV')"
+            data-testid="report-export-csv"
+          >
+            <mat-icon fontSet="material-symbols-outlined">csv</mat-icon
+            >{{ 'rp.export.CSV' | dcTranslate }}
+          </button>
+        </mat-menu>
+      }
+    </div>
+  </header>
+
+  @if (showSave()) {
+    <div class="rv-save" data-testid="report-save-form">
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'rp.saved.name' | dcTranslate }}</mat-label>
+        <input
+          matInput
+          [ngModel]="saveName()"
+          (ngModelChange)="saveName.set($event)"
+          maxlength="200"
+          data-testid="report-save-name"
+        />
+      </mat-form-field>
+      <mat-checkbox [ngModel]="saveDefault()" (ngModelChange)="saveDefault.set($event)">{{
+        'rp.saved.default' | dcTranslate
+      }}</mat-checkbox>
+      <button
+        matButton="filled"
+        type="button"
+        (click)="save()"
+        [disabled]="saving() || !saveName().trim()"
+        data-testid="report-save-confirm"
+      >
+        {{ 'rp.saved.save' | dcTranslate }}
+      </button>
+      <button matButton type="button" (click)="showSave.set(false)">
+        {{ 'rp.close' | dcTranslate }}
+      </button>
+    </div>
+  }
+  @if (notice()) {
+    <p class="rv-notice" role="status">{{ notice() }}</p>
+  }
+
+  @if (v.filters.length) {
+    <form class="rv-filters" (ngSubmit)="load(1)" data-testid="report-filters">
+      @for (f of v.filters; track f.name) {
+        <mat-form-field subscriptSizing="dynamic" [attr.data-filter]="f.name">
+          <mat-label>{{ label(f) }}{{ f.required ? ' *' : '' }}</mat-label>
+          @switch (f.type) {
+            @case ('LIST') {
+              @if (f.multiple) {
+                <mat-select
+                  multiple
+                  [ngModel]="multi(f)"
+                  (ngModelChange)="setMulti(f.name, $event)"
+                  [name]="f.name"
+                >
+                  @for (o of options.value()?.[f.name] ?? []; track o.value) {
+                    <mat-option [value]="o.value">{{ itemLabel(o) }}</mat-option>
+                  }
+                </mat-select>
+              } @else {
+                <mat-select
+                  [ngModel]="value(f)"
+                  (ngModelChange)="setValue(f.name, $event)"
+                  [name]="f.name"
+                >
+                  <mat-option value="">{{ 'rp.any' | dcTranslate }}</mat-option>
+                  @for (o of options.value()?.[f.name] ?? []; track o.value) {
+                    <mat-option [value]="o.value">{{ itemLabel(o) }}</mat-option>
+                  }
+                </mat-select>
+              }
+            }
+            @case ('YES_NO') {
+              <mat-select
+                [ngModel]="value(f)"
+                (ngModelChange)="setValue(f.name, $event)"
+                [name]="f.name"
+              >
+                <mat-option value="">{{ 'rp.any' | dcTranslate }}</mat-option>
+                <mat-option value="true">{{ 'rp.yes' | dcTranslate }}</mat-option>
+                <mat-option value="false">{{ 'rp.no' | dcTranslate }}</mat-option>
+              </mat-select>
+            }
+            @case ('DATE') {
+              <input
+                matInput
+                type="date"
+                [ngModel]="value(f)"
+                (ngModelChange)="setValue(f.name, $event)"
+                [name]="f.name"
+              />
+            }
+            @case ('NUMBER') {
+              <input
+                matInput
+                type="number"
+                [ngModel]="value(f)"
+                (ngModelChange)="setValue(f.name, $event === null ? null : '' + $event)"
+                [name]="f.name"
+              />
+            }
+            @default {
+              <input
+                matInput
+                [ngModel]="value(f)"
+                (ngModelChange)="setValue(f.name, $event)"
+                [name]="f.name"
+              />
+            }
+          }
+          @if (fieldErrors()[f.name]; as e) {
+            <mat-hint class="rv-error">{{ e }}</mat-hint>
+          }
+        </mat-form-field>
+      }
+      <div class="rv-buttons">
+        <button matButton="filled" type="submit" [disabled]="running()" data-testid="report-run">
+          <mat-icon fontSet="material-symbols-outlined">play_arrow</mat-icon
+          >{{ 'rp.run' | dcTranslate }}
+        </button>
+        <button matButton type="button" (click)="clear()">{{ 'rp.clear' | dcTranslate }}</button>
+      </div>
+    </form>
+  }
+}
+@if (running() || view.isLoading()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+@if (errors().length) {
+  <ul class="dc-errors" role="alert" data-testid="report-errors">
+    @for (e of errors(); track $index) {
+      <li>{{ e }}</li>
+    }
+  </ul>
+}
+<dc-report-result [run]="run()" (page)="load($event)" />

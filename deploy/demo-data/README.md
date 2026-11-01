@@ -33,6 +33,7 @@ Built from the customer journey study (V05), the classification rules workbook (
 | 19-public-api-lookups | `/lookups` for the partner demo: several classes and public lists of values in one call (`?classes=REGION,SVC_CATEGORY&lovs=REGIONS`) | Integrations → API endpoints |
 | 20-individual-nafath | *Version 2* of the professional qualification service asks the applicant to **confirm the request with Nafath** before it is submitted (ADR-0043): on submit the portal shows a number; pick it on the mock Nafath app page (below) | Portal → the individual service; Services → Service Builder → *Rules* → *Submitting* |
 | 21-yakeen-soap | **A SOAP service** (ADR-0044): provider *Elm — Yakeen (mock)*, connection `YAKEEN` (WS-Security UsernameToken with a password digest, secret `YAKEEN`) and two SOAP operations — `YAKEEN_CITIZEN_INFO` (national ID and date of birth → names, gender, dates of birth, nationality, ID status; faults `PersonNotFound`, `DateOfBirthMismatch`, `InvalidNin` mapped to bilingual messages) and `YAKEEN_CITIZEN_ADDRESS` (the addresses as lists). Try `1000000001` with `1410-09`; the WSDL at http://localhost:5090/soap/yakeen?wsdl can be imported on the Operations screen | Integrations → Connections, Operations (designer: *SOAP*), Test console, Call log |
+| 22-reports | **Reports** (ADR-0045): registered tables *Service requests*, *Services*, *Workflow tasks* and *Document values* (the certificates' values, one row each), the list *Services (for reports)*, four reports — *Requests by service, status and branch* (bar chart, tiles, filters by date, service and branch), *Overdue tasks* (as of a date), *Certificates by grade* (pie) and *Abandoned drafts by step* (not touched for 7 days) — the schedule *Overdue tasks — weekly* (Sundays 07:30, Excel in Arabic, to the branch managers and the audit manager, each with their own branches) and the reports granted to the *Branch requests manager* and *Audit manager* roles | Reports; Reports → Report design (designer, preview), Report schedules (*Send now*), Scheduled deliveries; emails in Mailpit (http://localhost:8025) |
 
 **Tracks:** *normal* — free, up to 60 working days; *fast (NHC)* — paid, 5 working days. The fast-track fee
 (5,000 / 10,000 / 20,000 / 30,000 SAR by annual revenue) is an assumption; change it in the service's Fees tab.
@@ -60,6 +61,15 @@ Who works on it: the branch requests manager of the request's branch (`ruh.manag
 the projects analysts (`prj.analyst1`, `prj.analyst2`) and the general manager (`nhc.gm`). SCE membership numbers in
 the mock gateway: `123456` and `654321` (active), `111111` (expired: the automatic check fails and the branch checks it
 by hand); any other number is not found. NIC data exists for `1000000001` (and `1000000003`).
+
+### Reports
+
+Open *Reports* in the side menu: the reports open to you, grouped as *Classification reports*. Each report has its
+filters (a list filter shows the list's values), tiles, a chart and the table with a totals row; *Export* gives Excel or
+CSV and *Saved filters* keeps filter values under a name (one may apply when the report opens). Rows always follow the
+viewer's company and branches — sign in as `ruh.manager` to see only the Riyadh branch's requests. *Report schedules* →
+*Send now* on *Overdue tasks — weekly* sends it at once: each recipient gets the file with their own rows (Mailpit), and
+*Scheduled deliveries* shows who got it and who was skipped and why.
 
 ### Nafath (mock)
 

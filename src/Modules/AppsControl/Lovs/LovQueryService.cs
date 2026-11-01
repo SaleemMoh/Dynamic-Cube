@@ -13,6 +13,14 @@ using Microsoft.Extensions.Options;
 namespace DynamicCube.Modules.AppsControl.Lovs;
 
 /// <summary>What a preview shows: the SQL the definition becomes, the first values, and what is wrong with it.</summary>
+/// <summary>A report's run: its columns, a page of rows, the number of rows (-1 when not asked), the totals row and the tiles.</summary>
+public sealed record LovReportOutput(
+    IReadOnlyList<(string Name, LovColumnCategory Category, string? Aggregate)> Columns,
+    List<System.Text.Json.Nodes.JsonObject> Rows,
+    long Total,
+    System.Text.Json.Nodes.JsonObject? Totals,
+    System.Text.Json.Nodes.JsonObject? Tiles);
+
 public sealed record LovQueryPreview(string? Sql, IReadOnlyList<LovItem> Items, bool HasMore, IReadOnlyList<LovQueryProblem> Problems, string? Error);
 
 /// <summary>
@@ -121,8 +129,13 @@ public sealed class LovQueryService(AppsControlDbContext context, DataScopeServi
         LovQueryDefinition? query, AccessSnapshot access, LovQueryRun run, string? resource, CancellationToken cancellationToken, bool withTables = false)
     {
         var sources = withTables ? await LoadWithTablesAsync(cancellationToken) : await LoadAsync(cancellationToken);
+        var scoped = await ScopesAsync(query, access, resource, cancellationToken);
+        return LovQueryCompiler.Compile(query, (kind, code) => sources.GetValueOrDefault((kind, code)), run with { Scopes = scoped });
+    }
 
-        // Data scopes of the data objects read (the same rule filters lists, inboxes and reports).
+    /// <summary>Data scopes of the data objects a query reads (the same rule filters lists, inboxes and reports).</summary>
+    private async Task<Dictionary<string, IReadOnlyList<DataScopeFilter>>> ScopesAsync(LovQueryDefinition? query, AccessSnapshot access, string? resource, CancellationToken cancellationToken)
+    {
         var scoped = new Dictionary<string, IReadOnlyList<DataScopeFilter>>(StringComparer.Ordinal);
         if (query is not null)
         {
@@ -136,7 +149,69 @@ public sealed class LovQueryService(AppsControlDbContext context, DataScopeServi
             }
         }
 
-        return LovQueryCompiler.Compile(query, (kind, code) => sources.GetValueOrDefault((kind, code)), run with { Scopes = scoped });
+        return scoped;
+    }
+
+    /// <summary>Problems of a report's query over the registered sources (ADR-0045).</summary>
+    public async Task<IReadOnlyList<LovQueryProblem>> CheckReportAsync(LovQueryDefinition? query, LovReportSpec spec, IReadOnlyCollection<string> inputs, CancellationToken cancellationToken)
+    {
+        var sources = await LoadAsync(cancellationToken);
+        return LovQueryCompiler.CheckReport(query, (kind, code) => kind == LovQueryKinds.Table ? null : sources.GetValueOrDefault((kind, code)), spec, inputs);
+    }
+
+    /// <summary>The columns of a report's result, or null when the query has problems.</summary>
+    public async Task<IReadOnlyList<(string Name, LovColumnCategory Category, string? Aggregate)>?> DescribeReportAsync(
+        LovQueryDefinition? query, LovReportSpec spec, IReadOnlyCollection<string> inputs, CancellationToken cancellationToken)
+    {
+        var sources = await LoadAsync(cancellationToken);
+        return LovQueryCompiler.DescribeReport(query, (kind, code) => kind == LovQueryKinds.Table ? null : sources.GetValueOrDefault((kind, code)), spec, inputs);
+    }
+
+    /// <summary>
+    /// One page of a report for a user: their facts answer conditions on the user's data, their data scopes (for the report's
+    /// resource) filter the data objects read; with the summary, the number of rows, the totals row and the tiles too.
+    /// </summary>
+    public async Task<(LovReportOutput? Output, IReadOnlyList<LovQueryProblem> Problems)> ReportAsync(
+        LovQueryDefinition? query,
+        LovReportSpec spec,
+        AccessSnapshot access,
+        string? resource,
+        IReadOnlyDictionary<string, string?> inputs,
+        int limit,
+        int offset,
+        bool withSummary,
+        CancellationToken cancellationToken)
+    {
+        var sources = await LoadAsync(cancellationToken);
+        var scoped = await ScopesAsync(query, access, resource, cancellationToken);
+        var run = new LovQueryRun(Facts(access), Limit: limit, Offset: offset, Scopes: scoped, Inputs: inputs);
+        var (compiled, problems) = LovQueryCompiler.CompileReport(query, (kind, code) => kind == LovQueryKinds.Table ? null : sources.GetValueOrDefault((kind, code)), spec, run);
+        if (compiled is null)
+        {
+            return (null, problems);
+        }
+
+        var names = compiled.Rows.Fields!;
+        var rows = await ExecuteAsync(compiled.Rows, reader => DataRowReader.Read(reader, names), cancellationToken);
+        long total = -1;
+        System.Text.Json.Nodes.JsonObject? totals = null;
+        System.Text.Json.Nodes.JsonObject? tiles = null;
+        if (withSummary)
+        {
+            total = (await ExecuteAsync(compiled.Count, reader => Convert.ToInt64(reader.GetValue(0), System.Globalization.CultureInfo.InvariantCulture), cancellationToken)).FirstOrDefault();
+            if (compiled.Totals is not null)
+            {
+                totals = (await ExecuteAsync(compiled.Totals, reader => DataRowReader.Read(reader, names), cancellationToken)).FirstOrDefault();
+            }
+
+            if (compiled.Tiles is not null)
+            {
+                var tileNames = compiled.Tiles.Fields!;
+                tiles = (await ExecuteAsync(compiled.Tiles, reader => DataRowReader.Read(reader, tileNames), cancellationToken)).FirstOrDefault();
+            }
+        }
+
+        return (new LovReportOutput(compiled.Columns, rows, total, totals, tiles), []);
     }
 
     /// <summary>Problems of a public endpoint's query over the registered sources (ADR-0042).</summary>

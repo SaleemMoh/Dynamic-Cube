@@ -57,6 +57,7 @@ export * from './lib/visits/visits.api';
 export * from './lib/visits/auth-image';
 export * from './lib/visits/visit-fields';
 export * from './lib/content/content.api';
+export * from './lib/reports/reports.api';
 export * from './lib/content/markdown';
 export * from './lib/content/markdown-view';
 export * from './lib/content/page-design';

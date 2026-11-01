@@ -58,6 +58,7 @@ public sealed class CommunicationDbContext(DbContextOptions<CommunicationDbConte
             b.Property(e => e.Body).IsRequired();
             b.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
             b.Property(e => e.Error).HasMaxLength(4000);
+            b.Property(e => e.Attachments).HasJsonColumn();
             b.HasIndex(e => new { e.EventId, e.RuleCode, e.Channel, e.Recipient }).IsUnique();
             b.HasIndex(e => new { e.SubjectType, e.SubjectId });
             b.HasIndex(e => new { e.Status, e.CreatedAt });

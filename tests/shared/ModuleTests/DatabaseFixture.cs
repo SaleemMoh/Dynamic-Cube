@@ -7,6 +7,7 @@ using DynamicCube.Modules.Documents.Persistence;
 using DynamicCube.Modules.Integration.Persistence;
 using DynamicCube.Modules.Parties.Persistence;
 using DynamicCube.Modules.Payments.Persistence;
+using DynamicCube.Modules.Reports.Persistence;
 using DynamicCube.Modules.Services.Persistence;
 using DynamicCube.Modules.Visits.Persistence;
 using DynamicCube.Modules.Workflow.Persistence;
@@ -58,6 +59,7 @@ public sealed class DatabaseFixture : IAsyncLifetime
             await sp.GetRequiredService<PaymentsDbContext>().Database.MigrateAsync();
             await sp.GetRequiredService<ContentDbContext>().Database.MigrateAsync();
             await sp.GetRequiredService<VisitsDbContext>().Database.MigrateAsync();
+            await sp.GetRequiredService<ReportsDbContext>().Database.MigrateAsync();
             await sp.GetRequiredService<AppsControlSeeder>().SeedAsync(CancellationToken.None);
         });
     }

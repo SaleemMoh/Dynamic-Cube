@@ -68,7 +68,7 @@ public interface IMessageChannel
 
 public sealed class MessageDeliveryException(string message, Exception? inner = null) : Exception(message, inner);
 
-internal sealed class EmailChannel(IOptions<CommunicationOptions> options, ISecretStore secrets) : IMessageChannel
+internal sealed class EmailChannel(IOptions<CommunicationOptions> options, ISecretStore secrets, DynamicCube.Platform.Files.IFileStorage files) : IMessageChannel
 {
     private readonly EmailOptions _options = options.Value.Email;
 
@@ -82,7 +82,16 @@ internal sealed class EmailChannel(IOptions<CommunicationOptions> options, ISecr
         mail.From.Add(new MailboxAddress(_options.FromName ?? string.Empty, _options.From));
         mail.To.Add(new MailboxAddress(message.RecipientName ?? string.Empty, message.Address ?? throw new MessageDeliveryException("The message has no address.")));
         mail.Subject = message.Title ?? string.Empty;
-        mail.Body = new BodyBuilder { HtmlBody = message.Body }.ToMessageBody();
+        var body = new BodyBuilder { HtmlBody = message.Body };
+        foreach (var attachment in message.Attachments)
+        {
+            await using var content = await files.OpenReadAsync(attachment.Key, cancellationToken);
+            using var buffer = new MemoryStream();
+            await content.CopyToAsync(buffer, cancellationToken);
+            body.Attachments.Add(attachment.FileName, buffer.ToArray(), ContentType.Parse(attachment.ContentType));
+        }
+
+        mail.Body = body.ToMessageBody();
         mail.Headers.Add("X-DynamicCube-Message", message.Id.ToString());
 
         using var client = new SmtpClient { Timeout = (int)_options.Timeout.TotalMilliseconds };

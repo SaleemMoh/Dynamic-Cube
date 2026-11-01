@@ -1462,6 +1462,136 @@ export const CONTENT_SECTIONS: ConfigSection[] = [
   },
 ];
 
+/** Reports (ADR-0045): report definitions (their own designer) and scheduled email delivery. */
+export const REPORT_SECTIONS: ConfigSection[] = [
+  {
+    path: 'reports-definitions',
+    title: t('تصميم التقارير', 'Report design'),
+    resource: 'reports.config',
+    types: [
+      {
+        entityType: 'rpt.report',
+        title: t('التقارير', 'Reports'),
+        key: 'code',
+        columns: ['categoryAr', 'pageSize'],
+        // The query builder, columns and totals, filters, tiles and chart with a live preview, in their own dialog.
+        editor: () => import('../../reports/report-designer').then((m) => m.ReportDesigner),
+        rowLinks: [
+          {
+            icon: 'open_in_new',
+            label: t('فتح التقرير', 'Open the report'),
+            route: (row) => ({ commands: ['/reports/view', String(row['code'])] }),
+            testId: 'report-open',
+          },
+        ],
+        fields: [
+          { code: 'categoryAr', type: 'text', label: t('المجموعة بالعربية', 'Arabic group') },
+          { code: 'categoryEn', type: 'text', label: t('المجموعة بالإنجليزية', 'English group') },
+          number('pageSize', t('صفوف في الصفحة', 'Rows a page'), 50),
+        ],
+      },
+    ],
+  },
+  {
+    path: 'reports-schedules',
+    title: t('جدولة التقارير', 'Report schedules'),
+    resource: 'reports.schedules',
+    types: [
+      {
+        entityType: 'rpt.schedule',
+        title: t('جدولة التقارير', 'Report schedules'),
+        key: 'code',
+        columns: ['reportCode', 'frequency', 'time', 'format', 'lastRunAt'],
+        // Each recipient gets the report run with their own access; the log shows who got it.
+        rowActions: [
+          {
+            icon: 'send',
+            label: t('إرسال الآن', 'Send now'),
+            testId: 'report-send-now',
+            width: '40rem',
+            dialog: () => import('../../reports/report-deliveries').then((m) => m.ReportSendNow),
+          },
+        ],
+        rowLinks: [
+          {
+            icon: 'outgoing_mail',
+            label: t('سجل الإرسال', 'Delivery log'),
+            route: () => ({ commands: ['/reports/deliveries'] }),
+            testId: 'report-deliveries',
+          },
+        ],
+        fields: [
+          { code: 'reportCode', type: 'select', label: t('التقرير', 'Report'), ref: 'rpt.report', required: true },
+          {
+            code: 'frequency',
+            type: 'select',
+            label: t('التكرار', 'How often'),
+            required: true,
+            defaultValue: 'DAILY',
+            options: [opt('DAILY', 'يوميًا', 'Daily'), opt('WEEKLY', 'أسبوعيًا', 'Weekly'), opt('MONTHLY', 'شهريًا', 'Monthly')],
+          },
+          {
+            code: 'time',
+            type: 'text',
+            label: t('الوقت', 'Time'),
+            required: true,
+            defaultValue: '07:00',
+            hint: t('بتوقيت الرياض، بصيغة 07:00', 'Riyadh time, as 07:00'),
+          },
+          {
+            code: 'dayOfWeek',
+            type: 'number',
+            label: t('يوم الأسبوع', 'Day of the week'),
+            hint: t('0 الأحد … 6 السبت', '0 Sunday … 6 Saturday'),
+            visibleWhen: { '==': [{ var: 'frequency' }, 'WEEKLY'] },
+          },
+          {
+            code: 'dayOfMonth',
+            type: 'number',
+            label: t('يوم الشهر', 'Day of the month'),
+            hint: t('من 1 إلى 28', '1 to 28'),
+            visibleWhen: { '==': [{ var: 'frequency' }, 'MONTHLY'] },
+          },
+          {
+            code: 'format',
+            type: 'select',
+            label: t('صيغة الملف', 'File format'),
+            required: true,
+            defaultValue: 'XLSX',
+            options: [opt('XLSX', 'Excel', 'Excel'), opt('CSV', 'CSV', 'CSV')],
+          },
+          {
+            code: 'language',
+            type: 'select',
+            label: t('لغة الملف والبريد', 'Language of the file and email'),
+            required: true,
+            defaultValue: 'AR',
+            options: [opt('AR', 'العربية', 'Arabic'), opt('EN', 'الإنجليزية', 'English')],
+          },
+          { code: 'users', type: 'select', multiple: true, label: t('المستخدمون', 'Users'), ref: 'apps.user', defaultValue: [] },
+          {
+            code: 'roles',
+            type: 'select',
+            multiple: true,
+            label: t('الأدوار', 'Roles'),
+            ref: 'apps.role',
+            defaultValue: [],
+            hint: t('كل من يحمل الدور يصله التقرير بصلاحياته', 'Everyone holding the role gets the report with their own access'),
+          },
+          {
+            code: 'filterValues',
+            type: 'json',
+            label: t('قيم المرشحات', 'Filter values'),
+            structure: { kind: 'map', keyLabel: t('المرشح', 'Filter'), valueLabel: t('القيمة', 'Value') },
+            hint: t('فارغ: القيم الافتراضية للتقرير (مثل TODAY-30)', 'Empty: the report’s defaults (e.g. TODAY-30)'),
+            defaultValue: {},
+          },
+        ],
+      },
+    ],
+  },
+];
+
 export const ALL_CONFIG_SECTIONS: ConfigSection[] = [
   ...CONFIG_SECTIONS,
   ...INTEGRATION_SECTIONS,
@@ -1474,4 +1604,5 @@ export const ALL_CONFIG_SECTIONS: ConfigSection[] = [
   ...PAYMENT_SECTIONS,
   ...VISIT_SECTIONS,
   ...CONTENT_SECTIONS,
+  ...REPORT_SECTIONS,
 ];

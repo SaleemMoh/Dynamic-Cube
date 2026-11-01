@@ -383,6 +383,11 @@ namespace DynamicCube.Modules.Communication.Persistence.Migrations
                         .HasColumnType("character varying(320)")
                         .HasColumnName("address");
 
+                    b.Property<string>("Attachments")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("attachments");
+
                     b.Property<int>("Attempts")
                         .HasColumnType("integer")
                         .HasColumnName("attempts");

@@ -41,3 +41,28 @@ public static class CommunicationEvents
         return services;
     }
 }
+
+/// <summary>A file sent with an email.</summary>
+public sealed record MessageAttachment(string FileName, string ContentType, byte[] Content);
+
+/// <summary>
+/// An email to one employee that no notification rule decides (e.g. a scheduled report, ADR-0045): sent through the
+/// outbox like every message, recorded in the outbound log, its attachments kept in file storage.
+/// </summary>
+public sealed record DirectEmail(
+    string UserName,
+    string? RecipientName,
+    string Address,
+    string Subject,
+    string HtmlBody,
+    IReadOnlyList<MessageAttachment> Attachments,
+    string Source,
+    string SubjectType,
+    Guid SubjectId);
+
+/// <summary>Direct emails (implemented by the Communication module).</summary>
+public interface IDirectMessages
+{
+    /// <summary>Queues the email; it is sent by the outbox, tried again on failure, and appears in the outbound log.</summary>
+    Task QueueEmailAsync(DirectEmail email, CancellationToken cancellationToken);
+}

@@ -18,7 +18,7 @@ public sealed class EmailTests
         var ct = TestContext.Current.CancellationToken;
         var api = new Uri(mailpit!);
         var options = Options.Create(new CommunicationOptions { Email = new EmailOptions { Host = api.Host, Port = 1025, Security = "None", From = "no-reply@dynamic-cube.local", FromName = "Dynamic Cube" } });
-        var channel = new EmailChannel(options, new NoSecrets());
+        var channel = new EmailChannel(options, new NoSecrets(), new NoFiles());
         var subject = "اعتماد الطلب " + Guid.NewGuid().ToString("N")[..8];
 
         await channel.SendAsync(new OutboundMessage { Address = "applicant@example.com", RecipientName = "مؤسسة المثال", Title = subject, Body = "<p dir=\"rtl\">تم اعتماد طلبكم</p>" }, ct);
@@ -28,8 +28,19 @@ public sealed class EmailTests
         found.GetProperty("messages_count").GetInt32().ShouldBe(1);
         found.GetProperty("messages")[0].GetProperty("To")[0].GetProperty("Address").GetString().ShouldBe("applicant@example.com");
 
-        var unreachable = new EmailChannel(Options.Create(new CommunicationOptions { Email = new EmailOptions { Host = api.Host, Port = 1, Security = "None" } }), new NoSecrets());
+        var unreachable = new EmailChannel(Options.Create(new CommunicationOptions { Email = new EmailOptions { Host = api.Host, Port = 1, Security = "None" } }), new NoSecrets(), new NoFiles());
         await Should.ThrowAsync<MessageDeliveryException>(() => unreachable.SendAsync(new OutboundMessage { Address = "a@example.com", Body = "x" }, ct));
+    }
+
+    private sealed class NoFiles : DynamicCube.Platform.Files.IFileStorage
+    {
+        public Task<DynamicCube.Platform.Files.StoredFile> SaveAsync(Stream content, string fileName, string contentType, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+        public Task<Stream> OpenReadAsync(string key, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+        public Task<bool> ExistsAsync(string key, CancellationToken cancellationToken) => Task.FromResult(false);
+
+        public Task DeleteAsync(string key, CancellationToken cancellationToken) => Task.CompletedTask;
     }
 
     private sealed class NoSecrets : ISecretStore

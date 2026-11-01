@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
+using DynamicCube.Platform.Reports;
 
 namespace DynamicCube.Modules.AppsControl.Lovs;
 
@@ -15,6 +16,24 @@ public sealed record LovCompiledQuery(string Sql, IReadOnlyDictionary<string, ob
 
 /// <summary>A column a public endpoint returns: its name in the response and the column (<c>alias.column</c>) it reads.</summary>
 public sealed record LovQueryField(string Name, string Column);
+
+/// <summary>A report's column (ADR-0045): its name, the column it reads and its aggregate (none: the rows are grouped by it).</summary>
+public sealed record LovReportColumn(string Name, string Column, string? Aggregate);
+
+/// <summary>A report's tile: an aggregate over all filtered rows (no column: the number of rows).</summary>
+public sealed record LovReportTile(string Name, string? Column, string Aggregate);
+
+/// <summary>What a report returns: its columns, tiles, sort (on its columns) and whether a totals row is wanted.</summary>
+public sealed record LovReportSpec(IReadOnlyList<LovReportColumn> Columns, IReadOnlyList<LovReportTile> Tiles, IReadOnlyList<(string Column, bool Descending)> Sort, bool Totals);
+
+/// <summary>A report compiled for one run: its page of rows, their number, the totals row and the tiles, sharing parameters.</summary>
+public sealed record LovCompiledReport(
+    LovCompiledQuery Rows,
+    LovCompiledQuery Count,
+    LovCompiledQuery? Totals,
+    LovCompiledQuery? Tiles,
+    IReadOnlyList<(string Name, LovColumnCategory Category, string? Aggregate)> Columns,
+    IReadOnlyList<(string Name, LovColumnCategory Category)> TileColumns);
 
 /// <summary>What a run adds to the definition: the parent and search typed in, the user's grant, the page.</summary>
 public sealed record LovQueryRun(
@@ -91,6 +110,47 @@ public static partial class LovQueryCompiler
         return problems.Count == 0 ? (compiled, problems) : (null, problems);
     }
 
+    /// <summary>Problems of a report's query (ADR-0045): its columns, tiles and sort; conditions may use its filters (<paramref name="inputs"/>).</summary>
+    public static IReadOnlyList<LovQueryProblem> CheckReport(LovQueryDefinition? query, Func<string, string, LovQuerySourceInfo?> source, LovReportSpec spec, IReadOnlyCollection<string> inputs)
+    {
+        var problems = new List<LovQueryProblem>();
+        _ = BuildReport(query, source, null, problems, spec, inputs);
+        return problems;
+    }
+
+    /// <summary>The columns of a report's result with their kinds; null when it has problems.</summary>
+    public static IReadOnlyList<(string Name, LovColumnCategory Category, string? Aggregate)>? DescribeReport(
+        LovQueryDefinition? query, Func<string, string, LovQuerySourceInfo?> source, LovReportSpec spec, IReadOnlyCollection<string> inputs)
+    {
+        var problems = new List<LovQueryProblem>();
+        var compiled = BuildReport(query, source, null, problems, spec, inputs);
+        return problems.Count == 0 ? compiled?.Columns : null;
+    }
+
+    /// <summary>A report's SQL for one run (its filters, user, data scopes and page), or the problems that prevent it.</summary>
+    public static (LovCompiledReport? Report, IReadOnlyList<LovQueryProblem> Problems) CompileReport(
+        LovQueryDefinition? query, Func<string, string, LovQuerySourceInfo?> source, LovReportSpec spec, LovQueryRun run)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+        var problems = new List<LovQueryProblem>();
+        var compiled = BuildReport(query, source, run, problems, spec, run.Inputs?.Keys.ToList() ?? []);
+        return problems.Count == 0 ? (compiled, problems) : (null, problems);
+    }
+
+    private static LovCompiledReport? BuildReport(
+        LovQueryDefinition? query, Func<string, string, LovQuerySourceInfo?> source, LovQueryRun? run, List<LovQueryProblem> problems, LovReportSpec spec, IReadOnlyCollection<string> inputs)
+    {
+        if (query is null)
+        {
+            problems.Add(new("query", "Build the query: choose where the data comes from."));
+            return null;
+        }
+
+        var builder = new Builder(source, run, problems, null, inputs, spec);
+        _ = builder.Compile(query);
+        return builder.CompiledReport;
+    }
+
     private static LovCompiledQuery? Build(
         LovQueryDefinition? query,
         Func<string, string, LovQuerySourceInfo?> source,
@@ -150,8 +210,12 @@ public static partial class LovQueryCompiler
         LovQueryRun? run,
         List<LovQueryProblem> problems,
         IReadOnlyList<LovQueryField>? fields,
-        IReadOnlyCollection<string>? inputs)
+        IReadOnlyCollection<string>? inputs,
+        LovReportSpec? report = null)
     {
+        /// <summary>The report compiled by <see cref="Compile"/> when the builder was given a report's columns.</summary>
+        public LovCompiledReport? CompiledReport { get; private set; }
+
         private readonly Dictionary<string, (LovQuerySourceInfo Info, Dictionary<string, LovSourceColumn> Columns)> _aliases = new(StringComparer.Ordinal);
 
         // Sources that could not be resolved (already reported): their columns are not reported again.
@@ -205,17 +269,24 @@ public static partial class LovQueryCompiler
                 }
             }
 
-            // A public endpoint returns chosen columns; a list returns a value, its labels and its parent.
+            // A report returns its columns; a public endpoint chosen columns; a list a value, its labels and its parent.
+            var reportColumns = report is null ? null : ReportColumns(report.Columns);
+            var reportTiles = report is null ? null : ReportTiles(report.Tiles);
+            var mapped = fields is null && report is null;
             var selected = fields is null ? null : Fields(fields);
-            var value = fields is null ? MapColumn(query.Map.Value, "query.map.value", required: true, "Choose the column that holds the value.") : null;
-            var labelAr = fields is null ? MapColumn(query.Map.LabelAr, "query.map.labelAr", required: true, "Choose the column that holds the Arabic label.") : null;
-            var labelEn = fields is null ? MapColumn(query.Map.LabelEn, "query.map.labelEn", required: true, "Choose the column that holds the English label.") : null;
-            var parent = fields is null ? MapColumn(query.Map.Parent, "query.map.parent", required: false, null) : null;
+            var value = mapped ? MapColumn(query.Map.Value, "query.map.value", required: true, "Choose the column that holds the value.") : null;
+            var labelAr = mapped ? MapColumn(query.Map.LabelAr, "query.map.labelAr", required: true, "Choose the column that holds the Arabic label.") : null;
+            var labelEn = mapped ? MapColumn(query.Map.LabelEn, "query.map.labelEn", required: true, "Choose the column that holds the English label.") : null;
+            var parent = mapped ? MapColumn(query.Map.Parent, "query.map.parent", required: false, null) : null;
 
             var where = new List<string>();
             if (from is not null)
             {
                 where.AddRange(BuiltIn(from, query.From.Alias));
+                if (report is not null)
+                {
+                    where.AddRange(WorkScope(from, query.From.Alias));
+                }
             }
 
             if (query.Where is not null)
@@ -239,6 +310,18 @@ public static partial class LovQueryCompiler
                     var name = Parameter(filter.Grant.Values.ToArray());
                     where.Add($"{Quote(scope.Key)}.{Quote(filter.Column)}::text = ANY({name}::text[])");
                 }
+            }
+
+            if (report is not null)
+            {
+                var order = ReportSort(report, reportColumns);
+                if (problems.Count > 0 || fromSql is null || reportColumns is null || reportTiles is null)
+                {
+                    return null;
+                }
+
+                CompiledReport = Report(query, report, reportColumns, reportTiles, order, fromSql, joinSql.ToString(), where);
+                return CompiledReport.Rows;
             }
 
             if (query.Sort.Count > MaxSorts)
@@ -395,6 +478,246 @@ public static partial class LovQueryCompiler
             return new LovCompiledQuery(sql.ToString(), _parameters, [.. selected.Select(f => (f.Name, f.Category))]);
         }
 
+        /// <summary>A report's columns, checked: valid names used once, registered columns, aggregates that fit the column.</summary>
+        private List<(string Name, string Sql, LovColumnCategory Category, string? Aggregate)>? ReportColumns(IReadOnlyList<LovReportColumn> chosen)
+        {
+            if (chosen.Count == 0)
+            {
+                problems.Add(new("columns", "Choose the columns the report shows."));
+                return null;
+            }
+
+            if (chosen.Count > MaxFields)
+            {
+                problems.Add(new("columns", $"Show at most {MaxFields} columns."));
+                return null;
+            }
+
+            var result = new List<(string, string, LovColumnCategory, string?)>();
+            var names = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var (column, i) in chosen.Select((c, i) => (c, i)))
+            {
+                var path = $"columns[{i}]";
+                if (!FieldPattern().IsMatch(column.Name ?? string.Empty))
+                {
+                    problems.Add(new($"{path}.name", "Use a name of English letters, digits and _, starting with a letter."));
+                }
+                else if (!names.Add(column.Name!))
+                {
+                    problems.Add(new($"{path}.name", $"'{column.Name}' is used twice."));
+                }
+
+                var resolved = Column(column.Column, $"{path}.column");
+                var aggregate = Aggregate(column.Aggregate, resolved?.Column.Category, $"{path}.aggregate", allowNone: true);
+                if (resolved is not null && aggregate != "-")
+                {
+                    result.Add((column.Name ?? string.Empty, resolved.Value.Sql, ResultCategory(resolved.Value.Column.Category, aggregate), aggregate));
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>A report's tiles: valid names used once, an aggregate that fits the column (counting rows needs none).</summary>
+        private List<(string Name, string? Sql, LovColumnCategory Category, string Aggregate)>? ReportTiles(IReadOnlyList<LovReportTile> tiles)
+        {
+            const int maxTiles = 8;
+            if (tiles.Count > maxTiles)
+            {
+                problems.Add(new("tiles", $"Show at most {maxTiles} tiles."));
+                return null;
+            }
+
+            var result = new List<(string, string?, LovColumnCategory, string)>();
+            var names = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var (tile, i) in tiles.Select((t, i) => (t, i)))
+            {
+                var path = $"tiles[{i}]";
+                if (!FieldPattern().IsMatch(tile.Name ?? string.Empty))
+                {
+                    problems.Add(new($"{path}.name", "Use a name of English letters, digits and _, starting with a letter."));
+                }
+                else if (!names.Add(tile.Name!))
+                {
+                    problems.Add(new($"{path}.name", $"'{tile.Name}' is used twice."));
+                }
+
+                if (string.IsNullOrWhiteSpace(tile.Column))
+                {
+                    if (!string.Equals(tile.Aggregate, ReportAggregates.Count, StringComparison.OrdinalIgnoreCase))
+                    {
+                        problems.Add(new($"{path}.column", "Choose the column; only counting the rows needs none."));
+                        continue;
+                    }
+
+                    result.Add((tile.Name ?? string.Empty, null, LovColumnCategory.Number, ReportAggregates.Count));
+                    continue;
+                }
+
+                var resolved = Column(tile.Column, $"{path}.column");
+                var aggregate = Aggregate(tile.Aggregate, resolved?.Column.Category, $"{path}.aggregate", allowNone: false);
+                if (resolved is not null && aggregate is not null and not "-")
+                {
+                    result.Add((tile.Name ?? string.Empty, resolved.Value.Sql, ResultCategory(resolved.Value.Column.Category, aggregate), aggregate));
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>The aggregate, upper case; null for none; "-" when it does not fit (reported).</summary>
+        private string? Aggregate(string? given, LovColumnCategory? category, string path, bool allowNone)
+        {
+            var aggregate = string.IsNullOrWhiteSpace(given) ? null : given.Trim().ToUpperInvariant();
+            if (aggregate is null)
+            {
+                if (allowNone)
+                {
+                    return null;
+                }
+
+                problems.Add(new(path, "Choose how the values are totalled."));
+                return "-";
+            }
+
+            if (!ReportAggregates.All.Contains(aggregate))
+            {
+                problems.Add(new(path, "Count, count distinct values, sum, average, minimum or maximum."));
+                return "-";
+            }
+
+            if (category is null)
+            {
+                return aggregate;
+            }
+
+            if (category == LovColumnCategory.Json && aggregate is not (ReportAggregates.Count or ReportAggregates.CountDistinct))
+            {
+                problems.Add(new(path, "A list or JSON column can only be counted."));
+                return "-";
+            }
+
+            if (aggregate is ReportAggregates.Sum or ReportAggregates.Avg && category != LovColumnCategory.Number)
+            {
+                problems.Add(new(path, "Only number columns are summed or averaged."));
+                return "-";
+            }
+
+            if (aggregate is ReportAggregates.Min or ReportAggregates.Max && category == LovColumnCategory.Bool)
+            {
+                problems.Add(new(path, "Yes/no columns are counted, not compared."));
+                return "-";
+            }
+
+            return aggregate;
+        }
+
+        private static LovColumnCategory ResultCategory(LovColumnCategory category, string? aggregate) => aggregate switch
+        {
+            ReportAggregates.Count or ReportAggregates.CountDistinct or ReportAggregates.Sum or ReportAggregates.Avg => LovColumnCategory.Number,
+            _ => category,
+        };
+
+        /// <summary>The report's sort as positions of its columns.</summary>
+        private List<(int Index, bool Descending)> ReportSort(LovReportSpec spec, List<(string Name, string Sql, LovColumnCategory Category, string? Aggregate)>? columns)
+        {
+            var result = new List<(int, bool)>();
+            if (spec.Sort.Count > MaxSorts)
+            {
+                problems.Add(new("sort", $"Sort by at most {MaxSorts} columns."));
+                return result;
+            }
+
+            foreach (var ((column, descending), i) in spec.Sort.Select((s, i) => (s, i)))
+            {
+                var index = columns?.FindIndex(c => c.Name == column) ?? -1;
+                if (index < 0)
+                {
+                    if (columns is not null)
+                    {
+                        problems.Add(new($"sort[{i}].column", $"'{column}' is not a column of the report."));
+                    }
+
+                    continue;
+                }
+
+                result.Add((index, descending));
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// The report's SQL: an inner query reads the chosen columns of the filtered rows; the outer one totals them,
+        /// grouping by the columns that are not totalled, sorts and pages. The count, the totals row and the tiles read the
+        /// same filtered rows.
+        /// </summary>
+        private LovCompiledReport Report(
+            LovQueryDefinition query,
+            LovReportSpec spec,
+            List<(string Name, string Sql, LovColumnCategory Category, string? Aggregate)> columns,
+            List<(string Name, string? Sql, LovColumnCategory Category, string Aggregate)> tiles,
+            List<(int Index, bool Descending)> order,
+            string fromSql,
+            string joinSql,
+            List<string> where)
+        {
+            var filter = where.Count > 0 ? " WHERE " + string.Join(" AND ", where.Select(w => "(" + w + ")")) : string.Empty;
+            string Inner(IEnumerable<string> expressions) =>
+                $"SELECT {(query.Distinct ? "DISTINCT " : string.Empty)}{string.Join(", ", expressions.Select((e, i) => $"{e} AS c{N(i)}"))} FROM {fromSql}{joinSql}{filter}";
+            static string Outer(int i, string? aggregate) => aggregate switch
+            {
+                null => $"q.c{N(i)}",
+                ReportAggregates.Count => $"COUNT(q.c{N(i)})",
+                ReportAggregates.CountDistinct => $"COUNT(DISTINCT q.c{N(i)})",
+                ReportAggregates.Sum => $"SUM(q.c{N(i)}::numeric)",
+                ReportAggregates.Avg => $"ROUND(AVG(q.c{N(i)}::numeric), 2)",
+                ReportAggregates.Min => $"MIN(q.c{N(i)})",
+                _ => $"MAX(q.c{N(i)})",
+            };
+
+            var inner = Inner(columns.Select(c => c.Sql));
+            var grouped = columns.Any(c => c.Aggregate is not null);
+            var keys = columns.Select((c, i) => (c, i)).Where(x => x.c.Aggregate is null).Select(x => x.i).ToList();
+            var groupBy = grouped && keys.Count > 0 ? " GROUP BY " + string.Join(", ", keys.Select(i => $"q.c{N(i)}")) : string.Empty;
+            var select = string.Join(", ", columns.Select((c, i) => $"{Outer(i, c.Aggregate)} AS f{N(i)}"));
+            var sort = order.Count > 0
+                ? string.Join(", ", order.Select(o => $"f{N(o.Index)}{(o.Descending ? " DESC" : string.Empty)} NULLS LAST"))
+                : $"f{N(grouped && keys.Count > 0 ? keys[0] : 0)}";
+            var page = run is null
+                ? string.Empty
+                : $" LIMIT {N(Math.Clamp(run.Limit, 1, 100_001))} OFFSET {N(Math.Max(0, run.Offset))}";
+            var rows = new LovCompiledQuery($"SELECT {select} FROM ({inner}) AS q{groupBy} ORDER BY {sort}{page}", _parameters, [.. columns.Select(c => (c.Name, c.Category))]);
+            var count = new LovCompiledQuery(
+                grouped
+                    ? keys.Count == 0 ? "SELECT 1::bigint" : $"SELECT COUNT(*) FROM (SELECT 1 FROM ({inner}) AS q{groupBy}) AS g"
+                    : $"SELECT COUNT(*) FROM ({inner}) AS q",
+                _parameters);
+            var totals = spec.Totals && grouped
+                ? new LovCompiledQuery(
+                    $"SELECT {string.Join(", ", columns.Select((c, i) => (c.Aggregate is null ? "NULL" : Outer(i, c.Aggregate)) + $" AS f{N(i)}"))} FROM ({inner}) AS q",
+                    _parameters,
+                    [.. columns.Select(c => (c.Name, c.Category))])
+                : null;
+            LovCompiledQuery? tileQuery = null;
+            if (tiles.Count > 0)
+            {
+                var tileInner = Inner(tiles.Select(t => t.Sql ?? "1"));
+                var tileSelect = string.Join(", ", tiles.Select((t, i) => (t.Sql is null ? "COUNT(*)" : Outer(i, t.Aggregate)) + $" AS f{N(i)}"));
+                tileQuery = new LovCompiledQuery($"SELECT {tileSelect} FROM ({tileInner}) AS q", _parameters, [.. tiles.Select(t => (t.Name, t.Category))]);
+            }
+
+            return new LovCompiledReport(
+                rows,
+                count,
+                totals,
+                tileQuery,
+                [.. columns.Select(c => (c.Name, c.Category, c.Aggregate))],
+                [.. tiles.Select(t => (t.Name, t.Category))]);
+        }
+
+        private static string N(int value) => value.ToString(CultureInfo.InvariantCulture);
+
         private LovQuerySourceInfo? Source(LovQuerySource source, string path)
         {
             var alias = source.Alias ?? string.Empty;
@@ -461,6 +784,34 @@ public static partial class LovQueryCompiler
             else if (company is not null && run?.User.AllCompanies != true)
             {
                 conditions.Add($"(cardinality({a}.companies) = 0 OR '*' = ANY({a}.companies) OR {Parameter(company)}::text = ANY({a}.companies))");
+            }
+
+            return conditions;
+        }
+
+        /// <summary>
+        /// A report's rows of a table are those of the viewer's company and branches (ADR-0045): a table with a
+        /// <c>company_code</c> column keeps the viewer's company (or companies), one with a <c>branch_code</c> column their
+        /// branches (rows without a branch belong to the whole company). A viewer of all companies or branches passes.
+        /// </summary>
+        private List<string> WorkScope(LovQuerySourceInfo info, string alias)
+        {
+            if (run is null || info.Kind == LovQueryKinds.Class)
+            {
+                return [];
+            }
+
+            var a = Quote(alias);
+            var conditions = new List<string>();
+            var names = info.Columns.Select(c => c.Name).ToHashSet(StringComparer.Ordinal);
+            if (names.Contains("company_code") && run.User.Get("COMPANY") is { } companies)
+            {
+                conditions.Add($"{a}.\"company_code\"::text = ANY({Parameter(companies.ToArray())}::text[])");
+            }
+
+            if (names.Contains("branch_code") && run.User.Get("BRANCHES") is { } branches)
+            {
+                conditions.Add($"({a}.\"branch_code\" IS NULL OR {a}.\"branch_code\"::text = ANY({Parameter(branches.ToArray())}::text[]))");
             }
 
             return conditions;
@@ -590,7 +941,7 @@ public static partial class LovQueryCompiler
             {
                 if (inputs is null || !inputs.Contains(condition.Param, StringComparer.Ordinal))
                 {
-                    problems.Add(new($"{path}.param", inputs is null ? "Only a public endpoint's query compares with inputs." : $"There is no input '{condition.Param}'."));
+                    problems.Add(new($"{path}.param", inputs is null ? "Only a report's or a public endpoint's query compares with inputs." : $"There is no input '{condition.Param}'."));
                     return null;
                 }
 

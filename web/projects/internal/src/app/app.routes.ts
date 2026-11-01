@@ -62,6 +62,10 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./communication/communication.routes').then((m) => m.COMMUNICATION_ROUTES),
       },
+      {
+        path: 'reports',
+        loadChildren: () => import('./reports/reports.routes').then((m) => m.REPORTS_ROUTES),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

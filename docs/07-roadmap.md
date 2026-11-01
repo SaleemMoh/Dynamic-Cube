@@ -552,7 +552,19 @@ header elements, MTOM attachments.
 
 ## Phase 4 — Extended capabilities
 
-- Report builder; pixel-perfect reports.
+The owner chose to start Phase 4 with the report builder and come back to Phase 3 (3f sub-requests) afterwards.
+
+- **Report builder (ADR-0045)** ✅ — reports built in the visual query builder over registered tables and classes,
+  columns grouped and totalled (count, distinct, sum, average, minimum, maximum), a totals row, number tiles and a bar,
+  line or pie chart, filters users fill (text, number, date with relative defaults, a list of values, yes/no) and saved
+  filters; each report a screen roles grant and menus open; Excel and CSV export; **scheduled email delivery** (daily,
+  weekly, monthly) to users and role holders, each recipient getting the report with their own access, with a delivery
+  log. Data permissions and the viewer's company and branches always apply. NHC demo: requests by service, status and
+  branch; overdue tasks; certificates by grade; abandoned drafts by step; a weekly delivery of overdue tasks to the
+  branch managers.
+  Later (round 2): dashboards of several reports, PDF through the print template designer, drill-down from a group to
+  its rows, conditional totals (e.g. approved of all), report subscriptions chosen by users themselves.
+- Pixel-perfect reports.
 - Public Apps Control API for other products (the partner API is ADR-0042).
 - Push notifications, chat; AI assistant integration point.
 - Advanced scripting / plugin SDK.
