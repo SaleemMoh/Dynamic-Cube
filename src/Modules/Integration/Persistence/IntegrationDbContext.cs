@@ -61,6 +61,7 @@ public sealed class IntegrationDbContext(DbContextOptions<IntegrationDbContext> 
             b.Property(e => e.DescriptionEn).HasMaxLength(2000);
             b.Property(e => e.Method).HasMaxLength(10).IsRequired();
             b.Property(e => e.PathTemplate).HasMaxLength(1000).IsRequired();
+            b.Property(e => e.Soap).HasJsonColumn();
             b.Property(e => e.Parameters).HasJsonColumn();
             b.Property(e => e.Outputs).HasJsonColumn();
             b.Property(e => e.ResponseCodes).HasJsonColumn();

@@ -4,7 +4,11 @@ using System.Text;
 
 namespace DynamicCube.Tests.Infrastructure;
 
-public sealed record RecordedRequest(HttpMethod Method, Uri Url, string? Authorization, string? Body);
+/// <summary>A request the provider received; <paramref name="Headers"/> holds request and content headers (values joined).</summary>
+public sealed record RecordedRequest(HttpMethod Method, Uri Url, string? Authorization, string? Body, IReadOnlyDictionary<string, string>? Headers = null)
+{
+    public string? Header(string name) => Headers is not null && Headers.TryGetValue(name, out var value) ? value : null;
+}
 
 /// <summary>Stands in for the provider's gateway: answers requests with a test-supplied function and records them.</summary>
 public sealed class FakeProvider : HttpMessageHandler
@@ -25,7 +29,9 @@ public sealed class FakeProvider : HttpMessageHandler
             request.Method,
             request.RequestUri!,
             request.Headers.Authorization?.ToString(),
-            request.Content is null ? null : await request.Content.ReadAsStringAsync(cancellationToken));
+            request.Content is null ? null : await request.Content.ReadAsStringAsync(cancellationToken),
+            request.Headers.Concat(request.Content?.Headers ?? Enumerable.Empty<KeyValuePair<string, IEnumerable<string>>>())
+                .ToDictionary(h => h.Key, h => string.Join(", ", h.Value), StringComparer.OrdinalIgnoreCase));
         _requests.Enqueue(recorded);
         var (status, body) = Respond(recorded);
         return new HttpResponseMessage(status) { Content = new StringContent(body, Encoding.UTF8, "application/json") };

@@ -38,10 +38,17 @@ import {
 } from './openapi-import-model';
 import { OPERATION_DESIGNER_TRANSLATIONS } from './operation-designer-translations';
 
-const AUTH_TYPES: AuthType[] = ['NONE', 'BASIC', 'API_KEY', 'OAUTH2_CLIENT_CREDENTIALS'];
+const AUTH_TYPES: AuthType[] = [
+  'NONE',
+  'BASIC',
+  'API_KEY',
+  'OAUTH2_CLIENT_CREDENTIALS',
+  'WS_SECURITY',
+];
 
 /**
- * Imports an OpenAPI 3.x or Swagger 2.0 description (ADR-0041): reads it on the server (nothing saved), suggests a new
+ * Imports an OpenAPI 3.x or Swagger 2.0 description (ADR-0041), or a WSDL 1.1 one with SOAP operations (ADR-0044): reads
+ * it on the server (nothing saved), suggests a new
  * provider and connection (or uses existing ones) and lists its operations with their inputs and response fields; the
  * ticked operations, with the outputs chosen, go into a change set like any configuration.
  */

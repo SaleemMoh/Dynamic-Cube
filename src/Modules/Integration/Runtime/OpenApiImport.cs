@@ -25,7 +25,10 @@ public sealed record OpenApiReadResult(
 /// <summary>A security scheme of the description and the connection settings it suggests (no credentials: those go to the secret store).</summary>
 public sealed record OpenApiAuthSuggestion(string Name, AuthType AuthType, string? TokenUrl, string? ApiKeyHeader, string? Note);
 
-/// <summary>An operation of the description: a ready operation definition plus the response fields it may read.</summary>
+/// <summary>
+/// An operation of the description: a ready operation definition plus the response fields it may read; a SOAP operation
+/// read from a WSDL (ADR-0044) carries its protocol and SOAP call.
+/// </summary>
 public sealed record ImportedOperation(
     string Code,
     string Method,
@@ -35,7 +38,9 @@ public sealed record ImportedOperation(
     string? Tag,
     IReadOnlyList<OperationParameter> Parameters,
     IReadOnlyList<ImportedField> Fields,
-    IReadOnlyList<string> Warnings);
+    IReadOnlyList<string> Warnings,
+    OperationProtocol Protocol = OperationProtocol.Rest,
+    SoapSettings? Soap = null);
 
 /// <summary>A field of the success response: the output it becomes (name and path) and its type.</summary>
 public sealed record ImportedField(string Name, string Path, string Type);
@@ -396,9 +401,9 @@ public static partial class OpenApiImport
         _ => null,
     };
 
-    private static bool Sensitive(string name) => SensitiveName().IsMatch(name);
+    internal static bool Sensitive(string name) => SensitiveName().IsMatch(name);
 
-    private static string ParameterName(string name)
+    internal static string ParameterName(string name)
     {
         var cleaned = Regex.Replace(name, "[^A-Za-z0-9_-]+", "_").Trim('_');
         if (cleaned.Length == 0 || !char.IsLetter(cleaned[0]))
@@ -410,7 +415,7 @@ public static partial class OpenApiImport
     }
 
     /// <summary>An output name from a path: its segments in camel case, without the list markers.</summary>
-    private static string OutputName(string path)
+    internal static string OutputName(string path)
     {
         var parts = path.Replace("[*]", string.Empty, StringComparison.Ordinal).Split('.', StringSplitOptions.RemoveEmptyEntries);
         var builder = new StringBuilder();
@@ -441,7 +446,7 @@ public static partial class OpenApiImport
         return char.IsLetter(code[0]) ? code : "OP_" + code;
     }
 
-    private static string Unique(string value, HashSet<string> taken)
+    internal static string Unique(string value, HashSet<string> taken)
     {
         var candidate = value;
         for (var i = 2; !taken.Add(candidate); i++)
@@ -452,9 +457,9 @@ public static partial class OpenApiImport
         return candidate;
     }
 
-    private static string Truncate(string value, int length) => value.Length <= length ? value : value[..length].TrimEnd('_');
+    internal static string Truncate(string value, int length) => value.Length <= length ? value : value[..length].TrimEnd('_');
 
-    private static string? FirstLine(string? text) =>
+    internal static string? FirstLine(string? text) =>
         string.IsNullOrWhiteSpace(text) ? null : text.Trim().Split('\n')[0].Trim();
 
     [GeneratedRegex(@"\{([^}]*)\}")]

@@ -1,0 +1,230 @@
+{
+  "title": "NHC — a SOAP service: Yakeen (mock) through WS-Security, with citizen information and national addresses (ADR-0044)",
+  "items": [
+    {
+      "entityType": "integ.provider",
+      "entityCode": "ELM_YAKEEN",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "علم — يقين (محاكاة)",
+        "nameEn": "Elm — Yakeen (mock)",
+        "descriptionAr": "خدمة SOAP لبيانات المواطنين والعنوان الوطني، بمحاكاة في بوابة التطوير",
+        "descriptionEn": "SOAP service for citizen information and national addresses, simulated by the development gateway"
+      }
+    },
+    {
+      "entityType": "integ.connection",
+      "entityCode": "YAKEEN",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "يقين (SOAP)",
+        "nameEn": "Yakeen (SOAP)",
+        "providerCode": "ELM_YAKEEN",
+        "baseUrl": "${GATEWAY_URL}",
+        "authType": "WS_SECURITY",
+        "secretName": "YAKEEN",
+        "passwordDigest": true,
+        "timeoutSeconds": 30,
+        "retryCount": 2,
+        "circuitBreakerFailures": 5,
+        "circuitBreakerSeconds": 60,
+        "headers": []
+      }
+    },
+    {
+      "entityType": "integ.operation",
+      "entityCode": "YAKEEN_CITIZEN_INFO",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "بيانات المواطن من يقين",
+        "nameEn": "Citizen information from Yakeen",
+        "descriptionAr": "الاسم والجنس وتاريخ الميلاد والجنسية وحالة الهوية بدلالة رقم الهوية وتاريخ الميلاد",
+        "descriptionEn": "Name, gender, date of birth, nationality and ID status by national ID and date of birth",
+        "connectionCode": "YAKEEN",
+        "envelopeProfileCode": null,
+        "protocol": "SOAP",
+        "soap": {
+          "version": "1.1",
+          "action": "urn:yakeen:GetCitizenInfo",
+          "operationName": "GetCitizenInfo",
+          "namespace": "http://yakeen.mock/person",
+          "qualifiedElements": true
+        },
+        "method": "POST",
+        "pathTemplate": "/soap/yakeen",
+        "parameters": [
+          {
+            "name": "nin",
+            "location": "BODY",
+            "target": "request.nin",
+            "isRequired": true,
+            "isMasked": true,
+            "sampleValue": "1000000001"
+          },
+          {
+            "name": "dateOfBirth",
+            "location": "BODY",
+            "target": "request.dateOfBirth",
+            "isRequired": true,
+            "isMasked": true,
+            "sampleValue": "1410-09"
+          },
+          {
+            "name": "chargeCode",
+            "location": "BODY",
+            "isRequired": false,
+            "isMasked": false,
+            "sampleValue": null
+          }
+        ],
+        "outputs": [
+          {
+            "name": "firstName",
+            "path": "return.firstName"
+          },
+          {
+            "name": "fatherName",
+            "path": "return.fatherName"
+          },
+          {
+            "name": "familyName",
+            "path": "return.familyName"
+          },
+          {
+            "name": "englishFirstName",
+            "path": "return.englishFirstName"
+          },
+          {
+            "name": "englishLastName",
+            "path": "return.englishLastName"
+          },
+          {
+            "name": "gender",
+            "path": "return.gender"
+          },
+          {
+            "name": "birthDate",
+            "path": "return.dateOfBirthG"
+          },
+          {
+            "name": "birthDateHijri",
+            "path": "return.dateOfBirthH"
+          },
+          {
+            "name": "nationality",
+            "path": "return.nationality"
+          },
+          {
+            "name": "nationalityCode",
+            "path": "return.nationalityCode"
+          },
+          {
+            "name": "idStatus",
+            "path": "return.idStatus"
+          },
+          {
+            "name": "idExpiryDate",
+            "path": "return.idExpiryDate"
+          }
+        ],
+        "responseCodes": [
+          {
+            "code": "PersonNotFound",
+            "outcome": "NOT_FOUND",
+            "messageAr": "لا يوجد مواطن بهذا الرقم لدى يقين.",
+            "messageEn": "Yakeen has no citizen with this national ID."
+          },
+          {
+            "code": "DateOfBirthMismatch",
+            "outcome": "BUSINESS_ERROR",
+            "messageAr": "تاريخ الميلاد لا يطابق رقم الهوية.",
+            "messageEn": "The date of birth does not match the national ID."
+          },
+          {
+            "code": "InvalidNin",
+            "outcome": "BUSINESS_ERROR",
+            "messageAr": "رقم الهوية الوطنية يتكون من 10 أرقام ويبدأ بـ 1.",
+            "messageEn": "A national ID is 10 digits starting with 1."
+          },
+          {
+            "code": "FailedAuthentication",
+            "outcome": "TECHNICAL_ERROR",
+            "messageAr": "تعذر التحقق من بيانات الدخول إلى يقين.",
+            "messageEn": "The Yakeen credentials were not accepted."
+          }
+        ],
+        "maskFields": ["familyName", "dateOfBirthG", "dateOfBirthH"],
+        "cacheSeconds": 0,
+        "isIdempotent": true
+      }
+    },
+    {
+      "entityType": "integ.operation",
+      "entityCode": "YAKEEN_CITIZEN_ADDRESS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "العنوان الوطني للمواطن من يقين",
+        "nameEn": "Citizen's national addresses from Yakeen",
+        "descriptionAr": "قائمة عناوين المواطن: المدينة والحي والشارع والرمز البريدي",
+        "descriptionEn": "The citizen's addresses: city, district, street and postal code",
+        "connectionCode": "YAKEEN",
+        "envelopeProfileCode": null,
+        "protocol": "SOAP",
+        "soap": {
+          "version": "1.1",
+          "action": "urn:yakeen:GetCitizenAddress",
+          "operationName": "GetCitizenAddress",
+          "namespace": "http://yakeen.mock/person",
+          "qualifiedElements": true
+        },
+        "method": "POST",
+        "pathTemplate": "/soap/yakeen",
+        "parameters": [
+          {
+            "name": "nin",
+            "location": "BODY",
+            "target": "nin",
+            "isRequired": true,
+            "isMasked": true,
+            "sampleValue": "1000000001"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "cities",
+            "path": "addresses.address[*].city"
+          },
+          {
+            "name": "districts",
+            "path": "addresses.address[*].district"
+          },
+          {
+            "name": "postalCodes",
+            "path": "addresses.address[*].postalCode"
+          },
+          {
+            "name": "primary",
+            "path": "addresses.address[*].isPrimary"
+          }
+        ],
+        "responseCodes": [
+          {
+            "code": "PersonNotFound",
+            "outcome": "NOT_FOUND",
+            "messageAr": "لا يوجد مواطن بهذا الرقم لدى يقين.",
+            "messageEn": "Yakeen has no citizen with this national ID."
+          },
+          {
+            "code": "FailedAuthentication",
+            "outcome": "TECHNICAL_ERROR",
+            "messageAr": "تعذر التحقق من بيانات الدخول إلى يقين.",
+            "messageEn": "The Yakeen credentials were not accepted."
+          }
+        ],
+        "maskFields": ["streetName", "buildingNumber"],
+        "cacheSeconds": 0,
+        "isIdempotent": true
+      }
+    }
+  ]
+}

@@ -12,7 +12,7 @@ namespace DynamicCube.Modules.Integration.Runtime;
 internal sealed class IntegrationAuthException(string message) : Exception(message);
 
 /// <summary>Adds the connection's credentials to requests; OAuth2 tokens are cached until shortly before they expire.</summary>
-internal sealed class TokenProvider(IHttpClientFactory httpClients, IMemoryCache cache, ISecretStore secrets, DefinitionCache definitions)
+internal sealed class TokenProvider(IHttpClientFactory httpClients, IMemoryCache cache, ISecretStore secrets, DefinitionCache definitions, TimeProvider clock)
 {
     private static readonly SemaphoreSlim TokenLock = new(1, 1);
 
@@ -31,6 +31,14 @@ internal sealed class TokenProvider(IHttpClientFactory httpClients, IMemoryCache
                 break;
         }
     }
+
+    /// <summary>
+    /// The WS-Security header of a SOAP request (ADR-0044): a UsernameToken from the secret's <c>username</c> and
+    /// <c>password</c>, with a fresh nonce and time. A REST operation cannot carry it.
+    /// </summary>
+    public string SoapSecurityHeader(Connection connection, string? soapVersion) => soapVersion is null
+        ? throw new IntegrationAuthException($"Connection '{connection.Code}' uses WS-Security, which only SOAP operations can send.")
+        : SoapXml.SecurityHeader(soapVersion, Secret(connection, "username"), Secret(connection, "password"), connection.PasswordDigest, clock.GetUtcNow());
 
     /// <summary>Drops a cached token the provider rejected.</summary>
     public void Forget(Connection connection) => cache.Remove(Key(connection));

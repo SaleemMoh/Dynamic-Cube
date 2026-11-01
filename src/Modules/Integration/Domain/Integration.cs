@@ -24,6 +24,13 @@ public enum AuthType
     /// <summary>Secret keys <c>clientId</c>, <c>clientSecret</c>; the token is cached until it expires.</summary>
     [JsonStringEnumMemberName("OAUTH2_CLIENT_CREDENTIALS")]
     OAuth2ClientCredentials,
+
+    /// <summary>
+    /// SOAP only (ADR-0044): a WS-Security UsernameToken in the envelope's header, from secret keys <c>username</c> and
+    /// <c>password</c> (sent as text, or as a digest with a nonce and the time when <see cref="Connection.PasswordDigest"/>).
+    /// </summary>
+    [JsonStringEnumMemberName("WS_SECURITY")]
+    WsSecurity,
 }
 
 /// <summary>Base URL, credentials and resilience policy shared by the operations of one gateway or system.</summary>
@@ -44,6 +51,9 @@ public sealed class Connection : ConfigEntity
     public string? TokenUrl { get; set; }
 
     public string? ApiKeyHeader { get; set; }
+
+    /// <summary>WS-Security: the UsernameToken carries a digest of the password (with a nonce and the time) instead of the text.</summary>
+    public bool PasswordDigest { get; set; }
 
     public int TimeoutSeconds { get; set; } = 30;
 
@@ -136,6 +146,37 @@ public sealed class OperationOutput
     public string Path { get; set; } = string.Empty;
 }
 
+/// <summary>How an operation talks to the provider.</summary>
+public enum OperationProtocol
+{
+    /// <summary>HTTP with JSON (query, path, header and JSON body inputs).</summary>
+    Rest,
+
+    /// <summary>SOAP 1.1 or 1.2 (ADR-0044): an XML envelope built from the inputs, the XML response read as JSON.</summary>
+    Soap,
+}
+
+/// <summary>
+/// The SOAP call of an operation (ADR-0044): the envelope version, the <c>SOAPAction</c>, and the operation element of the
+/// body with its namespace; body inputs become its child elements (dot paths nest them), in the order of the inputs.
+/// </summary>
+public sealed class SoapSettings
+{
+    /// <summary><c>1.1</c> (text/xml with a SOAPAction header) or <c>1.2</c> (application/soap+xml with the action in the content type).</summary>
+    public string Version { get; set; } = "1.1";
+
+    public string? Action { get; set; }
+
+    /// <summary>The body's element, e.g. <c>GetPersonInfo</c>.</summary>
+    public string OperationName { get; set; } = string.Empty;
+
+    /// <summary>Its namespace (the WSDL's target namespace), e.g. <c>http://yakeen.example/person</c>.</summary>
+    public string? Namespace { get; set; }
+
+    /// <summary>Child elements in the same namespace (<c>elementFormDefault="qualified"</c>); otherwise without one.</summary>
+    public bool QualifiedElements { get; set; } = true;
+}
+
 /// <summary>One call of an external API: request shape, response reading, cache and masking.</summary>
 public sealed class Operation : ConfigEntity
 {
@@ -150,6 +191,11 @@ public sealed class Operation : ConfigEntity
     public string? DescriptionAr { get; set; }
 
     public string? DescriptionEn { get; set; }
+
+    public OperationProtocol Protocol { get; set; }
+
+    /// <summary>The SOAP call; set for <see cref="OperationProtocol.Soap"/> operations only.</summary>
+    public SoapSettings? Soap { get; set; }
 
     public string Method { get; set; } = "GET";
 

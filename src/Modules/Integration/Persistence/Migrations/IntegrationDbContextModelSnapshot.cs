@@ -567,6 +567,10 @@ namespace DynamicCube.Modules.Integration.Persistence.Migrations
                         .HasColumnType("character varying(64)")
                         .HasColumnName("owner");
 
+                    b.Property<bool>("PasswordDigest")
+                        .HasColumnType("boolean")
+                        .HasColumnName("password_digest");
+
                     b.Property<Guid>("ProviderId")
                         .HasColumnType("uuid")
                         .HasColumnName("provider_id");
@@ -963,6 +967,12 @@ namespace DynamicCube.Modules.Integration.Persistence.Migrations
                         .HasColumnType("character varying(1000)")
                         .HasColumnName("path_template");
 
+                    b.Property<string>("Protocol")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("protocol");
+
                     b.Property<string>("ResponseCodes")
                         .IsRequired()
                         .HasColumnType("jsonb")
@@ -978,6 +988,10 @@ namespace DynamicCube.Modules.Integration.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text[]")
                         .HasColumnName("shared_apps");
+
+                    b.Property<string>("Soap")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("soap");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")

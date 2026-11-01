@@ -205,6 +205,7 @@ code {
 
 .od-code {
   margin: 0;
+  text-align: left;
   padding: 10px 12px;
   border-radius: 8px;
   background: #0f172a;
@@ -318,4 +319,9 @@ code {
   font-size: 18px;
   width: 18px;
   height: 18px;
+}
+
+/* SOAP (ADR-0044) */
+.od-protocol {
+  margin: 4px 0 12px;
 }

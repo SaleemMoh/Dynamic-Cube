@@ -46,7 +46,7 @@
         >{{ 'oi.file' | dcTranslate }}
         <input
           type="file"
-          accept=".json,.yaml,.yml,application/json,text/yaml"
+          accept=".json,.yaml,.yml,.wsdl,.xml,application/json,text/yaml,text/xml,application/xml"
           (change)="readFile($event)"
           data-testid="oi-file"
         />
@@ -307,10 +307,10 @@
               (change)="setOperation(indexOf(o), { selected: $event.checked })"
               [attr.aria-label]="o.name"
             />
-            <span class="oi-method" [attr.data-method]="o.source.method">{{
-              o.source.method
+            <span class="oi-method" [attr.data-method]="o.source.protocol === 'SOAP' ? 'SOAP' : o.source.method">{{
+              o.source.protocol === 'SOAP' ? 'SOAP' : o.source.method
             }}</span>
-            <code class="oi-path" dir="ltr">{{ o.source.pathTemplate }}</code>
+            <code class="oi-path" dir="ltr">{{ o.source.protocol === 'SOAP' ? (o.source.pathTemplate || '/') + ' · ' + o.source.soap?.operationName : o.source.pathTemplate }}</code>
             <input
               class="oi-cell oi-code"
               dir="ltr"

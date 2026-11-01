@@ -203,6 +203,9 @@ export function operationPayload(
     envelopeProfileCode,
     descriptionAr: null,
     descriptionEn: o.description ? o.description.slice(0, 2000) : null,
+    // A SOAP operation read from a WSDL keeps its SOAP call (ADR-0044).
+    protocol: o.protocol === 'SOAP' ? 'SOAP' : 'REST',
+    soap: o.protocol === 'SOAP' ? (o.soap ?? null) : null,
     method: o.method,
     pathTemplate: o.pathTemplate,
     parameters: o.parameters.map((p) => ({

@@ -150,11 +150,12 @@ internal sealed partial class IntegrationGateway(
         while (attempts < maxAttempts)
         {
             attempts++;
-            using var request = built.Create();
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeout.CancelAfter(TimeSpan.FromSeconds(connection.TimeoutSeconds));
             try
             {
+                // WS-Security travels in the envelope, with a fresh nonce and time for every attempt.
+                using var request = built.Create(connection.AuthType == AuthType.WsSecurity ? tokens.SoapSecurityHeader(connection, built.SoapVersion) : null);
                 await tokens.AuthorizeAsync(request, connection, timeout.Token);
                 using var response = await client.SendAsync(request, timeout.Token);
                 var body = await response.Content.ReadAsStringAsync(timeout.Token);
@@ -168,7 +169,7 @@ internal sealed partial class IntegrationGateway(
                     continue;
                 }
 
-                if (status >= 500 && attempts < maxAttempts)
+                if (status >= 500 && attempts < maxAttempts && !(built.SoapVersion is not null && SoapXml.IsFault(body)))
                 {
                     await DelayAsync(attempts, cancellationToken);
                     continue;
@@ -200,20 +201,36 @@ internal sealed partial class IntegrationGateway(
     internal static IntegrationResult Interpret(Guid callId, Operation operation, int httpStatus, string? body)
     {
         JsonNode? json = null;
-        try
+        SoapFault? fault = null;
+        var readable = string.IsNullOrWhiteSpace(body);
+        if (operation.Protocol == OperationProtocol.Soap)
         {
-            json = string.IsNullOrWhiteSpace(body) ? null : JsonNode.Parse(body);
+            // The XML response read as JSON (ADR-0044): the content of the body's element, or the fault.
+            if (SoapXml.Read(body) is { } soap)
+            {
+                json = soap.Data;
+                fault = soap.Fault;
+                readable = true;
+            }
         }
-        catch (JsonException)
+        else
         {
-            // Not JSON; decided by the HTTP status below.
+            try
+            {
+                json = string.IsNullOrWhiteSpace(body) ? null : JsonNode.Parse(body);
+                readable = true;
+            }
+            catch (JsonException)
+            {
+                // Not JSON; decided by the HTTP status below.
+            }
         }
 
         var envelope = operation.EnvelopeProfile;
         var statusCode = JsonPaths.ReadText(json, envelope?.StatusCodePath);
         var businessCode = JsonPaths.ReadText(json, envelope?.BusinessCodePath);
-        var providerMessage = JsonPaths.ReadText(json, envelope?.BusinessMessagePath) ?? JsonPaths.ReadText(json, envelope?.StatusMessagePath);
-        var code = businessCode ?? statusCode ?? httpStatus.ToString(CultureInfo.InvariantCulture);
+        var providerMessage = JsonPaths.ReadText(json, envelope?.BusinessMessagePath) ?? JsonPaths.ReadText(json, envelope?.StatusMessagePath) ?? fault?.Message;
+        var code = businessCode ?? statusCode ?? fault?.Code ?? httpStatus.ToString(CultureInfo.InvariantCulture);
         var mapping = Find(operation.ResponseCodes, code) ?? Find(envelope?.ResponseCodes, code)
             ?? Find(operation.ResponseCodes, $"HTTP_{httpStatus}") ?? Find(envelope?.ResponseCodes, $"HTTP_{httpStatus}");
 
@@ -221,6 +238,11 @@ internal sealed partial class IntegrationGateway(
         if (mapping is not null)
         {
             outcome = mapping.Outcome;
+        }
+        else if (fault is not null)
+        {
+            // A fault the provider blames on itself (Server / Receiver) is technical; one about the request is a business error.
+            outcome = fault.IsServer ? IntegrationOutcome.TechnicalError : IntegrationOutcome.BusinessError;
         }
         else if (httpStatus >= 500 || httpStatus is 401 or 403 or 407 or 408 or 429)
         {
@@ -238,7 +260,7 @@ internal sealed partial class IntegrationGateway(
         {
             outcome = IntegrationOutcome.BusinessError;
         }
-        else if (body is not null && json is null && !string.IsNullOrWhiteSpace(body))
+        else if (!readable)
         {
             outcome = IntegrationOutcome.TechnicalError;
         }
@@ -304,6 +326,9 @@ internal sealed partial class IntegrationGateway(
         var headers = new List<(string Name, string Value)>(connection.Headers.Select(h => (h.Name, h.Value)));
         JsonObject? body = null;
         JsonObject? maskedBody = null;
+        var soap = operation.Protocol == OperationProtocol.Soap ? operation.Soap : null;
+        var xmlValues = new List<(string Target, string Value)>();
+        var maskedXmlValues = new List<(string Target, string Value)>();
         foreach (var parameter in operation.Parameters)
         {
             var value = inputs.GetValueOrDefault(parameter.Name);
@@ -327,6 +352,10 @@ internal sealed partial class IntegrationGateway(
                 case ParameterLocation.Header:
                     headers.Add((target, value));
                     break;
+                case ParameterLocation.Body when soap is not null:
+                    xmlValues.Add((target, value));
+                    maskedXmlValues.Add((target, shown));
+                    break;
                 case ParameterLocation.Body:
                     body ??= [];
                     maskedBody ??= [];
@@ -334,6 +363,27 @@ internal sealed partial class IntegrationGateway(
                     JsonPaths.Write(maskedBody, target, shown);
                     break;
             }
+        }
+
+        if (soap is not null)
+        {
+            var soapUrl = connection.BaseUrl + path + (query.Count > 0 ? "?" + string.Join('&', query) : string.Empty);
+            var soapMaskedUrl = connection.BaseUrl + maskedPath + (maskedQuery.Count > 0 ? "?" + string.Join('&', maskedQuery) : string.Empty);
+            if (soap.Version != "1.2")
+            {
+                headers.Add(("SOAPAction", $"\"{soap.Action}\""));
+            }
+
+            return new BuiltRequest(
+                HttpMethod.Post,
+                new Uri(soapUrl),
+                soapMaskedUrl,
+                headers,
+                SoapXml.Envelope(soap, xmlValues),
+                SoapXml.WithHeader(SoapXml.Envelope(soap, maskedXmlValues), null),
+                SoapXml.ContentType(soap),
+                "application/soap+xml, text/xml",
+                soap.Version);
         }
 
         var url = connection.BaseUrl + path + (query.Count > 0 ? "?" + string.Join('&', query) : string.Empty);
@@ -406,21 +456,35 @@ internal sealed partial class IntegrationGateway(
     private static partial void CallLogFailed(ILogger logger, Exception exception, string operation);
 }
 
-/// <summary>A request that can be re-created for each attempt, plus its masked form for the log.</summary>
-internal sealed record BuiltRequest(HttpMethod Method, Uri Url, string MaskedUrl, IReadOnlyList<(string Name, string Value)> Headers, string? Body, string? MaskedBody)
+/// <summary>
+/// A request that can be re-created for each attempt, plus its masked form for the log. A SOAP request
+/// (<see cref="SoapVersion"/> set) carries its envelope; a header block (WS-Security) is added at each attempt.
+/// </summary>
+internal sealed record BuiltRequest(
+    HttpMethod Method,
+    Uri Url,
+    string MaskedUrl,
+    IReadOnlyList<(string Name, string Value)> Headers,
+    string? Body,
+    string? MaskedBody,
+    string ContentType = "application/json",
+    string Accept = "application/json",
+    string? SoapVersion = null)
 {
-    public HttpRequestMessage Create()
+    public HttpRequestMessage Create(string? soapHeader = null)
     {
         var request = new HttpRequestMessage(Method, Url);
-        request.Headers.Accept.ParseAdd("application/json");
+        request.Headers.Accept.ParseAdd(Accept);
         foreach (var (name, value) in Headers)
         {
             request.Headers.TryAddWithoutValidation(name, value);
         }
 
-        if (Body is not null)
+        var body = SoapVersion is null ? Body : SoapXml.WithHeader(Body ?? string.Empty, soapHeader);
+        if (body is not null)
         {
-            request.Content = new StringContent(Body, Encoding.UTF8, "application/json");
+            request.Content = new StringContent(body, Encoding.UTF8);
+            request.Content.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse(ContentType);
         }
 
         return request;

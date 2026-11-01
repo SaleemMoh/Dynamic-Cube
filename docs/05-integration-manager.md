@@ -29,9 +29,9 @@ This confirms the design below: a shared connection and envelope, many operation
 |---|---|
 | **Provider** | The external party (e.g. `MCI`, `NIC`, `DGA`); used by `domain_external_code` mappings |
 | **Connection** | Base URL per environment, timeouts, TLS settings, auth profile, retry & circuit-breaker policy. Shared by many operations |
-| **Auth profile** | `NONE` · `BASIC` · `API_KEY` · `OAUTH2_CLIENT_CREDENTIALS` (token cached until expiry) · `MTLS`. Credentials in the secret store, never in plain tables |
+| **Auth profile** | `NONE` · `BASIC` · `API_KEY` · `OAUTH2_CLIENT_CREDENTIALS` (token cached until expiry) · `WS_SECURITY` (SOAP UsernameToken, password as text or digest; ADR-0044) · `MTLS` (later). Credentials in the secret store, never in plain tables |
 | **Envelope profile** | How to read a response: success condition (e.g. `statusDetails.code` + `data.responseCode`), business-error path, message path. Defined once per provider family |
-| **Operation** | Method, relative URL, headers, input schema, output schema, response codes. REST or SOAP (WSDL) |
+| **Operation** | Method, relative URL, headers, input schema, output schema, response codes. REST, or SOAP 1.1/1.2 with its envelope built from the inputs and the XML response read as JSON (ADR-0044) |
 | **Response code map** | Provider code → outcome (`SUCCESS` / `NOT_FOUND` / `BUSINESS_ERROR` / `TECHNICAL_ERROR`) + **bilingual user-facing message**. Fixes "unclear system messages" |
 | **Mapping** | Declarative request mapping (from request / party / context to operation input) and response mapping (operation output to request data / party profile / credentials). Lookup translation via external codes |
 | **Cache policy** | Per operation (e.g. ISIC activity list cached daily; CR info cached per request) |
@@ -57,7 +57,8 @@ This confirms the design below: a shared connection and envelope, many operation
 - **Import from OpenAPI** (ADR-0041) — paste or choose an OpenAPI 3.x / Swagger 2.0 description (JSON or YAML): it
   suggests the provider, the connection (base URL, authentication, the credentials' name only) and the operations with
   their inputs and response fields; the ticked ones, with the outputs chosen, are imported as a configuration package
-  for review. WSDL import comes with SOAP support.
+  for review. **WSDL 1.1** descriptions are read on the same screen (ADR-0044): SOAP operations with their SOAPAction,
+  operation element and namespace, the request's elements as inputs and the response's elements as outputs.
 - **API Endpoint Builder** (ADR-0042) — read-only **public endpoints** partner systems call on the external host
   (`/api/public/v1/…`) with OAuth2 client credentials: rows read over registered tables and classes (fields, conditions
   on parameters or the client's companies and branches, paging), or read-only system functions (class values; several
@@ -66,6 +67,13 @@ This confirms the design below: a shared connection and envelope, many operation
   endpoints given, the companies and branches seen and a rate limit; every call is logged with masked parameters and
   each client gets an OpenAPI description. Screens: *API endpoints* (designer with *Try it*), *API clients* (*Sign-in
   and credentials*), *API calls*.
+- **SOAP** (ADR-0044) — an operation is REST or SOAP: a SOAP operation describes its envelope (version 1.1 or 1.2,
+  SOAPAction, the body's operation element and namespace) and its inputs become elements at their dot paths; the XML
+  response is read as JSON (elements by local name, repeated ones as lists, attributes as properties, text beside
+  attributes as `$text`), so outputs, response envelopes and code maps work unchanged; SOAP faults are codes for the
+  code map (unmapped: `Server`/`Receiver` technical, others business) and are never retried. Connections authenticate
+  with WS-Security UsernameToken (secret `username`/`password`; text or digest) or basic. The designer previews the
+  envelope; the mock gateway serves a Yakeen-like service at `http://localhost:5090/soap/yakeen` (WSDL at `?wsdl`).
 - **Nafath** (ADR-0043) — applicants **sign in** to the portal with Nafath (Keycloak's identity provider *نفاذ*, through
   a sign-in bridge on the external host that sends them to Nafath's sign-in page and back) and **confirm a request** in
   their Nafath app before submitting it, where the service version asks for it (the number shown in the portal, the
@@ -121,7 +129,7 @@ status outside the success list, or an unreadable body → `TECHNICAL_ERROR`; 40
 the provider's raw text is kept in the call log only.
 
 **Credentials** never live in tables: a connection names a secret, and the API hosts read
-`Secrets:{name}:{key}` (`clientId`/`clientSecret`, `username`/`password` or `apiKey`) from their
+`Secrets:{name}:{key}` (`clientId`/`clientSecret`, `username`/`password` for basic and WS-Security, or `apiKey`) from their
 configuration — environment variables, Kubernetes secrets or a vault provider.
 
 **Resilience**: timeout per connection; retries with exponential back-off only for idempotent
@@ -137,9 +145,9 @@ returns the outcome, code, bilingual message, mapped outputs and the result data
 credentials. The Party Registry uses it for acting contexts and profile fields.
 
 **Designer and import endpoints**: `POST /api/integration/v1/operations/try` runs an operation that is not saved (checked
-as saving would; test console privilege); `POST /api/integration/v1/openapi/read` reads a description into suggestions
-and saves nothing (create privilege on integrations). The mock gateway serves its description at
-`http://localhost:5090/openapi.yaml`.
+as saving would; test console privilege); `POST /api/integration/v1/openapi/read` reads a description (OpenAPI, Swagger
+or WSDL) into suggestions and saves nothing (create privilege on integrations). The mock gateway serves its descriptions
+at `http://localhost:5090/openapi.yaml` and `http://localhost:5090/soap/yakeen?wsdl`.
 
 **Configuration packages**: `deploy/config-packages/momrah-mci.json` holds the MCI connectors (two
 operations with the guide's business codes and messages) plus the Party Registry settings that use them;

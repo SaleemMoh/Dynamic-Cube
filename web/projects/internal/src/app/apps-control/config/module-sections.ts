@@ -138,6 +138,7 @@ export const INTEGRATION_SECTIONS: ConfigSection[] = [
               opt('BASIC', 'اسم مستخدم وكلمة مرور', 'Basic'),
               opt('API_KEY', 'مفتاح API', 'API key'),
               opt('OAUTH2_CLIENT_CREDENTIALS', 'OAuth2 (بيانات العميل)', 'OAuth2 client credentials'),
+              opt('WS_SECURITY', 'WS-Security — رمز اسم المستخدم (SOAP)', 'WS-Security UsernameToken (SOAP)'),
             ],
           },
           {
@@ -145,8 +146,8 @@ export const INTEGRATION_SECTIONS: ConfigSection[] = [
             type: 'text',
             label: t('اسم بيانات الاعتماد', 'Credentials name'),
             hint: t(
-              'القيم تُضبط في مخزن الأسرار: Secrets__الاسم__clientId …، ولا تُحفظ في قاعدة البيانات',
-              'Values are set in the secret store (Secrets__NAME__clientId …), never in the database',
+              'القيم تُضبط في مخزن الأسرار: Secrets__الاسم__clientId … (أو username وpassword لـ Basic وWS-Security)، ولا تُحفظ في قاعدة البيانات',
+              'Values are set in the secret store (Secrets__NAME__clientId …, or username and password for Basic and WS-Security), never in the database',
             ),
             requiredWhen: { '!=': [{ var: 'authType' }, 'NONE'] },
             visibleWhen: { '!=': [{ var: 'authType' }, 'NONE'] },
@@ -164,6 +165,16 @@ export const INTEGRATION_SECTIONS: ConfigSection[] = [
             type: 'text',
             label: t('ترويسة المفتاح', 'API key header'),
             visibleWhen: { '==': [{ var: 'authType' }, 'API_KEY'] },
+          },
+          {
+            code: 'passwordDigest',
+            type: 'checkbox',
+            label: t('إرسال كلمة المرور مختصرة (Digest)', 'Send the password as a digest'),
+            hint: t(
+              'بدلاً من نص كلمة المرور يُرسل مختصرها مع رقم عشوائي ووقت الطلب، حسب ما تطلبه الجهة',
+              'Instead of the password text, a digest with a nonce and the time is sent, as the provider requires',
+            ),
+            visibleWhen: { '==': [{ var: 'authType' }, 'WS_SECURITY'] },
           },
           number('timeoutSeconds', t('مهلة الاستجابة (ثانية)', 'Timeout (seconds)'), 30),
           number('retryCount', t('عدد مرات إعادة المحاولة', 'Retries'), 2, t('للعمليات الآمنة للتكرار فقط', 'Idempotent operations only')),

@@ -26,8 +26,8 @@ internal static class Masking
         }
         catch (JsonException)
         {
-            // Not JSON: keep only a short prefix, it cannot be masked reliably.
-            text = body.Length > 512 ? body[..512] + "…" : body;
+            // XML (SOAP) is masked element by element; anything else keeps only a short prefix, it cannot be masked reliably.
+            text = SoapXml.Mask(body, fields) ?? (body.Length > 512 ? body[..512] + "…" : body);
         }
 
         return text.Length > MaxLoggedChars ? text[..MaxLoggedChars] + "…" : text;

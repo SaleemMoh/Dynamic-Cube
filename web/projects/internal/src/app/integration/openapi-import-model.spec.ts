@@ -4,6 +4,7 @@ import {
   importItems,
   importProblems,
   initialChoices,
+  operationPayload,
   matchingEnvelope,
   withEnvelope,
   withPrefix,
@@ -131,5 +132,35 @@ describe('OpenAPI import model', () => {
     const op = importItems(choices).find((i) => i.entityCode.endsWith('GET_REGISTRATION'))!.payload;
     expect(op['envelopeProfileCode']).toBe('MOMRAH');
     expect((op['outputs'] as { path: string }[])[0].path).toBe('f0');
+  });
+
+  it('keeps the SOAP call of an operation read from a WSDL', () => {
+    const soap = {
+      version: '1.1' as const,
+      action: 'urn:GetPersonInfo',
+      operationName: 'GetPersonInfo',
+      namespace: 'http://yakeen.test/person',
+      qualifiedElements: true,
+    };
+    const payload = operationPayload(
+      {
+        source: { ...read.operations[1], protocol: 'SOAP', soap },
+        selected: true,
+        code: 'GET_PERSON',
+        name: 'Person',
+        outputs: new Set(),
+      },
+      'YAKEEN',
+      null,
+    );
+    expect(payload.protocol).toBe('SOAP');
+    expect(payload.soap).toEqual(soap);
+    const rest = operationPayload(
+      { source: read.operations[1], selected: true, code: 'V', name: 'V', outputs: new Set() },
+      'GW',
+      null,
+    );
+    expect(rest.protocol).toBe('REST');
+    expect(rest.soap).toBeNull();
   });
 });

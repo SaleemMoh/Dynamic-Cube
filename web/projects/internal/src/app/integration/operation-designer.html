@@ -118,17 +118,103 @@
                     </mat-form-field>
                   </div>
 
-                  <div class="od-url">
+                  <div class="od-row od-protocol">
+                    <span class="od-muted">{{ 'od.protocol' | dcTranslate }}</span>
                     <mat-button-toggle-group
-                      [value]="def().method"
-                      (change)="setMethod($event.value)"
-                      [attr.aria-label]="'od.method' | dcTranslate"
-                      data-testid="od-method"
+                      [value]="soap() ? 'SOAP' : 'REST'"
+                      (change)="setProtocol($event.value)"
+                      [attr.aria-label]="'od.protocol' | dcTranslate"
+                      data-testid="od-protocol"
                     >
-                      @for (m of methods; track m) {
-                        <mat-button-toggle [value]="m">{{ m }}</mat-button-toggle>
-                      }
+                      <mat-button-toggle value="REST">{{
+                        'od.protocol.REST' | dcTranslate
+                      }}</mat-button-toggle>
+                      <mat-button-toggle value="SOAP">{{
+                        'od.protocol.SOAP' | dcTranslate
+                      }}</mat-button-toggle>
                     </mat-button-toggle-group>
+                  </div>
+                  @if (connection()?.['authType'] === 'WS_SECURITY' && !soap()) {
+                    <p class="dc-errors" data-testid="od-ws-rest">
+                      {{ 'od.wsOnlySoap' | dcTranslate }}
+                    </p>
+                  }
+
+                  @if (soap() && def().soap; as call) {
+                    <p class="od-muted">{{ 'od.soap.hint' | dcTranslate }}</p>
+                    <div class="od-pair" data-testid="od-soap">
+                      <mat-form-field subscriptSizing="dynamic">
+                        <mat-label>{{ 'od.soap.version' | dcTranslate }}</mat-label>
+                        <mat-select
+                          [ngModel]="call.version"
+                          (ngModelChange)="setSoap({ version: $event })"
+                          data-testid="od-soap-version"
+                        >
+                          <mat-option value="1.1">SOAP 1.1</mat-option>
+                          <mat-option value="1.2">SOAP 1.2</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                      <mat-form-field subscriptSizing="dynamic">
+                        <mat-label>{{ 'od.soap.operationName' | dcTranslate }}</mat-label>
+                        <input
+                          matInput
+                          dir="ltr"
+                          class="od-mono"
+                          [ngModel]="call.operationName"
+                          (ngModelChange)="setSoap({ operationName: $event })"
+                          placeholder="GetPersonInfo"
+                          data-testid="od-soap-operation"
+                        />
+                        <mat-hint>{{ 'od.soap.operationNameHint' | dcTranslate }}</mat-hint>
+                      </mat-form-field>
+                      <mat-form-field subscriptSizing="dynamic">
+                        <mat-label>{{ 'od.soap.namespace' | dcTranslate }}</mat-label>
+                        <input
+                          matInput
+                          dir="ltr"
+                          class="od-mono"
+                          [ngModel]="call.namespace ?? ''"
+                          (ngModelChange)="setSoap({ namespace: $event || null })"
+                          placeholder="http://example.gov.sa/person"
+                          data-testid="od-soap-namespace"
+                        />
+                      </mat-form-field>
+                      <mat-form-field subscriptSizing="dynamic">
+                        <mat-label>{{ 'od.soap.action' | dcTranslate }}</mat-label>
+                        <input
+                          matInput
+                          dir="ltr"
+                          class="od-mono"
+                          [ngModel]="call.action ?? ''"
+                          (ngModelChange)="setSoap({ action: $event || null })"
+                          placeholder="urn:GetPersonInfo"
+                          data-testid="od-soap-action"
+                        />
+                      </mat-form-field>
+                      <mat-checkbox
+                        [checked]="call.qualifiedElements"
+                        (change)="setSoap({ qualifiedElements: $event.checked })"
+                        data-testid="od-soap-qualified"
+                        >{{ 'od.soap.qualified' | dcTranslate }}</mat-checkbox
+                      >
+                    </div>
+                  }
+
+                  <div class="od-url">
+                    @if (soap()) {
+                      <span class="od-chip" dir="ltr">POST</span>
+                    } @else {
+                      <mat-button-toggle-group
+                        [value]="def().method"
+                        (change)="setMethod($event.value)"
+                        [attr.aria-label]="'od.method' | dcTranslate"
+                        data-testid="od-method"
+                      >
+                        @for (m of methods; track m) {
+                          <mat-button-toggle [value]="m">{{ m }}</mat-button-toggle>
+                        }
+                      </mat-button-toggle-group>
+                    }
                     <mat-form-field subscriptSizing="dynamic" class="od-grow">
                       <mat-label>{{ 'od.path' | dcTranslate }}</mat-label>
                       <input
@@ -139,7 +225,9 @@
                         (ngModelChange)="setPath($event)"
                         data-testid="od-path"
                       />
-                      <mat-hint>{{ 'od.pathHint' | dcTranslate }}</mat-hint>
+                      <mat-hint>{{
+                        (soap() ? 'od.soap.pathHint' : 'od.pathHint') | dcTranslate
+                      }}</mat-hint>
                     </mat-form-field>
                   </div>
                   @if (placeholders().length) {
@@ -154,7 +242,9 @@
                   </p>
 
                   <h3>{{ 'od.inputs' | dcTranslate }}</h3>
-                  <p class="od-muted">{{ 'od.inputsHint' | dcTranslate }}</p>
+                  <p class="od-muted">
+                    {{ (soap() ? 'od.soap.inputsHint' : 'od.inputsHint') | dcTranslate }}
+                  </p>
                   @if (def().parameters.length) {
                     <div class="od-table" role="table">
                       <div class="od-table__head" role="row">
@@ -191,7 +281,12 @@
                                   (l === 'BODY' && def().method === 'GET')
                                 "
                               >
-                                {{ 'od.location.' + l | dcTranslate }}
+                                {{
+                                  (soap() && l === 'BODY'
+                                    ? 'od.location.ELEMENT'
+                                    : 'od.location.' + l
+                                  ) | dcTranslate
+                                }}
                               </option>
                             }
                           </select>
@@ -258,13 +353,20 @@
                       data-testid="od-add-body"
                     >
                       <mat-icon fontSet="material-symbols-outlined">add</mat-icon
-                      >{{ 'od.addBody' | dcTranslate }}
+                      >{{ (soap() ? 'od.addElement' : 'od.addBody') | dcTranslate }}
                     </button>
                   </div>
                   @if (bodyPreview(); as body) {
                     <h3>{{ 'od.bodyPreview' | dcTranslate }}</h3>
                     <pre class="od-code" dir="ltr" data-testid="od-body-preview">{{
                       body | json
+                    }}</pre>
+                  }
+                  @if (envelopePreview(); as envelope) {
+                    <h3>{{ 'od.envelopePreview' | dcTranslate }}</h3>
+                    <p class="od-muted">{{ 'od.envelopePreviewHint' | dcTranslate }}</p>
+                    <pre class="od-code" dir="ltr" data-testid="od-envelope-preview">{{
+                      envelope
                     }}</pre>
                   }
                 }

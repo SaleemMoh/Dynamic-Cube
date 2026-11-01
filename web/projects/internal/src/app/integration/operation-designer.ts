@@ -23,8 +23,10 @@ import {
   OperationDefinition,
   OperationOutputDef,
   OperationParameterDef,
+  OperationProtocol,
   ParameterLocation,
   ResponseCodeDef,
+  SoapSettings,
   TestOperationResult,
   TranslatePipe,
   problemMessages,
@@ -40,11 +42,16 @@ import {
   METHODS,
   addOutput,
   checkOperation,
+  emptySoap,
+  isSoap,
   normalizeOperation,
   placeholders,
   previewBody,
+  previewEnvelope,
   previewPath,
+  soapResponseToJson,
   syncPathParameters,
+  withProtocol,
 } from './operation-designer-model';
 import { OPERATION_DESIGNER_TRANSLATIONS } from './operation-designer-translations';
 import { OperationTry } from './operation-try';
@@ -158,7 +165,13 @@ export class OperationDesigner {
     () =>
       `${(this.connection()?.['baseUrl'] as string | undefined) ?? ''}${previewPath(this.def(), {})}`,
   );
-  protected readonly bodyPreview = computed(() => previewBody(this.def(), {}));
+  protected readonly soap = computed(() => isSoap(this.def()));
+  protected readonly bodyPreview = computed(() =>
+    this.soap() ? null : previewBody(this.def(), {}),
+  );
+  protected readonly envelopePreview = computed(() =>
+    this.soap() ? previewEnvelope(this.def(), {}) : null,
+  );
   protected readonly sampleText = signal('');
   protected readonly sampleError = signal(false);
   private readonly sample = signal<unknown>(undefined);
@@ -191,6 +204,15 @@ export class OperationDesigner {
 
   protected setMethod(method: string): void {
     this.set({ method });
+  }
+
+  /** REST or SOAP (ADR-0044): SOAP is always a POST and describes its envelope. */
+  protected setProtocol(protocol: OperationProtocol): void {
+    this.def.update((d) => withProtocol(d, protocol));
+  }
+
+  protected setSoap(change: Partial<SoapSettings>): void {
+    this.def.update((d) => ({ ...d, soap: { ...(d.soap ?? emptySoap()), ...change } }));
   }
 
   protected addParameter(location: ParameterLocation = 'QUERY'): void {
@@ -243,7 +265,11 @@ export class OperationDesigner {
 
   protected useSample(): void {
     try {
-      this.sample.set(JSON.parse(this.sampleText()));
+      // A SOAP response is read as the platform reads it: the body's element as JSON.
+      const text = this.sampleText().trim();
+      const value = text.startsWith('<') ? soapResponseToJson(text) : JSON.parse(text);
+      if (value === null && text.startsWith('<')) throw new Error('Not a SOAP envelope');
+      this.sample.set(value);
       this.sampleError.set(false);
       this.result.set(null);
     } catch {
@@ -331,6 +357,15 @@ export class OperationDesigner {
       nameAr: d.nameAr.trim(),
       nameEn: d.nameEn.trim(),
       pathTemplate: d.pathTemplate.trim(),
+      soap:
+        d.protocol === 'SOAP' && d.soap
+          ? {
+              ...d.soap,
+              operationName: d.soap.operationName.trim(),
+              namespace: d.soap.namespace?.trim() || null,
+              action: d.soap.action?.trim() || null,
+            }
+          : null,
       parameters: d.parameters.map((p) => ({
         ...p,
         target: p.target?.trim() || null,

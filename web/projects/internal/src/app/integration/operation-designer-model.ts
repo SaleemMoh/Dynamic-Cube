@@ -2,6 +2,8 @@ import {
   OperationDefinition,
   OperationOutputDef,
   OperationParameterDef,
+  OperationProtocol,
+  SoapSettings,
 } from '@dynamic-cube/shared';
 
 export const METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const;
@@ -10,6 +12,43 @@ const CODE = /^[A-Z][A-Z0-9_-]{0,50}$/;
 const PARAMETER_NAME = /^[A-Za-z][A-Za-z0-9_-]{0,63}$/;
 const READ_PATH = /^[A-Za-z_$][\w$-]*(\[(\d+|\*)\])*(\.[A-Za-z_$][\w$-]*(\[(\d+|\*)\])*)*$/;
 const WRITE_PATH = /^[A-Za-z_$][\w$-]*(\.[A-Za-z_$][\w$-]*)*$/;
+/** An XML element name without prefix (the parts of a SOAP body input's path). */
+const XML_NAME = /^[A-Za-z_][\w-]*$/;
+const XML_OPERATION = /^[A-Za-z_][\w.-]*$/;
+const SOAP_11 = 'http://schemas.xmlsoap.org/soap/envelope/';
+const SOAP_12 = 'http://www.w3.org/2003/05/soap-envelope';
+
+/** A new SOAP call: version 1.1, child elements in the operation's namespace. */
+export function emptySoap(): SoapSettings {
+  return {
+    version: '1.1',
+    action: null,
+    operationName: '',
+    namespace: null,
+    qualifiedElements: true,
+  };
+}
+
+/** Whether the operation is a SOAP one (ADR-0044). */
+export function isSoap(definition: OperationDefinition): boolean {
+  return definition.protocol === 'SOAP';
+}
+
+/** Switches between REST and SOAP: SOAP is always a POST and carries its call; REST drops it. */
+export function withProtocol(
+  definition: OperationDefinition,
+  protocol: OperationProtocol,
+): OperationDefinition {
+  if (protocol === 'SOAP')
+    return {
+      ...definition,
+      protocol,
+      method: 'POST',
+      soap: definition.soap ?? emptySoap(),
+      isIdempotent: definition.isIdempotent ?? null,
+    };
+  return { ...definition, protocol: 'REST', soap: null };
+}
 
 /** A new operation: a GET on the chosen connection, nothing else yet. */
 export function emptyOperation(connectionCode: string | null = null): OperationDefinition {
@@ -38,6 +77,8 @@ export function normalizeOperation(
   const value = { ...emptyOperation(), ...(row ?? {}) } as OperationDefinition;
   return {
     ...value,
+    protocol: value.protocol === 'SOAP' ? 'SOAP' : 'REST',
+    soap: value.protocol === 'SOAP' ? { ...emptySoap(), ...(value.soap ?? {}) } : null,
     parameters: (value.parameters ?? []).map((p) => ({
       ...p,
       target: p.target ?? null,
@@ -114,6 +155,113 @@ export function previewBody(
     any = true;
   }
   return any ? body : null;
+}
+
+/**
+ * The SOAP envelope the provider receives (ADR-0044): the operation element in its namespace with each body input as an
+ * element at its dot path (its value, or its name as a placeholder). The WS-Security header is added when it is sent.
+ */
+export function previewEnvelope(
+  definition: OperationDefinition,
+  inputs: Record<string, string | null>,
+): string {
+  const soap = definition.soap ?? emptySoap();
+  interface XmlNode {
+    name: string;
+    value?: string;
+    children: XmlNode[];
+  }
+  const root: XmlNode = { name: soap.operationName || 'Operation', children: [] };
+  for (const p of definition.parameters.filter((x) => x.location === 'BODY')) {
+    const parts = (p.target || p.name).split('.');
+    if (!parts.every((part) => XML_NAME.test(part))) continue;
+    let node = root;
+    for (const part of parts.slice(0, -1)) {
+      let child = [...node.children].reverse().find((c) => c.name === part && !c.value);
+      if (!child) {
+        child = { name: part, children: [] };
+        node.children.push(child);
+      }
+      node = child;
+    }
+    node.children.push({
+      name: parts[parts.length - 1],
+      value: inputs[p.name] || p.sampleValue || `<${p.name}>`,
+      children: [],
+    });
+  }
+  const prefix = soap.namespace ? 'ns:' : '';
+  const child = soap.qualifiedElements ? prefix : '';
+  const escape = (text: string) =>
+    text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+  const write = (node: XmlNode, indent: string, name: string): string =>
+    node.value !== undefined
+      ? `${indent}<${name}${node.name}>${escape(node.value)}</${name}${node.name}>`
+      : node.children.length === 0
+        ? `${indent}<${name}${node.name}/>`
+        : [
+            `${indent}<${name}${node.name}>`,
+            ...node.children.map((c) => write(c, `${indent}  `, child)),
+            `${indent}</${name}${node.name}>`,
+          ].join('\n');
+  const ns = soap.namespace ? ` xmlns:ns="${escape(soap.namespace)}"` : '';
+  const operation = write(root, '    ', prefix).replace(
+    `<${prefix}${root.name}`,
+    `<${prefix}${root.name}${ns}`,
+  );
+  return [
+    `<soapenv:Envelope xmlns:soapenv="${soap.version === '1.2' ? SOAP_12 : SOAP_11}">`,
+    '  <soapenv:Body>',
+    operation,
+    '  </soapenv:Body>',
+    '</soapenv:Envelope>',
+  ].join('\n');
+}
+
+/**
+ * A pasted SOAP response read as the platform reads it (ADR-0044): the content of the body's element as JSON — text
+ * elements as strings, empty or nil ones as null, repeated elements as lists, attributes as properties, text beside
+ * attributes as `$text`. A fault is read the same way. Null when the text is not a SOAP envelope.
+ */
+export function soapResponseToJson(text: string): unknown {
+  const doc = new DOMParser().parseFromString(text, 'application/xml');
+  const root = doc.documentElement;
+  if (
+    !root ||
+    doc.getElementsByTagName('parsererror').length > 0 ||
+    root.localName !== 'Envelope' ||
+    (root.namespaceURI !== SOAP_11 && root.namespaceURI !== SOAP_12)
+  )
+    return null;
+  const body = [...root.children].find(
+    (c) => c.localName === 'Body' && c.namespaceURI === root.namespaceURI,
+  );
+  if (!body) return null;
+  const first = body.firstElementChild;
+  return first ? xmlToJson(first) : null;
+}
+
+const XSI = 'http://www.w3.org/2001/XMLSchema-instance';
+
+function xmlToJson(element: Element): unknown {
+  if (element.getAttributeNS(XSI, 'nil') === 'true') return null;
+  const attributes = [...element.attributes].filter(
+    (a) => a.prefix !== 'xmlns' && a.name !== 'xmlns' && a.namespaceURI !== XSI,
+  );
+  const children = [...element.children];
+  const text = element.textContent ?? '';
+  if (children.length === 0 && attributes.length === 0) return text.length ? text : null;
+  const result: Record<string, unknown> = {};
+  for (const a of attributes) result[a.localName] = a.value;
+  const groups = new Map<string, unknown[]>();
+  for (const c of children) {
+    const list = groups.get(c.localName) ?? [];
+    list.push(xmlToJson(c));
+    groups.set(c.localName, list);
+  }
+  for (const [key, items] of groups) result[key] = items.length === 1 ? items[0] : items;
+  if (children.length === 0 && text.length) result['$text'] = text;
+  return result;
 }
 
 /** A node of a response as a tree: its key, the output path that reads it, a short preview and its children. */
@@ -224,8 +372,19 @@ export function checkOperation(
   if (isNew && !CODE.test(code)) p('details', 'od.problem.code');
   if (!definition.nameAr?.trim() || !definition.nameEn?.trim()) p('details', 'od.problem.names');
   if (!definition.connectionCode) p('request', 'od.problem.connection');
+  const soap = isSoap(definition);
   const template = definition.pathTemplate?.trim() ?? '';
-  if (!template.startsWith('/') || template.includes('://')) p('request', 'od.problem.path');
+  if ((!template.startsWith('/') && !(soap && template === '')) || template.includes('://'))
+    p('request', soap ? 'od.problem.soapPath' : 'od.problem.path');
+  if (soap) {
+    const call = definition.soap;
+    if (!call || !XML_OPERATION.test(call.operationName?.trim() ?? ''))
+      p('request', 'od.problem.soapOperation');
+    if (call && call.version !== '1.1' && call.version !== '1.2')
+      p('request', 'od.problem.soapVersion');
+    if (call?.namespace?.trim() && !/^[A-Za-z][A-Za-z0-9+.-]*:\S+$/.test(call.namespace.trim()))
+      p('request', 'od.problem.soapNamespace');
+  }
   const names = new Set<string>();
   definition.parameters.forEach((param, i) => {
     const n = i + 1;
@@ -238,6 +397,12 @@ export function checkOperation(
       p('request', 'od.problem.bodyOnGet', { name: param.name });
     if (param.location === 'BODY' && !WRITE_PATH.test(param.target || param.name))
       p('request', 'od.problem.bodyPath', { name: param.name });
+    else if (
+      soap &&
+      param.location === 'BODY' &&
+      !(param.target || param.name).split('.').every((part) => XML_NAME.test(part))
+    )
+      p('request', 'od.problem.soapElement', { name: param.name });
   });
   for (const name of placeholders(template)) {
     if (!definition.parameters.some((x) => x.location === 'PATH' && x.name === name))

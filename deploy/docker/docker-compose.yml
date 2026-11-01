@@ -13,6 +13,9 @@ x-dotnet-env: &dotnet-env
 x-gateway-secrets: &gateway-secrets
   Secrets__MOMRAH_GATEWAY__clientId: ${MOMRAH_CLIENT_ID:-dev-consumer-key}
   Secrets__MOMRAH_GATEWAY__clientSecret: ${MOMRAH_CLIENT_SECRET:-dev-consumer-secret}
+  # The Yakeen SOAP connection's WS-Security user (ADR-0044; development values for the mock gateway's Yakeen stand-in).
+  Secrets__YAKEEN__username: ${YAKEEN_USERNAME:-dev-yakeen-user}
+  Secrets__YAKEEN__password: ${YAKEEN_PASSWORD:-dev-yakeen-pass}
   # Payment notifications from SADAD are signed with this key (the mock gateway signs with the same one).
   Secrets__SADAD_CALLBACK__key: ${SADAD_CALLBACK_KEY:-dev-sadad-callback-key}
   # Inspection results from the inspection body (CIS) are signed with this key (the mock gateway signs with the same one).

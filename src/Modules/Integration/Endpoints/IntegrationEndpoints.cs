@@ -19,7 +19,7 @@ public sealed record TestOperationRequest(Dictionary<string, string?>? Inputs);
 /// <summary>An operation as edited in the designer (not saved yet) and the inputs to try it with.</summary>
 public sealed record TryOperationRequest(OperationPayload Operation, Dictionary<string, string?>? Inputs);
 
-/// <summary>An OpenAPI or Swagger description, as JSON or YAML text.</summary>
+/// <summary>An OpenAPI or Swagger description (JSON or YAML) or a WSDL 1.1 description (XML), as text.</summary>
 public sealed record ReadOpenApiRequest(string Text);
 
 public sealed record TestOperationResponse(
@@ -64,8 +64,10 @@ internal static class IntegrationEndpoints
             return TypedResults.Ok(new TestOperationResponse(result.Outcome, result.Code, result.MessageAr, result.MessageEn, result.Outputs, result.Data, result.CallId, trace));
         }).RequirePrivilege(IntegrationResources.TestConsole, CatalogActions.Execute).WithName("TryIntegrationOperation");
 
-        // Reads an OpenAPI / Swagger description into a provider, connection and operations to review (nothing is saved).
-        group.MapPost("/openapi/read", (ReadOpenApiRequest request) => TypedResults.Ok(OpenApiImport.Read(request.Text ?? string.Empty)))
+        // Reads an OpenAPI / Swagger description, or a WSDL (ADR-0044), into a provider, connection and operations to review
+        // (nothing is saved).
+        group.MapPost("/openapi/read", (ReadOpenApiRequest request) =>
+            TypedResults.Ok(WsdlImport.IsXml(request.Text) ? WsdlImport.Read(request.Text) : OpenApiImport.Read(request.Text ?? string.Empty)))
             .RequirePrivilege(IntegrationResources.Config, CatalogActions.Create).WithName("ReadOpenApiDescription");
 
         group.MapGet("/call-logs", async (

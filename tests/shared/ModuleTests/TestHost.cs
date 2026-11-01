@@ -60,6 +60,8 @@ public sealed class TestHost : IAsyncDisposable
             ["AppsControl:BootstrapUsers:checker:0"] = "CONFIG_CHECKER",
             [$"Secrets:{SecretName}:clientId"] = "consumer-key",
             [$"Secrets:{SecretName}:clientSecret"] = "consumer-secret",
+            [$"Secrets:{SecretName}:username"] = "soap-user",
+            [$"Secrets:{SecretName}:password"] = "soap-pass",
         }).Build();
         var services = new ServiceCollection();
         services.AddLogging();

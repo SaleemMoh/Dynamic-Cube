@@ -55,6 +55,9 @@ public sealed class ConnectionPayload : ConfigPayload
 
     public string? ApiKeyHeader { get; set; }
 
+    /// <summary>WS-Security: send a digest of the password instead of its text.</summary>
+    public bool PasswordDigest { get; set; }
+
     public int TimeoutSeconds { get; set; } = 30;
 
     public int RetryCount { get; set; } = 2;
@@ -111,6 +114,7 @@ internal sealed class ConnectionApplier(IntegrationDbContext db) : IntegrationAp
         entity.SecretName = payload.AuthType == AuthType.None ? null : payload.SecretName;
         entity.TokenUrl = payload.AuthType == AuthType.OAuth2ClientCredentials ? payload.TokenUrl?.Trim() : null;
         entity.ApiKeyHeader = payload.AuthType == AuthType.ApiKey ? (string.IsNullOrWhiteSpace(payload.ApiKeyHeader) ? "X-API-Key" : payload.ApiKeyHeader.Trim()) : null;
+        entity.PasswordDigest = payload.AuthType == AuthType.WsSecurity && payload.PasswordDigest;
         entity.TimeoutSeconds = payload.TimeoutSeconds;
         entity.RetryCount = payload.RetryCount;
         entity.CircuitBreakerFailures = payload.CircuitBreakerFailures;
@@ -127,6 +131,7 @@ internal sealed class ConnectionApplier(IntegrationDbContext db) : IntegrationAp
             SecretName = entity.SecretName,
             TokenUrl = entity.TokenUrl,
             ApiKeyHeader = entity.ApiKeyHeader,
+            PasswordDigest = entity.PasswordDigest,
             TimeoutSeconds = entity.TimeoutSeconds,
             RetryCount = entity.RetryCount,
             CircuitBreakerFailures = entity.CircuitBreakerFailures,
@@ -259,6 +264,12 @@ public sealed class OperationPayload : ConfigPayload
 
     public string? DescriptionEn { get; set; }
 
+    /// <summary><c>REST</c> (default) or <c>SOAP</c> (ADR-0044).</summary>
+    public OperationProtocol Protocol { get; set; }
+
+    /// <summary>The SOAP call of a SOAP operation: version, action, operation element and namespace.</summary>
+    public SoapSettings? Soap { get; set; }
+
     public string Method { get; set; } = "GET";
 
     public string PathTemplate { get; set; } = string.Empty;
@@ -303,16 +314,22 @@ internal sealed partial class OperationApplier(IntegrationDbContext db) : Integr
         errors.MaxLength("descriptionAr", payload.DescriptionAr, 2000);
         errors.MaxLength("descriptionEn", payload.DescriptionEn, 2000);
 
-        var method = payload.Method?.Trim().ToUpperInvariant() ?? string.Empty;
+        var soap = payload.Protocol == OperationProtocol.Soap;
+        var method = MethodOf(payload);
         if (!Methods.Contains(method))
         {
             errors.Add("method", $"Use one of {string.Join(", ", Methods)}.");
         }
 
         var template = payload.PathTemplate?.Trim() ?? string.Empty;
-        if (!template.StartsWith('/') || template.Contains("://", StringComparison.Ordinal))
+        if ((!template.StartsWith('/') && !(soap && template.Length == 0)) || template.Contains("://", StringComparison.Ordinal))
         {
-            errors.Add("pathTemplate", "A relative URL starting with '/' is required.");
+            errors.Add("pathTemplate", soap ? "A relative URL starting with '/', or nothing to call the connection's address." : "A relative URL starting with '/' is required.");
+        }
+
+        if (soap)
+        {
+            CheckSoap(payload.Soap, errors);
         }
 
         ChildSync.RequireUnique(payload.Parameters, p => p.Name, "parameters", errors);
@@ -333,6 +350,10 @@ internal sealed partial class OperationApplier(IntegrationDbContext db) : Integr
             if (parameter.Location == ParameterLocation.Body && !JsonPaths.IsValidTarget(parameter.Target ?? parameter.Name))
             {
                 errors.Add(field + ".target", "Use a dot path such as request.idNumber.");
+            }
+            else if (soap && parameter.Location == ParameterLocation.Body && !(string.IsNullOrWhiteSpace(parameter.Target) ? parameter.Name : parameter.Target).Split('.').All(SoapXml.IsElementName))
+            {
+                errors.Add(field + ".target", "Each part must be an XML element name, such as request.idNumber.");
             }
         }
 
@@ -359,13 +380,60 @@ internal sealed partial class OperationApplier(IntegrationDbContext db) : Integr
         ConnectionApplier.Range(errors, "cacheSeconds", payload.CacheSeconds, 0, 7 * 24 * 3600);
     }
 
+    /// <summary>The SOAP call's checks: version, operation element, namespace and action.</summary>
+    private static void CheckSoap(SoapSettings? soap, ValidationErrors errors)
+    {
+        if (soap is null)
+        {
+            errors.Add("soap", "Describe the SOAP call: the version and the operation element.");
+            return;
+        }
+
+        if (soap.Version is not ("1.1" or "1.2"))
+        {
+            errors.Add("soap.version", "Use 1.1 or 1.2.");
+        }
+
+        if (!SoapXml.IsElementName(soap.OperationName?.Trim()))
+        {
+            errors.Add("soap.operationName", "An XML element name such as GetPersonInfo is required.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(soap.Namespace) && !Uri.TryCreate(soap.Namespace.Trim(), UriKind.Absolute, out _))
+        {
+            errors.Add("soap.namespace", "A namespace URI such as http://example.gov.sa/person or urn:example:person.");
+        }
+
+        errors.MaxLength("soap.namespace", soap.Namespace, 500);
+        errors.MaxLength("soap.action", soap.Action, 500);
+        if (soap.Action?.Contains('"', StringComparison.Ordinal) == true)
+        {
+            errors.Add("soap.action", "The action cannot contain quotes.");
+        }
+    }
+
+    /// <summary>SOAP is always sent with POST.</summary>
+    private static string MethodOf(OperationPayload payload) =>
+        payload.Protocol == OperationProtocol.Soap ? "POST" : payload.Method?.Trim().ToUpperInvariant() ?? string.Empty;
+
     /// <summary>Copies a checked payload onto the operation.</summary>
     internal static void Fill(Operation entity, OperationPayload payload)
     {
-        var method = payload.Method?.Trim().ToUpperInvariant() ?? string.Empty;
+        var method = MethodOf(payload);
         var template = payload.PathTemplate?.Trim() ?? string.Empty;
         entity.DescriptionAr = payload.DescriptionAr;
         entity.DescriptionEn = payload.DescriptionEn;
+        entity.Protocol = payload.Protocol;
+        entity.Soap = payload.Protocol == OperationProtocol.Soap && payload.Soap is { } soap
+            ? new SoapSettings
+            {
+                Version = soap.Version,
+                Action = string.IsNullOrWhiteSpace(soap.Action) ? null : soap.Action.Trim(),
+                OperationName = soap.OperationName?.Trim() ?? string.Empty,
+                Namespace = string.IsNullOrWhiteSpace(soap.Namespace) ? null : soap.Namespace.Trim(),
+                QualifiedElements = soap.QualifiedElements,
+            }
+            : null;
         entity.Method = method;
         entity.PathTemplate = template;
         entity.Parameters = payload.Parameters;
@@ -383,6 +451,8 @@ internal sealed partial class OperationApplier(IntegrationDbContext db) : Integr
             EnvelopeProfileCode = entity.EnvelopeProfile?.Code,
             DescriptionAr = entity.DescriptionAr,
             DescriptionEn = entity.DescriptionEn,
+            Protocol = entity.Protocol,
+            Soap = entity.Soap,
             Method = entity.Method,
             PathTemplate = entity.PathTemplate,
             Parameters = entity.Parameters,

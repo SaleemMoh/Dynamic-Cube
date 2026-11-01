@@ -6,7 +6,8 @@ namespace DynamicCube.Platform.Integration;
 /// <summary>
 /// Minimal paths into provider JSON: <c>data.result.Licenses[0].Commercial_NO</c>, <c>Licenses[*].Commercial_NO</c>
 /// (all elements). A property read on an array reads its first element, so <c>statusDetails.code</c> works whether the
-/// provider sends <c>statusDetails</c> as an object (NIC) or as a one-element array (MCI).
+/// provider sends <c>statusDetails</c> as an object (NIC) or as a one-element array (MCI); likewise <c>[*]</c> on a single
+/// value reads it as a list of one.
 /// </summary>
 public static partial class JsonPaths
 {
@@ -65,6 +66,11 @@ public static partial class JsonPaths
                     if (node is JsonArray array)
                     {
                         next.AddRange(array);
+                    }
+                    else if (node is not null)
+                    {
+                        // A list with one item can arrive as the item itself (XML read as JSON, ADR-0044).
+                        next.Add(node);
                     }
                 }
             }

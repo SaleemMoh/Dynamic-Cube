@@ -29,7 +29,20 @@ export interface TestOperationResult {
 }
 
 export type ParameterLocation = 'PATH' | 'QUERY' | 'HEADER' | 'BODY';
-export type AuthType = 'NONE' | 'BASIC' | 'API_KEY' | 'OAUTH2_CLIENT_CREDENTIALS';
+export type AuthType = 'NONE' | 'BASIC' | 'API_KEY' | 'OAUTH2_CLIENT_CREDENTIALS' | 'WS_SECURITY';
+
+/** How an operation talks to the provider: JSON over HTTP, or SOAP (ADR-0044). */
+export type OperationProtocol = 'REST' | 'SOAP';
+
+/** The SOAP call of an operation: envelope version, SOAPAction, the body's operation element and its namespace. */
+export interface SoapSettings {
+  version: '1.1' | '1.2';
+  action: string | null;
+  operationName: string;
+  namespace: string | null;
+  /** Child elements in the operation's namespace (elementFormDefault="qualified"). */
+  qualifiedElements: boolean;
+}
 
 /** An input of an operation: where it goes (path, query, header or a dot path in the JSON body) and how it is logged. */
 export interface OperationParameterDef {
@@ -65,6 +78,9 @@ export interface OperationDefinition {
   envelopeProfileCode: string | null;
   descriptionAr?: string | null;
   descriptionEn?: string | null;
+  /** REST when absent. */
+  protocol?: OperationProtocol;
+  soap?: SoapSettings | null;
   method: string;
   pathTemplate: string;
   parameters: OperationParameterDef[];
@@ -102,9 +118,12 @@ export interface ImportedOperation {
   parameters: OperationParameterDef[];
   fields: ImportedField[];
   warnings: string[];
+  /** SOAP operations read from a WSDL carry their SOAP call. */
+  protocol?: OperationProtocol;
+  soap?: SoapSettings | null;
 }
 
-/** What an OpenAPI / Swagger description holds, ready to review (ADR-0041). */
+/** What an OpenAPI / Swagger description (ADR-0041) or a WSDL (ADR-0044) holds, ready to review. */
 export interface OpenApiReadResult {
   title: string;
   version: string | null;

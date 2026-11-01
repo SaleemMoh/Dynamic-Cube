@@ -514,8 +514,8 @@ gates and adjustments configured rather than written as rule sets; the panel's l
 
 The owner chose, of (a) visual operation designer, (b) SOAP, (c) OpenAPI import, (d) Nafath, (e) API Endpoint Builder:
 **(a) and (c)** ✅ — operations are designed visually and tried before they are saved, and OpenAPI / Swagger
-descriptions are imported as reviewed packages. Then **(e)** ✅ (ADR-0042) and **(d)** ✅ (ADR-0043); **(b)** SOAP with
-WSDL import is next.
+descriptions are imported as reviewed packages. Then **(e)** ✅ (ADR-0042), **(d)** ✅ (ADR-0043) and **(b)** ✅
+(ADR-0044): all five items are done.
 
 ## API Endpoint Builder (ADR-0042) ✅
 
@@ -539,6 +539,16 @@ asks for the confirmation in its version 2.
 
 Later: confirming a workflow step with Nafath (an employee or a delegate), a rate limit on the bridge, Nafath for
 staff accounts if wanted.
+
+## SOAP and WSDL (ADR-0044) ✅
+
+SOAP 1.1/1.2 operations in the operation designer (REST / SOAP switch, envelope built from the inputs and previewed, the
+XML response read as JSON for outputs, response envelopes and code maps, faults as outcomes), WS-Security UsernameToken
+(text or digest) and basic authentication, WSDL 1.1 import on the import screen, and a Yakeen-like mock SOAP service with
+the NHC demo connection `YAKEEN` and two operations.
+
+Later: client certificates (mutual TLS), signed WS-Security messages, lists and attributes in request envelopes, SOAP
+header elements, MTOM attachments.
 
 ## Phase 4 — Extended capabilities
 

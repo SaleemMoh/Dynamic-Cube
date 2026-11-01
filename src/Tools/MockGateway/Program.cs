@@ -246,6 +246,9 @@ DynamicCube.MockGateway.ConnectedAppSample.Map(app);
 // A Nafath stand-in (ADR-0043): Elm's Rabet API, Nafath's sign-in page and a page standing in for the Nafath app.
 DynamicCube.MockGateway.NafathMock.Map(app, people);
 
+// A Yakeen-like SOAP service with its WSDL and WS-Security (ADR-0044).
+DynamicCube.MockGateway.YakeenMock.Map(app, people);
+
 app.Run();
 
 static JsonObject InspectionResult(Inspection inspection, string? result) => new()
