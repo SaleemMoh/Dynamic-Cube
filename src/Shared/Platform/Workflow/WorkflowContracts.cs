@@ -63,7 +63,16 @@ public interface IWorkflowSubject
     Task<JsonObject> GetRuleContextAsync(Guid subjectId, CancellationToken cancellationToken);
 
     Task UpdateAsync(Guid subjectId, SubjectUpdate update, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// The items of the subject decided one by one at a task (e.g. each sector of a request approved on its own), for the
+    /// applicant to see. Subjects without items ignore it.
+    /// </summary>
+    Task ItemsDecidedAsync(Guid subjectId, IReadOnlyList<SubjectItem> items, CancellationToken cancellationToken) => Task.CompletedTask;
 }
+
+/// <summary>One item of a subject decided at a task: its key and label, APPROVED or REJECTED, and the reason given.</summary>
+public sealed record SubjectItem(string Key, string Label, string Decision, string? Reason, string Step);
 
 /// <summary>
 /// Every service has its own workflow (implemented by the Workflow module). A new service starts with a default one

@@ -664,6 +664,13 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
                         .HasColumnType("jsonb")
                         .HasColumnName("integrations");
 
+                    b.Property<string>("ItemResults")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("item_results")
+                        .HasDefaultValueSql("'[]'::jsonb");
+
                     b.Property<string>("LevelCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")

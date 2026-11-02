@@ -56,6 +56,7 @@ export * from './lib/services/service.models';
 export * from './lib/services/services.api';
 export * from './lib/services/service-form';
 export * from './lib/services/fee-table';
+export * from './lib/services/item-results';
 export * from './lib/services/bill-card';
 export * from './lib/payments/payments.api';
 export * from './lib/services/visit-card';

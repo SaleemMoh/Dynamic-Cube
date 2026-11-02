@@ -90,6 +90,7 @@ public sealed class WorkflowDbContext(DbContextOptions<WorkflowDbContext> option
             b.Property(e => e.ActionCode).HasMaxLength(100);
             b.Property(e => e.Comment).HasMaxLength(4000);
             b.Property(e => e.Inputs).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb").IsRequired();
+            b.Property(e => e.ItemDecisions).HasColumnType("jsonb").HasDefaultValueSql("'[]'::jsonb").IsRequired();
             b.Property(e => e.SubjectType).HasMaxLength(50).IsRequired();
             b.Property(e => e.SubjectNumber).HasMaxLength(50).IsRequired();
             b.Property(e => e.TitleAr).HasMaxLength(500);

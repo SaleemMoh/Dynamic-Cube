@@ -57,6 +57,24 @@ public sealed class TestSubject : IWorkflowSubject
 
         return Task.CompletedTask;
     }
+
+    /// <summary>Items decided at tasks, per subject.</summary>
+    public Dictionary<Guid, List<SubjectItem>> Items { get; } = [];
+
+    public Task ItemsDecidedAsync(Guid subjectId, IReadOnlyList<SubjectItem> items, CancellationToken cancellationToken)
+    {
+        lock (Items)
+        {
+            if (!Items.TryGetValue(subjectId, out var list))
+            {
+                Items[subjectId] = list = [];
+            }
+
+            list.AddRange(items);
+        }
+
+        return Task.CompletedTask;
+    }
 }
 
 /// <summary>Every party exists, as an establishment named after its id.</summary>

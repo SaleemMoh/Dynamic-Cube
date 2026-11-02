@@ -1,0 +1,384 @@
+{
+  "title": "Reusable service building blocks: one request with several items, each project approved or rejected on its own, and a certificate per approved project",
+  "items": [
+    {
+      "entityType": "doc.template",
+      "entityCode": "EXP_PROJECT_CERT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "شهادة خبرة مشروع",
+        "nameEn": "Project experience certificate",
+        "html": "<html dir=\"rtl\" lang=\"ar\">\n<head>\n<style>\n  @page { margin: 0; }\n  body { font-family: 'IBM Plex Sans Arabic'; margin: 0; color: #161616; }\n  .frame { margin: 1.2cm; padding: 1cm 1.2cm; border: 2px solid #0f5c4d; border-radius: 12px; min-height: 25cm; }\n  h1 { color: #0f5c4d; margin: 0 0 4px; font-size: 26px; }\n  .number { margin-top: 8px; font-size: 14px; }\n  .qr { float: left; text-align: center; font-size: 11px; color: #555; }\n  table { width: 100%; border-collapse: collapse; margin-top: 24px; }\n  td { padding: 10px; border-bottom: 1px solid #e3e3e3; }\n  td.k { color: #555; width: 35%; }\n  .foot { margin-top: 32px; font-size: 11px; color: #666; }\n</style>\n</head>\n<body>\n<div class=\"frame\">\n  <div class=\"qr\"><img src=\"{{ qr }}\" width=\"110\" alt=\"QR\"><br>امسح للتحقق</div>\n  <h1>{{ document.typeNameAr }}</h1>\n  <p>{{ document.typeNameEn }}</p>\n  <div class=\"number\">رقم الشهادة <b>{{ document.number }}</b></div>\n  <h2>{{ holder.nameAr }}</h2>\n  <table>\n    <tr><td class=\"k\">المشروع</td><td>{{ data.projectName }}</td></tr>\n    <tr><td class=\"k\">قيمة المشروع (مليون ريال)</td><td>{{ data.projectValue }}</td></tr>\n    <tr><td class=\"k\">نسبة الإنجاز</td><td>{{ data.completion }}%</td></tr>\n    <tr><td class=\"k\">فئة التقييم</td><td>{{ data.band }}</td></tr>\n    <tr><td class=\"k\">تاريخ الإصدار</td><td>{{ document.issuedOn }}</td></tr>\n  </table>\n  <div class=\"foot\">صادرة إلكترونيًا. للتحقق: <span dir=\"ltr\">{{ verifyUrl }}</span></div>\n</div>\n</body>\n</html>",
+        "pageSize": "A4",
+        "landscape": false
+      }
+    },
+    {
+      "entityType": "doc.document-type",
+      "entityCode": "EXP_PROJECT_CERT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "شهادة خبرة مشروع",
+        "nameEn": "Project experience certificate",
+        "descriptionAr": "تصدر لكل مشروع اعتُمد في بيان الخبرات.",
+        "descriptionEn": "Issued for each project approved in an experience statement.",
+        "numberPrefix": "EXPC",
+        "validityMonths": 60,
+        "onePerHolder": false,
+        "amendResetsValidity": false,
+        "templateCode": "EXP_PROJECT_CERT",
+        "alertDaysBefore": [],
+        "fields": [
+          {
+            "code": "projectName",
+            "nameAr": "المشروع",
+            "nameEn": "Project",
+            "isPublic": true
+          },
+          {
+            "code": "projectValue",
+            "nameAr": "قيمة المشروع",
+            "nameEn": "Project value",
+            "isPublic": true
+          },
+          {
+            "code": "completion",
+            "nameAr": "نسبة الإنجاز",
+            "nameEn": "Completion",
+            "isPublic": true
+          },
+          {
+            "code": "band",
+            "nameAr": "فئة التقييم",
+            "nameEn": "Band",
+            "isPublic": true
+          },
+          {
+            "code": "requestNumber",
+            "nameAr": "رقم الطلب",
+            "nameEn": "Request number",
+            "isPublic": false
+          }
+        ],
+        "lineFields": [],
+        "businessApp": "CLASSIFICATION"
+      }
+    },
+    {
+      "entityType": "wf.workflow-version",
+      "entityCode": "EXP_STATEMENT/3",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 3 — قرار كل مشروع",
+        "nameEn": "Version 3 — a decision per project",
+        "definition": {
+          "nodes": [
+            {
+              "code": "START",
+              "type": "START",
+              "nameAr": "تقديم الطلب",
+              "nameEn": "Submitted",
+              "next": "ASSESS"
+            },
+            {
+              "code": "ASSESS",
+              "type": "DECISION",
+              "nameAr": "التقييم المبدئي",
+              "nameEn": "Initial assessment",
+              "ruleSet": "EXP_ASSESSMENT",
+              "input": {
+                "total": {
+                  "if": [
+                    {
+                      "!=": [
+                        {
+                          "var": "inputs.REVIEW.VERIFIED_TOTAL"
+                        },
+                        null
+                      ]
+                    },
+                    {
+                      "var": "inputs.REVIEW.VERIFIED_TOTAL"
+                    },
+                    {
+                      "reduce": [
+                        {
+                          "var": "data.EXP_PROJECTS"
+                        },
+                        {
+                          "+": [
+                            {
+                              "var": "accumulator"
+                            },
+                            {
+                              "var": "current.VALUE"
+                            }
+                          ]
+                        },
+                        0
+                      ]
+                    }
+                  ]
+                },
+                "quality": {
+                  "if": [
+                    {
+                      "!=": [
+                        {
+                          "var": "inputs.REVIEW.QUALITY"
+                        },
+                        null
+                      ]
+                    },
+                    {
+                      "var": "inputs.REVIEW.QUALITY"
+                    },
+                    70
+                  ]
+                }
+              },
+              "result": "assessment",
+              "next": "REVIEW"
+            },
+            {
+              "code": "REVIEW",
+              "type": "HUMAN_TASK",
+              "nameAr": "مراجعة البيان: قرار كل مشروع وتقييمه",
+              "nameEn": "Review the statement: decide each project and assess",
+              "assignment": {
+                "target": "ROLE",
+                "role": "CLS_REQUEST_MANAGER",
+                "mode": "QUEUE"
+              },
+              "actions": [
+                {
+                  "code": "APPROVE",
+                  "kind": "COMPLETE",
+                  "nameAr": "اعتماد التقييم",
+                  "nameEn": "Confirm the assessment",
+                  "to": "ROUTE"
+                },
+                {
+                  "code": "RETURN",
+                  "kind": "RETURN",
+                  "nameAr": "طلب بيانات إضافية",
+                  "nameEn": "Ask for more data"
+                },
+                {
+                  "code": "REJECT",
+                  "kind": "REJECT",
+                  "nameAr": "رفض",
+                  "nameEn": "Reject",
+                  "to": "REJECTED"
+                }
+              ],
+              "fields": [
+                {
+                  "code": "VERIFIED_TOTAL",
+                  "labelAr": "مجموع القيم بعد التحقق (مليون ريال)",
+                  "labelEn": "Verified total value (SAR million)",
+                  "hintAr": "يبدأ بمجموع ما أدخله المتقدم؛ عدّله إن لم تثبت بعض المشاريع",
+                  "hintEn": "Starts from the applicant's total; change it if some projects were not proven",
+                  "type": "NUMBER",
+                  "required": true,
+                  "min": 0,
+                  "initial": {
+                    "reduce": [
+                      {
+                        "var": "data.EXP_PROJECTS"
+                      },
+                      {
+                        "+": [
+                          {
+                            "var": "accumulator"
+                          },
+                          {
+                            "var": "current.VALUE"
+                          }
+                        ]
+                      },
+                      0
+                    ]
+                  }
+                },
+                {
+                  "code": "QUALITY",
+                  "labelAr": "درجة جودة التنفيذ",
+                  "labelEn": "Delivery quality score",
+                  "type": "NUMBER",
+                  "required": true,
+                  "min": 0,
+                  "max": 100,
+                  "hintAr": "من 0 إلى 100 وفق خطابات الجهات المالكة",
+                  "hintEn": "0 to 100, from the owners' letters"
+                },
+                {
+                  "code": "EVIDENCE",
+                  "labelAr": "قوة الإثبات",
+                  "labelEn": "Strength of evidence",
+                  "type": "SELECT",
+                  "required": true,
+                  "options": [
+                    {
+                      "value": "STRONG",
+                      "labelAr": "قوية",
+                      "labelEn": "Strong"
+                    },
+                    {
+                      "value": "PARTIAL",
+                      "labelAr": "جزئية",
+                      "labelEn": "Partial"
+                    },
+                    {
+                      "value": "WEAK",
+                      "labelAr": "ضعيفة",
+                      "labelEn": "Weak"
+                    }
+                  ]
+                },
+                {
+                  "code": "VISIT",
+                  "labelAr": "تحتاج زيارة ميدانية لاحقًا",
+                  "labelEn": "Needs a site visit later",
+                  "type": "CHECKBOX"
+                },
+                {
+                  "code": "NOTES",
+                  "labelAr": "ملاحظات المراجع",
+                  "labelEn": "Reviewer's notes",
+                  "type": "LONG_TEXT"
+                }
+              ],
+              "recalculate": [
+                "ASSESS"
+              ],
+              "items": {
+                "source": {
+                  "var": "data.EXP_PROJECTS"
+                },
+                "as": "project",
+                "key": {
+                  "var": "project.NAME"
+                },
+                "label": {
+                  "cat": [
+                    {
+                      "var": "project.NAME"
+                    },
+                    " — ",
+                    {
+                      "var": "project.VALUE"
+                    },
+                    " مليون ريال"
+                  ]
+                },
+                "toApplicant": true
+              }
+            },
+            {
+              "code": "ROUTE",
+              "type": "GATEWAY",
+              "nameAr": "مؤهل؟",
+              "nameEn": "Eligible?",
+              "routes": [
+                {
+                  "when": {
+                    "and": [
+                      {
+                        ">": [
+                          {
+                            "var": "items.REVIEW.approvedCount"
+                          },
+                          0
+                        ]
+                      },
+                      {
+                        "var": "decisions.assessment.eligible"
+                      }
+                    ]
+                  },
+                  "to": "CERTIFY"
+                }
+              ],
+              "default": "REJECTED"
+            },
+            {
+              "code": "CERTIFY",
+              "type": "DOCUMENT",
+              "nameAr": "شهادة خبرة لكل مشروع معتمد",
+              "nameEn": "An experience certificate per approved project",
+              "documentType": "EXP_PROJECT_CERT",
+              "forEach": {
+                "var": "items.REVIEW.approvedItems"
+              },
+              "forEachAs": "project",
+              "data": {
+                "projectName": {
+                  "var": "project.NAME"
+                },
+                "projectValue": {
+                  "var": "project.VALUE"
+                },
+                "completion": {
+                  "var": "project.COMPLETION"
+                },
+                "band": {
+                  "var": "decisions.assessment.band"
+                },
+                "requestNumber": {
+                  "var": "number"
+                }
+              },
+              "reason": "اعتماد مشروع في بيان الخبرات",
+              "next": "APPROVED"
+            },
+            {
+              "code": "APPROVED",
+              "type": "END",
+              "nameAr": "معتمد",
+              "nameEn": "Approved",
+              "outcome": "APPROVED"
+            },
+            {
+              "code": "REJECTED",
+              "type": "END",
+              "nameAr": "مرفوض",
+              "nameEn": "Rejected",
+              "outcome": "REJECTED"
+            }
+          ],
+          "layout": {
+            "START": {
+              "x": 340,
+              "y": 40
+            },
+            "ASSESS": {
+              "x": 340,
+              "y": 150
+            },
+            "REVIEW": {
+              "x": 340,
+              "y": 260
+            },
+            "ROUTE": {
+              "x": 340,
+              "y": 370
+            },
+            "APPROVED": {
+              "x": 200,
+              "y": 590
+            },
+            "REJECTED": {
+              "x": 480,
+              "y": 590
+            },
+            "CERTIFY": {
+              "x": 200,
+              "y": 480
+            }
+          }
+        }
+      }
+    }
+  ]
+}

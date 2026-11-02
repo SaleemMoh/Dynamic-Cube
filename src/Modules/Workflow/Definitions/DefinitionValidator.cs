@@ -410,8 +410,26 @@ internal static partial class DefinitionValidator
     /// <summary>Fields an employee fills in on a human task and the decision steps worked out again with them.</summary>
     private static void TaskFields(NodeDefinition node, string field, Dictionary<string, NodeDefinition> nodes, JsonLogicEvaluator evaluator, ValidationErrors errors)
     {
+        if (node.Type != NodeType.Document && (node.ForEach is not null || node.ForEachAs is not null))
+        {
+            errors.Add(field + ".forEach", "Only document steps issue a document per element.");
+        }
+        else if (node.Type == NodeType.Document)
+        {
+            CheckRule(node.ForEach, field + ".forEach", evaluator, errors);
+            if (node.ForEachAs is not null && !ResultName().IsMatch(node.ForEachAs))
+            {
+                errors.Add(field + ".forEachAs", "Use letters, digits and _, starting with a letter.");
+            }
+        }
+
         if (node.Type != NodeType.HumanTask)
         {
+            if (node.Items is not null)
+            {
+                errors.Add(field + ".items", "Only human tasks decide items one by one.");
+            }
+
             if (node.Fields.Count > 0)
             {
                 errors.Add(field + ".fields", "Only human tasks have fields.");
@@ -477,6 +495,22 @@ internal static partial class DefinitionValidator
             }
         }
 
+        if (node.Items is { } items)
+        {
+            if (items.Source is null)
+            {
+                errors.Add(field + ".items.source", "Say where the items come from.");
+            }
+
+            CheckRule(items.Source, field + ".items.source", evaluator, errors);
+            CheckRule(items.Key, field + ".items.key", evaluator, errors);
+            CheckRule(items.Label, field + ".items.label", evaluator, errors);
+            if (items.As is not null && !ResultName().IsMatch(items.As))
+            {
+                errors.Add(field + ".items.as", "Use letters, digits and _, starting with a letter.");
+            }
+        }
+
         foreach (var code in node.Recalculate.Distinct(StringComparer.Ordinal))
         {
             if (!nodes.TryGetValue(code, out var decision) || decision.Type != NodeType.Decision)
@@ -529,5 +563,6 @@ internal static partial class DefinitionValidator
         ["payments"] = new JsonObject(),
         ["visits"] = new JsonObject(),
         ["inputs"] = new JsonObject(),
+        ["items"] = new JsonObject(),
     };
 }

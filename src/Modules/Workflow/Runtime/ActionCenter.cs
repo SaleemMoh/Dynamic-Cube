@@ -126,11 +126,14 @@ public sealed record TaskDetail(
 
     /// <summary>Whether the task works decision steps out again with its inputs (the screen then shows them live).</summary>
     public bool Recalculates { get; init; }
+
+    /// <summary>The items the task decides one by one, with the decisions so far.</summary>
+    public IReadOnlyList<TaskItemView> Items { get; init; } = [];
 }
 
-public sealed record ActRequest(string Action, string? Comment, JsonObject? Inputs = null);
+public sealed record ActRequest(string Action, string? Comment, JsonObject? Inputs = null, IReadOnlyList<ItemDecision>? Items = null);
 
-public sealed record InputsRequest(JsonObject? Inputs);
+public sealed record InputsRequest(JsonObject? Inputs, IReadOnlyList<ItemDecision>? Items = null);
 
 /// <summary>A decision step worked out again with a task's inputs: the result recorded now and the one the inputs give.</summary>
 public sealed record RecalculatedDecision(string Step, string NameAr, string NameEn, string Result, JsonObject? Before, JsonObject? After, string? Problem);
@@ -256,6 +259,7 @@ internal sealed class ActionCenter(
             Fields = node.Fields,
             Inputs = await engine.InputsAsync(task, cancellationToken),
             Recalculates = node.Recalculate.Count > 0,
+            Items = await engine.ItemsAsync(task, cancellationToken),
         };
     }
 
@@ -277,7 +281,17 @@ internal sealed class ActionCenter(
 
         var versionId = await context.Instances.Where(i => i.Id == task.InstanceId).Select(i => i.VersionId).SingleAsync(cancellationToken);
         var node = (await definitions.GetAsync(context, versionId, cancellationToken)).Node(task.NodeCode);
-        task.Inputs = TaskInputs.Clean(node.Fields, request.Inputs, complete: false).ToJsonString();
+        // What is not sent is kept: the fields and the items are saved separately.
+        if (request.Inputs is not null)
+        {
+            task.Inputs = TaskInputs.Clean(node.Fields, request.Inputs, complete: false).ToJsonString();
+        }
+
+        if (node.Items is not null && request.Items is not null)
+        {
+            task.ItemDecisions = TaskItemList.Serialize(await engine.CleanItemsAsync(task, request.Items, cancellationToken));
+        }
+
         try
         {
             await context.SaveChangesAsync(cancellationToken);
@@ -389,7 +403,7 @@ internal sealed class ActionCenter(
             throw new WorkflowForbiddenException(task.Assignee is null ? "Claim the task first." : "The task is assigned to someone else.");
         }
 
-        await engine.ActAsync(id, request.Action, request.Comment, me.UserName, task.Assignee == me.UserName ? null : task.Assignee, cancellationToken, request.Inputs);
+        await engine.ActAsync(id, request.Action, request.Comment, me.UserName, task.Assignee == me.UserName ? null : task.Assignee, cancellationToken, request.Inputs, request.Items);
     }
 
     public async Task AddNoteAsync(Guid id, NoteRequest request, CancellationToken cancellationToken)

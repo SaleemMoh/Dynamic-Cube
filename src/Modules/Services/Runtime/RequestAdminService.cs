@@ -70,6 +70,7 @@ internal sealed class RequestAdminService(ServicesDbContext context, ServiceCata
             await RequestFiles.ListAsync(context, entity.Id, cancellationToken))
         {
             Links = await RequestService.LinksAsync(context, entity, cancellationToken),
+            ItemResults = RequestService.ItemResults(entity),
         };
         return new RequestDetail(view, entity.SubmitterPartyId, entity.SubmitterName, entity.BeneficiaryPartyId, timeline);
     }

@@ -109,6 +109,8 @@ export interface InstanceView {
 
 export interface InstanceFacts {
   decisions?: Record<string, Record<string, unknown>>;
+  /** Items decided one by one at tasks: `items.<task>` (list, approved, rejected, counts). */
+  items?: Record<string, Record<string, unknown>>;
   /** What employees filled in on tasks: `inputs.<task>.<field>`. */
   inputs?: Record<string, Record<string, unknown>>;
   documents?: Record<string, { id: string; number: string; version: number; amended: boolean }>;
@@ -133,6 +135,25 @@ export interface TaskDetail {
   inputs?: Record<string, unknown>;
   /** The task works decision steps out again with its inputs (shown live). */
   recalculates?: boolean;
+  /** The items the task decides one by one, with the decisions so far. */
+  items?: TaskItemView[];
+}
+
+export type ItemVerdict = 'APPROVED' | 'REJECTED';
+
+/** One item of a task as the employee sees it: its key, label and the decision so far. */
+export interface TaskItemView {
+  key: string;
+  label: string;
+  decision: ItemVerdict | null;
+  reason: string | null;
+}
+
+/** The decision on one item of a task (a rejection needs a reason). */
+export interface ItemDecision {
+  key: string;
+  decision: ItemVerdict | null;
+  reason: string | null;
 }
 
 export type TaskFieldType = 'TEXT' | 'LONG_TEXT' | 'NUMBER' | 'DATE' | 'CHECKBOX' | 'SELECT';

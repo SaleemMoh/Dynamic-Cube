@@ -196,6 +196,13 @@ namespace DynamicCube.Modules.Workflow.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("instance_id");
 
+                    b.Property<string>("ItemDecisions")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("item_decisions")
+                        .HasDefaultValueSql("'[]'::jsonb");
+
                     b.Property<string>("LevelCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")

@@ -335,6 +335,53 @@
         (recalculateChange)="patch({ recalculate: $event })"
       />
 
+      <h3>{{ 'designer.section.taskItems' | dcTranslate }}</h3>
+      <p class="dc-panel__hint">{{ 'designer.taskItemsHint' | dcTranslate }}</p>
+      <mat-checkbox [ngModel]="!!n.items" (ngModelChange)="patch({ items: $event ? { source: null, as: 'item', toApplicant: true } : null })" data-testid="task-items-on">
+        {{ 'designer.taskItemsOn' | dcTranslate }}
+      </mat-checkbox>
+      @if (n.items) {
+        <dc-rule-editor
+          [label]="'designer.taskItemsSource' | dcTranslate"
+          mode="value"
+          [rule]="$any(n.items.source ?? null)"
+          [variables]="variables()"
+          testId="task-items-source"
+          (ruleChange)="patch({ items: { ...n.items, source: $event } })"
+        />
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'designer.taskItemsAs' | dcTranslate }}</mat-label>
+          <input
+            matInput
+            dir="ltr"
+            placeholder="item"
+            [ngModel]="n.items.as ?? ''"
+            (ngModelChange)="patch({ items: { ...n.items, as: $event.trim() || null } })"
+            [ngModelOptions]="{ updateOn: 'blur' }"
+          />
+          <mat-hint>{{ 'designer.taskItemsAsHint' | dcTranslate }}</mat-hint>
+        </mat-form-field>
+        <dc-rule-editor
+          [label]="'designer.taskItemsKey' | dcTranslate"
+          mode="value"
+          [rule]="$any(n.items.key ?? null)"
+          [variables]="variables()"
+          testId="task-items-key"
+          (ruleChange)="patch({ items: { ...n.items, key: $event } })"
+        />
+        <dc-rule-editor
+          [label]="'designer.taskItemsLabel' | dcTranslate"
+          mode="value"
+          [rule]="$any(n.items.label ?? null)"
+          [variables]="variables()"
+          testId="task-items-label"
+          (ruleChange)="patch({ items: { ...n.items, label: $event } })"
+        />
+        <mat-checkbox [ngModel]="n.items.toApplicant !== false" (ngModelChange)="patch({ items: { ...n.items, toApplicant: $event } })">
+          {{ 'designer.taskItemsToApplicant' | dcTranslate }}
+        </mat-checkbox>
+      }
+
       <h3>{{ 'designer.section.deadline' | dcTranslate }}</h3>
       <div class="dc-panel__pair">
         <mat-form-field subscriptSizing="dynamic">
@@ -617,6 +664,28 @@
     }
 
     @case ('DOCUMENT') {
+      <dc-rule-editor
+        [label]="'designer.field.forEach' | dcTranslate"
+        mode="value"
+        [rule]="$any(n.forEach ?? null)"
+        [variables]="variables()"
+        testId="document-for-each"
+        (ruleChange)="patch({ forEach: $event })"
+      />
+      @if (n.forEach !== null && n.forEach !== undefined) {
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'designer.taskItemsAs' | dcTranslate }}</mat-label>
+          <input
+            matInput
+            dir="ltr"
+            placeholder="item"
+            [ngModel]="n.forEachAs ?? ''"
+            (ngModelChange)="patch({ forEachAs: $event.trim() || null })"
+            [ngModelOptions]="{ updateOn: 'blur' }"
+          />
+          <mat-hint>{{ 'designer.forEachHint' | dcTranslate }}</mat-hint>
+        </mat-form-field>
+      }
       <mat-form-field subscriptSizing="dynamic">
         <mat-label>{{ 'designer.field.documentType' | dcTranslate }}</mat-label>
         <mat-select [ngModel]="n.documentType ?? null" (ngModelChange)="patch({ documentType: $event })" data-testid="document-type">

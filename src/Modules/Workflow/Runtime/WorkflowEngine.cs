@@ -139,7 +139,7 @@ internal sealed class WorkflowEngine(
     }
 
     /// <summary>Completes an open task with one of its actions and moves its branch on. The caller checked who may act.</summary>
-    public async Task ActAsync(Guid taskId, string actionCode, string? comment, string actor, string? onBehalfOf, CancellationToken cancellationToken, JsonObject? inputs = null)
+    public async Task ActAsync(Guid taskId, string actionCode, string? comment, string actor, string? onBehalfOf, CancellationToken cancellationToken, JsonObject? inputs = null, IReadOnlyList<ItemDecision>? items = null)
     {
         await using var work = await unitOfWork.BeginAsync(cancellationToken);
         var instanceId = await context.Tasks.Where(t => t.Id == taskId).Select(t => (Guid?)t.InstanceId).SingleOrDefaultAsync(cancellationToken)
@@ -164,6 +164,15 @@ internal sealed class WorkflowEngine(
         var moves = action.Kind is ActionKind.Complete or ActionKind.Approve;
         var filled = TaskInputs.Clean(node.Fields, inputs, moves);
         task.Inputs = filled.ToJsonString();
+        List<TaskItem>? itemList = null;
+        List<ItemDecision> decided = [];
+        if (node.Items is { } itemsDefinition)
+        {
+            itemList = TaskItemList.Read(itemsDefinition, await RuleContextAsync(run, cancellationToken), evaluator);
+            decided = TaskItemList.Clean(itemList, items, moves);
+            task.ItemDecisions = TaskItemList.Serialize(decided);
+        }
+
         task.Status = WorkTaskStatus.Completed;
         task.CompletedAt = run.Now;
         task.CompletedBy = actor;
@@ -195,6 +204,17 @@ internal sealed class WorkflowEngine(
             if (node.Fields.Count > 0)
             {
                 SetFact(run, "inputs", node.Code, filled.DeepClone());
+            }
+
+            if (itemList is not null)
+            {
+                SetFact(run, "items", node.Code, TaskItemList.Facts(itemList, decided));
+                if (node.Items!.ToApplicant)
+                {
+                    var byKey = decided.ToDictionary(d => d.Key, StringComparer.Ordinal);
+                    run.Items.AddRange(itemList.Where(i => byKey.ContainsKey(i.Key))
+                        .Select(i => new SubjectItem(i.Key, i.Label, byKey[i.Key].Decision!, byKey[i.Key].Reason, node.Code)));
+                }
             }
 
             if (moves)
@@ -371,8 +391,40 @@ internal sealed class WorkflowEngine(
     /// <summary>Issues the node's document (Documents module) for the holder and keeps its number as <c>documents.&lt;node&gt;</c>.</summary>
     private async Task IssueAsync(Run run, NodeDefinition node, CancellationToken cancellationToken)
     {
-        var issuer = services.GetService<IDocumentIssuer>() ?? throw new WorkflowConflictException("Documents are not installed.");
         var facts = await RuleContextAsync(run, cancellationToken);
+        if (node.ForEach is null)
+        {
+            var issued = await IssueOneAsync(run, node, facts, cancellationToken);
+            SetFact(run, "documents", node.Code, Issued(issued));
+            return;
+        }
+
+        // One document per element (e.g. per approved item); none when the list is empty.
+        var name = node.ForEachAs ?? "item";
+        var documents = new JsonArray();
+        foreach (var element in evaluator.Evaluate(node.ForEach, facts) as JsonArray ?? [])
+        {
+            var scope = (JsonObject)facts.DeepClone();
+            scope[name] = element?.DeepClone();
+            var issued = Issued(await IssueOneAsync(run, node, scope, cancellationToken));
+            issued[name] = element?.DeepClone();
+            documents.Add(issued);
+        }
+
+        SetFact(run, "documents", node.Code, new JsonObject { ["items"] = documents, ["count"] = documents.Count });
+    }
+
+    private static JsonObject Issued(IssuedDocumentInfo issued) => new()
+    {
+        ["id"] = issued.Id.ToString(),
+        ["number"] = issued.Number,
+        ["version"] = issued.Version,
+        ["amended"] = issued.Amended,
+    };
+
+    private async Task<IssuedDocumentInfo> IssueOneAsync(Run run, NodeDefinition node, JsonObject facts, CancellationToken cancellationToken)
+    {
+        var issuer = services.GetService<IDocumentIssuer>() ?? throw new WorkflowConflictException("Documents are not installed.");
         var holderValue = evaluator.Evaluate(node.Holder ?? new JsonObject { ["var"] = "party.id" }, facts);
         if (holderValue is not JsonValue holderText || !Guid.TryParse(holderText.ToString(), out var holder))
         {
@@ -413,14 +465,8 @@ internal sealed class WorkflowEngine(
             throw new WorkflowConflictException($"Step '{node.Code}': {ex.Message}");
         }
 
-        SetFact(run, "documents", node.Code, new JsonObject
-        {
-            ["id"] = issued.Id.ToString(),
-            ["number"] = issued.Number,
-            ["version"] = issued.Version,
-            ["amended"] = issued.Amended,
-        });
         run.Event(issued.Amended ? WorkflowEventTypes.DocumentAmended : WorkflowEventTypes.DocumentIssued, null, null, $"{issued.Number} v{issued.Version}", node: node.Code);
+        return issued;
     }
 
     /// <summary>
@@ -1014,6 +1060,39 @@ internal sealed class WorkflowEngine(
     }
 
     /// <summary>
+    /// The items a task decides one by one, with the decisions saved on it (else the ones the same step took last time).
+    /// </summary>
+    public async Task<IReadOnlyList<TaskItemView>> ItemsAsync(WorkTask task, CancellationToken cancellationToken)
+    {
+        var run = await ReadAsync(task.InstanceId, cancellationToken);
+        if (run.Version.Node(task.NodeCode).Items is not { } definition)
+        {
+            return [];
+        }
+
+        var items = TaskItemList.Read(definition, await RuleContextAsync(run, cancellationToken), evaluator);
+        var saved = TaskItemList.Parse(task.ItemDecisions);
+        if (saved.Count == 0)
+        {
+            var earlier = run.Tasks.Where(t => t.Id != task.Id && t.NodeCode == task.NodeCode && t.ItemDecisions != "[]")
+                .OrderByDescending(t => t.CompletedAt ?? t.CreatedAt).FirstOrDefault();
+            saved = earlier is null ? [] : TaskItemList.Parse(earlier.ItemDecisions);
+        }
+
+        var byKey = saved.GroupBy(d => d.Key, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.Last(), StringComparer.Ordinal);
+        return [.. items.Select(i => byKey.TryGetValue(i.Key, out var d) ? new TaskItemView(i.Key, i.Label, d.Decision, d.Reason) : new TaskItemView(i.Key, i.Label, null, null))];
+    }
+
+    /// <summary>Checks item decisions saved while working (not all items need one yet).</summary>
+    public async Task<List<ItemDecision>> CleanItemsAsync(WorkTask task, IReadOnlyList<ItemDecision>? decisions, CancellationToken cancellationToken)
+    {
+        var run = await ReadAsync(task.InstanceId, cancellationToken);
+        return run.Version.Node(task.NodeCode).Items is { } definition
+            ? TaskItemList.Clean(TaskItemList.Read(definition, await RuleContextAsync(run, cancellationToken), evaluator), decisions, complete: false)
+            : [];
+    }
+
+    /// <summary>
     /// The decision steps a task works out again, with the employee's inputs as typed so far: the result recorded now and
     /// the one these inputs would give. Nothing is recorded.
     /// </summary>
@@ -1085,6 +1164,7 @@ internal sealed class WorkflowEngine(
         facts["integrations"] = produced["integrations"]?.DeepClone() ?? new JsonObject();
         facts["subrequests"] = produced["subrequests"]?.DeepClone() ?? new JsonObject();
         facts["inputs"] = produced["inputs"]?.DeepClone() ?? new JsonObject();
+        facts["items"] = produced["items"]?.DeepClone() ?? new JsonObject();
         return facts;
     }
 
@@ -1132,6 +1212,11 @@ internal sealed class WorkflowEngine(
         if (run.Pending is { } update && !(instance.Status == InstanceStatus.WaitingCustomer && update.Status == SubjectStatus.InProgress))
         {
             await Subject(instance.SubjectType).UpdateAsync(instance.SubjectId, update, cancellationToken);
+        }
+
+        if (run.Items.Count > 0)
+        {
+            await Subject(instance.SubjectType).ItemsDecidedAsync(instance.SubjectId, run.Items, cancellationToken);
         }
 
         // Requests steps asked for are made last, once this operation is saved: one finished at once (a service whose workflow
@@ -1211,6 +1296,9 @@ internal sealed class WorkflowEngine(
 
         /// <summary>Requests sub-request steps asked for in this operation, made once it is saved (3f).</summary>
         public List<SpawnRequest> Spawns { get; } = [];
+
+        /// <summary>Items decided one by one in this operation, for the applicant.</summary>
+        public List<SubjectItem> Items { get; } = [];
 
         /// <summary>Tokens resumed after the applicant's correction in this operation.</summary>
         public HashSet<Guid> Resuming { get; } = [];

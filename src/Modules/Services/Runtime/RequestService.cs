@@ -832,8 +832,13 @@ internal sealed class RequestService(
             Changes = changes ?? [],
             Links = await LinksAsync(context, entity, cancellationToken),
             Bundle = entity.StatusCategory == StatusCategory.Draft ? await BundleOptionsAsync(version, facts, acting, data, cancellationToken) : [],
+            ItemResults = ItemResults(entity),
         };
     }
+
+    /// <summary>The items decided one by one at workflow tasks.</summary>
+    internal static IReadOnlyList<SubjectItem> ItemResults(ServiceRequest entity) =>
+        JsonSerializer.Deserialize<List<SubjectItem>>(entity.ItemResults, JsonSerializerOptions.Web) ?? [];
 
     /// <summary>The request it came from and the requests that came from it (3f), newest last.</summary>
     internal static async Task<IReadOnlyList<LinkedRequest>> LinksAsync(ServicesDbContext context, ServiceRequest entity, CancellationToken cancellationToken)

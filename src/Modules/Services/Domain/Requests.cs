@@ -73,6 +73,9 @@ public sealed class ServiceRequest : IAuditable, IHasAuditColumns
     /// <summary>Integration steps run for the request: step code → outcome (JSON), so required ones are checked on submit.</summary>
     public string Integrations { get; set; } = "{}";
 
+    /// <summary>The items decided one by one at a workflow task (e.g. each sector), with their reasons, a JSON array.</summary>
+    public string ItemResults { get; set; } = "[]";
+
     public List<FeeLine> Fees { get; set; } = [];
 
     public decimal FeeTotal { get; set; }

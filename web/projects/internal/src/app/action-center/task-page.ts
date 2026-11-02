@@ -29,6 +29,7 @@ import { ConfirmData, ConfirmDialog } from '../apps-control/confirm-dialog';
 import { AssignDialog } from './assign-dialog';
 import { InstanceFactsCard } from './instance-facts';
 import { TaskInputsCard } from './task-inputs';
+import { TaskItemsCard } from './task-items';
 import { WorkflowCard } from './workflow-card';
 
 /** One task: the request's answers, what the employee may do now (claim, assign, act) and the workflow so far. */
@@ -47,6 +48,7 @@ import { WorkflowCard } from './workflow-card';
     RequestAnswers,
     SlaChip,
     TaskInputsCard,
+    TaskItemsCard,
     TranslatePipe,
     WorkflowCard,
   ],
@@ -139,6 +141,14 @@ import { WorkflowCard } from './workflow-card';
         </ul>
       }
 
+      @if (d.items?.length) {
+        <dc-task-items
+          [taskId]="d.task.id"
+          [items]="d.items ?? []"
+          [editable]="d.task.status === 'OPEN' && d.permissions.canAct"
+          (saved)="inputsSaved()"
+        />
+      }
       @if (d.fields?.length) {
         <dc-task-inputs
           [taskId]="d.task.id"
@@ -344,6 +354,7 @@ export class TaskPage {
   protected readonly errors = signal<string[]>([]);
   protected note = '';
   private readonly inputs = viewChild(TaskInputsCard);
+  private readonly items = viewChild(TaskItemsCard);
 
   protected async run(change: Observable<TaskDetail | null>, done?: string): Promise<boolean> {
     this.errors.set([]);
@@ -382,8 +393,10 @@ export class TaskPage {
     // Moving on needs the task's required fields; returns and rejections do not.
     const inputs = this.inputs();
     const moves = action.kind === 'APPROVE' || action.kind === 'COMPLETE';
-    if (moves && inputs?.missing().length) {
-      this.errors.set([`${this.i18n.translate('taskInputs.missing')} ${inputs.missing().join('، ')}`]);
+    const items = this.items();
+    const missing = moves ? [...(inputs?.missing() ?? []), ...(items?.missing() ?? [])] : [];
+    if (missing.length) {
+      this.errors.set([`${this.i18n.translate('taskInputs.missing')} ${missing.join('، ')}`]);
       return;
     }
     const name = localize({ ar: action.nameAr, en: action.nameEn }, this.i18n.language());
@@ -397,7 +410,7 @@ export class TaskPage {
     };
     const comment = await firstValueFrom(this.dialog.open<ConfirmDialog, ConfirmData, string>(ConfirmDialog, { data }).afterClosed());
     if (comment !== undefined) {
-      await this.run(this.api.act(d.task.id, action.code, comment || null, inputs?.value()), 'tasks.done');
+      await this.run(this.api.act(d.task.id, action.code, comment || null, inputs?.value(), items?.value()), 'tasks.done');
     }
   }
 

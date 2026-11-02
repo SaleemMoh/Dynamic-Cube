@@ -213,6 +213,37 @@ public sealed class NodeDefinition
     /// recorded (replacing the earlier result) when the task is done with an action that moves on.
     /// </summary>
     public List<string> Recalculate { get; set; } = [];
+
+    /// <summary>
+    /// Human task: items decided one by one (e.g. each sector or project of the request): each is approved or rejected
+    /// with a reason, kept as <c>items.&lt;task&gt;</c> and shown to the applicant.
+    /// </summary>
+    public TaskItems? Items { get; set; }
+
+    /// <summary>Document: a list rule; one document is issued per element (e.g. per approved item), the element as <see cref="ForEachAs"/>.</summary>
+    public JsonNode? ForEach { get; set; }
+
+    /// <summary>Document: the name rules use for the element of <see cref="ForEach"/> (default <c>item</c>).</summary>
+    public string? ForEachAs { get; set; }
+}
+
+/// <summary>The items a task decides one by one.</summary>
+public sealed class TaskItems
+{
+    /// <summary>A rule giving the list (e.g. <c>data.SECTORS</c> or <c>data.PROJECTS</c>).</summary>
+    public JsonNode? Source { get; set; }
+
+    /// <summary>The name rules use for one element (default <c>item</c>).</summary>
+    public string? As { get; set; }
+
+    /// <summary>A rule giving the element's key (default: the element itself when it is a text or a number).</summary>
+    public JsonNode? Key { get; set; }
+
+    /// <summary>A rule giving what the employee and the applicant read for the element (default: its key).</summary>
+    public JsonNode? Label { get; set; }
+
+    /// <summary>The decisions and reasons are shown to the applicant (default yes).</summary>
+    public bool ToApplicant { get; set; } = true;
 }
 
 public enum TaskFieldType

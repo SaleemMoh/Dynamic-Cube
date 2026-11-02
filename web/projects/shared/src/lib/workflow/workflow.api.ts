@@ -6,6 +6,7 @@ import {
   InboxBox,
   InboxCounts,
   InstanceView,
+  ItemDecision,
   RecalculatedDecision,
   SlaState,
   StaffOption,
@@ -69,17 +70,23 @@ export class WorkflowApi {
     action: string,
     comment: string | null,
     inputs?: Record<string, unknown>,
+    items?: ItemDecision[],
   ): Observable<TaskDetail | null> {
     return this.http.post<TaskDetail | null>(`${WORKFLOW_API}/tasks/${id}/act`, {
       action,
       comment,
       inputs: inputs ?? null,
+      items: items ?? null,
     });
   }
 
-  /** Keeps what the employee filled in so far, without acting. */
-  saveInputs(id: string, inputs: Record<string, unknown>): Observable<TaskDetail | null> {
-    return this.http.put<TaskDetail | null>(`${WORKFLOW_API}/tasks/${id}/inputs`, { inputs });
+  /** Keeps what the employee filled in so far (fields, item decisions or both), without acting. */
+  saveInputs(
+    id: string,
+    inputs: Record<string, unknown> | null,
+    items: ItemDecision[] | null = null,
+  ): Observable<TaskDetail | null> {
+    return this.http.put<TaskDetail | null>(`${WORKFLOW_API}/tasks/${id}/inputs`, { inputs, items });
   }
 
   /** The decisions the task works out again, with the inputs as typed so far (nothing recorded). */

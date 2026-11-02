@@ -4,6 +4,7 @@ using DynamicCube.Modules.Services.Domain;
 using DynamicCube.Platform.Parties;
 using DynamicCube.Platform.Payments;
 using DynamicCube.Platform.Visits;
+using DynamicCube.Platform.Workflow;
 
 namespace DynamicCube.Modules.Services.Runtime;
 
@@ -92,6 +93,9 @@ public sealed record RequestView(
 
     /// <summary>A draft's bundled services: required or offered, each open to the applicant now or not (with why).</summary>
     public IReadOnlyList<BundleOption> Bundle { get; init; } = [];
+
+    /// <summary>The items decided one by one (e.g. each sector approved on its own), with the reasons.</summary>
+    public IReadOnlyList<SubjectItem> ItemResults { get; init; } = [];
 }
 
 /// <summary>

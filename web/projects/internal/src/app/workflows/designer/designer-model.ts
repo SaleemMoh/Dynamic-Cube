@@ -65,6 +65,11 @@ export interface NodeDef {
   fields?: TaskField[];
   /** Human task: decision steps worked out again with the employee's inputs. */
   recalculate?: string[];
+  /** Human task: items decided one by one (each approved or rejected with a reason). */
+  items?: { source?: JsonRule; as?: string | null; key?: JsonRule; label?: JsonRule; toApplicant?: boolean } | null;
+  /** Document: one document per element of this list. */
+  forEach?: JsonRule;
+  forEachAs?: string | null;
   branches?: string[];
   mode?: 'ALL' | 'ANY' | 'COUNT';
   count?: number | null;
@@ -667,6 +672,7 @@ export function check(def: WorkflowDraft): Problem[] {
           }
           fieldCodes.add(field.code);
         }
+        if (n.items && (n.items.source === null || n.items.source === undefined)) p(n, 'designer.problem.taskItems');
         for (const step of n.recalculate ?? []) {
           if (byCode.get(step)?.type !== 'DECISION') p(n, 'designer.problem.recalculate', { step });
         }

@@ -449,6 +449,17 @@ export interface RequestView {
   links?: LinkedRequest[] | null;
   /** A draft's bundled services (3f). */
   bundle?: BundleOption[] | null;
+  /** Items decided one by one (e.g. each sector approved on its own), with the reasons. */
+  itemResults?: ItemResult[] | null;
+}
+
+/** One item of a request decided at a workflow task: APPROVED or REJECTED, with the reason. */
+export interface ItemResult {
+  key: string;
+  label: string;
+  decision: 'APPROVED' | 'REJECTED';
+  reason: string | null;
+  step: string;
 }
 
 export type VisitStatus = 'PENDING' | 'SCHEDULED' | 'IN_PROGRESS' | 'SENT' | 'COMPLETED' | 'CANCELLED';

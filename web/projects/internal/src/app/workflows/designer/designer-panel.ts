@@ -104,6 +104,17 @@ export class DesignerPanel {
       });
     }
     for (const task of this.tasks()) {
+      if (task.items) {
+        list.push({
+          path: `items.${task.code}.approvedCount`,
+          label: t(`${task.nameAr}: عدد البنود المعتمدة`, `${task.nameEn}: approved items`),
+          type: 'number',
+        });
+        list.push({
+          path: `items.${task.code}.approvedItems`,
+          label: t(`${task.nameAr}: البنود المعتمدة`, `${task.nameEn}: the approved items`),
+        });
+      }
       for (const f of task.fields ?? []) {
         list.push({
           path: `inputs.${task.code}.${f.code}`,

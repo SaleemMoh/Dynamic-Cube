@@ -51,6 +51,17 @@ internal sealed class RequestSubject(ServicesDbContext context, IPartyFacts part
         };
     }
 
+    /// <summary>Keeps the items decided at a task; a later decision on the same item replaces the earlier one.</summary>
+    public async Task ItemsDecidedAsync(Guid subjectId, IReadOnlyList<SubjectItem> items, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(items);
+        var request = await LoadAsync(subjectId, cancellationToken);
+        var kept = (JsonSerializer.Deserialize<List<SubjectItem>>(request.ItemResults, JsonSerializerOptions.Web) ?? [])
+            .Where(old => !items.Any(i => i.Step == old.Step && i.Key == old.Key));
+        request.ItemResults = JsonSerializer.Serialize(kept.Concat(items).ToList(), JsonSerializerOptions.Web);
+        await context.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task UpdateAsync(Guid subjectId, SubjectUpdate update, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(update);

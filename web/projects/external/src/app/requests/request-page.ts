@@ -12,6 +12,7 @@ import {
   VisitCard,
   FeeTable,
   FieldError,
+  ItemResults,
   LinkedRequests,
   LiveResultFeed,
   LocalizePipe,
@@ -57,6 +58,7 @@ const EDITABLE = ['DRAFT', 'PENDING_CUSTOMER'];
     MatProgressBarModule,
     RouterLink,
     FeeTable,
+    ItemResults,
     LinkedRequests,
     LocalizePipe,
     PanelReadiness,
@@ -108,6 +110,11 @@ const EDITABLE = ['DRAFT', 'PENDING_CUSTOMER'];
             <dc-visit-card [visit]="visit" />
           }
           <dc-linked-requests [links]="v.links ?? []" />
+          @if (v.itemResults?.length) {
+            <div class="dc-card">
+              <dc-item-results [items]="v.itemResults ?? []" />
+            </div>
+          }
           @if (v.request.status === 'PENDING_CUSTOMER') {
             <div class="dc-card dc-request__returned" role="status" data-testid="returned-banner">
               <mat-icon fontSet="material-symbols-outlined">edit_note</mat-icon>
