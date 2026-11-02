@@ -116,9 +116,24 @@ public sealed record TaskDetail(
     string? OnBehalfOf,
     TaskPermissions Permissions,
     IReadOnlyList<ActionView> Actions,
-    InstanceView Instance);
+    InstanceView Instance)
+{
+    /// <summary>What the employee fills in on the task.</summary>
+    public IReadOnlyList<TaskField> Fields { get; init; } = [];
 
-public sealed record ActRequest(string Action, string? Comment);
+    /// <summary>What the fields hold now (saved, given last time, or the starting values).</summary>
+    public JsonObject Inputs { get; init; } = [];
+
+    /// <summary>Whether the task works decision steps out again with its inputs (the screen then shows them live).</summary>
+    public bool Recalculates { get; init; }
+}
+
+public sealed record ActRequest(string Action, string? Comment, JsonObject? Inputs = null);
+
+public sealed record InputsRequest(JsonObject? Inputs);
+
+/// <summary>A decision step worked out again with a task's inputs: the result recorded now and the one the inputs give.</summary>
+public sealed record RecalculatedDecision(string Step, string NameAr, string NameEn, string Result, JsonObject? Before, JsonObject? After, string? Problem);
 
 public sealed record AssignRequest(string UserName);
 
@@ -236,7 +251,55 @@ internal sealed class ActionCenter(
             task.Assignee is not null && task.Assignee != me.UserName && who.Delegators.Contains(task.Assignee) ? task.Assignee : null,
             permissions,
             actions,
-            await InstanceViewAsync(instance, version, cancellationToken));
+            await InstanceViewAsync(instance, version, cancellationToken))
+        {
+            Fields = node.Fields,
+            Inputs = await engine.InputsAsync(task, cancellationToken),
+            Recalculates = node.Recalculate.Count > 0,
+        };
+    }
+
+    /// <summary>Keeps what the employee filled in so far, without acting (required fields may still be empty).</summary>
+    public async Task SaveInputsAsync(Guid id, InputsRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var me = await MeAsync(cancellationToken);
+        var task = await context.Tasks.SingleOrDefaultAsync(t => t.Id == id, cancellationToken) ?? throw NotFound();
+        if (task.Status != WorkTaskStatus.Open)
+        {
+            throw new WorkflowConflictException("The task is already closed.");
+        }
+
+        if (!(await RightsAsync(me, task, cancellationToken)).Permissions(task).CanAct)
+        {
+            throw new WorkflowForbiddenException(task.Assignee is null ? "Claim the task first." : "The task is assigned to someone else.");
+        }
+
+        var versionId = await context.Instances.Where(i => i.Id == task.InstanceId).Select(i => i.VersionId).SingleAsync(cancellationToken);
+        var node = (await definitions.GetAsync(context, versionId, cancellationToken)).Node(task.NodeCode);
+        task.Inputs = TaskInputs.Clean(node.Fields, request.Inputs, complete: false).ToJsonString();
+        try
+        {
+            await context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            throw new WorkflowConflictException("Someone else changed the task; reload it.");
+        }
+    }
+
+    /// <summary>The decisions the task works out again, with the inputs as typed so far (nothing recorded).</summary>
+    public async Task<IReadOnlyList<RecalculatedDecision>> RecalculateAsync(Guid id, InputsRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var me = await MeAsync(cancellationToken);
+        var task = await context.Tasks.AsNoTracking().SingleOrDefaultAsync(t => t.Id == id, cancellationToken) ?? throw NotFound();
+        if (!(await RightsAsync(me, task, cancellationToken)).CanViewTask(task))
+        {
+            throw new WorkflowForbiddenException("This task is not in your inboxes.");
+        }
+
+        return await engine.RecalculateAsync(task, request.Inputs, cancellationToken);
     }
 
     /// <summary>The workflow of a subject (e.g. on the request page), for employees of the Action Center.</summary>
@@ -326,7 +389,7 @@ internal sealed class ActionCenter(
             throw new WorkflowForbiddenException(task.Assignee is null ? "Claim the task first." : "The task is assigned to someone else.");
         }
 
-        await engine.ActAsync(id, request.Action, request.Comment, me.UserName, task.Assignee == me.UserName ? null : task.Assignee, cancellationToken);
+        await engine.ActAsync(id, request.Action, request.Comment, me.UserName, task.Assignee == me.UserName ? null : task.Assignee, cancellationToken, request.Inputs);
     }
 
     public async Task AddNoteAsync(Guid id, NoteRequest request, CancellationToken cancellationToken)

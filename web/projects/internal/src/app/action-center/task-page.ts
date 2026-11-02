@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal, viewChild } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -28,6 +28,7 @@ import { Observable, catchError, firstValueFrom, of } from 'rxjs';
 import { ConfirmData, ConfirmDialog } from '../apps-control/confirm-dialog';
 import { AssignDialog } from './assign-dialog';
 import { InstanceFactsCard } from './instance-facts';
+import { TaskInputsCard } from './task-inputs';
 import { WorkflowCard } from './workflow-card';
 
 /** One task: the request's answers, what the employee may do now (claim, assign, act) and the workflow so far. */
@@ -45,6 +46,7 @@ import { WorkflowCard } from './workflow-card';
     LocalizePipe,
     RequestAnswers,
     SlaChip,
+    TaskInputsCard,
     TranslatePipe,
     WorkflowCard,
   ],
@@ -137,6 +139,16 @@ import { WorkflowCard } from './workflow-card';
         </ul>
       }
 
+      @if (d.fields?.length) {
+        <dc-task-inputs
+          [taskId]="d.task.id"
+          [fields]="d.fields ?? []"
+          [initial]="d.inputs ?? {}"
+          [editable]="d.task.status === 'OPEN' && d.permissions.canAct"
+          [recalculates]="!!d.recalculates"
+          (saved)="inputsSaved()"
+        />
+      }
       <dc-instance-facts [facts]="d.instance.facts" />
       <div class="dc-request-grid">
         <section class="dc-card">
@@ -331,6 +343,7 @@ export class TaskPage {
   });
   protected readonly errors = signal<string[]>([]);
   protected note = '';
+  private readonly inputs = viewChild(TaskInputsCard);
 
   protected async run(change: Observable<TaskDetail | null>, done?: string): Promise<boolean> {
     this.errors.set([]);
@@ -361,7 +374,18 @@ export class TaskPage {
     }
   }
 
+  protected inputsSaved(): void {
+    this.snackBar.open(this.i18n.translate('taskInputs.saved'), undefined, { duration: 3000 });
+  }
+
   protected async act(d: TaskDetail, action: ActionView): Promise<void> {
+    // Moving on needs the task's required fields; returns and rejections do not.
+    const inputs = this.inputs();
+    const moves = action.kind === 'APPROVE' || action.kind === 'COMPLETE';
+    if (moves && inputs?.missing().length) {
+      this.errors.set([`${this.i18n.translate('taskInputs.missing')} ${inputs.missing().join('، ')}`]);
+      return;
+    }
     const name = localize({ ar: action.nameAr, en: action.nameEn }, this.i18n.language());
     const data: ConfirmData = {
       title: name,
@@ -373,7 +397,7 @@ export class TaskPage {
     };
     const comment = await firstValueFrom(this.dialog.open<ConfirmDialog, ConfirmData, string>(ConfirmDialog, { data }).afterClosed());
     if (comment !== undefined) {
-      await this.run(this.api.act(d.task.id, action.code, comment || null), 'tasks.done');
+      await this.run(this.api.act(d.task.id, action.code, comment || null, inputs?.value()), 'tasks.done');
     }
   }
 

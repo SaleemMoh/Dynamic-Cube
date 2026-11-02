@@ -1,4 +1,4 @@
-import { JsonValue, LocalizedText } from '@dynamic-cube/shared';
+import { JsonValue, LocalizedText, TaskField } from '@dynamic-cube/shared';
 import { GraphDefinition, graphEdges, layout } from '../workflow-graph';
 
 /** The node types the engine runs; the palette offers exactly these. */
@@ -61,6 +61,10 @@ export interface NodeDef {
   displayStatus?: string | null;
   sla?: SlaDef | null;
   excludeActorsOf?: string[];
+  /** Human task: what the employee fills in (kept as `inputs.<task>.<field>`). */
+  fields?: TaskField[];
+  /** Human task: decision steps worked out again with the employee's inputs. */
+  recalculate?: string[];
   branches?: string[];
   mode?: 'ALL' | 'ANY' | 'COUNT';
   count?: number | null;
@@ -494,6 +498,7 @@ export function removeNode(def: WorkflowDraft, code: string): WorkflowDraft {
       for (const a of n.actions) if (a.resumeAt === code) a.resumeAt = null;
     }
     if (n.excludeActorsOf) n.excludeActorsOf = n.excludeActorsOf.filter((s) => s !== code);
+    if (n.recalculate) n.recalculate = n.recalculate.filter((s) => s !== code);
     if (n.assignment?.step === code) n.assignment.step = null;
   }
   if (next.layout) {
@@ -526,6 +531,7 @@ export function renameNode(def: WorkflowDraft, from: string, to: string): Workfl
       }
     }
     if (n.excludeActorsOf) n.excludeActorsOf = n.excludeActorsOf.map((s) => swap(s)!);
+    if (n.recalculate) n.recalculate = n.recalculate.map((s) => swap(s)!);
     if (n.assignment) n.assignment.step = swap(n.assignment.step);
   }
   if (next.layout?.[from]) {
@@ -646,6 +652,23 @@ export function check(def: WorkflowDraft): Problem[] {
         for (const action of n.actions ?? []) {
           if (action.kind !== 'RETURN') target(n, action.to, 'designer.problem.actionTarget');
           if (!CODE.test(action.code) || !action.nameAr?.trim() || !action.nameEn?.trim()) p(n, 'designer.problem.action', { action: action.code });
+        }
+        const fieldCodes = new Set<string>();
+        for (const field of n.fields ?? []) {
+          if (
+            !CODE.test(field.code) ||
+            fieldCodes.has(field.code) ||
+            !field.labelAr?.trim() ||
+            !field.labelEn?.trim() ||
+            (field.type === 'SELECT' && !(field.options ?? []).length) ||
+            (field.min !== null && field.min !== undefined && field.max !== null && field.max !== undefined && field.min > field.max)
+          ) {
+            p(n, 'designer.problem.taskField', { field: field.code });
+          }
+          fieldCodes.add(field.code);
+        }
+        for (const step of n.recalculate ?? []) {
+          if (byCode.get(step)?.type !== 'DECISION') p(n, 'designer.problem.recalculate', { step });
         }
         break;
       }

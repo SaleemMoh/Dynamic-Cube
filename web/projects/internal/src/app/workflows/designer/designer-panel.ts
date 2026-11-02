@@ -15,6 +15,7 @@ import { ActionDef, AssignmentDef, NodeDef, NodeType, Outlet, WorkflowDraft, new
 import { DesignerReferences } from './designer-references';
 import { DesignerStore } from './designer-store';
 import { MappingEditor } from './mapping-editor';
+import { DecisionChoice, TaskFieldsEditor } from './task-fields-editor';
 
 const CODE = /^[A-Z][A-Z0-9_-]{0,50}$/;
 
@@ -37,6 +38,7 @@ const CODE = /^[A-Z][A-Z0-9_-]{0,50}$/;
     TranslatePipe,
     RuleEditor,
     MappingEditor,
+    TaskFieldsEditor,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './designer-panel.html',
@@ -61,6 +63,12 @@ export class DesignerPanel {
   /** Nodes an arrow can go to (anything but START and the node itself). */
   protected readonly targets = computed(() => this.nodes().filter((n) => n.type !== 'START' && n.code !== this.node()?.code));
   protected readonly tasks = computed(() => this.nodes().filter((n) => n.type === 'HUMAN_TASK'));
+  /** Decision steps a task can work out again with its inputs. */
+  protected readonly decisionChoices = computed<DecisionChoice[]>(() =>
+    this.nodes()
+      .filter((n) => n.type === 'DECISION')
+      .map((n) => ({ code: n.code, label: this.name(n) })),
+  );
 
   /** The selected arrow and the node it leaves. */
   protected readonly edge = computed(() => {
@@ -94,6 +102,21 @@ export class DesignerPanel {
           label: { ar: a.nameAr, en: a.nameEn },
         })),
       });
+    }
+    for (const task of this.tasks()) {
+      for (const f of task.fields ?? []) {
+        list.push({
+          path: `inputs.${task.code}.${f.code}`,
+          label: t(`${task.nameAr}: ${f.labelAr || f.code}`, `${task.nameEn}: ${f.labelEn || f.code}`),
+          type: f.type === 'NUMBER' ? 'number' : f.type === 'DATE' ? 'date' : f.type === 'CHECKBOX' ? 'boolean' : 'text',
+          options:
+            f.type === 'SELECT'
+              ? (f.options ?? []).map((o) => ({ value: o.value, label: { ar: o.labelAr, en: o.labelEn } }))
+              : f.type === 'CHECKBOX'
+                ? [{ value: 'true', label: t('نعم', 'Yes') }]
+                : undefined,
+        });
+      }
     }
     for (const d of this.nodes().filter((n) => n.type === 'DECISION')) {
       list.push({

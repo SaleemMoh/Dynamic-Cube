@@ -325,6 +325,16 @@
         />
       </mat-form-field>
 
+      <h3>{{ 'designer.section.taskFields' | dcTranslate }}</h3>
+      <dc-task-fields-editor
+        [fields]="n.fields ?? []"
+        [decisions]="decisionChoices()"
+        [recalculate]="n.recalculate ?? []"
+        [variables]="variables()"
+        (fieldsChange)="patch({ fields: $event })"
+        (recalculateChange)="patch({ recalculate: $event })"
+      />
+
       <h3>{{ 'designer.section.deadline' | dcTranslate }}</h3>
       <div class="dc-panel__pair">
         <mat-form-field subscriptSizing="dynamic">

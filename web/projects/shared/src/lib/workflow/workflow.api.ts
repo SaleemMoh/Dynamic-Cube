@@ -1,7 +1,17 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { DelegationView, InboxBox, InboxCounts, InstanceView, SlaState, StaffOption, TaskDetail, TaskPage } from './workflow.models';
+import {
+  DelegationView,
+  InboxBox,
+  InboxCounts,
+  InstanceView,
+  RecalculatedDecision,
+  SlaState,
+  StaffOption,
+  TaskDetail,
+  TaskPage,
+} from './workflow.models';
 
 export const WORKFLOW_API = '/api/workflow/v1';
 
@@ -54,11 +64,27 @@ export class WorkflowApi {
     return this.http.post<TaskDetail | null>(`${WORKFLOW_API}/tasks/${id}/assign`, { userName });
   }
 
-  act(id: string, action: string, comment: string | null): Observable<TaskDetail | null> {
+  act(
+    id: string,
+    action: string,
+    comment: string | null,
+    inputs?: Record<string, unknown>,
+  ): Observable<TaskDetail | null> {
     return this.http.post<TaskDetail | null>(`${WORKFLOW_API}/tasks/${id}/act`, {
       action,
       comment,
+      inputs: inputs ?? null,
     });
+  }
+
+  /** Keeps what the employee filled in so far, without acting. */
+  saveInputs(id: string, inputs: Record<string, unknown>): Observable<TaskDetail | null> {
+    return this.http.put<TaskDetail | null>(`${WORKFLOW_API}/tasks/${id}/inputs`, { inputs });
+  }
+
+  /** The decisions the task works out again, with the inputs as typed so far (nothing recorded). */
+  recalculate(id: string, inputs: Record<string, unknown>): Observable<RecalculatedDecision[]> {
+    return this.http.post<RecalculatedDecision[]>(`${WORKFLOW_API}/tasks/${id}/recalculate`, { inputs });
   }
 
   note(id: string, text: string): Observable<TaskDetail | null> {

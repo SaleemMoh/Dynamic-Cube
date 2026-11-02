@@ -201,6 +201,67 @@ public sealed class NodeDefinition
 
     /// <summary>Sub-request: submit the request at once when its answers are complete (otherwise the applicant completes it).</summary>
     public bool SubmitChild { get; set; }
+
+    /// <summary>
+    /// Human task: what the employee fills in while working on it (a score, a reviewed value, a finding). The values are kept
+    /// as <c>inputs.&lt;task&gt;.&lt;field&gt;</c>, so later rules, decisions and documents can use them.
+    /// </summary>
+    public List<TaskField> Fields { get; set; } = [];
+
+    /// <summary>
+    /// Human task: decision steps worked out again with the employee's inputs: shown live while the task is filled in and
+    /// recorded (replacing the earlier result) when the task is done with an action that moves on.
+    /// </summary>
+    public List<string> Recalculate { get; set; } = [];
+}
+
+public enum TaskFieldType
+{
+    Text,
+    LongText,
+    Number,
+    Date,
+    Checkbox,
+    Select,
+}
+
+/// <summary>A field an employee fills in on a task.</summary>
+public sealed class TaskField
+{
+    public string Code { get; set; } = string.Empty;
+
+    public string LabelAr { get; set; } = string.Empty;
+
+    public string LabelEn { get; set; } = string.Empty;
+
+    public string? HintAr { get; set; }
+
+    public string? HintEn { get; set; }
+
+    public TaskFieldType Type { get; set; }
+
+    /// <summary>Needed for actions that move on (complete and approve); returns and rejections do not need it.</summary>
+    public bool Required { get; set; }
+
+    /// <summary>Select: the choices.</summary>
+    public List<TaskFieldOption> Options { get; set; } = [];
+
+    /// <summary>Number: the least and most allowed.</summary>
+    public decimal? Min { get; set; }
+
+    public decimal? Max { get; set; }
+
+    /// <summary>A JSONLogic rule over the request's facts giving the starting value (e.g. the applicant's figure, or a computed score).</summary>
+    public JsonNode? Initial { get; set; }
+}
+
+public sealed class TaskFieldOption
+{
+    public string Value { get; set; } = string.Empty;
+
+    public string LabelAr { get; set; } = string.Empty;
+
+    public string LabelEn { get; set; } = string.Empty;
 }
 
 public enum DocumentTarget

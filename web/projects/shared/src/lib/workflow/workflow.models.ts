@@ -109,6 +109,8 @@ export interface InstanceView {
 
 export interface InstanceFacts {
   decisions?: Record<string, Record<string, unknown>>;
+  /** What employees filled in on tasks: `inputs.<task>.<field>`. */
+  inputs?: Record<string, Record<string, unknown>>;
   documents?: Record<string, { id: string; number: string; version: number; amended: boolean }>;
 }
 
@@ -125,6 +127,48 @@ export interface TaskDetail {
   permissions: TaskPermissions;
   actions: ActionView[];
   instance: InstanceView;
+  /** What the employee fills in on the task. */
+  fields?: TaskField[];
+  /** What the fields hold now (saved, given last time, or the starting values). */
+  inputs?: Record<string, unknown>;
+  /** The task works decision steps out again with its inputs (shown live). */
+  recalculates?: boolean;
+}
+
+export type TaskFieldType = 'TEXT' | 'LONG_TEXT' | 'NUMBER' | 'DATE' | 'CHECKBOX' | 'SELECT';
+
+export interface TaskFieldOption {
+  value: string;
+  labelAr: string;
+  labelEn: string;
+}
+
+/** A field an employee fills in on a task; kept as `inputs.<task>.<field>` for later rules and documents. */
+export interface TaskField {
+  code: string;
+  labelAr: string;
+  labelEn: string;
+  hintAr?: string | null;
+  hintEn?: string | null;
+  type: TaskFieldType;
+  /** Needed for actions that move on (complete, approve). */
+  required?: boolean;
+  options?: TaskFieldOption[];
+  min?: number | null;
+  max?: number | null;
+  /** JSONLogic over the request's facts giving the starting value. */
+  initial?: unknown;
+}
+
+/** A decision step worked out again with a task's inputs: the result recorded now and the one the inputs give. */
+export interface RecalculatedDecision {
+  step: string;
+  nameAr: string;
+  nameEn: string;
+  result: string;
+  before: Record<string, unknown> | null;
+  after: Record<string, unknown> | null;
+  problem: string | null;
 }
 
 export interface StaffOption {

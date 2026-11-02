@@ -139,7 +139,7 @@ internal sealed class WorkflowEngine(
     }
 
     /// <summary>Completes an open task with one of its actions and moves its branch on. The caller checked who may act.</summary>
-    public async Task ActAsync(Guid taskId, string actionCode, string? comment, string actor, string? onBehalfOf, CancellationToken cancellationToken)
+    public async Task ActAsync(Guid taskId, string actionCode, string? comment, string actor, string? onBehalfOf, CancellationToken cancellationToken, JsonObject? inputs = null)
     {
         await using var work = await unitOfWork.BeginAsync(cancellationToken);
         var instanceId = await context.Tasks.Where(t => t.Id == taskId).Select(t => (Guid?)t.InstanceId).SingleOrDefaultAsync(cancellationToken)
@@ -160,6 +160,10 @@ internal sealed class WorkflowEngine(
             throw new WorkflowValidationException("comment", "A comment is required for this action.");
         }
 
+        // Moving on needs the required fields; returns and rejections take what is there.
+        var moves = action.Kind is ActionKind.Complete or ActionKind.Approve;
+        var filled = TaskInputs.Clean(node.Fields, inputs, moves);
+        task.Inputs = filled.ToJsonString();
         task.Status = WorkTaskStatus.Completed;
         task.CompletedAt = run.Now;
         task.CompletedBy = actor;
@@ -186,6 +190,19 @@ internal sealed class WorkflowEngine(
             if (action.DisplayStatus is not null)
             {
                 run.Update(SubjectStatus.InProgress, action.DisplayStatus, "STATUS_CHANGED", null);
+            }
+
+            if (node.Fields.Count > 0)
+            {
+                SetFact(run, "inputs", node.Code, filled.DeepClone());
+            }
+
+            if (moves)
+            {
+                foreach (var step in node.Recalculate.Distinct(StringComparer.Ordinal))
+                {
+                    await DecideAsync(run, run.Version.Node(step), cancellationToken);
+                }
             }
 
             token.NodeCode = action.To!;
@@ -941,6 +958,113 @@ internal sealed class WorkflowEngine(
         }
     }
 
+    /// <summary>
+    /// What a task's fields hold now: what was saved on the task, else what the same step was given last time (e.g. before
+    /// the request was returned), else each field's starting value worked out from the request's facts.
+    /// </summary>
+    public async Task<JsonObject> InputsAsync(WorkTask task, CancellationToken cancellationToken)
+    {
+        var run = await ReadAsync(task.InstanceId, cancellationToken);
+        var node = run.Version.Node(task.NodeCode);
+        if (node.Fields.Count == 0)
+        {
+            return [];
+        }
+
+        var saved = Parse(task.Inputs);
+        if (saved.Count > 0)
+        {
+            return saved;
+        }
+
+        var earlier = run.Tasks.Where(t => t.Id != task.Id && t.NodeCode == task.NodeCode && t.Inputs != "{}")
+            .OrderByDescending(t => t.CompletedAt ?? t.CreatedAt).FirstOrDefault();
+        if (earlier is not null)
+        {
+            return Parse(earlier.Inputs);
+        }
+
+        if (node.Fields.All(f => f.Initial is null))
+        {
+            return [];
+        }
+
+        var facts = await RuleContextAsync(run, cancellationToken);
+        var initial = new JsonObject();
+        foreach (var field in node.Fields.Where(f => f.Initial is not null))
+        {
+            try
+            {
+                initial[field.Code] = evaluator.Evaluate(field.Initial, facts)?.DeepClone();
+            }
+            catch (JsonLogicException)
+            {
+                // A starting value that cannot be worked out is left empty.
+            }
+        }
+
+        try
+        {
+            return TaskInputs.Clean(node.Fields, initial, complete: false);
+        }
+        catch (WorkflowValidationException)
+        {
+            return [];
+        }
+    }
+
+    /// <summary>
+    /// The decision steps a task works out again, with the employee's inputs as typed so far: the result recorded now and
+    /// the one these inputs would give. Nothing is recorded.
+    /// </summary>
+    public async Task<IReadOnlyList<RecalculatedDecision>> RecalculateAsync(WorkTask task, JsonObject? inputs, CancellationToken cancellationToken)
+    {
+        var run = await ReadAsync(task.InstanceId, cancellationToken);
+        var node = run.Version.Node(task.NodeCode);
+        if (node.Recalculate.Count == 0)
+        {
+            return [];
+        }
+
+        var decisions = services.GetService<IDecisionService>() ?? throw new WorkflowConflictException("Decision rules are not installed.");
+        var facts = await RuleContextAsync(run, cancellationToken);
+        var recorded = facts["decisions"]?.DeepClone() as JsonObject ?? [];
+        var given = facts["inputs"] as JsonObject ?? [];
+        given[node.Code] = TaskInputs.Clean(node.Fields, inputs, complete: false);
+        facts["inputs"] = given;
+        var results = new List<RecalculatedDecision>();
+        foreach (var code in node.Recalculate.Distinct(StringComparer.Ordinal))
+        {
+            var step = run.Version.Node(code);
+            var result = step.Result ?? step.Code;
+            var before = recorded[result] as JsonObject;
+            try
+            {
+                var input = step.Input.Count == 0 ? facts : Map(step.Input, facts);
+                var preview = await decisions.PreviewAsync(step.RuleSet!, input, cancellationToken);
+                results.Add(new RecalculatedDecision(step.Code, step.NameAr, step.NameEn, result, before, preview.Output, null));
+            }
+            catch (DecisionException ex)
+            {
+                results.Add(new RecalculatedDecision(step.Code, step.NameAr, step.NameEn, result, before, null, ex.Message));
+            }
+        }
+
+        return results;
+    }
+
+    /// <summary>The instance as it is, without a lock, to read (works on finished instances too).</summary>
+    private async Task<Run> ReadAsync(Guid instanceId, CancellationToken cancellationToken)
+    {
+        var instance = await context.Instances.AsNoTracking().SingleAsync(i => i.Id == instanceId, cancellationToken);
+        var version = await definitions.GetAsync(context, instance.VersionId, cancellationToken);
+        var tokens = await context.Tokens.AsNoTracking().Where(t => t.InstanceId == instanceId).ToListAsync(cancellationToken);
+        var tasks = await context.Tasks.AsNoTracking().Where(t => t.InstanceId == instanceId).ToListAsync(cancellationToken);
+        return new Run(instance, version, await calendars.GetAsync(cancellationToken), clock.GetUtcNow(), string.Empty, null, tokens, tasks);
+    }
+
+    private static JsonObject Parse(string json) => JsonNode.Parse(json) as JsonObject ?? [];
+
     /// <summary>What rules see: the subject's facts, the last action taken on each task, and decisions and documents so far.</summary>
     private async Task<JsonObject> RuleContextAsync(Run run, CancellationToken cancellationToken)
     {
@@ -960,6 +1084,7 @@ internal sealed class WorkflowEngine(
         facts["visits"] = produced["visits"]?.DeepClone() ?? new JsonObject();
         facts["integrations"] = produced["integrations"]?.DeepClone() ?? new JsonObject();
         facts["subrequests"] = produced["subrequests"]?.DeepClone() ?? new JsonObject();
+        facts["inputs"] = produced["inputs"]?.DeepClone() ?? new JsonObject();
         return facts;
     }
 

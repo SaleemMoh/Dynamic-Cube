@@ -1,0 +1,379 @@
+{
+  "title": "Reusable service building blocks: what the reviewer fills in on a task (verified total, quality score, evidence) feeds the assessment, worked out again live",
+  "items": [
+    {
+      "entityType": "dec.rule-set",
+      "entityCode": "EXP_ASSESSMENT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تقييم بيان الخبرات",
+        "nameEn": "Experience statement assessment",
+        "engine": "RULES",
+        "descriptionAr": "فئة من مجموع قيم المشاريع ودرجة الجودة",
+        "descriptionEn": "A band from the projects' total value and the quality score",
+        "businessApp": "CLASSIFICATION"
+      }
+    },
+    {
+      "entityType": "dec.rule-set-version",
+      "entityCode": "EXP_ASSESSMENT/1",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 1",
+        "nameEn": "Version 1",
+        "configuration": {
+          "variables": [
+            {
+              "code": "total",
+              "rule": {
+                "+": [
+                  {
+                    "var": "input.total"
+                  },
+                  0
+                ]
+              }
+            },
+            {
+              "code": "quality",
+              "rule": {
+                "+": [
+                  {
+                    "var": "input.quality"
+                  },
+                  0
+                ]
+              }
+            },
+            {
+              "code": "band",
+              "rule": {
+                "if": [
+                  {
+                    "and": [
+                      {
+                        ">=": [
+                          {
+                            "var": "vars.total"
+                          },
+                          50
+                        ]
+                      },
+                      {
+                        ">=": [
+                          {
+                            "var": "vars.quality"
+                          },
+                          80
+                        ]
+                      }
+                    ]
+                  },
+                  "A",
+                  {
+                    "and": [
+                      {
+                        ">=": [
+                          {
+                            "var": "vars.total"
+                          },
+                          10
+                        ]
+                      },
+                      {
+                        ">=": [
+                          {
+                            "var": "vars.quality"
+                          },
+                          60
+                        ]
+                      }
+                    ]
+                  },
+                  "B",
+                  {
+                    ">=": [
+                      {
+                        "var": "vars.quality"
+                      },
+                      50
+                    ]
+                  },
+                  "C",
+                  "NONE"
+                ]
+              }
+            }
+          ],
+          "output": {
+            "band": {
+              "var": "vars.band"
+            },
+            "total": {
+              "var": "vars.total"
+            },
+            "quality": {
+              "var": "vars.quality"
+            },
+            "eligible": {
+              "!=": [
+                {
+                  "var": "vars.band"
+                },
+                "NONE"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "entityType": "wf.workflow-version",
+      "entityCode": "EXP_STATEMENT/2",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 2 — تقييم المراجع",
+        "nameEn": "Version 2 — reviewer assessment",
+        "definition": {
+          "nodes": [
+            {
+              "code": "START",
+              "type": "START",
+              "nameAr": "تقديم الطلب",
+              "nameEn": "Submitted",
+              "next": "ASSESS"
+            },
+            {
+              "code": "ASSESS",
+              "type": "DECISION",
+              "nameAr": "التقييم المبدئي",
+              "nameEn": "Initial assessment",
+              "ruleSet": "EXP_ASSESSMENT",
+              "input": {
+                "total": {
+                  "if": [
+                    {
+                      "!=": [
+                        {
+                          "var": "inputs.REVIEW.VERIFIED_TOTAL"
+                        },
+                        null
+                      ]
+                    },
+                    {
+                      "var": "inputs.REVIEW.VERIFIED_TOTAL"
+                    },
+                    {
+                      "reduce": [
+                        {
+                          "var": "data.EXP_PROJECTS"
+                        },
+                        {
+                          "+": [
+                            {
+                              "var": "accumulator"
+                            },
+                            {
+                              "var": "current.VALUE"
+                            }
+                          ]
+                        },
+                        0
+                      ]
+                    }
+                  ]
+                },
+                "quality": {
+                  "if": [
+                    {
+                      "!=": [
+                        {
+                          "var": "inputs.REVIEW.QUALITY"
+                        },
+                        null
+                      ]
+                    },
+                    {
+                      "var": "inputs.REVIEW.QUALITY"
+                    },
+                    70
+                  ]
+                }
+              },
+              "result": "assessment",
+              "next": "REVIEW"
+            },
+            {
+              "code": "REVIEW",
+              "type": "HUMAN_TASK",
+              "nameAr": "مراجعة البيان وتقييمه",
+              "nameEn": "Review and assess the statement",
+              "assignment": {
+                "target": "ROLE",
+                "role": "CLS_REQUEST_MANAGER",
+                "mode": "QUEUE"
+              },
+              "actions": [
+                {
+                  "code": "APPROVE",
+                  "kind": "COMPLETE",
+                  "nameAr": "اعتماد التقييم",
+                  "nameEn": "Confirm the assessment",
+                  "to": "ROUTE"
+                },
+                {
+                  "code": "RETURN",
+                  "kind": "RETURN",
+                  "nameAr": "طلب بيانات إضافية",
+                  "nameEn": "Ask for more data"
+                },
+                {
+                  "code": "REJECT",
+                  "kind": "REJECT",
+                  "nameAr": "رفض",
+                  "nameEn": "Reject",
+                  "to": "REJECTED"
+                }
+              ],
+              "fields": [
+                {
+                  "code": "VERIFIED_TOTAL",
+                  "labelAr": "مجموع القيم بعد التحقق (مليون ريال)",
+                  "labelEn": "Verified total value (SAR million)",
+                  "hintAr": "يبدأ بمجموع ما أدخله المتقدم؛ عدّله إن لم تثبت بعض المشاريع",
+                  "hintEn": "Starts from the applicant's total; change it if some projects were not proven",
+                  "type": "NUMBER",
+                  "required": true,
+                  "min": 0,
+                  "initial": {
+                    "reduce": [
+                      {
+                        "var": "data.EXP_PROJECTS"
+                      },
+                      {
+                        "+": [
+                          {
+                            "var": "accumulator"
+                          },
+                          {
+                            "var": "current.VALUE"
+                          }
+                        ]
+                      },
+                      0
+                    ]
+                  }
+                },
+                {
+                  "code": "QUALITY",
+                  "labelAr": "درجة جودة التنفيذ",
+                  "labelEn": "Delivery quality score",
+                  "type": "NUMBER",
+                  "required": true,
+                  "min": 0,
+                  "max": 100,
+                  "hintAr": "من 0 إلى 100 وفق خطابات الجهات المالكة",
+                  "hintEn": "0 to 100, from the owners' letters"
+                },
+                {
+                  "code": "EVIDENCE",
+                  "labelAr": "قوة الإثبات",
+                  "labelEn": "Strength of evidence",
+                  "type": "SELECT",
+                  "required": true,
+                  "options": [
+                    {
+                      "value": "STRONG",
+                      "labelAr": "قوية",
+                      "labelEn": "Strong"
+                    },
+                    {
+                      "value": "PARTIAL",
+                      "labelAr": "جزئية",
+                      "labelEn": "Partial"
+                    },
+                    {
+                      "value": "WEAK",
+                      "labelAr": "ضعيفة",
+                      "labelEn": "Weak"
+                    }
+                  ]
+                },
+                {
+                  "code": "VISIT",
+                  "labelAr": "تحتاج زيارة ميدانية لاحقًا",
+                  "labelEn": "Needs a site visit later",
+                  "type": "CHECKBOX"
+                },
+                {
+                  "code": "NOTES",
+                  "labelAr": "ملاحظات المراجع",
+                  "labelEn": "Reviewer's notes",
+                  "type": "LONG_TEXT"
+                }
+              ],
+              "recalculate": [
+                "ASSESS"
+              ]
+            },
+            {
+              "code": "ROUTE",
+              "type": "GATEWAY",
+              "nameAr": "مؤهل؟",
+              "nameEn": "Eligible?",
+              "routes": [
+                {
+                  "when": {
+                    "var": "decisions.assessment.eligible"
+                  },
+                  "to": "APPROVED"
+                }
+              ],
+              "default": "REJECTED"
+            },
+            {
+              "code": "APPROVED",
+              "type": "END",
+              "nameAr": "معتمد",
+              "nameEn": "Approved",
+              "outcome": "APPROVED"
+            },
+            {
+              "code": "REJECTED",
+              "type": "END",
+              "nameAr": "مرفوض",
+              "nameEn": "Rejected",
+              "outcome": "REJECTED"
+            }
+          ],
+          "layout": {
+            "START": {
+              "x": 340,
+              "y": 40
+            },
+            "ASSESS": {
+              "x": 340,
+              "y": 150
+            },
+            "REVIEW": {
+              "x": 340,
+              "y": 260
+            },
+            "ROUTE": {
+              "x": 340,
+              "y": 370
+            },
+            "APPROVED": {
+              "x": 200,
+              "y": 480
+            },
+            "REJECTED": {
+              "x": 480,
+              "y": 480
+            }
+          }
+        }
+      }
+    }
+  ]
+}

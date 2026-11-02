@@ -23,6 +23,8 @@ internal static class WorkflowEndpoints
         center.MapPost("/tasks/{id:guid}/release", async (Guid id, ActionCenter service, CancellationToken ct) => await Then(service.ReleaseAsync(id, ct), service, id, ct)).WithName("ReleaseTask");
         center.MapPost("/tasks/{id:guid}/assign", async (Guid id, AssignRequest request, ActionCenter service, CancellationToken ct) => await Then(service.AssignAsync(id, request, ct), service, id, ct)).WithName("AssignTask");
         center.MapPost("/tasks/{id:guid}/act", async (Guid id, ActRequest request, ActionCenter service, CancellationToken ct) => await Then(service.ActAsync(id, request, ct), service, id, ct)).WithName("ActOnTask");
+        center.MapPut("/tasks/{id:guid}/inputs", async (Guid id, InputsRequest request, ActionCenter service, CancellationToken ct) => await Then(service.SaveInputsAsync(id, request, ct), service, id, ct)).WithName("SaveTaskInputs");
+        center.MapPost("/tasks/{id:guid}/recalculate", async (Guid id, InputsRequest request, ActionCenter service, CancellationToken ct) => TypedResults.Ok(await service.RecalculateAsync(id, request, ct))).WithName("RecalculateTask");
         center.MapPost("/tasks/{id:guid}/notes", async (Guid id, NoteRequest request, ActionCenter service, CancellationToken ct) => await Then(service.AddNoteAsync(id, request, ct), service, id, ct)).WithName("AddTaskNote");
         center.MapGet("/instances/{subjectType}/{subjectId:guid}", async (string subjectType, Guid subjectId, ActionCenter service, CancellationToken ct) =>
             TypedResults.Ok(await service.InstanceAsync(subjectType, subjectId, ct))).WithName("GetWorkflowInstance");

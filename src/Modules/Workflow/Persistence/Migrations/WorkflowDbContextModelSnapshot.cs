@@ -185,6 +185,13 @@ namespace DynamicCube.Modules.Workflow.Persistence.Migrations
                         .HasColumnType("text[]")
                         .HasColumnName("excluded_users");
 
+                    b.Property<string>("Inputs")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("inputs")
+                        .HasDefaultValueSql("'{}'::jsonb");
+
                     b.Property<Guid>("InstanceId")
                         .HasColumnType("uuid")
                         .HasColumnName("instance_id");

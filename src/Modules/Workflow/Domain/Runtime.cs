@@ -193,6 +193,9 @@ public sealed class WorkTask : IAuditable
 
     public string? Comment { get; set; }
 
+    /// <summary>What the employee filled in on the task (saved while working, final once done), a JSON object.</summary>
+    public string Inputs { get; set; } = "{}";
+
     public Guid SubjectId { get; set; }
 
     public string SubjectType { get; set; } = string.Empty;

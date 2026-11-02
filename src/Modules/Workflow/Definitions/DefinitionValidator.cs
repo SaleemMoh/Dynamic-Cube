@@ -65,6 +65,7 @@ internal static partial class DefinitionValidator
         CheckCode(node.Code, field + ".code", errors);
         errors.Required(field + ".nameAr", node.NameAr);
         errors.Required(field + ".nameEn", node.NameEn);
+        TaskFields(node, field, nodes, evaluator, errors);
         switch (node.Type)
         {
             case NodeType.Start:
@@ -403,6 +404,88 @@ internal static partial class DefinitionValidator
             .Where(c => c is not null)
             .Select(c => c!);
 
+    /// <summary>Most fields a task may ask for.</summary>
+    private const int MaxTaskFields = 30;
+
+    /// <summary>Fields an employee fills in on a human task and the decision steps worked out again with them.</summary>
+    private static void TaskFields(NodeDefinition node, string field, Dictionary<string, NodeDefinition> nodes, JsonLogicEvaluator evaluator, ValidationErrors errors)
+    {
+        if (node.Type != NodeType.HumanTask)
+        {
+            if (node.Fields.Count > 0)
+            {
+                errors.Add(field + ".fields", "Only human tasks have fields.");
+            }
+
+            if (node.Recalculate.Count > 0)
+            {
+                errors.Add(field + ".recalculate", "Only human tasks work decisions out again.");
+            }
+
+            return;
+        }
+
+        if (node.Fields.Count > MaxTaskFields)
+        {
+            errors.Add(field + ".fields", $"A task may ask for at most {MaxTaskFields} fields.");
+        }
+
+        foreach (var duplicate in node.Fields.GroupBy(f => f.Code).Where(g => g.Count() > 1))
+        {
+            errors.Add(field + ".fields", $"'{duplicate.Key}' is used more than once.");
+        }
+
+        for (var f = 0; f < node.Fields.Count; f++)
+        {
+            var input = node.Fields[f];
+            var at = $"{field}.fields[{f}]";
+            CheckCode(input.Code, at + ".code", errors);
+            errors.Required(at + ".labelAr", input.LabelAr);
+            errors.Required(at + ".labelEn", input.LabelEn);
+            CheckRule(input.Initial, at + ".initial", evaluator, errors);
+            if (input.Type == TaskFieldType.Select)
+            {
+                if (input.Options.Count == 0)
+                {
+                    errors.Add(at + ".options", "A choice field needs its choices.");
+                }
+
+                foreach (var duplicate in input.Options.GroupBy(o => o.Value).Where(g => g.Count() > 1))
+                {
+                    errors.Add(at + ".options", $"'{duplicate.Key}' is used more than once.");
+                }
+
+                for (var o = 0; o < input.Options.Count; o++)
+                {
+                    errors.Required($"{at}.options[{o}].value", input.Options[o].Value);
+                    errors.Required($"{at}.options[{o}].labelAr", input.Options[o].LabelAr);
+                    errors.Required($"{at}.options[{o}].labelEn", input.Options[o].LabelEn);
+                }
+            }
+            else if (input.Options.Count > 0)
+            {
+                errors.Add(at + ".options", "Only choice fields have choices.");
+            }
+
+            if ((input.Min is not null || input.Max is not null) && input.Type != TaskFieldType.Number)
+            {
+                errors.Add(at + ".min", "Only number fields have a least and a most.");
+            }
+            else if (input.Min > input.Max)
+            {
+                errors.Add(at + ".max", "Must not be less than the least.");
+            }
+        }
+
+        foreach (var code in node.Recalculate.Distinct(StringComparer.Ordinal))
+        {
+            if (!nodes.TryGetValue(code, out var decision) || decision.Type != NodeType.Decision)
+            {
+                errors.Add(field + ".recalculate", $"'{code}' is not a decision step of this workflow.");
+            }
+        }
+    }
+
     private static void CheckRule(JsonNode? rule, string field, JsonLogicEvaluator evaluator, ValidationErrors errors)
     {
         if (rule is null)
@@ -445,5 +528,6 @@ internal static partial class DefinitionValidator
         ["documents"] = new JsonObject(),
         ["payments"] = new JsonObject(),
         ["visits"] = new JsonObject(),
+        ["inputs"] = new JsonObject(),
     };
 }
