@@ -18,7 +18,8 @@ public sealed record QuestionSnapshot(
     string? Prefill,
     IntegrationFill? Integration = null,
     bool? AllowManualEntry = null,
-    IReadOnlyList<RowColumn>? Columns = null)
+    IReadOnlyList<RowColumn>? Columns = null,
+    string? RecordList = null)
 {
     /// <summary>The answer is always the filled value (the applicant may not type or change it).</summary>
     public bool Locked => AllowManualEntry == false && (Prefill is not null || Integration is not null);
@@ -28,7 +29,8 @@ public sealed record QuestionSnapshot(
             q.Fill == QuestionFill.Party ? q.Prefill : null,
             q.Fill == QuestionFill.Integration ? q.Integration : null,
             q.Fill == QuestionFill.None ? null : q.AllowManualEntry,
-            q.Type == QuestionType.Rows ? q.Columns : null);
+            q.Type == QuestionType.Rows ? q.Columns : null,
+            q.Type == QuestionType.Rows ? q.RecordList : null);
 
     /// <summary>The columns of a rows question (none for the other types).</summary>
     public IReadOnlyList<RowColumn> RowColumns => Columns ?? [];

@@ -30,6 +30,10 @@ public sealed class PartiesDbContext(DbContextOptions<PartiesDbContext> options)
 
     public DbSet<ContextSource> ContextSources => Set<ContextSource>();
 
+    public DbSet<RecordList> RecordLists => Set<RecordList>();
+
+    public DbSet<PartyRecord> Records => Set<PartyRecord>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -55,6 +59,24 @@ public sealed class PartiesDbContext(DbContextOptions<PartiesDbContext> options)
             b.Property(e => e.ActiveStatuses).HasJsonColumn();
         });
 
+        modelBuilder.ConfigTable<RecordList>(Schema, "record_list", b =>
+        {
+            b.Property(e => e.DescriptionAr).HasMaxLength(2000);
+            b.Property(e => e.DescriptionEn).HasMaxLength(2000);
+            b.Property(e => e.Icon).HasMaxLength(100);
+            b.Property(e => e.Columns).HasJsonColumn();
+            b.Property(e => e.Import).HasJsonColumn();
+        });
+        modelBuilder.Entity<PartyRecord>(b =>
+        {
+            b.ToTable("party_record", Schema);
+            b.Property(e => e.ListCode).HasMaxLength(100).IsRequired();
+            b.Property(e => e.Key).HasMaxLength(200);
+            b.Property(e => e.Data).HasColumnType("jsonb").IsRequired();
+            AuditColumns(b);
+            b.HasOne<Party>().WithMany().HasForeignKey(e => e.PartyId).OnDelete(DeleteBehavior.Cascade);
+            b.HasIndex(e => new { e.PartyId, e.ListCode });
+        });
         modelBuilder.Entity<Party>(b =>
         {
             b.ToTable("party", Schema);

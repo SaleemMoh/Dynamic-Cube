@@ -1,0 +1,361 @@
+{
+  "title": "Reusable service building blocks: record lists of an establishment (projects imported from Etimad or typed in), picked in a rows question",
+  "items": [
+    {
+      "entityType": "integ.operation",
+      "entityCode": "ETIMAD_CONTRACTS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "عقود المنشأة في منصة اعتماد",
+        "nameEn": "The establishment's contracts on Etimad",
+        "connectionCode": "MOMRAH_GATEWAY",
+        "envelopeProfileCode": "MOMRAH",
+        "method": "GET",
+        "pathTemplate": "/v1/ETIMAD/contracts/{crNumber}",
+        "parameters": [
+          {
+            "name": "crNumber",
+            "location": "PATH",
+            "isRequired": true,
+            "isMasked": false,
+            "sampleValue": "1010012006"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "contractNumbers",
+            "path": "contracts[*].contractNumber"
+          }
+        ],
+        "responseCodes": [
+          {
+            "code": "004-000002",
+            "outcome": "BUSINESS_ERROR",
+            "messageAr": "رقم السجل التجاري غير صحيح.",
+            "messageEn": "The CR number is not valid."
+          }
+        ],
+        "maskFields": [],
+        "cacheSeconds": 0,
+        "isIdempotent": true
+      }
+    },
+    {
+      "entityType": "party.record-list",
+      "entityCode": "ESTABLISHMENT_PROJECTS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مشاريع المنشأة",
+        "nameEn": "Establishment projects",
+        "partyKind": "ESTABLISHMENT",
+        "descriptionAr": "مشاريع المنشأة المنفذة والجارية: تُجلب من منصة اعتماد أو تُضاف يدويًا، ويُختار منها في طلبات الخدمات.",
+        "descriptionEn": "The establishment's completed and running projects: fetched from Etimad or added by hand, and picked in service requests.",
+        "icon": "apartment",
+        "allowManual": true,
+        "displayOrder": 10,
+        "columns": [
+          {
+            "code": "NAME",
+            "labelAr": "اسم المشروع",
+            "labelEn": "Project name",
+            "type": "TEXT",
+            "required": true,
+            "inTable": true,
+            "options": []
+          },
+          {
+            "code": "OWNER",
+            "labelAr": "الجهة المالكة",
+            "labelEn": "Owner",
+            "type": "SELECT",
+            "required": true,
+            "inTable": true,
+            "options": [
+              {
+                "value": "GOV",
+                "labelAr": "جهة حكومية",
+                "labelEn": "Government"
+              },
+              {
+                "value": "PRIVATE",
+                "labelAr": "قطاع خاص",
+                "labelEn": "Private sector"
+              }
+            ]
+          },
+          {
+            "code": "VALUE",
+            "labelAr": "قيمة العقد (مليون ريال)",
+            "labelEn": "Contract value (SAR million)",
+            "type": "NUMBER",
+            "required": true,
+            "inTable": true,
+            "options": []
+          },
+          {
+            "code": "COMPLETION",
+            "labelAr": "نسبة الإنجاز %",
+            "labelEn": "Completion %",
+            "type": "NUMBER",
+            "required": true,
+            "inTable": true,
+            "options": []
+          },
+          {
+            "code": "START",
+            "labelAr": "تاريخ البدء",
+            "labelEn": "Start date",
+            "type": "DATE",
+            "required": false,
+            "inTable": false,
+            "options": []
+          },
+          {
+            "code": "CONTRACT_NO",
+            "labelAr": "رقم العقد",
+            "labelEn": "Contract number",
+            "type": "TEXT",
+            "required": false,
+            "inTable": false,
+            "options": []
+          }
+        ],
+        "import": {
+          "operationCode": "ETIMAD_CONTRACTS",
+          "inputs": [
+            {
+              "parameter": "crNumber",
+              "identifierType": "CR_NUMBER"
+            }
+          ],
+          "itemsPath": "contracts",
+          "keyColumn": "CONTRACT_NO",
+          "fields": [
+            {
+              "column": "CONTRACT_NO",
+              "path": "contractNumber"
+            },
+            {
+              "column": "NAME",
+              "path": "projectName"
+            },
+            {
+              "column": "OWNER",
+              "path": "ownerType"
+            },
+            {
+              "column": "VALUE",
+              "path": "contractValue"
+            },
+            {
+              "column": "COMPLETION",
+              "path": "completionPercent"
+            },
+            {
+              "column": "START",
+              "path": "startDate"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "entityType": "svc.question",
+      "entityCode": "EXP_PROJECTS",
+      "operation": "UPDATE",
+      "payload": {
+        "nameAr": "المشاريع المنفذة",
+        "nameEn": "Completed projects",
+        "type": "ROWS",
+        "hintAr": "اختر مشاريعك من «سجلاتي» أو أضفها صفًا صفًا: الجهة المالكة والقيمة ونسبة الإنجاز، وخطاب الموافقة للمشاريع الحكومية.",
+        "hintEn": "Pick your projects from \"My records\" or add them row by row: owner, value and completion, with the approval letter for government projects.",
+        "validation": {
+          "minRows": 1,
+          "maxRows": 20
+        },
+        "columns": [
+          {
+            "code": "NAME",
+            "labelAr": "اسم المشروع",
+            "labelEn": "Project name",
+            "type": "TEXT",
+            "required": true,
+            "inTable": true,
+            "options": [],
+            "multiple": false,
+            "validation": {
+              "maxLength": 200
+            }
+          },
+          {
+            "code": "OWNER",
+            "labelAr": "الجهة المالكة",
+            "labelEn": "Owner",
+            "type": "SELECT",
+            "required": true,
+            "inTable": true,
+            "multiple": false,
+            "validation": {},
+            "options": [
+              {
+                "value": "GOV",
+                "labelAr": "جهة حكومية",
+                "labelEn": "Government"
+              },
+              {
+                "value": "PRIVATE",
+                "labelAr": "قطاع خاص",
+                "labelEn": "Private sector"
+              }
+            ]
+          },
+          {
+            "code": "VALUE",
+            "labelAr": "قيمة العقد (مليون ريال)",
+            "labelEn": "Contract value (SAR million)",
+            "type": "NUMBER",
+            "required": true,
+            "inTable": true,
+            "options": [],
+            "multiple": false,
+            "validation": {
+              "min": 0
+            }
+          },
+          {
+            "code": "COMPLETION",
+            "labelAr": "نسبة الإنجاز %",
+            "labelEn": "Completion %",
+            "type": "NUMBER",
+            "required": true,
+            "inTable": true,
+            "options": [],
+            "multiple": false,
+            "validation": {
+              "min": 0,
+              "max": 100
+            }
+          },
+          {
+            "code": "START",
+            "labelAr": "تاريخ البدء",
+            "labelEn": "Start date",
+            "type": "DATE",
+            "required": false,
+            "options": [],
+            "multiple": false,
+            "validation": {}
+          },
+          {
+            "code": "APPROVAL",
+            "labelAr": "خطاب موافقة الجهة",
+            "labelEn": "Owner's approval letter",
+            "type": "FILE",
+            "required": false,
+            "options": [],
+            "multiple": false,
+            "validation": {
+              "extensions": [
+                "pdf"
+              ],
+              "maxSizeMb": 5
+            },
+            "visibleWhen": {
+              "==": [
+                {
+                  "var": "OWNER"
+                },
+                "GOV"
+              ]
+            },
+            "requiredWhen": {
+              "==": [
+                {
+                  "var": "OWNER"
+                },
+                "GOV"
+              ]
+            },
+            "hintAr": "للمشاريع الحكومية فقط.",
+            "hintEn": "Government projects only."
+          }
+        ],
+        "recordList": "ESTABLISHMENT_PROJECTS"
+      }
+    },
+    {
+      "entityType": "svc.service-version",
+      "entityCode": "EXP_STATEMENT/2",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 2",
+        "nameEn": "Version 2",
+        "definition": {
+          "levels": [],
+          "steps": [
+            {
+              "code": "PROJECTS",
+              "type": "FORM",
+              "titleAr": "المشاريع",
+              "titleEn": "Projects",
+              "sections": [
+                {
+                  "code": "MAIN",
+                  "titleAr": "المشاريع المنفذة",
+                  "titleEn": "Completed projects",
+                  "questions": [
+                    {
+                      "code": "EXP_PROJECTS",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "REVIEW",
+              "type": "REVIEW",
+              "titleAr": "المراجعة",
+              "titleEn": "Review",
+              "sections": []
+            }
+          ],
+          "eligibility": [],
+          "validations": [
+            {
+              "code": "MIN_VALUE",
+              "step": "PROJECTS",
+              "rule": {
+                ">=": [
+                  {
+                    "reduce": [
+                      {
+                        "var": "data.EXP_PROJECTS"
+                      },
+                      {
+                        "+": [
+                          {
+                            "var": "accumulator"
+                          },
+                          {
+                            "var": "current.VALUE"
+                          }
+                        ]
+                      },
+                      0
+                    ]
+                  },
+                  1
+                ]
+              },
+              "messageAr": "يجب ألا يقل مجموع قيم المشاريع عن مليون ريال.",
+              "messageEn": "The projects must add up to at least SAR 1 million."
+            }
+          ],
+          "fees": []
+        }
+      }
+    }
+  ]
+}

@@ -33,11 +33,13 @@ public static class PartiesModule
 
         AddApplier<ProfileFieldApplier>(services);
         AddApplier<ContextSourceApplier>(services);
+        AddApplier<RecordListApplier>(services);
 
         services.AddScoped<IApplicantIdentity, ClaimsApplicantIdentity>();
         services.AddScoped<PartyDirectory>();
         services.AddScoped<ContextService>();
         services.AddScoped<ProfileService>();
+        services.AddScoped<RecordService>();
         services.AddScoped<PartyAdminService>();
         services.AddScoped<IActingPartyAccessor, ActingPartyAccessor>();
         services.AddScoped<IPartyFacts, PartyFactsProvider>();
@@ -96,6 +98,7 @@ internal static class PartiesCatalog
             new("party.relationship-types", "أنواع العلاقات", "Relationship types", "/party/relationship-types", PartyResources.Config, "share", 20),
             new("party.context-sources", "مصادر صفة التمثيل", "Acting context sources", "/party/context-sources", PartyResources.Config, "switch_account", 30),
             new("party.profile-fields", "بيانات الملف", "Profile fields", "/party/profile-fields", PartyResources.Config, "assignment_ind", 40),
+            new("party.record-lists", "قوائم السجلات", "Record lists", "/party/record-lists", PartyResources.Config, "table_rows", 45),
             new("party.credential-types", "أنواع الشهادات", "Credential types", "/party/credential-types", PartyResources.Config, "workspace_premium", 50),
             new("party.sanction-types", "أنواع الجزاءات", "Sanction types", "/party/sanction-types", PartyResources.Config, "gavel", 60),
         ],

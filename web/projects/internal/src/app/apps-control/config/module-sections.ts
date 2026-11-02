@@ -414,6 +414,98 @@ export const PARTY_SECTIONS: ConfigSection[] = [
     ],
   },
   {
+    path: 'record-lists',
+    title: t('قوائم السجلات', 'Record lists'),
+    resource: 'party.config',
+    types: [
+      {
+        entityType: 'party.record-list',
+        title: t('قوائم السجلات', 'Record lists'),
+        key: 'code',
+        columns: ['partyKind', 'allowManual'],
+        fields: [
+          {
+            code: 'partyKind',
+            type: 'select',
+            label: t('نوع الطرف', 'Party kind'),
+            options: partyKinds,
+            required: true,
+            defaultValue: 'ESTABLISHMENT',
+          },
+          { code: 'descriptionAr', type: 'textarea', label: t('الوصف بالعربية', 'Arabic description') },
+          { code: 'descriptionEn', type: 'textarea', label: t('الوصف بالإنجليزية', 'English description') },
+          { code: 'icon', type: 'icon', label: t('الأيقونة', 'Icon') },
+          {
+            code: 'allowManual',
+            type: 'checkbox',
+            label: t('يضيف مقدم الطلب سجلات بنفسه', 'The applicant adds records by hand'),
+            defaultValue: true,
+          },
+          json(
+            'columns',
+            t('الأعمدة', 'Columns'),
+            table(
+              col('code', t('الرمز', 'Code'), 'text', LTR_REQ),
+              col('labelAr', t('الاسم بالعربية', 'Arabic label'), 'text', REQ),
+              col('labelEn', t('الاسم بالإنجليزية', 'English label'), 'text', LTR_REQ),
+              col('type', t('النوع', 'Type'), 'select', {
+                required: true,
+                defaultValue: 'TEXT',
+                options: [
+                  opt('TEXT', 'نص', 'Text'),
+                  opt('NUMBER', 'رقم', 'Number'),
+                  opt('DATE', 'تاريخ', 'Date'),
+                  opt('CHECKBOX', 'نعم/لا', 'Yes/no'),
+                  opt('SELECT', 'اختيار', 'Choice'),
+                ],
+              }),
+              col('required', t('مطلوب', 'Required'), 'checkbox'),
+              col('inTable', t('يظهر في الجدول', 'In the table'), 'checkbox'),
+              col('options', t('الخيارات', 'Options'), 'table', {
+                columns: [
+                  col('value', t('القيمة', 'Value'), 'text', LTR_REQ),
+                  col('labelAr', t('الاسم بالعربية', 'Arabic label'), 'text', REQ),
+                  col('labelEn', t('الاسم بالإنجليزية', 'English label'), 'text', LTR_REQ),
+                ],
+              }),
+            ),
+            t(
+              'أسئلة «الصفوف المتكررة» في الخدمات التي تختار من هذه القائمة تأخذ قيمة كل عمود في العمود الذي له الرمز نفسه.',
+              'Rows questions of services that pick from this list take each column into the column of the same code.',
+            ),
+          ),
+          json(
+            'import',
+            t('الجلب من نظام آخر', 'Import from another system'),
+            object(
+              col('operationCode', t('العملية', 'Operation'), 'select', { ref: 'integ.operation' }),
+              col('inputs', t('المدخلات', 'Inputs'), 'table', {
+                columns: [
+                  col('parameter', t('مدخل العملية', 'Operation input'), 'text', LTR_REQ),
+                  col('identifierType', t('المعرّف', 'Identifier'), 'select', {
+                    required: true,
+                    options: [...identifierTypes('INDIVIDUAL'), ...identifierTypes('ESTABLISHMENT')],
+                  }),
+                ],
+              }),
+              col('itemsPath', t('مسار القائمة في النتيجة', 'Path of the items in the result'), 'text', LTR),
+              col('keyColumn', t('عمود المفتاح', 'Key column'), 'text', LTR),
+              col('fields', t('مواقع الأعمدة', 'Where each column is'), 'table', {
+                columns: [col('column', t('العمود', 'Column'), 'text', LTR_REQ), col('path', t('المسار في العنصر', 'Path in an item'), 'text', LTR_REQ)],
+              }),
+            ),
+            t(
+              'اختياري. تُستدعى العملية بمعرّف الطرف، وتُقرأ عناصر القائمة من المسار، ويُحدَّث كل سجل مجلوب بقيمة عمود المفتاح؛ وتُحذف السجلات المجلوبة التي لم تعد في النتيجة.',
+              "Optional. The operation is called with the party's identifier, the items are read at the path, and each imported record is updated by its key column; imported records no longer returned are removed.",
+            ),
+            null,
+          ),
+          number('displayOrder', t('الترتيب', 'Display order'), 0),
+        ],
+      },
+    ],
+  },
+  {
     path: 'context-sources',
     title: t('مصادر صفة التمثيل', 'Acting context sources'),
     resource: 'party.config',
@@ -898,6 +990,17 @@ export const SERVICE_SECTIONS: ConfigSection[] = [
                 'Each row is filled through a form of these columns. "Shown when" and "Required when" (JSONLogic) see the row\'s values by column code on top of the request\'s answers, e.g. {"==": [{"var": "OWNER"}, "GOV"]}. "In the table": the columns shown in the table of rows (the first four when none is ticked).',
               ),
               [],
+            ),
+            visibleWhen: { '==': [{ var: 'type' }, 'ROWS'] },
+          },
+          {
+            code: 'recordList',
+            type: 'select',
+            label: t('الاختيار من قائمة سجلات', 'Pick from a record list'),
+            ref: 'party.record-list',
+            hint: t(
+              'اختياري: يختار مقدم الطلب صفوفًا من سجلات جهته في هذه القائمة (بحسب رموز الأعمدة).',
+              "Optional: the applicant picks rows from their party's records in this list (by column code).",
             ),
             visibleWhen: { '==': [{ var: 'type' }, 'ROWS'] },
           },

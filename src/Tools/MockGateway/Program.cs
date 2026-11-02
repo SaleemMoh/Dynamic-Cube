@@ -58,6 +58,49 @@ mci.MapGet("/cr-information-id-number/{idNumber}", (string idNumber) =>
 mci.MapGet("/CR-Information/{crNumber}", (string crNumber) =>
     samples["byCrNumber"]?[crNumber] is JsonObject cr ? Success(cr.DeepClone()) : Business("001-000001", "Record Not Found"));
 
+// Etimad (government contracts): an establishment's contracts by CR number, made up from the number so every demo
+// establishment has a few. Used by the record lists' import (the establishment's projects).
+var etimad = app.MapGroup("/v1/ETIMAD").AddEndpointFilter(async (context, next) =>
+{
+    var authorization = context.HttpContext.Request.Headers.Authorization.ToString();
+    var token = authorization.StartsWith("Bearer ", StringComparison.Ordinal) ? authorization[7..] : string.Empty;
+    return tokens.TryGetValue(token, out var expires) && expires > DateTimeOffset.UtcNow
+        ? await next(context)
+        : Results.Json(Status(401, "Access Token Expired"), statusCode: 401);
+});
+
+etimad.MapGet("/contracts/{crNumber}", (string crNumber) =>
+{
+    if (crNumber.Length != 10 || !crNumber.All(char.IsAsciiDigit))
+    {
+        return Business("004-000002", "Wrong CR Number");
+    }
+
+    var seed = int.Parse(crNumber[^4..], System.Globalization.CultureInfo.InvariantCulture);
+    (string Name, string Owner, decimal Value, int Completion, string Start)[] contracts =
+    [
+        ("إنشاء مدرسة ابتدائية — حي النرجس", "GOV", 12.5m + (seed % 7), 100, "2022-03-01"),
+        ("صيانة مباني أمانة المنطقة", "GOV", 4.2m + (seed % 3), 65, "2023-09-15"),
+        ("تطوير مجمع سكني خاص", "PRIVATE", 18m + (seed % 5), 40, "2024-01-20"),
+    ];
+    var items = new JsonArray();
+    for (var i = 0; i < contracts.Length; i++)
+    {
+        var c = contracts[i];
+        items.Add(new JsonObject
+        {
+            ["contractNumber"] = $"ETM-{crNumber[^4..]}-{i + 1:D3}",
+            ["projectName"] = c.Name,
+            ["ownerType"] = c.Owner,
+            ["contractValue"] = c.Value,
+            ["completionPercent"] = c.Completion,
+            ["startDate"] = c.Start,
+        });
+    }
+
+    return Success(new JsonObject { ["contracts"] = items });
+});
+
 // NIC (National Information Center): a person's identity data by ID number; SCE (Saudi Council of Engineers): an
 // engineer's membership by number. Used by the individuals' demo service.
 var people = JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "samples", "people.json")))!;

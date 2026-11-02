@@ -255,6 +255,12 @@ public sealed class Question : ConfigEntity
 
     /// <summary>Rows questions: the columns of each row.</summary>
     public List<RowColumn> Columns { get; set; } = [];
+
+    /// <summary>
+    /// Rows questions: a record list of the applicant's party (Party Registry) whose records the applicant may pick as rows;
+    /// a record's values go into the columns of the same code.
+    /// </summary>
+    public string? RecordList { get; set; }
 }
 
 /// <summary>

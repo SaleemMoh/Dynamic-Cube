@@ -44,6 +44,8 @@ export interface FormRows {
   tableColumns?: string[];
   minRows?: number;
   maxRows?: number;
+  /** A record list the user may pick rows from (the app provides RECORD_SOURCE); a record's values fill the columns of the same code. */
+  source?: string;
 }
 
 export interface FormField {

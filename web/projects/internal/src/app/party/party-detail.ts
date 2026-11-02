@@ -14,12 +14,14 @@ import { catchError, firstValueFrom, of } from 'rxjs';
 import { ConfirmData, ConfirmDialog } from '../apps-control/confirm-dialog';
 import { PortalAccountData, PortalAccountDialog } from '../apps-control/portal-accounts/portal-account-dialog';
 import { PrivilegesService } from '../apps-control/privileges.service';
+import { PartyRecords } from './party-records';
 import { FormDialog, FormDialogData } from '../common/form-dialog';
 
 /** One party: identifiers, profile (refreshable), relationships, credentials, projects and sanctions. */
 @Component({
   selector: 'dc-party-detail',
   imports: [
+    PartyRecords,
     DatePipe,
     DecimalPipe,
     JsonPipe,
@@ -237,6 +239,12 @@ import { FormDialog, FormDialogData } from '../common/form-dialog';
             <tr mat-header-row *matHeaderRowDef="['name', 'client', 'value', 'dates', 'status']"></tr>
             <tr mat-row *matRowDef="let row; columns: ['name', 'client', 'value', 'dates', 'status']"></tr>
           </table>
+        </mat-tab>
+
+        <mat-tab [label]="'partyRecords.tab' | dcTranslate">
+          <ng-template matTabContent>
+            <dc-party-records [partyId]="d.party.id" [canImport]="canEdit()" />
+          </ng-template>
         </mat-tab>
 
         <mat-tab [label]="'party.sanctions' | dcTranslate">

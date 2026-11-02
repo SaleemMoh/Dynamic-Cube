@@ -303,6 +303,9 @@ public sealed class QuestionPayload : ConfigPayload
     /// <summary>Rows questions: the columns of each row.</summary>
     public List<RowColumn> Columns { get; set; } = [];
 
+    /// <summary>Rows questions: a record list of the applicant's party whose records may be picked as rows.</summary>
+    public string? RecordList { get; set; }
+
     public string? HintAr { get; set; }
 
     public string? HintEn { get; set; }
@@ -404,6 +407,11 @@ internal sealed class QuestionApplier(ServicesDbContext db) : ServiceApplier<Que
         }
 
         var columns = payload.Type == QuestionType.Rows ? RowColumnRules.Check(payload.Columns, errors) : [];
+        var recordList = payload.Type == QuestionType.Rows ? Blank(payload.RecordList) : null;
+        if (recordList is not null)
+        {
+            errors.Code("recordList", recordList, ValidationErrors.IdentifierCode());
+        }
         if (payload.Type == QuestionType.Rows)
         {
             if (validation.MinRows is < 0 or > RowColumnRules.MostRows)
@@ -497,6 +505,7 @@ internal sealed class QuestionApplier(ServicesDbContext db) : ServiceApplier<Que
         entity.Integration = integration;
         entity.AllowManualEntry = fill == QuestionFill.None || payload.AllowManualEntry;
         entity.Columns = columns;
+        entity.RecordList = recordList;
     }
 
     /// <summary>Whether versions of a service other than <paramref name="owner"/> use the question (any when it would be shared).</summary>
@@ -528,6 +537,7 @@ internal sealed class QuestionApplier(ServicesDbContext db) : ServiceApplier<Que
             Integration = entity.Integration,
             AllowManualEntry = entity.AllowManualEntry,
             Columns = entity.Columns,
+            RecordList = entity.RecordList,
         });
 
     protected override async Task BeforeDeleteAsync(ServicesDbContext context, Question entity, CancellationToken cancellationToken)

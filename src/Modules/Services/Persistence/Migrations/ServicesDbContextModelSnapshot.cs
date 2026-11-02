@@ -258,6 +258,11 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("prefill");
 
+                    b.Property<string>("RecordList")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("record_list");
+
                     b.Property<uint>("RowVersion")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()

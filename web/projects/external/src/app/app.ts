@@ -25,6 +25,7 @@ import { APP_TRANSLATIONS } from './translations';
         <ng-container dcShellNav>
           <a class="dc-nav-link" routerLink="/requests" routerLinkActive="dc-nav-link--active" data-testid="nav-requests">{{ 'nav.requests' | dcTranslate }}</a>
           <a class="dc-nav-link" routerLink="/documents" routerLinkActive="dc-nav-link--active" data-testid="nav-documents">{{ 'documents.mine' | dcTranslate }}</a>
+          <a class="dc-nav-link" routerLink="/records" routerLinkActive="dc-nav-link--active" data-testid="nav-records">{{ 'records.mine' | dcTranslate }}</a>
         </ng-container>
       }
       <a dcShellActions class="dc-header-search" routerLink="/services" [attr.aria-label]="'portal.search' | dcTranslate" data-testid="header-search">
@@ -103,7 +104,7 @@ export class App {
     { initialValue: '' },
   );
   /** Pages with a title band run edge to edge; detail pages keep the centred content width. */
-  protected readonly heroPage = () => ['/', '', '/services', '/requests', '/documents', '/faq'].includes(this.url()) || this.url().startsWith('/pages/');
+  protected readonly heroPage = () => ['/', '', '/services', '/requests', '/documents', '/records', '/faq'].includes(this.url()) || this.url().startsWith('/pages/');
   protected readonly inServices = () => this.url().startsWith('/services');
 
   constructor() {

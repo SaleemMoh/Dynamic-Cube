@@ -9,6 +9,7 @@ export const routes: Routes = [
   { path: 'services/:code', loadComponent: () => import('./services/service-page').then((m) => m.ServicePage) },
   { path: 'requests', canActivate: [authGuard], loadComponent: () => import('./requests/my-requests').then((m) => m.MyRequests) },
   { path: 'requests/:id', canActivate: [authGuard], loadComponent: () => import('./requests/request-page').then((m) => m.RequestPage) },
+  { path: 'records', canActivate: [authGuard], loadComponent: () => import('./records/my-records').then((m) => m.MyRecords) },
   { path: 'documents', canActivate: [authGuard], loadComponent: () => import('./documents/my-documents').then((m) => m.MyDocuments) },
   { path: 'documents/:id', canActivate: [authGuard], loadComponent: () => import('./documents/my-document-page').then((m) => m.MyDocumentPage) },
   // Public: the QR code on every document opens /verify/CODE.

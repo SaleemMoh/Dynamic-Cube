@@ -55,6 +55,8 @@ export interface QuestionSnapshot {
   };
   /** Rows questions: the columns of each row. */
   columns?: RowColumn[] | null;
+  /** Rows questions: a record list of the applicant's party whose records may be picked as rows. */
+  recordList?: string | null;
   prefill: string | null;
   /** Answered by an integration call (when the draft starts). */
   integration?: { operation: string; inputs: IntegrationInput[]; output: string } | null;

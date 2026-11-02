@@ -65,6 +65,7 @@ public sealed class ServicesDbContext(DbContextOptions<ServicesDbContext> option
             b.Property(e => e.Options).HasJsonColumn();
             b.Property(e => e.Validation).HasJsonColumn();
             b.Property(e => e.Columns).HasJsonColumn();
+            b.Property(e => e.RecordList).HasMaxLength(100);
         });
         modelBuilder.ConfigTable<ServiceVersion>(Schema, "service_version", b =>
         {

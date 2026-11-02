@@ -14,6 +14,8 @@ import { MatPaginatorIntl } from '@angular/material/paginator';
 import { AppDirectionality } from '../i18n/app-directionality';
 import { DcPaginatorIntl } from '../i18n/paginator-intl';
 import { DialogChrome } from './dialog-chrome';
+import { RowDialog } from '../forms/row-dialog';
+import { ROW_DIALOG } from '../forms/row-dialog-token';
 
 /**
  * UI providers shared by all Dynamic Cube apps. Colors and typography come from the Material 3 theme in
@@ -31,6 +33,8 @@ export function provideDynamicCubeUi(): EnvironmentProviders {
         subscriptSizing: 'dynamic',
       } satisfies MatFormFieldDefaultOptions,
     },
+    // Rows fields edit a row in this dialog (the shared dynamic form).
+    { provide: ROW_DIALOG, useValue: RowDialog },
     // Dialogs move by their title bar; big ones can fill the screen.
     provideAppInitializer(() => inject(DialogChrome).start()),
   ]);

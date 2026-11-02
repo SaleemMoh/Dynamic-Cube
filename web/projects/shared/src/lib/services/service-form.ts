@@ -93,6 +93,7 @@ function toField(
             tableColumns: (q.columns ?? []).filter((c) => c.inTable).map((c) => c.code),
             minRows: q.validation.minRows ?? undefined,
             maxRows: q.validation.maxRows ?? 50,
+            source: q.recordList ?? undefined,
           }
         : undefined,
   };

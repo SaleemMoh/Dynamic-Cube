@@ -22,15 +22,18 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { I18nService } from '../i18n/i18n.service';
 import { LocalizedText } from '../i18n/language';
 import { LocalizePipe, TranslatePipe } from '../i18n/translate.pipe';
-import { DynamicForm, FormValue } from './dynamic-form';
+import type { FormValue } from './dynamic-form';
 import { FileUploader } from './file-input';
-import { FormField, FormOption, FormSchema } from './form-schema';
+import { FormField, FormOption } from './form-schema';
 import { LOV_SOURCE } from './lov-source';
+import { RECORD_PROVIDER, RecordPick } from './record-source';
+import { ROW_DIALOG } from './row-dialog-token';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 
 export type Row = Record<string, unknown>;
 
 /** What the row dialog is given: the columns, the row being edited (none: a new row) and where its files go. */
-interface RowDialogData {
+export interface RowDialogData {
   title: LocalizedText;
   columns: FormField[];
   row: Row | null;
@@ -185,6 +188,18 @@ function columnUploader(uploader: FileUploader | null, field: string): FileUploa
             <mat-icon>add</mat-icon>
             {{ 'rows.add' | dcTranslate }}
           </button>
+          @if (canPick()) {
+            <button
+              matButton="outlined"
+              type="button"
+              (click)="pick()"
+              [disabled]="full()"
+              [attr.data-testid]="'rows-pick-' + field().code"
+            >
+              <mat-icon>playlist_add_check</mat-icon>
+              {{ 'rows.pick' | dcTranslate }}
+            </button>
+          }
         }
         @if (field().rows?.maxRows; as most) {
           <small class="dc-muted"
@@ -262,7 +277,12 @@ export class RowsInput implements ControlValueAccessor {
   private readonly dialog = inject(MatDialog);
   private readonly i18n = inject(I18nService);
   private readonly lovSource = inject(LOV_SOURCE, { optional: true });
+  private readonly recordProvider = inject(RECORD_PROVIDER, { optional: true });
+  /** The dialog of a row's form (the shared dynamic form), provided by provideDynamicCubeUi. */
+  private readonly rowDialog = inject(ROW_DIALOG);
   private readonly destroyRef = inject(DestroyRef);
+  /** Whether rows can be picked from a record list here. */
+  protected readonly canPick = computed(() => !!this.recordProvider && !!this.field().rows?.source);
   private onChange: (value: Row[]) => void = () => undefined;
   private onTouched: () => void = () => undefined;
 
@@ -350,9 +370,45 @@ export class RowsInput implements ControlValueAccessor {
     }
   }
 
+  /** Picks records of the field's record list and adds them as rows (their values go into the columns of the same code). */
+  protected async pick(): Promise<void> {
+    const field = this.field();
+    const picked = await this.recordProvider!.load(field.rows!.source!);
+    if (!picked) return;
+    const room = (field.rows?.maxRows ?? Number.MAX_SAFE_INTEGER) - this.rows().length;
+    const ref = this.dialog.open<RecordPicker, RecordPickerData, Row[]>(RecordPicker, {
+      width: '760px',
+      maxWidth: '95vw',
+      data: { picked, room },
+    });
+    const subscription = ref.afterClosed().subscribe((records) => {
+      this.onTouched();
+      if (!records?.length) return;
+      const columns = field.rows?.columns ?? [];
+      const rows = records.map((record) => {
+        const row: Row = {};
+        for (const column of columns) {
+          const value = record[column.code];
+          if (value === null || value === undefined || value === '') continue;
+          if (
+            column.type === 'select' &&
+            !column.lov &&
+            !(column.options ?? []).some((o) => o.value === value)
+          )
+            continue;
+          if (column.type === 'file') continue;
+          row[column.code] = value;
+        }
+        return row;
+      });
+      this.commit([...this.rows(), ...rows.filter((r) => Object.keys(r).length > 0)]);
+    });
+    this.destroyRef.onDestroy(() => subscription.unsubscribe());
+  }
+
   private open(row: Row | null, done: (row: Row) => void): void {
     const field = this.field();
-    const ref = this.dialog.open<RowDialog, RowDialogData, Row>(RowDialog, {
+    const ref = this.dialog.open<unknown, RowDialogData, Row>(this.rowDialog, {
       width: '720px',
       maxWidth: '95vw',
       autoFocus: 'first-tabbable',
@@ -379,65 +435,110 @@ export class RowsInput implements ControlValueAccessor {
   }
 }
 
-/** The form of one row, in a dialog. Files uploaded and then cancelled are removed again. */
+interface RecordPickerData {
+  picked: RecordPick;
+  /** How many more rows the field takes. */
+  room: number;
+}
+
+/** The records of a list to pick from, with a box each. */
 @Component({
-  selector: 'dc-row-dialog',
-  imports: [
-    MatDialogModule,
-    MatButtonModule,
-    forwardRef(() => DynamicForm),
-    LocalizePipe,
-    TranslatePipe,
-  ],
+  selector: 'dc-record-picker',
+  imports: [MatDialogModule, MatButtonModule, MatCheckboxModule, LocalizePipe, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <h2 mat-dialog-title>
-      {{ data.title | dcLocalize }} — {{ (data.row ? 'rows.edit' : 'rows.add') | dcTranslate }}
+      {{ 'rows.pickFrom' | dcTranslate }} {{ data.picked.title | dcLocalize }}
     </h2>
     <mat-dialog-content>
-      <dc-dynamic-form
-        [schema]="schema"
-        [initialValue]="initial"
-        [context]="data.context"
-        [uploader]="data.uploader"
-        [submitLabel]="'rows.save' | dcTranslate"
-        submitIcon="check"
-        [cancellable]="true"
-        [cancelLabel]="'rows.cancel' | dcTranslate"
-        (submitted)="save($event)"
-        (cancelled)="cancel()"
-        (edited)="typed = $event"
-      />
+      @if (data.picked.rows.length) {
+        <div class="dc-rows__scroll">
+          <table class="dc-picker__table">
+            <thead>
+              <tr>
+                <th scope="col">
+                  <span class="cdk-visually-hidden">{{ 'rows.choose' | dcTranslate }}</span>
+                </th>
+                @for (c of data.picked.columns; track c.code) {
+                  <th scope="col">{{ c.label | dcLocalize }}</th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (r of data.picked.rows; track r.id) {
+                <tr>
+                  <td>
+                    <mat-checkbox
+                      [checked]="chosen().has(r.id)"
+                      [disabled]="!chosen().has(r.id) && chosen().size >= data.room"
+                      (change)="toggle(r.id)"
+                      [attr.data-testid]="'pick-' + r.id"
+                    />
+                  </td>
+                  @for (c of data.picked.columns; track c.code) {
+                    <td>{{ text(c, r.data[c.code]) }}</td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <p class="dc-muted">{{ 'rows.noRecords' | dcTranslate }}</p>
+      }
     </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button matButton type="button" mat-dialog-close>{{ 'rows.cancel' | dcTranslate }}</button>
+      <button
+        matButton="filled"
+        type="button"
+        [disabled]="!chosen().size"
+        (click)="done()"
+        data-testid="pick-done"
+      >
+        {{ 'rows.addChosen' | dcTranslate }} ({{ chosen().size }})
+      </button>
+    </mat-dialog-actions>
+  `,
+  styles: `
+    .dc-rows__scroll {
+      overflow-x: auto;
+    }
+    .dc-picker__table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+    .dc-picker__table th,
+    .dc-picker__table td {
+      padding: 4px 8px;
+      border-bottom: 1px solid var(--dc-border, #d9dee3);
+      text-align: start;
+    }
   `,
 })
-export class RowDialog {
-  protected readonly data = inject<RowDialogData>(MAT_DIALOG_DATA);
-  private readonly ref = inject<MatDialogRef<RowDialog, Row>>(MatDialogRef);
-  protected readonly schema: FormSchema = {
-    code: 'row',
-    sections: [{ code: 'row', title: { ar: '', en: '' }, fields: this.data.columns }],
-  };
-  protected readonly initial = rowForForm(this.data.columns, this.data.row ?? {});
-  /** The row as typed so far, to find files uploaded before a cancel. */
-  protected typed: FormValue | null = null;
+export class RecordPicker {
+  protected readonly data = inject<RecordPickerData>(MAT_DIALOG_DATA);
+  private readonly ref = inject<MatDialogRef<RecordPicker, Row[]>>(MatDialogRef);
+  private readonly i18n = inject(I18nService);
+  protected readonly chosen = signal<ReadonlySet<string>>(new Set());
 
-  constructor() {
-    this.ref.backdropClick().subscribe(() => this.cancel());
-    this.ref.keydownEvents().subscribe((event) => {
-      if (event.key === 'Escape') this.cancel();
-    });
+  protected toggle(id: string): void {
+    const next = new Set(this.chosen());
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    this.chosen.set(next);
   }
 
-  protected save(value: FormValue): void {
-    this.ref.close(rowForStorage(value));
+  protected text(column: RecordPick['columns'][number], value: unknown): string {
+    if (value === null || value === undefined || value === '') return '—';
+    const ar = this.i18n.language() === 'ar';
+    if (typeof value === 'boolean') return value ? (ar ? 'نعم' : 'Yes') : ar ? 'لا' : 'No';
+    const option = column.options?.find((o) => o.value === value);
+    return option ? (ar ? option.label.ar : option.label.en) : String(value);
   }
 
-  protected async cancel(): Promise<void> {
-    const kept = new Set(rowFiles(this.data.columns, this.data.row).map((f) => f.id));
-    for (const file of rowFiles(this.data.columns, this.typed).filter((f) => !kept.has(f.id))) {
-      await this.data.uploader?.remove(file.column, file.id).catch(() => undefined);
-    }
-    this.ref.close();
+  protected done(): void {
+    this.ref.close(this.data.picked.rows.filter((r) => this.chosen().has(r.id)).map((r) => r.data));
   }
 }

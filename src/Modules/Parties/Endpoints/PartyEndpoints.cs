@@ -19,6 +19,8 @@ public sealed record CreatedResponse(Guid Id);
 
 public sealed record SetProfileValueRequest(JsonNode? Value);
 
+public sealed record RecordRequest(JsonObject? Data);
+
 internal static class PartyEndpoints
 {
     /// <summary>Portal: the applicant's acting contexts and the validated acting party.</summary>
@@ -29,6 +31,28 @@ internal static class PartyEndpoints
 
         group.MapGet("/me/acting", async (IActingPartyAccessor acting, CancellationToken ct) =>
             TypedResults.Ok(await acting.GetAsync(ct))).WithName("GetActingParty");
+
+        // The acting party's record lists (its projects, owners, branches…): typed by hand or imported.
+        group.MapGet("/me/record-lists", async (IActingPartyAccessor acting, RecordService records, CancellationToken ct) =>
+            TypedResults.Ok(await records.ListsAsync((await acting.GetAsync(ct)).PartyId, ct))).WithName("GetMyRecordLists");
+
+        group.MapGet("/me/record-lists/{code}", async (string code, IActingPartyAccessor acting, RecordService records, CancellationToken ct) =>
+            TypedResults.Ok(await records.ListAsync((await acting.GetAsync(ct)).PartyId, code, ct))).WithName("GetMyRecordList");
+
+        group.MapPost("/me/record-lists/{code}/records", async (string code, RecordRequest request, IActingPartyAccessor acting, RecordService records, CancellationToken ct) =>
+            TypedResults.Ok(await records.AddAsync((await acting.GetAsync(ct)).PartyId, code, request.Data, ct))).WithName("AddMyRecord");
+
+        group.MapPut("/me/records/{id:guid}", async (Guid id, RecordRequest request, IActingPartyAccessor acting, RecordService records, CancellationToken ct) =>
+            TypedResults.Ok(await records.UpdateAsync((await acting.GetAsync(ct)).PartyId, id, request.Data, ct))).WithName("UpdateMyRecord");
+
+        group.MapDelete("/me/records/{id:guid}", async (Guid id, IActingPartyAccessor acting, RecordService records, CancellationToken ct) =>
+        {
+            await records.DeleteAsync((await acting.GetAsync(ct)).PartyId, id, ct);
+            return TypedResults.NoContent();
+        }).WithName("DeleteMyRecord");
+
+        group.MapPost("/me/record-lists/{code}/import", async (string code, IActingPartyAccessor acting, RecordService records, CancellationToken ct) =>
+            TypedResults.Ok(await records.ImportAsync((await acting.GetAsync(ct)).PartyId, code, ct))).WithName("ImportMyRecords");
     }
 
     /// <summary>Internal system: the registry for employees.</summary>
@@ -70,6 +94,12 @@ internal static class PartyEndpoints
             await service.AddIdentifierAsync(id, request, ct);
             return TypedResults.NoContent();
         }).RequirePrivilege(PartyResources.Parties, CatalogActions.Edit).WithName("AddPartyIdentifier");
+
+        group.MapGet("/parties/{id:guid}/record-lists", async (Guid id, RecordService records, CancellationToken ct) =>
+            TypedResults.Ok(await records.ListsAsync(id, ct))).RequirePrivilege(PartyResources.Parties, CatalogActions.View).WithName("GetPartyRecordLists");
+
+        group.MapPost("/parties/{id:guid}/record-lists/{code}/import", async (Guid id, string code, RecordService records, CancellationToken ct) =>
+            TypedResults.Ok(await records.ImportAsync(id, code, ct))).RequirePrivilege(PartyResources.Parties, CatalogActions.Edit).WithName("ImportPartyRecords");
 
         group.MapPost("/parties/{id:guid}/profile/refresh", async (Guid id, bool? force, ProfileService profiles, CancellationToken ct) =>
             TypedResults.Ok(await profiles.RefreshAsync(id, force ?? true, ct))).RequirePrivilege(PartyResources.Parties, CatalogActions.Edit).WithName("RefreshPartyProfile");
@@ -141,6 +171,10 @@ internal static class PartyEndpoints
         catch (ChangeValidationException ex)
         {
             return Results.ValidationProblem(ex.Errors.ToDictionary(e => e.Key, e => e.Value), title: "The request is invalid.");
+        }
+        catch (RecordValidationException ex)
+        {
+            return Results.ValidationProblem(ex.Errors.ToDictionary(e => e.Key, e => e.Value), title: "The record is not valid.");
         }
         catch (PartyNotFoundException ex)
         {
