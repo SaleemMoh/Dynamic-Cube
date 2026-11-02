@@ -23,8 +23,16 @@ public sealed record LovReportColumn(string Name, string Column, string? Aggrega
 /// <summary>A report's tile: an aggregate over all filtered rows (no column: the number of rows).</summary>
 public sealed record LovReportTile(string Name, string? Column, string Aggregate);
 
-/// <summary>What a report returns: its columns, tiles, sort (on its columns) and whether a totals row is wanted.</summary>
-public sealed record LovReportSpec(IReadOnlyList<LovReportColumn> Columns, IReadOnlyList<LovReportTile> Tiles, IReadOnlyList<(string Column, bool Descending)> Sort, bool Totals);
+/// <summary>A drill-down's condition: the column (by a period when bucketed) equals the group's value (null: is empty).</summary>
+public sealed record LovReportMatch(string Column, string? Bucket, JsonNode? Value);
+
+/// <summary>What a report returns: its columns, tiles, sort (on its columns), whether a totals row is wanted and a drill-down's conditions.</summary>
+public sealed record LovReportSpec(
+    IReadOnlyList<LovReportColumn> Columns,
+    IReadOnlyList<LovReportTile> Tiles,
+    IReadOnlyList<(string Column, bool Descending)> Sort,
+    bool Totals,
+    IReadOnlyList<LovReportMatch>? Matches = null);
 
 /// <summary>A report compiled for one run: its page of rows, their number, the totals row and the tiles, sharing parameters.</summary>
 public sealed record LovCompiledReport(
@@ -57,6 +65,9 @@ public static partial class LovQueryCompiler
     public const int MaxConditions = 30;
     public const int MaxDepth = 3;
     public const int MaxSorts = 5;
+
+    /// <summary>The most values a drill-down narrows by (a table row's grouped columns, a chart's group and series).</summary>
+    public const int MaxMatches = 12;
 
     public static readonly string[] Operators =
         ["EQ", "NE", "GT", "GE", "LT", "LE", "CONTAINS", "STARTS_WITH", "ENDS_WITH", "IN", "NOT_IN", "IS_EMPTY", "IS_NOT_EMPTY"];
@@ -292,6 +303,20 @@ public static partial class LovQueryCompiler
             if (query.Where is not null)
             {
                 var condition = Group(query.Where, "query.where", 1);
+                if (condition is not null)
+                {
+                    where.Add(condition);
+                }
+            }
+
+            if (report?.Matches is { Count: > MaxMatches })
+            {
+                problems.Add(new("matches", $"Drill down by at most {MaxMatches} values."));
+            }
+
+            foreach (var (match, i) in (report?.Matches ?? []).Take(MaxMatches).Select((m, i) => (m, i)))
+            {
+                var condition = Match(match, $"matches[{i}]");
                 if (condition is not null)
                 {
                     where.Add(condition);
@@ -1165,6 +1190,64 @@ public static partial class LovQueryCompiler
             }
 
             return raw;
+        }
+
+        /// <summary>
+        /// A drill-down's condition (ADR-0047): the column, by its period when bucketed, equals the group's value, compared
+        /// by its kind and always as a parameter; a null value matches the rows where the column is empty.
+        /// </summary>
+        private string? Match(LovReportMatch match, string path)
+        {
+            var resolved = Column(match.Column, $"{path}.column");
+            if (resolved is null)
+            {
+                return null;
+            }
+
+            var category = resolved.Value.Column.Category;
+            var bucket = string.IsNullOrWhiteSpace(match.Bucket) ? null : match.Bucket.Trim().ToUpperInvariant();
+            if (bucket is not null && (category != LovColumnCategory.Date || !ReportBuckets.All.Contains(bucket)))
+            {
+                problems.Add(new($"{path}.bucket", "Only a date column is grouped by a period."));
+                return null;
+            }
+
+            var sql = bucket is null ? resolved.Value.Sql : $"(date_trunc('{bucket.ToLowerInvariant()}', {resolved.Value.Sql}))::date";
+            if (match.Value is null)
+            {
+                return $"{sql} IS NULL";
+            }
+
+            var raw = match.Value is JsonValue v ? v.GetValueKind() switch
+            {
+                JsonValueKind.String => v.GetValue<string>(),
+                JsonValueKind.Number => v.ToJsonString(),
+                JsonValueKind.True => "true",
+                JsonValueKind.False => "false",
+                _ => null,
+            } : null;
+            if (raw is null || category == LovColumnCategory.Json)
+            {
+                problems.Add(new($"{path}.value", "This value cannot be drilled into."));
+                return null;
+            }
+
+            switch (category)
+            {
+                case LovColumnCategory.Number when decimal.TryParse(raw, NumberStyles.Number, CultureInfo.InvariantCulture, out var number):
+                    return $"({sql})::numeric = {Parameter(number)}";
+                case LovColumnCategory.Bool when raw is "true" or "false":
+                    return $"{sql} = {Parameter(raw == "true")}";
+                case LovColumnCategory.Date when DatePattern().IsMatch(raw) && DateOnly.TryParseExact(raw, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var day):
+                    return $"({sql})::date = {Parameter(day)}";
+                case LovColumnCategory.Date when bucket is null && DateTimeOffset.TryParse(raw, CultureInfo.InvariantCulture, DateTimeStyles.None, out var at):
+                    return $"{sql} = {Parameter(at.ToUniversalTime())}";
+                case LovColumnCategory.Text:
+                    return $"{sql}::text = {Parameter(raw)}";
+                default:
+                    problems.Add(new($"{path}.value", "The value does not fit the column."));
+                    return null;
+            }
         }
 
         private string Parameter(object? value)

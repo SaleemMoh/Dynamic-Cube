@@ -10,6 +10,10 @@
       }
     </div>
     <div class="rv-actions">
+      <button matButton type="button" (click)="pin()" data-testid="report-pin">
+        <mat-icon fontSet="material-symbols-outlined">push_pin</mat-icon
+        >{{ 'rp.pin' | dcTranslate }}
+      </button>
       <button matButton type="button" [matMenuTriggerFor]="savedMenu" data-testid="report-saved">
         <mat-icon fontSet="material-symbols-outlined">bookmarks</mat-icon
         >{{ 'rp.saved' | dcTranslate }}
@@ -114,7 +118,14 @@
     </div>
   }
   @if (notice()) {
-    <p class="rv-notice" role="status">{{ notice() }}</p>
+    <p class="rv-notice" role="status">
+      {{ notice() }}
+      @if (pinned()) {
+        <button matButton type="button" (click)="openPinned()" data-testid="report-pin-open">
+          {{ 'rp.pin.open' | dcTranslate }}
+        </button>
+      }
+    </p>
   }
 
   @if (v.filters.length) {
@@ -211,4 +222,9 @@
     }
   </ul>
 }
-<dc-report-result [run]="run()" (page)="load($event)" />
+<dc-report-result
+  [run]="run()"
+  [drillable]="view.value()?.canDrill ?? false"
+  (page)="load($event)"
+  (drill)="drill($event)"
+/>

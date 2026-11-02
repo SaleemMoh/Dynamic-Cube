@@ -3,15 +3,17 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import {
   AppsControlApi,
+  DashboardView,
   I18nService,
   LovItem,
   ReportFilterDef,
@@ -26,7 +28,9 @@ import {
 } from '@dynamic-cube/shared';
 import { catchError, firstValueFrom, forkJoin, map, of, tap } from 'rxjs';
 import { cleanFilters, exportFileName, joinValues, splitValues } from './report-model';
-import { ReportResult } from './report-result';
+import { ReportDrill, ReportDrillData } from './report-drill';
+import { ReportPin, ReportPinData } from './report-pin';
+import { DrillTarget, ReportResult } from './report-result';
 import { REPORT_TRANSLATIONS } from './report-translations';
 
 const NONE: string[] = [];
@@ -59,10 +63,14 @@ const NONE: string[] = [];
 export class ReportViewer {
   private readonly api = inject(ReportsApi);
   private readonly config = inject(AppsControlApi);
+  private readonly dialog = inject(MatDialog);
+  private readonly router = inject(Router);
   protected readonly i18n = inject(I18nService);
   readonly code = input.required<string>();
 
   protected readonly values = signal<Record<string, string | null>>({});
+  /** The values the user chose (not the defaults filled in): what a pinned widget keeps, so relative dates stay relative. */
+  private readonly chosen = signal<Record<string, string | null>>({});
   protected readonly run = signal<ReportRun | null>(null);
   protected readonly running = signal(false);
   protected readonly errors = signal<string[]>([]);
@@ -73,6 +81,8 @@ export class ReportViewer {
   protected readonly saveDefault = signal(false);
   protected readonly showSave = signal(false);
   protected readonly notice = signal('');
+  /** The personal dashboard a widget was just pinned to (a link to open it). */
+  protected readonly pinned = signal<DashboardView | null>(null);
 
   protected readonly view = rxResource({
     params: () => this.code(),
@@ -132,6 +142,7 @@ export class ReportViewer {
     this.saved.set(view.savedFilters);
     const preferred = view.savedFilters.find((s) => s.isDefault);
     this.values.set(preferred ? { ...preferred.values } : {});
+    this.chosen.set(preferred ? { ...preferred.values } : {});
     // The resource's value is set after this tap: the first run takes the view itself.
     void this.load(1, view);
   }
@@ -154,6 +165,7 @@ export class ReportViewer {
 
   protected setValue(name: string, value: string | null): void {
     this.values.update((v) => ({ ...v, [name]: value || null }));
+    this.chosen.update((v) => ({ ...v, [name]: value || null }));
   }
 
   protected setMulti(name: string, values: string[]): void {
@@ -162,11 +174,13 @@ export class ReportViewer {
 
   protected clear(): void {
     this.values.set({});
+    this.chosen.set({});
     void this.load(1);
   }
 
   protected apply(saved: SavedReportFilter): void {
     this.values.set({ ...saved.values });
+    this.chosen.set({ ...saved.values });
     void this.load(1);
   }
 
@@ -206,6 +220,50 @@ export class ReportViewer {
     } catch (error) {
       this.errors.set(problemMessages(error));
     }
+  }
+
+  /** Opens the rows behind the clicked group, with the filters the page ran with. */
+  protected drill(target: DrillTarget): void {
+    const view = this.view.value();
+    if (!view) return;
+    this.dialog.open<ReportDrill, ReportDrillData>(ReportDrill, {
+      data: {
+        report: view.code,
+        reportNameAr: view.nameAr,
+        reportNameEn: view.nameEn,
+        titleAr: target.titleAr,
+        titleEn: target.titleEn,
+        canExport: view.canExport,
+        request: {
+          filters: cleanFilters(this.run()?.filters ?? this.values()),
+          source: target.source,
+          chart: target.chart,
+          values: target.values,
+        },
+      },
+      maxWidth: '96vw',
+    });
+  }
+
+  /** Pins a chart, tile or the table to one of the user's dashboards. */
+  protected pin(): void {
+    const view = this.view.value();
+    if (!view) return;
+    this.dialog
+      .open<ReportPin, ReportPinData, DashboardView>(ReportPin, {
+        data: { view, filters: this.chosen() },
+      })
+      .afterClosed()
+      .subscribe((board) => {
+        if (!board) return;
+        this.pinned.set(board);
+        this.notice.set(this.i18n.translate('rp.pin.done').replace('{name}', board.nameEn));
+      });
+  }
+
+  protected openPinned(): void {
+    const board = this.pinned();
+    if (board?.id) void this.router.navigate(['/reports/my-dashboards', board.id]);
   }
 
   protected async save(): Promise<void> {

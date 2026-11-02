@@ -39,8 +39,17 @@ public sealed record ReportTile(string Name, string? Column, string Aggregate);
 /// <summary>A sort on a column of the result.</summary>
 public sealed record ReportSort(string Column, bool Descending = false);
 
-/// <summary>What a report returns over its query: columns (grouped when one is totalled), tiles, the sort and a totals row.</summary>
-public sealed record ReportShape(IReadOnlyList<ReportColumn> Columns, IReadOnlyList<ReportTile> Tiles, IReadOnlyList<ReportSort> Sort, bool Totals);
+/// <summary>
+/// A condition a drill-down adds (ADR-0047): the column (<c>alias.column</c>), grouped by a period when
+/// <paramref name="Bucket"/> is set, equals the value of the group clicked (null: the column is empty).
+/// </summary>
+public sealed record ReportMatch(string Column, string? Bucket, JsonNode? Value);
+
+/// <summary>
+/// What a report returns over its query: columns (grouped when one is totalled), tiles, the sort and a totals row; a
+/// drill-down adds the group's values as <paramref name="Matches"/>.
+/// </summary>
+public sealed record ReportShape(IReadOnlyList<ReportColumn> Columns, IReadOnlyList<ReportTile> Tiles, IReadOnlyList<ReportSort> Sort, bool Totals, IReadOnlyList<ReportMatch>? Matches = null);
 
 /// <summary>
 /// Who a report runs for: the signed-in user (null <paramref name="UserName"/>), or a stored user (a scheduled report sent

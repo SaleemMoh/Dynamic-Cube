@@ -7,6 +7,8 @@ public static class ReportChangeTypes
 
     public const string Schedule = "rpt.schedule";
 
+    public const string Dashboard = "rpt.dashboard";
+
     public const string Area = "rpt.reports";
 }
 
@@ -21,6 +23,12 @@ public static class ReportResources
     /// <summary>Scheduled deliveries and their log.</summary>
     public const string Schedules = "reports.schedules";
 
+    /// <summary>Designing shared dashboards (ADR-0047).</summary>
+    public const string Dashboards = "reports.dashboards";
+
     /// <summary>The resource of one report: roles grant VIEW (and EXPORT) on it; menus open it.</summary>
     public static string Of(string reportCode) => "reports.r." + reportCode.ToLowerInvariant();
+
+    /// <summary>The resource of one shared dashboard: roles grant VIEW on it; menus open it.</summary>
+    public static string Dashboard(string dashboardCode) => "reports.d." + dashboardCode.ToLowerInvariant();
 }

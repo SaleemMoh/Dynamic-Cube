@@ -27,6 +27,13 @@ internal static class ReportEndpoints
             var file = await reports.ExportAsync(code, filters, format ?? "XLSX", !string.Equals(lang, "en", StringComparison.OrdinalIgnoreCase), ct);
             return Results.File(file.Content, file.ContentType, file.FileName);
         }).WithName("ExportReport");
+        group.MapPost("/reports/{code}/drill", async (string code, DrillRequest request, ReportService reports, CancellationToken ct) =>
+            TypedResults.Ok(await reports.DrillAsync(code, request, ct))).WithName("DrillIntoReport");
+        group.MapPost("/reports/{code}/drill/export", async (string code, string? format, string? lang, DrillRequest request, ReportService reports, CancellationToken ct) =>
+        {
+            var file = await reports.ExportDrillAsync(code, request, format ?? "XLSX", !string.Equals(lang, "en", StringComparison.OrdinalIgnoreCase), ct);
+            return Results.File(file.Content, file.ContentType, file.FileName);
+        }).WithName("ExportReportDrill");
         group.MapPost("/reports/{code}/saved-filters", async (string code, SaveFilterRequest request, ReportService reports, CancellationToken ct) =>
             TypedResults.Ok(await reports.SaveFilterAsync(code, request, ct))).WithName("SaveReportFilters");
         group.MapDelete("/reports/{code}/saved-filters/{id:guid}", async (string code, Guid id, ReportService reports, CancellationToken ct) =>
@@ -34,6 +41,27 @@ internal static class ReportEndpoints
             await reports.DeleteFilterAsync(code, id, ct);
             return TypedResults.NoContent();
         }).WithName("DeleteReportFilters");
+
+        // Dashboards (ADR-0047): shared ones (each checked against its own resource) and the user's own; widgets run one by one.
+        var dashboards = group.MapGroup(string.Empty).RequirePrivilege(ReportResources.Root, CatalogActions.View);
+        dashboards.MapGet("/dashboards", async (DashboardService service, CancellationToken ct) => TypedResults.Ok(await service.MineAsync(ct))).WithName("ListMyDashboards");
+        dashboards.MapGet("/dashboards/{code}", async (string code, DashboardService service, CancellationToken ct) => TypedResults.Ok(await service.SharedAsync(code, ct))).WithName("GetDashboard");
+        dashboards.MapPost("/dashboards/{code}/widgets/{widget}", async (string code, string widget, RunWidgetRequest request, DashboardService service, CancellationToken ct) =>
+            TypedResults.Ok(await service.RunSharedAsync(code, widget, request, ct))).WithName("RunDashboardWidget");
+        dashboards.MapPost("/my-dashboards", async (SavePersonalDashboardRequest request, DashboardService service, CancellationToken ct) =>
+            TypedResults.Ok(await service.SavePersonalAsync(null, request, ct))).WithName("CreateMyDashboard");
+        dashboards.MapPost("/my-dashboards/pin", async (PinWidgetRequest request, DashboardService service, CancellationToken ct) =>
+            TypedResults.Ok(await service.PinAsync(request, ct))).WithName("PinToMyDashboard");
+        dashboards.MapGet("/my-dashboards/{id:guid}", async (Guid id, DashboardService service, CancellationToken ct) => TypedResults.Ok(await service.PersonalAsync(id, ct))).WithName("GetMyDashboard");
+        dashboards.MapPut("/my-dashboards/{id:guid}", async (Guid id, SavePersonalDashboardRequest request, DashboardService service, CancellationToken ct) =>
+            TypedResults.Ok(await service.SavePersonalAsync(id, request, ct))).WithName("SaveMyDashboard");
+        dashboards.MapDelete("/my-dashboards/{id:guid}", async (Guid id, DashboardService service, CancellationToken ct) =>
+        {
+            await service.DeletePersonalAsync(id, ct);
+            return TypedResults.NoContent();
+        }).WithName("DeleteMyDashboard");
+        dashboards.MapPost("/my-dashboards/{id:guid}/widgets/{widget}", async (Guid id, string widget, RunWidgetRequest request, DashboardService service, CancellationToken ct) =>
+            TypedResults.Ok(await service.RunPersonalAsync(id, widget, request, ct))).WithName("RunMyDashboardWidget");
 
         // Scheduled deliveries: their log, and sending a schedule now.
         group.MapGet("/admin/deliveries", async (string? schedule, int? skip, int? take, ReportsDbContext db, CancellationToken ct) =>
@@ -76,7 +104,11 @@ internal static class ReportEndpoints
         }
         catch (ChangeValidationException ex)
         {
-            return Results.ValidationProblem(ex.Errors.ToDictionary(e => e.Key, e => e.Value), title: "The report is invalid.");
+            return Results.ValidationProblem(ex.Errors.ToDictionary(e => e.Key, e => e.Value), title: "The report or dashboard is invalid.");
+        }
+        catch (DashboardNotFoundException ex)
+        {
+            return Results.Problem(statusCode: StatusCodes.Status404NotFound, detail: ex.Message);
         }
         catch (ReportNotFoundException ex)
         {

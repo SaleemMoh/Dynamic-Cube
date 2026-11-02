@@ -41,3 +41,25 @@
 .rp-short {
   width: 7rem;
 }
+
+.rp-details {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--dga-gray-200, #e5e7eb);
+
+  h3 {
+    margin: 0;
+    font-size: 14px;
+  }
+}
+
+.rp-grid--details {
+  display: grid;
+  grid-template-columns:
+    minmax(10rem, 1.4fr) minmax(7rem, 1fr) minmax(8rem, 1fr) minmax(8rem, 1fr)
+    auto;
+  gap: 6px;
+  align-items: center;
+}

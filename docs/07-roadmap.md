@@ -587,8 +587,15 @@ The owner chose to start Phase 4 with the report builder and come back to Phase 
   branch; overdue tasks; certificates by grade; abandoned drafts by step; a weekly delivery of overdue tasks to the
   branch managers.
   The Excel file carries the charts as native Excel charts beside their data.
-  Later (round 2): dashboards of several reports, PDF through the print template designer, drill-down from a group to
-  its rows, conditional totals (e.g. approved of all), report subscriptions chosen by users themselves.
+  **Round 2 — dashboards and drill-down (ADR-0047)** ✅: shared dashboards built by makers (change sets, a screen each,
+  granted by role) and personal ones (pinned from any report: its table, a tile or a chart); tiles, charts and short
+  tables of several reports, laid out in twelfths of the row, with dashboard filters that fill the reports' filters (the
+  same name by default, another one, a fixed value or the report's default); widgets of reports a viewer may not open
+  are hidden. A grouped row, a chart's bar, point or slice, a tile or the totals row opens the rows behind it (detail
+  columns per report), paged and exportable, with the report's filters and the viewer's access. NHC demo:
+  *Classification overview*.
+  Still later: PDF through the print template designer, conditional totals (e.g. approved of all), report subscriptions
+  chosen by users themselves, dashboards on a schedule.
 - Pixel-perfect reports.
 - Public Apps Control API for other products (the partner API is ADR-0042).
 - Push notifications, chat; AI assistant integration point.

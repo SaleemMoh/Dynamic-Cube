@@ -409,6 +409,66 @@
         />
       </label>
     </div>
+    <section class="rp-details" data-testid="rp-drill-columns">
+      <h3>{{ 'rp.drillCols' | dcTranslate }}</h3>
+      <p class="ed-muted">{{ 'rp.drillCols.hint' | dcTranslate }}</p>
+      @for (c of def().details ?? []; track $index; let i = $index) {
+        <div class="rp-grid__row rp-grid--details" [attr.data-detail]="c.name">
+          <select
+            class="ed-cell"
+            dir="ltr"
+            [ngModel]="c.column"
+            (ngModelChange)="setDetail(i, { column: $event })"
+            [attr.aria-label]="'rp.column.source' | dcTranslate"
+          >
+            <option value="">—</option>
+            @for (col of columns(); track col.ref) {
+              <option [value]="col.ref">{{ col.ref }}</option>
+            }
+          </select>
+          <input
+            class="ed-cell ed-mono"
+            dir="ltr"
+            [ngModel]="c.name"
+            [ngModelOptions]="{ updateOn: 'blur' }"
+            (ngModelChange)="setDetail(i, { name: $event })"
+            [attr.aria-label]="'rp.column.name' | dcTranslate"
+          />
+          <input
+            class="ed-cell"
+            dir="rtl"
+            [ngModel]="c.labelAr"
+            (ngModelChange)="setDetail(i, { labelAr: $event })"
+            [attr.aria-label]="'rp.column.labelAr' | dcTranslate"
+          />
+          <input
+            class="ed-cell"
+            dir="ltr"
+            [ngModel]="c.labelEn"
+            (ngModelChange)="setDetail(i, { labelEn: $event })"
+            [attr.aria-label]="'rp.column.labelEn' | dcTranslate"
+          />
+          <button
+            matIconButton
+            type="button"
+            (click)="removeDetail(i)"
+            [attr.aria-label]="'rp.remove' | dcTranslate"
+          >
+            <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+          </button>
+        </div>
+      }
+      <button
+        matButton
+        type="button"
+        class="ed-add"
+        (click)="addDetail()"
+        data-testid="rp-add-drill-column"
+      >
+        <mat-icon fontSet="material-symbols-outlined">add</mat-icon
+        >{{ 'rp.drillCols.add' | dcTranslate }}
+      </button>
+    </section>
   }
 
   @case ('filters') {

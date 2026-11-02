@@ -16,6 +16,10 @@ public sealed class ReportsDbContext(DbContextOptions<ReportsDbContext> options)
 
     public DbSet<ReportDelivery> Deliveries => Set<ReportDelivery>();
 
+    public DbSet<DashboardDefinition> Dashboards => Set<DashboardDefinition>();
+
+    public DbSet<PersonalDashboard> PersonalDashboards => Set<PersonalDashboard>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -33,6 +37,7 @@ public sealed class ReportsDbContext(DbContextOptions<ReportsDbContext> options)
             b.Property(e => e.Tiles).HasJsonColumn();
             b.Property(e => e.Sort).HasJsonColumn();
             b.Property(e => e.Charts).HasJsonColumn();
+            b.Property(e => e.Details).HasJsonColumn();
         });
         modelBuilder.Entity<SavedReportFilter>(b =>
         {
@@ -64,6 +69,23 @@ public sealed class ReportsDbContext(DbContextOptions<ReportsDbContext> options)
             b.Property(e => e.Error).HasMaxLength(4000);
             b.HasIndex(e => new { e.ScheduleCode, e.DueAt }).IsUnique();
             b.HasIndex(e => e.StartedAt);
+        });
+        modelBuilder.ConfigTable<DashboardDefinition>(Schema, "dashboard", b =>
+        {
+            b.Property(e => e.DescriptionAr).HasMaxLength(2000);
+            b.Property(e => e.DescriptionEn).HasMaxLength(2000);
+            b.Property(e => e.Icon).HasMaxLength(100);
+            b.Property(e => e.Filters).HasJsonColumn();
+            b.Property(e => e.Widgets).HasJsonColumn();
+        });
+        modelBuilder.Entity<PersonalDashboard>(b =>
+        {
+            b.ToTable("personal_dashboard", Schema);
+            b.Property(e => e.UserName).HasMaxLength(256).IsRequired();
+            b.Property(e => e.Name).HasMaxLength(200).IsRequired();
+            b.Property(e => e.Filters).HasJsonColumn();
+            b.Property(e => e.Widgets).HasJsonColumn();
+            b.HasIndex(e => new { e.UserName, e.Name }).IsUnique();
         });
     }
 }

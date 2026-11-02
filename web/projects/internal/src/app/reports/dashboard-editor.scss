@@ -1,0 +1,159 @@
+:host {
+  display: grid;
+  grid-template-rows: auto auto auto 1fr auto;
+  max-height: 92vh;
+}
+
+.de-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px 8px;
+
+  h2 {
+    margin: 0;
+    font-size: 18px;
+  }
+}
+
+.de-head__icon {
+  color: var(--dga-primary-600, #1b8354);
+}
+
+.de-grow {
+  flex: 1;
+}
+
+.de-muted {
+  margin: 0;
+  color: var(--dga-text-3, #6c737f);
+  font-size: 13px;
+}
+
+.de-body {
+  display: grid;
+  gap: 18px;
+}
+
+.de-identity {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 10px;
+  align-items: end;
+}
+
+.de-field {
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--dga-text-3, #6c737f);
+  min-width: 0;
+}
+
+.de-field--wide {
+  grid-column: span 2;
+}
+
+.de-field--narrow {
+  max-width: 7rem;
+}
+
+.ed-cell {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--dga-gray-300, #d2d6db);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--dga-text-1, #1f2a37);
+  font: inherit;
+  font-size: 13px;
+}
+
+.ed-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.de-section {
+  display: grid;
+  gap: 8px;
+
+  h3 {
+    margin: 0;
+    font-size: 15px;
+  }
+}
+
+.de-filter {
+  display: grid;
+  grid-template-columns: 8rem minmax(8rem, 1fr) minmax(8rem, 1fr) 9rem minmax(8rem, 1fr) auto auto;
+  gap: 6px;
+  align-items: center;
+}
+
+.de-widget {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--dga-gray-200, #e5e7eb);
+  border-radius: 8px;
+}
+
+.de-widget__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: end;
+
+  .de-field {
+    flex: 1 1 10rem;
+  }
+
+  .de-field--wide {
+    flex: 2 1 16rem;
+  }
+
+  .de-field--narrow {
+    flex: 0 0 6rem;
+  }
+}
+
+.de-acts {
+  display: inline-flex;
+}
+
+.de-binds {
+  display: grid;
+  gap: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--dga-gray-200, #e5e7eb);
+}
+
+.de-bind {
+  display: grid;
+  grid-template-columns: minmax(8rem, 12rem) minmax(12rem, 1fr) minmax(8rem, 1fr);
+  gap: 6px;
+  align-items: center;
+  font-size: 13px;
+}
+
+.de-add {
+  justify-self: start;
+}
+
+.de-actions {
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+@media (max-width: 900px) {
+  .de-filter,
+  .de-bind {
+    grid-template-columns: 1fr;
+  }
+
+  .de-field--wide {
+    grid-column: auto;
+  }
+}

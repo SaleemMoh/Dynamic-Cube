@@ -40,6 +40,9 @@ public sealed class ReportPayload : ConfigPayload
     public LegacyReportChart? Chart { get; set; }
 
     public int PageSize { get; set; } = 50;
+
+    /// <summary>The columns of the rows behind a group (drill-down); empty: chosen from the report's columns.</summary>
+    public List<ReportColumnDef> Details { get; set; } = [];
 }
 
 internal sealed partial class ReportApplier(ReportsDbContext db, IReportQueries queries)
@@ -84,13 +87,62 @@ internal sealed partial class ReportApplier(ReportsDbContext db, IReportQueries 
         }
 
         // Filters: names the query's conditions compare with.
-        if (payload.Filters.Count > MaxFilters)
+        CheckFilters(payload.Filters, errors);
+
+        foreach (var (tile, i) in payload.Tiles.Select((t, i) => (t, i)))
+        {
+            errors.Required($"tiles[{i}].labelAr", tile.LabelAr);
+            errors.Required($"tiles[{i}].labelEn", tile.LabelEn);
+        }
+
+        var shape = ReportShapes.Of(payload.Columns, payload.Tiles, payload.Sort, payload.Totals);
+        var inputs = payload.Filters.Select(f => f.Name).ToList();
+        var problems = await queries.CheckAsync(payload.Query, shape, inputs, cancellationToken);
+        foreach (var (field, messages) in problems)
+        {
+            foreach (var message in messages)
+            {
+                errors.Add(field, message);
+            }
+        }
+
+        // Charts: each groups the filtered rows its own way (X axis, series, values).
+        await CheckChartsAsync(ChartsOf(payload), payload.Query, inputs, errors, queries, cancellationToken);
+
+        // The rows behind a group: columns read as they are.
+        if (payload.Details.Count > 0)
+        {
+            foreach (var (column, i) in payload.Details.Select((c, i) => (c, i)))
+            {
+                errors.Required($"details[{i}].labelAr", column.LabelAr);
+                errors.Required($"details[{i}].labelEn", column.LabelEn);
+                if (!string.IsNullOrWhiteSpace(column.Aggregate))
+                {
+                    errors.Add($"details[{i}].aggregate", "The rows behind a group show their columns as they are.");
+                }
+            }
+
+            var details = await queries.CheckAsync(payload.Query, ReportShapes.Of(payload.Details, [], [], false), inputs, cancellationToken);
+            foreach (var (field, messages) in details.Where(p => p.Key.StartsWith("columns", StringComparison.Ordinal)))
+            {
+                foreach (var message in messages)
+                {
+                    errors.Add("details" + field["columns".Length..], message);
+                }
+            }
+        }
+    }
+
+    /// <summary>The checks of filters users fill (a report's, or a dashboard's own).</summary>
+    internal static void CheckFilters(IReadOnlyList<ReportFilterDef> filters, ValidationErrors errors)
+    {
+        if (filters.Count > MaxFilters)
         {
             errors.Add("filters", $"Use at most {MaxFilters} filters.");
         }
 
-        ChildSync.RequireUnique(payload.Filters, f => f.Name, "filters", errors);
-        foreach (var (filter, i) in payload.Filters.Select((f, i) => (f, i)))
+        ChildSync.RequireUnique(filters, f => f.Name, "filters", errors);
+        foreach (var (filter, i) in filters.Select((f, i) => (f, i)))
         {
             var path = $"filters[{i}]";
             if (!FilterName().IsMatch(filter.Name ?? string.Empty))
@@ -119,26 +171,6 @@ internal sealed partial class ReportApplier(ReportsDbContext db, IReportQueries 
                 errors.Add($"{path}.default", problem);
             }
         }
-
-        foreach (var (tile, i) in payload.Tiles.Select((t, i) => (t, i)))
-        {
-            errors.Required($"tiles[{i}].labelAr", tile.LabelAr);
-            errors.Required($"tiles[{i}].labelEn", tile.LabelEn);
-        }
-
-        var shape = ReportShapes.Of(payload.Columns, payload.Tiles, payload.Sort, payload.Totals);
-        var inputs = payload.Filters.Select(f => f.Name).ToList();
-        var problems = await queries.CheckAsync(payload.Query, shape, inputs, cancellationToken);
-        foreach (var (field, messages) in problems)
-        {
-            foreach (var message in messages)
-            {
-                errors.Add(field, message);
-            }
-        }
-
-        // Charts: each groups the filtered rows its own way (X axis, series, values).
-        await CheckChartsAsync(ChartsOf(payload), payload.Query, inputs, errors, queries, cancellationToken);
     }
 
     public const int MaxCharts = 6;
@@ -299,6 +331,7 @@ internal sealed partial class ReportApplier(ReportsDbContext db, IReportQueries 
         entity.Totals = payload.Totals;
         entity.Charts = ChartsOf(payload);
         entity.PageSize = payload.PageSize;
+        entity.Details = [.. payload.Details.Select(c => { c.Aggregate = null; return c; })];
     }
 
     protected override Task<ReportPayload> ToPayloadAsync(ReportsDbContext context, ReportDefinition entity, CancellationToken cancellationToken) =>
@@ -317,6 +350,7 @@ internal sealed partial class ReportApplier(ReportsDbContext db, IReportQueries 
             Totals = entity.Totals,
             Charts = entity.Charts,
             PageSize = entity.PageSize,
+            Details = entity.Details,
         });
 
     protected override async Task BeforeDeleteAsync(ReportsDbContext context, ReportDefinition entity, CancellationToken cancellationToken)
@@ -324,6 +358,12 @@ internal sealed partial class ReportApplier(ReportsDbContext db, IReportQueries 
         if (await context.Schedules.AnyAsync(s => s.ReportCode == entity.Code, cancellationToken))
         {
             throw new ChangeSetException($"Report '{entity.Code}' still has schedules.");
+        }
+
+        var dashboards = await context.Dashboards.AsNoTracking().Select(d => new { d.Code, d.Widgets }).ToListAsync(cancellationToken);
+        if (dashboards.FirstOrDefault(d => d.Widgets.Any(w => w.Report == entity.Code)) is { } used)
+        {
+            throw new ChangeSetException($"Report '{entity.Code}' is shown on dashboard '{used.Code}'.");
         }
     }
 

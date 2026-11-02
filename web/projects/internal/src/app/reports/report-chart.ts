@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { I18nService, ReportChartData, TranslatePipe } from '@dynamic-cube/shared';
 import { layoutChart } from './report-chart-layout';
 
@@ -29,7 +29,14 @@ import { layoutChart } from './report-chart-layout';
         <svg class="rc-pie" viewBox="0 0 200 200" role="img" [attr.aria-label]="title()">
           @for (s of l.slices; track $index) {
             @if (s.path) {
-              <path [attr.d]="s.path" [attr.fill]="s.color" stroke="#fff" stroke-width="2">
+              <path
+                [attr.d]="s.path"
+                [attr.fill]="s.color"
+                stroke="#fff"
+                stroke-width="2"
+                [class.rc-drill]="drillable() && !!s.key"
+                (click)="open(s.key)"
+              >
                 <title>{{ s.title }}</title>
               </path>
             }
@@ -83,6 +90,8 @@ import { layoutChart } from './report-chart-layout';
               [attr.height]="r.h"
               [attr.fill]="r.color"
               rx="3"
+              [class.rc-drill]="drillable() && !!r.key"
+              (click)="open(r.key)"
             >
               <title>{{ r.title }}</title>
             </rect>
@@ -106,6 +115,8 @@ import { layoutChart } from './report-chart-layout';
               [attr.fill]="d.color"
               stroke="#fff"
               stroke-width="2"
+              [class.rc-drill]="drillable() && !!d.key"
+              (click)="open(d.key)"
             >
               <title>{{ d.title }}</title>
             </circle>
@@ -200,6 +211,12 @@ import { layoutChart } from './report-chart-layout';
       height: 10px;
       border-radius: 2px;
     }
+    .rc-drill {
+      cursor: pointer;
+    }
+    .rc-drill:hover {
+      opacity: 0.8;
+    }
     .rc-empty,
     .rc-more {
       margin: 0;
@@ -213,6 +230,10 @@ export class ReportChart {
   readonly showTitle = input(true);
   /** The drawing's width in SVG units (text keeps its size when the chart is wide); default by the chart's width. */
   readonly size = input<number | null>(null);
+  /** Whether a click on a bar, point or slice opens the rows behind it (ADR-0047). */
+  readonly drillable = input(false);
+  /** The clicked group's values by their key in the chart's rows (x0 or y0, and s). */
+  readonly drill = output<Record<string, unknown>>();
 
   private readonly lang = computed(() => (this.i18n.language() === 'ar' ? 'ar' : 'en'));
   protected readonly layout = computed(() => {
@@ -221,6 +242,10 @@ export class ReportChart {
     const width = this.size() ?? (c.width === 'FULL' ? 1200 : 640);
     return layoutChart(c, this.lang(), width, width > 900 ? 340 : 300);
   });
+  protected open(key: Record<string, unknown> | undefined): void {
+    if (key && this.drillable()) this.drill.emit(key);
+  }
+
   protected readonly title = computed(() => {
     const c = this.chart();
     return c ? (this.lang() === 'ar' ? c.titleAr : c.titleEn) : '';

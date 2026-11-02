@@ -2,11 +2,31 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, output } f
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
-import { I18nService, ReportRun, ReportRunColumn, TranslatePipe } from '@dynamic-cube/shared';
+import {
+  DrillSource,
+  I18nService,
+  ReportRun,
+  ReportRunColumn,
+  TranslatePipe,
+} from '@dynamic-cube/shared';
 import { ReportChart } from './report-chart';
 import { formatValue } from './report-model';
 
-/** A page of a report: its tiles, its charts (half or full width), the table with a totals row and the page buttons. */
+/** Where a group was clicked and its values: what a drill-down opens (ADR-0047). */
+export interface DrillTarget {
+  source: DrillSource;
+  chart: string | null;
+  values: Record<string, unknown> | null;
+  /** What the group is called on the drill-down's title (the tile's or chart's name). */
+  titleAr?: string;
+  titleEn?: string;
+}
+
+/**
+ * A page of a report: its tiles, its charts (half or full width), the table with a totals row and the page buttons.
+ * When the report drills down, a tile, a chart's bar, point or slice, a grouped row or the totals row opens the rows
+ * behind it.
+ */
 @Component({
   selector: 'dc-report-result',
   imports: [MatButtonModule, MatIconModule, MatTableModule, ReportChart, TranslatePipe],
@@ -17,7 +37,32 @@ import { formatValue } from './report-model';
       @if (r.tiles.length) {
         <div class="rr-tiles" data-testid="report-tiles">
           @for (t of r.tiles; track t.name) {
-            <div class="rr-tile" [attr.data-tile]="t.name">
+            <div
+              class="rr-tile"
+              [class.rr-drill]="drillable()"
+              [attr.data-tile]="t.name"
+              [attr.role]="drillable() ? 'button' : null"
+              [attr.tabindex]="drillable() ? 0 : null"
+              [attr.title]="drillable() ? ('rp.drill.hint' | dcTranslate) : null"
+              (click)="
+                open({
+                  source: 'TILE',
+                  chart: null,
+                  values: null,
+                  titleAr: t.labelAr,
+                  titleEn: t.labelEn,
+                })
+              "
+              (keydown.enter)="
+                open({
+                  source: 'TILE',
+                  chart: null,
+                  values: null,
+                  titleAr: t.labelAr,
+                  titleEn: t.labelEn,
+                })
+              "
+            >
               <span class="rr-tile__label">{{ lang() === 'ar' ? t.labelAr : t.labelEn }}</span>
               <span class="rr-tile__value">{{ number(t.value) }}</span>
             </div>
@@ -32,6 +77,16 @@ import { formatValue } from './report-model';
               [class.rr-chart--full]="c.width === 'FULL'"
               [chart]="c"
               [attr.data-chart]="c.name"
+              [drillable]="drillable() && c.category !== 'ROWS'"
+              (drill)="
+                open({
+                  source: 'CHART',
+                  chart: c.name,
+                  values: $event,
+                  titleAr: c.titleAr,
+                  titleEn: c.titleEn,
+                })
+              "
             />
           }
         </div>
@@ -57,13 +112,21 @@ import { formatValue } from './report-model';
             </ng-container>
           }
           <tr mat-header-row *matHeaderRowDef="names()"></tr>
-          <tr mat-row *matRowDef="let row; columns: names()"></tr>
+          <tr
+            mat-row
+            *matRowDef="let row; columns: names()"
+            [class.rr-drill]="groups()"
+            [attr.title]="groups() ? ('rp.drill.hint' | dcTranslate) : null"
+            (click)="openRow(row)"
+          ></tr>
           @if (r.totals && r.rows.length) {
             <tr
               mat-footer-row
               *matFooterRowDef="names()"
               class="rr-totals"
+              [class.rr-drill]="drillable()"
               data-testid="report-totals"
+              (click)="open({ source: 'TOTALS', chart: null, values: null })"
             ></tr>
           }
         </table>
@@ -152,6 +215,13 @@ import { formatValue } from './report-model';
       font-weight: 600;
       border-top: 2px solid var(--dga-gray-300, #d2d6db);
     }
+    .rr-drill {
+      cursor: pointer;
+    }
+    tr.rr-drill:hover td,
+    .rr-tile.rr-drill:hover {
+      background: var(--dga-gray-50, #f9fafb);
+    }
     .rr-pager {
       display: flex;
       align-items: center;
@@ -165,6 +235,9 @@ export class ReportResult {
   private readonly i18n = inject(I18nService);
   readonly run = input<ReportRun | null>(null);
   readonly page = output<number>();
+  /** Whether groups open to the rows behind them. */
+  readonly drillable = input(false);
+  readonly drill = output<DrillTarget>();
 
   protected readonly lang = computed(() => (this.i18n.language() === 'ar' ? 'ar' : 'en'));
   protected readonly names = computed(() => this.run()?.columns.map((c) => c.name) ?? []);
@@ -183,6 +256,25 @@ export class ReportResult {
       .replace('{page}', String(this.run()?.page ?? 1))
       .replace('{pages}', String(this.pages())),
   );
+
+  /** A grouped table's rows open to the rows behind them (a table without totals already shows the records). */
+  protected readonly groups = computed(
+    () => this.drillable() && (this.run()?.columns.some((c) => !!c.aggregate) ?? false),
+  );
+
+  protected open(target: DrillTarget): void {
+    if (this.drillable()) this.drill.emit(target);
+  }
+
+  protected openRow(row: Record<string, unknown>): void {
+    if (!this.groups()) return;
+    const values = Object.fromEntries(
+      (this.run()?.columns ?? [])
+        .filter((c) => !c.aggregate)
+        .map((c) => [c.name, row[c.name] ?? null]),
+    );
+    this.drill.emit({ source: 'TABLE', chart: null, values });
+  }
 
   protected label(c: ReportRunColumn): string {
     return this.lang() === 'ar' ? c.labelAr : c.labelEn;

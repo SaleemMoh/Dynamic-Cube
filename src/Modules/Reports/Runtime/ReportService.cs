@@ -43,7 +43,8 @@ public sealed record ReportView(
     IReadOnlyList<ReportChartDef> Charts,
     int PageSize,
     bool CanExport,
-    IReadOnlyList<SavedFilterView> SavedFilters);
+    IReadOnlyList<SavedFilterView> SavedFilters,
+    bool CanDrill = false);
 
 public sealed record SavedFilterView(Guid Id, string Name, IReadOnlyDictionary<string, string?> Values, bool IsDefault);
 
@@ -142,7 +143,8 @@ internal sealed class ReportService(ReportsDbContext context, IReportQueries que
             report.Charts,
             report.PageSize,
             await queries.CanAsync(ReportViewer.Current, ReportResources.Of(report.Code), "EXPORT", cancellationToken),
-            saved);
+            saved,
+            ReportDrills.Columns(report).Count > 0);
     }
 
     public async Task<ReportRun> RunAsync(string code, RunReportRequest request, CancellationToken cancellationToken)
@@ -187,6 +189,63 @@ internal sealed class ReportService(ReportsDbContext context, IReportQueries que
         var csv = string.Equals(format, ReportFormats.Csv, StringComparison.OrdinalIgnoreCase);
         var charts = csv ? [] : await ChartsAsync(report, inputs, ReportViewer.Current, resource, cancellationToken);
         return ReportExports.Write(report, result, inputs, csv ? ReportFormats.Csv : ReportFormats.Xlsx, arabic, options.Value.Now(clock), charts);
+    }
+
+    /// <summary>The rows behind a group of the report (ADR-0047): the report's query, filters and the viewer's access, narrowed to the group.</summary>
+    public async Task<DrillRun> DrillAsync(string code, DrillRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var report = await OpenAsync(code, CatalogActions.View, cancellationToken);
+        var columns = ReportDrills.Columns(report);
+        var (matches, narrowed) = ReportDrills.Matches(report, request);
+        var size = Math.Clamp(request.PageSize ?? report.PageSize, 1, 500);
+        var page = Math.Max(1, request.Page);
+        var (result, inputs) = await DetailsAsync(report, columns, matches, request.Filters, size, (page - 1) * size, cancellationToken);
+        return new DrillRun(
+            [.. result.Columns.Select(col => columns.FirstOrDefault(d => d.Name == col.Name) is { } def
+                ? new RunColumn(col.Name, def.LabelAr, def.LabelEn, col.Type, null)
+                : new RunColumn(col.Name, col.Name, col.Name, col.Type, null))],
+            result.Rows,
+            result.Total,
+            page,
+            size,
+            result.HasMore,
+            inputs,
+            narrowed);
+    }
+
+    /// <summary>The rows behind a group as Excel or CSV (needs EXPORT on the report).</summary>
+    public async Task<ReportFile> ExportDrillAsync(string code, DrillRequest request, string format, bool arabic, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var report = await OpenAsync(code, "EXPORT", cancellationToken);
+        var columns = ReportDrills.Columns(report);
+        var (matches, _) = ReportDrills.Matches(report, request);
+        var (result, inputs) = await DetailsAsync(report, columns, matches, request.Filters, ReportExports.MaxRows, 0, cancellationToken);
+        var details = new ReportDefinition
+        {
+            Code = report.Code + "-details",
+            NameAr = report.NameAr + " — التفاصيل",
+            NameEn = report.NameEn + " — details",
+            Columns = [.. columns],
+            Filters = report.Filters,
+        };
+        var csv = string.Equals(format, ReportFormats.Csv, StringComparison.OrdinalIgnoreCase);
+        return ReportExports.Write(details, result, inputs, csv ? ReportFormats.Csv : ReportFormats.Xlsx, arabic, options.Value.Now(clock));
+    }
+
+    private async Task<(ReportResult Result, Dictionary<string, string?> Inputs)> DetailsAsync(
+        ReportDefinition report, IReadOnlyList<ReportColumnDef> columns, IReadOnlyList<ReportMatch> matches, IReadOnlyDictionary<string, string?>? filters, int limit, int offset, CancellationToken cancellationToken)
+    {
+        if (columns.Count == 0)
+        {
+            throw new ReportInputException(new Dictionary<string, string[]> { ["details"] = ["The report does not say which columns its rows show."] });
+        }
+
+        var inputs = ReportFilters.Resolve(report.Filters, filters, Today);
+        var shape = ReportShapes.Of(columns, [], [], false) with { Matches = matches };
+        var result = await queries.RunAsync(JsonNode.Parse(report.Query), shape, inputs, ReportViewer.Current, ReportResources.Of(report.Code), limit, offset, withSummary: true, cancellationToken);
+        return (result, inputs);
     }
 
     public async Task<SavedFilterView> SaveFilterAsync(string code, SaveFilterRequest request, CancellationToken cancellationToken)
@@ -273,7 +332,7 @@ internal sealed class ReportService(ReportsDbContext context, IReportQueries que
     }
 
     /// <summary>A chart's rows for the viewer: the filtered rows grouped by its axes (or as they are), in its order, up to its limit.</summary>
-    private async Task<ChartData> ChartAsync(string query, ReportChartDef chart, IReadOnlyDictionary<string, string?> inputs, ReportViewer viewer, string? resource, CancellationToken cancellationToken)
+    internal async Task<ChartData> ChartAsync(string query, ReportChartDef chart, IReadOnlyDictionary<string, string?> inputs, ReportViewer viewer, string? resource, CancellationToken cancellationToken)
     {
         var (shape, _) = ReportShapes.Chart(chart);
         var result = await queries.RunAsync(JsonNode.Parse(query), shape, inputs, viewer, resource, Math.Clamp(chart.Limit, 1, 500), 0, withSummary: false, cancellationToken);
@@ -327,7 +386,7 @@ internal sealed class ReportService(ReportsDbContext context, IReportQueries que
 
     private string UserName => user.UserName ?? user.UserId;
 
-    private DateOnly Today => DateOnly.FromDateTime(options.Value.Now(clock).DateTime);
+    internal DateOnly Today => DateOnly.FromDateTime(options.Value.Now(clock).DateTime);
 }
 
 /// <summary>

@@ -97,7 +97,8 @@ internal sealed class ReportQueries(LovQueryService queries, AccessResolver acce
         [.. shape.Columns.Select(c => new LovReportColumn(c.Name, c.Column, c.Aggregate, c.Bucket))],
         [.. shape.Tiles.Select(t => new LovReportTile(t.Name, t.Column, t.Aggregate))],
         [.. shape.Sort.Select(s => (s.Column, s.Descending))],
-        shape.Totals);
+        shape.Totals,
+        shape.Matches is null ? null : [.. shape.Matches.Select(m => new LovReportMatch(m.Column, m.Bucket, m.Value))]);
 
     private static string TypeOf(LovColumnCategory category) => category switch
     {

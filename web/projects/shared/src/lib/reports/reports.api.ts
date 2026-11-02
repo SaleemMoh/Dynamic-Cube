@@ -107,6 +107,8 @@ export interface ReportDefinition {
   totals: boolean;
   charts: ReportChartDef[];
   pageSize: number;
+  /** The columns of the rows behind a group (drill-down); empty: chosen from the report's columns. */
+  details?: ReportColumnDef[];
 }
 
 /** A report in the reports list. */
@@ -142,6 +144,8 @@ export interface ReportView {
   pageSize: number;
   canExport: boolean;
   savedFilters: SavedReportFilter[];
+  /** Whether the report's groups open to the rows behind them. */
+  canDrill: boolean;
 }
 
 export interface ReportRunColumn {
@@ -198,6 +202,140 @@ export interface ReportRun {
   charts: ReportChartData[];
   /** The filter values applied (defaults filled in). */
   filters: Record<string, string | null>;
+}
+
+/** Where a drill-down starts (ADR-0047). */
+export type DrillSource = 'TABLE' | 'CHART' | 'TILE' | 'TOTALS';
+
+/** Opening the rows behind a group: the report's filters, where it was clicked and the group's values by their key. */
+export interface DrillRequest {
+  filters: Record<string, string | null>;
+  source: DrillSource;
+  chart: string | null;
+  values: Record<string, unknown> | null;
+  page?: number;
+  pageSize?: number | null;
+}
+
+/** A value the rows are narrowed by, with its column's label. */
+export interface DrillValue {
+  labelAr: string;
+  labelEn: string;
+  value: unknown;
+  bucket: ReportBucket | null;
+}
+
+/** A page of the rows behind a group. */
+export interface DrillRun {
+  columns: ReportRunColumn[];
+  rows: Record<string, unknown>[];
+  total: number;
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
+  filters: Record<string, string | null>;
+  narrowed: DrillValue[];
+}
+
+export type DashboardWidgetKind = 'TILE' | 'CHART' | 'TABLE';
+
+/**
+ * A widget of a dashboard: a report's tile, chart or first rows; its width in twelfths of the row; the report's filters
+ * filled by fixed values or bound dashboard filters (by default the one of the same name).
+ */
+export interface DashboardWidgetDef {
+  name: string;
+  kind: DashboardWidgetKind;
+  report: string;
+  item: string | null;
+  titleAr: string | null;
+  titleEn: string | null;
+  span: number;
+  rows: number;
+  bind: Record<string, string>;
+  values: Record<string, string | null>;
+}
+
+/** A shared dashboard as it is designed (the payload of an rpt.dashboard change). */
+export interface DashboardDefinition {
+  nameAr: string;
+  nameEn: string;
+  descriptionAr: string | null;
+  descriptionEn: string | null;
+  icon: string | null;
+  filters: ReportFilterDef[];
+  widgets: DashboardWidgetDef[];
+}
+
+/** A dashboard in the list: shared ones by code, the user's own by id. */
+export interface DashboardSummary {
+  code: string | null;
+  id: string | null;
+  nameAr: string;
+  nameEn: string;
+  descriptionAr: string | null;
+  descriptionEn: string | null;
+  icon: string | null;
+  personal: boolean;
+  isDefault: boolean;
+}
+
+export interface DashboardWidgetView {
+  name: string;
+  kind: DashboardWidgetKind;
+  report: string;
+  reportNameAr: string;
+  reportNameEn: string;
+  item: string | null;
+  titleAr: string;
+  titleEn: string;
+  span: number;
+  rows: number;
+  canDrill: boolean;
+  canExport: boolean;
+}
+
+/** A dashboard to show: the widgets of reports the user may view; hidden counts the others. */
+export interface DashboardView {
+  code: string | null;
+  id: string | null;
+  nameAr: string;
+  nameEn: string;
+  descriptionAr: string | null;
+  descriptionEn: string | null;
+  filters: ReportFilterDef[];
+  widgets: DashboardWidgetView[];
+  personal: boolean;
+  hidden: number;
+  /** A personal dashboard's own definition, to edit. */
+  definition: DashboardWidgetDef[] | null;
+  isDefault: boolean;
+}
+
+export interface WidgetTable {
+  columns: ReportRunColumn[];
+  rows: Record<string, unknown>[];
+  total: number;
+  totals: Record<string, unknown> | null;
+  grouped: boolean;
+}
+
+/** A widget's data with the report filter values it ran with. */
+export interface WidgetData {
+  name: string;
+  kind: DashboardWidgetKind;
+  report: string;
+  filters: Record<string, string | null>;
+  tile: ReportTileValue | null;
+  chart: ReportChartData | null;
+  table: WidgetTable | null;
+}
+
+export interface SavePersonalDashboard {
+  name: string;
+  filters: ReportFilterDef[];
+  widgets: DashboardWidgetDef[];
+  isDefault: boolean;
 }
 
 export interface ReportDeliveryRecipient {
@@ -282,6 +420,79 @@ export class ReportsApi {
     return this.http.delete<void>(
       `${REPORTS_API}/reports/${encodeURIComponent(code)}/saved-filters/${id}`,
     );
+  }
+
+  /** The rows behind a group of the report (ADR-0047). */
+  drill(code: string, request: DrillRequest): Observable<DrillRun> {
+    return this.http.post<DrillRun>(
+      `${REPORTS_API}/reports/${encodeURIComponent(code)}/drill`,
+      request,
+    );
+  }
+
+  exportDrill(
+    code: string,
+    request: DrillRequest,
+    format: ReportFormat,
+    lang: 'ar' | 'en',
+  ): Observable<Blob> {
+    const params = new HttpParams().set('format', format).set('lang', lang);
+    return this.http.post(
+      `${REPORTS_API}/reports/${encodeURIComponent(code)}/drill/export`,
+      request,
+      {
+        params,
+        responseType: 'blob',
+      },
+    );
+  }
+
+  /** The dashboards the user may open: their own, then the shared ones granted to them. */
+  dashboards(): Observable<DashboardSummary[]> {
+    return this.http.get<DashboardSummary[]>(`${REPORTS_API}/dashboards`);
+  }
+
+  dashboard(code: string): Observable<DashboardView> {
+    return this.http.get<DashboardView>(`${REPORTS_API}/dashboards/${encodeURIComponent(code)}`);
+  }
+
+  myDashboard(id: string): Observable<DashboardView> {
+    return this.http.get<DashboardView>(`${REPORTS_API}/my-dashboards/${id}`);
+  }
+
+  /** One widget run with the dashboard's filter values (a shared dashboard by code, the user's own by id). */
+  runWidget(
+    dashboard: { code: string | null; id: string | null },
+    widget: string,
+    filters: Record<string, string | null>,
+  ): Observable<WidgetData> {
+    const base = dashboard.id
+      ? `${REPORTS_API}/my-dashboards/${dashboard.id}`
+      : `${REPORTS_API}/dashboards/${encodeURIComponent(dashboard.code ?? '')}`;
+    return this.http.post<WidgetData>(`${base}/widgets/${encodeURIComponent(widget)}`, { filters });
+  }
+
+  saveMyDashboard(id: string | null, dashboard: SavePersonalDashboard): Observable<DashboardView> {
+    return id
+      ? this.http.put<DashboardView>(`${REPORTS_API}/my-dashboards/${id}`, dashboard)
+      : this.http.post<DashboardView>(`${REPORTS_API}/my-dashboards`, dashboard);
+  }
+
+  deleteMyDashboard(id: string): Observable<void> {
+    return this.http.delete<void>(`${REPORTS_API}/my-dashboards/${id}`);
+  }
+
+  /** Adds a report's tile, chart or table to one of the user's dashboards (a new one named newName when none). */
+  pin(
+    dashboard: string | null,
+    newName: string | null,
+    widget: DashboardWidgetDef,
+  ): Observable<DashboardView> {
+    return this.http.post<DashboardView>(`${REPORTS_API}/my-dashboards/pin`, {
+      dashboard,
+      newName,
+      widget,
+    });
   }
 
   /** Runs an unsaved report within the designer's own access (first page). */

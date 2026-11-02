@@ -81,6 +81,12 @@ public sealed class ReportDefinition : ConfigEntity
     public List<ReportChartDef> Charts { get; set; } = [];
 
     public int PageSize { get; set; } = 50;
+
+    /// <summary>
+    /// The columns of the rows behind a group (drill-down, ADR-0047), as they are (not totalled); empty: the report's
+    /// columns not totalled and those summed, averaged or at a minimum or maximum, read as they are.
+    /// </summary>
+    public List<ReportColumnDef> Details { get; set; } = [];
 }
 
 /// <summary>A column: its name, labels, the column it reads (<c>alias.column</c>) and its aggregate (none: grouped by it).</summary>
@@ -315,4 +321,92 @@ public sealed class ReportDelivery
     public List<ReportDeliveryRecipient> Recipients { get; set; } = [];
 
     public string? Error { get; set; }
+}
+
+/// <summary>What a dashboard widget shows of its report (ADR-0047).</summary>
+public static class DashboardWidgetKinds
+{
+    /// <summary>One of the report's tiles.</summary>
+    public const string Tile = "TILE";
+
+    /// <summary>One of the report's charts.</summary>
+    public const string Chart = "CHART";
+
+    /// <summary>The report's table: its first rows.</summary>
+    public const string Table = "TABLE";
+
+    public static IReadOnlyList<string> All { get; } = [Tile, Chart, Table];
+}
+
+/// <summary>
+/// A widget of a dashboard (ADR-0047): a tile, a chart or the first rows of a report, its title (default: the item's),
+/// its width in twelfths of the row and, for a table, how many rows. Its report's filters take the widget's fixed values,
+/// or else the dashboard filter bound to them (by default the one of the same name), or else the report's defaults. The
+/// widget is shown only to viewers who may view its report.
+/// </summary>
+public sealed class DashboardWidgetDef
+{
+    public string Name { get; set; } = string.Empty;
+
+    public string Kind { get; set; } = DashboardWidgetKinds.Chart;
+
+    public string Report { get; set; } = string.Empty;
+
+    /// <summary>The tile's or chart's name; none for a table.</summary>
+    public string? Item { get; set; }
+
+    public string? TitleAr { get; set; }
+
+    public string? TitleEn { get; set; }
+
+    /// <summary>Width in twelfths of the row (3: a quarter, 4: a third, 6: half, 12: the whole row).</summary>
+    public int Span { get; set; } = 6;
+
+    /// <summary>A table: how many rows it shows (1–50).</summary>
+    public int Rows { get; set; } = 10;
+
+    /// <summary>Report filter → the dashboard filter that fills it; empty: none (the report's default), even one of the same name.</summary>
+    public Dictionary<string, string> Bind { get; set; } = [];
+
+    /// <summary>Report filter → a fixed value.</summary>
+    public Dictionary<string, string?> Values { get; set; } = [];
+}
+
+/// <summary>
+/// A shared dashboard (ADR-0047): tiles, charts and short tables of several reports with filters of its own that fill
+/// the reports' filters. Configuration, edited through change sets; each dashboard is a resource of Apps Control
+/// (<c>reports.d.{code}</c>) roles grant and menus open.
+/// </summary>
+public sealed class DashboardDefinition : ConfigEntity
+{
+    public string? DescriptionAr { get; set; }
+
+    public string? DescriptionEn { get; set; }
+
+    public string? Icon { get; set; }
+
+    public List<ReportFilterDef> Filters { get; set; } = [];
+
+    public List<DashboardWidgetDef> Widgets { get; set; } = [];
+}
+
+/// <summary>A user's own dashboard (ADR-0047): the same widgets and filters, kept for them alone and saved directly.</summary>
+public sealed class PersonalDashboard
+{
+    public Guid Id { get; set; } = Guid.CreateVersion7();
+
+    public string UserName { get; set; } = string.Empty;
+
+    public string Name { get; set; } = string.Empty;
+
+    public List<ReportFilterDef> Filters { get; set; } = [];
+
+    public List<DashboardWidgetDef> Widgets { get; set; } = [];
+
+    /// <summary>Opened first in the dashboards list.</summary>
+    public bool IsDefault { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
 }

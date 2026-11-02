@@ -1,0 +1,376 @@
+<header class="de-head">
+  <mat-icon fontSet="material-symbols-outlined" class="de-head__icon" aria-hidden="true"
+    >dashboard_customize</mat-icon
+  >
+  <div class="de-grow">
+    <h2>{{ (personal ? 'db.editor.personal' : 'db.editor.title') | dcTranslate }}</h2>
+    <p class="de-muted">{{ 'db.editor.subtitle' | dcTranslate }}</p>
+  </div>
+  <button
+    matIconButton
+    type="button"
+    (click)="close()"
+    [attr.aria-label]="'db.close' | dcTranslate"
+  >
+    <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+  </button>
+</header>
+
+@if (saving()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+@if (errors().length) {
+  <ul class="dc-errors" role="alert" data-testid="db-errors">
+    @for (e of errors(); track $index) {
+      <li>{{ e }}</li>
+    }
+  </ul>
+}
+
+<mat-dialog-content class="de-body">
+  <section class="de-identity">
+    @if (personal) {
+      <label class="de-field de-field--wide">
+        <span>{{ 'db.name' | dcTranslate }}</span>
+        <input
+          class="ed-cell"
+          maxlength="200"
+          [ngModel]="def().nameEn"
+          (ngModelChange)="set({ nameEn: $event, nameAr: $event })"
+          data-testid="db-name"
+        />
+      </label>
+      <mat-checkbox [ngModel]="isDefault()" (ngModelChange)="isDefault.set($event)">{{
+        'db.isDefault' | dcTranslate
+      }}</mat-checkbox>
+    } @else {
+      <label class="de-field">
+        <span>{{ 'db.code' | dcTranslate }}</span>
+        <input
+          class="ed-cell ed-mono"
+          dir="ltr"
+          [ngModel]="code()"
+          (ngModelChange)="code.set($event.toUpperCase())"
+          [disabled]="!isNew"
+          data-testid="db-code"
+        />
+      </label>
+      <label class="de-field">
+        <span>{{ 'db.nameAr' | dcTranslate }}</span>
+        <input
+          class="ed-cell"
+          dir="rtl"
+          [ngModel]="def().nameAr"
+          (ngModelChange)="set({ nameAr: $event })"
+          data-testid="db-name-ar"
+        />
+      </label>
+      <label class="de-field">
+        <span>{{ 'db.nameEn' | dcTranslate }}</span>
+        <input
+          class="ed-cell"
+          dir="ltr"
+          [ngModel]="def().nameEn"
+          (ngModelChange)="set({ nameEn: $event })"
+          data-testid="db-name-en"
+        />
+      </label>
+      <label class="de-field">
+        <span>{{ 'db.descriptionAr' | dcTranslate }}</span>
+        <input
+          class="ed-cell"
+          dir="rtl"
+          [ngModel]="def().descriptionAr"
+          (ngModelChange)="set({ descriptionAr: $event })"
+        />
+      </label>
+      <label class="de-field">
+        <span>{{ 'db.descriptionEn' | dcTranslate }}</span>
+        <input
+          class="ed-cell"
+          dir="ltr"
+          [ngModel]="def().descriptionEn"
+          (ngModelChange)="set({ descriptionEn: $event })"
+        />
+      </label>
+    }
+  </section>
+
+  <section class="de-section" data-testid="db-filters">
+    <h3>{{ 'db.filters' | dcTranslate }}</h3>
+    <p class="de-muted">{{ 'db.filters.hint' | dcTranslate }}</p>
+    @for (f of def().filters; track $index; let i = $index) {
+      <div class="de-filter" [attr.data-filter]="f.name">
+        <input
+          class="ed-cell ed-mono"
+          dir="ltr"
+          [ngModel]="f.name"
+          [ngModelOptions]="{ updateOn: 'blur' }"
+          (ngModelChange)="setFilter(i, { name: $event })"
+          [attr.aria-label]="'db.filter.name' | dcTranslate"
+          [placeholder]="'db.filter.name' | dcTranslate"
+        />
+        <input
+          class="ed-cell"
+          dir="rtl"
+          [ngModel]="f.labelAr"
+          (ngModelChange)="setFilter(i, { labelAr: $event })"
+          [placeholder]="'db.filter.labelAr' | dcTranslate"
+          [attr.aria-label]="'db.filter.labelAr' | dcTranslate"
+        />
+        <input
+          class="ed-cell"
+          dir="ltr"
+          [ngModel]="f.labelEn"
+          (ngModelChange)="setFilter(i, { labelEn: $event })"
+          [placeholder]="'db.filter.labelEn' | dcTranslate"
+          [attr.aria-label]="'db.filter.labelEn' | dcTranslate"
+        />
+        <select
+          class="ed-cell"
+          [ngModel]="f.type"
+          (ngModelChange)="setFilterType(i, $event)"
+          [attr.aria-label]="'db.filter.type' | dcTranslate"
+        >
+          @for (t of filterTypes; track t) {
+            <option [value]="t">{{ 'db.filter.type.' + t | dcTranslate }}</option>
+          }
+        </select>
+        @if (f.type === 'LIST') {
+          <select
+            class="ed-cell"
+            [ngModel]="f.lov ?? ''"
+            (ngModelChange)="setFilter(i, { lov: $event || null })"
+            [attr.aria-label]="'db.filter.lov' | dcTranslate"
+          >
+            <option value="">—</option>
+            @for (l of lovs(); track l.code) {
+              <option [value]="l.code">{{ name(l) }}</option>
+            }
+          </select>
+          <mat-checkbox
+            [ngModel]="f.multiple"
+            (ngModelChange)="setFilter(i, { multiple: $event })"
+            >{{ 'db.filter.multiple' | dcTranslate }}</mat-checkbox
+          >
+        } @else {
+          <input
+            class="ed-cell"
+            dir="ltr"
+            [ngModel]="f.default"
+            (ngModelChange)="setFilter(i, { default: $event || null })"
+            [placeholder]="'db.filter.default' | dcTranslate"
+            [attr.aria-label]="'db.filter.default' | dcTranslate"
+          />
+        }
+        <button
+          matIconButton
+          type="button"
+          (click)="removeFilter(i)"
+          [attr.aria-label]="'rp.remove' | dcTranslate"
+        >
+          <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+        </button>
+      </div>
+    }
+    <button
+      matButton
+      type="button"
+      class="de-add"
+      (click)="addFilter()"
+      data-testid="db-add-filter"
+    >
+      <mat-icon fontSet="material-symbols-outlined">add</mat-icon
+      >{{ 'db.filter.add' | dcTranslate }}
+    </button>
+  </section>
+
+  <section class="de-section" data-testid="db-widgets">
+    <h3>{{ 'db.widgets' | dcTranslate }}</h3>
+    @for (w of def().widgets; track $index; let i = $index; let first = $first; let last = $last) {
+      @let view = views()[w.report];
+      <div class="de-widget" [attr.data-widget]="w.name">
+        <div class="de-widget__row">
+          <label class="de-field de-field--wide">
+            <span>{{ 'db.widget.report' | dcTranslate }}</span>
+            <select
+              class="ed-cell"
+              [ngModel]="w.report"
+              (ngModelChange)="setReport(i, $event)"
+              data-testid="db-widget-report"
+            >
+              <option value="">—</option>
+              @for (r of reports(); track r.code) {
+                <option [value]="r.code">{{ name(r) }}</option>
+              }
+            </select>
+          </label>
+          <label class="de-field">
+            <span>{{ 'db.widget.kind' | dcTranslate }}</span>
+            <select
+              class="ed-cell"
+              [ngModel]="w.kind"
+              (ngModelChange)="setKind(i, $event)"
+              data-testid="db-widget-kind"
+            >
+              @for (k of kinds; track k) {
+                <option [value]="k">{{ 'db.widget.kind.' + k | dcTranslate }}</option>
+              }
+            </select>
+          </label>
+          @if (w.kind !== 'TABLE') {
+            <label class="de-field">
+              <span>{{ 'db.widget.item' | dcTranslate }}</span>
+              <select
+                class="ed-cell"
+                [ngModel]="w.item ?? ''"
+                (ngModelChange)="setWidget(i, { item: $event || null })"
+                data-testid="db-widget-item"
+              >
+                <option value="">—</option>
+                @if (w.kind === 'TILE') {
+                  @for (t of view?.tiles ?? []; track t.name) {
+                    <option [value]="t.name">{{ label(t) }}</option>
+                  }
+                } @else {
+                  @for (c of view?.charts ?? []; track c.name) {
+                    <option [value]="c.name">{{ title(c) }}</option>
+                  }
+                }
+              </select>
+            </label>
+          } @else {
+            <label class="de-field de-field--narrow">
+              <span>{{ 'db.widget.rows' | dcTranslate }}</span>
+              <input
+                class="ed-cell"
+                type="number"
+                min="1"
+                max="50"
+                [ngModel]="w.rows"
+                (ngModelChange)="setWidget(i, { rows: +$event })"
+              />
+            </label>
+          }
+          <label class="de-field">
+            <span>{{ 'db.widget.span' | dcTranslate }}</span>
+            <select
+              class="ed-cell"
+              [ngModel]="w.span"
+              (ngModelChange)="setWidget(i, { span: +$event })"
+            >
+              @for (s of spans; track s) {
+                <option [ngValue]="s">{{ 'db.widget.span.' + s | dcTranslate }}</option>
+              }
+            </select>
+          </label>
+          <span class="de-acts">
+            <button
+              matIconButton
+              type="button"
+              [disabled]="first"
+              (click)="moveWidget(i, -1)"
+              [attr.aria-label]="'db.widget.up' | dcTranslate"
+            >
+              <mat-icon fontSet="material-symbols-outlined">arrow_upward</mat-icon>
+            </button>
+            <button
+              matIconButton
+              type="button"
+              [disabled]="last"
+              (click)="moveWidget(i, 1)"
+              [attr.aria-label]="'db.widget.down' | dcTranslate"
+            >
+              <mat-icon fontSet="material-symbols-outlined">arrow_downward</mat-icon>
+            </button>
+            <button
+              matIconButton
+              type="button"
+              (click)="removeWidget(i)"
+              [attr.aria-label]="'db.widget.remove' | dcTranslate"
+            >
+              <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
+            </button>
+          </span>
+        </div>
+        <div class="de-widget__row">
+          <label class="de-field">
+            <span>{{ 'db.widget.titleAr' | dcTranslate }}</span>
+            <input
+              class="ed-cell"
+              dir="rtl"
+              [ngModel]="w.titleAr"
+              (ngModelChange)="setWidget(i, { titleAr: $event || null })"
+            />
+          </label>
+          <label class="de-field">
+            <span>{{ 'db.widget.titleEn' | dcTranslate }}</span>
+            <input
+              class="ed-cell"
+              dir="ltr"
+              [ngModel]="w.titleEn"
+              (ngModelChange)="setWidget(i, { titleEn: $event || null })"
+            />
+          </label>
+        </div>
+        @if (view?.filters?.length) {
+          <div class="de-binds">
+            <span class="de-muted">{{ 'db.widget.filters' | dcTranslate }}</span>
+            @for (f of view!.filters; track f.name) {
+              <div class="de-bind" [attr.data-bind]="f.name">
+                <span class="de-bind__name">{{ label(f) }}</span>
+                <select
+                  class="ed-cell"
+                  [ngModel]="sourceKey(w, f)"
+                  (ngModelChange)="setSource(i, f, $event)"
+                >
+                  @for (c of candidates(f); track c.name) {
+                    <option [value]="'BOUND:' + c.name">
+                      {{ 'db.widget.from' | dcTranslate }}: {{ label(c) }}
+                    </option>
+                  }
+                  <option value="FIXED">{{ 'db.widget.fixed' | dcTranslate }}</option>
+                  <option value="DEFAULT">{{ 'db.widget.reportDefault' | dcTranslate }}</option>
+                </select>
+                @if (sourceKey(w, f) === 'FIXED') {
+                  <input
+                    class="ed-cell"
+                    dir="ltr"
+                    [ngModel]="fixedValue(w, f)"
+                    (ngModelChange)="setFixed(i, f, $event)"
+                  />
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+    <button
+      matButton
+      type="button"
+      class="de-add"
+      (click)="addWidget()"
+      data-testid="db-add-widget"
+    >
+      <mat-icon fontSet="material-symbols-outlined">add</mat-icon
+      >{{ 'db.widget.add' | dcTranslate }}
+    </button>
+  </section>
+</mat-dialog-content>
+
+<mat-dialog-actions class="de-actions">
+  <button matButton type="button" (click)="close()">{{ 'db.close' | dcTranslate }}</button>
+  @if (!personal) {
+    <dc-submit-button [entityType]="entityType" [disabled]="saving()" (submitted)="save(true)" />
+  }
+  <button
+    matButton="filled"
+    type="button"
+    (click)="save()"
+    [disabled]="saving()"
+    data-testid="db-save"
+  >
+    <mat-icon fontSet="material-symbols-outlined">save</mat-icon>{{ 'db.save' | dcTranslate }}
+  </button>
+</mat-dialog-actions>

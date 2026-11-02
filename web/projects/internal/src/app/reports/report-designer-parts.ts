@@ -295,6 +295,34 @@ export class ReportDesignerParts {
     this.def.update((d) => removeColumn(d, index));
   }
 
+  // ------------------------------------------------------------------ rows behind a group (drill-down)
+
+  protected addDetail(): void {
+    const details = this.def().details ?? [];
+    this.setDef({
+      details: [...details, { name: '', labelAr: '', labelEn: '', column: '', aggregate: null }],
+    });
+  }
+
+  protected setDetail(index: number, change: Partial<ReportColumnDef>): void {
+    const details = (this.def().details ?? []).map((c, i) => {
+      if (i !== index) return c;
+      const next = { ...c, ...change };
+      if (change.column) {
+        const fresh = columnFor(change.column, this.columns(), this.def().details ?? [], null);
+        next.name = next.name || fresh.name;
+        next.labelAr = next.labelAr || fresh.labelAr;
+        next.labelEn = next.labelEn || fresh.labelEn;
+      }
+      return next;
+    });
+    this.setDef({ details });
+  }
+
+  protected removeDetail(index: number): void {
+    this.setDef({ details: (this.def().details ?? []).filter((_, i) => i !== index) });
+  }
+
   protected addSort(): void {
     this.setDef({
       sort: [...this.def().sort, { column: this.def().columns[0]?.name ?? '', descending: false }],

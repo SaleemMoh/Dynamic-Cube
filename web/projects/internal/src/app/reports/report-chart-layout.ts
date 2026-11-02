@@ -26,6 +26,8 @@ export interface ChartRect {
   h: number;
   color: string;
   title: string;
+  /** The group's values by their key in the chart's rows (a drill-down opens the rows behind it). */
+  key?: Record<string, unknown>;
 }
 
 export interface ChartLine {
@@ -39,12 +41,14 @@ export interface ChartDot {
   cy: number;
   color: string;
   title: string;
+  key?: Record<string, unknown>;
 }
 
 export interface ChartSlice {
   path: string;
   color: string;
   title: string;
+  key?: Record<string, unknown>;
 }
 
 /** What a chart draws: its plot area, axes with ticks and titles, the marks and the legend. */
@@ -170,11 +174,13 @@ function pie(
   const byX = data.category !== 'Y';
   const cat = byX ? data.x[0] : data.y[0];
   const val = byX ? data.y[0] : data.x[0];
-  let parts = data.rows.map((r, i) => ({
-    label: fieldText(r[cat.name], cat, lang),
-    value: toNumber(r[val.name]),
-    color: CHART_COLORS[i] ?? OTHER_COLOR,
-  }));
+  let parts: { label: string; value: number; color: string; key?: Record<string, unknown> }[] =
+    data.rows.map((r, i) => ({
+      label: fieldText(r[cat.name], cat, lang),
+      value: toNumber(r[val.name]),
+      color: CHART_COLORS[i] ?? OTHER_COLOR,
+      key: { [cat.name]: r[cat.name] ?? null },
+    }));
   if (parts.length > CHART_COLORS.length) {
     const rest = parts.slice(CHART_COLORS.length - 1).reduce((a, p) => a + p.value, 0);
     parts = [
@@ -190,6 +196,7 @@ function pie(
     path: slices[i].path,
     color: p.color,
     title: `${p.label} · ${label(val)}: ${formatValue(p.value, 'NUMBER', lang)} (${Math.round(slices[i].share * 100)}%)`,
+    key: p.key,
   }));
   layout.legend = parts.map((p) => ({ label: p.label, color: p.color }));
   return layout;
@@ -259,6 +266,17 @@ function grouped(
     0,
     CHART_COLORS.length,
   );
+  // The raw values behind each category and series name: what a click on a mark opens.
+  const rawCategory = new Map<string, unknown>();
+  const rawSeries = new Map<string, unknown>();
+  for (const r of data.rows) {
+    rawCategory.set(fieldText(r[catKey], catField, lang), r[catKey] ?? null);
+    if (data.series) rawSeries.set(fieldText(r['s'], data.series, lang), r['s'] ?? null);
+  }
+  const keyOf = (ci: number, s: (typeof series)[number]): Record<string, unknown> => ({
+    [catKey]: rawCategory.get(categories[ci]) ?? null,
+    ...(data.series ? { s: rawSeries.get(s.label) ?? null } : {}),
+  });
   const stacked = data.stacked && (data.type === 'BAR' || data.type === 'AREA');
   let lo = 0;
   let hi = 0;
@@ -338,6 +356,7 @@ function grouped(
                 h: each,
                 color: s.color,
                 title: title(ci, s, v),
+                key: keyOf(ci, s),
               }
             : {
                 x: offset,
@@ -346,6 +365,7 @@ function grouped(
                 h: Math.max(0, a - b),
                 color: s.color,
                 title: title(ci, s, v),
+                key: keyOf(ci, s),
               },
         );
       });
@@ -368,7 +388,13 @@ function grouped(
           : [catPos(ci), valuePos(from)];
         pts.push(point);
         lower.push(floor);
-        layout.dots.push({ cx: point[0], cy: point[1], color: s.color, title: title(ci, s, v) });
+        layout.dots.push({
+          cx: point[0],
+          cy: point[1],
+          color: s.color,
+          title: title(ci, s, v),
+          key: keyOf(ci, s),
+        });
       });
       if (data.type !== 'SCATTER' && pts.length) {
         const area =

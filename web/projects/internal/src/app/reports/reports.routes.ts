@@ -12,6 +12,18 @@ export const REPORTS_ROUTES: Routes = [
     loadComponent: () => import('./report-viewer').then((m) => m.ReportViewer),
   },
   {
+    path: 'dashboards',
+    loadComponent: () => import('./dashboard-list').then((m) => m.DashboardList),
+  },
+  {
+    path: 'dashboards/:code',
+    loadComponent: () => import('./dashboard-viewer').then((m) => m.DashboardViewer),
+  },
+  {
+    path: 'my-dashboards/:id',
+    loadComponent: () => import('./dashboard-viewer').then((m) => m.DashboardViewer),
+  },
+  {
     path: 'deliveries',
     loadComponent: () => import('./report-deliveries').then((m) => m.ReportDeliveries),
   },

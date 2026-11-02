@@ -23,6 +23,165 @@ namespace DynamicCube.Modules.Reports.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("DynamicCube.Modules.Reports.Domain.DashboardDefinition", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("BusinessApp")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("business_app");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("code");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("DescriptionAr")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("description_ar");
+
+                    b.Property<string>("DescriptionEn")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("description_en");
+
+                    b.Property<string>("EntityCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("entity_code");
+
+                    b.Property<string>("Filters")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("filters");
+
+                    b.Property<string>("Icon")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("icon");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("NameAr")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("name_ar");
+
+                    b.Property<string>("NameEn")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("name_en");
+
+                    b.Property<string>("Owner")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("owner");
+
+                    b.Property<uint>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.PrimitiveCollection<List<string>>("SharedApps")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("shared_apps");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("updated_by");
+
+                    b.Property<string>("Widgets")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("widgets");
+
+                    b.HasKey("Id")
+                        .HasName("pk_dashboard");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_dashboard_code");
+
+                    b.ToTable("dashboard", "rpt");
+                });
+
+            modelBuilder.Entity("DynamicCube.Modules.Reports.Domain.PersonalDashboard", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Filters")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("filters");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_default");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("UserName")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("user_name");
+
+                    b.Property<string>("Widgets")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("widgets");
+
+                    b.HasKey("Id")
+                        .HasName("pk_personal_dashboard");
+
+                    b.HasIndex("UserName", "Name")
+                        .IsUnique()
+                        .HasDatabaseName("ix_personal_dashboard_user_name_name");
+
+                    b.ToTable("personal_dashboard", "rpt");
+                });
+
             modelBuilder.Entity("DynamicCube.Modules.Reports.Domain.ReportDefinition", b =>
                 {
                     b.Property<Guid>("Id")
@@ -79,6 +238,11 @@ namespace DynamicCube.Modules.Reports.Persistence.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)")
                         .HasColumnName("description_en");
+
+                    b.Property<string>("Details")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("details");
 
                     b.Property<string>("EntityCode")
                         .HasMaxLength(100)

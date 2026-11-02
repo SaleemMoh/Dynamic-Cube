@@ -1485,6 +1485,33 @@ export const REPORT_SECTIONS: ConfigSection[] = [
     ],
   },
   {
+    path: 'reports-dashboard-definitions',
+    title: t('تصميم لوحات المؤشرات', 'Dashboard design'),
+    resource: 'reports.dashboards',
+    types: [
+      {
+        entityType: 'rpt.dashboard',
+        title: t('لوحات المؤشرات', 'Dashboards'),
+        key: 'code',
+        columns: ['descriptionAr'],
+        // Tiles, charts and tables of several reports with shared filters, in their own dialog (ADR-0047).
+        editor: () => import('../../reports/dashboard-editor').then((m) => m.DashboardEditor),
+        rowLinks: [
+          {
+            icon: 'open_in_new',
+            label: t('فتح اللوحة', 'Open the dashboard'),
+            route: (row) => ({ commands: ['/reports/dashboards', String(row['code'])] }),
+            testId: 'dashboard-open',
+          },
+        ],
+        fields: [
+          { code: 'descriptionAr', type: 'text', label: t('الوصف بالعربية', 'Arabic description') },
+          { code: 'descriptionEn', type: 'text', label: t('الوصف بالإنجليزية', 'English description') },
+        ],
+      },
+    ],
+  },
+  {
     path: 'reports-schedules',
     title: t('جدولة التقارير', 'Report schedules'),
     resource: 'reports.schedules',

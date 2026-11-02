@@ -33,8 +33,11 @@ public static class ReportsModule
 
         AddApplier<ReportApplier>(services);
         AddApplier<ReportScheduleApplier>(services);
+        AddApplier<DashboardApplier>(services);
         services.AddScoped<IChangeSetPublishHook<ReportsDbContext>, ReportResourceSync>();
+        services.AddScoped<IChangeSetPublishHook<ReportsDbContext>, DashboardResourceSync>();
         services.AddScoped<ReportService>();
+        services.AddScoped<DashboardService>();
         services.AddScoped<ReportScheduler>();
         return services;
     }
@@ -73,12 +76,15 @@ internal static class ReportsCatalog
             new(ReportResources.Root, "التقارير", "Reports", "INTERNAL", null, [CatalogActions.View]),
             new(ReportResources.Config, "تصميم التقارير", "Report design", "INTERNAL", ReportResources.Root, CatalogActions.Edits),
             new(ReportResources.Schedules, "جدولة التقارير", "Report schedules", "INTERNAL", ReportResources.Root, CatalogActions.Edits),
+            new(ReportResources.Dashboards, "تصميم لوحات المؤشرات", "Dashboard design", "INTERNAL", ReportResources.Root, CatalogActions.Edits),
         ],
         MenuGroup = new CatalogMenuGroup(MenuGroup, "التقارير", "Reports", "INTERNAL", "analytics", 640),
         Menus =
         [
+            new("reports.dashboards", "لوحات المؤشرات", "Dashboards", "/reports/dashboards", ReportResources.Root, "space_dashboard", 5),
             new("reports.list", "التقارير", "Reports", "/reports", ReportResources.Root, "bar_chart", 10),
             new("reports.design", "تصميم التقارير", "Report design", "/reports/definitions", ReportResources.Config, "query_stats", 20),
+            new("reports.dashboard-design", "تصميم لوحات المؤشرات", "Dashboard design", "/reports/dashboard-definitions", ReportResources.Dashboards, "dashboard_customize", 25),
             new("reports.schedules", "جدولة التقارير", "Report schedules", "/reports/schedules", ReportResources.Schedules, "schedule_send", 30),
             new("reports.deliveries", "سجل الإرسال المجدول", "Scheduled deliveries", "/reports/deliveries", ReportResources.Schedules, "outgoing_mail", 40),
         ],
