@@ -114,7 +114,8 @@ public sealed class LovService(AppsControlDbContext context, GrantResolver grant
             domains = domains.Where(d => EF.Functions.ILike(d.NameAr, pattern) || EF.Functions.ILike(d.NameEn, pattern) || EF.Functions.ILike(d.Code, pattern));
         }
 
-        var ordered = domains.OrderBy(d => d.DisplayOrder).ThenBy(d => d.NameAr);
+        // The code (unique within the class) last, so that pages never overlap or skip values with the same order and name.
+        var ordered = domains.OrderBy(d => d.DisplayOrder).ThenBy(d => d.NameAr).ThenBy(d => d.Code);
         if (lov.StaticFilter is null)
         {
             return await ordered
@@ -159,7 +160,7 @@ public sealed class LovService(AppsControlDbContext context, GrantResolver grant
             WHERE (@p_parent::text IS NULL OR {parentColumn} = @p_parent)
               AND (@p_search::text IS NULL OR {displayAr}::text ILIKE @p_search OR {displayEn}::text ILIKE @p_search OR {value}::text ILIKE @p_search)
               AND (@p_all OR {value}::text = ANY(@p_values))
-            ORDER BY 2
+            ORDER BY 2, 1
             LIMIT @p_limit OFFSET @p_offset
             """;
 

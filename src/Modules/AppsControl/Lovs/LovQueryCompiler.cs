@@ -397,9 +397,10 @@ public static partial class LovQueryCompiler
             }
 
             sql.Append(" ORDER BY ");
+            // The value last, so that pages never overlap or skip values with the same sort keys and label.
             sql.Append(sorts.Count == 0
-                ? "q.label_ar"
-                : string.Join(", ", sorts.Select((s, i) => $"q.s{i.ToString(CultureInfo.InvariantCulture)}{(s.Descending ? " DESC" : string.Empty)} NULLS LAST")) + ", q.label_ar");
+                ? "q.label_ar, q.value"
+                : string.Join(", ", sorts.Select((s, i) => $"q.s{i.ToString(CultureInfo.InvariantCulture)}{(s.Descending ? " DESC" : string.Empty)} NULLS LAST")) + ", q.label_ar, q.value");
             if (run is not null)
             {
                 sql.Append(" LIMIT ").Append(Math.Clamp(run.Limit, 1, 5001).ToString(CultureInfo.InvariantCulture))

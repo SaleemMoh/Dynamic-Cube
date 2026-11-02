@@ -196,6 +196,13 @@ namespace DynamicCube.Modules.Payments.Persistence.Migrations
                         .HasColumnType("character varying(4000)")
                         .HasColumnName("comment");
 
+                    b.Property<long>("Sequence")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("sequence");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Sequence"));
+
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -205,8 +212,8 @@ namespace DynamicCube.Modules.Payments.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_bill_event");
 
-                    b.HasIndex("BillId", "At")
-                        .HasDatabaseName("ix_bill_event_bill_id_at");
+                    b.HasIndex("BillId", "At", "Sequence")
+                        .HasDatabaseName("ix_bill_event_bill_id_at_sequence");
 
                     b.ToTable("bill_event", "pay");
                 });

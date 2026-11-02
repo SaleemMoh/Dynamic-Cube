@@ -131,6 +131,9 @@ public sealed class BillEvent
     public string Actor { get; set; } = string.Empty;
 
     public string? Comment { get; set; }
+
+    /// <summary>Insertion order, given by the database: breaks ties between events recorded at the same instant.</summary>
+    public long Sequence { get; set; }
 }
 
 public static class BillEventTypes

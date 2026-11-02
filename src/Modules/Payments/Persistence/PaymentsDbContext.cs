@@ -65,7 +65,8 @@ public sealed class PaymentsDbContext(DbContextOptions<PaymentsDbContext> option
             b.Property(e => e.Actor).HasMaxLength(256).IsRequired();
             b.Property(e => e.Comment).HasMaxLength(4000);
             b.HasOne<Bill>().WithMany().HasForeignKey(e => e.BillId).OnDelete(DeleteBehavior.Cascade);
-            b.HasIndex(e => new { e.BillId, e.At });
+            b.Property(e => e.Sequence).UseIdentityAlwaysColumn();
+            b.HasIndex(e => new { e.BillId, e.At, e.Sequence });
         });
         modelBuilder.Entity<BillNumberSequence>(b =>
         {

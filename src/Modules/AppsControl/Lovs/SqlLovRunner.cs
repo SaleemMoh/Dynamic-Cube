@@ -79,7 +79,7 @@ public sealed class SqlLovRunner : IDisposable
             WHERE (@p_parent::text IS NULL OR {parentExpression} = @p_parent)
               AND (@p_search::text IS NULL OR {displayAr} ILIKE @p_search OR {displayEn} ILIKE @p_search OR {value} ILIKE @p_search)
               AND (@p_all OR {value} = ANY(@p_values))
-            ORDER BY 2
+            ORDER BY 2, 1
             LIMIT @p_limit OFFSET @p_offset
             """;
         var items = new List<LovItem>();
