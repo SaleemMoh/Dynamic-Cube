@@ -61,6 +61,8 @@ import {
   removeSection,
   updateBlock,
   updateSection,
+  htmlToMarkdown,
+  withMarkdownText,
 } from './page-editor-model';
 
 const BLOCK_MIME = 'application/x-dc-page-block';
@@ -1142,7 +1144,7 @@ export class PageDesignerPage {
     });
   }
 
-  /** A first layout from what the page shows today: its title and its Markdown body. */
+  /** A first layout from what the page shows today: its title and its body (Markdown, or HTML turned into it). */
   private fromBody(): PageDesign {
     const page = this.pageRow();
     if (!page) return starterPage();
@@ -1159,7 +1161,14 @@ export class PageDesignerPage {
             [
               { id: 'b1', kind: 'heading', level: 1, textAr: page.nameAr, textEn: page.nameEn },
               ...(bodyAr || bodyEn
-                ? [{ id: 'b2', kind: 'text' as const, textAr: bodyAr, textEn: bodyEn }]
+                ? [
+                    {
+                      id: 'b2',
+                      kind: 'text' as const,
+                      textAr: htmlToMarkdown(bodyAr),
+                      textEn: htmlToMarkdown(bodyEn),
+                    },
+                  ]
                 : []),
             ],
           ],
@@ -1199,7 +1208,7 @@ export class PageDesignerPage {
     if (!code) return;
     try {
       const row = await firstValueFrom(this.api.get(VERSION, `${code}/${n}`));
-      this.reset(readPageDesign(row['design']) ?? starterPage(), n);
+      this.reset(withMarkdownText(readPageDesign(row['design']) ?? starterPage()), n);
     } catch (error) {
       this.errors.set(problemMessages(error));
     }

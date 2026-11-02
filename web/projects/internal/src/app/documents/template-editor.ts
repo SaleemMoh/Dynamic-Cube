@@ -9,7 +9,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { DocumentsApi, I18nService, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
 import { catchError, debounceTime, firstValueFrom, switchMap } from 'rxjs';
@@ -18,7 +17,8 @@ import { ConfigEditorData } from '../apps-control/config/config-editor';
 import { SubmitButton } from '../apps-control/submit-button';
 import { PrintDesigner } from './print-designer/print-designer';
 import { PRINT_TRANSLATIONS } from './print-designer/print-translations';
-import { PrintDesign, readDesign, starterDesign, toHtml } from './print-designer/print-model';
+import { importPrintHtml } from './print-designer/print-import';
+import { PageSize, PrintDesign, readDesign, starterDesign, toHtml } from './print-designer/print-model';
 
 const STARTER = `<html dir="rtl" lang="ar">
 <head>
@@ -63,7 +63,6 @@ const SAMPLE_LINES = [
     MatIconModule,
     MatInputModule,
     MatSelectModule,
-    MatTooltipModule,
     PrintDesigner,
     TranslatePipe,
   ],
@@ -87,9 +86,6 @@ const SAMPLE_LINES = [
           HTML
         </mat-button-toggle>
       </mat-button-toggle-group>
-      <button matIconButton type="button" (click)="toggleMax()" [matTooltip]="(maximized() ? 'designer.exitFullWindow' : 'designer.fullWindow') | dcTranslate" data-testid="tpl-max">
-        <mat-icon fontSet="material-symbols-outlined">{{ maximized() ? 'close_fullscreen' : 'open_in_full' }}</mat-icon>
-      </button>
     </h2>
     @if (mode() === 'design') {
       <mat-dialog-content class="dc-tpl-design">
@@ -322,7 +318,6 @@ export class DocumentTemplateEditor {
   protected readonly designView = signal<'layout' | 'preview'>('layout');
   /** The template was written as HTML and is being redesigned: saving replaces that HTML. */
   protected readonly fromHtml = signal(false);
-  protected readonly maximized = signal(false);
   protected readonly sampleData = signal(JSON.stringify(SAMPLE_DATA, null, 2));
   protected readonly sampleLines = signal(JSON.stringify(SAMPLE_LINES, null, 2));
   protected readonly preview = signal<SafeHtml>('');
@@ -370,21 +365,27 @@ export class DocumentTemplateEditor {
       });
   }
 
-  protected setMode(mode: 'design' | 'html'): void {
-    if (mode === 'design' && this.mode() === 'html' && !this.stored) this.fromHtml.set(true);
-    this.mode.set(mode);
-  }
+  /** The template as written in HTML, and the layout imported from it (to give the HTML back if the layout is left as imported). */
+  private written: { html: string; imported: PrintDesign } | null = null;
 
-  protected toggleMax(): void {
-    const max = !this.maximized();
-    this.maximized.set(max);
-    if (max) {
-      this.ref.updateSize('100vw', '100vh');
-      this.ref.addPanelClass('dc-dialog-max');
-    } else {
-      this.ref.updateSize('96rem', '');
-      this.ref.removePanelClass('dc-dialog-max');
+  /**
+   * To the visual designer: a template written as HTML is imported into a layout (each part where it shows), so it opens
+   * as it looks; back to HTML before changing that layout gives the HTML back as it was written.
+   */
+  protected async setMode(mode: 'design' | 'html'): Promise<void> {
+    if (mode === 'design' && this.mode() === 'html' && !this.stored) {
+      this.fromHtml.set(true);
+      if (!this.written) {
+        const imported = await importPrintHtml(this.html(), this.pageSize() as PageSize, this.landscape());
+        this.written = { html: this.html(), imported };
+        this.design.set(imported);
+      }
+    } else if (mode === 'html' && this.written && this.design() === this.written.imported) {
+      this.mode.set(mode);
+      this.html.set(this.written.html);
+      return;
     }
+    this.mode.set(mode);
   }
 
   protected async pdf(): Promise<void> {

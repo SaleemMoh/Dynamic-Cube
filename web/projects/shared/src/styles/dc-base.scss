@@ -82,3 +82,61 @@ body {
     text-decoration: underline;
   }
 }
+
+/* Dialogs (DialogChrome): moved by their title bar; big ones fill the screen from a button at its end. */
+.dc-dialog-handle {
+  cursor: move;
+  user-select: none;
+  touch-action: none;
+}
+
+.dc-dialog-handle--max {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+}
+
+.dc-dialog-max-toggle {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  margin-inline-start: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--dga-text-3, #6c737f);
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--dga-gray-100, #f3f4f6);
+    color: var(--dga-text-1, #1f2a37);
+  }
+
+  .material-symbols-outlined {
+    font-size: 20px;
+  }
+}
+
+body.dc-dialog-dragging {
+  cursor: move;
+  user-select: none;
+}
+
+/* A dialog filling the window. */
+.cdk-overlay-pane.dc-dialog-max {
+  max-width: 100vw !important;
+  max-height: 100vh !important;
+  transform: none !important;
+
+  .mat-mdc-dialog-surface {
+    border-radius: 0;
+  }
+
+  .mat-mdc-dialog-content {
+    max-height: none;
+  }
+}

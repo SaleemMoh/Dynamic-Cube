@@ -1,5 +1,10 @@
 import { Directionality } from '@angular/cdk/bidi';
-import { EnvironmentProviders, makeEnvironmentProviders } from '@angular/core';
+import {
+  EnvironmentProviders,
+  inject,
+  makeEnvironmentProviders,
+  provideAppInitializer,
+} from '@angular/core';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import {
   MAT_FORM_FIELD_DEFAULT_OPTIONS,
@@ -8,6 +13,7 @@ import {
 import { MatPaginatorIntl } from '@angular/material/paginator';
 import { AppDirectionality } from '../i18n/app-directionality';
 import { DcPaginatorIntl } from '../i18n/paginator-intl';
+import { DialogChrome } from './dialog-chrome';
 
 /**
  * UI providers shared by all Dynamic Cube apps. Colors and typography come from the Material 3 theme in
@@ -25,5 +31,7 @@ export function provideDynamicCubeUi(): EnvironmentProviders {
         subscriptSizing: 'dynamic',
       } satisfies MatFormFieldDefaultOptions,
     },
+    // Dialogs move by their title bar; big ones can fill the screen.
+    provideAppInitializer(() => inject(DialogChrome).start()),
   ]);
 }

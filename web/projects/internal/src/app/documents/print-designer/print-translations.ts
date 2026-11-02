@@ -6,7 +6,7 @@ export const PRINT_TRANSLATIONS: TranslationDictionary = {
     'print.modeDesign': 'التصميم المرئي',
     'print.layout': 'التخطيط',
     'print.replacesHtml':
-      'كُتب هذا القالب بلغة HTML. الحفظ من المصمم يستبدل ذلك النص بالتصميم الجديد.',
+      'كُتب هذا القالب بلغة HTML وفُتح هنا بعناصره في مواضعها تقريبًا؛ راجعها وعدّلها. الحفظ من المصمم يستبدل نص HTML بالتصميم، والرجوع إلى HTML قبل أي تعديل يعيده كما كُتب.',
     'print.palette': 'العناصر',
     'print.tip':
       'اسحب عنصراً إلى الصفحة أو انقره لإضافته. حرّك العناصر بالسحب أو بالأسهم (Shift: 5 مم)، وغيّر الحجم من المقبض.',
@@ -53,7 +53,7 @@ export const PRINT_TRANSLATIONS: TranslationDictionary = {
     'print.modeDesign': 'Visual designer',
     'print.layout': 'Layout',
     'print.replacesHtml':
-      'This template was written as HTML. Saving from the designer replaces that HTML with the new layout.',
+      'This template was written as HTML and opens here with its parts placed about where they show; check and adjust them. Saving from the designer replaces the HTML with the layout; going back to HTML before any change gives it back as written.',
     'print.palette': 'Elements',
     'print.tip':
       'Drag an element onto the page or click it to add it. Move elements by dragging or with the arrow keys (Shift: 5 mm); resize from the handle.',

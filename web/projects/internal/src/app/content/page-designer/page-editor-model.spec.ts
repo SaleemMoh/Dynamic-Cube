@@ -1,6 +1,8 @@
 import { PageDesign, newBlock, starterPage } from '@dynamic-cube/shared';
 import {
   addSection,
+  htmlToMarkdown,
+  withMarkdownText,
   findBlock,
   insertBlock,
   moveBlock,
@@ -59,5 +61,32 @@ describe('page editor', () => {
   it('gives new ids that are not used yet', () => {
     expect(nextId(starterPage(), 'b')).toBe('b5');
     expect(nextId(starterPage(), 's')).toBe('s3');
+  });
+});
+
+describe('pages written as HTML', () => {
+  it('turn into Markdown text the designer edits', () => {
+    const md = htmlToMarkdown(
+      '<p>Intro <b>bold</b> and <a href="/faq">help</a>.</p><h3>Domains</h3><ul><li>Building</li><li>ICT</li></ul><hr/>',
+    );
+    expect(md).toBe('Intro **bold** and [help](/faq).\n\n### Domains\n\n- Building\n- ICT\n\n---');
+    expect(htmlToMarkdown('# Already Markdown')).toBe('# Already Markdown');
+  });
+
+  it('convert the text blocks of a saved design that hold HTML', () => {
+    const design: PageDesign = {
+      version: 1,
+      sections: [
+        {
+          id: 's1',
+          layout: '1',
+          background: 'none',
+          columns: [[{ id: 'b1', kind: 'text', textAr: '<p>نص</p>', textEn: '<p>Text</p>' }]],
+        },
+      ],
+    };
+    const fixed = withMarkdownText(design);
+    expect(fixed.sections[0].columns[0][0]).toMatchObject({ textAr: 'نص', textEn: 'Text' });
+    expect(withMarkdownText(fixed)).toBe(fixed);
   });
 });

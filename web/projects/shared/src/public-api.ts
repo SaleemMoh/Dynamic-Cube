@@ -22,6 +22,7 @@ export * from './lib/layout/app-shell';
 export * from './lib/layout/gov-bar';
 export * from './lib/layout/app-footer';
 export * from './lib/theme/theme';
+export * from './lib/theme/dialog-chrome';
 export * from './lib/api/host-info.service';
 export * from './lib/forms/lov-source';
 export * from './lib/config/runtime-config';

@@ -138,3 +138,92 @@ export function nextId(design: PageDesign, prefix: string): string {
   while (used.has(`${prefix}${n}`)) n++;
   return `${prefix}${n}`;
 }
+
+/** Whether text holds HTML markup (pages written before the designer, or bodies imported as HTML). */
+export function looksLikeHtml(text: string | null | undefined): boolean {
+  return /<\/?(p|h[1-6]|ul|ol|li|br|b|strong|i|em|a|div|span|hr|blockquote)\b[^>]*>/i.test(
+    text ?? '',
+  );
+}
+
+/**
+ * HTML turned into the Markdown text blocks show (headings, paragraphs, lists, quotes, rules, bold, italic, links), so a
+ * page written as HTML opens in the designer as editable text rather than as markup. Text that is not HTML is kept.
+ */
+export function htmlToMarkdown(html: string | null | undefined): string {
+  const source = html ?? '';
+  if (!looksLikeHtml(source)) return source;
+  const doc = new DOMParser().parseFromString(`<body>${source}</body>`, 'text/html');
+  const inline = (node: Node): string => {
+    if (node.nodeType === Node.TEXT_NODE) return (node.textContent ?? '').replace(/\s+/g, ' ');
+    if (!(node instanceof Element)) return '';
+    const inner = [...node.childNodes].map(inline).join('');
+    switch (node.tagName.toLowerCase()) {
+      case 'b':
+      case 'strong':
+        return inner.trim() ? `**${inner.trim()}**` : '';
+      case 'i':
+      case 'em':
+        return inner.trim() ? `*${inner.trim()}*` : '';
+      case 'a': {
+        const href = node.getAttribute('href');
+        return href ? `[${inner.trim()}](${href})` : inner;
+      }
+      case 'br':
+        return '\n';
+      default:
+        return inner;
+    }
+  };
+  const blocks: string[] = [];
+  const block = (node: Node): void => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = (node.textContent ?? '').trim();
+      if (text) blocks.push(text.replace(/\s+/g, ' '));
+      return;
+    }
+    if (!(node instanceof Element)) return;
+    const tag = node.tagName.toLowerCase();
+    const heading = /^h([1-6])$/.exec(tag);
+    if (heading) {
+      // The page title is the h1: headings inside the body start at ##.
+      const level = Math.min(4, Math.max(2, Number(heading[1])));
+      blocks.push(`${'#'.repeat(level)} ${inline(node).trim()}`);
+    } else if (tag === 'p') {
+      const text = inline(node).trim();
+      if (text) blocks.push(text);
+    } else if (tag === 'ul' || tag === 'ol') {
+      const items = [...node.children]
+        .filter((li) => li.tagName.toLowerCase() === 'li')
+        .map((li, i) => `${tag === 'ol' ? `${i + 1}.` : '-'} ${inline(li).trim()}`);
+      if (items.length) blocks.push(items.join('\n'));
+    } else if (tag === 'blockquote') {
+      blocks.push(`> ${inline(node).trim()}`);
+    } else if (tag === 'hr') {
+      blocks.push('---');
+    } else if (['div', 'section', 'article', 'body', 'main'].includes(tag)) {
+      node.childNodes.forEach(block);
+    } else {
+      const text = inline(node).trim();
+      if (text) blocks.push(text);
+    }
+  };
+  doc.body.childNodes.forEach(block);
+  return blocks.join('\n\n');
+}
+
+/** A design whose text blocks hold HTML, with that HTML turned into Markdown. */
+export function withMarkdownText(design: PageDesign): PageDesign {
+  let changed = false;
+  const sections = design.sections.map((s) => ({
+    ...s,
+    columns: s.columns.map((column) =>
+      column.map((b) => {
+        if (b.kind !== 'text' || (!looksLikeHtml(b.textAr) && !looksLikeHtml(b.textEn))) return b;
+        changed = true;
+        return { ...b, textAr: htmlToMarkdown(b.textAr), textEn: htmlToMarkdown(b.textEn) };
+      }),
+    ),
+  }));
+  return changed ? { ...design, sections } : design;
+}
