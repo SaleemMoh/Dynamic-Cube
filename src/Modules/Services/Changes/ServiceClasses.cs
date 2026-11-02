@@ -31,6 +31,7 @@ public static class ServiceClasses
             new("SELECT", "اختيار", "Choice"),
             new("CHECKBOX", "نعم/لا", "Yes/no"),
             new("FILE", "رفع ملفات", "File upload"),
+            new("ROWS", "صفوف متكررة", "Repeating rows"),
         ]),
     ];
 }

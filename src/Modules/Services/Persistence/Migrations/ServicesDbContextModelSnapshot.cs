@@ -172,6 +172,11 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("code");
 
+                    b.Property<string>("Columns")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("columns");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -376,8 +381,8 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
 
                     b.Property<string>("QuestionCode")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(201)
+                        .HasColumnType("character varying(201)")
                         .HasColumnName("question_code");
 
                     b.Property<Guid>("RequestId")

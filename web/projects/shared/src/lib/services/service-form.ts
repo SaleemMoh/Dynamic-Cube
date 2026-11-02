@@ -1,7 +1,7 @@
 import { JsonLogicRule, jsonLogic } from '../expressions/jsonlogic';
 import { FieldWidth, FormDisplay, FormField, FormFieldType, FormSchema, FormSection } from '../forms/form-schema';
 import { problemMessages } from '../apps-control/apps-control.models';
-import { EligibilityFailure, FieldError, QuestionSnapshot, QuestionUse, ResolvedVersion, StepDefinition, isLocked } from './service.models';
+import { EligibilityFailure, FieldError, QuestionSnapshot, QuestionUse, ResolvedVersion, RowColumn, StepDefinition, isLocked } from './service.models';
 
 const TYPES: Record<QuestionSnapshot['type'], FormFieldType> = {
   TEXT: 'text',
@@ -11,6 +11,7 @@ const TYPES: Record<QuestionSnapshot['type'], FormFieldType> = {
   SELECT: 'select',
   CHECKBOX: 'checkbox',
   FILE: 'file',
+  ROWS: 'rows',
 };
 
 const both = (a: JsonLogicRule | null | undefined, b: JsonLogicRule | null | undefined): JsonLogicRule | undefined =>
@@ -83,6 +84,38 @@ function toField(
     accept: q.validation.extensions?.length ? q.validation.extensions : undefined,
     maxSizeMb: q.validation.maxSizeMb ?? undefined,
     maxFiles: q.validation.maxFiles ?? undefined,
+    rows:
+      q.type === 'ROWS'
+        ? {
+            columns: (q.columns ?? []).map((c) =>
+              toField(columnQuestion(q, c, false), c.required, c.requiredWhen ?? undefined, c.visibleWhen ?? undefined, false),
+            ),
+            tableColumns: (q.columns ?? []).filter((c) => c.inTable).map((c) => c.code),
+            minRows: q.validation.minRows ?? undefined,
+            maxRows: q.validation.maxRows ?? 50,
+          }
+        : undefined,
+  };
+}
+
+/**
+ * A column of a rows question as a question of its own (for its field and for showing its answers). `prefixed` codes it
+ * QUESTION/COLUMN, as its files are kept; otherwise it keeps the column's code, as in the row.
+ */
+export function columnQuestion(question: QuestionSnapshot, column: RowColumn, prefixed = true): QuestionSnapshot {
+  return {
+    code: prefixed ? `${question.code}/${column.code}` : column.code,
+    labelAr: column.labelAr,
+    labelEn: column.labelEn,
+    hintAr: column.hintAr ?? null,
+    hintEn: column.hintEn ?? null,
+    type: column.type,
+    lov: column.lov ?? null,
+    lovParentQuestion: null,
+    options: column.options ?? [],
+    multiple: column.multiple,
+    validation: column.validation ?? { min: null, max: null, maxLength: null, pattern: null },
+    prefill: null,
   };
 }
 
@@ -110,6 +143,10 @@ export function answeredSections(
 /** An answer as text: option labels for choices, yes/no for checkboxes, file names for files. */
 export function displayAnswer(question: QuestionSnapshot, value: unknown, language: 'ar' | 'en', files: { id: string; fileName: string }[] = []): string {
   if (value === null || value === undefined || value === '' || (Array.isArray(value) && value.length === 0)) return '—';
+  if (question.type === 'ROWS') {
+    const count = Array.isArray(value) ? value.length : 0;
+    return language === 'ar' ? `${count} صفوف` : `${count} ${count === 1 ? 'row' : 'rows'}`;
+  }
   if (question.type === 'FILE') {
     const ids = Array.isArray(value) ? value : [value];
     return ids.map((id) => files.find((f) => f.id === id)?.fileName ?? String(id)).join(language === 'ar' ? '، ' : ', ');

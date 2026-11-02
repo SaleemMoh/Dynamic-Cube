@@ -1,0 +1,226 @@
+{
+  "title": "Reusable service building blocks: repeating rows (projects with a letter for government ones)",
+  "items": [
+    {
+      "entityType": "svc.question",
+      "entityCode": "EXP_PROJECTS",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "المشاريع المنفذة",
+        "nameEn": "Completed projects",
+        "type": "ROWS",
+        "hintAr": "أضف كل مشروع في صف: الجهة المالكة والقيمة ونسبة الإنجاز، وخطاب الموافقة للمشاريع الحكومية.",
+        "hintEn": "Add each project as a row: its owner, value and completion, with the approval letter for government projects.",
+        "validation": {
+          "minRows": 1,
+          "maxRows": 20
+        },
+        "columns": [
+          {
+            "code": "NAME",
+            "labelAr": "اسم المشروع",
+            "labelEn": "Project name",
+            "type": "TEXT",
+            "required": true,
+            "inTable": true,
+            "options": [],
+            "multiple": false,
+            "validation": {
+              "maxLength": 200
+            }
+          },
+          {
+            "code": "OWNER",
+            "labelAr": "الجهة المالكة",
+            "labelEn": "Owner",
+            "type": "SELECT",
+            "required": true,
+            "inTable": true,
+            "multiple": false,
+            "validation": {},
+            "options": [
+              {
+                "value": "GOV",
+                "labelAr": "جهة حكومية",
+                "labelEn": "Government"
+              },
+              {
+                "value": "PRIVATE",
+                "labelAr": "قطاع خاص",
+                "labelEn": "Private sector"
+              }
+            ]
+          },
+          {
+            "code": "VALUE",
+            "labelAr": "قيمة العقد (مليون ريال)",
+            "labelEn": "Contract value (SAR million)",
+            "type": "NUMBER",
+            "required": true,
+            "inTable": true,
+            "options": [],
+            "multiple": false,
+            "validation": {
+              "min": 0
+            }
+          },
+          {
+            "code": "COMPLETION",
+            "labelAr": "نسبة الإنجاز %",
+            "labelEn": "Completion %",
+            "type": "NUMBER",
+            "required": true,
+            "inTable": true,
+            "options": [],
+            "multiple": false,
+            "validation": {
+              "min": 0,
+              "max": 100
+            }
+          },
+          {
+            "code": "START",
+            "labelAr": "تاريخ البدء",
+            "labelEn": "Start date",
+            "type": "DATE",
+            "required": false,
+            "options": [],
+            "multiple": false,
+            "validation": {}
+          },
+          {
+            "code": "APPROVAL",
+            "labelAr": "خطاب موافقة الجهة",
+            "labelEn": "Owner's approval letter",
+            "type": "FILE",
+            "required": false,
+            "options": [],
+            "multiple": false,
+            "validation": {
+              "extensions": [
+                "pdf"
+              ],
+              "maxSizeMb": 5
+            },
+            "visibleWhen": {
+              "==": [
+                {
+                  "var": "OWNER"
+                },
+                "GOV"
+              ]
+            },
+            "requiredWhen": {
+              "==": [
+                {
+                  "var": "OWNER"
+                },
+                "GOV"
+              ]
+            },
+            "hintAr": "للمشاريع الحكومية فقط.",
+            "hintEn": "Government projects only."
+          }
+        ]
+      }
+    },
+    {
+      "entityType": "svc.service",
+      "entityCode": "EXP_STATEMENT",
+      "operation": "CREATE",
+      "payload": {
+        "partyKinds": [
+          "ESTABLISHMENT"
+        ],
+        "draftsAllowed": true,
+        "draftExpiryDays": 30,
+        "onNewVersion": "CONTINUE",
+        "businessApp": "CLASSIFICATION",
+        "categoryCode": "SUPPLIERS",
+        "archetype": "ISSUANCE",
+        "nameAr": "بيان الخبرات والمشاريع",
+        "nameEn": "Projects and experience statement",
+        "descriptionAr": "قدّم مشاريع المنشأة المنفذة مع مستنداتها.",
+        "descriptionEn": "Submit the establishment's completed projects with their documents.",
+        "icon": "work_history",
+        "displayOrder": 40,
+        "isListed": true,
+        "numberPrefix": "EXP"
+      }
+    },
+    {
+      "entityType": "svc.service-version",
+      "entityCode": "EXP_STATEMENT/1",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 1",
+        "nameEn": "Version 1",
+        "definition": {
+          "levels": [],
+          "steps": [
+            {
+              "code": "PROJECTS",
+              "type": "FORM",
+              "titleAr": "المشاريع",
+              "titleEn": "Projects",
+              "sections": [
+                {
+                  "code": "MAIN",
+                  "titleAr": "المشاريع المنفذة",
+                  "titleEn": "Completed projects",
+                  "questions": [
+                    {
+                      "code": "EXP_PROJECTS",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "REVIEW",
+              "type": "REVIEW",
+              "titleAr": "المراجعة",
+              "titleEn": "Review",
+              "sections": []
+            }
+          ],
+          "eligibility": [],
+          "validations": [
+            {
+              "code": "MIN_VALUE",
+              "step": "PROJECTS",
+              "rule": {
+                ">=": [
+                  {
+                    "reduce": [
+                      {
+                        "var": "data.EXP_PROJECTS"
+                      },
+                      {
+                        "+": [
+                          {
+                            "var": "accumulator"
+                          },
+                          {
+                            "var": "current.VALUE"
+                          }
+                        ]
+                      },
+                      0
+                    ]
+                  },
+                  1
+                ]
+              },
+              "messageAr": "يجب ألا يقل مجموع قيم المشاريع عن مليون ريال.",
+              "messageEn": "The projects must add up to at least SAR 1 million."
+            }
+          ],
+          "fees": []
+        }
+      }
+    }
+  ]
+}

@@ -300,6 +300,9 @@ public sealed class QuestionPayload : ConfigPayload
 {
     public QuestionType Type { get; set; }
 
+    /// <summary>Rows questions: the columns of each row.</summary>
+    public List<RowColumn> Columns { get; set; } = [];
+
     public string? HintAr { get; set; }
 
     public string? HintEn { get; set; }
@@ -400,6 +403,30 @@ internal sealed class QuestionApplier(ServicesDbContext db) : ServiceApplier<Que
             errors.Add("validation.max", "Must not be less than min.");
         }
 
+        var columns = payload.Type == QuestionType.Rows ? RowColumnRules.Check(payload.Columns, errors) : [];
+        if (payload.Type == QuestionType.Rows)
+        {
+            if (validation.MinRows is < 0 or > RowColumnRules.MostRows)
+            {
+                errors.Add("validation.minRows", $"Must be between 0 and {RowColumnRules.MostRows}.");
+            }
+
+            if (validation.MaxRows is < 1 or > RowColumnRules.MostRows)
+            {
+                errors.Add("validation.maxRows", $"Must be between 1 and {RowColumnRules.MostRows}.");
+            }
+
+            if (validation.MinRows > validation.MaxRows)
+            {
+                errors.Add("validation.maxRows", "Must not be less than the fewest rows.");
+            }
+        }
+        else
+        {
+            validation.MinRows = null;
+            validation.MaxRows = null;
+        }
+
         if (validation.MaxLength is < 1 or > 100_000)
         {
             errors.Add("validation.maxLength", "Must be between 1 and 100000.");
@@ -421,9 +448,9 @@ internal sealed class QuestionApplier(ServicesDbContext db) : ServiceApplier<Que
         var fill = payload.Fill ?? (Blank(payload.Prefill) is null ? QuestionFill.None : QuestionFill.Party);
         var prefill = fill == QuestionFill.Party ? Blank(payload.Prefill) : null;
         var integration = fill == QuestionFill.Integration ? payload.Integration ?? new IntegrationFill() : null;
-        if (fill != QuestionFill.None && payload.Type == QuestionType.File)
+        if (fill != QuestionFill.None && payload.Type is QuestionType.File or QuestionType.Rows)
         {
-            errors.Add("fill", "File questions are answered by the applicant.");
+            errors.Add("fill", "File and rows questions are answered by the applicant.");
         }
 
         if (fill == QuestionFill.Party && (prefill is null || !JsonPaths.IsValid(prefill)))
@@ -469,6 +496,7 @@ internal sealed class QuestionApplier(ServicesDbContext db) : ServiceApplier<Que
         entity.Prefill = prefill;
         entity.Integration = integration;
         entity.AllowManualEntry = fill == QuestionFill.None || payload.AllowManualEntry;
+        entity.Columns = columns;
     }
 
     /// <summary>Whether versions of a service other than <paramref name="owner"/> use the question (any when it would be shared).</summary>
@@ -499,6 +527,7 @@ internal sealed class QuestionApplier(ServicesDbContext db) : ServiceApplier<Que
             Prefill = entity.Prefill,
             Integration = entity.Integration,
             AllowManualEntry = entity.AllowManualEntry,
+            Columns = entity.Columns,
         });
 
     protected override async Task BeforeDeleteAsync(ServicesDbContext context, Question entity, CancellationToken cancellationToken)

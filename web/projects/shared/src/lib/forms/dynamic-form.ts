@@ -17,6 +17,7 @@ import { FormField, FormOption, FormSchema, FormSection } from './form-schema';
 import { DualList } from './dual-list';
 import { FileInput, FileUploader } from './file-input';
 import { StructuredInput } from './structured-input';
+import { RowsInput } from './rows-input';
 import { pickIcon } from './icon-picker';
 import { LOV_SOURCE } from './lov-source';
 
@@ -42,6 +43,7 @@ export type FormValue = Record<string, unknown>;
     MatTabsModule,
     DualList,
     StructuredInput,
+    RowsInput,
     FileInput,
     LocalizePipe,
     TranslatePipe,
@@ -80,6 +82,8 @@ export class DynamicForm {
   readonly formGroup = computed(() => this.buildGroup(this.schema(), this.initialValue()));
 
   private readonly visibleCodes = signal<ReadonlySet<string>>(new Set());
+  /** The form's values with the outside context, for the rules of a rows field's columns. */
+  protected readonly rowContext = signal<FormValue>({});
   private readonly requiredCodes = signal<ReadonlySet<string>>(new Set());
   private readonly lovOptions = signal<Readonly<Record<string, FormOption[]>>>({});
   private readonly lovSource = inject(LOV_SOURCE, { optional: true });
@@ -131,7 +135,8 @@ export class DynamicForm {
         field.type === 'textarea' ||
         field.type === 'dualList' ||
         field.type === 'structured' ||
-        field.type === 'file')
+        field.type === 'file' ||
+        field.type === 'rows')
     );
   }
 
@@ -156,6 +161,8 @@ export class DynamicForm {
     if (errors['max']) return { key: 'form.max', value: String(field?.max ?? '') };
     if (errors['maxlength']) return { key: 'form.maxLength', value: String(field?.maxLength ?? '') };
     if (errors['pattern']) return { key: 'form.pattern', value: '' };
+    if (errors['minRows']) return { key: 'form.minRows', value: String(field?.rows?.minRows ?? '') };
+    if (errors['maxRows']) return { key: 'form.maxRows', value: String(field?.rows?.maxRows ?? '') };
     return { key: 'form.required', value: '' };
   }
 
@@ -322,19 +329,34 @@ export class DynamicForm {
       if (rules.max !== undefined) validators.push(Validators.max(rules.max));
       if (rules.maxLength !== undefined) validators.push(Validators.maxLength(rules.maxLength));
       if (rules.pattern) validators.push(Validators.pattern(rules.pattern));
+      if (rules.type === 'rows') validators.push(rowCount(rules.rows?.minRows, rules.rows?.maxRows));
       control.setValidators(validators);
       control.updateValueAndValidity({ emitEvent: false });
     }
 
     group.updateValueAndValidity({ emitEvent: false });
+    this.rowContext.set(data as FormValue);
     this.visibleCodes.set(visible);
     this.requiredCodes.set(required);
   }
 }
 
+/** A rows field's number of rows within its limits (an empty list is left to "required"). */
+function rowCount(min: number | undefined, max: number | undefined): ValidatorFn {
+  return (control) => {
+    const count = Array.isArray(control.value) ? control.value.length : 0;
+    if (min !== undefined && count > 0 && count < min) return { minRows: true };
+    if (max !== undefined && count > max) return { maxRows: true };
+    return null;
+  };
+}
+
 function defaultValue(field: FormField): unknown {
   if (field.type === 'checkbox') {
     return false;
+  }
+  if (field.type === 'rows') {
+    return [];
   }
   return field.multiple ? [] : null;
 }

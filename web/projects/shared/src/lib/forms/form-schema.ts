@@ -33,7 +33,18 @@ export interface FormSection {
  * them between an available and a chosen list. `structured` edits nested data (rows, lists, objects) through a form made
  * for its {@link FormField.structure}, with a JSON view.
  */
-export type FormFieldType = 'text' | 'textarea' | 'number' | 'date' | 'select' | 'checkbox' | 'icon' | 'dualList' | 'structured' | 'file';
+export type FormFieldType = 'text' | 'textarea' | 'number' | 'date' | 'select' | 'checkbox' | 'icon' | 'dualList' | 'structured' | 'file' | 'rows';
+
+/**
+ * A `rows` field: a list of rows, each filled through a form of {@link columns} (their rules see the row's values on top
+ * of the form's), shown as a table of the {@link tableColumns} (the first four columns when none is given).
+ */
+export interface FormRows {
+  columns: FormField[];
+  tableColumns?: string[];
+  minRows?: number;
+  maxRows?: number;
+}
 
 export interface FormField {
   code: string;
@@ -63,6 +74,8 @@ export interface FormField {
   maxFiles?: number;
   /** For `structured` fields: what the value holds. */
   structure?: StructuredShape;
+  /** For `rows` fields: the columns of a row and how many rows. */
+  rows?: FormRows;
   /** Limits checked in the browser and again on the server. */
   min?: number;
   max?: number;

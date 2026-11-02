@@ -64,6 +64,7 @@ public sealed class ServicesDbContext(DbContextOptions<ServicesDbContext> option
             b.Property(e => e.Integration).HasJsonColumn();
             b.Property(e => e.Options).HasJsonColumn();
             b.Property(e => e.Validation).HasJsonColumn();
+            b.Property(e => e.Columns).HasJsonColumn();
         });
         modelBuilder.ConfigTable<ServiceVersion>(Schema, "service_version", b =>
         {
@@ -115,7 +116,7 @@ public sealed class ServicesDbContext(DbContextOptions<ServicesDbContext> option
         modelBuilder.Entity<RequestFile>(b =>
         {
             b.ToTable("request_file", Schema);
-            b.Property(e => e.QuestionCode).HasMaxLength(100).IsRequired();
+            b.Property(e => e.QuestionCode).HasMaxLength(201).IsRequired();
             b.Property(e => e.FileName).HasMaxLength(255).IsRequired();
             b.Property(e => e.ContentType).HasMaxLength(200).IsRequired();
             b.Property(e => e.Sha256).HasMaxLength(64);

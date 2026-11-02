@@ -103,5 +103,59 @@ public static partial class RequestFiles
                 data[question.Code] = new JsonArray([.. ids.Select(id => (JsonNode)JsonValue.Create(id)!)]);
             }
         }
+
+        // File columns of rows questions: their files are uploaded under QUESTION/COLUMN.
+        foreach (var question in version.Questions.Values.Where(q => q.Type == QuestionType.Rows && data[q.Code] is JsonArray))
+        {
+            foreach (var column in question.RowColumns.Where(c => c.Type == QuestionType.File))
+            {
+                var own = byQuestion.GetValueOrDefault($"{question.Code}/{column.Code}") ?? [];
+                foreach (var row in ((JsonArray)data[question.Code]!).OfType<JsonObject>())
+                {
+                    var ids = Ids(row[column.Code]).Where(own.Contains).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+                    if (ids.Count == 0)
+                    {
+                        row.Remove(column.Code);
+                    }
+                    else
+                    {
+                        row[column.Code] = new JsonArray([.. ids.Select(id => (JsonNode)JsonValue.Create(id)!)]);
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>Takes a file out of the answers: from its file question, or from every row of its rows question's column.</summary>
+    public static void Forget(JsonObject data, string questionCode, string fileId)
+    {
+        var parts = questionCode.Split('/', 2);
+        if (parts.Length == 2)
+        {
+            foreach (var row in (data[parts[0]] as JsonArray)?.OfType<JsonObject>() ?? [])
+            {
+                var rest = Ids(row[parts[1]]).Where(v => !string.Equals(v, fileId, StringComparison.OrdinalIgnoreCase)).ToList();
+                if (rest.Count == 0)
+                {
+                    row.Remove(parts[1]);
+                }
+                else
+                {
+                    row[parts[1]] = new JsonArray([.. rest.Select(v => (JsonNode)JsonValue.Create(v)!)]);
+                }
+            }
+
+            return;
+        }
+
+        var left = Ids(data[questionCode]).Where(v => !string.Equals(v, fileId, StringComparison.OrdinalIgnoreCase)).ToList();
+        if (left.Count == 0)
+        {
+            data.Remove(questionCode);
+        }
+        else
+        {
+            data[questionCode] = new JsonArray([.. left.Select(v => (JsonNode)JsonValue.Create(v)!)]);
+        }
     }
 }

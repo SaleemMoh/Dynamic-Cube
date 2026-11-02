@@ -96,6 +96,50 @@ public enum QuestionType
 
     /// <summary>Files uploaded with the request (the answer is the list of file ids).</summary>
     File,
+
+    /// <summary>
+    /// Repeating rows (e.g. projects, owners, branches): the answer is a list of rows, each an object of the question's
+    /// <see cref="Question.Columns"/>.
+    /// </summary>
+    Rows,
+}
+
+/// <summary>
+/// A column of a rows question: its own answer type, limits and options, required always or when
+/// <see cref="RequiredWhen"/> is truthy, shown when <see cref="VisibleWhen"/> is truthy. Both rules see the row's values
+/// (by column code) on top of the request's answers.
+/// </summary>
+public sealed class RowColumn
+{
+    public string Code { get; set; } = string.Empty;
+
+    public string LabelAr { get; set; } = string.Empty;
+
+    public string LabelEn { get; set; } = string.Empty;
+
+    public string? HintAr { get; set; }
+
+    public string? HintEn { get; set; }
+
+    /// <summary>Any answer type except rows.</summary>
+    public QuestionType Type { get; set; }
+
+    public bool Required { get; set; }
+
+    public System.Text.Json.Nodes.JsonNode? RequiredWhen { get; set; }
+
+    public System.Text.Json.Nodes.JsonNode? VisibleWhen { get; set; }
+
+    public string? Lov { get; set; }
+
+    public List<QuestionOption> Options { get; set; } = [];
+
+    public bool Multiple { get; set; }
+
+    public QuestionValidation Validation { get; set; } = new();
+
+    /// <summary>Shown in the table of rows (the others only in the row's form); the first columns when none is marked.</summary>
+    public bool InTable { get; set; }
 }
 
 public sealed class QuestionOption
@@ -125,6 +169,12 @@ public sealed class QuestionValidation
 
     /// <summary>File questions with several files: how many at most (default 5).</summary>
     public int? MaxFiles { get; set; }
+
+    /// <summary>Rows questions: the fewest rows (a required question needs at least one anyway).</summary>
+    public int? MinRows { get; set; }
+
+    /// <summary>Rows questions: the most rows (default 50).</summary>
+    public int? MaxRows { get; set; }
 }
 
 /// <summary>Where a question's first answer comes from.</summary>
@@ -202,6 +252,9 @@ public sealed class Question : ConfigEntity
     /// read-only and reset on the server).
     /// </summary>
     public bool AllowManualEntry { get; set; } = true;
+
+    /// <summary>Rows questions: the columns of each row.</summary>
+    public List<RowColumn> Columns { get; set; } = [];
 }
 
 /// <summary>

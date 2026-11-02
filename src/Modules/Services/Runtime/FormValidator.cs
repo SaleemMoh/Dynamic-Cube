@@ -41,6 +41,11 @@ internal sealed class FormValidator(JsonLogicEvaluator evaluator, ILovValidator 
                 value = JsonPaths.Read(context, question.Prefill);
             }
 
+            if (question.Type == QuestionType.Rows)
+            {
+                value = CleanRows(question, value, data);
+            }
+
             if (!IsEmpty(value))
             {
                 clean[code] = value;
@@ -195,6 +200,8 @@ internal sealed class FormValidator(JsonLogicEvaluator evaluator, ILovValidator 
                 }
 
                 return null;
+            case QuestionType.Rows:
+                return await CheckRowsAsync(question, (JsonArray)value, data, cancellationToken);
             case QuestionType.File:
                 // Ids of files uploaded with the request (the request keeps only its own files in the answers).
                 var files = RequestFiles.Ids(value);
@@ -208,6 +215,95 @@ internal sealed class FormValidator(JsonLogicEvaluator evaluator, ILovValidator 
             default:
                 return Invalid(code);
         }
+    }
+
+    /// <summary>The most rows a rows question takes when it names no limit.</summary>
+    public const int DefaultMaxRows = 50;
+
+    /// <summary>
+    /// The rows of a rows question as they are kept: objects only, each with the shown columns that have a value (hidden
+    /// and unknown columns dropped), empty rows left out. Null when nothing is left.
+    /// </summary>
+    private JsonArray? CleanRows(QuestionSnapshot question, JsonNode? value, JsonObject data)
+    {
+        if (value is not JsonArray list)
+        {
+            return null;
+        }
+
+        var rows = new JsonArray();
+        foreach (var row in list.OfType<JsonObject>())
+        {
+            var context = RowContext(data, row);
+            var clean = new JsonObject();
+            foreach (var column in question.RowColumns.Where(c => Truthy(c.VisibleWhen, context, true)))
+            {
+                if (!IsEmpty(row[column.Code]))
+                {
+                    clean[column.Code] = row[column.Code]!.DeepClone();
+                }
+            }
+
+            if (clean.Count > 0)
+            {
+                rows.Add(clean);
+            }
+        }
+
+        return rows.Count == 0 ? null : rows;
+    }
+
+    /// <summary>What the rules of a row's columns see: the request's answers with the row's values on top (by column code).</summary>
+    private static JsonObject RowContext(JsonObject data, JsonObject row)
+    {
+        var context = data.DeepClone().AsObject();
+        foreach (var (key, cell) in row)
+        {
+            context[key] = cell?.DeepClone();
+        }
+
+        return context;
+    }
+
+    /// <summary>The number of rows, then each row's columns: required ones present, every value valid for its column.</summary>
+    private async Task<FieldError?> CheckRowsAsync(QuestionSnapshot question, JsonArray rows, JsonObject data, CancellationToken cancellationToken)
+    {
+        var code = question.Code;
+        var most = question.Validation.MaxRows ?? DefaultMaxRows;
+        if (rows.Count > most)
+        {
+            return Error(code, "MAX_ROWS", $"الحد الأقصى {most} صفوف.", $"At most {most} rows.");
+        }
+
+        if (question.Validation.MinRows is { } fewest && rows.Count < fewest)
+        {
+            return Error(code, "MIN_ROWS", $"أضف {fewest} صفوف على الأقل.", $"Add at least {fewest} rows.");
+        }
+
+        for (var i = 0; i < rows.Count; i++)
+        {
+            var row = (JsonObject)rows[i]!;
+            var context = RowContext(data, row);
+            foreach (var column in question.RowColumns.Where(c => Truthy(c.VisibleWhen, context, true)))
+            {
+                var cell = row[column.Code];
+                var required = column.Required || Truthy(column.RequiredWhen, context, false);
+                var problem = IsEmpty(cell) || (required && column.Type == QuestionType.Checkbox && cell!.GetValueKind() == JsonValueKind.False)
+                    ? required ? Error(code, "REQUIRED", "هذا الحقل مطلوب.", "This field is required.") : null
+                    : await CheckValueAsync(question.Column(column), cell!, context, cancellationToken);
+                if (problem is not null)
+                {
+                    return problem with
+                    {
+                        Field = code,
+                        MessageAr = $"الصف {i + 1}، {column.LabelAr}: {problem.MessageAr}",
+                        MessageEn = $"Row {i + 1}, {column.LabelEn}: {problem.MessageEn}",
+                    };
+                }
+            }
+        }
+
+        return null;
     }
 
     private static FieldError Invalid(string code) => Error(code, "INVALID", "القيمة غير صحيحة.", "The value is not valid.");

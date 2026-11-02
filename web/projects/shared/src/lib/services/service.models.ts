@@ -2,7 +2,29 @@ import { JsonLogicRule } from '../expressions/jsonlogic';
 import { PartyKind } from '../party/party.models';
 import { PanelDefinition } from './panel/panel.models';
 
-export type QuestionType = 'TEXT' | 'TEXTAREA' | 'NUMBER' | 'DATE' | 'SELECT' | 'CHECKBOX' | 'FILE';
+export type QuestionType = 'TEXT' | 'TEXTAREA' | 'NUMBER' | 'DATE' | 'SELECT' | 'CHECKBOX' | 'FILE' | 'ROWS';
+
+/**
+ * A column of a rows question: its own answer type, limits and options; required always or when `requiredWhen` is
+ * truthy, shown when `visibleWhen` is truthy (both see the row's values by column code on top of the answers).
+ */
+export interface RowColumn {
+  code: string;
+  labelAr: string;
+  labelEn: string;
+  hintAr?: string | null;
+  hintEn?: string | null;
+  type: Exclude<QuestionType, 'ROWS'>;
+  required: boolean;
+  requiredWhen?: JsonLogicRule | null;
+  visibleWhen?: JsonLogicRule | null;
+  lov?: string | null;
+  options: { value: string; labelAr: string; labelEn: string }[];
+  multiple: boolean;
+  validation: QuestionSnapshot['validation'];
+  /** Shown in the table of rows (the first columns when none is marked). */
+  inTable?: boolean;
+}
 export type StepType = 'FORM' | 'LEVEL' | 'FEES' | 'REVIEW' | 'DECLARATION' | 'INTEGRATION';
 export type StatusCategory =
   'DRAFT' | 'SUBMITTED' | 'IN_PROGRESS' | 'PENDING_CUSTOMER' | 'PENDING_EXTERNAL' | 'PENDING_PAYMENT' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'CLOSED';
@@ -27,7 +49,12 @@ export interface QuestionSnapshot {
     extensions?: string[];
     maxSizeMb?: number | null;
     maxFiles?: number | null;
+    /** Rows questions: the fewest and the most rows (default 50). */
+    minRows?: number | null;
+    maxRows?: number | null;
   };
+  /** Rows questions: the columns of each row. */
+  columns?: RowColumn[] | null;
   prefill: string | null;
   /** Answered by an integration call (when the draft starts). */
   integration?: { operation: string; inputs: IntegrationInput[]; output: string } | null;

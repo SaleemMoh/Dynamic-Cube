@@ -17,7 +17,8 @@ public sealed record QuestionSnapshot(
     QuestionValidation Validation,
     string? Prefill,
     IntegrationFill? Integration = null,
-    bool? AllowManualEntry = null)
+    bool? AllowManualEntry = null,
+    IReadOnlyList<RowColumn>? Columns = null)
 {
     /// <summary>The answer is always the filled value (the applicant may not type or change it).</summary>
     public bool Locked => AllowManualEntry == false && (Prefill is not null || Integration is not null);
@@ -26,7 +27,33 @@ public sealed record QuestionSnapshot(
         new(q.Code, q.NameAr, q.NameEn, q.HintAr, q.HintEn, q.Type, q.Lov, q.LovParentQuestion, q.Options, q.Multiple, q.Validation,
             q.Fill == QuestionFill.Party ? q.Prefill : null,
             q.Fill == QuestionFill.Integration ? q.Integration : null,
-            q.Fill == QuestionFill.None ? null : q.AllowManualEntry);
+            q.Fill == QuestionFill.None ? null : q.AllowManualEntry,
+            q.Type == QuestionType.Rows ? q.Columns : null);
+
+    /// <summary>The columns of a rows question (none for the other types).</summary>
+    public IReadOnlyList<RowColumn> RowColumns => Columns ?? [];
+
+    /// <summary>A column of this rows question as a question of its own (its answer checked like any other), coded <c>QUESTION/COLUMN</c>.</summary>
+    public QuestionSnapshot Column(RowColumn column) =>
+        new($"{Code}/{column.Code}", column.LabelAr, column.LabelEn, column.HintAr, column.HintEn, column.Type, column.Lov, null, column.Options, column.Multiple, column.Validation, null);
+
+    /// <summary>The question a file belongs to: a file question, or a file column of a rows question (<c>QUESTION/COLUMN</c>).</summary>
+    public static QuestionSnapshot? FileTarget(ResolvedVersion version, string code)
+    {
+        var parts = code.Split('/', 2);
+        if (!version.Questions.TryGetValue(parts[0], out var question))
+        {
+            return null;
+        }
+
+        if (parts.Length == 1)
+        {
+            return question.Type == QuestionType.File ? question : null;
+        }
+
+        var column = question.RowColumns.FirstOrDefault(c => c.Code == parts[1] && c.Type == QuestionType.File);
+        return column is null ? null : question.Column(column);
+    }
 }
 
 /// <summary>A published version with snapshots of every question it uses: everything the wizard and the server need.</summary>

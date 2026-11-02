@@ -843,9 +843,64 @@ export const SERVICE_SECTIONS: ConfigSection[] = [
               opt('SELECT', 'اختيار', 'Choice'),
               opt('CHECKBOX', 'نعم/لا', 'Yes/no'),
               opt('FILE', 'رفع ملفات', 'File upload'),
+              opt('ROWS', 'صفوف متكررة', 'Repeating rows'),
             ],
           },
           { code: 'hintAr', type: 'text', label: t('تلميح بالعربية', 'Arabic hint') },
+          {
+            ...json(
+              'columns',
+              t('أعمدة الصف', 'Columns of a row'),
+              table(
+                col('code', t('الرمز', 'Code'), 'text', LTR_REQ),
+                col('labelAr', t('الاسم بالعربية', 'Arabic label'), 'text', REQ),
+                col('labelEn', t('الاسم بالإنجليزية', 'English label'), 'text', LTR_REQ),
+                col('type', t('نوع الإجابة', 'Answer type'), 'select', {
+                  required: true,
+                  defaultValue: 'TEXT',
+                  options: [
+                    opt('TEXT', 'نص', 'Text'),
+                    opt('TEXTAREA', 'نص طويل', 'Long text'),
+                    opt('NUMBER', 'رقم', 'Number'),
+                    opt('DATE', 'تاريخ', 'Date'),
+                    opt('SELECT', 'اختيار', 'Choice'),
+                    opt('CHECKBOX', 'نعم/لا', 'Yes/no'),
+                    opt('FILE', 'رفع ملفات', 'File upload'),
+                  ],
+                }),
+                col('required', t('مطلوب', 'Required'), 'checkbox'),
+                col('inTable', t('يظهر في الجدول', 'In the table'), 'checkbox'),
+                col('lov', t('قائمة القيم', 'List of values'), 'select', { ref: 'apps.lov' }),
+                col('options', t('الخيارات', 'Options'), 'table', {
+                  columns: [
+                    col('value', t('القيمة', 'Value'), 'text', LTR_REQ),
+                    col('labelAr', t('الاسم بالعربية', 'Arabic label'), 'text', REQ),
+                    col('labelEn', t('الاسم بالإنجليزية', 'English label'), 'text', LTR_REQ),
+                  ],
+                }),
+                col('multiple', t('متعدد', 'Several'), 'checkbox'),
+                col('validation', t('القيود', 'Limits'), 'object', {
+                  columns: [
+                    col('min', t('أقل قيمة', 'Minimum'), 'number'),
+                    col('max', t('أعلى قيمة', 'Maximum'), 'number'),
+                    col('maxLength', t('أقصى طول', 'Longest text'), 'number'),
+                    col('pattern', t('النمط', 'Pattern'), 'text', LTR),
+                    col('extensions', t('أنواع الملفات', 'File types'), 'tags', LTR),
+                    col('maxSizeMb', t('أكبر حجم (ميجابايت)', 'Largest file (MB)'), 'number'),
+                    col('maxFiles', t('أقصى عدد للملفات', 'Most files'), 'number'),
+                  ],
+                }),
+                col('visibleWhen', t('يظهر عندما', 'Shown when'), 'value', LTR),
+                col('requiredWhen', t('مطلوب عندما', 'Required when'), 'value', LTR),
+              ),
+              t(
+                'كل صف يُعبّأ بنموذج من هذه الأعمدة. شرطا الظهور والإلزام (JSONLogic) يريان قيم الصف برموز الأعمدة فوق إجابات الطلب، مثل {"==": [{"var": "OWNER"}, "GOV"]}. «يظهر في الجدول»: الأعمدة المعروضة في جدول الصفوف (أول أربعة إن لم يُحدَّد شيء).',
+                'Each row is filled through a form of these columns. "Shown when" and "Required when" (JSONLogic) see the row\'s values by column code on top of the request\'s answers, e.g. {"==": [{"var": "OWNER"}, "GOV"]}. "In the table": the columns shown in the table of rows (the first four when none is ticked).',
+              ),
+              [],
+            ),
+            visibleWhen: { '==': [{ var: 'type' }, 'ROWS'] },
+          },
           { code: 'hintEn', type: 'text', label: t('تلميح بالإنجليزية', 'English hint') },
           {
             code: 'lov',
@@ -891,6 +946,8 @@ export const SERVICE_SECTIONS: ConfigSection[] = [
               col('extensions', t('أنواع الملفات المقبولة', 'Accepted file types'), 'tags', LTR),
               col('maxSizeMb', t('أكبر حجم للملف (ميجابايت)', 'Largest file (MB)'), 'number'),
               col('maxFiles', t('أقصى عدد للملفات', 'Most files'), 'number'),
+              col('minRows', t('أقل عدد من الصفوف', 'Fewest rows'), 'number'),
+              col('maxRows', t('أكثر عدد من الصفوف', 'Most rows'), 'number'),
             ),
             t(
               'لأسئلة رفع الملفات: الأنواع مثل pdf, jpg (فارغ: المستندات والصور المعتادة)، والحجم (افتراضيًا 10)، والعدد مع «عدة ملفات» (افتراضيًا 5). لطلب ملف عند إجابة معينة استخدم «مطلوب عندما» في منشئ الخدمات.',

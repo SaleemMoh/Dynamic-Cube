@@ -680,7 +680,10 @@ internal sealed class RequestService(
         var (entity, _) = await LoadMineAsync(id, cancellationToken);
         RequireEditable(entity);
         var version = await cache.GetAsync(context, entity.ServiceVersionId, cancellationToken);
-        if (!version.Questions.TryGetValue(questionCode, out var question) || question.Type != QuestionType.File)
+        // A file question, or a file column of a rows question (QUESTION/COLUMN).
+        var question = QuestionSnapshot.FileTarget(version, questionCode);
+        var inRow = questionCode.Contains('/', StringComparison.Ordinal);
+        if (question is null)
         {
             throw new RequestValidationException([new FieldError(questionCode, "INVALID", "هذا السؤال لا يقبل ملفات.", "This question does not take files.", null)]);
         }
@@ -701,9 +704,9 @@ internal sealed class RequestService(
         }
 
         var data = JsonNode.Parse(entity.Data)!.AsObject();
-        var current = RequestFiles.Ids(data[questionCode]);
+        var current = inRow ? [] : RequestFiles.Ids(data[questionCode]);
         var limit = RequestFiles.MaxFiles(question);
-        if (limit > 1 && current.Count >= limit)
+        if (!inRow && limit > 1 && current.Count >= limit)
         {
             throw new RequestValidationException([new FieldError(questionCode, "FILE_COUNT", $"الحد الأقصى {limit} ملفات.", $"At most {limit} files.", null)]);
         }
@@ -722,6 +725,13 @@ internal sealed class RequestService(
             UploadedBy = user.UserId ?? string.Empty,
         };
         context.RequestFiles.Add(file);
+
+        // A row's file: the row (kept by the browser until the row is saved) takes it; the answer is not changed here.
+        if (inRow)
+        {
+            await context.SaveChangesAsync(cancellationToken);
+            return new RequestFileInfo(file.Id, file.QuestionCode, file.FileName, file.ContentType, file.Length, file.UploadedAt);
+        }
 
         // One file: the new one replaces the answer (the old file goes); several: it is added.
         if (limit == 1)
@@ -748,16 +758,7 @@ internal sealed class RequestService(
         var file = await context.RequestFiles.SingleOrDefaultAsync(f => f.Id == fileId && f.RequestId == entity.Id, cancellationToken)
             ?? throw new RequestNotFoundException($"File {fileId} does not exist.");
         var data = JsonNode.Parse(entity.Data)!.AsObject();
-        var rest = RequestFiles.Ids(data[file.QuestionCode]).Where(v => !string.Equals(v, file.Id.ToString(), StringComparison.OrdinalIgnoreCase)).ToList();
-        if (rest.Count == 0)
-        {
-            data.Remove(file.QuestionCode);
-        }
-        else
-        {
-            data[file.QuestionCode] = new JsonArray([.. rest.Select(v => (JsonNode)JsonValue.Create(v)!)]);
-        }
-
+        RequestFiles.Forget(data, file.QuestionCode, file.Id.ToString());
         entity.Data = data.ToJsonString();
         await RemoveAsync(file, cancellationToken);
         await context.SaveChangesAsync(cancellationToken);
