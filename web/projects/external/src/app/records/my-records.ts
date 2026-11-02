@@ -8,6 +8,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { firstValueFrom } from 'rxjs';
 import {
   ActingPartyService,
+  DynamicForm,
   I18nService,
   LocalizePipe,
   PartyRecord,
@@ -213,6 +214,7 @@ export class MyRecords {
         row: record?.data ?? null,
         context: {},
         uploader: null,
+        form: DynamicForm,
       },
     });
     ref.afterClosed().subscribe(async (data?: Record<string, unknown>) => {

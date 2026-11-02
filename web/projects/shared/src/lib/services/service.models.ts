@@ -156,10 +156,27 @@ export interface ServiceLevelDefinition {
   descriptionAr?: string | null;
   descriptionEn?: string | null;
   slaWorkingDays?: number | null;
+  /** A Material Symbols icon for the level's card. */
+  icon?: string | null;
+  /** Chosen for the applicant at first. */
+  isDefault?: boolean;
+  /** JSONLogic over the answers: when truthy the level is marked as recommended. */
+  recommendWhen?: JsonLogicRule | null;
+  /** The level's features by code: true, or a short text. */
+  features?: Record<string, boolean | string | null>;
+}
+
+/** A feature service levels may offer, compared side by side on the level step. */
+export interface LevelFeatureDefinition {
+  code: string;
+  nameAr: string;
+  nameEn: string;
 }
 
 export interface VersionDefinition {
   levels: ServiceLevelDefinition[];
+  /** What the levels may offer, as rows of their comparison. */
+  levelFeatures?: LevelFeatureDefinition[];
   steps: StepDefinition[];
   eligibility: unknown[];
   validations: unknown[];
@@ -284,6 +301,9 @@ export interface FeeLine {
   vat: number;
   total: number;
   isEstimate: boolean;
+  /** How the fee is worked out, as the applicant reads it. */
+  noteAr?: string | null;
+  noteEn?: string | null;
 }
 
 export interface EligibilityFailure {

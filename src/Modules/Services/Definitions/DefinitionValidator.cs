@@ -24,6 +24,25 @@ internal static partial class DefinitionValidator
             {
                 errors.Add(field + ".slaWorkingDays", "Must be between 1 and 365.");
             }
+
+            CheckRule(level.RecommendWhen, field + ".recommendWhen", evaluator, errors);
+            foreach (var feature in level.Features.Keys.Where(k => !definition.LevelFeatures.Any(f => f.Code == k)))
+            {
+                errors.Add(field + ".features", $"Feature '{feature}' is not one of the version's level features.");
+            }
+        }
+
+        if (definition.Levels.Count(l => l.IsDefault) > 1)
+        {
+            errors.Add("definition.levels", "Only one level may be chosen at first.");
+        }
+
+        Unique(definition.LevelFeatures.Select(f => f.Code), "definition.levelFeatures", errors);
+        foreach (var (feature, i) in definition.LevelFeatures.Select((f, i) => (f, i)))
+        {
+            CheckCode(feature.Code, $"definition.levelFeatures[{i}].code", errors);
+            errors.Required($"definition.levelFeatures[{i}].nameAr", feature.NameAr);
+            errors.Required($"definition.levelFeatures[{i}].nameEn", feature.NameEn);
         }
 
         if (definition.Steps.Count == 0)
@@ -445,6 +464,16 @@ internal static partial class DefinitionValidator
             if (fee.Fixed < 0)
             {
                 errors.Add(field + ".fixed", "Must not be negative.");
+            }
+
+            if (fee.Minimum < 0 || fee.Maximum < 0)
+            {
+                errors.Add(field + ".minimum", "Must not be negative.");
+            }
+
+            if (fee.Minimum > fee.Maximum)
+            {
+                errors.Add(field + ".maximum", "Must not be less than the minimum.");
             }
 
             CheckRule(fee.Formula, field + ".formula", evaluator, errors);

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { FormField } from './form-schema';
-import { rowFiles, rowForForm, rowForStorage, tableColumns } from './rows-input';
+import { tableColumns } from './rows-input';
+import { rowFiles, rowForForm, rowForStorage } from './row-form';
 import { stepSchema } from '../services/service-form';
 import { ResolvedVersion } from '../services/service.models';
 

@@ -1,0 +1,209 @@
+{
+  "title": "Reusable service building blocks: service levels as packages (features compared, a default, a recommendation) and a formula fee with a least and a most",
+  "items": [
+    {
+      "entityType": "svc.service-version",
+      "entityCode": "EXP_STATEMENT/3",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 3",
+        "nameEn": "Version 3",
+        "definition": {
+          "levels": [
+            {
+              "code": "BASIC",
+              "nameAr": "أساسي",
+              "nameEn": "Basic",
+              "descriptionAr": "دراسة البيان بمستوى الخدمة القياسي.",
+              "descriptionEn": "The statement is reviewed at the standard service level.",
+              "slaWorkingDays": 20,
+              "icon": "verified_user",
+              "isDefault": true,
+              "features": {
+                "PRIORITY": "قياسية",
+                "READINESS": true
+              }
+            },
+            {
+              "code": "PREMIUM",
+              "nameAr": "متميز",
+              "nameEn": "Premium",
+              "descriptionAr": "معالجة بأولوية عالية مع مستشار مخصص.",
+              "descriptionEn": "High-priority processing with a dedicated adviser.",
+              "slaWorkingDays": 5,
+              "icon": "workspace_premium",
+              "recommendWhen": {
+                ">": [
+                  {
+                    "reduce": [
+                      {
+                        "var": "data.EXP_PROJECTS"
+                      },
+                      {
+                        "+": [
+                          {
+                            "var": "accumulator"
+                          },
+                          {
+                            "var": "current.VALUE"
+                          }
+                        ]
+                      },
+                      0
+                    ]
+                  },
+                  30
+                ]
+              },
+              "features": {
+                "PRIORITY": "الأعلى",
+                "READINESS": true,
+                "ADVISER": true
+              }
+            }
+          ],
+          "steps": [
+            {
+              "code": "PROJECTS",
+              "type": "FORM",
+              "titleAr": "المشاريع",
+              "titleEn": "Projects",
+              "sections": [
+                {
+                  "code": "MAIN",
+                  "titleAr": "المشاريع المنفذة",
+                  "titleEn": "Completed projects",
+                  "questions": [
+                    {
+                      "code": "EXP_PROJECTS",
+                      "required": true,
+                      "readonly": false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "LEVEL",
+              "type": "LEVEL",
+              "titleAr": "المسار والباقة",
+              "titleEn": "Path and package",
+              "sections": []
+            },
+            {
+              "code": "FEES",
+              "type": "FEES",
+              "titleAr": "الرسوم",
+              "titleEn": "Fees",
+              "sections": []
+            },
+            {
+              "code": "REVIEW",
+              "type": "REVIEW",
+              "titleAr": "المراجعة",
+              "titleEn": "Review",
+              "sections": []
+            }
+          ],
+          "eligibility": [],
+          "validations": [
+            {
+              "code": "MIN_VALUE",
+              "step": "PROJECTS",
+              "rule": {
+                ">=": [
+                  {
+                    "reduce": [
+                      {
+                        "var": "data.EXP_PROJECTS"
+                      },
+                      {
+                        "+": [
+                          {
+                            "var": "accumulator"
+                          },
+                          {
+                            "var": "current.VALUE"
+                          }
+                        ]
+                      },
+                      0
+                    ]
+                  },
+                  1
+                ]
+              },
+              "messageAr": "يجب ألا يقل مجموع قيم المشاريع عن مليون ريال.",
+              "messageEn": "The projects must add up to at least SAR 1 million."
+            }
+          ],
+          "fees": [
+            {
+              "code": "REVIEW_FEE",
+              "nameAr": "رسوم دراسة البيان",
+              "nameEn": "Statement review fee",
+              "levels": [],
+              "formula": {
+                "*": [
+                  {
+                    "reduce": [
+                      {
+                        "var": "data.EXP_PROJECTS"
+                      },
+                      {
+                        "+": [
+                          {
+                            "var": "accumulator"
+                          },
+                          {
+                            "var": "current.VALUE"
+                          }
+                        ]
+                      },
+                      0
+                    ]
+                  },
+                  1000
+                ]
+              },
+              "minimum": 500,
+              "maximum": 20000,
+              "vatRate": 0.15,
+              "vatIncluded": false,
+              "noteAr": "0.1% من مجموع قيم المشاريع، بحد أدنى 500 وأعلى 20,000 ريال",
+              "noteEn": "0.1% of the projects' total value, at least SAR 500 and at most SAR 20,000"
+            },
+            {
+              "code": "PREMIUM_FEE",
+              "nameAr": "رسوم الباقة المتميزة",
+              "nameEn": "Premium package fee",
+              "levels": [
+                "PREMIUM"
+              ],
+              "fixed": 3000,
+              "vatRate": 0.15,
+              "vatIncluded": false
+            }
+          ],
+          "levelFeatures": [
+            {
+              "code": "PRIORITY",
+              "nameAr": "أولوية المعالجة",
+              "nameEn": "Processing priority"
+            },
+            {
+              "code": "READINESS",
+              "nameAr": "فحص جاهزية قبل التقديم",
+              "nameEn": "Readiness check before submitting"
+            },
+            {
+              "code": "ADVISER",
+              "nameAr": "مستشار مخصص",
+              "nameEn": "Dedicated adviser"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

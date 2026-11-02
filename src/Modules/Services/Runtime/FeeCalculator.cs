@@ -28,6 +28,12 @@ internal sealed class FeeCalculator(JsonLogicEvaluator evaluator)
             }
 
             var (amount, estimate) = Amount(fee, context);
+            // A formula or bracket is kept between its least and most (an estimate shows the least).
+            if (fee.Fixed is null && (amount > 0 || estimate))
+            {
+                amount = Math.Clamp(amount, fee.Minimum ?? 0, fee.Maximum ?? decimal.MaxValue);
+            }
+
             if (amount <= 0)
             {
                 continue;
@@ -36,7 +42,7 @@ internal sealed class FeeCalculator(JsonLogicEvaluator evaluator)
             var (net, vat, total) = fee.VatIncluded
                 ? (Round(amount / (1 + fee.VatRate)), Round(amount - Round(amount / (1 + fee.VatRate))), Round(amount))
                 : (Round(amount), Round(amount * fee.VatRate), Round(amount + Round(amount * fee.VatRate)));
-            lines.Add(new FeeLine(fee.Code, fee.NameAr, fee.NameEn, net, vat, total, estimate));
+            lines.Add(new FeeLine(fee.Code, fee.NameAr, fee.NameEn, net, vat, total, estimate, fee.NoteAr, fee.NoteEn));
         }
 
         return lines;

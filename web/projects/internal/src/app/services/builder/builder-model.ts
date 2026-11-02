@@ -1,5 +1,6 @@
 import {
   JsonValue,
+  LevelFeatureDefinition,
   PanelDefinition,
   QuestionUse,
   ResultValueDefinition,
@@ -40,6 +41,12 @@ export interface FeeDef {
   bracket?: { of: Rule | null; rows: BracketRow[] } | null;
   vatRate: number;
   vatIncluded: boolean;
+  /** Formula and bracket fees: the least and the most they come to. */
+  minimum?: number | null;
+  maximum?: number | null;
+  /** How the fee is worked out, as the applicant reads it. */
+  noteAr?: string | null;
+  noteEn?: string | null;
 }
 
 export interface DateBound {
@@ -78,6 +85,8 @@ export interface BundleDef {
 
 export interface ServiceDraft {
   levels: ServiceLevelDefinition[];
+  /** What the levels may offer, compared side by side on the level step. */
+  levelFeatures?: LevelFeatureDefinition[];
   steps: StepDefinition[];
   eligibility: RuleDef[];
   validations: RuleDef[];
@@ -132,6 +141,7 @@ export function normalize(definition: Partial<ServiceDraft> | null | undefined):
   return {
     ...d,
     levels: d.levels ?? [],
+    levelFeatures: d.levelFeatures ?? [],
     steps: (d.steps ?? []).map((s) => ({ ...s, sections: (s.sections ?? []).map((x) => ({ ...x, questions: x.questions ?? [] })) })),
     eligibility: d.eligibility ?? [],
     validations: d.validations ?? [],

@@ -11,6 +11,12 @@ public sealed class VersionDefinition
 {
     public List<ServiceLevelDefinition> Levels { get; set; } = [];
 
+    /// <summary>
+    /// What the service levels (packages) may offer, compared side by side on the level step: e.g. priority, a dedicated
+    /// adviser, a readiness check. Each level says which it has (or a short text such as "Highest").
+    /// </summary>
+    public List<LevelFeatureDefinition> LevelFeatures { get; set; } = [];
+
     public List<StepDefinition> Steps { get; set; } = [];
 
     /// <summary>Rules over the applicant's facts; each must be truthy for the applicant to start or submit.</summary>
@@ -77,6 +83,28 @@ public sealed class ServiceLevelDefinition
 
     /// <summary>Target processing time in working days.</summary>
     public int? SlaWorkingDays { get; set; }
+
+    /// <summary>A Material Symbols icon shown on the level's card.</summary>
+    public string? Icon { get; set; }
+
+    /// <summary>Chosen for the applicant at first (one level at most).</summary>
+    public bool IsDefault { get; set; }
+
+    /// <summary>JSONLogic over the answers: when truthy the level is marked as recommended for this applicant.</summary>
+    public JsonNode? RecommendWhen { get; set; }
+
+    /// <summary>The level's features by code (<see cref="VersionDefinition.LevelFeatures"/>): true, or a short text.</summary>
+    public Dictionary<string, JsonNode?> Features { get; set; } = [];
+}
+
+/// <summary>A feature a service level may offer, shown as a row of the levels' comparison.</summary>
+public sealed class LevelFeatureDefinition
+{
+    public string Code { get; set; } = string.Empty;
+
+    public string NameAr { get; set; } = string.Empty;
+
+    public string NameEn { get; set; } = string.Empty;
 }
 
 public enum StepType
@@ -261,6 +289,17 @@ public sealed class FeeDefinition
     public JsonNode? Formula { get; set; }
 
     public BracketDefinition? Bracket { get; set; }
+
+    /// <summary>The least the fee comes to (a formula or bracket below it is raised to it).</summary>
+    public decimal? Minimum { get; set; }
+
+    /// <summary>The most the fee comes to (a formula or bracket above it is lowered to it).</summary>
+    public decimal? Maximum { get; set; }
+
+    /// <summary>What the applicant reads about how the fee is worked out, e.g. "0.05% of assets and revenues, 3,000 to 175,000".</summary>
+    public string? NoteAr { get; set; }
+
+    public string? NoteEn { get; set; }
 
     /// <summary>Value-added tax rate (0.15 in Saudi Arabia).</summary>
     public decimal VatRate { get; set; } = 0.15m;

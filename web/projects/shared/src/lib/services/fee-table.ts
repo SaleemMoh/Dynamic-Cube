@@ -22,7 +22,12 @@ import { FeeLine } from './service.models';
         <tbody>
           @for (line of lines(); track line.code) {
             <tr>
-              <td>{{ { ar: line.nameAr, en: line.nameEn } | dcLocalize }}@if (line.isEstimate) { <span class="dc-muted"> ({{ 'fees.estimate' | dcTranslate }})</span> }</td>
+              <td>
+                {{ { ar: line.nameAr, en: line.nameEn } | dcLocalize }}@if (line.isEstimate) { <span class="dc-muted"> ({{ 'fees.estimate' | dcTranslate }})</span> }
+                @if (line.noteAr || line.noteEn) {
+                  <small class="dc-fees__note">{{ { ar: line.noteAr ?? '', en: line.noteEn ?? '' } | dcLocalize }}</small>
+                }
+              </td>
               <td dir="ltr">{{ line.net | number: '1.2-2' }}</td>
               <td dir="ltr">{{ line.vat | number: '1.2-2' }}</td>
               <td dir="ltr">{{ line.total | number: '1.2-2' }}</td>
@@ -54,6 +59,11 @@ import { FeeLine } from './service.models';
     .dc-fees thead th {
       background: var(--dga-gray-50, #f9fafb);
       font-weight: 500;
+    }
+    .dc-fees__note {
+      display: block;
+      color: var(--dga-text-3, #6c737f);
+      font-size: 12px;
     }
     .dc-fees tfoot th {
       font-weight: 700;

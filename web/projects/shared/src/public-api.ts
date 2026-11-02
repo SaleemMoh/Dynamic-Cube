@@ -21,7 +21,7 @@ export * from './lib/forms/file-input';
 export * from './lib/forms/rows-input';
 export * from './lib/forms/record-source';
 export * from './lib/forms/row-dialog';
-export * from './lib/forms/row-dialog-token';
+export * from './lib/forms/row-form';
 export * from './lib/party/records';
 export * from './lib/layout/app-shell';
 export * from './lib/layout/gov-bar';

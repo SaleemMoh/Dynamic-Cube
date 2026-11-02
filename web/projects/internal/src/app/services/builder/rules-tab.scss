@@ -70,3 +70,21 @@
   border-radius: 6px;
   font: inherit;
 }
+
+.dc-rt__subhead {
+  margin-block-start: 16px;
+}
+.dc-rt__subhead h3 {
+  margin: 0;
+  font-size: 15px;
+}
+.dc-rt__features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+.dc-rt__feature {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

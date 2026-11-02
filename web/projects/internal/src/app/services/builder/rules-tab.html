@@ -62,9 +62,71 @@
             [ngModelOptions]="{ updateOn: 'blur' }"
           />
         </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic" class="dc-rt__code">
+          <mat-label>{{ 'builder.levelIcon' | dcTranslate }}</mat-label>
+          <input matInput dir="ltr" [ngModel]="l.icon ?? ''" (ngModelChange)="level(i, { icon: $event || null })" [ngModelOptions]="{ updateOn: 'blur' }" />
+        </mat-form-field>
+        <mat-checkbox [checked]="!!l.isDefault" (change)="defaultLevel(i, $event.checked)" [attr.data-testid]="'level-default-' + l.code">{{
+          'builder.levelDefault' | dcTranslate
+        }}</mat-checkbox>
+        <div class="dc-rt__wide">
+          <dc-rule-editor
+            [label]="'builder.levelRecommendWhen' | dcTranslate"
+            [rule]="l.recommendWhen ?? null"
+            [variables]="variables()"
+            (ruleChange)="level(i, { recommendWhen: $event })"
+          />
+        </div>
+        @if (def().levelFeatures?.length) {
+          <div class="dc-rt__wide dc-rt__features">
+            @for (feature of def().levelFeatures; track feature.code) {
+              <div class="dc-rt__feature">
+                <mat-checkbox [checked]="!!l.features?.[feature.code]" (change)="levelFeature(i, feature.code, $event.checked ? true : null)">{{
+                  { ar: feature.nameAr, en: feature.nameEn } | dcLocalize
+                }}</mat-checkbox>
+                <mat-form-field subscriptSizing="dynamic">
+                  <mat-label>{{ 'builder.featureText' | dcTranslate }}</mat-label>
+                  <input
+                    matInput
+                    [ngModel]="featureText(l, feature.code)"
+                    (ngModelChange)="levelFeature(i, feature.code, $event ? $event : l.features?.[feature.code] ? true : null)"
+                    [ngModelOptions]="{ updateOn: 'blur' }"
+                  />
+                </mat-form-field>
+              </div>
+            }
+          </div>
+        }
       </div>
     } @empty {
       <p class="dc-rt__muted">{{ 'builder.noLevels' | dcTranslate }}</p>
+    }
+    <header class="dc-rt__head dc-rt__subhead">
+      <h3>{{ 'builder.levelFeatures' | dcTranslate }}</h3>
+      <button matButton type="button" (click)="addFeature()" data-testid="add-level-feature">
+        <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+        {{ 'builder.addLevelFeature' | dcTranslate }}
+      </button>
+    </header>
+    <p class="dc-rt__muted">{{ 'builder.levelFeaturesHint' | dcTranslate }}</p>
+    @for (f of def().levelFeatures ?? []; track $index; let i = $index) {
+      <div class="dc-rt__row">
+        <mat-form-field subscriptSizing="dynamic" class="dc-rt__code">
+          <mat-label>{{ 'builder.code' | dcTranslate }}</mat-label>
+          <input matInput dir="ltr" [ngModel]="f.code" (ngModelChange)="feature(i, { code: $event })" [ngModelOptions]="{ updateOn: 'blur' }" />
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'builder.nameAr' | dcTranslate }}</mat-label>
+          <input matInput dir="rtl" [ngModel]="f.nameAr" (ngModelChange)="feature(i, { nameAr: $event })" [ngModelOptions]="{ updateOn: 'blur' }" />
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'builder.nameEn' | dcTranslate }}</mat-label>
+          <input matInput dir="ltr" [ngModel]="f.nameEn" (ngModelChange)="feature(i, { nameEn: $event })" [ngModelOptions]="{ updateOn: 'blur' }" />
+        </mat-form-field>
+        <button matIconButton type="button" (click)="removeFeature(i)" [matTooltip]="'rule.remove' | dcTranslate">
+          <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
+        </button>
+      </div>
     }
   </section>
 
@@ -283,6 +345,28 @@
             </button>
           }
         }
+        @if (feeKind(f) !== 'fixed') {
+          <div class="dc-rt__row">
+            <mat-form-field subscriptSizing="dynamic" class="dc-rt__num">
+              <mat-label>{{ 'builder.feeMinimum' | dcTranslate }}</mat-label>
+              <input matInput type="number" min="0" [ngModel]="f.minimum ?? null" (ngModelChange)="fee(i, { minimum: num($event) })" [ngModelOptions]="{ updateOn: 'blur' }" />
+            </mat-form-field>
+            <mat-form-field subscriptSizing="dynamic" class="dc-rt__num">
+              <mat-label>{{ 'builder.feeMaximum' | dcTranslate }}</mat-label>
+              <input matInput type="number" min="0" [ngModel]="f.maximum ?? null" (ngModelChange)="fee(i, { maximum: num($event) })" [ngModelOptions]="{ updateOn: 'blur' }" />
+            </mat-form-field>
+          </div>
+        }
+        <div class="dc-rt__row">
+          <mat-form-field subscriptSizing="dynamic" class="dc-rt__wide">
+            <mat-label>{{ 'builder.feeNoteAr' | dcTranslate }}</mat-label>
+            <input matInput dir="rtl" [ngModel]="f.noteAr ?? ''" (ngModelChange)="fee(i, { noteAr: $event || null })" [ngModelOptions]="{ updateOn: 'blur' }" />
+          </mat-form-field>
+          <mat-form-field subscriptSizing="dynamic" class="dc-rt__wide">
+            <mat-label>{{ 'builder.feeNoteEn' | dcTranslate }}</mat-label>
+            <input matInput dir="ltr" [ngModel]="f.noteEn ?? ''" (ngModelChange)="fee(i, { noteEn: $event || null })" [ngModelOptions]="{ updateOn: 'blur' }" />
+          </mat-form-field>
+        </div>
         <dc-rule-editor [label]="'builder.feeWhen' | dcTranslate" [rule]="f.when ?? null" [variables]="variables()" (ruleChange)="fee(i, { when: $event })" />
       </div>
     }

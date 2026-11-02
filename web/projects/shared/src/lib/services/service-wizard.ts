@@ -13,7 +13,8 @@ import { AnswerChanges, IntegrationResult, ResultValue, fetchedAnswers } from '.
 import { FeeTable } from './fee-table';
 import { RequestAnswers } from './request-answers';
 import { fromAnswers, stepSchema, toAnswers } from './service-form';
-import { AnswerChange, FeeLine, FieldError, IntegrationStepRun, ResolvedVersion, StepDefinition } from './service.models';
+import { AnswerChange, FeeLine, FieldError, IntegrationStepRun, ResolvedVersion, ServiceLevelDefinition, StepDefinition } from './service.models';
+import { jsonLogic } from '../expressions/jsonlogic';
 
 /** Moving between steps: the answers so far, the chosen level, the step being left and the step to show. */
 export interface WizardMove {
@@ -126,12 +127,33 @@ export interface WizardDraft {
                   (click)="chooseLevel(level.code)"
                   [attr.data-testid]="'level-' + level.code"
                 >
-                  <strong>{{ { ar: level.nameAr, en: level.nameEn } | dcLocalize }}</strong>
+                  <span class="dc-level__head">
+                    @if (level.icon) {
+                      <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">{{ level.icon }}</mat-icon>
+                    }
+                    <strong>{{ { ar: level.nameAr, en: level.nameEn } | dcLocalize }}</strong>
+                    @if (recommended(level)) {
+                      <span class="dc-level__badge" data-testid="level-recommended">{{ 'wizard.recommended' | dcTranslate }}</span>
+                    }
+                  </span>
                   @if (level.descriptionAr || level.descriptionEn) {
                     <span class="dc-muted">{{ { ar: level.descriptionAr ?? '', en: level.descriptionEn ?? '' } | dcLocalize }}</span>
                   }
                   @if (level.slaWorkingDays) {
                     <span>{{ 'wizard.duration' | dcTranslate }} {{ level.slaWorkingDays }} {{ 'wizard.workingDays' | dcTranslate }}</span>
+                  }
+                  @if (version().definition.levelFeatures?.length) {
+                    <ul class="dc-level__features">
+                      @for (f of version().definition.levelFeatures; track f.code) {
+                        <li [class.dc-level__feature--off]="!level.features?.[f.code]">
+                          <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">{{ level.features?.[f.code] ? 'check_circle' : 'remove' }}</mat-icon>
+                          <span>{{ { ar: f.nameAr, en: f.nameEn } | dcLocalize }}</span>
+                          @if (featureText(level, f.code); as text) {
+                            <em>{{ text }}</em>
+                          }
+                        </li>
+                      }
+                    </ul>
                   }
                   @if (feesByLevel()[level.code]; as lines) {
                     <span class="dc-level__fee">{{
@@ -315,6 +337,51 @@ export interface WizardDraft {
       border-color: var(--dga-primary, #1b8354);
       box-shadow: inset 0 0 0 1px var(--dga-primary, #1b8354);
     }
+    .dc-level__head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .dc-level__badge {
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--dga-primary-50, #ecfdf3);
+      color: var(--dga-primary-700, #166a45);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .dc-level__features {
+      list-style: none;
+      margin: 4px 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 13px;
+      text-align: start;
+    }
+    .dc-level__features li {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .dc-level__features mat-icon {
+      width: 18px;
+      height: 18px;
+      font-size: 18px;
+      color: var(--dga-primary-600, #1b8354);
+    }
+    .dc-level__features em {
+      font-style: normal;
+      color: var(--dga-text-3, #6c737f);
+    }
+    .dc-level__feature--off {
+      color: var(--dga-text-3, #6c737f);
+    }
+    .dc-level__feature--off mat-icon {
+      color: var(--dga-gray-400, #9da4ae);
+    }
     .dc-level__fee {
       font-weight: 700;
       color: var(--dga-primary-dark, #074d31);
@@ -390,6 +457,22 @@ export class ServiceWizard {
   /** Answers an integration step fetched so far (its outputs), to show the applicant. */
   protected fetched(step: StepDefinition): ResultValue[] {
     return fetchedAnswers(this.version(), step, this.data(), this.i18n);
+  }
+
+  /** Whether the level's rule recommends it for the answers so far (rules read them as data.CODE). */
+  protected recommended(level: ServiceLevelDefinition): boolean {
+    if (!level.recommendWhen) return false;
+    try {
+      return jsonLogic.evaluateTruthy(level.recommendWhen, { data: this.data() } as never);
+    } catch {
+      return false;
+    }
+  }
+
+  /** A feature given as text (e.g. "Highest") rather than just offered. */
+  protected featureText(level: ServiceLevelDefinition, code: string): string | null {
+    const value = level.features?.[code];
+    return typeof value === 'string' && value ? value : null;
   }
 
   protected levelTotal(lines: FeeLine[]): number {

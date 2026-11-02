@@ -18,6 +18,7 @@ import { DualList } from './dual-list';
 import { FileInput, FileUploader } from './file-input';
 import { StructuredInput } from './structured-input';
 import { RowsInput } from './rows-input';
+import { ROW_FORM } from './row-form';
 import { pickIcon } from './icon-picker';
 import { LOV_SOURCE } from './lov-source';
 
@@ -49,6 +50,8 @@ export type FormValue = Record<string, unknown>;
     TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  // Rows fields open this same form for a row.
+  providers: [{ provide: ROW_FORM, useFactory: () => DynamicForm }],
   templateUrl: './dynamic-form.html',
   styleUrl: './dynamic-form.scss',
 })

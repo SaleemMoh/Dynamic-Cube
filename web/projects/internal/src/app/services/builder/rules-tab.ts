@@ -8,7 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { JsonLogicRule, RuleEditor, RuleVariable, ServiceLevelDefinition, TranslatePipe } from '@dynamic-cube/shared';
+import { JsonLogicRule, LevelFeatureDefinition, LocalizePipe, RuleEditor, RuleVariable, ServiceLevelDefinition, TranslatePipe } from '@dynamic-cube/shared';
 import { BuilderReferences } from './builder-references';
 import { BuilderStore } from './builder-store';
 import { LinkedServices } from './linked-services';
@@ -30,6 +30,7 @@ type FeeKind = 'fixed' | 'formula' | 'bracket';
     MatSelectModule,
     MatTooltipModule,
     TranslatePipe,
+    LocalizePipe,
     RuleEditor,
     LinkedServices,
   ],
@@ -100,6 +101,75 @@ export class RulesTab {
 
   protected moveLevel(index: number, by: number): void {
     this.set((d) => ({ levels: move(d.levels, index, index + by) }));
+  }
+
+  /** One level at most is chosen at first. */
+  protected defaultLevel(index: number, chosen: boolean): void {
+    this.set((d) => ({ levels: d.levels.map((l, i) => ({ ...l, isDefault: i === index ? chosen : chosen ? false : !!l.isDefault })) }));
+  }
+
+  /** A level offers a feature (true), describes it (text) or not (null). */
+  protected levelFeature(index: number, code: string, value: boolean | string | null): void {
+    this.set((d) => ({
+      levels: d.levels.map((l, i) => {
+        if (i !== index) return l;
+        const features = { ...(l.features ?? {}) };
+        if (value === null || value === '') delete features[code];
+        else features[code] = value;
+        return { ...l, features };
+      }),
+    }));
+  }
+
+  protected featureText(level: ServiceLevelDefinition, code: string): string {
+    const value = level.features?.[code];
+    return typeof value === 'string' ? value : '';
+  }
+
+  protected addFeature(): void {
+    this.set((d) => ({
+      levelFeatures: [
+        ...(d.levelFeatures ?? []),
+        {
+          code: freeCode(
+            (d.levelFeatures ?? []).map((f) => f.code),
+            'FEATURE',
+          ),
+          nameAr: 'ميزة جديدة',
+          nameEn: 'New feature',
+        },
+      ],
+    }));
+  }
+
+  protected feature(index: number, change: Partial<LevelFeatureDefinition>): void {
+    const before = (this.def().levelFeatures ?? [])[index]?.code;
+    if (change.code !== undefined) change.code = change.code.trim().toUpperCase();
+    this.set((d) => ({
+      levelFeatures: (d.levelFeatures ?? []).map((f, i) => (i === index ? { ...f, ...change } : f)),
+      // The levels name the features they offer.
+      levels:
+        change.code && change.code !== before
+          ? d.levels.map((l) => {
+              if (!l.features || !(before in l.features)) return l;
+              const { [before]: value, ...rest } = l.features;
+              return { ...l, features: { ...rest, [change.code!]: value } };
+            })
+          : d.levels,
+    }));
+  }
+
+  protected removeFeature(index: number): void {
+    const code = (this.def().levelFeatures ?? [])[index]?.code;
+    this.set((d) => ({
+      levelFeatures: (d.levelFeatures ?? []).filter((_, i) => i !== index),
+      levels: d.levels.map((l) => {
+        if (!l.features || !(code in l.features)) return l;
+        const features = { ...l.features };
+        delete features[code];
+        return { ...l, features };
+      }),
+    }));
   }
 
   // Eligibility and validations

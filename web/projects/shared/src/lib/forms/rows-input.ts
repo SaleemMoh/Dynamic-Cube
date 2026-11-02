@@ -20,74 +20,15 @@ import {
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { I18nService } from '../i18n/i18n.service';
-import { LocalizedText } from '../i18n/language';
 import { LocalizePipe, TranslatePipe } from '../i18n/translate.pipe';
 import type { FormValue } from './dynamic-form';
 import { FileUploader } from './file-input';
 import { FormField, FormOption } from './form-schema';
 import { LOV_SOURCE } from './lov-source';
 import { RECORD_PROVIDER, RecordPick } from './record-source';
-import { ROW_DIALOG } from './row-dialog-token';
+import { RowDialog } from './row-dialog';
+import { ROW_FORM, Row, RowDialogData, rowFiles } from './row-form';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-
-export type Row = Record<string, unknown>;
-
-/** What the row dialog is given: the columns, the row being edited (none: a new row) and where its files go. */
-export interface RowDialogData {
-  title: LocalizedText;
-  columns: FormField[];
-  row: Row | null;
-  context: FormValue;
-  uploader: FileUploader | null;
-}
-
-/** A date as the API keeps it (yyyy-MM-dd); other values as they are. */
-function toStored(value: unknown): unknown {
-  return value instanceof Date
-    ? `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`
-    : value;
-}
-
-/** A row's values for its form: date columns become dates for the date picker. */
-export function rowForForm(columns: FormField[], row: Row): Row {
-  const result: Row = { ...row };
-  for (const column of columns) {
-    const value = row[column.code];
-    if (column.type === 'date' && typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) {
-      const [y, m, d] = value.slice(0, 10).split('-').map(Number);
-      result[column.code] = new Date(y, m - 1, d);
-    }
-  }
-  return result;
-}
-
-/** A row as it is kept: dates as yyyy-MM-dd, empty values left out. */
-export function rowForStorage(row: Row): Row {
-  const result: Row = {};
-  for (const [key, value] of Object.entries(row)) {
-    const stored = toStored(value);
-    if (
-      stored !== null &&
-      stored !== undefined &&
-      stored !== '' &&
-      !(Array.isArray(stored) && stored.length === 0)
-    )
-      result[key] = stored;
-  }
-  return result;
-}
-
-/** The ids of the files of a row (in its file columns). */
-export function rowFiles(columns: FormField[], row: Row | null): { column: string; id: string }[] {
-  if (!row) return [];
-  return columns
-    .filter((c) => c.type === 'file')
-    .flatMap((c) => {
-      const value = row[c.code];
-      const ids = Array.isArray(value) ? value : value ? [value] : [];
-      return ids.map((id) => ({ column: c.code, id: String(id) }));
-    });
-}
 
 /** The columns shown in the table: the field's choice, or the first four. */
 export function tableColumns(field: FormField): FormField[] {
@@ -278,8 +219,8 @@ export class RowsInput implements ControlValueAccessor {
   private readonly i18n = inject(I18nService);
   private readonly lovSource = inject(LOV_SOURCE, { optional: true });
   private readonly recordProvider = inject(RECORD_PROVIDER, { optional: true });
-  /** The dialog of a row's form (the shared dynamic form), provided by provideDynamicCubeUi. */
-  private readonly rowDialog = inject(ROW_DIALOG);
+  /** The form of a row: the dynamic form this field sits in (it provides itself). */
+  private readonly rowForm = inject(ROW_FORM);
   private readonly destroyRef = inject(DestroyRef);
   /** Whether rows can be picked from a record list here. */
   protected readonly canPick = computed(() => !!this.recordProvider && !!this.field().rows?.source);
@@ -408,7 +349,7 @@ export class RowsInput implements ControlValueAccessor {
 
   private open(row: Row | null, done: (row: Row) => void): void {
     const field = this.field();
-    const ref = this.dialog.open<unknown, RowDialogData, Row>(this.rowDialog, {
+    const ref = this.dialog.open<RowDialog, RowDialogData, Row>(RowDialog, {
       width: '720px',
       maxWidth: '95vw',
       autoFocus: 'first-tabbable',
@@ -420,6 +361,7 @@ export class RowsInput implements ControlValueAccessor {
         row,
         context: this.context(),
         uploader: columnUploader(this.uploader(), field.code),
+        form: this.rowForm,
       },
     });
     const subscription = ref.afterClosed().subscribe((result) => {

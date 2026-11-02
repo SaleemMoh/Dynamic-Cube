@@ -20,7 +20,7 @@ public enum StatusCategory
 }
 
 /// <summary>One fee item as charged: net amount, VAT and total, in SAR.</summary>
-public sealed record FeeLine(string Code, string NameAr, string NameEn, decimal Net, decimal Vat, decimal Total, bool IsEstimate);
+public sealed record FeeLine(string Code, string NameAr, string NameEn, decimal Net, decimal Vat, decimal Total, bool IsEstimate, string? NoteAr = null, string? NoteEn = null);
 
 /// <summary>
 /// One application, from draft to closure. Pinned to the service version it started on; <see cref="Data"/> holds the
