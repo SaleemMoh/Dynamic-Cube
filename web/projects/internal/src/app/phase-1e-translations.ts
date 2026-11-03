@@ -87,6 +87,7 @@ export const PHASE_1E_TRANSLATIONS: TranslationDictionary = {
     'messages.resend': 'إعادة الإرسال',
     'messages.none': 'لا توجد رسائل.',
     'decisions.versionsTitle': 'إصدارات مجموعات القواعد',
+    'decisions.matrixDesigner': 'فتح في مصمم المصفوفة',
     'decisions.versionsHint': 'الإصدار المنشور لا يتغير، ويُستخدم أحدث إصدار غير موقوف. جرّب أي إصدار على مدخلات تجريبية قبل اعتماده.',
     'decisions.ruleSet': 'مجموعة القواعد',
     'decisions.versions': 'الإصدارات',
@@ -194,6 +195,7 @@ export const PHASE_1E_TRANSLATIONS: TranslationDictionary = {
     'messages.resend': 'Send again',
     'messages.none': 'No messages.',
     'decisions.versionsTitle': 'Rule set versions',
+    'decisions.matrixDesigner': 'Open in the matrix designer',
     'decisions.versionsHint':
       'Published versions never change; the latest version that is not retired is used. Try any version on a sample input before approving it.',
     'decisions.ruleSet': 'Rule set',

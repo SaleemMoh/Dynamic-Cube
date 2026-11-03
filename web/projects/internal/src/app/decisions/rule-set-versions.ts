@@ -2,6 +2,7 @@ import { DatePipe, JsonPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -283,6 +284,7 @@ export function traceText(step: TraceStep): string {
     MatTooltipModule,
     StructuredInput,
     LocalizePipe,
+    RouterLink,
     TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -300,6 +302,12 @@ export function traceText(step: TraceStep): string {
           }
         </mat-select>
       </mat-form-field>
+      @if (isMatrix()) {
+        <a matButton="tonal" routerLink="/decisions/matrix" [queryParams]="{ ruleSet: ruleSet() }" data-testid="open-matrix-designer">
+          <mat-icon fontSet="material-symbols-outlined">grid_on</mat-icon>
+          {{ 'decisions.matrixDesigner' | dcTranslate }}
+        </a>
+      }
     </div>
 
     @if (ruleSet(); as code) {
@@ -473,6 +481,10 @@ export class RuleSetVersions {
   protected readonly errors = signal<string[]>([]);
   protected readonly canCreate = computed(() => this.privileges.can('decisions.config', 'CREATE'));
   protected readonly canEdit = computed(() => this.privileges.can('decisions.config', 'EDIT'));
+  /** A MATRIX rule set is designed in the scoring matrix designer. */
+  protected readonly isMatrix = computed(
+    () => String((this.ruleSets.value() ?? []).find((r) => r.code === this.ruleSet())?.['engine'] ?? '').toUpperCase() === 'MATRIX',
+  );
 
   protected readonly rows = computed(() => {
     const prefix = `${this.ruleSet()}/`;

@@ -7,4 +7,5 @@ export const DECISIONS_ROUTES: Routes = [
     loadComponent: () => import('../apps-control/config/config-section-page').then((m) => m.ConfigSectionPage),
   },
   { path: 'versions', loadComponent: () => import('./rule-set-versions').then((m) => m.RuleSetVersions) },
+  { path: 'matrix', loadComponent: () => import('./matrix/matrix-page').then((m) => m.MatrixPage) },
 ];

@@ -82,6 +82,7 @@ internal static class DecisionsCatalog
         [
             new("decisions.rule-sets", "مجموعات القواعد", "Rule sets", "/decisions", DecisionResources.Config, "rule_folder", 10),
             new("decisions.versions", "إصدارات القواعد", "Rule-set versions", "/decisions/versions", DecisionResources.Config, "history_edu", 20),
+            new("decisions.matrix", "مصمم مصفوفة التقييم", "Scoring matrix designer", "/decisions/matrix", DecisionResources.Config, "grid_on", 15),
         ],
     };
 }
