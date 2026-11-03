@@ -1,0 +1,175 @@
+{
+  "title": "Reusable service building blocks: relationship types and provider checks for acting on a Balady authorization or a Najiz agency",
+  "items": [
+    {
+      "entityType": "apps.domain",
+      "entityCode": "PARTY_RELATIONSHIP_TYPE/BALADY_DELEGATE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مفوّض بتفويض بلدي",
+        "nameEn": "Delegate by Balady authorization",
+        "classCode": "PARTY_RELATIONSHIP_TYPE",
+        "displayOrder": 7,
+        "attributes": {
+          "CAN_ACT": true
+        }
+      }
+    },
+    {
+      "entityType": "apps.domain",
+      "entityCode": "PARTY_RELATIONSHIP_TYPE/NAJIZ_AGENT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "وكيل بوكالة ناجز",
+        "nameEn": "Agent by Najiz agency",
+        "classCode": "PARTY_RELATIONSHIP_TYPE",
+        "displayOrder": 8,
+        "attributes": {
+          "CAN_ACT": true
+        }
+      }
+    },
+    {
+      "entityType": "integ.operation",
+      "entityCode": "BALADY_AUTHORIZATION",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "التحقق من تفويض بلدي",
+        "nameEn": "Check a Balady authorization",
+        "connectionCode": "MOMRAH_GATEWAY",
+        "envelopeProfileCode": "MOMRAH",
+        "method": "GET",
+        "pathTemplate": "/v1/AUTHORITIES/balady/{number}",
+        "parameters": [
+          {
+            "name": "number",
+            "location": "PATH",
+            "isRequired": true,
+            "isMasked": false,
+            "sampleValue": "BL-100200"
+          },
+          {
+            "name": "crNumber",
+            "location": "QUERY",
+            "isRequired": true,
+            "isMasked": false,
+            "sampleValue": "1010000002"
+          },
+          {
+            "name": "idNumber",
+            "location": "QUERY",
+            "isRequired": true,
+            "isMasked": true,
+            "sampleValue": "1000000001"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "valid",
+            "path": "valid"
+          },
+          {
+            "name": "expiresOn",
+            "path": "expiresOn"
+          },
+          {
+            "name": "firmNameAr",
+            "path": "firmNameAr"
+          },
+          {
+            "name": "firmNameEn",
+            "path": "firmNameEn"
+          }
+        ],
+        "responseCodes": [
+          {
+            "code": "005-000001",
+            "outcome": "BUSINESS_ERROR",
+            "messageAr": "لم يُعثر على هذا الرقم لدى الجهة.",
+            "messageEn": "The provider has no authority with this number."
+          },
+          {
+            "code": "005-000002",
+            "outcome": "BUSINESS_ERROR",
+            "messageAr": "رقم السجل التجاري غير صحيح.",
+            "messageEn": "The CR number is not valid."
+          }
+        ],
+        "maskFields": [],
+        "cacheSeconds": 0,
+        "isIdempotent": true
+      }
+    },
+    {
+      "entityType": "integ.operation",
+      "entityCode": "NAJIZ_AGENCY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "التحقق من وكالة ناجز",
+        "nameEn": "Check a Najiz agency",
+        "connectionCode": "MOMRAH_GATEWAY",
+        "envelopeProfileCode": "MOMRAH",
+        "method": "GET",
+        "pathTemplate": "/v1/AUTHORITIES/najiz/{number}",
+        "parameters": [
+          {
+            "name": "number",
+            "location": "PATH",
+            "isRequired": true,
+            "isMasked": false,
+            "sampleValue": "NJ-445566"
+          },
+          {
+            "name": "crNumber",
+            "location": "QUERY",
+            "isRequired": true,
+            "isMasked": false,
+            "sampleValue": "1010000002"
+          },
+          {
+            "name": "idNumber",
+            "location": "QUERY",
+            "isRequired": true,
+            "isMasked": true,
+            "sampleValue": "1000000001"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "valid",
+            "path": "valid"
+          },
+          {
+            "name": "expiresOn",
+            "path": "expiresOn"
+          },
+          {
+            "name": "firmNameAr",
+            "path": "firmNameAr"
+          },
+          {
+            "name": "firmNameEn",
+            "path": "firmNameEn"
+          }
+        ],
+        "responseCodes": [
+          {
+            "code": "005-000001",
+            "outcome": "BUSINESS_ERROR",
+            "messageAr": "لم يُعثر على هذا الرقم لدى الجهة.",
+            "messageEn": "The provider has no authority with this number."
+          },
+          {
+            "code": "005-000002",
+            "outcome": "BUSINESS_ERROR",
+            "messageAr": "رقم السجل التجاري غير صحيح.",
+            "messageEn": "The CR number is not valid."
+          }
+        ],
+        "maskFields": [],
+        "cacheSeconds": 0,
+        "isIdempotent": true
+      }
+    }
+  ]
+}

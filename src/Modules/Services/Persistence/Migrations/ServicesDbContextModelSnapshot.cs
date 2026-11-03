@@ -589,6 +589,16 @@ namespace DynamicCube.Modules.Services.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("ActingAuthority")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("acting_authority");
+
+                    b.Property<string>("ActingRelationship")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("acting_relationship");
+
                     b.Property<string>("BeneficiaryNameAr")
                         .IsRequired()
                         .HasMaxLength(500)

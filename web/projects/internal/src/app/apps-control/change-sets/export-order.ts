@@ -40,6 +40,7 @@ export const BASE_TYPE_ORDER: readonly string[] = [
   'party.sanction-type',
   'party.profile-field',
   'party.context-source',
+  'party.authority-type',
   'doc.template',
   'doc.document-type',
   'com.template',

@@ -9,6 +9,7 @@ public static class PartyChangeTypes
     public const string SanctionType = "party.sanction-type";
     public const string ContextSource = "party.context-source";
     public const string RecordList = "party.record-list";
+    public const string AuthorityType = "party.authority-type";
 
     public const string Area = "party.registry";
 }

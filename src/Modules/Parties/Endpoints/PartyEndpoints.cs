@@ -51,6 +51,19 @@ internal static class PartyEndpoints
             return TypedResults.NoContent();
         }).WithName("DeleteMyRecord");
 
+        // Acting for another firm on an authority (authorization, agency): the types, the applicant's authorities, add and end.
+        group.MapGet("/me/authority-types", async (AuthorityService authorities, CancellationToken ct) =>
+            TypedResults.Ok(await authorities.TypesAsync(ct))).WithName("GetAuthorityTypes");
+        group.MapGet("/me/authorities", async (AuthorityService authorities, CancellationToken ct) =>
+            TypedResults.Ok(await authorities.MineAsync(ct))).WithName("GetMyAuthorities");
+        group.MapPost("/me/authorities", async (AuthorityRequest request, AuthorityService authorities, CancellationToken ct) =>
+            TypedResults.Ok(await authorities.AddAsync(request, ct))).WithName("AddMyAuthority");
+        group.MapDelete("/me/authorities/{id:guid}", async (Guid id, AuthorityService authorities, CancellationToken ct) =>
+        {
+            await authorities.EndAsync(id, ct);
+            return TypedResults.NoContent();
+        }).WithName("EndMyAuthority");
+
         group.MapPost("/me/record-lists/{code}/import", async (string code, IActingPartyAccessor acting, RecordService records, CancellationToken ct) =>
             TypedResults.Ok(await records.ImportAsync((await acting.GetAsync(ct)).PartyId, code, ct))).WithName("ImportMyRecords");
     }

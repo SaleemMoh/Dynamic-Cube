@@ -113,7 +113,14 @@ public sealed record BundleOption(string Service, string NameAr, string NameEn, 
 
 public sealed record TimelineEntry(DateTimeOffset At, string UserId, string Type, StatusCategory? FromStatus, StatusCategory? ToStatus, string? Comment);
 
-public sealed record RequestDetail(RequestView View, Guid SubmitterPartyId, string SubmitterName, Guid BeneficiaryPartyId, IReadOnlyList<TimelineEntry> Timeline);
+public sealed record RequestDetail(RequestView View, Guid SubmitterPartyId, string SubmitterName, Guid BeneficiaryPartyId, IReadOnlyList<TimelineEntry> Timeline)
+{
+    /// <summary>How the submitter acted for the beneficiary (relationship type), when not for themselves.</summary>
+    public string? ActingRelationship { get; init; }
+
+    /// <summary>The authority the submitter acted on (authorization, agency), <c>TYPE:NUMBER</c>.</summary>
+    public string? ActingAuthority { get; init; }
+}
 
 /// <param name="DocumentId">For a follow-up service: the applicant's document the request is for.</param>
 public sealed record CreateRequest(string ServiceCode, Guid? DocumentId = null);

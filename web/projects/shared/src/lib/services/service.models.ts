@@ -551,4 +551,8 @@ export interface RequestDetail {
   submitterName: string;
   beneficiaryPartyId: string;
   timeline: TimelineEntry[];
+  /** How the submitter acted for the beneficiary (relationship type), when not for themselves. */
+  actingRelationship?: string | null;
+  /** The authority the submitter acted on (authorization, agency), `TYPE:NUMBER`. */
+  actingAuthority?: string | null;
 }

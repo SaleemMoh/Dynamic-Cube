@@ -15,6 +15,9 @@ public enum RecordSource
     Manual,
     Integration,
     SignIn,
+
+    /// <summary>Given by the applicant as an authority (authorization, agency), checked when the type has a check.</summary>
+    Authority,
 }
 
 /// <summary>Identifier types; the first identifier of each party is its primary one.</summary>

@@ -1,5 +1,5 @@
-using DynamicCube.Platform.Persistence;
 using DynamicCube.Platform.Parties;
+using DynamicCube.Platform.Persistence;
 
 namespace DynamicCube.Modules.Parties.Domain;
 

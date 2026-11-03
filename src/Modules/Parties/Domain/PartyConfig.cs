@@ -92,3 +92,66 @@ public sealed class ContextSource : ConfigEntity
 
     public int DisplayOrder { get; set; }
 }
+
+/// <summary>What an authority check reads: the number typed, the firm's identifier, the applicant's ID number or the expiry.</summary>
+public enum AuthorityInputSource
+{
+    Number,
+    Principal,
+    Individual,
+    Expiry,
+}
+
+/// <summary>Passes one value of an authority to the check operation's parameter.</summary>
+public sealed class AuthorityInput
+{
+    public string Parameter { get; set; } = string.Empty;
+
+    public AuthorityInputSource From { get; set; }
+}
+
+/// <summary>
+/// A document that lets an individual act for a firm they do not own (a municipal authorization, a notarised agency…):
+/// the applicant gives its number (and expiry), it is checked through an operation when one is set, and a dated
+/// relationship of <see cref="RelationshipCode"/> is recorded, so the firm becomes one of their acting contexts.
+/// </summary>
+public sealed class AuthorityType : ConfigEntity
+{
+    public string? DescriptionAr { get; set; }
+
+    public string? DescriptionEn { get; set; }
+
+    /// <summary>The relationship type recorded (a value of class <c>PARTY_RELATIONSHIP_TYPE</c> that allows acting).</summary>
+    public string RelationshipCode { get; set; } = string.Empty;
+
+    public PartyKind PrincipalKind { get; set; } = PartyKind.Establishment;
+
+    public string PrincipalIdentifierType { get; set; } = IdentifierTypes.CrNumber;
+
+    public string NumberLabelAr { get; set; } = string.Empty;
+
+    public string NumberLabelEn { get; set; } = string.Empty;
+
+    public bool RequiresExpiry { get; set; }
+
+    /// <summary>Services it covers (empty: all).</summary>
+    public List<string> Services { get; set; } = [];
+
+    /// <summary>The operation that checks the authority; without one it is recorded as given.</summary>
+    public string? OperationCode { get; set; }
+
+    public List<AuthorityInput> Inputs { get; set; } = [];
+
+    /// <summary>An output that must be true (or the call must succeed when not set).</summary>
+    public string? ValidOutput { get; set; }
+
+    /// <summary>An output giving the expiry date the provider knows (used instead of the typed one).</summary>
+    public string? ExpiryOutput { get; set; }
+
+    /// <summary>Outputs naming the firm, to register it when it is not known yet.</summary>
+    public string? PrincipalNameArOutput { get; set; }
+
+    public string? PrincipalNameEnOutput { get; set; }
+
+    public int DisplayOrder { get; set; }
+}

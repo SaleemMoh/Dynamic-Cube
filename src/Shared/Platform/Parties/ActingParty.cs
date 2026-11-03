@@ -11,7 +11,8 @@ public enum PartyKind
 /// represent (owner, manager, delegate…). Requests record both (submitter and beneficiary).
 /// </summary>
 /// <param name="Services">Service codes the relationship covers; empty means all services.</param>
-public sealed record ActingParty(Guid IndividualId, Guid PartyId, PartyKind Kind, string NameAr, string NameEn, string? RelationshipCode, IReadOnlyList<string> Services)
+/// <param name="Authority">When acting on an authority (authorization, agency): its type and number, <c>TYPE:NUMBER</c>.</param>
+public sealed record ActingParty(Guid IndividualId, Guid PartyId, PartyKind Kind, string NameAr, string NameEn, string? RelationshipCode, IReadOnlyList<string> Services, string? Authority = null)
 {
     public bool IsSelf => IndividualId == PartyId;
 

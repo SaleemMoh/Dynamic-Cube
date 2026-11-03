@@ -41,6 +41,15 @@ internal sealed class RequestSubject(ServicesDbContext context, IPartyFacts part
             ["service"] = request.ServiceCode,
             ["number"] = request.Number,
             ["submitterPartyId"] = request.SubmitterPartyId.ToString(),
+            // How the submitter acts for the beneficiary, and on what authority.
+            ["applicant"] = new JsonObject
+            {
+                ["individualId"] = request.SubmitterPartyId.ToString(),
+                ["relationship"] = request.ActingRelationship,
+                ["isSelf"] = request.SubmitterPartyId == request.BeneficiaryPartyId,
+                ["authority"] = RuleContext.Authority(request.ActingAuthority).Type,
+                ["authorityNumber"] = RuleContext.Authority(request.ActingAuthority).Number,
+            },
             // The beneficiary: decisions and documents read its profile, identifiers and credentials.
             ["party"] = party?.ToJson() ?? new JsonObject { ["id"] = request.BeneficiaryPartyId.ToString() },
             // What a payment step bills by default: the fees computed at submission.

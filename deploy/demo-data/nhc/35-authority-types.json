@@ -1,0 +1,81 @@
+{
+  "title": "Reusable service building blocks: authority types (Balady authorization, Najiz agency) the applicant adds to act for another firm",
+  "items": [
+    {
+      "entityType": "party.authority-type",
+      "entityCode": "BALADY_AUTH",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تفويض بلدي",
+        "nameEn": "Balady authorization",
+        "descriptionAr": "تفويض صادر من منصة بلدي للتعامل نيابة عن المنشأة.",
+        "descriptionEn": "An authorization issued on Balady to deal on behalf of the firm.",
+        "relationshipCode": "BALADY_DELEGATE",
+        "principalKind": "ESTABLISHMENT",
+        "principalIdentifierType": "CR_NUMBER",
+        "numberLabelAr": "رقم التفويض",
+        "numberLabelEn": "Authorization number",
+        "requiresExpiry": false,
+        "services": [],
+        "operationCode": "BALADY_AUTHORIZATION",
+        "inputs": [
+          {
+            "parameter": "number",
+            "from": "NUMBER"
+          },
+          {
+            "parameter": "crNumber",
+            "from": "PRINCIPAL"
+          },
+          {
+            "parameter": "idNumber",
+            "from": "INDIVIDUAL"
+          }
+        ],
+        "validOutput": "valid",
+        "expiryOutput": "expiresOn",
+        "principalNameArOutput": "firmNameAr",
+        "principalNameEnOutput": "firmNameEn",
+        "displayOrder": 1
+      }
+    },
+    {
+      "entityType": "party.authority-type",
+      "entityCode": "NAJIZ_AGENCY",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "وكالة ناجز",
+        "nameEn": "Najiz agency",
+        "descriptionAr": "وكالة شرعية موثقة في ناجز تخول التعامل باسم المنشأة.",
+        "descriptionEn": "A notarised agency on Najiz to act in the firm's name.",
+        "relationshipCode": "NAJIZ_AGENT",
+        "principalKind": "ESTABLISHMENT",
+        "principalIdentifierType": "CR_NUMBER",
+        "numberLabelAr": "رقم الوكالة",
+        "numberLabelEn": "Agency number",
+        "requiresExpiry": true,
+        "services": [],
+        "operationCode": "NAJIZ_AGENCY",
+        "inputs": [
+          {
+            "parameter": "number",
+            "from": "NUMBER"
+          },
+          {
+            "parameter": "crNumber",
+            "from": "PRINCIPAL"
+          },
+          {
+            "parameter": "idNumber",
+            "from": "INDIVIDUAL"
+          }
+        ],
+        "validOutput": "valid",
+        "expiryOutput": "expiresOn",
+        "principalNameArOutput": "firmNameAr",
+        "principalNameEnOutput": "firmNameEn",
+        "displayOrder": 2
+      }
+    }
+  ]
+}

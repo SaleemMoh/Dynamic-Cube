@@ -23,8 +23,18 @@ internal static class RuleContext
         {
             ["individualId"] = acting.IndividualId.ToString(),
             ["relationship"] = acting.RelationshipCode,
+            // Acting on an authority (authorization, agency): its type and number.
+            ["authority"] = Authority(acting.Authority).Type,
+            ["authorityNumber"] = Authority(acting.Authority).Number,
             ["isSelf"] = acting.IsSelf,
         },
         ["document"] = document?.ToJson(),
     };
+
+    /// <summary>An authority reference <c>TYPE:NUMBER</c> split into its parts.</summary>
+    internal static (string? Type, string? Number) Authority(string? reference)
+    {
+        var at = reference?.IndexOf(':', StringComparison.Ordinal) ?? -1;
+        return at < 0 ? (reference, null) : (reference![..at], reference[(at + 1)..]);
+    }
 }

@@ -101,6 +101,44 @@ etimad.MapGet("/contracts/{crNumber}", (string crNumber) =>
     return Success(new JsonObject { ["contracts"] = items });
 });
 
+// Authorities to act for a firm: a municipal authorization (Balady, numbers BL-…) and a notarised agency (Najiz,
+// numbers NJ-…) for a CR number and the delegate's ID number. A number ending in X is revoked; any other is valid for six
+// months. The firm's name comes from the MCI samples when known.
+var authorities = app.MapGroup("/v1/AUTHORITIES").AddEndpointFilter(async (context, next) =>
+{
+    var authorization = context.HttpContext.Request.Headers.Authorization.ToString();
+    var token = authorization.StartsWith("Bearer ", StringComparison.Ordinal) ? authorization[7..] : string.Empty;
+    return tokens.TryGetValue(token, out var expires) && expires > DateTimeOffset.UtcNow
+        ? await next(context)
+        : Results.Json(Status(401, "Access Token Expired"), statusCode: 401);
+});
+
+authorities.MapGet("/{kind}/{number}", (string kind, string number, string? crNumber, string? idNumber) =>
+{
+    var prefix = kind switch { "balady" => "BL-", "najiz" => "NJ-", _ => null };
+    if (prefix is null || !number.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) || number.Length < 6)
+    {
+        return Business("005-000001", "Authority Not Found");
+    }
+
+    if (crNumber is not { Length: 10 } || !crNumber.All(char.IsAsciiDigit))
+    {
+        return Business("005-000002", "Wrong CR Number");
+    }
+
+    var firm = samples["byCrNumber"]?[crNumber] as JsonObject;
+    return Success(new JsonObject
+    {
+        ["authorityNumber"] = number.ToUpperInvariant(),
+        ["valid"] = !number.EndsWith('X') && !number.EndsWith('x'),
+        ["crNumber"] = crNumber,
+        ["delegateId"] = idNumber,
+        ["firmNameAr"] = firm?["Commercial_Name"]?.DeepClone() ?? firm?["crName"]?.DeepClone() ?? JsonValue.Create($"منشأة {crNumber}"),
+        ["firmNameEn"] = JsonValue.Create($"Establishment {crNumber}"),
+        ["expiresOn"] = DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(6)).ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
+    });
+});
+
 // NIC (National Information Center): a person's identity data by ID number; SCE (Saudi Council of Engineers): an
 // engineer's membership by number. Used by the individuals' demo service.
 var people = JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "samples", "people.json")))!;

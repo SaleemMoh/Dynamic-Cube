@@ -141,6 +141,8 @@ internal sealed class RequestService(
             SubmitterPartyId = acting.IndividualId,
             SubmitterName = individual.NameAr,
             BeneficiaryPartyId = acting.PartyId,
+            ActingRelationship = acting.IsSelf ? null : acting.RelationshipCode,
+            ActingAuthority = acting.IsSelf ? null : acting.Authority,
             BeneficiaryNameAr = facts.NameAr,
             BeneficiaryNameEn = facts.NameEn,
             StatusCategory = StatusCategory.Draft,

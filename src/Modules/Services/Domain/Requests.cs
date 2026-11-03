@@ -57,6 +57,12 @@ public sealed class ServiceRequest : IAuditable, IHasAuditColumns
     /// <summary>The party the request is for (the individual or the establishment they act for).</summary>
     public Guid BeneficiaryPartyId { get; set; }
 
+    /// <summary>How the submitter acts for the beneficiary (relationship type), when not for themselves.</summary>
+    public string? ActingRelationship { get; set; }
+
+    /// <summary>The authority the submitter acts on (authorization, agency), <c>TYPE:NUMBER</c>.</summary>
+    public string? ActingAuthority { get; set; }
+
     public string BeneficiaryNameAr { get; set; } = string.Empty;
 
     public string BeneficiaryNameEn { get; set; } = string.Empty;

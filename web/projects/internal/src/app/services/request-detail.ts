@@ -61,6 +61,14 @@ import { RequestEvidence } from './request-evidence';
             }}</a>
             · {{ 'requests.submitter' | dcTranslate }}:
             <a class="dc-link" [routerLink]="['/party/parties', d.submitterPartyId]">{{ d.submitterName }}</a>
+            @if (d.actingRelationship) {
+              <span class="dc-badge dc-badge--info" data-testid="request-acting">
+                {{ 'requests.actingAs' | dcTranslate }} {{ d.actingRelationship }}
+                @if (d.actingAuthority) {
+                  · <span dir="ltr">{{ d.actingAuthority }}</span>
+                }
+              </span>
+            }
             · {{ 'requests.version' | dcTranslate }} {{ d.view.versionNumber }}
             @if (branches.several() && d.view.request.branchCode) {
               · {{ 'requests.branch' | dcTranslate }} <span data-testid="request-branch">{{ branches.name(d.view.request.branchCode) | dcLocalize }}</span>

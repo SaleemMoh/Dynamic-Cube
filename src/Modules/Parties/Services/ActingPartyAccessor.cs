@@ -32,6 +32,6 @@ internal sealed class ActingPartyAccessor(IHttpContextAccessor accessor, Context
 
         var context = (await contexts.ListAsync(individual.Id, cancellationToken)).FirstOrDefault(c => c.PartyId == requested)
             ?? throw new ActingPartyException("You are not authorized to act for this party.");
-        return _resolved = new ActingParty(individual.Id, context.PartyId, context.Kind, context.NameAr, context.NameEn, context.RelationshipCode, context.Services);
+        return _resolved = new ActingParty(individual.Id, context.PartyId, context.Kind, context.NameAr, context.NameEn, context.RelationshipCode, context.Services, context.Authority);
     }
 }

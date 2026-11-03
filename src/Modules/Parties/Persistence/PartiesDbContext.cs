@@ -32,6 +32,8 @@ public sealed class PartiesDbContext(DbContextOptions<PartiesDbContext> options)
 
     public DbSet<RecordList> RecordLists => Set<RecordList>();
 
+    public DbSet<AuthorityType> AuthorityTypes => Set<AuthorityType>();
+
     public DbSet<PartyRecord> Records => Set<PartyRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -66,6 +68,22 @@ public sealed class PartiesDbContext(DbContextOptions<PartiesDbContext> options)
             b.Property(e => e.Icon).HasMaxLength(100);
             b.Property(e => e.Columns).HasJsonColumn();
             b.Property(e => e.Import).HasJsonColumn();
+        });
+        modelBuilder.ConfigTable<AuthorityType>(Schema, "authority_type", b =>
+        {
+            b.Property(e => e.DescriptionAr).HasMaxLength(2000);
+            b.Property(e => e.DescriptionEn).HasMaxLength(2000);
+            b.Property(e => e.RelationshipCode).HasMaxLength(100).IsRequired();
+            b.Property(e => e.PrincipalIdentifierType).HasMaxLength(50).IsRequired();
+            b.Property(e => e.NumberLabelAr).HasMaxLength(200).IsRequired();
+            b.Property(e => e.NumberLabelEn).HasMaxLength(200).IsRequired();
+            b.Property(e => e.OperationCode).HasMaxLength(100);
+            b.Property(e => e.Inputs).HasJsonColumn();
+            b.Property(e => e.Services).HasJsonColumn();
+            b.Property(e => e.ValidOutput).HasMaxLength(200);
+            b.Property(e => e.ExpiryOutput).HasMaxLength(200);
+            b.Property(e => e.PrincipalNameArOutput).HasMaxLength(200);
+            b.Property(e => e.PrincipalNameEnOutput).HasMaxLength(200);
         });
         modelBuilder.Entity<PartyRecord>(b =>
         {

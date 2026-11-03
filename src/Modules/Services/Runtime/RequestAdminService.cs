@@ -74,7 +74,11 @@ internal sealed class RequestAdminService(ServicesDbContext context, ServiceCata
             ItemResults = RequestService.ItemResults(entity),
             Evidence = services.GetService<IIntegrationEvidence>() is { } evidence ? await evidence.OfSubjectAsync(RequestSubject.Type, entity.Id, cancellationToken) : [],
         };
-        return new RequestDetail(view, entity.SubmitterPartyId, entity.SubmitterName, entity.BeneficiaryPartyId, timeline);
+        return new RequestDetail(view, entity.SubmitterPartyId, entity.SubmitterName, entity.BeneficiaryPartyId, timeline)
+        {
+            ActingRelationship = entity.ActingRelationship,
+            ActingAuthority = entity.ActingAuthority,
+        };
     }
 
     /// <summary>The content of a file uploaded with a submitted request.</summary>

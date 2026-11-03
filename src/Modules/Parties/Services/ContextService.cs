@@ -23,7 +23,8 @@ public sealed record ActingContext(
     string? RelationshipNameAr,
     string? RelationshipNameEn,
     IReadOnlyList<string> Services,
-    DateOnly? ValidTo);
+    DateOnly? ValidTo,
+    string? Authority = null);
 
 /// <summary>A context source that could not be read; the contexts it gave before are kept.</summary>
 public sealed record ContextWarning(string Source, IntegrationOutcome Outcome, string? MessageAr, string? MessageEn);
@@ -228,7 +229,8 @@ internal sealed partial class ContextService(
             var services = g.Any(r => r.Services.Count == 0) ? [] : g.SelectMany(r => r.Services).Distinct().ToList();
             var identifier = first.Principal!.PrimaryIdentifier;
             return new ActingContext(first.PrincipalId, first.Principal.Kind, first.Principal.NameAr, first.Principal.NameEn, identifier.Type, identifier.Value,
-                type.Code, type.NameAr, type.NameEn, services, g.Max(r => r.ValidTo));
+                type.Code, type.NameAr, type.NameEn, services, g.Max(r => r.ValidTo),
+                first.Source == RecordSource.Authority ? first.SourceReference : null);
         })];
     }
 
