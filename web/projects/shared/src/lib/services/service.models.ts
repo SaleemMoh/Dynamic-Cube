@@ -451,6 +451,28 @@ export interface RequestView {
   bundle?: BundleOption[] | null;
   /** Items decided one by one (e.g. each sector approved on its own), with the reasons. */
   itemResults?: ItemResult[] | null;
+  /** Staff only: every integration call made for the request (masked), newest first. */
+  evidence?: IntegrationEvidence[] | null;
+}
+
+/** One integration call made for a request, as kept in the call log (personal data masked). */
+export interface IntegrationEvidence {
+  id: string;
+  operationCode: string;
+  operationNameAr: string;
+  operationNameEn: string;
+  at: string;
+  durationMs: number;
+  outcome: 'SUCCESS' | 'NOT_FOUND' | 'BUSINESS_ERROR' | 'TECHNICAL_ERROR';
+  httpStatus: number | null;
+  code: string | null;
+  message: string | null;
+  fromCache: boolean;
+  method: string;
+  url: string;
+  requestBody: string | null;
+  responseBody: string | null;
+  userId: string;
 }
 
 /** One item of a request decided at a workflow task: APPROVED or REJECTED, with the reason. */

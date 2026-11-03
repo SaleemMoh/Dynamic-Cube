@@ -122,13 +122,18 @@ internal sealed class RequestService(
             throw new NotEligibleException(failures);
         }
 
-        // Answers fetched from integrations (e.g. the capital from the commercial register).
-        await integrations.FillAsync(version, Context(facts, acting, data, null, document), data, lockedOnly: false, cancellationToken);
+        // Answers fetched from integrations (e.g. the capital from the commercial register); the calls are the request's evidence.
+        var requestId = Guid.CreateVersion7();
+        using (IntegrationSubject.Use(RequestSubject.Type, requestId))
+        {
+            await integrations.FillAsync(version, Context(facts, acting, data, null, document), data, lockedOnly: false, cancellationToken);
+        }
 
         var individual = acting.IsSelf ? facts : await FactsAsync(acting.IndividualId, cancellationToken);
         var now = clock.GetUtcNow();
         var entity = new ServiceRequest
         {
+            Id = requestId,
             ServiceId = service.Id,
             ServiceCode = service.Code,
             ServiceVersionId = versionId,
@@ -189,6 +194,7 @@ internal sealed class RequestService(
             var data = JsonNode.Parse(entity.Data)!.AsObject();
             var runs = JsonNode.Parse(entity.Integrations) as JsonObject ?? [];
             var document = await SourceDocumentAsync(entity, cancellationToken);
+            using var evidence = IntegrationSubject.Use(RequestSubject.Type, entity.Id);
             changes = await integrations.RefreshAsync(version, Context(facts, acting, data, entity.LevelCode, document), data, runs, cancellationToken);
             entity.Data = data.ToJsonString();
             entity.Integrations = runs.ToJsonString();
@@ -263,6 +269,7 @@ internal sealed class RequestService(
         // when the applicant arrives on it (its result card shows the outcome) and, when leaving, again if it did not succeed
         // or the applicant asks to try again; the outputs go into the answers.
         var current = JsonNode.Parse(entity.Data)!.AsObject();
+        using var evidence = IntegrationSubject.Use(RequestSubject.Type, entity.Id);
         await integrations.FillAsync(version, Context(facts, acting, current, entity.LevelCode, document), current, lockedOnly: true, cancellationToken);
         var runs = JsonNode.Parse(entity.Integrations) as JsonObject ?? [];
         if (request.ValidateStep is not null && version.Definition.Steps.FirstOrDefault(s => s.Code == request.ValidateStep) is { Type: StepType.Integration, Integration: { } call } step)
@@ -512,7 +519,12 @@ internal sealed class RequestService(
             data[key] = value?.DeepClone();
         }
 
-        await integrations.FillAsync(version, Context(facts, acting, data, null), data, lockedOnly: false, cancellationToken);
+        var newId = id ?? Guid.CreateVersion7();
+        using (IntegrationSubject.Use(RequestSubject.Type, newId))
+        {
+            await integrations.FillAsync(version, Context(facts, acting, data, null), data, lockedOnly: false, cancellationToken);
+        }
+
         var now = clock.GetUtcNow();
         var entity = new ServiceRequest
         {
@@ -535,10 +547,7 @@ internal sealed class RequestService(
             LinkKind = kind,
             ParentStep = step,
         };
-        if (id is { } given)
-        {
-            entity.Id = given;
-        }
+        entity.Id = newId;
 
         var (company, branch) = await PlaceAsync(service, data, cancellationToken);
         (entity.CompanyCode, entity.BranchCode) = (company ?? parent.CompanyCode, branch ?? parent.BranchCode);

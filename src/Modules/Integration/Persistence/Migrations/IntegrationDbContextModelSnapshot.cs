@@ -463,6 +463,15 @@ namespace DynamicCube.Modules.Integration.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("started_at");
 
+                    b.Property<Guid?>("SubjectId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("subject_id");
+
+                    b.Property<string>("SubjectType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("subject_type");
+
                     b.Property<string>("Url")
                         .IsRequired()
                         .HasMaxLength(2000)
@@ -483,6 +492,9 @@ namespace DynamicCube.Modules.Integration.Persistence.Migrations
 
                     b.HasIndex("OperationCode", "StartedAt")
                         .HasDatabaseName("ix_call_log_operation_code_started_at");
+
+                    b.HasIndex("SubjectType", "SubjectId")
+                        .HasDatabaseName("ix_call_log_subject_type_subject_id");
 
                     b.ToTable("call_log", "integ");
                 });

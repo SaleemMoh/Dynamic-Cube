@@ -258,4 +258,9 @@ public sealed class CallLog
     public string? ResponseBody { get; set; }
 
     public string? Error { get; set; }
+
+    /// <summary>What the call was made for (e.g. <c>SERVICE_REQUEST</c>), when known: the subject's evidence.</summary>
+    public string? SubjectType { get; set; }
+
+    public Guid? SubjectId { get; set; }
 }

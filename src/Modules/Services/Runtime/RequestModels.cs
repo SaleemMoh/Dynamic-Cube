@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
 using DynamicCube.Modules.Services.Definitions;
 using DynamicCube.Modules.Services.Domain;
+using DynamicCube.Platform.Integration;
 using DynamicCube.Platform.Parties;
 using DynamicCube.Platform.Payments;
 using DynamicCube.Platform.Visits;
@@ -96,6 +97,9 @@ public sealed record RequestView(
 
     /// <summary>The items decided one by one (e.g. each sector approved on its own), with the reasons.</summary>
     public IReadOnlyList<SubjectItem> ItemResults { get; init; } = [];
+
+    /// <summary>Staff only: every integration call made for the request (masked), newest first.</summary>
+    public IReadOnlyList<IntegrationEvidence> Evidence { get; init; } = [];
 }
 
 /// <summary>

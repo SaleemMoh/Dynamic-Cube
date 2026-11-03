@@ -149,6 +149,8 @@ public sealed class IntegrationDbContext(DbContextOptions<IntegrationDbContext> 
             b.Property(e => e.Error).HasMaxLength(4000);
             b.HasIndex(e => e.StartedAt);
             b.HasIndex(e => new { e.OperationCode, e.StartedAt });
+            b.Property(e => e.SubjectType).HasMaxLength(50);
+            b.HasIndex(e => new { e.SubjectType, e.SubjectId });
         });
     }
 }

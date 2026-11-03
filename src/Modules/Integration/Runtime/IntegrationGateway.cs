@@ -112,7 +112,8 @@ internal sealed partial class IntegrationGateway(
         if (useCache && cacheKey is not null && cache.TryGetValue(cacheKey, out IntegrationResult? cached) && cached is not null)
         {
             var hit = cached with { CallId = Guid.CreateVersion7(), FromCache = true };
-            await LogAsync(operation, request, hit, started, 0, null, null, 0, null);
+            // The cached result is logged as the response: it is what the caller used (evidence), masked like any response.
+            await LogAsync(operation, request, hit, started, 0, null, hit.Data?.ToJsonString(), 0, null);
             return (hit, new IntegrationTrace(operation.Method, request.MaskedUrl, request.MaskedBody, null, null, 0, 0, null));
         }
 
@@ -432,6 +433,8 @@ internal sealed partial class IntegrationGateway(
             RequestBody = Masking.Body(request.MaskedBody, fields),
             ResponseBody = Masking.Body(responseBody, fields),
             Error = Truncate(error, 4000),
+            SubjectType = IntegrationSubject.Current?.Type,
+            SubjectId = IntegrationSubject.Current?.Id,
         };
 
         try

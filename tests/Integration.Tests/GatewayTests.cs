@@ -53,6 +53,29 @@ public sealed class GatewayTests(DatabaseFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Calls_made_for_a_subject_are_its_evidence()
+    {
+        var operation = await MomrahSamples.PublishAsync(_host);
+        Answer(_ => (HttpStatusCode.OK, MomrahSamples.CrInformation));
+        var request = Guid.CreateVersion7();
+
+        await InvokeAsync(operation);
+        IntegrationResult tagged;
+        using (IntegrationSubject.Use("SERVICE_REQUEST", request))
+        {
+            tagged = await InvokeAsync(operation, "1003721520");
+        }
+
+        var evidence = await _host.AsAsync("admin", sp => sp.GetRequiredService<IIntegrationEvidence>().OfSubjectAsync("SERVICE_REQUEST", request, CancellationToken.None));
+        var call = evidence.ShouldHaveSingleItem();
+        call.Id.ShouldBe(tagged.CallId);
+        call.OperationCode.ShouldBe(operation);
+        call.Outcome.ShouldBe(IntegrationOutcome.Success);
+        call.ResponseBody.ShouldNotBeNullOrEmpty();
+        IntegrationSubject.Current.ShouldBeNull();
+    }
+
+    [Fact]
     public async Task Business_codes_map_to_outcomes_and_bilingual_messages()
     {
         var operation = await MomrahSamples.PublishAsync(_host);

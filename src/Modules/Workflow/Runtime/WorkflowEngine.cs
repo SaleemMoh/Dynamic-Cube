@@ -334,6 +334,7 @@ internal sealed class WorkflowEngine(
         string? problem = null;
         try
         {
+            using var subject = IntegrationSubject.Use(run.Instance.SubjectType, run.Instance.SubjectId);
             result = await gateway.InvokeAsync(node.Operation!, inputs, cancellationToken);
         }
         catch (IntegrationOperationNotFoundException ex)

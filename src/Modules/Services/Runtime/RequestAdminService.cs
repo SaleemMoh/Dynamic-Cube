@@ -6,6 +6,7 @@ using DynamicCube.Modules.Services.Persistence;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Expressions;
 using DynamicCube.Platform.Files;
+using DynamicCube.Platform.Integration;
 using DynamicCube.Platform.Payments;
 using DynamicCube.Platform.Security;
 using DynamicCube.Platform.Visits;
@@ -71,6 +72,7 @@ internal sealed class RequestAdminService(ServicesDbContext context, ServiceCata
         {
             Links = await RequestService.LinksAsync(context, entity, cancellationToken),
             ItemResults = RequestService.ItemResults(entity),
+            Evidence = services.GetService<IIntegrationEvidence>() is { } evidence ? await evidence.OfSubjectAsync(RequestSubject.Type, entity.Id, cancellationToken) : [],
         };
         return new RequestDetail(view, entity.SubmitterPartyId, entity.SubmitterName, entity.BeneficiaryPartyId, timeline);
     }

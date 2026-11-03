@@ -50,6 +50,7 @@ public static class IntegrationModule
         services.AddScoped<TokenProvider>();
         services.AddScoped<IntegrationGateway>();
         services.AddScoped<IIntegrationGateway>(sp => sp.GetRequiredService<IntegrationGateway>());
+        services.AddScoped<IIntegrationEvidence, IntegrationEvidenceReader>();
 
         // The public API (ADR-0042): read-only endpoints partners call on the external host with their own tokens.
         services.AddSingleton(new PublicApiSettings(

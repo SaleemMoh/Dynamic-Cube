@@ -30,6 +30,7 @@ import { AssignDialog } from './assign-dialog';
 import { InstanceFactsCard } from './instance-facts';
 import { TaskInputsCard } from './task-inputs';
 import { TaskItemsCard } from './task-items';
+import { RequestEvidence } from '../services/request-evidence';
 import { WorkflowCard } from './workflow-card';
 
 /** One task: the request's answers, what the employee may do now (claim, assign, act) and the workflow so far. */
@@ -49,6 +50,7 @@ import { WorkflowCard } from './workflow-card';
     SlaChip,
     TaskInputsCard,
     TaskItemsCard,
+    RequestEvidence,
     TranslatePipe,
     WorkflowCard,
   ],
@@ -168,6 +170,7 @@ import { WorkflowCard } from './workflow-card';
               <a class="dc-link" [routerLink]="['/services/requests', d.task.subjectId]">{{ 'tasks.openRequest' | dcTranslate }}</a>
             </p>
             <dc-request-answers [version]="r.view.version" [data]="r.view.data" [files]="r.view.files" (openFile)="openFile(r.view.request.id, $event)" />
+            <dc-request-evidence [calls]="r.view.evidence ?? []" />
           } @else if (request.isLoading()) {
             <mat-progress-bar mode="indeterminate" />
           } @else {

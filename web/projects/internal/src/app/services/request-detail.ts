@@ -22,11 +22,13 @@ import { InstanceFactsCard } from '../action-center/instance-facts';
 import { WorkflowCard } from '../action-center/workflow-card';
 import { BranchNames } from '../common/branch-names';
 import { GraphDefinition, WorkflowGraph } from '../workflows/workflow-graph';
+import { RequestEvidence } from './request-evidence';
 
 /** One request as submitted: who, what, the answers, fees, its workflow (when it has one) and the timeline. */
 @Component({
   selector: 'dc-request-detail',
   imports: [
+    RequestEvidence,
     BillCard,
     VisitCard,
     DatePipe,
@@ -79,6 +81,7 @@ import { GraphDefinition, WorkflowGraph } from '../workflows/workflow-graph';
           <section class="dc-card">
             <dc-request-answers [version]="d.view.version" [data]="d.view.data" [files]="d.view.files" (openFile)="openFile(d.view.request.id, $event)" />
           </section>
+          <dc-request-evidence [calls]="d.view.evidence ?? []" />
           @if (instance.value(); as i) {
             @if (i.definition?.nodes?.length) {
               <section class="dc-card" data-testid="request-workflow-position">
