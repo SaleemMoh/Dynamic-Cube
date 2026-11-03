@@ -34,6 +34,8 @@ public static class DecisionsModule
         AddApplier<RuleSetApplier>(services);
         AddApplier<RuleSetVersionApplier>(services);
         services.AddSingleton<IDecisionEngine, RulesEngine>();
+        services.AddSingleton<IDecisionEngine, Runtime.Matrix.MatrixEngine>();
+        services.AddSingleton<Runtime.Matrix.MatrixDesign>();
         services.AddScoped<DecisionService>();
         services.AddScoped<IDecisionService>(sp => sp.GetRequiredService<DecisionService>());
         return services;

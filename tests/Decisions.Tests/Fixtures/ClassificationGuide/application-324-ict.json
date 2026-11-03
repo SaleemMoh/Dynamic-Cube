@@ -1,0 +1,509 @@
+{
+ "gates": [
+  {
+   "code": "cr_or_license",
+   "passed": true,
+   "ruleId": 1523,
+   "messageAr": "يلزم سجل تجاري أو ترخيص هندسي ساري يشمل النشاط.",
+   "messageEn": "A valid commercial register or engineering license covering the activity is required.",
+   "isBlocking": true
+  },
+  {
+   "code": "financial_statements",
+   "passed": true,
+   "ruleId": 1524,
+   "messageAr": "يلزم تقديم قوائم مالية معتمدة على برنامج قوائم.",
+   "messageEn": "Financial statements approved on the Qawaem platform must be provided.",
+   "isBlocking": true
+  },
+  {
+   "code": "commercial_license",
+   "passed": true,
+   "ruleId": 1526,
+   "messageAr": "يلزم تقديم الرخصة التجارية.",
+   "messageEn": "The commercial license must be provided.",
+   "isBlocking": true
+  }
+ ],
+ "tracks": [
+  {
+   "code": "technical",
+   "grade": 2,
+   "score": 71.0,
+   "groups": [],
+   "nameAr": "التقييم الفني",
+   "nameEn": "Technical assessment",
+   "details": {
+    "category": "gold",
+    "activities": [
+     {
+      "name": "0",
+      "score": 87.0,
+      "required": 70.0,
+      "qualified": true,
+      "chainLabel": "البحث والتطوير والابتكار (RDI)",
+      "valueChain": "RDI"
+     }
+    ],
+    "downgraded": true,
+    "categoryLabel": "الذهبي",
+    "startCategory": "platinum",
+    "hasRdResources": false,
+    "qualifiedLevels": [
+     1
+    ]
+   },
+   "trackId": 13604,
+   "maxScore": 100.0,
+   "isPending": false,
+   "trackType": "Technical",
+   "isLimiting": false,
+   "aggregation": "Custom",
+   "includeInFinal": true
+  },
+  {
+   "code": "performance",
+   "grade": 1,
+   "groups": [
+    {
+     "code": "performance",
+     "nameAr": "الخبرات التنفيذية السابقة",
+     "nameEn": "Previous execution experience",
+     "points": 0,
+     "criteria": [
+      {
+       "code": "cumulative_value",
+       "grade": 1,
+       "bandId": 401964,
+       "nameAr": "القيمة التراكمية للمشاريع خلال 10 سنوات (مليون ريال)",
+       "nameEn": "Cumulative project value over 10 years (SAR million)",
+       "points": 0,
+       "bandCount": 5,
+       "bandIndex": 0,
+       "metricCode": "cumulative_value_sar_m",
+       "outputType": "Grade",
+       "criterionId": 68553,
+       "inputNumber": 161.200144,
+       "scoringType": "Bands",
+       "isApplicable": true
+      },
+      {
+       "code": "largest_project",
+       "grade": 1,
+       "bandId": 401969,
+       "nameAr": "قيمة أكبر مشروع منجز (مليون ريال)",
+       "nameEn": "Value of the largest completed project (SAR million)",
+       "points": 0,
+       "bandCount": 5,
+       "bandIndex": 0,
+       "metricCode": "largest_project_sar_m",
+       "outputType": "Grade",
+       "criterionId": 68554,
+       "inputNumber": 161.200144,
+       "scoringType": "Bands",
+       "isApplicable": true
+      }
+     ],
+     "minimumMet": true,
+     "isMandatory": false
+    }
+   ],
+   "nameAr": "سجل الأداء",
+   "nameEn": "Performance record",
+   "trackId": 13605,
+   "isPending": false,
+   "trackType": "Performance",
+   "isLimiting": false,
+   "aggregation": "WorstGrade",
+   "includeInFinal": true
+  },
+  {
+   "code": "governance",
+   "grade": 5,
+   "score": 0.0,
+   "groups": [
+    {
+     "code": "governance",
+     "nameAr": "أسئلة الحوكمة",
+     "nameEn": "Governance questions",
+     "points": 0.0,
+     "criteria": [
+      {
+       "code": "board",
+       "nameAr": "هل يوجد للمنشأة مجلس إدارة؟",
+       "nameEn": "Does the firm have a board of directors?",
+       "points": 0.0,
+       "optionId": 93721,
+       "bandCount": 0,
+       "maxPoints": 10.0,
+       "metricCode": "gov_board",
+       "outputType": "Points",
+       "criterionId": 68555,
+       "scoringType": "Options",
+       "isApplicable": true,
+       "inputOptionCode": "no"
+      },
+      {
+       "code": "board_meetings",
+       "note": "not_applicable",
+       "nameAr": "كم مرة يجتمع مجلس الإدارة وفريق الإدارة لمراجعة العمليات واتخاذ القرارات؟",
+       "nameEn": "How often do the board and the management team meet to review operations and take decisions?",
+       "points": 0,
+       "bandCount": 0,
+       "maxPoints": 5.0,
+       "metricCode": "gov_board_meetings",
+       "outputType": "Points",
+       "criterionId": 68556,
+       "scoringType": "Options",
+       "isApplicable": false
+      },
+      {
+       "code": "erp",
+       "nameAr": "هل يوجد نظام لتخطيط موارد المؤسسة (ERP)؟",
+       "nameEn": "Is there an enterprise resource planning (ERP) system?",
+       "points": 0.0,
+       "optionId": 93728,
+       "bandCount": 0,
+       "maxPoints": 10.0,
+       "metricCode": "gov_erp",
+       "outputType": "Points",
+       "criterionId": 68557,
+       "scoringType": "Options",
+       "isApplicable": true,
+       "inputOptionCode": "none"
+      },
+      {
+       "code": "pms",
+       "nameAr": "هل يوجد نظام لإدارة المشاريع؟",
+       "nameEn": "Is there a project management system?",
+       "points": 0.0,
+       "optionId": 93731,
+       "bandCount": 0,
+       "maxPoints": 15.0,
+       "metricCode": "gov_pms",
+       "outputType": "Points",
+       "criterionId": 68558,
+       "scoringType": "Options",
+       "isApplicable": true,
+       "inputOptionCode": "none"
+      },
+      {
+       "code": "committees",
+       "nameAr": "هل شكّل المقاول لجان مجلس الإدارة؟",
+       "nameEn": "Has the contractor formed board committees?",
+       "points": 0.0,
+       "optionId": 93733,
+       "bandCount": 0,
+       "maxPoints": 5.0,
+       "metricCode": "gov_committees",
+       "outputType": "Points",
+       "criterionId": 68559,
+       "scoringType": "Options",
+       "isApplicable": true,
+       "inputOptionCode": "no"
+      },
+      {
+       "code": "committee_meetings",
+       "note": "not_applicable",
+       "nameAr": "كم مرة تجتمع لجان مجلس الإدارة؟",
+       "nameEn": "How often do the board committees meet?",
+       "points": 0,
+       "bandCount": 0,
+       "maxPoints": 5.0,
+       "metricCode": "gov_committee_meetings",
+       "outputType": "Points",
+       "criterionId": 68560,
+       "scoringType": "Options",
+       "isApplicable": false
+      },
+      {
+       "code": "org_chart",
+       "nameAr": "هل يوجد هيكل تنظيمي مع مصفوفة صلاحيات واضحة (حتى المستوى الثاني)؟",
+       "nameEn": "Is there an organization chart with a clear authority matrix (down to the second level)?",
+       "points": 0.0,
+       "optionId": 93738,
+       "bandCount": 0,
+       "maxPoints": 10.0,
+       "metricCode": "gov_org_chart",
+       "outputType": "Points",
+       "criterionId": 68561,
+       "scoringType": "Options",
+       "isApplicable": true,
+       "inputOptionCode": "no"
+      },
+      {
+       "code": "csr",
+       "nameAr": "هل للمنشأة مساهمات في برامج المسؤولية الاجتماعية؟",
+       "nameEn": "Does the firm contribute to social responsibility programs?",
+       "points": 0.0,
+       "optionId": 93740,
+       "bandCount": 0,
+       "maxPoints": 10.0,
+       "metricCode": "gov_csr",
+       "outputType": "Points",
+       "criterionId": 68562,
+       "scoringType": "Options",
+       "isApplicable": true,
+       "inputOptionCode": "no"
+      },
+      {
+       "code": "iso",
+       "nameAr": "هل تتوفر شهادة ISO أو شهادة سلامة وصحة معتمدة دوليًا؟",
+       "nameEn": "Does the firm hold an ISO or an internationally accredited health and safety certificate?",
+       "points": 0.0,
+       "optionId": 93742,
+       "bandCount": 0,
+       "maxPoints": 10.0,
+       "metricCode": "gov_iso",
+       "outputType": "Points",
+       "criterionId": 68563,
+       "scoringType": "Options",
+       "isApplicable": true,
+       "inputOptionCode": "no"
+      },
+      {
+       "code": "local_content",
+       "nameAr": "هل حصلت المنشأة على شهادة المحتوى المحلي؟",
+       "nameEn": "Has the firm obtained a local content certificate?",
+       "points": 0.0,
+       "optionId": 93744,
+       "bandCount": 0,
+       "maxPoints": 10.0,
+       "metricCode": "gov_local_content",
+       "outputType": "Points",
+       "criterionId": 68564,
+       "scoringType": "Options",
+       "isApplicable": true,
+       "inputOptionCode": "no"
+      },
+      {
+       "code": "risk",
+       "nameAr": "هل يوجد لدى المنشأة إدارة مخاطر (قرار تشكيل + سياسة)؟",
+       "nameEn": "Does the firm have risk management (formation decision + policy)?",
+       "points": 0.0,
+       "optionId": 93746,
+       "bandCount": 0,
+       "maxPoints": 10.0,
+       "metricCode": "gov_risk",
+       "outputType": "Points",
+       "criterionId": 68565,
+       "scoringType": "Options",
+       "isApplicable": true,
+       "inputOptionCode": "no"
+      }
+     ],
+     "maxPoints": 100.0,
+     "minimumMet": true,
+     "isMandatory": false
+    }
+   ],
+   "nameAr": "الحوكمة",
+   "nameEn": "Governance",
+   "trackId": 13606,
+   "maxScore": 100.0,
+   "isPending": false,
+   "trackType": "Governance",
+   "isLimiting": false,
+   "aggregation": "SumToScale",
+   "includeInFinal": true
+  },
+  {
+   "code": "financial",
+   "groups": [
+    {
+     "code": "credit",
+     "nameAr": "التصنيف الائتماني",
+     "nameEn": "Credit rating",
+     "points": 0,
+     "criteria": [
+      {
+       "code": "credit_rating",
+       "nameAr": "التقييم الائتماني (ترتيب في قائمة التقييمات)",
+       "nameEn": "Credit assessment (rank in the rating list)",
+       "points": 0,
+       "bandCount": 5,
+       "metricCode": "credit_rating",
+       "outputType": "Grade",
+       "criterionId": 68566,
+       "scoringType": "Bands",
+       "isApplicable": true
+      }
+     ],
+     "minimumMet": true,
+     "isMandatory": false
+    }
+   ],
+   "nameAr": "التقييم الائتماني",
+   "nameEn": "Credit assessment",
+   "trackId": 13607,
+   "isPending": true,
+   "trackType": "Financial",
+   "isLimiting": true,
+   "aggregation": "WorstGrade",
+   "includeInFinal": true
+  }
+ ],
+ "messages": [
+  {
+   "code": "ict_downgraded",
+   "textAr": "خُفّضت الفئة تلقائيًا من «البلاتينيوم» إلى «الذهبي».",
+   "textEn": "Category automatically downgraded from \"platinum\" to \"gold\".",
+   "severity": "info"
+  },
+  {
+   "ref": "credit_rating",
+   "code": "staff_input_pending",
+   "textAr": "في انتظار إدخال «التقييم الائتماني» من الموظف المختص.",
+   "textEn": "Waiting for staff to enter \"Credit assessment\".",
+   "severity": "info"
+  }
+ ],
+ "projects": [
+  {
+   "name": "مشروع وزارة الصحة - المرحلة 1",
+   "reasons": [],
+   "warnings": [],
+   "projectId": 16,
+   "isIncluded": true,
+   "countedValueSarM": 161.200144
+  }
+ ],
+ "activities": [
+  {
+   "code": "RDI",
+   "name": "0",
+   "known": true,
+   "level": 1,
+   "score": 87.0,
+   "nameAr": "البحث والتطوير والابتكار (RDI)",
+   "nameEn": "RDI",
+   "required": 70.0,
+   "qualified": true
+  }
+ ],
+ "isEligible": true,
+ "sectorCode": "ict",
+ "adjustments": [
+  {
+   "code": "withdrawn_projects",
+   "effect": "DemoteGrades",
+   "nameAr": "سحب مشروعين حكوميين أو أكثر من جهتين مختلفتين خلال 3 سنوات",
+   "nameEn": "Two or more government projects withdrawn by two different entities within 3 years",
+   "ruleId": 762,
+   "applied": false,
+   "effectValue": 1
+  },
+  {
+   "code": "municipal_violations",
+   "effect": "DemoteGrades",
+   "nameAr": "70 مخالفة بلدية فأكثر في نفس المجال خلال 3 سنوات",
+   "nameEn": "70 or more municipal violations in the same field within 3 years",
+   "ruleId": 763,
+   "applied": false,
+   "effectValue": 1
+  }
+ ],
+ "ruleSetCode": "MOMAH-2026-04-SP-20261101",
+ "expectedGrade": 5,
+ "limitingTracks": [
+  "financial"
+ ],
+ "resolvedValues": {
+  "saudis": 6.0,
+  "gov_csr": "no",
+  "gov_erp": "none",
+  "gov_iso": "no",
+  "gov_pms": "none",
+  "gov_risk": "no",
+  "engineers": 7.0,
+  "gov_board": "no",
+  "is_branch": false,
+  "saudis_pct": 31.57894736842105,
+  "saudi_chefs": null,
+  "saudi_women": 1.0,
+  "technicians": 3.0,
+  "credit_rating": null,
+  "engineers_pct": 36.8421052631579,
+  "gov_org_chart": "no",
+  "gov_committees": "no",
+  "chefs_certified": null,
+  "gov_erp_product": null,
+  "gov_pms_product": null,
+  "high_wage_chefs": null,
+  "saudi_chefs_pct": null,
+  "saudi_engineers": 2.0,
+  "saudi_high_wage": 1.0,
+  "saudi_women_pct": 5.2631578947368425,
+  "technicians_pct": 15.789473684210526,
+  "total_employees": 19.0,
+  "value_added_pct": 52.63157894736842,
+  "engineers_avg_exp": 15.0,
+  "gov_local_content": "no",
+  "has_housing_lease": false,
+  "ict_overall_score": 71.0,
+  "saudi_technicians": null,
+  "credit_fin_net_ppe": 25000000.0,
+  "cyber_score_points": null,
+  "gov_board_meetings": null,
+  "chefs_certified_pct": null,
+  "chefs_non_certified": null,
+  "cr_or_license_valid": true,
+  "high_wage_chefs_pct": null,
+  "saudi_chefs_avg_exp": null,
+  "saudi_engineers_pct": 10.526315789473685,
+  "saudi_high_wage_pct": 5.2631578947368425,
+  "specialists_avg_exp": null,
+  "technicians_avg_exp": 5.0,
+  "value_added_avg_exp": null,
+  "credit_fin_net_income": 8100000.0,
+  "largest_project_sar_m": 161.200144,
+  "parent_license_number": "787878",
+  "saudi_technicians_pct": null,
+  "credit_consent_inquiry": true,
+  "credit_fin_fiscal_year": 2025.0,
+  "cumulative_value_sar_m": 161.200144,
+  "declaration_acceptance": true,
+  "exhibition_specialists": null,
+  "gov_committee_meetings": null,
+  "housing_license_number": "787878",
+  "chefs_certified_avg_exp": null,
+  "chefs_non_certified_pct": null,
+  "credit_fin_total_assets": 110000000.0,
+  "credit_fin_total_equity": 65000000.0,
+  "credit_fin_total_income": 90000000.0,
+  "municipal_violations_3y": 3.0,
+  "saudi_engineers_avg_exp": null,
+  "withdrawn_projects_list": null,
+  "exhibitions_saudi_points": null,
+  "housing_license_provided": true,
+  "ict_has_rd_resources_ksa": false,
+  "commercial_license_number": "457878",
+  "declaration_data_accuracy": true,
+  "declaration_info_exchange": true,
+  "withdrawn_gov_entities_3y": 1,
+  "withdrawn_gov_projects_3y": 1,
+  "credit_fin_cash_short_term": 15000000.0,
+  "exhibition_specialists_pct": null,
+  "financial_statements_valid": true,
+  "realestate_gov_mgmt_points": null,
+  "chefs_non_certified_avg_exp": null,
+  "commercial_license_provided": true,
+  "withdrawn_projects_declared": false,
+  "credit_fin_total_liabilities": 45000000.0,
+  "exhibitions_high_wage_points": null,
+  "exhibitions_saudi_spec_points": null,
+  "credit_fin_current_liabilities": 27000000.0,
+  "declaration_consent_disclosure": true,
+  "exhibitions_saudi_women_points": null,
+  "realestate_business_risk_points": null,
+  "declaration_accuracy_undertaking": true
+ },
+ "ruleSetVersionId": 398,
+ "sizeCategoryCode": "small",
+ "nonFinancialGrade": 5,
+ "pendingStaffInputs": [
+  "credit_rating"
+ ],
+ "baseGrade": null,
+ "finalGrade": null
+}

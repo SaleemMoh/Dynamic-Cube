@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
 using DynamicCube.Modules.Decisions.Changes;
 using DynamicCube.Modules.Decisions.Runtime;
+using DynamicCube.Modules.Decisions.Runtime.Matrix;
 using DynamicCube.Platform.Decisions;
 using DynamicCube.Platform.Parties;
 using DynamicCube.Platform.Security;
@@ -19,6 +20,10 @@ internal static class DecisionEndpoints
             .RequirePrivilege(DecisionResources.Config, CatalogActions.View).WithName("ListDecisionEngines");
         group.MapPost("/rule-sets/{code}/try", async (string code, TryRequest request, DecisionService service, CancellationToken ct) =>
             TypedResults.Ok(await service.TryAsync(code, request, ct))).RequirePrivilege(DecisionResources.Config, CatalogActions.View).WithName("TryRuleSet");
+        group.MapPost("/matrix/import", (JsonObject export) => TypedResults.Ok(MatrixDesign.Import(export)))
+            .RequirePrivilege(DecisionResources.Config, CatalogActions.View).WithName("ImportClassificationGuide");
+        group.MapPost("/matrix/simulate", async (MatrixSimulation simulation, MatrixDesign design, CancellationToken ct) =>
+            TypedResults.Ok(await design.SimulateAsync(simulation, ct))).RequirePrivilege(DecisionResources.Config, CatalogActions.View).WithName("SimulateMatrix");
         group.MapGet("/evaluations", async (string? subjectType, Guid? subjectId, string? ruleSet, int? take, DecisionService service, CancellationToken ct) =>
             TypedResults.Ok(await service.ListAsync(subjectType, subjectId, ruleSet, take ?? 50, ct))).RequirePrivilege(DecisionResources.Evaluations, CatalogActions.View).WithName("ListEvaluations");
     }
