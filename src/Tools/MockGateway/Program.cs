@@ -139,6 +139,93 @@ authorities.MapGet("/{kind}/{number}", (string kind, string number, string? crNu
     });
 });
 
+// Sources of the classification matrix (ADR-0050): Qawaem (audited financial statements), the sector authority (an
+// establishment's workforce as registered for the sector), the commercial register (whether the register covers the
+// sector) and Ifaa (municipal violations). The figures are made up from the CR number, so every demo establishment
+// always gets the same ones; a number ending in 9 has no audited statements.
+var classification = app.MapGroup("/v1/CLASSIFICATION-SOURCES").AddEndpointFilter(async (context, next) =>
+{
+    var authorization = context.HttpContext.Request.Headers.Authorization.ToString();
+    var token = authorization.StartsWith("Bearer ", StringComparison.Ordinal) ? authorization[7..] : string.Empty;
+    return tokens.TryGetValue(token, out var expires) && expires > DateTimeOffset.UtcNow
+        ? await next(context)
+        : Results.Json(Status(401, "Access Token Expired"), statusCode: 401);
+});
+
+static int Seed(string crNumber) => crNumber.Where(char.IsAsciiDigit).Aggregate(17, (n, c) => (n * 31 + c - '0') % 9973);
+
+static bool ValidCr(string crNumber) => crNumber is { Length: 10 } && crNumber.All(char.IsAsciiDigit);
+
+classification.MapGet("/qawaem/financial-statements/{crNumber}", (string crNumber) =>
+{
+    if (!ValidCr(crNumber))
+    {
+        return Business("006-000002", "Wrong CR Number");
+    }
+
+    if (crNumber.EndsWith('9'))
+    {
+        return Business("006-000001", "No audited statements");
+    }
+
+    var seed = Seed(crNumber);
+    var assets = 20_000_000m + (seed % 80) * 1_000_000m;
+    var liabilities = Math.Round(assets * (0.35m + (seed % 30) / 100m));
+    var current = Math.Round(liabilities * 0.6m);
+    var income = Math.Round(assets * (0.8m + (seed % 50) / 100m));
+    return Success(new JsonObject
+    {
+        ["fiscalYear"] = DateTime.UtcNow.Year - 1,
+        ["statementsValid"] = true,
+        ["totalAssets"] = assets,
+        ["totalLiabilities"] = liabilities,
+        ["totalEquity"] = assets - liabilities,
+        ["currentLiabilities"] = current,
+        ["cashAndShortTermInvestments"] = Math.Round(current * (0.9m + (seed % 60) / 100m)),
+        ["netPropertyPlantEquipment"] = Math.Round(assets * 0.3m),
+        ["totalIncome"] = income,
+        ["netIncome"] = Math.Round(income * (0.04m + (seed % 8) / 100m)),
+    });
+});
+
+classification.MapGet("/authority/workforce/{crNumber}", (string crNumber, string? sector) =>
+{
+    if (!ValidCr(crNumber))
+    {
+        return Business("006-000002", "Wrong CR Number");
+    }
+
+    var seed = Seed(crNumber + (sector ?? string.Empty));
+    var workers = 40 + seed % 260;
+    var saudis = (int)(workers * (0.25 + seed % 30 / 100.0));
+    var engineers = 4 + seed % 40;
+    var technicians = 6 + seed % 50;
+    return Success(new JsonObject
+    {
+        ["sector"] = sector,
+        ["totalWorkers"] = workers,
+        ["saudis"] = saudis,
+        ["saudiWomen"] = saudis / 5,
+        ["saudiHighWage"] = saudis / 3,
+        ["engineers"] = engineers,
+        ["saudiEngineers"] = engineers / 2,
+        ["engineersAvgExp"] = 4 + seed % 9,
+        ["technicians"] = technicians,
+        ["techniciansAvgExp"] = 3 + seed % 7,
+        ["scorePct"] = 55 + seed % 45,
+    });
+});
+
+classification.MapGet("/register/sector-validity/{crNumber}", (string crNumber, string? sector) =>
+    ValidCr(crNumber)
+        ? Success(new JsonObject { ["sector"] = sector, ["validForSector"] = !crNumber.EndsWith('8') })
+        : Business("006-000002", "Wrong CR Number"));
+
+classification.MapGet("/ifaa/violations/{crNumber}", (string crNumber, string? sector) =>
+    ValidCr(crNumber)
+        ? Success(new JsonObject { ["sector"] = sector, ["violationsInSector"] = Seed(crNumber) % 12 })
+        : Business("006-000002", "Wrong CR Number"));
+
 // NIC (National Information Center): a person's identity data by ID number; SCE (Saudi Council of Engineers): an
 // engineer's membership by number. Used by the individuals' demo service.
 var people = JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "samples", "people.json")))!;
