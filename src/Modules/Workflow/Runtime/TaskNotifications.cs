@@ -13,6 +13,8 @@ internal static class TaskNotifications
     public const string Assigned = "TASK_ASSIGNED";
     public const string SlaWarning = "TASK_SLA_WARNING";
     public const string SlaBreached = "TASK_SLA_BREACHED";
+    public const string Reminder = "TASK_REMINDER";
+    public const string Escalated = "TASK_ESCALATED";
 
     public static CommunicationEventType[] Types { get; } =
     [
@@ -20,6 +22,8 @@ internal static class TaskNotifications
         Type(Assigned, "إسناد مهمة إلى موظف", "Task assigned to an employee"),
         Type(SlaWarning, "اقتراب موعد إنجاز مهمة", "Task nearing its due time"),
         Type(SlaBreached, "تجاوز موعد إنجاز مهمة", "Task overdue"),
+        Type(Reminder, "تذكير بمهمة (قاعدة أتمتة)", "Task reminder (automation rule)"),
+        Type(Escalated, "تصعيد مهمة (قاعدة أتمتة)", "Task escalated (automation rule)"),
     ];
 
     public static void Raise(WorkflowDbContext context, TimeProvider clock, string code, WorkTask task) =>

@@ -1208,6 +1208,83 @@ export const SERVICE_SECTIONS: ConfigSection[] = [
  */
 export const WORKFLOW_SECTIONS: ConfigSection[] = [
   {
+    path: 'automation-rules',
+    title: t('قواعد الأتمتة', 'Automation rules'),
+    resource: 'workflows.config',
+    types: [
+      {
+        entityType: 'wf.automation-rule',
+        title: t('قواعد الأتمتة', 'Automation rules'),
+        key: 'code',
+        columns: ['action', 'workflows', 'repeatHours'],
+        intro: () => import('../../workflows/automation').then((m) => m.AutomationIntro),
+        rowActions: [
+          {
+            icon: 'play_circle',
+            label: t('اختبار القاعدة', 'Test the rule'),
+            testId: 'automation-test',
+            width: '44rem',
+            dialog: () => import('../../workflows/automation').then((m) => m.AutomationTest),
+          },
+        ],
+        fields: [
+          { code: 'descriptionAr', type: 'textarea', label: t('الوصف بالعربية', 'Arabic description') },
+          { code: 'descriptionEn', type: 'textarea', label: t('الوصف بالإنجليزية', 'English description') },
+          {
+            code: 'workflows',
+            type: 'select',
+            label: t('مسارات العمل (فارغ: كلها)', 'Workflows (empty: all)'),
+            ref: 'wf.workflow',
+            multiple: true,
+          },
+          json(
+            'steps',
+            t('الخطوات (فارغ: كلها)', 'Steps (empty: all)'),
+            list(),
+            t('رموز خطوات المهام، مثل REVIEW', 'Codes of the task steps, e.g. REVIEW'),
+          ),
+          json(
+            'when',
+            t('متى تعمل (JSONLogic)', 'When it acts (JSONLogic)'),
+            JSON_RULE,
+            t(
+              'شرط على المهمة، مثل {">=": [{"var": "task.unassignedHours"}, 4]}. انظر ما يقرؤه الشرط أعلى الصفحة.',
+              'A condition on the task, e.g. {">=": [{"var": "task.unassignedHours"}, 4]}. See what the condition reads above.',
+            ),
+            { '>=': [{ var: 'task.unassignedHours' }, 4] },
+          ),
+          {
+            code: 'action',
+            type: 'select',
+            label: t('الإجراء', 'Action'),
+            required: true,
+            defaultValue: 'ASSIGN_LEAST_LOADED',
+            options: [
+              opt('ASSIGN_LEAST_LOADED', 'إسناد للموظف الأقل عبئًا (المهام غير المسندة)', 'Assign to the least loaded employee (unassigned tasks)'),
+              opt('REMIND', 'تذكير المكلف بالمهمة', 'Remind whoever has the task'),
+              opt('ESCALATE', 'تصعيد إلى دور', 'Escalate to a role'),
+            ],
+          },
+          {
+            code: 'escalateToRole',
+            type: 'select',
+            label: t('دور التصعيد', 'Escalate to role'),
+            ref: 'apps.role',
+            visibleWhen: { '==': [{ var: 'action' }, 'ESCALATE'] },
+            requiredWhen: { '==': [{ var: 'action' }, 'ESCALATE'] },
+          },
+          {
+            code: 'repeatHours',
+            type: 'number',
+            label: t('التكرار كل (ساعات)', 'Repeat every (hours)'),
+            hint: t('فارغ: مرة واحدة لكل مهمة', 'Empty: once per task'),
+          },
+          number('displayOrder', t('الترتيب', 'Display order'), 0),
+        ],
+      },
+    ],
+  },
+  {
     path: 'workflows',
     title: t('مسارات العمل', 'Workflows'),
     resource: 'workflows.config',

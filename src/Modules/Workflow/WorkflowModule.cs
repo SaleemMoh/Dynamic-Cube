@@ -38,6 +38,7 @@ public static class WorkflowModule
 
         AddApplier<WorkflowApplier>(services);
         AddApplier<WorkflowVersionApplier>(services);
+        AddApplier<AutomationRuleApplier>(services);
         services.AddSingleton<DefinitionCache>();
         services.AddScoped<Assignments>();
         services.AddScoped<WorkflowEngine>();
@@ -47,6 +48,8 @@ public static class WorkflowModule
         services.AddScoped<DynamicCube.Platform.Services.IChildRequestListener, ChildRequestContinuation>();
         services.AddScoped<ActionCenter>();
         services.AddScoped<SlaMonitor>();
+        services.AddScoped<AutomationRunner>();
+        services.AddScoped<AutomationConsole>();
         services.AddScoped<ServiceWorkflows>();
         services.AddScoped<IServiceWorkflows>(sp => sp.GetRequiredService<ServiceWorkflows>());
         services.AddScoped<IRuleSetUsage, RuleSetUsage>();
@@ -70,6 +73,10 @@ public static class WorkflowModule
 
     public static Task<int> CheckSlaAsync(IServiceProvider services, CancellationToken cancellationToken) =>
         services.GetRequiredService<SlaMonitor>().RunAsync(cancellationToken);
+
+    /// <summary>Runs the automation rules on open tasks (called periodically by the worker); returns how many actions were taken.</summary>
+    public static Task<int> RunAutomationAsync(IServiceProvider services, CancellationToken cancellationToken) =>
+        services.GetRequiredService<AutomationRunner>().RunAsync(cancellationToken);
 
     private static void AddApplier<T>(IServiceCollection services)
         where T : class, IConfigApplier, IChangeApplier<WorkflowDbContext>
@@ -108,6 +115,8 @@ internal static class WorkflowCatalog
             new("workflows.workflows", "مسارات العمل", "Workflows", "/workflows", WorkflowResources.Config, "account_tree", 30),
             new("workflows.versions", "إصدارات المسارات", "Workflow versions", "/workflows/versions", WorkflowResources.Config, "history_edu", 40),
             new("workflows.designer", "مصمم مسارات العمل", "Workflow designer", "/workflows/designer", WorkflowResources.Config, "design_services", 45),
+            new("workflows.automation-rules", "قواعد الأتمتة", "Automation rules", "/workflows/automation-rules", WorkflowResources.Config, "smart_toy", 50),
+            new("workflows.automation-log", "سجل الأتمتة", "Automation log", "/workflows/automation-log", WorkflowResources.Config, "manage_history", 55),
         ],
     };
 }

@@ -284,6 +284,8 @@ public static class WorkflowEventTypes
     public const string SubRequestFinished = "SUB_REQUEST_FINISHED";
     public const string IntegrationCalled = "INTEGRATION_CALLED";
     public const string IntegrationFailed = "INTEGRATION_FAILED";
+    public const string Reminded = "REMINDED";
+    public const string Escalated = "ESCALATED";
 }
 
 /// <summary>Out of office: the delegate works on the delegator's assigned tasks between the dates.</summary>

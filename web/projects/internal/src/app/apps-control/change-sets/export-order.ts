@@ -53,6 +53,7 @@ export const BASE_TYPE_ORDER: readonly string[] = [
   'svc.service',
   'wf.workflow',
   'wf.workflow-version',
+  'wf.automation-rule',
   'svc.service-version',
   'cms.page',
   'cms.page-version',

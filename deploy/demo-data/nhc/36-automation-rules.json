@@ -1,0 +1,217 @@
+{
+  "title": "Reusable service building blocks: automation rules that assign waiting audit tasks, remind about tasks near their due time and escalate requests not distributed",
+  "items": [
+    {
+      "entityType": "wf.automation-rule",
+      "entityCode": "CLS_AUTO_ASSIGN_AUDIT",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إسناد مهام التدقيق المنتظرة",
+        "nameEn": "Assign waiting audit tasks",
+        "descriptionAr": "مهمة تدقيق بقيت في قائمة الدور أربع ساعات دون أن يأخذها أحد تُسند إلى المدقق الأقل عبئًا.",
+        "descriptionEn": "An audit task left in the role's queue for four hours is assigned to the least loaded auditor.",
+        "workflows": [
+          "CLS_NEW",
+          "CLS_CHANGE",
+          "CLS_RENEW"
+        ],
+        "steps": [
+          "GOV_AUDIT",
+          "PROJECTS_AUDIT",
+          "FIN_AUDIT"
+        ],
+        "when": {
+          ">=": [
+            {
+              "var": "task.unassignedHours"
+            },
+            4
+          ]
+        },
+        "action": "ASSIGN_LEAST_LOADED",
+        "displayOrder": 10
+      }
+    },
+    {
+      "entityType": "wf.automation-rule",
+      "entityCode": "CLS_REMIND_NEAR_DUE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تذكير بالمهام القريبة من موعدها",
+        "nameEn": "Remind about tasks near their due time",
+        "descriptionAr": "المهمة المسندة التي اقتربت من موعدها يُذكَّر بها صاحبها مرة كل يوم حتى تُنجز.",
+        "descriptionEn": "Whoever has a task near its due time is reminded once a day until it is done.",
+        "workflows": [
+          "CLS_NEW",
+          "CLS_CHANGE",
+          "CLS_RENEW"
+        ],
+        "steps": [],
+        "when": {
+          "and": [
+            {
+              "var": "task.assigned"
+            },
+            {
+              "in": [
+                {
+                  "var": "task.sla"
+                },
+                [
+                  "WARNING",
+                  "BREACHED"
+                ]
+              ]
+            }
+          ]
+        },
+        "action": "REMIND",
+        "repeatHours": 24,
+        "displayOrder": 20
+      }
+    },
+    {
+      "entityType": "wf.automation-rule",
+      "entityCode": "CLS_ESCALATE_UNDISTRIBUTED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تصعيد الطلبات غير الموزعة",
+        "nameEn": "Escalate requests not distributed",
+        "descriptionAr": "طلب لم يأخذه مدير الطلبات للتوزيع خلال يوم يُصعَّد إلى المدير العام.",
+        "descriptionEn": "A request the requests manager has not taken for distribution within a day is escalated to the general manager.",
+        "workflows": [
+          "CLS_NEW",
+          "CLS_CHANGE",
+          "CLS_RENEW"
+        ],
+        "steps": [
+          "DISTRIBUTE"
+        ],
+        "when": {
+          "and": [
+            {
+              ">=": [
+                {
+                  "var": "task.unassignedHours"
+                },
+                24
+              ]
+            },
+            {
+              "!": [
+                {
+                  "var": "task.escalated"
+                }
+              ]
+            }
+          ]
+        },
+        "action": "ESCALATE",
+        "escalateToRole": "CLS_GENERAL_MANAGER",
+        "displayOrder": 30
+      }
+    },
+    {
+      "entityType": "com.template",
+      "entityCode": "CLS_TASK_REMINDER",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تذكير بمهمة",
+        "nameEn": "Task reminder",
+        "inAppTitleAr": "تذكير: {{ task.nameAr }} تقترب من موعدها",
+        "inAppTitleEn": "Reminder: {{ task.nameEn }} is near its due time",
+        "inAppBodyAr": "{{ task.titleAr }} — {{ subject.number }} — {{ task.partyNameAr }}",
+        "inAppBodyEn": "{{ task.titleEn }} — {{ subject.number }} — {{ task.partyNameEn }}",
+        "link": "/action-center/tasks/{{ task.id }}"
+      }
+    },
+    {
+      "entityType": "com.rule",
+      "entityCode": "CLS_TASK_REMINDER",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "تذكير الموظف بمهمته",
+        "nameEn": "Remind the employee of their task",
+        "eventCode": "TASK_REMINDER",
+        "templateCode": "CLS_TASK_REMINDER",
+        "condition": {
+          "==": [
+            {
+              "substr": [
+                {
+                  "var": "task.service"
+                },
+                0,
+                14
+              ]
+            },
+            "CLASSIFICATION"
+          ]
+        },
+        "channels": [
+          "IN_APP"
+        ],
+        "recipients": [
+          {
+            "kind": "USER",
+            "value": {
+              "var": "task.assignee"
+            }
+          }
+        ],
+        "language": "AR"
+      }
+    },
+    {
+      "entityType": "com.template",
+      "entityCode": "CLS_TASK_ESCALATED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "مهمة مصعدة",
+        "nameEn": "Task escalated",
+        "inAppTitleAr": "صُعّدت إليك مهمة متأخرة: {{ task.nameAr }}",
+        "inAppTitleEn": "A late task was escalated to you: {{ task.nameEn }}",
+        "inAppBodyAr": "{{ task.titleAr }} — {{ subject.number }} — {{ task.partyNameAr }}",
+        "inAppBodyEn": "{{ task.titleEn }} — {{ subject.number }} — {{ task.partyNameEn }}",
+        "link": "/action-center/tasks/{{ task.id }}"
+      }
+    },
+    {
+      "entityType": "com.rule",
+      "entityCode": "CLS_TASK_ESCALATED",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "إبلاغ دور التصعيد",
+        "nameEn": "Tell the escalation role",
+        "eventCode": "TASK_ESCALATED",
+        "templateCode": "CLS_TASK_ESCALATED",
+        "condition": {
+          "==": [
+            {
+              "substr": [
+                {
+                  "var": "task.service"
+                },
+                0,
+                14
+              ]
+            },
+            "CLASSIFICATION"
+          ]
+        },
+        "channels": [
+          "IN_APP"
+        ],
+        "recipients": [
+          {
+            "kind": "ROLE",
+            "value": {
+              "var": "task.escalatedToRole"
+            }
+          }
+        ],
+        "language": "AR"
+      }
+    }
+  ]
+}

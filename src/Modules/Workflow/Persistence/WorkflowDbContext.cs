@@ -20,6 +20,10 @@ public sealed class WorkflowDbContext(DbContextOptions<WorkflowDbContext> option
 
     public DbSet<WorkflowEvent> Events => Set<WorkflowEvent>();
 
+    public DbSet<AutomationRule> AutomationRules => Set<AutomationRule>();
+
+    public DbSet<AutomationLog> AutomationLogs => Set<AutomationLog>();
+
     public DbSet<Delegation> Delegations => Set<Delegation>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -32,6 +36,25 @@ public sealed class WorkflowDbContext(DbContextOptions<WorkflowDbContext> option
             b.Property(e => e.DescriptionEn).HasMaxLength(4000);
             b.Property(e => e.ServiceCode).HasMaxLength(100);
             b.HasIndex(e => e.ServiceCode).IsUnique().HasFilter("service_code IS NOT NULL");
+        });
+        modelBuilder.ConfigTable<AutomationRule>(Schema, "automation_rule", b =>
+        {
+            b.Property(e => e.DescriptionAr).HasMaxLength(2000);
+            b.Property(e => e.DescriptionEn).HasMaxLength(2000);
+            b.Property(e => e.Workflows).HasDefaultValueSql("'{}'::text[]");
+            b.Property(e => e.Steps).HasDefaultValueSql("'{}'::text[]");
+            b.Property(e => e.Condition).HasColumnType("jsonb").IsRequired();
+            b.Property(e => e.EscalateToRole).HasMaxLength(100);
+        });
+        modelBuilder.Entity<AutomationLog>(b =>
+        {
+            b.ToTable("automation_log", Schema);
+            b.Property(e => e.RuleCode).HasMaxLength(100).IsRequired();
+            b.Property(e => e.SubjectNumber).HasMaxLength(50).IsRequired();
+            b.Property(e => e.NodeCode).HasMaxLength(100).IsRequired();
+            b.Property(e => e.Detail).HasMaxLength(1000);
+            b.HasIndex(e => new { e.RuleCode, e.TaskId, e.At });
+            b.HasIndex(e => e.At);
         });
         modelBuilder.ConfigTable<WorkflowVersion>(Schema, "workflow_version", b =>
         {

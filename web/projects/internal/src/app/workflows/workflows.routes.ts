@@ -11,6 +11,15 @@ export const WORKFLOWS_ROUTES: Routes = [
     loadComponent: () => import('./workflow-version-list').then((m) => m.WorkflowVersionList),
   },
   {
+    path: 'automation-rules',
+    data: { section: 'automation-rules' },
+    loadComponent: () => import('../apps-control/config/config-section-page').then((m) => m.ConfigSectionPage),
+  },
+  {
+    path: 'automation-log',
+    loadComponent: () => import('./automation').then((m) => m.AutomationLog),
+  },
+  {
     path: 'designer',
     loadComponent: () => import('./designer/designer-page').then((m) => m.DesignerPage),
   },

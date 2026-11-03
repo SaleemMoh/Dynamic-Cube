@@ -5,6 +5,7 @@ public static class WorkflowChangeTypes
 {
     public const string Workflow = "wf.workflow";
     public const string Version = "wf.workflow-version";
+    public const string AutomationRule = "wf.automation-rule";
 
     public const string Area = "wf.workflows";
 }

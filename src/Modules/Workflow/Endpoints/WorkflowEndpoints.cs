@@ -40,6 +40,11 @@ internal static class WorkflowEndpoints
         group.MapGet("/supervision", async (string? search, string? role, string? sla, bool? unassigned, int? skip, int? take, ActionCenter service, CancellationToken ct) =>
             TypedResults.Ok(await service.SupervisionAsync(search, role, Parse<SlaState>(sla, "sla"), unassigned, skip ?? 0, take ?? 50, ct)))
             .RequirePrivilege(WorkflowResources.Supervision, CatalogActions.View).WithName("GetSupervision");
+
+        var automation = group.MapGroup("/automation").RequirePrivilege(WorkflowResources.Config, CatalogActions.View);
+        automation.MapPost("/test", async (AutomationTestRequest request, AutomationConsole service, CancellationToken ct) => TypedResults.Ok(await service.TestAsync(request, ct))).WithName("TestAutomationRule");
+        automation.MapGet("/log", async (string? rule, string? subject, int? skip, int? take, AutomationConsole service, CancellationToken ct) =>
+            TypedResults.Ok(await service.LogAsync(rule, subject, skip ?? 0, take ?? 50, ct))).WithName("GetAutomationLog");
     }
 
     /// <summary>A query value as the API writes enums (MINE, ON_TRACK, …).</summary>

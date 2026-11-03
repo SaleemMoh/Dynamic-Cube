@@ -32,6 +32,7 @@ builder.Services.AddPayments(builder.Configuration);
 builder.Services.AddVisits(builder.Configuration);
 builder.Services.AddReports(builder.Configuration);
 builder.Services.AddHostedService<SlaBackgroundService>();
+builder.Services.AddHostedService<AutomationBackgroundService>();
 builder.Services.AddHostedService<DocumentDatesBackgroundService>();
 builder.Services.AddHostedService<BillExpiryBackgroundService>();
 builder.Services.AddHostedService<ExternalVisitsBackgroundService>();
