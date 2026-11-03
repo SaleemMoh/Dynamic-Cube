@@ -308,6 +308,20 @@ internal sealed class MatrixEngine(JsonLogicEvaluator logic, TimeProvider clock)
                 return new CellResult { Kind = "empty" };
             }
 
+            if (cell.Kind == "shared")
+            {
+                // A shared calculation: the cell evaluates it as its own.
+                var shared = definition.Shared.FirstOrDefault(s => string.Equals(s.Code, cell.Shared, StringComparison.OrdinalIgnoreCase));
+                return shared is null || shared.Cell.Kind is "shared" or "same" or "empty"
+                    ? new CellResult { Kind = "shared", Note = $"The shared calculation '{cell.Shared}' is missing." }
+                    : Evaluate(shared.Cell, column, depth) with { SharedAs = shared.Code };
+            }
+
+            return Evaluate(cell, column, depth);
+        }
+
+        private CellResult Evaluate(MatrixCell cell, string column, int depth)
+        {
             if (cell.Kind == "same")
             {
                 return depth < 5 && cell.SameRow is not null
@@ -621,6 +635,8 @@ internal sealed class MatrixEngine(JsonLogicEvaluator logic, TimeProvider clock)
 
         public string? SameAs { get; init; }
 
+        public string? SharedAs { get; init; }
+
         public string? Note { get; init; }
 
         public JsonObject ToJson(MatrixColumn column) => new()
@@ -636,6 +652,7 @@ internal sealed class MatrixEngine(JsonLogicEvaluator logic, TimeProvider clock)
             ["pending"] = Pending,
             ["minimumMet"] = MinimumMet,
             ["sameAs"] = SameAs,
+            ["shared"] = SharedAs,
             ["note"] = Note,
             ["details"] = Details?.DeepClone(),
             ["groups"] = Groups?.DeepClone(),

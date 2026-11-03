@@ -12,6 +12,8 @@ export interface Matrix {
   rowsInput?: string | null;
   columns: MatrixColumn[];
   cells: MatrixCell[];
+  /** Calculations several cells use (a cell of kind `shared` names one); changing one changes every linked cell. */
+  shared?: MatrixShared[];
   gates: MatrixGate[];
   adjustments: MatrixAdjustment[];
   projects?: MatrixProjects | null;
@@ -124,13 +126,15 @@ export interface MatrixColumn {
   weight?: number | null;
 }
 
-export type CellKind = 'points' | 'worst' | 'formula' | 'same' | 'empty';
+export type CellKind = 'points' | 'worst' | 'formula' | 'same' | 'shared' | 'empty';
+/** The kinds a cell editor offers (a shared link is made from the grid). */
 export const CELL_KINDS: CellKind[] = ['points', 'worst', 'formula', 'same', 'empty'];
 export const CELL_ICONS: Record<CellKind, string> = {
   points: 'scoreboard',
   worst: 'vertical_align_bottom',
   formula: 'function',
   same: 'content_copy',
+  shared: 'link',
   empty: 'block',
 };
 
@@ -142,11 +146,21 @@ export interface MatrixCell {
   groups: MatrixGroup[];
   sameRow?: string | null;
   sameColumn?: string | null;
+  /** For `shared`: the code of the shared calculation. */
+  shared?: string | null;
   gradeRule?: JsonLogicRule | null;
   scoreRule?: JsonLogicRule | null;
   detailsRule?: JsonLogicRule | null;
   noteAr?: string | null;
   noteEn?: string | null;
+}
+
+/** A named calculation several cells use; its cell holds the calculation (row and column unused). */
+export interface MatrixShared {
+  code: string;
+  nameAr: string;
+  nameEn: string;
+  cell: MatrixCell;
 }
 
 export interface MatrixGroup {
@@ -167,6 +181,8 @@ export interface MatrixCriterion {
   scoring: 'bands' | 'options' | 'direct';
   output: 'points' | 'grade';
   useOrdinal?: boolean;
+  /** For `options` scoring: the points or grades follow the weights the question bank gives each answer. */
+  fromBank?: boolean;
   maxPoints?: number | null;
   appliesWhen?: JsonLogicRule | null;
   bands: MatrixBand[];
@@ -248,6 +264,7 @@ export function emptyMatrix(): Matrix {
       { code: 'financial', nameAr: 'التقييم المالي', nameEn: 'Financial', includeInFinal: true },
     ],
     cells: [],
+    shared: [],
     gates: [],
     adjustments: [],
     projects: null,
@@ -268,6 +285,10 @@ export function readMatrix(value: unknown): Matrix {
     rows: m.rows ?? [],
     columns: m.columns ?? [],
     cells: (m.cells ?? []).map((c) => ({ ...c, groups: c.groups ?? [] })),
+    shared: (m.shared ?? []).map((x) => ({
+      ...x,
+      cell: { ...x.cell, groups: x.cell?.groups ?? [] },
+    })),
     gates: m.gates ?? [],
     adjustments: m.adjustments ?? [],
   };
@@ -279,6 +300,7 @@ export function cellOf(m: Matrix, row: string, column: string): MatrixCell | nul
 
 /** The cell a "same as" cell copies, followed up to five steps (null when it leads nowhere). */
 export function resolveCell(m: Matrix, cell: MatrixCell | null, depth = 0): MatrixCell | null {
+  if (cell?.kind === 'shared') return sharedOf(m, cell.shared)?.cell ?? null;
   if (!cell || cell.kind !== 'same') return cell;
   if (depth >= 5 || !cell.sameRow) return null;
   return resolveCell(m, cellOf(m, cell.sameRow, cell.sameColumn ?? cell.column), depth + 1);
@@ -344,6 +366,12 @@ export function cellSummary(
     const row = m.rows.find((r) => same(r.code, cell.sameRow ?? ''));
     return `${t('mx.cell.sameAs')} ${row ? row.nameAr || row.code : (cell.sameRow ?? '?')}`;
   }
+  if (cell.kind === 'shared') {
+    const shared = sharedOf(m, cell.shared);
+    if (!shared) return `${t('mx.cell.sharedMissing')} ${cell.shared ?? ''}`;
+    const inner = cellSummary(m, shared.cell, t);
+    return `${shared.nameAr || shared.code} · ${inner}`;
+  }
   if (cell.kind === 'formula') return t('mx.kind.formula');
   const count = criteriaOf(cell).length;
   const scale =
@@ -361,9 +389,73 @@ export function bankQuestionCode(i: MatrixInput): string | null {
 }
 
 /** An input's answers as choices: its bank question's answers when it has them, else its option set's. */
-export type AnswersOf = (
-  i: MatrixInput,
-) => { value: string; labelAr: string; labelEn: string }[] | null | undefined;
+export type AnswersOf = (i: MatrixInput) =>
+  | {
+      value: string;
+      labelAr: string;
+      labelEn: string;
+      points?: number | null;
+      grade?: number | null;
+    }[]
+  | null
+  | undefined;
+
+/** Whether bank answers carry weights (points or grades). */
+export function hasWeights(
+  answers: { points?: number | null; grade?: number | null }[] | null | undefined,
+): boolean {
+  return !!answers?.some(
+    (a) =>
+      (a.points !== null && a.points !== undefined) || (a.grade !== null && a.grade !== undefined),
+  );
+}
+
+/** A criterion's answers scored with the bank's weights (keeping each answer's attachment). */
+export function bankOptions(
+  c: MatrixCriterion,
+  answers: { value: string; points?: number | null; grade?: number | null }[],
+): MatrixCriterion['options'] {
+  return answers.map((a) => ({
+    value: a.value,
+    points: a.points ?? null,
+    grade: a.grade ?? null,
+    attachment:
+      c.options.find((o) => o.value.toLowerCase() === a.value.toLowerCase())?.attachment ?? null,
+  }));
+}
+
+/** Every criterion that follows the bank, with the weights the bank gives now (what a saved version keeps). */
+export function syncFromBank(m: Matrix, answersOf: AnswersOf): Matrix {
+  const byCode = new Map(m.inputs.map((i) => [i.code, i]));
+  const sync = (cell: MatrixCell): MatrixCell => ({
+    ...cell,
+    groups: cell.groups.map((g) => ({
+      ...g,
+      criteria: g.criteria.map((c) => {
+        const input = byCode.get(c.input);
+        const answers = c.fromBank && c.scoring === 'options' && input ? answersOf(input) : null;
+        return answers && hasWeights(answers) ? { ...c, options: bankOptions(c, answers) } : c;
+      }),
+    })),
+  });
+  return {
+    ...m,
+    cells: m.cells.map(sync),
+    shared: (m.shared ?? []).map((s) => ({ ...s, cell: sync(s.cell) })),
+  };
+}
+
+/** Whether a criterion that follows the bank holds weights other than the bank's (they change on the next save). */
+export function bankWeightsChanged(
+  c: MatrixCriterion,
+  answers: { value: string; points?: number | null; grade?: number | null }[] | null | undefined,
+): boolean {
+  if (!c.fromBank || !answers || !hasWeights(answers)) return false;
+  return (
+    JSON.stringify(bankOptions(c, answers).map((o) => [o.value, o.points, o.grade])) !==
+    JSON.stringify(c.options.map((o) => [o.value, o.points ?? null, o.grade ?? null]))
+  );
+}
 
 /** The inputs as Logic Builder fields (by code, with their answers as choices: the bank question's, else the option set's). */
 export function inputFields(m: Matrix, exclude?: string, answersOf?: AnswersOf): LogicField[] {
@@ -531,4 +623,142 @@ export function removeColumn(m: Matrix, code: string): Matrix {
     columns: m.columns.filter((c) => c.code !== code),
     cells: m.cells.filter((c) => c.column !== code),
   };
+}
+
+/** A shared calculation by code (ignoring case). */
+export function sharedOf(m: Matrix, code: string | null | undefined): MatrixShared | undefined {
+  return code ? (m.shared ?? []).find((x) => same(x.code, code)) : undefined;
+}
+
+/** The cells linked to a shared calculation. */
+export function sharedUsers(m: Matrix, code: string): MatrixCell[] {
+  return m.cells.filter((c) => c.kind === 'shared' && same(c.shared ?? '', code));
+}
+
+/** A cell's own calculation (what a copy or a new shared calculation starts from): a link gives what it links to. */
+export function ownCalculation(m: Matrix, cell: MatrixCell | null): MatrixCell | null {
+  const target = resolveCell(m, cell);
+  return target && target.kind !== 'empty' ? target : null;
+}
+
+/** A copy of a calculation placed at a row and column (nothing shared with the original). */
+export function placed(calculation: MatrixCell, row: string, column: string): MatrixCell {
+  return {
+    ...structuredClone(calculation),
+    row,
+    column,
+    sameRow: null,
+    sameColumn: null,
+    shared: null,
+  };
+}
+
+/** Pastes a copy of `source` into a cell: an independent copy, or a link to the same shared calculation. */
+export function pasteCell(
+  m: Matrix,
+  source: MatrixCell,
+  row: string,
+  column: string,
+  asLink: boolean,
+): Matrix {
+  if (!asLink) {
+    const own = ownCalculation(m, source);
+    return own ? withCell(m, placed(own, row, column)) : m;
+  }
+  let next = m;
+  let code = source.kind === 'shared' ? source.shared : null;
+  if (!code) {
+    // Linking to a cell that is not shared yet shares it first.
+    code = freeCode(
+      (m.shared ?? []).map((x) => x.code),
+      `${source.column}-shared-`,
+    );
+    next = shareCells(m, source.row, source.column, code, [source.row]);
+  }
+  return withCell(next, { row, column, kind: 'shared', shared: code, groups: [] });
+}
+
+/**
+ * Turns a cell's calculation into a shared calculation and links the cell and the chosen rows' cells (same column) to
+ * it; the shared calculation is named after the column.
+ */
+export function shareCells(
+  m: Matrix,
+  row: string,
+  column: string,
+  code: string,
+  rows: string[],
+): Matrix {
+  const own = ownCalculation(m, cellOf(m, row, column));
+  if (!own) return m;
+  const col = m.columns.find((c) => same(c.code, column));
+  const shared: MatrixShared = {
+    code,
+    nameAr: `${col?.nameAr || column} (مشترك)`,
+    nameEn: `${col?.nameEn || column} (shared)`,
+    cell: placed(own, '', ''),
+  };
+  let next: Matrix = { ...m, shared: [...(m.shared ?? []), shared] };
+  for (const r of new Set([row, ...rows]))
+    next = withCell(next, { row: r, column, kind: 'shared', shared: code, groups: [] });
+  return next;
+}
+
+/** Gives a linked cell its own copy of the shared calculation, so it can differ from the others. */
+export function detachCell(m: Matrix, row: string, column: string): Matrix {
+  const cell = cellOf(m, row, column);
+  const own = cell?.kind === 'shared' ? sharedOf(m, cell.shared)?.cell : null;
+  return own ? withCell(m, placed(own, row, column)) : m;
+}
+
+/** Changes a shared calculation (every linked cell follows). */
+export function withShared(m: Matrix, code: string, cell: MatrixCell): Matrix {
+  return {
+    ...m,
+    shared: (m.shared ?? []).map((x) =>
+      same(x.code, code) ? { ...x, cell: placed(cell, '', '') } : x,
+    ),
+  };
+}
+
+/** What makes two calculations the same (not where they sit, nor their notes). */
+function fingerprint(c: MatrixCell): string {
+  return JSON.stringify({
+    kind: c.kind,
+    scale: c.scale ?? null,
+    groups: c.groups,
+    gradeRule: c.gradeRule ?? null,
+    scoreRule: c.scoreRule ?? null,
+    detailsRule: c.detailsRule ?? null,
+  });
+}
+
+/** Sets of rows whose cells in a column hold the very same calculation (not yet linked). */
+export function identicalCells(m: Matrix, column: string): string[][] {
+  const groups = new Map<string, string[]>();
+  for (const cell of m.cells.filter(
+    (c) => same(c.column, column) && ['points', 'worst', 'formula'].includes(c.kind),
+  )) {
+    const key = fingerprint(cell);
+    groups.set(key, [...(groups.get(key) ?? []), cell.row]);
+  }
+  return [...groups.values()].filter((rows) => rows.length > 1);
+}
+
+/** Links every set of identical cells in a column to one shared calculation each. */
+export function shareIdentical(m: Matrix, column: string): Matrix {
+  let next = m;
+  for (const rows of identicalCells(m, column)) {
+    const code = freeCode(
+      (next.shared ?? []).map((x) => x.code),
+      `${column}-shared-`,
+    );
+    next = shareCells(next, rows[0], column, code, rows);
+  }
+  return next;
+}
+
+/** Removes shared calculations no cell links to any more. */
+export function dropUnusedShared(m: Matrix): Matrix {
+  return { ...m, shared: (m.shared ?? []).filter((x) => sharedUsers(m, x.code).length > 0) };
 }

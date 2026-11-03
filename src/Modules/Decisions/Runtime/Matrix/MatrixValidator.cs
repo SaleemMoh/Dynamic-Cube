@@ -8,7 +8,7 @@ namespace DynamicCube.Modules.Decisions.Runtime.Matrix;
 internal static class MatrixValidator
 {
     private static readonly string[] Sources = ["applicant", "reviewer", "integration", "party", "derived", "projects", "given"];
-    private static readonly string[] CellKinds = ["points", "worst", "formula", "same", "empty"];
+    private static readonly string[] CellKinds = ["points", "worst", "formula", "same", "shared", "empty"];
 
     public static IReadOnlyDictionary<string, string> Validate(JsonNode? configuration, JsonLogicEvaluator logic)
     {
@@ -66,6 +66,7 @@ internal static class MatrixValidator
         Unique("rows", definition.Rows, r => r.Code);
         Unique("columns", definition.Columns, c => c.Code);
         Unique("scales", definition.Scales, s => s.Code);
+        Unique("shared", definition.Shared, s => s.Code);
         Unique("optionSets", definition.OptionSets, s => s.Code);
         if (definition.Rows.Count == 0)
         {
@@ -120,18 +121,30 @@ internal static class MatrixValidator
             errors["sizes.input"] = $"Unknown input '{sizes.Input}'.";
         }
 
-        for (var i = 0; i < definition.Cells.Count; i++)
+        var sharedCodes = definition.Shared.Select(x => x.Code).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var all = definition.Cells.Select((c, i) => (Cell: c, At: $"cells[{i}]", IsShared: false))
+            .Concat(definition.Shared.Select((x, i) => (Cell: x.Cell, At: $"shared[{i}].cell", IsShared: true)))
+            .ToList();
+        foreach (var (cell, at, isShared) in all)
         {
-            var cell = definition.Cells[i];
-            var at = $"cells[{i}]";
-            if (!rows.Contains(cell.Row))
+            if (!isShared && !rows.Contains(cell.Row))
             {
                 errors[$"{at}.row"] = $"Unknown row '{cell.Row}'.";
             }
 
-            if (!columns.Contains(cell.Column))
+            if (!isShared && !columns.Contains(cell.Column))
             {
                 errors[$"{at}.column"] = $"Unknown column '{cell.Column}'.";
+            }
+
+            if (isShared && cell.Kind is "shared" or "same")
+            {
+                errors[$"{at}.kind"] = "A shared calculation holds points, worst grade or a formula.";
+            }
+
+            if (!isShared && cell.Kind == "shared" && (cell.Shared is null || !sharedCodes.Contains(cell.Shared)))
+            {
+                errors[$"{at}.shared"] = $"Unknown shared calculation '{cell.Shared}'.";
             }
 
             if (!CellKinds.Contains(cell.Kind))

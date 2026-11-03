@@ -29,8 +29,13 @@ import {
   MatrixGroup,
   MatrixInput,
   SOURCE_ICONS,
+  bankOptions,
   bankQuestionCode,
   freeCode,
+  hasWeights,
+  placed,
+  sharedOf,
+  sharedUsers,
   inputFields,
   newCell,
   newCriterion,
@@ -49,6 +54,10 @@ export interface MatrixCellEditorData {
 export interface MatrixCellEditorResult {
   cell: MatrixCell;
   inputs: MatrixInput[];
+  /** A linked cell gets its own copy instead of changing the shared calculation. */
+  detach?: boolean;
+  /** The shared calculation's names, when they were changed. */
+  sharedName?: { ar: string; en: string };
 }
 
 /**
@@ -78,6 +87,57 @@ export interface MatrixCellEditorResult {
   template: `
     <h2 mat-dialog-title>{{ rowName() }} · {{ columnName() }}</h2>
     <mat-dialog-content class="mx-ce">
+      @if (shared; as sh) {
+        <section
+          class="mx-ce__shared"
+          [class.mx-ce__shared--detached]="detach()"
+          data-testid="mx-shared-banner"
+        >
+          @if (!detach()) {
+            <div class="mx-ce__row">
+              <mat-icon fontSet="material-symbols-outlined">link</mat-icon>
+              <strong>{{ 'mx.shared.title' | dcTranslate }}</strong>
+              <mat-form-field subscriptSizing="dynamic">
+                <mat-label>{{ 'mx.nameAr' | dcTranslate }}</mat-label>
+                <input
+                  matInput
+                  dir="rtl"
+                  [ngModel]="sharedNameAr()"
+                  (ngModelChange)="sharedNameAr.set($event)"
+                />
+              </mat-form-field>
+              <mat-form-field subscriptSizing="dynamic">
+                <mat-label>{{ 'mx.nameEn' | dcTranslate }}</mat-label>
+                <input
+                  matInput
+                  dir="ltr"
+                  [ngModel]="sharedNameEn()"
+                  (ngModelChange)="sharedNameEn.set($event)"
+                />
+              </mat-form-field>
+            </div>
+            <p>{{ 'mx.shared.usedBy' | dcTranslate }} {{ sh.users }}</p>
+            <p class="dc-muted">{{ 'mx.shared.hint' | dcTranslate }}</p>
+            <button
+              matButton="tonal"
+              type="button"
+              (click)="detach.set(true)"
+              data-testid="mx-shared-detach"
+            >
+              <mat-icon fontSet="material-symbols-outlined">link_off</mat-icon>
+              {{ 'mx.shared.onlyThis' | dcTranslate }}
+            </button>
+          } @else {
+            <p>
+              <mat-icon fontSet="material-symbols-outlined">link_off</mat-icon>
+              {{ 'mx.shared.detached' | dcTranslate }}
+              <button matButton type="button" (click)="detach.set(false)">
+                {{ 'mx.shared.keepLink' | dcTranslate }}
+              </button>
+            </p>
+          }
+        </section>
+      }
       <mat-button-toggle-group
         [ngModel]="cell().kind"
         (ngModelChange)="kind($event)"
@@ -271,7 +331,7 @@ export interface MatrixCellEditorResult {
                       <mat-label>{{ 'mx.cell.input' | dcTranslate }}</mat-label>
                       <mat-select
                         [ngModel]="c.input"
-                        (ngModelChange)="setCriterion(gi, ci, { input: $event })"
+                        (ngModelChange)="chooseInput(gi, ci, $event)"
                         [attr.data-testid]="'mx-criterion-input-' + c.code"
                       >
                         @for (i of inputs(); track i.code) {
@@ -509,6 +569,14 @@ export interface MatrixCellEditorResult {
                   }
                   @if (c.scoring === 'options') {
                     <h4>{{ 'mx.cell.options' | dcTranslate }}</h4>
+                    @if (bankWeighted(c)) {
+                      <mat-checkbox
+                        [ngModel]="c.fromBank === true"
+                        (ngModelChange)="followBank(gi, ci, c, $event)"
+                        [attr.data-testid]="'mx-from-bank-' + c.code"
+                        >{{ 'mx.cell.fromBank' | dcTranslate }}</mat-checkbox
+                      >
+                    }
                     @switch (answerSource(c).from) {
                       @case ('bank') {
                         <p class="mx-ce__from" data-testid="mx-answers-from-bank">
@@ -563,6 +631,7 @@ export interface MatrixCellEditorResult {
                                 type="number"
                                 dir="ltr"
                                 class="mx-ce__in"
+                                [disabled]="c.fromBank === true"
                                 [ngModel]="
                                   c.output === 'grade'
                                     ? (o.score?.grade ?? null)
@@ -761,6 +830,22 @@ export interface MatrixCellEditorResult {
     .mx-danger {
       color: var(--dga-error-600, #d92d20);
     }
+    .mx-ce__shared {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #bdb4fe;
+      border-radius: 10px;
+      background: #f9f8ff;
+    }
+    .mx-ce__shared p {
+      margin: 0.25rem 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .mx-ce__shared--detached {
+      border-color: var(--dga-warning-300, #fec84b);
+      background: #fffaeb;
+    }
     .mx-ce__from {
       display: flex;
       align-items: center;
@@ -796,8 +881,30 @@ export class MatrixCellEditor {
   protected readonly sourceIcons = SOURCE_ICONS;
   protected readonly lang = this.i18n.language;
 
+  /** A linked cell edits its shared calculation (every linked cell follows) unless it is given its own copy. */
+  protected readonly shared = (() => {
+    const cell = this.data.cell;
+    const definition =
+      cell?.kind === 'shared' ? sharedOf(this.data.matrix, cell.shared) : undefined;
+    if (!definition) return null;
+    const lang = this.i18n.language();
+    const users = sharedUsers(this.data.matrix, definition.code)
+      .map((c) => {
+        const row = this.data.matrix.rows.find((r) => r.code === c.row);
+        return (lang === 'ar' ? row?.nameAr : row?.nameEn) || c.row;
+      })
+      .join('، ');
+    return { definition, users };
+  })();
+  protected readonly detach = signal(false);
+  protected readonly sharedNameAr = signal(this.shared?.definition.nameAr ?? '');
+  protected readonly sharedNameEn = signal(this.shared?.definition.nameEn ?? '');
   protected readonly cell = signal<MatrixCell>(
-    structuredClone(this.data.cell ?? newCell(this.data.row, this.data.column, 'points')),
+    structuredClone(
+      this.shared
+        ? placed(this.shared.definition.cell, this.data.row, this.data.column)
+        : (this.data.cell ?? newCell(this.data.row, this.data.column, 'points')),
+    ),
   );
   protected readonly inputs = signal<MatrixInput[]>(structuredClone(this.data.matrix.inputs));
   protected readonly sizeFilter = signal<string | null>(null);
@@ -1106,6 +1213,49 @@ export class MatrixCellEditor {
   }
 
   protected done(): void {
-    this.ref.close({ cell: this.cell(), inputs: this.inputs() });
+    const renamed =
+      this.shared &&
+      (this.sharedNameAr() !== this.shared.definition.nameAr ||
+        this.sharedNameEn() !== this.shared.definition.nameEn)
+        ? { ar: this.sharedNameAr(), en: this.sharedNameEn() }
+        : undefined;
+    this.ref.close({
+      cell: this.cell(),
+      inputs: this.inputs(),
+      detach: this.detach(),
+      sharedName: renamed,
+    });
+  }
+
+  /** The bank question's answers for a criterion, when they carry weights (points or grades). */
+  protected bankWeighted(c: MatrixCriterion) {
+    const input = this.inputOf(c.input);
+    const answers = input ? this.data.references.answersOf(input) : null;
+    return hasWeights(answers) ? answers : null;
+  }
+
+  /** Following the bank copies its weights now (and again whenever the matrix is saved); leaving it keeps them as they are. */
+  protected followBank(gi: number, ci: number, c: MatrixCriterion, on: boolean): void {
+    const answers = this.bankWeighted(c);
+    const output = answers?.some((a) => a.points !== null && a.points !== undefined)
+      ? 'points'
+      : 'grade';
+    this.setCriterion(
+      gi,
+      ci,
+      on && answers
+        ? { fromBank: true, output, options: bankOptions(c, answers) }
+        : { fromBank: false },
+    );
+  }
+
+  /** A newly chosen input whose bank question carries weights is scored by answer with them. */
+  protected chooseInput(gi: number, ci: number, code: string): void {
+    this.setCriterion(gi, ci, { input: code });
+    const c = this.cell().groups[gi]?.criteria[ci];
+    if (c && this.bankWeighted(c)) {
+      this.setCriterion(gi, ci, { scoring: 'options' });
+      this.followBank(gi, ci, this.cell().groups[gi].criteria[ci], true);
+    }
   }
 }

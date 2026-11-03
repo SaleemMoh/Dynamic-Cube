@@ -47,7 +47,15 @@ import {
   cellInputs,
   cellOf,
   cellSummary,
+  detachCell,
+  dropUnusedShared,
   freeCode,
+  identicalCells,
+  MatrixCell,
+  pasteCell,
+  shareCells,
+  shareIdentical,
+  withShared,
   removeColumn,
   removeRow,
   renameColumn,
@@ -188,6 +196,118 @@ export class MatrixHeaderDialog {
   }
 }
 
+interface ShareDialogData {
+  matrix: Matrix;
+  row: string;
+  column: string;
+}
+
+/**
+ * Chooses the sectors that share a cell's calculation (same track). Sectors whose cell already holds the very same
+ * calculation are ticked; a sector linked to it stays ticked.
+ */
+@Component({
+  selector: 'dc-matrix-share-dialog',
+  imports: [
+    FormsModule,
+    LocalizePipe,
+    MatButtonModule,
+    MatCheckboxModule,
+    MatDialogModule,
+    TranslatePipe,
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <h2 mat-dialog-title>{{ 'mx.share.title' | dcTranslate }}</h2>
+    <mat-dialog-content class="mx-sh">
+      <p class="dc-muted">{{ 'mx.share.hint' | dcTranslate }}</p>
+      @for (r of others; track r.code) {
+        <mat-checkbox
+          [checked]="chosen().has(r.code)"
+          (change)="toggle(r.code, $event.checked)"
+          [attr.data-testid]="'mx-share-row-' + r.code"
+        >
+          {{ { ar: r.nameAr, en: r.nameEn } | dcLocalize }}
+          @if (hint(r.code); as h) {
+            <span class="dc-muted">· {{ h | dcTranslate }}</span>
+          }
+        </mat-checkbox>
+      }
+      <div class="mx-sh__bar">
+        <button matButton type="button" (click)="all(true)">
+          {{ 'mx.share.all' | dcTranslate }}
+        </button>
+        <button matButton type="button" (click)="all(false)">
+          {{ 'mx.share.none' | dcTranslate }}
+        </button>
+      </div>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button matButton mat-dialog-close type="button">{{ 'form.cancel' | dcTranslate }}</button>
+      <button matButton="filled" type="button" (click)="done()" data-testid="mx-share-done">
+        {{ 'mx.share.done' | dcTranslate }}
+      </button>
+    </mat-dialog-actions>
+  `,
+  styles: `
+    .mx-sh {
+      display: grid;
+      gap: 0.25rem;
+    }
+    .mx-sh__bar {
+      display: flex;
+      gap: 0.5rem;
+    }
+  `,
+})
+export class MatrixShareDialog {
+  protected readonly data = inject<ShareDialogData>(MAT_DIALOG_DATA);
+  private readonly ref = inject(MatDialogRef<MatrixShareDialog, string[]>);
+  private readonly source = cellOf(this.data.matrix, this.data.row, this.data.column);
+  protected readonly others = this.data.matrix.rows.filter((r) => r.code !== this.data.row);
+  private readonly identicalRows = new Set(
+    identicalCells(this.data.matrix, this.data.column).find((rows) =>
+      rows.includes(this.data.row),
+    ) ?? [],
+  );
+  protected readonly chosen = signal(
+    new Set(
+      this.others
+        .filter((r) => this.identicalRows.has(r.code) || this.linked(r.code))
+        .map((r) => r.code),
+    ),
+  );
+
+  private linked(row: string): boolean {
+    const cell = cellOf(this.data.matrix, row, this.data.column);
+    return !!this.source?.shared && cell?.kind === 'shared' && cell.shared === this.source.shared;
+  }
+
+  protected hint(row: string): string | null {
+    if (this.linked(row)) return 'mx.share.linked';
+    if (this.identicalRows.has(row)) return 'mx.share.identical';
+    const cell = cellOf(this.data.matrix, row, this.data.column);
+    return cell && cell.kind !== 'empty' ? 'mx.share.replaces' : null;
+  }
+
+  protected toggle(row: string, on: boolean): void {
+    this.chosen.update((set) => {
+      const next = new Set(set);
+      if (on) next.add(row);
+      else next.delete(row);
+      return next;
+    });
+  }
+
+  protected all(on: boolean): void {
+    this.chosen.set(new Set(on ? this.others.map((r) => r.code) : []));
+  }
+
+  protected done(): void {
+    this.ref.close([...this.chosen()]);
+  }
+}
+
 /**
  * The matrix as a table: sectors are rows, tracks are columns, and each cell holds that sector's calculation for the
  * track. A cell shows its kind, a short summary and an icon per kind of source its inputs come from; an icon opens a
@@ -246,6 +366,18 @@ export class MatrixHeaderDialog {
                         <mat-icon fontSet="material-symbols-outlined">arrow_forward</mat-icon
                         >{{ 'mx.moveAfter' | dcTranslate }}
                       </button>
+                      @if (identical(c.code); as sets) {
+                        @if (sets.length) {
+                          <button
+                            mat-menu-item
+                            (click)="shareIdentical(c)"
+                            [attr.data-testid]="'mx-share-identical-' + c.code"
+                          >
+                            <mat-icon fontSet="material-symbols-outlined">join</mat-icon
+                            >{{ 'mx.column.shareIdentical' | dcTranslate }} ({{ sets.length }})
+                          </button>
+                        }
+                      }
                       <button mat-menu-item (click)="deleteColumn(c)">
                         <mat-icon fontSet="material-symbols-outlined">delete</mat-icon
                         >{{ 'mx.remove' | dcTranslate }}
@@ -320,7 +452,73 @@ export class MatrixHeaderDialog {
                     class="mx-card"
                     [class.mx-card--empty]="!cell"
                     [class.mx-card--same]="cell?.kind === 'same'"
+                    [class.mx-card--shared]="cell?.kind === 'shared'"
                   >
+                    @if (editable()) {
+                      <button
+                        matIconButton
+                        type="button"
+                        class="mx-card__more"
+                        [matMenuTriggerFor]="cellMenu"
+                        [attr.aria-label]="'mx.more' | dcTranslate"
+                        [attr.data-testid]="'mx-cell-menu-' + r.code + '-' + c.code"
+                      >
+                        <mat-icon fontSet="material-symbols-outlined">more_horiz</mat-icon>
+                      </button>
+                      <mat-menu #cellMenu="matMenu">
+                        @if (cell && cell.kind !== 'empty') {
+                          <button mat-menu-item (click)="copy(cell)" data-testid="mx-cell-copy">
+                            <mat-icon fontSet="material-symbols-outlined">content_copy</mat-icon
+                            >{{ 'mx.cell.copy' | dcTranslate }}
+                          </button>
+                        }
+                        @if (clipboard(); as clip) {
+                          <button
+                            mat-menu-item
+                            (click)="paste(r.code, c.code, false)"
+                            data-testid="mx-cell-paste"
+                          >
+                            <mat-icon fontSet="material-symbols-outlined">content_paste</mat-icon
+                            >{{ 'mx.cell.paste' | dcTranslate }}
+                            <span class="mx-menu__detail">{{ clip.row }} · {{ clip.column }}</span>
+                          </button>
+                          <button
+                            mat-menu-item
+                            (click)="paste(r.code, c.code, true)"
+                            data-testid="mx-cell-paste-link"
+                          >
+                            <mat-icon fontSet="material-symbols-outlined">add_link</mat-icon
+                            >{{ 'mx.cell.pasteLink' | dcTranslate }}
+                          </button>
+                        }
+                        @if (cell && cell.kind !== 'empty' && cell.kind !== 'same') {
+                          <button
+                            mat-menu-item
+                            (click)="share(r.code, c.code)"
+                            data-testid="mx-cell-share"
+                          >
+                            <mat-icon fontSet="material-symbols-outlined">share</mat-icon
+                            >{{ 'mx.cell.share' | dcTranslate }}
+                          </button>
+                        }
+                        @if (cell?.kind === 'shared') {
+                          <button
+                            mat-menu-item
+                            (click)="detach(r.code, c.code)"
+                            data-testid="mx-cell-detach"
+                          >
+                            <mat-icon fontSet="material-symbols-outlined">link_off</mat-icon
+                            >{{ 'mx.cell.detach' | dcTranslate }}
+                          </button>
+                        }
+                        @if (cell) {
+                          <button mat-menu-item (click)="clear(r.code, c.code)">
+                            <mat-icon fontSet="material-symbols-outlined">backspace</mat-icon
+                            >{{ 'mx.cell.clear' | dcTranslate }}
+                          </button>
+                        }
+                      </mat-menu>
+                    }
                     <button
                       type="button"
                       class="mx-card__main"
@@ -493,6 +691,30 @@ export class MatrixHeaderDialog {
     }
     .mx-card--same {
       background: var(--dga-gray-50, #f9fafb);
+    }
+    .mx-card {
+      position: relative;
+    }
+    .mx-card--shared {
+      border-color: #7a5af8;
+      background: #f9f8ff;
+    }
+    .mx-card--shared .mx-card__kind {
+      color: #6938ef;
+    }
+    .mx-card__more {
+      position: absolute;
+      inset-inline-end: 0;
+      top: 0;
+      transform: scale(0.8);
+      opacity: 0.5;
+    }
+    .mx-card:hover .mx-card__more,
+    .mx-card__more:focus {
+      opacity: 1;
+    }
+    .mx-card__main {
+      padding-inline-end: 22px;
     }
     .mx-card:hover {
       border-color: var(--mat-sys-primary, #1b8354);
@@ -680,7 +902,109 @@ export class MatrixGrid {
         })
         .afterClosed(),
     );
-    if (result) this.emit(withCell({ ...m, inputs: result.inputs }, result.cell));
+    if (!result) return;
+    const cell = cellOf(m, row, column);
+    const withInputs = { ...m, inputs: result.inputs };
+    if (cell?.kind === 'shared' && cell.shared && !result.detach) {
+      // Editing a shared calculation changes every linked cell.
+      let next = withShared(withInputs, cell.shared, result.cell);
+      if (result.sharedName)
+        next = {
+          ...next,
+          shared: (next.shared ?? []).map((x) =>
+            x.code === cell.shared
+              ? { ...x, nameAr: result.sharedName!.ar, nameEn: result.sharedName!.en }
+              : x,
+          ),
+        };
+      this.emit(next);
+    } else {
+      this.emit(withCell(withInputs, result.cell));
+    }
+  }
+
+  /** The cell copied with "Copy", pasted with "Paste" (a copy) or "Paste as link" (shared). */
+  protected readonly clipboard = signal<MatrixCell | null>(null);
+
+  protected copy(cell: MatrixCell): void {
+    this.clipboard.set(structuredClone(cell));
+  }
+
+  protected paste(row: string, column: string, asLink: boolean): void {
+    const source = this.clipboard();
+    if (!source) return;
+    const target = cellOf(this.matrix(), row, column);
+    if (
+      target &&
+      target.kind !== 'empty' &&
+      !confirm(this.i18n.translate('mx.cell.confirmReplace'))
+    )
+      return;
+    this.emit(dropUnusedShared(pasteCell(this.matrix(), source, row, column, asLink)));
+  }
+
+  /** Shares the cell's calculation with chosen sectors (same track): changing it then changes all of them. */
+  protected async share(row: string, column: string): Promise<void> {
+    const m = this.matrix();
+    const cell = cellOf(m, row, column);
+    if (!cell) return;
+    const rows = await firstValueFrom(
+      this.dialog
+        .open<MatrixShareDialog, ShareDialogData, string[]>(MatrixShareDialog, {
+          data: { matrix: m, row, column },
+          width: '32rem',
+          maxWidth: '96vw',
+        })
+        .afterClosed(),
+    );
+    if (!rows) return;
+    if (cell.kind === 'shared' && cell.shared) {
+      let next = m;
+      for (const r of rows)
+        next = withCell(next, { row: r, column, kind: 'shared', shared: cell.shared, groups: [] });
+      this.emit(dropUnusedShared(next));
+    } else {
+      const code = freeCode(
+        (m.shared ?? []).map((x) => x.code),
+        `${column}-shared-`,
+      );
+      this.emit(dropUnusedShared(shareCells(m, row, column, code, rows)));
+    }
+  }
+
+  protected detach(row: string, column: string): void {
+    this.emit(dropUnusedShared(detachCell(this.matrix(), row, column)));
+  }
+
+  protected clear(row: string, column: string): void {
+    if (confirm(this.i18n.translate('mx.cell.confirmClear'))) {
+      this.emit(
+        dropUnusedShared({
+          ...this.matrix(),
+          cells: this.matrix().cells.filter((c) => !(c.row === row && c.column === column)),
+        }),
+      );
+    }
+  }
+
+  /** Sets of sectors whose cells in a track hold the very same calculation. */
+  protected identical(column: string): string[][] {
+    return identicalCells(this.matrix(), column);
+  }
+
+  protected shareIdentical(column: MatrixColumn): void {
+    const sets = identicalCells(this.matrix(), column.code);
+    const count = sets.reduce((n, rows) => n + rows.length, 0);
+    if (
+      confirm(
+        this.i18n
+          .translate('mx.column.confirmShareIdentical')
+          .replace('{n}', String(count))
+          .replace('{k}', String(sets.length)),
+      )
+    ) {
+      this.emit(shareIdentical(this.matrix(), column.code));
+    }
   }
 
   protected async editInput(input: MatrixInput): Promise<void> {

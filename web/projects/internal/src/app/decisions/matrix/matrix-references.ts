@@ -47,6 +47,9 @@ export interface BankAnswer {
   value: string;
   labelAr: string;
   labelEn: string;
+  /** The answer's weight the bank gives it, in points and/or as a grade. */
+  points?: number | null;
+  grade?: number | null;
 }
 
 /** What a bank question says about its answer: the matrix input type it gives, its answers and its limits. */
@@ -270,6 +273,8 @@ export class MatrixReferences {
             value: o.value,
             labelAr: o.labelAr || o.value,
             labelEn: o.labelEn || o.value,
+            points: o.points ?? null,
+            grade: o.grade ?? null,
           }))
         : null;
     }

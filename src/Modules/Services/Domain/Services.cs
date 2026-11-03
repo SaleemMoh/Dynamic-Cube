@@ -149,6 +149,15 @@ public sealed class QuestionOption
     public string LabelAr { get; set; } = string.Empty;
 
     public string LabelEn { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The answer's weight in points, for assessments that score the question (e.g. a scoring matrix criterion). Kept in
+    /// the bank only: the form the applicant fills never carries it.
+    /// </summary>
+    public decimal? Points { get; set; }
+
+    /// <summary>The grade the answer gives (1 best), for assessments that grade the question directly.</summary>
+    public int? Grade { get; set; }
 }
 
 public sealed class QuestionValidation

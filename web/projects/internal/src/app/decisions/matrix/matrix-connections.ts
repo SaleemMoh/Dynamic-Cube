@@ -13,7 +13,14 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { I18nService, LocalizePipe, TranslatePipe } from '@dynamic-cube/shared';
-import { Matrix, MatrixInput, SOURCE_ICONS, bankQuestionCode, cellInputs } from './matrix-model';
+import {
+  Matrix,
+  MatrixInput,
+  SOURCE_ICONS,
+  bankQuestionCode,
+  bankWeightsChanged,
+  cellInputs,
+} from './matrix-model';
 import { MatrixReferences } from './matrix-references';
 
 export type LinkState = 'ok' | 'warn' | 'error';
@@ -50,6 +57,16 @@ export function checkInput(
     ];
     if (stale.length)
       return { state: 'warn', message: 'mx.link.staleAnswers', detail: stale.join(', ') };
+    const changed = m.cells
+      .concat((m.shared ?? []).map((x) => x.cell))
+      .flatMap((c) => c.groups.flatMap((g) => g.criteria))
+      .filter((c) => c.input === i.code && bankWeightsChanged(c, bank.answers));
+    if (changed.length)
+      return {
+        state: 'warn',
+        message: 'mx.link.bankWeightsChanged',
+        detail: changed.map((c) => c.code).join(', '),
+      };
   }
   switch (s.kind) {
     case 'applicant': {

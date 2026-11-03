@@ -284,6 +284,41 @@ public sealed class MatrixEngineTests
         (await Engine().EvaluateAsync(definition.ToJson(), facts, TestContext.Current.CancellationToken)).Output["rows"]!.AsArray().ShouldBeEmpty();
     }
 
+    [Fact]
+    public async Task A_shared_calculation_grades_as_the_cell_it_came_from()
+    {
+        var expected = Load("application-324-construction");
+        var definition = Import().Definition;
+        var input = new JsonObject { ["values"] = expected["resolvedValues"]!.DeepClone(), ["rows"] = new JsonArray("construction") };
+        var before = (await Engine().EvaluateAsync(definition.ToJson(), input.DeepClone().AsObject(), TestContext.Current.CancellationToken)).Output["rows"]![0]!;
+
+        // Every column of the row becomes a shared calculation the row's cells link to.
+        foreach (var cell in definition.Cells.Where(c => c.Row == "construction").ToList())
+        {
+            var code = $"shared-{cell.Column}";
+            definition.Shared.Add(new MatrixShared { Code = code, NameAr = code, NameEn = code, Cell = MatrixDefinition.Read(JsonNode.Parse(System.Text.Json.JsonSerializer.Serialize(new { cells = new[] { cell } }, MatrixDefinition.Json))!).Cells[0] });
+            cell.Kind = "shared";
+            cell.Shared = code;
+            cell.Groups = [];
+        }
+
+        Engine().Validate(definition.ToJson()).ShouldBeEmpty();
+        var after = (await Engine().EvaluateAsync(definition.ToJson(), input, TestContext.Current.CancellationToken)).Output["rows"]![0]!;
+        foreach (var key in new[] { "provisionalGrade", "baseGrade", "finalGrade", "expectedGrade" })
+        {
+            after[key].ShouldBeJson(before[key], key);
+        }
+
+        after["columns"]![0]!["shared"]!.GetValue<string>().ShouldBe("shared-technical");
+        after["columns"]![0]!["score"].ShouldBeJson(before["columns"]![0]!["score"], "score");
+
+        definition.Cells.First(c => c.Kind == "shared").Shared = "nope";
+        definition.Shared.Add(new MatrixShared { Code = "bad", Cell = new MatrixCell { Kind = "same" } });
+        var errors = Engine().Validate(definition.ToJson());
+        errors.Keys.ShouldContain(k => k.EndsWith(".shared", StringComparison.Ordinal));
+        errors.Keys.ShouldContain(k => k.StartsWith("shared[", StringComparison.Ordinal) && k.EndsWith(".kind", StringComparison.Ordinal));
+    }
+
     private static int? Grade(JsonNode? node) => MatrixEngine.Number(node) is { } d ? (int)d : null;
 
     private sealed class FixedClock : TimeProvider

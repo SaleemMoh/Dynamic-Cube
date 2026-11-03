@@ -25,12 +25,16 @@ public sealed record QuestionSnapshot(
     public bool Locked => AllowManualEntry == false && (Prefill is not null || Integration is not null);
 
     public static QuestionSnapshot Of(Question q) =>
-        new(q.Code, q.NameAr, q.NameEn, q.HintAr, q.HintEn, q.Type, q.Lov, q.LovParentQuestion, q.Options, q.Multiple, q.Validation,
+        new(q.Code, q.NameAr, q.NameEn, q.HintAr, q.HintEn, q.Type, q.Lov, q.LovParentQuestion, Shown(q.Options), q.Multiple, q.Validation,
             q.Fill == QuestionFill.Party ? q.Prefill : null,
             q.Fill == QuestionFill.Integration ? q.Integration : null,
             q.Fill == QuestionFill.None ? null : q.AllowManualEntry,
             q.Type == QuestionType.Rows ? q.Columns : null,
             q.Type == QuestionType.Rows ? q.RecordList : null);
+
+    /// <summary>The choices as the form shows them: value and labels, without the weights assessments give them.</summary>
+    private static List<QuestionOption> Shown(List<QuestionOption> options) =>
+        options.Select(o => new QuestionOption { Value = o.Value, LabelAr = o.LabelAr, LabelEn = o.LabelEn }).ToList();
 
     /// <summary>The columns of a rows question (none for the other types).</summary>
     public IReadOnlyList<RowColumn> RowColumns => Columns ?? [];

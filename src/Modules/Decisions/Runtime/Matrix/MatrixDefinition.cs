@@ -45,6 +45,12 @@ public sealed class MatrixDefinition
     /// <summary>One per row and column; a missing cell is empty (the column does not apply to the row).</summary>
     public List<MatrixCell> Cells { get; set; } = [];
 
+    /// <summary>
+    /// Calculations several cells use (e.g. the governance assessment of every sector): a cell of kind <c>shared</c> names
+    /// one, so changing it changes every cell linked to it; a cell that must differ gets its own copy instead.
+    /// </summary>
+    public List<MatrixShared> Shared { get; set; } = [];
+
     public List<MatrixGate> Gates { get; set; } = [];
 
     public List<MatrixAdjustment> Adjustments { get; set; } = [];
@@ -249,9 +255,13 @@ public sealed class MatrixCell
 
     /// <summary>
     /// <c>points</c> (criteria give points, groups add up, the total goes through <see cref="Scale"/>), <c>worst</c> (criteria
-    /// give grades, the worst counts), <c>formula</c> (a rule gives the grade), <c>same</c> (as another cell) or <c>empty</c>.
+    /// give grades, the worst counts), <c>formula</c> (a rule gives the grade), <c>same</c> (as another cell),
+    /// <c>shared</c> (a calculation of <see cref="MatrixDefinition.Shared"/>) or <c>empty</c>.
     /// </summary>
     public string Kind { get; set; } = "points";
+
+    /// <summary>For <c>shared</c>: the code of the shared calculation.</summary>
+    public string? Shared { get; set; }
 
     public string? Scale { get; set; }
 
@@ -274,6 +284,18 @@ public sealed class MatrixCell
     public string? NoteAr { get; set; }
 
     public string? NoteEn { get; set; }
+}
+
+/// <summary>A named calculation several cells use; its <see cref="Cell"/> holds the calculation (row and column unused).</summary>
+public sealed class MatrixShared
+{
+    public string Code { get; set; } = string.Empty;
+
+    public string NameAr { get; set; } = string.Empty;
+
+    public string NameEn { get; set; } = string.Empty;
+
+    public MatrixCell Cell { get; set; } = new();
 }
 
 public sealed class MatrixGroup
@@ -307,6 +329,12 @@ public sealed class MatrixCriterion
     public string Input { get; set; } = string.Empty;
 
     /// <summary><c>bands</c> (ranges of a number), <c>options</c> (an answer) or <c>direct</c> (the value is the points).</summary>
+    /// <summary>
+    /// For <c>options</c> scoring: the points or grades per answer follow the weights the question bank gives the input's
+    /// question; the designer copies them into <see cref="Options"/> when the version is saved.
+    /// </summary>
+    public bool FromBank { get; set; }
+
     public string Scoring { get; set; } = "bands";
 
     /// <summary><c>points</c> or <c>grade</c>.</summary>

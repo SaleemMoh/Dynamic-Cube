@@ -41,6 +41,8 @@ import {
   emptyMatrix,
   freeCode,
   readMatrix,
+  shareIdentical,
+  syncFromBank,
 } from './matrix-model';
 import { MatrixReferences } from './matrix-references';
 import { MatrixSettings } from './matrix-settings';
@@ -584,14 +586,26 @@ export class MatrixPage {
     try {
       const guide = JSON.parse(await file.text()) as unknown;
       const result = await firstValueFrom(this.decisions.importGuide(guide));
-      this.matrix.set(readMatrix(result.configuration));
+      // Cells that are the same in several sectors become one shared calculation (any sector can get its own copy later).
+      let imported = readMatrix(result.configuration);
+      for (const column of imported.columns) imported = shareIdentical(imported, column.code);
+      const linked = imported.cells.filter((c) => c.kind === 'shared').length;
+      this.matrix.set(imported);
+      const sharing = linked
+        ? [
+            this.i18n
+              .translate('mx.importShared')
+              .replace('{n}', String(linked))
+              .replace('{k}', String(imported.shared?.length ?? 0)),
+          ]
+        : [];
       const extras = Object.entries(result.extras ?? {})
         .filter(([, v]) => Array.isArray(v) && v.length)
         .map(
           ([k, v]) =>
             `${this.i18n.translate('mx.importExtra')}: ${k}${Array.isArray(v) ? ` (${v.length})` : ''}`,
         );
-      this.notes.set([...(result.warnings ?? []), ...extras]);
+      this.notes.set([...sharing, ...(result.warnings ?? []), ...extras]);
       this.tab.set(0);
     } catch (error) {
       this.errors.set(
@@ -622,7 +636,11 @@ export class MatrixPage {
         'dec.rule-set-version',
         `${code}/${n}`,
         'CREATE',
-        { nameAr: `الإصدار ${n}`, nameEn: `Version ${n}`, configuration: this.matrix() },
+        {
+          nameAr: `الإصدار ${n}`,
+          nameEn: `Version ${n}`,
+          configuration: syncFromBank(this.matrix(), this.refs.answersOf),
+        },
         { submit },
       );
       this.saved.set(JSON.stringify(this.matrix()));
