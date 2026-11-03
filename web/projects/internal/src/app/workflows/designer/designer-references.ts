@@ -81,6 +81,8 @@ export class DesignerReferences {
 
   readonly roles = computed(() => options(this.roleRows()));
   readonly ruleSets = computed(() => options(this.ruleSetRows()));
+  /** Rule sets of the scoring matrix engine, which read the request themselves (ADR-0050). */
+  readonly matrixRuleSets = computed(() => new Set(this.ruleSetRows().filter((r) => String(r['engine'] ?? '').toUpperCase() === 'MATRIX').map((r) => r.code)));
   readonly documentTypes = computed(() => options(this.documentTypeRows()));
   /** Services a sub-request step can make requests of (3f). */
   readonly services = computed(() => options(this.serviceRows().filter((s) => s.isActive !== false)));

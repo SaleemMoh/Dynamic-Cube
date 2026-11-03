@@ -340,6 +340,48 @@ const QUESTION_TYPES: Record<string, string> = {
               }
             </mat-form-field>
           </div>
+          @if (source().operation) {
+            <div class="mx-ie__row">
+              <mat-form-field subscriptSizing="dynamic" class="mx-wide">
+                <mat-label>{{ 'mx.source.callStep' | dcTranslate }}</mat-label>
+                <mat-select
+                  [ngModel]="source().step ?? null"
+                  (ngModelChange)="setSource({ step: $event })"
+                  data-testid="mx-source-call-step"
+                >
+                  <mat-option [value]="null">{{ 'mx.source.anyCall' | dcTranslate }}</mat-option>
+                  @for (c of callSteps(); track c.workflow + '/' + c.step) {
+                    <mat-option [value]="c.result"
+                      >{{ c.workflowName | dcLocalize }} › {{ c.stepName | dcLocalize }} ({{
+                        c.step
+                      }})</mat-option
+                    >
+                  }
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field subscriptSizing="dynamic">
+                <mat-label>{{ 'mx.source.formAnswer' | dcTranslate }}</mat-label>
+                <mat-select
+                  [ngModel]="source().question ?? null"
+                  (ngModelChange)="setSource({ question: $event })"
+                >
+                  <mat-option [value]="null">—</mat-option>
+                  @for (q of refs.questions(); track q.code) {
+                    <mat-option [value]="q.code"
+                      >{{ { ar: q.nameAr, en: q.nameEn } | dcLocalize }} ({{ q.code }})</mat-option
+                    >
+                  }
+                </mat-select>
+              </mat-form-field>
+            </div>
+            @if (!callSteps().length && !formCalls().length && !source().question) {
+              <p class="mx-warn" data-testid="mx-operation-not-called">
+                {{ 'mx.source.notCalled' | dcTranslate }}
+              </p>
+            } @else {
+              <p class="dc-muted">{{ 'mx.source.calledBy' | dcTranslate }} {{ calledBy() }}</p>
+            }
+          }
           @if (source().operation && !operation()) {
             <p class="mx-warn" data-testid="mx-operation-missing">
               {{ 'mx.source.operationMissing' | dcTranslate }}
@@ -647,6 +689,22 @@ export class MatrixInputEditor {
     })),
   ]);
   protected readonly operation = computed(() => this.refs.operation(this.source().operation));
+  /** Workflow steps that call the chosen operation (one can be named when the operation is called more than once). */
+  protected readonly callSteps = computed(() =>
+    this.refs
+      .integrationSteps()
+      .filter((c) => c.operation.toLowerCase() === (this.source().operation ?? '').toLowerCase()),
+  );
+  /** Services whose form calls the operation in an integration step. */
+  protected readonly formCalls = computed(
+    () => this.refs.formOperations().get(this.source().operation ?? '') ?? [],
+  );
+  protected readonly calledBy = computed(() =>
+    [
+      ...this.callSteps().map((c) => `${c.workflow} › ${c.step}`),
+      ...this.formCalls().map((f) => `${f} (form)`),
+    ].join(', '),
+  );
   protected readonly outputRows = computed(() =>
     Object.entries(this.tryResult()?.outputs ?? {}).map(([name, value]) => ({ name, value })),
   );

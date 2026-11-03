@@ -584,6 +584,15 @@
         />
         <mat-hint dir="ltr">decisions.{{ n.result || n.code }}</mat-hint>
       </mat-form-field>
+      @if (n.ruleSet && refs.matrixRuleSets().has(n.ruleSet)) {
+        <p class="dc-panel__hint dc-panel__hint--info" data-testid="decision-matrix-hint">
+          {{ 'designer.matrixHint' | dcTranslate }}
+          <a routerLink="/decisions/matrix" [queryParams]="{ ruleSet: n.ruleSet }" target="_blank">{{ 'designer.openMatrix' | dcTranslate }}</a>
+        </p>
+        @if ((n.input | keyvalue)?.length) {
+          <p class="dc-panel__hint dc-panel__hint--warn">{{ 'designer.matrixMapped' | dcTranslate }}</p>
+        }
+      }
       <h3>{{ 'designer.section.input' | dcTranslate }}</h3>
       <p class="dc-panel__hint">{{ 'designer.inputHint' | dcTranslate }}</p>
       <dc-mapping-editor [mapping]="n.input ?? {}" [variables]="variables()" (mappingChange)="patch({ input: $event })" />

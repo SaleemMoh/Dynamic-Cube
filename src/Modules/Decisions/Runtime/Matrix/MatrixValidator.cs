@@ -82,6 +82,10 @@ internal static class MatrixValidator
         var columns = definition.Columns.Select(c => c.Code).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var scales = definition.Scales.Select(s => s.Code).ToHashSet(StringComparer.Ordinal);
         var sets = definition.OptionSets.Select(s => s.Code).ToHashSet(StringComparer.Ordinal);
+        if (definition.RowsInput is { Length: > 0 } rowsInput && !inputs.Contains(rowsInput))
+        {
+            errors["rowsInput"] = $"Unknown input '{rowsInput}'.";
+        }
 
         for (var i = 0; i < definition.Inputs.Count; i++)
         {

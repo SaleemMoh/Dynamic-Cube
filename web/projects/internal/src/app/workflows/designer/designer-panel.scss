@@ -27,6 +27,17 @@ h3 {
   color: var(--dga-text-3, #6c737f);
   font-size: 12px;
 }
+.dc-panel__hint--info,
+.dc-panel__hint--warn {
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: #eff8ff;
+  color: #175cd3;
+}
+.dc-panel__hint--warn {
+  background: #fffaeb;
+  color: #b54708;
+}
 .dc-panel__bad {
   color: #b42318;
 }

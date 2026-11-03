@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
+import { KeyValuePipe, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatExpansionModule } from '@angular/material/expansion';
@@ -24,7 +25,9 @@ const CODE = /^[A-Z][A-Z0-9_-]{0,50}$/;
   selector: 'dc-designer-panel',
   imports: [
     FormsModule,
+    KeyValuePipe,
     NgTemplateOutlet,
+    RouterLink,
     MatButtonModule,
     MatCheckboxModule,
     MatExpansionModule,

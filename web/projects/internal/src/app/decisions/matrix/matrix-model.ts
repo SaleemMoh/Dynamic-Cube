@@ -8,6 +8,8 @@ export interface Matrix {
   sizes?: MatrixSizes | null;
   scales: MatrixScale[];
   rows: MatrixRow[];
+  /** The input whose answer lists the rows applied for (each answer selects the row whose `answer`, or code, it equals). */
+  rowsInput?: string | null;
   columns: MatrixColumn[];
   cells: MatrixCell[];
   gates: MatrixGate[];
@@ -105,6 +107,8 @@ export interface MatrixRow {
   nameAr: string;
   nameEn: string;
   active: boolean;
+  /** The answer of the rows input that selects this row (its code when empty). */
+  answer?: string | null;
   final: 'worst' | 'weighted' | 'formula';
   finalRule?: JsonLogicRule | null;
   notesAr?: string | null;

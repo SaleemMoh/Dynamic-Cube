@@ -30,6 +30,7 @@ import { firstValueFrom } from 'rxjs';
 import { DraftsService } from '../../apps-control/drafts.service';
 import { PrivilegesService } from '../../apps-control/privileges.service';
 import { SubmitButton } from '../../apps-control/submit-button';
+import { MatrixConnections } from './matrix-connections';
 import { MatrixGrid } from './matrix-grid';
 import { MatrixInputEditor, MatrixInputEditorData } from './matrix-input-editor';
 import {
@@ -63,6 +64,7 @@ import { MATRIX_TRANSLATIONS } from './matrix-translations';
     MatSelectModule,
     MatTabsModule,
     MatTooltipModule,
+    MatrixConnections,
     MatrixGrid,
     MatrixSettings,
     MatrixSimulator,
@@ -166,6 +168,25 @@ import { MATRIX_TRANSLATIONS } from './matrix-translations';
     >
       <mat-tab [label]="'mx.tab.grid' | dcTranslate">
         <div class="mx-page__tab">
+          <div class="mx-page__rows-input">
+            <mat-form-field subscriptSizing="dynamic">
+              <mat-label>{{ 'mx.grid.rowsInput' | dcTranslate }}</mat-label>
+              <mat-select
+                [ngModel]="matrix().rowsInput ?? null"
+                (ngModelChange)="update({ ...matrix(), rowsInput: $event })"
+                [disabled]="!canCreate()"
+                data-testid="mx-rows-input"
+              >
+                <mat-option [value]="null">{{ 'mx.grid.rowsInputAll' | dcTranslate }}</mat-option>
+                @for (i of listInputs(); track i.code) {
+                  <mat-option [value]="i.code"
+                    >{{ { ar: i.nameAr, en: i.nameEn } | dcLocalize }} ({{ i.code }})</mat-option
+                  >
+                }
+              </mat-select>
+            </mat-form-field>
+            <span class="dc-muted">{{ 'mx.grid.rowsInputHint' | dcTranslate }}</span>
+          </div>
           <dc-matrix-grid
             [matrix]="matrix()"
             [references]="refs"
@@ -238,6 +259,17 @@ import { MATRIX_TRANSLATIONS } from './matrix-translations';
       <mat-tab [label]="'mx.tab.simulator' | dcTranslate">
         <div class="mx-page__tab">
           <dc-matrix-simulator [matrix]="matrix()" />
+        </div>
+      </mat-tab>
+      <mat-tab [label]="'mx.tab.connections' | dcTranslate">
+        <div class="mx-page__tab">
+          <dc-matrix-connections
+            [matrix]="matrix()"
+            [references]="refs"
+            [ruleSet]="ruleSet()"
+            [editable]="canCreate()"
+            (fix)="editInput($event)"
+          />
         </div>
       </mat-tab>
       <mat-tab [label]="'mx.tab.json' | dcTranslate">
@@ -329,6 +361,16 @@ import { MATRIX_TRANSLATIONS } from './matrix-translations';
     .mx-page__tab {
       padding-top: 1rem;
     }
+    .mx-page__rows-input {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+    .mx-page__rows-input mat-form-field {
+      width: min(26rem, 100%);
+    }
     .mx-page__json {
       width: 100%;
       font-family: ui-monospace, monospace;
@@ -407,6 +449,13 @@ export class MatrixPage {
   });
   protected readonly nextNumber = computed(
     () => 1 + Math.max(0, ...this.versions().map((r) => number(r.code))),
+  );
+
+  /** Inputs that can list the rows applied for (lists and choices). */
+  protected readonly listInputs = computed(() =>
+    this.matrix().inputs.filter(
+      (i) => i.type === 'list' || i.type === 'option' || i.type === 'text',
+    ),
   );
 
   /** How many cells read each input. */

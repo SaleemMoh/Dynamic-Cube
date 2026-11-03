@@ -107,6 +107,17 @@ interface HeaderDialogData {
         <input matInput dir="ltr" [(ngModel)]="item.nameEn" data-testid="mx-header-name-en" />
       </mat-form-field>
       @if (data.kind === 'row') {
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>{{ 'mx.row.answer' | dcTranslate }}</mat-label>
+          <input
+            matInput
+            dir="ltr"
+            [(ngModel)]="row.answer"
+            [placeholder]="item.code"
+            data-testid="mx-header-answer"
+          />
+          <mat-hint>{{ 'mx.row.answerHint' | dcTranslate }}</mat-hint>
+        </mat-form-field>
         <mat-checkbox [(ngModel)]="row.active">{{ 'mx.row.active' | dcTranslate }}</mat-checkbox>
         <mat-form-field subscriptSizing="dynamic">
           <mat-label>{{ 'mx.row.final' | dcTranslate }}</mat-label>
@@ -169,7 +180,11 @@ export class MatrixHeaderDialog {
       this.taken.set(true);
       return;
     }
-    this.ref.close({ ...this.item, code });
+    this.ref.close({
+      ...this.item,
+      code,
+      ...(this.data.kind === 'row' ? { answer: this.row.answer?.trim() || null } : {}),
+    });
   }
 }
 

@@ -161,6 +161,129 @@ public sealed class MatrixEngineTests
         Should.Throw<DynamicCube.Platform.Decisions.DecisionException>(() => MatrixDesign.Import(new JsonObject { ["x"] = 1 }));
     }
 
+    [Theory]
+    [InlineData("application-324-construction")]
+    [InlineData("simulator-construction-medium")]
+    public async Task It_reads_a_request_and_grades_as_with_the_values(string name)
+    {
+        var expected = Load(name);
+        var definition = Import().Definition;
+        var values = expected["resolvedValues"]!.AsObject();
+        var input = new JsonObject { ["rows"] = new JsonArray(expected["sectorCode"]!.GetValue<string>()) };
+        var withValues = await Engine().EvaluateAsync(definition.ToJson(), new JsonObject { ["values"] = values.DeepClone(), ["rows"] = input["rows"]!.DeepClone() }, TestContext.Current.CancellationToken);
+
+        // The same values spread over a request: answers, a review task, workflow integration calls and party facts.
+        var facts = new JsonObject { ["data"] = new JsonObject(), ["inputs"] = new JsonObject { ["REVIEW"] = new JsonObject() }, ["integrations"] = new JsonObject(), ["party"] = new JsonObject() };
+        var call = 0;
+        foreach (var i in definition.Inputs)
+        {
+            var value = values[i.Code]?.DeepClone();
+            switch (i.Source.Kind)
+            {
+                case "applicant":
+                    facts["data"]![i.Source.Question ?? i.Code] = value;
+                    break;
+                case "reviewer":
+                    facts["inputs"]!["REVIEW"]![i.Source.Field ?? i.Code] = value;
+                    break;
+                case "integration":
+                    facts["integrations"]![$"CALL{++call}"] = new JsonObject { ["operation"] = i.Source.Operation, ["success"] = true, ["outputs"] = new JsonObject { [i.Source.Output ?? i.Code] = value } };
+                    break;
+                case "derived" or "projects":
+                    // Worked out again by the matrix; a value the reviewed system kept wins as before.
+                    if (value is not null)
+                    {
+                        facts["inputs"]!["REVIEW"]![i.Code] = value;
+                        i.Source.AllowOverride = true;
+                    }
+
+                    break;
+                default:
+                    facts[i.Code] = value;
+                    break;
+            }
+        }
+
+        facts["rows"] = input["rows"]!.DeepClone();
+        var fromRequest = await Engine().EvaluateAsync(definition.ToJson(), facts, TestContext.Current.CancellationToken);
+        var row = fromRequest.Output["rows"]![0]!;
+        foreach (var key in new[] { "provisionalGrade", "baseGrade", "finalGrade", "expectedGrade", "eligible" })
+        {
+            row[key].ShouldBeJson(withValues.Output["rows"]![0]![key], $"{name}: {key}");
+            fromRequest.Output[key].ShouldBeJson(row[key], $"{name}: top-level {key}");
+        }
+
+        fromRequest.Trace.First()!["step"]!.GetValue<string>().ShouldBe("sources");
+        var item = fromRequest.Output["items"]![0]!;
+        item["code"]!.GetValue<string>().ShouldBe(expected["sectorCode"]!.GetValue<string>());
+        item["technical"].ShouldBeJson(row["columns"]![0]!["grade"]);
+    }
+
+    [Fact]
+    public void Facts_are_read_from_each_source()
+    {
+        var definition = new MatrixDefinition
+        {
+            RowsInput = "sectors",
+            Rows = [new() { Code = "construction", Answer = "BUILD" }, new() { Code = "ict" }, new() { Code = "om" }],
+            Inputs =
+            [
+                new() { Code = "sectors", Type = "list", Source = new() { Kind = "applicant", Question = "CLS_SECTORS" } },
+                new() { Code = "rating", Source = new() { Kind = "reviewer", Step = "REVIEW", Field = "credit" } },
+                new() { Code = "anyTask", Source = new() { Kind = "reviewer", Field = "score" } },
+                new() { Code = "employees", Source = new() { Kind = "integration", Operation = "GOSI", Output = "count", AllowOverride = true } },
+                new() { Code = "byStep", Source = new() { Kind = "integration", Step = "ZATCA_CALL", Output = "revenue" } },
+                new() { Code = "fromForm", Source = new() { Kind = "integration", Operation = "MISSING", Question = "REVENUE" } },
+                new() { Code = "cr", Source = new() { Kind = "party", Path = "party.identifiers.CR_NUMBER" } },
+                new() { Code = "blank", Source = new() { Kind = "applicant" } },
+            ],
+        };
+        var facts = JsonNode.Parse("""
+            {
+              "data": { "CLS_SECTORS": ["BUILD", "ict"], "REVENUE": 7, "blank": " " },
+              "inputs": { "REVIEW": { "credit": "A" }, "AUDIT": { "score": 3, "employees": 12 } },
+              "integrations": {
+                "OLD": { "operation": "gosi", "success": true, "outputs": { "count": 5 } },
+                "FAILED": { "operation": "GOSI", "success": false, "outputs": { "count": 9 } },
+                "ZATCA_CALL": { "operation": "ZATCA", "success": true, "outputs": { "revenue": 40 } }
+              },
+              "party": { "identifiers": { "CR_NUMBER": "101" } }
+            }
+            """)!.AsObject();
+
+        MatrixFacts.IsFacts(facts).ShouldBeTrue();
+        MatrixFacts.IsFacts(new JsonObject { ["values"] = new JsonObject(), ["data"] = new JsonObject() }).ShouldBeFalse();
+        var (values, sources) = MatrixFacts.Resolve(definition, facts);
+        values["rating"]!.GetValue<string>().ShouldBe("A");
+        values["anyTask"]!.GetValue<int>().ShouldBe(3);
+        values["employees"]!.GetValue<int>().ShouldBe(12, "an employee's value replaces the integration's when allowed");
+        values["byStep"]!.GetValue<int>().ShouldBe(40);
+        values["fromForm"]!.GetValue<int>().ShouldBe(7);
+        values["cr"]!.GetValue<string>().ShouldBe("101");
+        values["blank"].ShouldBeNull();
+        sources.Single(s => s!["input"]!.GetValue<string>() == "blank")!["found"]!.GetValue<bool>().ShouldBeFalse();
+        MatrixFacts.Rows(definition, values["sectors"]).OrderBy(r => r).ShouldBe(["construction", "ict"]);
+        MatrixFacts.Rows(definition, JsonValue.Create("om, BUILD")).OrderBy(r => r).ShouldBe(["construction", "om"]);
+        MatrixFacts.Rows(definition, null).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task A_request_grades_only_the_rows_applied_for()
+    {
+        var definition = Import().Definition;
+        definition.RowsInput = definition.Inputs[0].Code;
+        definition.Rows.Single(r => r.Code == "ict").Answer = "ICT_SECTOR";
+        definition.Inputs[0].Source = new MatrixSource { Kind = "applicant", Question = "SECTORS" };
+        var facts = new JsonObject { ["data"] = new JsonObject { ["SECTORS"] = new JsonArray("ICT_SECTOR", "catering") } };
+        var output = (await Engine().EvaluateAsync(definition.ToJson(), facts, TestContext.Current.CancellationToken)).Output;
+        output["rows"]!.AsArray().Select(r => r!["code"]!.GetValue<string>()).ShouldBe(["ict", "catering"]);
+        output["items"]!.AsArray().Count.ShouldBe(2);
+        output["finalGrade"].ShouldBeNull();
+
+        facts["data"]!["SECTORS"] = null;
+        (await Engine().EvaluateAsync(definition.ToJson(), facts, TestContext.Current.CancellationToken)).Output["rows"]!.AsArray().ShouldBeEmpty();
+    }
+
     private static int? Grade(JsonNode? node) => MatrixEngine.Number(node) is { } d ? (int)d : null;
 
     private sealed class FixedClock : TimeProvider
@@ -171,6 +294,9 @@ public sealed class MatrixEngineTests
 
 internal static class JsonShould
 {
+    public static void ShouldBeJson(this JsonNode? actual, JsonNode? expected, string? because = null) =>
+        JsonNode.DeepEquals(actual, expected).ShouldBeTrue($"{because}: {actual?.ToJsonString() ?? "null"} should be {expected?.ToJsonString() ?? "null"}");
+
     public static void ShouldBeJson(this JsonNode? actual, string expected) =>
         JsonNode.DeepEquals(actual, JsonNode.Parse(expected)).ShouldBeTrue($"{actual?.ToJsonString()} should be {expected}");
 }

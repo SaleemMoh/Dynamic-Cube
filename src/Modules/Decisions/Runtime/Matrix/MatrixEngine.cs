@@ -8,10 +8,12 @@ namespace DynamicCube.Modules.Decisions.Runtime.Matrix;
 
 /// <summary>
 /// The scoring matrix engine (ADR-0050). Input: <c>values</c> (input code → value; missing derived and project inputs are
-/// worked out), optionally <c>rows</c> (the row codes to grade; all active rows otherwise) and <c>asOf</c> (the date ages
-/// are counted to). Output: the resolved <c>values</c>, the <c>size</c> and, per row, its gates, each column's score,
-/// grade and explanation down to every criterion, the provisional, base and final grades, the adjustments applied, the
-/// limiting columns and the inputs still pending.
+/// worked out) or a request's facts (each input read from its source, see <see cref="MatrixFacts"/>), optionally
+/// <c>rows</c> (the row codes to grade; otherwise those the rows input selects, or all active rows) and <c>asOf</c> (the
+/// date ages are counted to). Output: the resolved <c>values</c>, the <c>size</c> and, per row, its gates, each column's
+/// score, grade and explanation down to every criterion, the provisional, base and final grades, the adjustments
+/// applied, the limiting columns and the inputs still pending; <c>items</c> (one flat element per row) and, with one
+/// row, its grades at the top.
 /// </summary>
 internal sealed class MatrixEngine(JsonLogicEvaluator logic, TimeProvider clock) : IDecisionEngine
 {
@@ -32,13 +34,24 @@ internal sealed class MatrixEngine(JsonLogicEvaluator logic, TimeProvider clock)
         var asOf = input["asOf"] is JsonValue d && DateOnly.TryParse(d.ToString()[..Math.Min(10, d.ToString().Length)], CultureInfo.InvariantCulture, out var day)
             ? day
             : DateOnly.FromDateTime(clock.GetUtcNow().UtcDateTime);
-        var values = (input["values"] as JsonObject ?? input).DeepClone().AsObject();
-        values.Remove("rows");
-        values.Remove("asOf");
+        var fromFacts = MatrixFacts.IsFacts(input);
+        JsonObject values;
+        if (fromFacts)
+        {
+            // A request's facts: each input is read from its source (answers, task fields, integration results…).
+            (values, var sources) = MatrixFacts.Resolve(definition, input);
+            trace.Add(new JsonObject { ["step"] = "sources", ["value"] = sources });
+        }
+        else
+        {
+            values = (input["values"] as JsonObject ?? input).DeepClone().AsObject();
+            values.Remove("rows");
+            values.Remove("asOf");
+        }
 
         var evaluation = new Evaluation(definition, logic, values, asOf);
         evaluation.Resolve(trace);
-        var wanted = (input["rows"] as JsonArray)?.Select(r => r?.ToString()).Where(r => r is not null).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var wanted = Wanted(definition, input, values, fromFacts);
         var rows = new JsonArray();
         foreach (var row in definition.Rows.Where(r => wanted is null ? r.Active : wanted.Contains(r.Code)))
         {
@@ -50,8 +63,78 @@ internal sealed class MatrixEngine(JsonLogicEvaluator logic, TimeProvider clock)
             ["size"] = evaluation.Size?.Code,
             ["values"] = values.DeepClone(),
             ["rows"] = rows,
+            ["items"] = Items(definition, rows),
         };
+
+        // With one row its grades are also at the top, for rules such as decisions.grading.finalGrade.
+        if (rows.Count == 1 && rows[0] is JsonObject only)
+        {
+            foreach (var key in new[] { "eligible", "provisionalGrade", "baseGrade", "finalGrade", "expectedGrade" })
+            {
+                output[key] = only[key]?.DeepClone();
+            }
+        }
+
         return Task.FromResult(new EngineResult(output, trace));
+    }
+
+    /// <summary>
+    /// The rows to grade: those named in <c>rows</c>; else those the rows input's answer selects (none until it is
+    /// answered when reading a request); else every active row.
+    /// </summary>
+    private static HashSet<string>? Wanted(MatrixDefinition definition, JsonObject input, JsonObject values, bool fromFacts)
+    {
+        if (input["rows"] is JsonArray named)
+        {
+            return named.Select(r => r?.ToString()).Where(r => r is not null).Select(r => r!).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        }
+
+        if (definition.RowsInput is { Length: > 0 } rowsInput)
+        {
+            var answer = values[rowsInput];
+            if (answer is not null || fromFacts)
+            {
+                return MatrixFacts.Rows(definition, answer);
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// One flat element per graded row (code, names, eligibility, grades, waiting, and each column's grade under the
+    /// column's code), for item-by-item steps, document lines and the live panel.
+    /// </summary>
+    private static JsonArray Items(MatrixDefinition definition, JsonArray rows)
+    {
+        var items = new JsonArray();
+        foreach (var row in rows.OfType<JsonObject>())
+        {
+            var item = new JsonObject
+            {
+                ["code"] = row["code"]?.DeepClone(),
+                ["nameAr"] = row["nameAr"]?.DeepClone(),
+                ["nameEn"] = row["nameEn"]?.DeepClone(),
+                ["eligible"] = row["eligible"]?.DeepClone(),
+                ["provisionalGrade"] = row["provisionalGrade"]?.DeepClone(),
+                ["baseGrade"] = row["baseGrade"]?.DeepClone(),
+                ["finalGrade"] = row["finalGrade"]?.DeepClone(),
+                ["expectedGrade"] = row["expectedGrade"]?.DeepClone(),
+                ["waiting"] = (row["pending"] as JsonArray)?.Count > 0,
+            };
+            foreach (var column in (row["columns"] as JsonArray ?? []).OfType<JsonObject>())
+            {
+                var code = column["code"]?.ToString();
+                if (code is not null && !item.ContainsKey(code) && definition.Columns.Any(c => c.Code == code))
+                {
+                    item[code] = column["grade"]?.DeepClone();
+                }
+            }
+
+            items.Add(item);
+        }
+
+        return items;
     }
 
     /// <summary>One evaluation: the resolved values, the size and the projects that count.</summary>

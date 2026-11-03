@@ -33,6 +33,12 @@ public sealed class MatrixDefinition
     /// <summary>The rows (e.g. sectors).</summary>
     public List<MatrixRow> Rows { get; set; } = [];
 
+    /// <summary>
+    /// The input whose value lists the rows applied for (e.g. the sectors question); each answer selects the row whose
+    /// <see cref="MatrixRow.Answer"/> (or code) it equals. Without it, or without an answer, every active row is graded.
+    /// </summary>
+    public string? RowsInput { get; set; }
+
     /// <summary>The columns (e.g. tracks).</summary>
     public List<MatrixColumn> Columns { get; set; } = [];
 
@@ -202,6 +208,9 @@ public sealed class MatrixRow
     public string NameEn { get; set; } = string.Empty;
 
     public bool Active { get; set; } = true;
+
+    /// <summary>The answer of the <see cref="MatrixDefinition.RowsInput"/> that selects this row (its code when empty).</summary>
+    public string? Answer { get; set; }
 
     /// <summary>How the row's grade is made from its columns: <c>worst</c> (default), <c>weighted</c> or <c>formula</c>.</summary>
     public string Final { get; set; } = "worst";

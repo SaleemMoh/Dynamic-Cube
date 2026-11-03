@@ -318,7 +318,7 @@ internal sealed class WorkflowEngine(
 
     /// <summary>
     /// Calls the node's integration operation with its parameters and keeps the outcome as <c>integrations.&lt;result&gt;</c>
-    /// (<c>success</c>, <c>code</c>, <c>messageAr</c>, <c>messageEn</c>, <c>outputs</c>, <c>data</c>). Returns whether it
+    /// (<c>success</c>, <c>operation</c>, <c>code</c>, <c>messageAr</c>, <c>messageEn</c>, <c>outputs</c>, <c>data</c>). Returns whether it
     /// succeeded; a failure without a <c>failed</c> route stops the step with the message.
     /// </summary>
     private async Task<bool> CallAsync(Run run, NodeDefinition node, CancellationToken cancellationToken)
@@ -350,6 +350,7 @@ internal sealed class WorkflowEngine(
         SetFact(run, "integrations", node.Result ?? node.Code, new JsonObject
         {
             ["success"] = success,
+            ["operation"] = node.Operation,
             ["code"] = result?.Code,
             ["messageAr"] = result?.MessageAr ?? problem,
             ["messageEn"] = result?.MessageEn ?? problem,
