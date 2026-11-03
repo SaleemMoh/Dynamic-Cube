@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { checkInput } from './matrix-connections';
-import { MatrixInput } from './matrix-model';
+import { MatrixInput, emptyMatrix } from './matrix-model';
 import { MatrixReferences } from './matrix-references';
 
 /** A stand-in for the references: one question asked by one service, one review task, one operation called once. */
@@ -25,6 +25,16 @@ function refs(): MatrixReferences {
     ]),
     formOperations: signal(new Map<string, string[]>()),
     partyFacts: signal([{ code: 'party.identifiers.CR_NUMBER', name: { ar: '', en: '' } }]),
+    bankQuestion: (code: string | null) =>
+      code === 'ENGINEERS'
+        ? {
+            code,
+            answers: [
+              { value: 'few', labelAr: '', labelEn: '' },
+              { value: 'many', labelAr: '', labelEn: '' },
+            ],
+          }
+        : null,
   };
   return fake as unknown as MatrixReferences;
 }
@@ -76,6 +86,47 @@ describe('checkInput', () => {
     expect(
       checkInput(input({ kind: 'integration', operation: 'GOSI', step: 'other' }), refs()).state,
     ).toBe('error');
+  });
+
+  it('flags points given to answers the bank question no longer has', () => {
+    const scored = input({ kind: 'applicant', question: 'ENGINEERS' });
+    const m = emptyMatrix();
+    m.cells = [
+      {
+        row: 'A',
+        column: 'technical',
+        kind: 'points',
+        groups: [
+          {
+            code: 'g',
+            nameAr: '',
+            nameEn: '',
+            mandatory: false,
+            criteria: [
+              {
+                code: 'c',
+                nameAr: '',
+                nameEn: '',
+                input: 'x',
+                scoring: 'options',
+                output: 'points',
+                bands: [],
+                options: [
+                  { value: 'FEW', points: 1 },
+                  { value: 'old', points: 2 },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ];
+    expect(checkInput(scored, refs(), m)).toEqual({
+      state: 'warn',
+      message: 'mx.link.staleAnswers',
+      detail: 'old',
+    });
+    expect(checkInput(scored, refs()).state).toBe('ok');
   });
 
   it('checks party facts, and computed and given inputs', () => {

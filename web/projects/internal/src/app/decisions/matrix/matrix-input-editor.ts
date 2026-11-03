@@ -37,6 +37,7 @@ import {
   SOURCE_ICONS,
   SOURCE_KINDS,
   SourceKind,
+  bankQuestionCode,
   inputFields,
   projectFields,
 } from './matrix-model';
@@ -138,7 +139,15 @@ const QUESTION_TYPES: Record<string, string> = {
             }
           </mat-select>
         </mat-form-field>
-        @if (input().type === 'option' || input().type === 'list') {
+        @if (bankInfo()?.answers) {
+          <p class="mx-ie__bank" data-testid="mx-bank-answers">
+            <mat-icon fontSet="material-symbols-outlined">quiz</mat-icon>
+            {{ 'mx.input.bankAnswers' | dcTranslate }}
+            @for (a of bankInfo()!.answers!; track a.value) {
+              <span class="mx-ie__answer">{{ { ar: a.labelAr, en: a.labelEn } | dcLocalize }}</span>
+            }
+          </p>
+        } @else if (input().type === 'option' || input().type === 'list') {
           <mat-form-field subscriptSizing="dynamic">
             <mat-label>{{ 'mx.input.optionSet' | dcTranslate }}</mat-label>
             <mat-select
@@ -210,7 +219,7 @@ const QUESTION_TYPES: Record<string, string> = {
               <mat-label>{{ 'mx.source.question' | dcTranslate }}</mat-label>
               <mat-select
                 [ngModel]="source().question ?? null"
-                (ngModelChange)="setSource({ question: $event })"
+                (ngModelChange)="chooseQuestion($event)"
                 data-testid="mx-source-question"
               >
                 @if (questionMissing()) {
@@ -644,6 +653,26 @@ const QUESTION_TYPES: Record<string, string> = {
       font-family: ui-monospace, monospace;
       font-size: 13px;
     }
+    .mx-ie__bank {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      margin: 0;
+      font-size: 12px;
+      color: var(--dga-text-3, #6c737f);
+    }
+    .mx-ie__bank mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+    .mx-ie__answer {
+      padding: 1px 8px;
+      border-radius: 10px;
+      background: var(--dga-gray-100, #f3f4f6);
+      color: var(--dga-text-2, #384250);
+    }
     .mx-warn {
       color: var(--dga-warning-700, #b54708);
       margin: 0;
@@ -726,14 +755,31 @@ export class MatrixInputEditor {
   protected readonly questionMissing = computed(
     () => !!this.source().question && !this.refs.question(this.source().question),
   );
+  /** The bank question this input's value is the answer of (its type, answers and limits are the bank's). */
+  protected readonly bankInfo = computed(() =>
+    this.refs.bankQuestion(bankQuestionCode(this.input())),
+  );
   protected readonly questionMismatch = computed(() => {
-    const q = this.refs.question(this.source().question);
-    return (
-      !!q &&
-      QUESTION_TYPES[this.input().type] !== q['type'] &&
-      !(this.input().type === 'text' && q['type'] === 'TEXTAREA')
-    );
+    const bank = this.bankInfo();
+    return !!bank && bank.inputType !== this.input().type;
   });
+
+  /** Picking a bank question takes its answer type, names and limits; its answers replace the matrix's own answer list. */
+  protected chooseQuestion(code: string): void {
+    this.setSource({ question: code });
+    const bank = this.refs.bankQuestion(code);
+    const row = this.refs.question(code);
+    if (!bank || !row) return;
+    this.input.update((i) => ({
+      ...i,
+      type: bank.inputType,
+      nameAr: i.nameAr || String(row.nameAr ?? ''),
+      nameEn: i.nameEn || String(row.nameEn ?? ''),
+      min: bank.min ?? i.min ?? null,
+      max: bank.max ?? i.max ?? null,
+      optionSet: bank.answers ? null : i.optionSet,
+    }));
+  }
   protected readonly valid = computed(
     () =>
       /^[A-Za-z][A-Za-z0-9_-]*$/.test(this.input().code) &&
@@ -809,10 +855,21 @@ export class MatrixInputEditor {
       nameEn: i.nameEn,
       type: QUESTION_TYPES[i.type] ?? 'TEXT',
       multiple: i.type === 'list',
+      // The matrix's own answers and limits move to the bank, which keeps them from now on.
+      options: (this.data.matrix.optionSets.find((o) => o.code === i.optionSet)?.items ?? []).map(
+        (o) => ({
+          value: o.code,
+          labelAr: o.labelAr,
+          labelEn: o.labelEn,
+        }),
+      ),
+      validation: { min: i.min ?? null, max: i.max ?? null },
     });
     if (saved) {
       this.refs.loadQuestions();
       this.setSource({ question: code });
+      // The bank keeps the answers now; the input stops pointing at its own list.
+      if (i.optionSet) this.set({ optionSet: null });
     }
   }
 

@@ -353,21 +353,33 @@ export function cellSummary(
   return `${count} ${t('mx.cell.criteria')} · ${scale}`;
 }
 
-/** The inputs as Logic Builder fields (by code, with their option set's answers as choices). */
-export function inputFields(m: Matrix, exclude?: string): LogicField[] {
+/** The bank question an input's value is the answer of: an applicant input's question, or the answer a form integration step fills. */
+export function bankQuestionCode(i: MatrixInput): string | null {
+  if (i.source.kind === 'applicant') return i.source.question || i.code;
+  if (i.source.kind === 'integration') return i.source.question || null;
+  return null;
+}
+
+/** An input's answers as choices: its bank question's answers when it has them, else its option set's. */
+export type AnswersOf = (
+  i: MatrixInput,
+) => { value: string; labelAr: string; labelEn: string }[] | null | undefined;
+
+/** The inputs as Logic Builder fields (by code, with their answers as choices: the bank question's, else the option set's). */
+export function inputFields(m: Matrix, exclude?: string, answersOf?: AnswersOf): LogicField[] {
   const group: LocalizedText = { ar: 'مدخلات المصفوفة', en: 'Matrix inputs' };
   return m.inputs
     .filter((i) => i.code !== exclude)
     .map((i) => {
       const set = i.optionSet ? m.optionSets.find((s) => s.code === i.optionSet) : undefined;
+      const bank = answersOf?.(i);
       return {
         path: i.code,
         label: { ar: i.nameAr || i.code, en: i.nameEn || i.code },
         type: i.type === 'option' ? 'text' : i.type === 'list' ? 'list' : i.type,
-        options: set?.items.map((o) => ({
-          value: o.code,
-          label: { ar: o.labelAr, en: o.labelEn },
-        })),
+        options: bank?.length
+          ? bank.map((o) => ({ value: o.value, label: { ar: o.labelAr, en: o.labelEn } }))
+          : set?.items.map((o) => ({ value: o.code, label: { ar: o.labelAr, en: o.labelEn } })),
         group,
       } satisfies LogicField;
     });

@@ -258,7 +258,7 @@ import { MATRIX_TRANSLATIONS } from './matrix-translations';
       </mat-tab>
       <mat-tab [label]="'mx.tab.simulator' | dcTranslate">
         <div class="mx-page__tab">
-          <dc-matrix-simulator [matrix]="matrix()" />
+          <dc-matrix-simulator [matrix]="matrix()" [answersOf]="refs.answersOf" />
         </div>
       </mat-tab>
       <mat-tab [label]="'mx.tab.connections' | dcTranslate">

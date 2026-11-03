@@ -13,7 +13,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { I18nService, LocalizePipe, TranslatePipe } from '@dynamic-cube/shared';
-import { Matrix, MatrixInput, SOURCE_ICONS, cellInputs } from './matrix-model';
+import { Matrix, MatrixInput, SOURCE_ICONS, bankQuestionCode, cellInputs } from './matrix-model';
 import { MatrixReferences } from './matrix-references';
 
 export type LinkState = 'ok' | 'warn' | 'error';
@@ -32,8 +32,25 @@ export interface InputLink {
 export function checkInput(
   i: MatrixInput,
   refs: MatrixReferences,
+  m?: Matrix,
 ): Omit<InputLink, 'input' | 'usedIn'> {
   const s = i.source;
+  // Points or grades given to answers the bank question does not have (any more).
+  const bank = refs.bankQuestion?.(bankQuestionCode(i));
+  if (m && bank?.answers?.length) {
+    const known = new Set(bank.answers.map((a) => a.value.toLowerCase()));
+    const stale = [
+      ...new Set(
+        m.cells
+          .flatMap((c) => c.groups.flatMap((g) => g.criteria))
+          .filter((c) => c.input === i.code && c.scoring === 'options')
+          .flatMap((c) => c.options.map((o) => o.value))
+          .filter((v) => !known.has(v.toLowerCase())),
+      ),
+    ];
+    if (stale.length)
+      return { state: 'warn', message: 'mx.link.staleAnswers', detail: stale.join(', ') };
+  }
   switch (s.kind) {
     case 'applicant': {
       const code = s.question ?? i.code;
@@ -334,7 +351,7 @@ export class MatrixConnections {
       for (const i of cellInputs(m, cell)) usage.set(i.code, (usage.get(i.code) ?? 0) + 1);
     const order: Record<LinkState, number> = { error: 0, warn: 1, ok: 2 };
     return m.inputs
-      .map((i) => ({ input: i, usedIn: usage.get(i.code) ?? 0, ...checkInput(i, refs) }))
+      .map((i) => ({ input: i, usedIn: usage.get(i.code) ?? 0, ...checkInput(i, refs, m) }))
       .sort((a, b) => order[a.state] - order[b.state]);
   });
 

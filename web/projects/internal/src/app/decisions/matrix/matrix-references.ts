@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { AppsControlApi, ConfigRow, LocalizedText, TaskField } from '@dynamic-cube/shared';
 import { catchError, of } from 'rxjs';
+import { MatrixInput, bankQuestionCode } from './matrix-model';
 
 /** A human task of a workflow, with the fields the employee fills in on it. */
 export interface ReviewTask {
@@ -41,6 +42,26 @@ export interface DecisionStep {
   mapsInput: boolean;
 }
 
+/** One answer of a bank question (an option, a list value, or yes/no). */
+export interface BankAnswer {
+  value: string;
+  labelAr: string;
+  labelEn: string;
+}
+
+/** What a bank question says about its answer: the matrix input type it gives, its answers and its limits. */
+export interface BankQuestionInfo {
+  code: string;
+  questionType: string;
+  inputType: 'number' | 'text' | 'option' | 'boolean' | 'date' | 'list';
+  /** The answers, when the question has choices (options, a list of values, or yes/no); null otherwise. */
+  answers: BankAnswer[] | null;
+  /** The list of values the answers come from (its values may still be loading). */
+  lov: string | null;
+  min: number | null;
+  max: number | null;
+}
+
 /** A party fact a value can be read from (`party.crNumber`, …). */
 export interface PartyFact {
   code: string;
@@ -59,6 +80,9 @@ export class MatrixReferences {
   private readonly operationRows = signal<ConfigRow[]>([]);
   private readonly serviceVersionRows = signal<ConfigRow[]>([]);
   readonly partyFacts = signal<PartyFact[]>([]);
+  /** Values of the lists of values bank questions take their answers from, read once per list. */
+  private readonly lovAnswers = signal<Record<string, BankAnswer[]>>({});
+  private readonly lovRequested = new Set<string>();
 
   constructor() {
     this.loadQuestions();
@@ -220,6 +244,79 @@ export class MatrixReferences {
       })),
     })),
   );
+
+  /** A bank question's answer type, answers and limits (its list of values is read the first time it is asked for). */
+  bankQuestion(code: string | null | undefined): BankQuestionInfo | null {
+    const q = this.question(code);
+    if (!q) return null;
+    const type = String(q['type'] ?? 'TEXT').toUpperCase();
+    const multiple = q['multiple'] === true;
+    const lov = (q['lov'] as string | null | undefined) || null;
+    const validation =
+      (q['validation'] as { min?: number | null; max?: number | null } | null | undefined) ?? {};
+    let answers: BankAnswer[] | null;
+    if (type === 'CHECKBOX') {
+      answers = [
+        { value: 'yes', labelAr: 'نعم', labelEn: 'Yes' },
+        { value: 'no', labelAr: 'لا', labelEn: 'No' },
+      ];
+    } else if (lov) {
+      this.loadLov(lov);
+      answers = this.lovAnswers()[lov] ?? [];
+    } else {
+      const options = (q['options'] as BankAnswer[] | undefined) ?? [];
+      answers = options.length
+        ? options.map((o) => ({
+            value: o.value,
+            labelAr: o.labelAr || o.value,
+            labelEn: o.labelEn || o.value,
+          }))
+        : null;
+    }
+    const inputType =
+      type === 'NUMBER'
+        ? 'number'
+        : type === 'CHECKBOX'
+          ? 'boolean'
+          : type === 'DATE'
+            ? 'date'
+            : type === 'ROWS' || (type === 'SELECT' && multiple)
+              ? 'list'
+              : type === 'SELECT'
+                ? 'option'
+                : 'text';
+    return {
+      code: q.code,
+      questionType: type,
+      inputType,
+      answers,
+      lov,
+      min: validation.min ?? null,
+      max: validation.max ?? null,
+    };
+  }
+
+  /** An input's answers from its bank question (null when it has no bank question with choices). */
+  readonly answersOf = (i: MatrixInput): BankAnswer[] | null =>
+    this.bankQuestion(bankQuestionCode(i))?.answers ?? null;
+
+  private loadLov(lov: string): void {
+    if (this.lovRequested.has(lov)) return;
+    this.lovRequested.add(lov);
+    this.api
+      .lovOptions(lov)
+      .pipe(catchError(() => of(null)))
+      .subscribe((page) =>
+        this.lovAnswers.update((all) => ({
+          ...all,
+          [lov]: (page?.items ?? []).map((i) => ({
+            value: i.value,
+            labelAr: i.labelAr || i.value,
+            labelEn: i.labelEn || i.value,
+          })),
+        })),
+      );
+  }
 
   question(code: string | null | undefined): ConfigRow | undefined {
     return code ? this.questions().find((q) => q.code === code) : undefined;

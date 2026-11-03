@@ -17,7 +17,7 @@ import {
   problemMessages,
 } from '@dynamic-cube/shared';
 import { firstValueFrom } from 'rxjs';
-import { Matrix, MatrixInput, SOURCE_ICONS, cellInputs, varsOf } from './matrix-model';
+import { AnswersOf, Matrix, MatrixInput, SOURCE_ICONS, cellInputs, varsOf } from './matrix-model';
 
 /** A criterion, group, track and sector as the engine reports them. */
 export interface SimCriterion {
@@ -628,6 +628,8 @@ export function simulatorInputs(m: Matrix, rows?: string[]): MatrixInput[] {
 export class MatrixSimulator {
   private readonly api = inject(DecisionsApi);
   readonly matrix = input.required<Matrix>();
+  /** The bank question answers of an input, when the page knows the question bank. */
+  readonly answersOf = input<AnswersOf | null>(null);
   protected readonly icons = SOURCE_ICONS;
 
   protected readonly values = signal<Record<string, unknown>>({});
@@ -660,7 +662,11 @@ export class MatrixSimulator {
     JSON.stringify(this.values()[this.projectsInput() ?? ''] ?? [], null, 2),
   );
 
-  protected options(i: MatrixInput) {
+  /** An input's answers: its bank question's, else its answer list's. */
+  protected options(i: MatrixInput): { code: string; labelAr: string; labelEn: string }[] {
+    const bank = this.answersOf()?.(i);
+    if (bank?.length)
+      return bank.map((a) => ({ code: a.value, labelAr: a.labelAr, labelEn: a.labelEn }));
     return this.matrix().optionSets.find((s) => s.code === i.optionSet)?.items ?? [];
   }
 

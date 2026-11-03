@@ -29,6 +29,7 @@ import {
   MatrixGroup,
   MatrixInput,
   SOURCE_ICONS,
+  bankQuestionCode,
   freeCode,
   inputFields,
   newCell,
@@ -356,6 +357,12 @@ export interface MatrixCellEditorResult {
                     (ruleChange)="setCriterion(gi, ci, { appliesWhen: $event })"
                   />
 
+                  @if (c.scoring === 'bands' && limitsOf(c.input); as limits) {
+                    <p class="mx-ce__from">
+                      <mat-icon fontSet="material-symbols-outlined">quiz</mat-icon>
+                      {{ 'mx.cell.bankLimits' | dcTranslate }} <span dir="ltr">{{ limits }}</span>
+                    </p>
+                  }
                   @if (c.scoring === 'bands') {
                     <div class="mx-ce__bands-head">
                       <h4>{{ 'mx.cell.bands' | dcTranslate }}</h4>
@@ -502,6 +509,22 @@ export interface MatrixCellEditorResult {
                   }
                   @if (c.scoring === 'options') {
                     <h4>{{ 'mx.cell.options' | dcTranslate }}</h4>
+                    @switch (answerSource(c).from) {
+                      @case ('bank') {
+                        <p class="mx-ce__from" data-testid="mx-answers-from-bank">
+                          <mat-icon fontSet="material-symbols-outlined">quiz</mat-icon>
+                          {{ 'mx.cell.answersFromBank' | dcTranslate }}
+                          <span dir="ltr">{{ answerSource(c).code }}</span>
+                        </p>
+                      }
+                      @case ('set') {
+                        <p class="mx-ce__from mx-ce__from--warn" data-testid="mx-answers-from-set">
+                          <mat-icon fontSet="material-symbols-outlined">warning</mat-icon>
+                          {{ 'mx.cell.answersFromSet' | dcTranslate }}
+                          <span dir="ltr">{{ answerSource(c).code }}</span>
+                        </p>
+                      }
+                    }
                     <table class="mx-ce__bands">
                       <thead>
                         <tr>
@@ -518,9 +541,22 @@ export interface MatrixCellEditorResult {
                       <tbody>
                         @for (o of optionRows(c); track o.value) {
                           <tr>
-                            <td>
+                            <td [class.mx-ce__stale]="o.stale">
                               {{ o.label | dcLocalize }}
                               <span dir="ltr" class="dc-muted">{{ o.value }}</span>
+                              @if (o.stale) {
+                                <span class="mx-ce__stale-note">{{
+                                  'mx.cell.staleAnswer' | dcTranslate
+                                }}</span>
+                                <button
+                                  matIconButton
+                                  type="button"
+                                  (click)="dropOption(gi, ci, o.value)"
+                                  [attr.aria-label]="'mx.remove' | dcTranslate"
+                                >
+                                  <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+                                </button>
+                              }
                             </td>
                             <td>
                               <input
@@ -725,6 +761,29 @@ export interface MatrixCellEditorResult {
     .mx-danger {
       color: var(--dga-error-600, #d92d20);
     }
+    .mx-ce__from {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin: 0.25rem 0;
+      font-size: 12px;
+      color: var(--dga-text-3, #6c737f);
+    }
+    .mx-ce__from mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+    .mx-ce__from--warn {
+      color: var(--dga-warning-700, #b54708);
+    }
+    .mx-ce__stale {
+      color: var(--dga-error-600, #d92d20);
+    }
+    .mx-ce__stale-note {
+      font-size: 11px;
+      margin-inline-start: 6px;
+    }
   `,
 })
 export class MatrixCellEditor {
@@ -744,7 +803,11 @@ export class MatrixCellEditor {
   protected readonly sizeFilter = signal<string | null>(null);
   protected readonly sizes = computed(() => this.data.matrix.sizes?.categories ?? []);
   protected readonly fields = computed(() =>
-    inputFields({ ...this.data.matrix, inputs: this.inputs() }),
+    inputFields(
+      { ...this.data.matrix, inputs: this.inputs() },
+      undefined,
+      this.data.references.answersOf,
+    ),
   );
   protected readonly otherRows = computed(() =>
     this.data.matrix.rows.filter((r) => r.code !== this.data.row),
@@ -818,13 +881,64 @@ export class MatrixCellEditor {
   }
 
   /** The answers of an option input, with the score each one gives. */
+  /** Where a criterion's answers come from: the input's bank question, else its answer list, else only what is scored. */
+  protected answerSource(c: MatrixCriterion): {
+    from: 'bank' | 'set' | 'none';
+    code: string | null;
+  } {
+    const input = this.inputOf(c.input);
+    if (!input) return { from: 'none', code: null };
+    const bank = this.data.references.bankQuestion(bankQuestionCode(input));
+    if (bank?.answers) return { from: 'bank', code: bank.code };
+    return input.optionSet ? { from: 'set', code: input.optionSet } : { from: 'none', code: null };
+  }
+
+  /**
+   * The answers of an option input with the score each one gives: the bank question's answers (else the answer list's);
+   * scored answers the question no longer has are kept at the end, marked, so they can be removed.
+   */
   protected optionRows(c: MatrixCriterion) {
     const input = this.inputOf(c.input);
-    const set = this.data.matrix.optionSets.find((s) => s.code === input?.optionSet);
-    const values = set
-      ? set.items.map((o) => ({ value: o.code, label: { ar: o.labelAr, en: o.labelEn } }))
-      : c.options.map((o) => ({ value: o.value, label: { ar: o.value, en: o.value } }));
-    return values.map((v) => ({ ...v, score: c.options.find((o) => o.value === v.value) }));
+    const source = this.answerSource(c);
+    const bank =
+      source.from === 'bank' && input ? (this.data.references.answersOf(input) ?? []) : null;
+    const set =
+      source.from === 'set'
+        ? this.data.matrix.optionSets.find((s) => s.code === input?.optionSet)
+        : undefined;
+    const values = bank
+      ? bank.map((o) => ({ value: o.value, label: { ar: o.labelAr, en: o.labelEn } }))
+      : set
+        ? set.items.map((o) => ({ value: o.code, label: { ar: o.labelAr, en: o.labelEn } }))
+        : [];
+    const known = new Set(values.map((v) => v.value.toLowerCase()));
+    const stale = c.options
+      .filter((o) => !known.has(o.value.toLowerCase()))
+      .map((o) => ({
+        value: o.value,
+        label: { ar: o.value, en: o.value },
+        stale: source.from !== 'none',
+      }));
+    return [...values.map((v) => ({ ...v, stale: false })), ...stale].map((v) => ({
+      ...v,
+      score: c.options.find((o) => o.value.toLowerCase() === v.value.toLowerCase()),
+    }));
+  }
+
+  /** The answer limits the bank question sets, as text (e.g. "0 – 500"), for a number criterion. */
+  protected limitsOf(code: string): string | null {
+    const input = this.inputOf(code);
+    const bank = input ? this.data.references.bankQuestion(bankQuestionCode(input)) : null;
+    if (!bank || (bank.min === null && bank.max === null)) return null;
+    return `${bank.min ?? '…'} – ${bank.max ?? '…'}`;
+  }
+
+  protected dropOption(gi: number, ci: number, value: string): void {
+    this.criteria(gi, (cs) =>
+      cs.map((c, i) =>
+        i === ci ? { ...c, options: c.options.filter((o) => o.value !== value) } : c,
+      ),
+    );
   }
 
   protected set(change: Partial<MatrixCell>): void {

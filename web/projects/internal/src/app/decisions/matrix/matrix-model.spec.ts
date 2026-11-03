@@ -1,5 +1,6 @@
 import {
   Matrix,
+  bankQuestionCode,
   cellInputs,
   cellOf,
   cellSummary,
@@ -165,6 +166,13 @@ describe('matrix model', () => {
     expect(fields.map((f) => f.path)).toEqual(['engineers', 'rating', 'revenue']);
     expect(fields[1].options).toEqual([{ value: 'yes', label: { ar: 'نعم', en: 'Yes' } }]);
     expect(trackFields(sample()).some((f) => f.path === 'columns.technical.grade')).toBe(true);
+    // The bank question's answers win over the matrix's own list.
+    const bank = inputFields(sample(), undefined, (i) =>
+      i.code === 'rating' ? [{ value: 'A', labelAr: 'أ', labelEn: 'A' }] : null,
+    );
+    expect(bank[1].options).toEqual([{ value: 'A', label: { ar: 'أ', en: 'A' } }]);
+    expect(bankQuestionCode(sample().inputs[0])).toBe('ENGINEERS');
+    expect(bankQuestionCode(sample().inputs[1])).toBeNull();
   });
 
   it('renames and removes rows and columns everywhere', () => {
