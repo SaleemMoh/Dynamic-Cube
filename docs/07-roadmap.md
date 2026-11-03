@@ -599,6 +599,25 @@ Table cells (rule set steps and results, rows column rules) show the rule as a s
 Later: fields over registered tables and columns where rules read table rows, date functions, named reusable
 conditions.
 
+## AI-assisted setup (decided, not started)
+
+The owner chose a **hybrid** approach to turn documents and files (Word, PDF, Excel, scans) into lookups, lists of
+values, questions, services, rules and workflows:
+- **Everything free to use:** open-source parsers and OCR (Tesseract), an open-weight local model behind a free model
+  server with the common OpenAI-style API (e.g. Ollama or llama.cpp), and a public model used on a free tier.
+- **The local side runs on a developer laptop first** (CPU or a small GPU, a small quantized model), then moves to a
+  server with more resources by changing the connection settings only.
+- **Split of work:** plain code reads files and builds lookups from tables; the local model tags sensitivity and finds
+  names to mask; the public model drafts from **masked text only** (names and numbers replaced by tokens, put back
+  on-prem); Secret documents never leave. Every public call is previewed, logged and can be switched off.
+- **Output is a configuration package** that goes through the existing check, import review and change sets — the
+  model never writes to the system.
+- Free public tiers usually keep or learn from what is sent: masking and the sensitivity rules are what make them
+  acceptable; the provider is the owner's compliance decision.
+- Planned order: AI-1 gateway (local + public connections, routing, masking, preview, log, off switch) with file
+  reading and OCR; AI-2 lookups from tables and the question bank from application forms; then rules, workflows and
+  "say it in words" in the Logic Builder.
+
 ## Phase 4 — Extended capabilities
 
 The owner chose to start Phase 4 with the report builder and come back to Phase 3 (3f sub-requests) afterwards.
