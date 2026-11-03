@@ -34,7 +34,7 @@ const t = (ar: string, en: string) => ({ ar, en });
 /** Named steps: a code and a JSONLogic rule that may read input, vars and earlier steps. */
 const STEPS: StructuredColumn[] = [
   { key: 'code', label: t('الاسم', 'Name'), type: 'text', ltr: true, required: true },
-  { key: 'rule', label: t('القاعدة (JSONLogic)', 'Rule (JSONLogic)'), type: 'value', required: true },
+  { key: 'rule', label: t('القاعدة', 'Rule'), type: 'logic', required: true, logic: { mode: 'value', rowFields: { codeKey: 'code', prefix: 'vars.' } } },
 ];
 
 /** The built-in RULES engine's configuration: steps, per-item results and the overall output. */
@@ -47,13 +47,13 @@ const RULES_SHAPE: StructuredShape = {
       label: t('نتيجة لكل عنصر (اختياري)', 'A result per element (optional)'),
       type: 'object',
       columns: [
-        { key: 'source', label: t('العناصر (قاعدة)', 'Elements (rule)'), type: 'value' },
+        { key: 'source', label: t('العناصر (قاعدة)', 'Elements (rule)'), type: 'logic', logic: { mode: 'value' } },
         { key: 'as', label: t('اسم العنصر', 'Element name'), type: 'text', ltr: true },
         { key: 'variables', label: t('خطوات العنصر', 'Element steps'), type: 'table', columns: STEPS },
-        { key: 'output', label: t('نتيجة العنصر', 'Element result'), type: 'map' },
+        { key: 'output', label: t('نتيجة العنصر', 'Element result'), type: 'map', logic: { mode: 'value', rowFields: { from: 'variables', codeKey: 'code', prefix: 'vars.' } } },
       ],
     },
-    { key: 'output', label: t('النتيجة', 'Result'), type: 'map' },
+    { key: 'output', label: t('النتيجة', 'Result'), type: 'map', logic: { mode: 'value', rowFields: { from: 'variables', codeKey: 'code', prefix: 'vars.' } } },
   ],
 };
 

@@ -797,8 +797,8 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
           {
             code: 'staticFilter',
             type: 'json',
-            label: t('شرط ثابت (JSONLogic)', 'Static filter (JSONLogic)'),
-            structure: { kind: 'json' },
+            label: t('شرط ثابت', 'Static filter'),
+            structure: { kind: 'logic', logic: { mode: 'condition', context: 'classValue' } },
             visibleWhen: { '==': [{ var: 'sourceType' }, 'CLASS'] },
           },
           {

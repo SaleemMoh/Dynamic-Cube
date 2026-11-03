@@ -1,4 +1,4 @@
-import { FormOption, LocalizedText, StructuredColumn, StructuredShape } from '@dynamic-cube/shared';
+import { FormOption, LocalizedText, StructuredColumn, StructuredShape, LogicSpec } from '@dynamic-cube/shared';
 import { CONFIG_SECTIONS, ConfigField, ConfigRowLink, ConfigSection } from './config-types';
 
 const t = (ar: string, en: string): LocalizedText => ({ ar, en });
@@ -35,7 +35,10 @@ const table = (...columns: StructuredColumn[]): StructuredShape => ({ kind: 'tab
 const list = (item: 'text' | 'number' = 'text'): StructuredShape => ({ kind: 'list', item });
 const object = (...properties: StructuredColumn[]): StructuredShape => ({ kind: 'object', properties });
 /** A JSONLogic rule: written as JSON. */
-const JSON_RULE: StructuredShape = { kind: 'json' };
+/** A rule edited in the Logic Builder, reading the fields of a named context (see logic-contexts.ts). */
+const LOGIC = (mode: 'condition' | 'value', context?: string): StructuredShape => ({ kind: 'logic', logic: { mode, context } });
+/** A rule on a row of a rows question: it reads the row's other columns by code. */
+const ROW_COLUMNS: LogicSpec = { mode: 'condition', rowFields: { codeKey: 'code', labelKeys: ['labelAr', 'labelEn'] } };
 const REQ: Partial<StructuredColumn> = { required: true };
 const LTR: Partial<StructuredColumn> = { ltr: true };
 const LTR_REQ: Partial<StructuredColumn> = { ltr: true, required: true };
@@ -1052,8 +1055,8 @@ export const SERVICE_SECTIONS: ConfigSection[] = [
                     col('maxFiles', t('أقصى عدد للملفات', 'Most files'), 'number'),
                   ],
                 }),
-                col('visibleWhen', t('يظهر عندما', 'Shown when'), 'value', LTR),
-                col('requiredWhen', t('مطلوب عندما', 'Required when'), 'value', LTR),
+                col('visibleWhen', t('يظهر عندما', 'Shown when'), 'logic', { logic: ROW_COLUMNS }),
+                col('requiredWhen', t('مطلوب عندما', 'Required when'), 'logic', { logic: ROW_COLUMNS }),
               ),
               t(
                 'كل صف يُعبّأ بنموذج من هذه الأعمدة. شرطا الظهور والإلزام (JSONLogic) يريان قيم الصف برموز الأعمدة فوق إجابات الطلب، مثل {"==": [{"var": "OWNER"}, "GOV"]}. «يظهر في الجدول»: الأعمدة المعروضة في جدول الصفوف (أول أربعة إن لم يُحدَّد شيء).',
@@ -1245,12 +1248,9 @@ export const WORKFLOW_SECTIONS: ConfigSection[] = [
           ),
           json(
             'when',
-            t('متى تعمل (JSONLogic)', 'When it acts (JSONLogic)'),
-            JSON_RULE,
-            t(
-              'شرط على المهمة، مثل {">=": [{"var": "task.unassignedHours"}, 4]}. انظر ما يقرؤه الشرط أعلى الصفحة.',
-              'A condition on the task, e.g. {">=": [{"var": "task.unassignedHours"}, 4]}. See what the condition reads above.',
-            ),
+            t('متى تعمل', 'When it acts'),
+            LOGIC('condition', 'task'),
+            t('شرط على المهمة: اختر الحقل والمقارنة والقيمة، مثل «ساعات بلا إسناد أكبر من أو يساوي 4».', 'A condition on the task: choose the field, the comparison and the value, e.g. "Hours unassigned is at least 4".'),
             { '>=': [{ var: 'task.unassignedHours' }, 4] },
           ),
           {
@@ -1452,7 +1452,7 @@ function calculatorFields(): ConfigField[] {
               col('labelEn', t('بالإنجليزية', 'English'), 'text', REQ),
             ],
           }),
-          col('prefill', t('القيمة من بيانات المنشأة (قاعدة)', 'Value from the firm\'s data (rule)'), 'value', LTR),
+          col('prefill', t('القيمة من بيانات المنشأة (قاعدة)', 'Value from the firm\'s data (rule)'), 'logic', { logic: { mode: 'value', context: 'party' } }),
         ),
         t(
           'ما يدخله الزائر؛ تقرأه القواعد باسم input.الرمز. القيمة من بيانات المنشأة قاعدة مثل {"var": "party.profile.CR_CAPITAL"} تُعبأ للمسجل دخوله.',
@@ -1580,9 +1580,9 @@ export const COMMUNICATION_SECTIONS: ConfigSection[] = [
           ),
           json(
             'condition',
-            t('الشرط (JSONLogic)', 'Condition (JSONLogic)'),
-            JSON_RULE,
-            t('فارغ: دائماً. مثال: {"==": [{"var": "document.alertDays"}, 90]}', 'Empty: always. e.g. {"==": [{"var": "document.alertDays"}, 90]}'),
+            t('الشرط', 'Condition'),
+            LOGIC('condition'),
+            t('فارغ: دائماً.', 'Empty: always.'),
             null,
           ),
           {

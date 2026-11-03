@@ -1,8 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { AppsControlApi, ConfigRow, LocalizedText, RuleVariable } from '@dynamic-cube/shared';
+import { AppsControlApi, ConfigRow, LocalizedText, RowColumn, RuleVariable, answerField } from '@dynamic-cube/shared';
 import { Observable, catchError, map, of } from 'rxjs';
+import { profileType } from '../../logic-contexts';
 
 /** A question of the bank, as the builder lists it. */
 export interface BankQuestion {
@@ -11,6 +12,9 @@ export interface BankQuestion {
   type: string;
   options: { value: string; label: LocalizedText }[];
   lov: string | null;
+  multiple: boolean;
+  /** Rows questions: the columns of each row. */
+  columns: RowColumn[];
   prefill: string | null;
   /** The service the question belongs to; null for a shared bank question. */
   serviceCode: string | null;
@@ -89,6 +93,8 @@ export class BuilderReferences {
         type: (q['type'] as string) ?? 'TEXT',
         options: opts.map((o) => ({ value: o.value, label: { ar: o.labelAr, en: o.labelEn } })),
         lov: (q['lov'] as string | null) ?? null,
+        multiple: q['multiple'] === true,
+        columns: (q['columns'] as RowColumn[] | null | undefined) ?? [],
         prefill: (q['prefill'] as string | null) ?? null,
         serviceCode: q['serviceCode'] && q['serviceCode'] !== '*' ? (q['serviceCode'] as string) : null,
         fill: fillOf(q['fill'], q['prefill']),
@@ -105,17 +111,13 @@ export class BuilderReferences {
     const byCode = this.byCode();
     return codes.map((code) => {
       const q = byCode.get(code);
-      return {
-        path: prefix + code,
-        label: q?.label ?? { ar: code, en: code },
-        type: q?.type === 'NUMBER' ? 'number' : q?.type === 'DATE' ? 'date' : q?.type === 'CHECKBOX' ? 'boolean' : 'text',
-        options: q?.type === 'CHECKBOX' ? [{ value: 'true', label: { ar: 'نعم', en: 'Yes' } }] : q?.options,
-      };
+      return answerField(prefix + code, { ...(q ?? { type: 'TEXT' }), label: q?.label ?? { ar: code, en: code } }, ANSWERS);
     });
   }
 
   /** The beneficiary's facts eligibility and fee rules can read. */
-  readonly partyVariables = computed<RuleVariable[]>(() => [
+  readonly partyVariables = computed<RuleVariable[]>(() =>
+    [
     {
       path: 'party.kind',
       label: { ar: 'نوع المستفيد', en: 'Beneficiary kind' },
@@ -130,7 +132,11 @@ export class BuilderReferences {
       type: 'boolean',
       options: [{ value: 'true', label: { ar: 'نعم', en: 'Yes' } }],
     },
-    ...this.profileRows().map((f) => ({ path: `party.profile.${f.code}`, label: { ar: (f.nameAr as string) || f.code, en: (f.nameEn as string) || f.code } })),
+    ...this.profileRows().map((f) => ({
+      path: `party.profile.${f.code}`,
+      label: { ar: (f.nameAr as string) || f.code, en: (f.nameEn as string) || f.code },
+      type: profileType(f['dataType']),
+    })),
     { path: 'applicant.relationship', label: { ar: 'صفة مقدم الطلب', en: "Applicant's relationship" } },
     { path: 'today', label: { ar: 'تاريخ اليوم', en: 'Today' }, type: 'date' },
     {
@@ -138,7 +144,8 @@ export class BuilderReferences {
       label: { ar: 'حالة المستند', en: 'Document status' },
       options: ['ACTIVE', 'EXPIRED', 'SUSPENDED'].map((v) => ({ value: v, label: { ar: v, en: v } })),
     },
-  ]);
+    ].map((v) => ({ ...v, group: APPLICANT } as RuleVariable)),
+  );
 
   /** The latest published version of the service's workflow. */
   workflowOf(service: string | null): { code: string; number: number; definition: { nodes: Record<string, unknown>[] } } | null {
@@ -154,6 +161,9 @@ export class BuilderReferences {
       : { code: wf.code, number: 0, definition: { nodes: [] } };
   }
 }
+
+const ANSWERS: LocalizedText = { ar: 'الإجابات', en: 'Answers' };
+const APPLICANT: LocalizedText = { ar: 'المستفيد ومقدم الطلب', en: 'Beneficiary and applicant' };
 
 /** The fill source as the question stores it (older rows only have a prefill path). */
 function fillOf(fill: unknown, prefill: unknown): BankQuestion['fill'] {

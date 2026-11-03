@@ -3,7 +3,12 @@
  */
 export * from './lib/expressions/jsonlogic';
 export * from './lib/expressions/rule-editor';
-export * from './lib/expressions/rule-model';
+export * from './lib/expressions/logic-model';
+export * from './lib/expressions/logic-fields';
+export * from './lib/expressions/logic-builder';
+export * from './lib/expressions/logic-node';
+export * from './lib/expressions/logic-text';
+export * from './lib/expressions/logic-chip';
 export * from './lib/i18n/language';
 export * from './lib/i18n/translations';
 export * from './lib/i18n/i18n.service';

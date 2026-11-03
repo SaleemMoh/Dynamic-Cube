@@ -587,6 +587,18 @@ and **integration evidence** on the request page. NHC demo packages 28–36.
 Later: the configurable classification engine (review §6, CE-1/CE-2), automation actions beyond tasks (abandoned
 drafts, applicant reminders), testing an unsaved automation rule from its editor.
 
+## Logic Builder (ADR-0049) ✅
+
+The owner asked for rules to be written without JSONLogic: one form used in every place a rule is written. Fields come
+from a grouped menu (answers, applicant, task, decision results, staff inputs…), comparisons fit the field's type, and
+values are chosen from the field's options, its class (Class/Domain) or its list of values. Conditions nest in groups
+(all / any, not) and can test the rows of a list; calculations cover arithmetic, if/then/otherwise, the sum or count of
+rows and joined texts. The rule is said in words, can be tried with sample values, and the JSON is behind *Advanced*.
+Table cells (rule set steps and results, rows column rules) show the rule as a sentence that opens the builder.
+
+Later: fields over registered tables and columns where rules read table rows, date functions, named reusable
+conditions.
+
 ## Phase 4 — Extended capabilities
 
 The owner chose to start Phase 4 with the report builder and come back to Phase 3 (3f sub-requests) afterwards.

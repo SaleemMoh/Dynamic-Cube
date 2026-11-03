@@ -3,6 +3,7 @@ import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { RuntimeConfig, authInterceptor, companyInterceptor, provideAuth, provideBranding, provideDynamicCubeUi, provideLovSource, provideUiTexts } from '@dynamic-cube/shared';
 import { routes } from './app.routes';
+import { provideLogicContexts } from './logic-contexts';
 
 export function createAppConfig(config: RuntimeConfig): ApplicationConfig {
   return {
@@ -15,6 +16,7 @@ export function createAppConfig(config: RuntimeConfig): ApplicationConfig {
       provideBranding(),
       provideLovSource(),
       provideDynamicCubeUi(),
+      provideLogicContexts(),
     ],
   };
 }

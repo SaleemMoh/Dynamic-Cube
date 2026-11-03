@@ -1,6 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { AppsControlApi, ConfigRow, DomainItem, LocalizedText, VersionDefinition } from '@dynamic-cube/shared';
+import { AppsControlApi, ConfigRow, DomainItem, LocalizedText, RowColumn, VersionDefinition } from '@dynamic-cube/shared';
 import { catchError, of } from 'rxjs';
 import { NODE_ICONS, NODE_TYPES, NodeType } from './designer-model';
 
@@ -15,6 +15,9 @@ export interface QuestionRef {
   label: LocalizedText;
   type: string;
   options: RefOption[];
+  multiple?: boolean;
+  lov?: string | null;
+  columns?: RowColumn[];
 }
 
 /**
@@ -141,6 +144,9 @@ export class DesignerReferences {
         label: { ar: (q?.['labelAr'] as string) ?? code, en: (q?.['labelEn'] as string) ?? code },
         type: (q?.['type'] as string) ?? 'TEXT',
         options: opts.map((o) => ({ value: o.value, label: { ar: o.labelAr, en: o.labelEn } })),
+        multiple: q?.['multiple'] === true,
+        lov: (q?.['lov'] as string | null) ?? null,
+        columns: (q?.['columns'] as RowColumn[] | null | undefined) ?? [],
       };
     });
   });

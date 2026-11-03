@@ -1,5 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, forwardRef, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef, inject, input, signal } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -9,7 +9,23 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { LocalizedText } from '../i18n/language';
 import { LocalizePipe, TranslatePipe } from '../i18n/translate.pipe';
+import { JsonLogicRule } from '../expressions/jsonlogic';
+import { LogicBuilder } from '../expressions/logic-builder';
+import { LogicChip } from '../expressions/logic-chip';
+import { LogicField } from '../expressions/logic-fields';
+import { LogicContexts } from '../expressions/logic-text';
 import { FormOption } from './form-schema';
+
+/**
+ * Where a rule edited by the Logic Builder takes its fields from: a fixed list, a named context the app registered
+ * (`task`, `party`…), and the other rows of a table (e.g. earlier steps as `vars.CODE`, or a row's sibling columns).
+ */
+export interface LogicSpec {
+  mode?: 'condition' | 'value';
+  context?: string;
+  fields?: LogicField[];
+  rowFields?: { from?: string; codeKey: string; prefix?: string; labelKeys?: [string, string] };
+}
 
 /**
  * A column of a table, or a property of an object: `tags` is a list of words typed with commas, `value` is text or
@@ -19,7 +35,9 @@ import { FormOption } from './form-schema';
 export interface StructuredColumn {
   key: string;
   label: LocalizedText;
-  type: 'text' | 'number' | 'checkbox' | 'select' | 'date' | 'tags' | 'value' | 'table' | 'object' | 'map';
+  type: 'text' | 'number' | 'checkbox' | 'select' | 'date' | 'tags' | 'value' | 'table' | 'object' | 'map' | 'logic';
+  /** For `logic` columns: a rule edited in the Logic Builder (shown as a sentence). */
+  logic?: LogicSpec;
   options?: FormOption[];
   /** Options of a `select` column are numbers (e.g. week days). */
   numeric?: boolean;
@@ -68,7 +86,8 @@ export type StructuredShape =
   | { kind: 'list'; item: 'text' | 'number'; options?: FormOption[] }
   | { kind: 'table'; columns: StructuredColumn[] }
   | { kind: 'object'; properties: StructuredColumn[] }
-  | { kind: 'map'; keyLabel?: LocalizedText; valueLabel?: LocalizedText }
+  | { kind: 'map'; keyLabel?: LocalizedText; valueLabel?: LocalizedText; logic?: LogicSpec }
+  | { kind: 'logic'; logic: LogicSpec }
   | { kind: 'json' };
 
 type Row = Record<string, unknown>;
@@ -97,12 +116,16 @@ export function looseText(value: unknown): string {
 }
 
 /** Rows for editing a map (`{ a: 1 }` → `[{ key: 'a', value: '1' }]`) and back. */
-export function mapRows(value: unknown): Row[] {
-  return value && typeof value === 'object' && !Array.isArray(value) ? Object.entries(value as Row).map(([key, v]) => ({ key, value: looseText(v) })) : [];
+export function mapRows(value: unknown, raw = false): Row[] {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? Object.entries(value as Row).map(([key, v]) => ({ key, value: raw ? v : looseText(v) }))
+    : [];
 }
 
-export function rowsMap(rows: Row[]): Row {
-  return Object.fromEntries(rows.filter((r) => String(r['key'] ?? '').trim()).map((r) => [String(r['key']).trim(), parseLoose(String(r['value'] ?? ''))]));
+export function rowsMap(rows: Row[], raw = false): Row {
+  return Object.fromEntries(
+    rows.filter((r) => String(r['key'] ?? '').trim()).map((r) => [String(r['key']).trim(), raw ? (r['value'] ?? null) : parseLoose(String(r['value'] ?? ''))]),
+  );
 }
 
 /**
@@ -123,18 +146,28 @@ export function rowsMap(rows: Row[]): Row {
     MatTooltipModule,
     LocalizePipe,
     TranslatePipe,
+    LogicBuilder,
+    LogicChip,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => StructuredInput), multi: true }],
   template: `
     <div class="dc-si" [attr.data-testid]="testId()">
-      @if (shape().kind !== 'json') {
+      @if (shape().kind !== 'json' && shape().kind !== 'logic') {
         <mat-button-toggle-group class="dc-si__mode" [ngModel]="mode()" (ngModelChange)="setMode($event)" hideSingleSelectionIndicator>
           <mat-button-toggle value="form">{{ 'structured.form' | dcTranslate }}</mat-button-toggle>
           <mat-button-toggle value="json" [attr.data-testid]="testId() ? testId() + '-json' : null">JSON</mat-button-toggle>
         </mat-button-toggle-group>
       }
-      @if (mode() === 'json' || shape().kind === 'json') {
+      @if (shape().kind === 'logic') {
+        <dc-logic-builder
+          [rule]="$any(value())"
+          [mode]="logicSpec().mode ?? 'condition'"
+          [fields]="logicFields(logicSpec(), null)"
+          (ruleChange)="setLogic($event)"
+          [testId]="testId() ? testId() + '-logic' : 'logic-builder'"
+        />
+      } @else if (mode() === 'json' || shape().kind === 'json') {
         <textarea
           class="dc-si__json"
           dir="ltr"
@@ -346,6 +379,7 @@ export function rowsMap(rows: Row[]): Row {
           <dc-structured-input
             class="dc-si__nested"
             [shape]="{ kind: 'table', columns: c.columns ?? [] }"
+            [parent]="row"
             [ngModel]="row[c.key] ?? []"
             (ngModelChange)="setCell(i, c.key, $event)"
             [disabled]="disabled()"
@@ -355,6 +389,7 @@ export function rowsMap(rows: Row[]): Row {
           <dc-structured-input
             class="dc-si__nested"
             [shape]="{ kind: 'object', properties: c.columns ?? [] }"
+            [parent]="row"
             [ngModel]="row[c.key] ?? {}"
             (ngModelChange)="setCell(i, c.key, $event)"
             [disabled]="disabled()"
@@ -363,10 +398,21 @@ export function rowsMap(rows: Row[]): Row {
         @case ('map') {
           <dc-structured-input
             class="dc-si__nested"
-            [shape]="{ kind: 'map' }"
+            [shape]="{ kind: 'map', logic: c.logic }"
+            [parent]="row"
             [ngModel]="row[c.key] ?? {}"
             (ngModelChange)="setCell(i, c.key, $event)"
             [disabled]="disabled()"
+          />
+        }
+        @case ('logic') {
+          <dc-logic-chip
+            [rule]="$any(row[c.key])"
+            [mode]="c.logic?.mode ?? 'condition'"
+            [fields]="logicFields(c.logic, row)"
+            [title]="c.label | dcLocalize"
+            [disabled]="disabled()"
+            (ruleChange)="setCell(i, c.key, $event)"
           />
         }
         @default {
@@ -557,6 +603,9 @@ export function rowsMap(rows: Row[]): Row {
 export class StructuredInput implements ControlValueAccessor {
   readonly shape = input.required<StructuredShape>();
   readonly testId = input<string | null>(null);
+  /** The row or object this input sits in (rules of a `logic` column may read its other properties). */
+  readonly parent = input<Row | null>(null);
+  private readonly contexts = inject(LogicContexts);
 
   protected readonly value = signal<unknown>(null);
   protected readonly mode = signal<'form' | 'json'>('form');
@@ -573,7 +622,7 @@ export class StructuredInput implements ControlValueAccessor {
     if (JSON.stringify(value ?? null) === JSON.stringify(this.value())) return;
     this.value.set(value ?? null);
     this.text.set(jsonText(value));
-    this.mapState.set(mapRows(value));
+    this.mapState.set(mapRows(value, this.mapLogic()));
     this.jsonError.set(false);
   }
 
@@ -614,6 +663,37 @@ export class StructuredInput implements ControlValueAccessor {
     } catch {
       this.jsonError.set(true);
     }
+  }
+
+  protected logicSpec(): LogicSpec {
+    const shape = this.shape();
+    return shape.kind === 'logic' ? shape.logic : {};
+  }
+
+  protected setLogic(rule: JsonLogicRule | null): void {
+    this.emit(rule);
+  }
+
+  /** The fields a rule may read: the spec's own, its context's and the other rows' codes. */
+  protected logicFields(spec: LogicSpec | undefined, row: Row | null): LogicField[] {
+    if (!spec) return [];
+    const fields = [...(spec.fields ?? []), ...this.contexts.fields(spec.context)];
+    const from = spec.rowFields;
+    if (from) {
+      const source = from.from ? (this.parent()?.[from.from] ?? this.objectValue()[from.from]) : this.rows();
+      for (const r of Array.isArray(source) ? (source as Row[]) : []) {
+        const code = String(r?.[from.codeKey] ?? '').trim();
+        if (!code || r === row) continue;
+        const [ar, en] = from.labelKeys ?? [from.codeKey, from.codeKey];
+        fields.push({ path: (from.prefix ?? '') + code, label: { ar: String(r[ar] || code), en: String(r[en] || code) } });
+      }
+    }
+    return fields;
+  }
+
+  private mapLogic(): boolean {
+    const shape = this.shape();
+    return shape.kind === 'map' && !!shape.logic;
   }
 
   protected columns(): StructuredColumn[] {
@@ -741,10 +821,10 @@ export class StructuredInput implements ControlValueAccessor {
     this.emit(this.listItems().filter((_, i) => i !== index));
   }
 
-  private mapColumns(shape: { keyLabel?: LocalizedText; valueLabel?: LocalizedText }): StructuredColumn[] {
+  private mapColumns(shape: { keyLabel?: LocalizedText; valueLabel?: LocalizedText; logic?: LogicSpec }): StructuredColumn[] {
     return [
       { key: 'key', label: shape.keyLabel ?? { ar: 'الاسم', en: 'Name' }, type: 'text', ltr: true, required: true },
-      { key: 'value', label: shape.valueLabel ?? { ar: 'القيمة', en: 'Value' }, type: 'value' },
+      { key: 'value', label: shape.valueLabel ?? { ar: 'القيمة', en: 'Value' }, type: shape.logic ? 'logic' : 'value', logic: shape.logic },
     ];
   }
 
@@ -752,7 +832,7 @@ export class StructuredInput implements ControlValueAccessor {
     if (this.shape().kind === 'map') {
       // Rows being typed (a name still empty) stay on screen; the value holds the named ones.
       this.mapState.set(rows);
-      this.emit(rowsMap(rows), { rows: false });
+      this.emit(rowsMap(rows, this.mapLogic()), { rows: false });
       return;
     }
     this.emit(rows);
@@ -761,7 +841,7 @@ export class StructuredInput implements ControlValueAccessor {
   private emit(value: unknown, sync: { text?: boolean; rows?: boolean } = {}): void {
     this.value.set(value);
     if (sync.text !== false) this.text.set(jsonText(value));
-    if (sync.rows !== false) this.mapState.set(mapRows(value));
+    if (sync.rows !== false) this.mapState.set(mapRows(value, this.mapLogic()));
     this.onChange(value);
   }
 

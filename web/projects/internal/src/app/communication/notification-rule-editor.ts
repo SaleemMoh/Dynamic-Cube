@@ -26,7 +26,7 @@ import {
   TranslatePipe,
   localize,
   problemMessages,
-  varPath,
+  fieldPath,
 } from '@dynamic-cube/shared';
 import { catchError, debounceTime, of, switchMap } from 'rxjs';
 import { ConfigEditorData } from '../apps-control/config/config-editor';
@@ -59,7 +59,7 @@ export function toRows(value: unknown): RecipientRow[] {
   const list = Array.isArray(value) ? (value as { kind: string; value?: unknown }[]) : [];
   return list.map((r) => {
     const kind = (r.kind?.toUpperCase() as RecipientKind) ?? 'PARTY';
-    const path = varPath(r.value as never);
+    const path = fieldPath(r.value as never);
     if (path !== null) return { kind, codes: [], fromEvent: path };
     const codes = Array.isArray(r.value) ? r.value.map(String) : r.value === null || r.value === undefined ? [] : [String(r.value)];
     return { kind, codes, fromEvent: null };

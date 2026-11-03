@@ -10,7 +10,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { I18nService, JsonLogicRule, LocalizePipe, RuleEditor, RuleVariable, TranslatePipe, localize } from '@dynamic-cube/shared';
+import { I18nService, JsonLogicRule, LocalizePipe, LocalizedText, RuleEditor, RuleVariable, TranslatePipe, answerField, localize } from '@dynamic-cube/shared';
 import { ActionDef, AssignmentDef, NodeDef, NodeType, Outlet, WorkflowDraft, newAction, replaceNode } from './designer-model';
 import { DesignerReferences } from './designer-references';
 import { DesignerStore } from './designer-store';
@@ -82,12 +82,7 @@ export class DesignerPanel {
   /** What rules in this workflow can read. */
   protected readonly variables = computed<RuleVariable[]>(() => {
     const t = (ar: string, en: string) => ({ ar, en });
-    const list: RuleVariable[] = this.refs.questions().map((q) => ({
-      path: `data.${q.code}`,
-      label: q.label,
-      type: q.type === 'NUMBER' ? 'number' : q.type === 'DATE' ? 'date' : q.type === 'CHECKBOX' ? 'boolean' : 'text',
-      options: q.type === 'CHECKBOX' ? [{ value: 'true', label: t('نعم', 'Yes') }] : q.options,
-    }));
+    const list: RuleVariable[] = this.refs.questions().map((q) => answerField(`data.${q.code}`, q));
     list.push({
       path: 'level',
       label: t('مستوى الخدمة', 'Service level'),
@@ -196,7 +191,7 @@ export class DesignerPanel {
       label: t('تاريخ انتهاء المستند', 'Document expiry date'),
       type: 'date',
     });
-    return list;
+    return list.map((v) => ({ ...v, group: v.group ?? groupOf(v.path) }));
   });
 
   protected typeName(type: NodeType): string {
@@ -410,4 +405,20 @@ export class DesignerPanel {
   protected num(value: unknown): number | null {
     return value === '' || value === null || value === undefined || Number.isNaN(Number(value)) ? null : Number(value);
   }
+}
+
+const FIELD_GROUPS: [string, LocalizedText][] = [
+  ['data.', { ar: 'الإجابات', en: 'Answers' }],
+  ['actions.', { ar: 'إجراءات المهام', en: 'Task actions' }],
+  ['items.', { ar: 'بنود المهام', en: 'Task items' }],
+  ['inputs.', { ar: 'مدخلات الموظفين', en: 'Staff inputs' }],
+  ['decisions.', { ar: 'نتائج القرارات', en: 'Decision results' }],
+  ['payments.', { ar: 'المدفوعات', en: 'Payments' }],
+  ['visits.', { ar: 'الزيارات', en: 'Visits' }],
+  ['integrations.', { ar: 'التكاملات', en: 'Integrations' }],
+];
+
+/** The heading a workflow fact is listed under in the Logic Builder's field menu. */
+function groupOf(path: string): LocalizedText {
+  return FIELD_GROUPS.find(([prefix]) => path.startsWith(prefix))?.[1] ?? { ar: 'الطلب', en: 'Request' };
 }
