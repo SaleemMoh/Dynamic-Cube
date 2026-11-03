@@ -21,6 +21,7 @@ import { APP_TRANSLATIONS } from './translations';
         {{ 'nav.services' | dcTranslate }}
         <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">expand_more</mat-icon>
       </button>
+      <a dcShellNav class="dc-nav-link" routerLink="/calculators" routerLinkActive="dc-nav-link--active" data-testid="nav-calculators">{{ 'calculators.title' | dcTranslate }}</a>
       @if (auth.isAuthenticated()) {
         <ng-container dcShellNav>
           <a class="dc-nav-link" routerLink="/requests" routerLinkActive="dc-nav-link--active" data-testid="nav-requests">{{ 'nav.requests' | dcTranslate }}</a>

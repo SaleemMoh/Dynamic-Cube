@@ -3,6 +3,7 @@ using System.Text.Json.Nodes;
 using DynamicCube.Modules.Decisions.Domain;
 using DynamicCube.Modules.Decisions.Persistence;
 using DynamicCube.Platform.Decisions;
+using DynamicCube.Platform.Expressions;
 using DynamicCube.Platform.Security;
 using Microsoft.EntityFrameworkCore;
 
@@ -31,7 +32,7 @@ public sealed record EngineInfo(string Code, string NameAr, string NameEn);
 /// Evaluates rule sets: the current published version (or a given one, when trying it out), through its engine, recording
 /// inputs, results and trace. Public rule sets also answer anonymous calculator requests, which are not recorded.
 /// </summary>
-internal sealed class DecisionService(DecisionsDbContext context, IEnumerable<IDecisionEngine> engines, ICurrentUser user, TimeProvider clock) : IDecisionService
+internal sealed class DecisionService(DecisionsDbContext context, IEnumerable<IDecisionEngine> engines, ICurrentUser user, TimeProvider clock, JsonLogicEvaluator evaluator) : IDecisionService
 {
     public const string TrySubject = "TRY";
 
@@ -90,7 +91,70 @@ internal sealed class DecisionService(DecisionsDbContext context, IEnumerable<ID
             throw new DecisionNotFoundException($"No public calculator '{code}'.");
         }
 
+        // A described calculator passes on only its own fields.
+        if (CalculatorDefinition.Parse(ruleSet.Calculator) is { } calculator)
+        {
+            input = CalculatorRules.Clean(calculator, input);
+        }
+
         return (await EngineAsync(ruleSet, version, input, cancellationToken)).Output;
+    }
+
+    /// <summary>The public calculators shown on the portal (public, active rule sets described as one).</summary>
+    public async Task<IReadOnlyList<CalculatorSummary>> CalculatorsAsync(CancellationToken cancellationToken)
+    {
+        var rows = await context.RuleSets.AsNoTracking().Where(r => r.IsPublic && r.IsActive && r.Calculator != null).OrderBy(r => r.Code).ToListAsync(cancellationToken);
+        return [.. rows.Select(r => (r.Code, Calculator: CalculatorDefinition.Parse(r.Calculator)!))
+            .Select(r => new CalculatorSummary(r.Code, r.Calculator.TitleAr, r.Calculator.TitleEn, r.Calculator.IntroAr, r.Calculator.IntroEn, r.Calculator.Icon))];
+    }
+
+    /// <summary>A public calculator's form and results.</summary>
+    public async Task<CalculatorView> CalculatorAsync(string code, CancellationToken cancellationToken)
+    {
+        var (ruleSet, calculator) = await PublicCalculatorAsync(code, cancellationToken);
+        return new CalculatorView(
+            ruleSet.Code,
+            calculator.TitleAr,
+            calculator.TitleEn,
+            calculator.IntroAr,
+            calculator.IntroEn,
+            calculator.Icon,
+            [.. calculator.Inputs.Select(i => new CalculatorInputView(i.Code, i.LabelAr, i.LabelEn, i.HintAr, i.HintEn, i.Type, i.Required, i.Options, i.Min, i.Max, i.Prefill is not null))],
+            calculator.Results,
+            calculator.NoteAr,
+            calculator.NoteEn);
+    }
+
+    /// <summary>Starting values from the party's latest data (each field's prefill rule over <c>{ party }</c>).</summary>
+    public async Task<JsonObject> PrefillAsync(string code, JsonObject party, CancellationToken cancellationToken)
+    {
+        var (_, calculator) = await PublicCalculatorAsync(code, cancellationToken);
+        var facts = new JsonObject { ["party"] = party };
+        var values = new JsonObject();
+        foreach (var input in calculator.Inputs.Where(i => i.Prefill is not null))
+        {
+            try
+            {
+                if (evaluator.Evaluate(input.Prefill, facts) is { } value)
+                {
+                    values[input.Code] = value.DeepClone();
+                }
+            }
+            catch (JsonLogicException)
+            {
+                // A value that cannot be worked out is left for the applicant to type.
+            }
+        }
+
+        return values;
+    }
+
+    private async Task<(RuleSet RuleSet, CalculatorDefinition Calculator)> PublicCalculatorAsync(string code, CancellationToken cancellationToken)
+    {
+        var ruleSet = await context.RuleSets.AsNoTracking().SingleOrDefaultAsync(r => r.Code == code, cancellationToken);
+        return ruleSet is { IsPublic: true, IsActive: true } && CalculatorDefinition.Parse(ruleSet.Calculator) is { } calculator
+            ? (ruleSet, calculator)
+            : throw new DecisionNotFoundException($"No public calculator '{code}'.");
     }
 
     public async Task<IReadOnlyList<EvaluationView>> ListAsync(string? subjectType, Guid? subjectId, string? ruleSet, int take, CancellationToken cancellationToken)

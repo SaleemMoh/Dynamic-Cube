@@ -1,0 +1,270 @@
+{
+  "title": "Reusable service building blocks: a public calculator on the portal (capacity estimate) that starts from the firm's capital",
+  "items": [
+    {
+      "entityType": "dec.rule-set",
+      "entityCode": "CAPACITY_ESTIMATE",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "حاسبة القدرة التقديرية",
+        "nameEn": "Capacity estimate",
+        "engine": "RULES",
+        "isPublic": true,
+        "businessApp": "CLASSIFICATION",
+        "descriptionAr": "تقدير فئة المنشأة وحد المشروع الواحد من رأس المال والمشاريع وسنوات الخبرة.",
+        "descriptionEn": "Estimates a firm's band and per-project ceiling from capital, projects and years of experience.",
+        "calculatorTitleAr": "قدّر فئة منشأتك",
+        "calculatorTitleEn": "Estimate your firm's band",
+        "calculatorIntroAr": "أدخل رأس المال وقيم المشاريع وسنوات الخبرة لتعرف الفئة المتوقعة قبل التقدم.",
+        "calculatorIntroEn": "Enter your capital, projects and years of experience to see the likely band before applying.",
+        "calculatorIcon": "calculate",
+        "calculatorInputs": [
+          {
+            "code": "capital",
+            "labelAr": "رأس المال (ريال)",
+            "labelEn": "Capital (SAR)",
+            "type": "NUMBER",
+            "required": true,
+            "min": 0,
+            "hintAr": "من السجل التجاري",
+            "hintEn": "From the commercial register",
+            "prefill": {
+              "var": "party.profile.CR_CAPITAL"
+            }
+          },
+          {
+            "code": "projectsTotal",
+            "labelAr": "مجموع قيم المشاريع المنفذة (مليون ريال)",
+            "labelEn": "Total value of completed projects (SAR million)",
+            "type": "NUMBER",
+            "required": true,
+            "min": 0
+          },
+          {
+            "code": "years",
+            "labelAr": "سنوات الخبرة",
+            "labelEn": "Years of experience",
+            "type": "NUMBER",
+            "required": true,
+            "min": 0,
+            "max": 100
+          }
+        ],
+        "calculatorResults": [
+          {
+            "path": "band",
+            "labelAr": "الفئة التقديرية",
+            "labelEn": "Estimated band",
+            "format": "TEXT",
+            "headline": true
+          },
+          {
+            "path": "ceiling",
+            "labelAr": "الحد التقديري لقيمة المشروع الواحد",
+            "labelEn": "Estimated ceiling per project",
+            "format": "MONEY",
+            "headline": false
+          },
+          {
+            "path": "eligible",
+            "labelAr": "مؤهل للتصنيف",
+            "labelEn": "Eligible for classification",
+            "format": "YES_NO",
+            "headline": false
+          }
+        ],
+        "calculatorNoteAr": "نتيجة تقديرية لا تُغني عن قرار التصنيف.",
+        "calculatorNoteEn": "An estimate; it is not a classification decision."
+      }
+    },
+    {
+      "entityType": "dec.rule-set-version",
+      "entityCode": "CAPACITY_ESTIMATE/1",
+      "operation": "CREATE",
+      "payload": {
+        "nameAr": "الإصدار 1",
+        "nameEn": "Version 1",
+        "configuration": {
+          "variables": [
+            {
+              "code": "capitalM",
+              "rule": {
+                "/": [
+                  {
+                    "+": [
+                      {
+                        "var": "input.capital"
+                      },
+                      0
+                    ]
+                  },
+                  1000000
+                ]
+              }
+            },
+            {
+              "code": "projects",
+              "rule": {
+                "+": [
+                  {
+                    "var": "input.projectsTotal"
+                  },
+                  0
+                ]
+              }
+            },
+            {
+              "code": "years",
+              "rule": {
+                "+": [
+                  {
+                    "var": "input.years"
+                  },
+                  0
+                ]
+              }
+            },
+            {
+              "code": "band",
+              "rule": {
+                "if": [
+                  {
+                    "and": [
+                      {
+                        ">=": [
+                          {
+                            "var": "vars.capitalM"
+                          },
+                          10
+                        ]
+                      },
+                      {
+                        ">=": [
+                          {
+                            "var": "vars.projects"
+                          },
+                          50
+                        ]
+                      },
+                      {
+                        ">=": [
+                          {
+                            "var": "vars.years"
+                          },
+                          10
+                        ]
+                      }
+                    ]
+                  },
+                  "A",
+                  {
+                    "and": [
+                      {
+                        ">=": [
+                          {
+                            "var": "vars.capitalM"
+                          },
+                          2
+                        ]
+                      },
+                      {
+                        ">=": [
+                          {
+                            "var": "vars.projects"
+                          },
+                          10
+                        ]
+                      },
+                      {
+                        ">=": [
+                          {
+                            "var": "vars.years"
+                          },
+                          5
+                        ]
+                      }
+                    ]
+                  },
+                  "B",
+                  {
+                    "and": [
+                      {
+                        ">=": [
+                          {
+                            "var": "vars.capitalM"
+                          },
+                          0.5
+                        ]
+                      },
+                      {
+                        ">=": [
+                          {
+                            "var": "vars.years"
+                          },
+                          2
+                        ]
+                      }
+                    ]
+                  },
+                  "C",
+                  "D"
+                ]
+              }
+            },
+            {
+              "code": "ceiling",
+              "rule": {
+                "if": [
+                  {
+                    "==": [
+                      {
+                        "var": "vars.band"
+                      },
+                      "A"
+                    ]
+                  },
+                  500000000,
+                  {
+                    "==": [
+                      {
+                        "var": "vars.band"
+                      },
+                      "B"
+                    ]
+                  },
+                  100000000,
+                  {
+                    "==": [
+                      {
+                        "var": "vars.band"
+                      },
+                      "C"
+                    ]
+                  },
+                  20000000,
+                  5000000
+                ]
+              }
+            }
+          ],
+          "output": {
+            "band": {
+              "var": "vars.band"
+            },
+            "ceiling": {
+              "var": "vars.ceiling"
+            },
+            "eligible": {
+              "!=": [
+                {
+                  "var": "vars.band"
+                },
+                "D"
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
+}

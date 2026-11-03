@@ -2,6 +2,7 @@ using System.Text.Json.Nodes;
 using DynamicCube.Modules.Decisions.Changes;
 using DynamicCube.Modules.Decisions.Runtime;
 using DynamicCube.Platform.Decisions;
+using DynamicCube.Platform.Parties;
 using DynamicCube.Platform.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -23,9 +24,23 @@ internal static class DecisionEndpoints
     }
 
     /// <summary>External host: public calculators (no sign-in, nothing recorded).</summary>
-    public static void MapPublic(RouteGroupBuilder group) =>
+    public static void MapPublic(RouteGroupBuilder group)
+    {
+        group.MapGet("/calculators", async (DecisionService service, CancellationToken ct) =>
+            TypedResults.Ok(await service.CalculatorsAsync(ct))).AllowAnonymous().WithName("ListCalculators");
+        group.MapGet("/calculators/{code}", async (string code, DecisionService service, CancellationToken ct) =>
+            TypedResults.Ok(await service.CalculatorAsync(code, ct))).AllowAnonymous().WithName("GetCalculator");
         group.MapPost("/calculators/{code}", async (string code, JsonObject input, DecisionService service, CancellationToken ct) =>
             TypedResults.Ok(await service.CalculateAsync(code, input, ct))).AllowAnonymous().WithName("Calculate");
+
+        // Signed in: start from the acting party's latest data.
+        group.MapGet("/calculators/{code}/prefill", async (string code, IActingPartyAccessor acting, IPartyFacts parties, DecisionService service, CancellationToken ct) =>
+        {
+            var party = await acting.GetAsync(ct);
+            var facts = await parties.GetAsync(party.PartyId, refreshProfile: false, ct);
+            return TypedResults.Ok(facts is null ? new JsonObject() : await service.PrefillAsync(code, facts.ToJson(), ct));
+        }).RequireAuthorization().WithName("PrefillCalculator");
+    }
 
     public static async ValueTask<object?> Errors(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
     {

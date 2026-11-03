@@ -1264,6 +1264,78 @@ export const DOCUMENT_SECTIONS: ConfigSection[] = [
   },
 ];
 
+/** How a public rule set is shown as a calculator on the portal (fields, results, starting values from the firm's data). */
+function calculatorFields(): ConfigField[] {
+  const shown = { '==': [{ var: 'isPublic' }, true] };
+  const text = (code: string, label: LocalizedText, type: 'text' | 'textarea' | 'icon' = 'text'): ConfigField => ({ code, type, label, visibleWhen: shown });
+  return [
+    text('calculatorTitleAr', t('عنوان الحاسبة بالعربية', 'Calculator title (Arabic)')),
+    text('calculatorTitleEn', t('عنوان الحاسبة بالإنجليزية', 'Calculator title (English)')),
+    text('calculatorIntroAr', t('مقدمة الحاسبة بالعربية', 'Calculator intro (Arabic)'), 'textarea'),
+    text('calculatorIntroEn', t('مقدمة الحاسبة بالإنجليزية', 'Calculator intro (English)'), 'textarea'),
+    text('calculatorIcon', t('أيقونة الحاسبة', 'Calculator icon'), 'icon'),
+    {
+      ...json(
+        'calculatorInputs',
+        t('حقول الحاسبة', 'Calculator fields'),
+        table(
+          col('code', t('الرمز (input.الرمز)', 'Code (input.code)'), 'text', LTR_REQ),
+          col('labelAr', t('الاسم بالعربية', 'Arabic label'), 'text', REQ),
+          col('labelEn', t('الاسم بالإنجليزية', 'English label'), 'text', REQ),
+          col('type', t('النوع', 'Type'), 'select', {
+            required: true,
+            defaultValue: 'NUMBER',
+            options: [
+              opt('NUMBER', 'رقم', 'Number'),
+              opt('TEXT', 'نص', 'Text'),
+              opt('SELECT', 'قائمة اختيار', 'Choice list'),
+              opt('CHECKBOX', 'مربع اختيار', 'Tick box'),
+              opt('DATE', 'تاريخ', 'Date'),
+            ],
+          }),
+          col('required', t('مطلوب', 'Required'), 'checkbox'),
+          col('min', t('الحد الأدنى', 'Least'), 'number'),
+          col('max', t('الحد الأعلى', 'Most'), 'number'),
+          col('hintAr', t('تلميح بالعربية', 'Arabic hint')),
+          col('hintEn', t('تلميح بالإنجليزية', 'English hint')),
+          col('options', t('الخيارات', 'Choices'), 'table', {
+            columns: [
+              col('value', t('القيمة', 'Value'), 'text', LTR_REQ),
+              col('labelAr', t('بالعربية', 'Arabic'), 'text', REQ),
+              col('labelEn', t('بالإنجليزية', 'English'), 'text', REQ),
+            ],
+          }),
+          col('prefill', t('القيمة من بيانات المنشأة (قاعدة)', 'Value from the firm\'s data (rule)'), 'value', LTR),
+        ),
+        t(
+          'ما يدخله الزائر؛ تقرأه القواعد باسم input.الرمز. القيمة من بيانات المنشأة قاعدة مثل {"var": "party.profile.CR_CAPITAL"} تُعبأ للمسجل دخوله.',
+          'What the visitor types; the rules read it as input.code. The value from the firm\'s data is a rule such as {"var": "party.profile.CR_CAPITAL"}, filled in for a signed-in applicant.',
+        ),
+      ),
+      visibleWhen: shown,
+    },
+    {
+      ...json(
+        'calculatorResults',
+        t('نتائج الحاسبة', 'Calculator results'),
+        table(
+          col('path', t('المسار في النتيجة', 'Path in the output'), 'text', LTR_REQ),
+          col('labelAr', t('الاسم بالعربية', 'Arabic label'), 'text', REQ),
+          col('labelEn', t('الاسم بالإنجليزية', 'English label'), 'text', REQ),
+          col('format', t('العرض', 'Shown as'), 'select', {
+            defaultValue: 'TEXT',
+            options: [opt('TEXT', 'نص', 'Text'), opt('NUMBER', 'رقم', 'Number'), opt('MONEY', 'مبلغ', 'Amount'), opt('YES_NO', 'نعم / لا', 'Yes / no')],
+          }),
+          col('headline', t('النتيجة الرئيسة', 'Main result'), 'checkbox'),
+        ),
+      ),
+      visibleWhen: shown,
+    },
+    text('calculatorNoteAr', t('ملاحظة تحت النتيجة بالعربية', 'Note under the result (Arabic)'), 'textarea'),
+    text('calculatorNoteEn', t('ملاحظة تحت النتيجة بالإنجليزية', 'Note under the result (English)'), 'textarea'),
+  ];
+}
+
 /** Decision rule configuration screens (internal system → Decisions); versions have their own screen. */
 export const DECISION_SECTIONS: ConfigSection[] = [
   {
@@ -1300,6 +1372,7 @@ export const DECISION_SECTIONS: ConfigSection[] = [
             type: 'checkbox',
             label: t('حاسبة عامة في البوابة (بدون تسجيل دخول)', 'Public calculator on the portal (no sign-in)'),
           },
+          ...calculatorFields(),
         ],
       },
     ],

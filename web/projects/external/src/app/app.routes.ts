@@ -16,6 +16,8 @@ export const routes: Routes = [
   { path: 'verify', loadComponent: () => import('./documents/verify-page').then((m) => m.VerifyPage) },
   { path: 'verify/:code', loadComponent: () => import('./documents/verify-page').then((m) => m.VerifyPage) },
   // Public: questions and pages written in the Content Manager.
+  { path: 'calculators', loadComponent: () => import('./calculators/calculator-list').then((m) => m.CalculatorList) },
+  { path: 'calculators/:code', loadComponent: () => import('./calculators/calculator-page').then((m) => m.CalculatorPage) },
   { path: 'faq', loadComponent: () => import('./content/faq-page').then((m) => m.FaqPage) },
   { path: 'pages/:slug', loadComponent: () => import('./content/content-page').then((m) => m.ContentPage) },
   { path: '**', redirectTo: '' },

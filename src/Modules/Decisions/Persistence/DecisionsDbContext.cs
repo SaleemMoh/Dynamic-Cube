@@ -23,6 +23,7 @@ public sealed class DecisionsDbContext(DbContextOptions<DecisionsDbContext> opti
             b.Property(e => e.DescriptionAr).HasMaxLength(4000);
             b.Property(e => e.DescriptionEn).HasMaxLength(4000);
             b.Property(e => e.Engine).HasMaxLength(50).IsRequired();
+            b.Property(e => e.Calculator).HasColumnType("jsonb");
         });
         modelBuilder.ConfigTable<RuleSetVersion>(Schema, "rule_set_version", b =>
         {

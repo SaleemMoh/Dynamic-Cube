@@ -12,6 +12,9 @@ public sealed class RuleSet : ConfigEntity
 
     /// <summary>Anyone may evaluate it without signing in (a public calculator on the portal).</summary>
     public bool IsPublic { get; set; }
+
+    /// <summary>How a public rule set is shown as a calculator on the portal (JSON), when it is one.</summary>
+    public string? Calculator { get; set; }
 }
 
 /// <summary>One numbered configuration of a rule set (<c>CODE/N</c>); published versions never change.</summary>

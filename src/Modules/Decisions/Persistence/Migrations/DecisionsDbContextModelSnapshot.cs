@@ -112,6 +112,10 @@ namespace DynamicCube.Modules.Decisions.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("business_app");
 
+                    b.Property<string>("Calculator")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("calculator");
+
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(100)

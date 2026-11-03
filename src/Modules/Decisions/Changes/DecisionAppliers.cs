@@ -3,8 +3,10 @@ using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using DynamicCube.Modules.Decisions.Domain;
 using DynamicCube.Modules.Decisions.Persistence;
+using DynamicCube.Modules.Decisions.Runtime;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Decisions;
+using DynamicCube.Platform.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -34,9 +36,28 @@ public sealed class RuleSetPayload : ConfigPayload
     public string? Engine { get; set; }
 
     public bool IsPublic { get; set; }
+
+    // The calculator a public rule set is shown as on the portal (kept as one definition).
+    public string? CalculatorTitleAr { get; set; }
+
+    public string? CalculatorTitleEn { get; set; }
+
+    public string? CalculatorIntroAr { get; set; }
+
+    public string? CalculatorIntroEn { get; set; }
+
+    public string? CalculatorIcon { get; set; }
+
+    public List<CalculatorInput> CalculatorInputs { get; set; } = [];
+
+    public List<CalculatorResult> CalculatorResults { get; set; } = [];
+
+    public string? CalculatorNoteAr { get; set; }
+
+    public string? CalculatorNoteEn { get; set; }
 }
 
-internal sealed class RuleSetApplier(DecisionsDbContext db, IEnumerable<IDecisionEngine> engines, IServiceProvider services) : DecisionApplierBase<RuleSet, RuleSetPayload>(db)
+internal sealed class RuleSetApplier(DecisionsDbContext db, IEnumerable<IDecisionEngine> engines, IServiceProvider services, JsonLogicEvaluator evaluator) : DecisionApplierBase<RuleSet, RuleSetPayload>(db)
 {
     public override string EntityType => DecisionChangeTypes.RuleSet;
 
@@ -72,10 +93,55 @@ internal sealed class RuleSetApplier(DecisionsDbContext db, IEnumerable<IDecisio
         entity.DescriptionEn = string.IsNullOrWhiteSpace(payload.DescriptionEn) ? null : payload.DescriptionEn.Trim();
         entity.Engine = engine;
         entity.IsPublic = payload.IsPublic;
+
+        // A calculator is described once it has fields; only public rule sets are shown as one.
+        CalculatorDefinition? calculator = null;
+        if (payload.CalculatorInputs.Count > 0 || !string.IsNullOrWhiteSpace(payload.CalculatorTitleAr))
+        {
+            calculator = new CalculatorDefinition
+            {
+                TitleAr = payload.CalculatorTitleAr?.Trim() ?? string.Empty,
+                TitleEn = payload.CalculatorTitleEn?.Trim() ?? string.Empty,
+                IntroAr = Blank(payload.CalculatorIntroAr),
+                IntroEn = Blank(payload.CalculatorIntroEn),
+                Icon = Blank(payload.CalculatorIcon),
+                Inputs = payload.CalculatorInputs,
+                Results = payload.CalculatorResults,
+                NoteAr = Blank(payload.CalculatorNoteAr),
+                NoteEn = Blank(payload.CalculatorNoteEn),
+            };
+            CalculatorRules.Validate(calculator, evaluator, errors);
+            if (!payload.IsPublic)
+            {
+                errors.Add("isPublic", "A calculator is shown only for a public rule set.");
+            }
+        }
+
+        entity.Calculator = calculator?.ToJson();
     }
 
-    protected override Task<RuleSetPayload> ToPayloadAsync(DecisionsDbContext context, RuleSet entity, CancellationToken cancellationToken) =>
-        Task.FromResult(new RuleSetPayload { DescriptionAr = entity.DescriptionAr, DescriptionEn = entity.DescriptionEn, Engine = entity.Engine, IsPublic = entity.IsPublic });
+    private static string? Blank(string? text) => string.IsNullOrWhiteSpace(text) ? null : text.Trim();
+
+    protected override Task<RuleSetPayload> ToPayloadAsync(DecisionsDbContext context, RuleSet entity, CancellationToken cancellationToken)
+    {
+        var calculator = CalculatorDefinition.Parse(entity.Calculator);
+        return Task.FromResult(new RuleSetPayload
+        {
+            DescriptionAr = entity.DescriptionAr,
+            DescriptionEn = entity.DescriptionEn,
+            Engine = entity.Engine,
+            IsPublic = entity.IsPublic,
+            CalculatorTitleAr = calculator?.TitleAr,
+            CalculatorTitleEn = calculator?.TitleEn,
+            CalculatorIntroAr = calculator?.IntroAr,
+            CalculatorIntroEn = calculator?.IntroEn,
+            CalculatorIcon = calculator?.Icon,
+            CalculatorInputs = calculator?.Inputs ?? [],
+            CalculatorResults = calculator?.Results ?? [],
+            CalculatorNoteAr = calculator?.NoteAr,
+            CalculatorNoteEn = calculator?.NoteEn,
+        });
+    }
 
     protected override async Task BeforeDeleteAsync(DecisionsDbContext context, RuleSet entity, CancellationToken cancellationToken)
     {
