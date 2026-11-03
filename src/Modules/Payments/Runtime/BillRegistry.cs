@@ -48,7 +48,7 @@ internal sealed class BillRegistry(PaymentsDbContext context, PaymentService pay
     {
         var bill = await context.Bills.AsNoTracking().SingleOrDefaultAsync(b => b.Id == id, cancellationToken) ?? throw new BillNotFoundException($"Bill {id} does not exist.");
         var provider = await context.Providers.AsNoTracking().SingleAsync(p => p.Id == bill.ProviderId, cancellationToken);
-        var events = await context.Events.AsNoTracking().Where(e => e.BillId == id).OrderBy(e => e.At)
+        var events = await context.Events.AsNoTracking().Where(e => e.BillId == id).OrderBy(e => e.At).ThenBy(e => e.Id)
             .Select(e => new BillEventView(e.At, e.Type, e.Actor, e.Comment)).ToListAsync(cancellationToken);
         return new BillDetail(Summary(bill), PaymentService.Info(bill, provider), bill.DescriptionAr, bill.DescriptionEn, bill.PayerPartyId, bill.Net, bill.Vat, bill.PaidAmount, events);
     }

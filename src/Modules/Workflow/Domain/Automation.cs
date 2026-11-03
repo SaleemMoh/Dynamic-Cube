@@ -1,3 +1,5 @@
+using DynamicCube.Platform.Persistence;
+
 namespace DynamicCube.Modules.Workflow.Domain;
 
 public enum AutomationAction

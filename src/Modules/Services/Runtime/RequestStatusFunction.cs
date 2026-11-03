@@ -45,7 +45,7 @@ internal sealed class RequestStatusFunction(ServicesDbContext context, IWorkflow
         var service = await context.Services.AsNoTracking().Where(s => s.Code == request.ServiceCode)
             .Select(s => new { s.NameAr, s.NameEn }).SingleOrDefaultAsync(cancellationToken);
         var events = await context.RequestEvents.AsNoTracking().Where(e => e.RequestId == request.Id && e.Type != RequestEventTypes.Created)
-            .OrderBy(e => e.At).Select(e => new { e.At, e.Type, e.ToStatus }).ToListAsync(cancellationToken);
+            .OrderBy(e => e.At).ThenBy(e => e.Id).Select(e => new { e.At, e.Type, e.ToStatus }).ToListAsync(cancellationToken);
         var progress = await workflows.ProgressAsync(RequestSubject.Type, request.Id, cancellationToken);
         return new ApiFunctionResult(new JsonObject
         {

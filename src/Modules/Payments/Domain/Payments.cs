@@ -120,7 +120,8 @@ public sealed class Bill : IAuditable
 /// <summary>The bill's history, including payment notifications that were refused.</summary>
 public sealed class BillEvent
 {
-    public Guid Id { get; set; } = Guid.CreateVersion7();
+    /// <summary>Increases in the order events are recorded (events of one call share their time).</summary>
+    public Guid Id { get; set; } = OrderedIds.Next();
 
     public Guid BillId { get; set; }
 
