@@ -823,7 +823,7 @@ internal sealed class RequestService(
             : new Dictionary<string, IReadOnlyList<FeeLine>>();
         // The applicant sees what happened and the reasons given to them, not which employee did it.
         var me = user.UserId;
-        var timeline = await context.RequestEvents.AsNoTracking().Where(e => e.RequestId == entity.Id).OrderBy(e => e.At)
+        var timeline = await context.RequestEvents.AsNoTracking().Where(e => e.RequestId == entity.Id).OrderBy(e => e.At).ThenBy(e => e.Id)
             .Select(e => new TimelineEntry(e.At, e.UserId == me ? e.UserId : string.Empty, e.Type, e.FromStatus, e.ToStatus, e.Comment))
             .ToListAsync(cancellationToken);
         var bills = services.GetService<IPayments>() is { } payments && entity.StatusCategory != StatusCategory.Draft

@@ -161,7 +161,8 @@ public sealed class RequestFile
 
 public sealed class RequestEvent
 {
-    public Guid Id { get; set; } = Guid.CreateVersion7();
+    /// <summary>Increases in the order events are recorded (events of one call share their time).</summary>
+    public Guid Id { get; set; } = OrderedIds.Next();
 
     public Guid RequestId { get; set; }
 

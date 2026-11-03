@@ -61,7 +61,7 @@ internal sealed class RequestAdminService(ServicesDbContext context, ServiceCata
             ?? throw new RequestNotFoundException($"Request {id} does not exist.");
         var service = await context.Services.AsNoTracking().SingleAsync(s => s.Id == entity.ServiceId, cancellationToken);
         var version = await cache.GetAsync(context, entity.ServiceVersionId, cancellationToken);
-        var timeline = await context.RequestEvents.AsNoTracking().Where(e => e.RequestId == id).OrderBy(e => e.At)
+        var timeline = await context.RequestEvents.AsNoTracking().Where(e => e.RequestId == id).OrderBy(e => e.At).ThenBy(e => e.Id)
             .Select(e => new TimelineEntry(e.At, e.UserId, e.Type, e.FromStatus, e.ToStatus, e.Comment))
             .ToListAsync(cancellationToken);
         var view = new RequestView(RequestService.Summary(entity, (service.NameAr, service.NameEn)), entity.VersionNumber, entity.LevelCode, entity.CurrentStep,
