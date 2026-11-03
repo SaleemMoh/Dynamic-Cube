@@ -572,6 +572,21 @@ the NHC demo connection `YAKEEN` and two operations.
 Later: client certificates (mutual TLS), signed WS-Security messages, lists and attributes in request envelopes, SOAP
 header elements, MTOM attachments.
 
+## Reusable service building blocks (ADR-0048) ✅
+
+After the NHCI review (`docs/reviews/nhci-classification-review.md`) the owner asked for the missing service features
+as reusable parts, not NHC-only: **repeating rows** (columns, row rules, files per row), a firm's **record lists**
+(typed in or imported, e.g. projects from Etimad, picked as rows), **packages** (features, a default, recommend-when, a
+fee formula kept between a least and a most with a note), **staff inputs on tasks** (fields recorded as facts, decision
+steps worked out again), **one request with several items** each approved or rejected on its own (a reason the
+applicant reads, a document per approved item), **acting for a firm on an authority** (Balady authorization, Najiz
+agency, checked with the provider), **automation rules** on open tasks (assign to the least loaded, remind, escalate;
+once or repeating; test and log), a **calculator page** on the portal (public rule sets, prefilled from the firm's data)
+and **integration evidence** on the request page. NHC demo packages 28–36.
+
+Later: the configurable classification engine (review §6, CE-1/CE-2), automation actions beyond tasks (abandoned
+drafts, applicant reminders), testing an unsaved automation rule from its editor.
+
 ## Phase 4 — Extended capabilities
 
 The owner chose to start Phase 4 with the report builder and come back to Phase 3 (3f sub-requests) afterwards.

@@ -190,6 +190,12 @@ every criterion: input, band, points, why a criterion did not apply.
 | Integration evidence per request | ✅ Integration call log | Show it on the request page |
 | **The classification engine** (§2) | ❌ Built-in engine is JSONLogic rule sets only | **New:** engine plug-in (below) |
 
+**Update (ADR-0048):** the service-side gaps above are now built as reusable parts — repeating rows with files per row,
+the firm's record lists with an Etimad import, packages with features and a capped formula fee, staff inputs on tasks
+with the decision worked out again, one request with a result per item (decision 1 below: one request with a result per
+sector), Balady and Najiz authorities checked with the provider, automation rules (assign, remind, escalate), the
+calculator page and integration evidence on the request page. The classification engine (CE-1 / CE-2) is still open.
+
 ## 6. Proposed approach
 
 **A configurable classification engine as a Decisions engine** (ADR-0014 contract: rule set code and version, input
