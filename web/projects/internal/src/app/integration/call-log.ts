@@ -8,9 +8,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
-import { CallLogSummary, IntegrationApi, IntegrationOutcome, TranslatePipe } from '@dynamic-cube/shared';
+import { CallLogSummary, IntegrationApi, IntegrationOutcome, TranslatePipe, SearchableSelectModule } from '@dynamic-cube/shared';
 import { OutcomeChip } from '../common/outcome-chip';
 import { CallLogDetail } from './call-log-detail';
 
@@ -25,7 +24,7 @@ import { CallLogDetail } from './call-log-detail';
     MatIconModule,
     MatInputModule,
     MatPaginatorModule,
-    MatSelectModule,
+    SearchableSelectModule,
     MatTableModule,
     OutcomeChip,
     TranslatePipe,

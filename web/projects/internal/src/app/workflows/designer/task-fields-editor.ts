@@ -6,7 +6,6 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import {
   I18nService,
   JsonLogicRule,
@@ -16,6 +15,7 @@ import {
   TaskFieldOption,
   TaskFieldType,
   TranslatePipe,
+  SearchableSelectModule,
 } from '@dynamic-cube/shared';
 
 /** A decision step the task can work out again. */
@@ -38,7 +38,7 @@ export interface DecisionChoice {
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    MatSelectModule,
+    SearchableSelectModule,
     RuleEditor,
     TranslatePipe,
   ],

@@ -6,7 +6,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
   AppsControlApi,
@@ -15,6 +14,7 @@ import {
   LocalizePipe,
   TranslatePipe,
   problemMessages,
+  SearchableSelectModule,
 } from '@dynamic-cube/shared';
 import { ConfigEditorData } from '../config/config-editor';
 import { payloadOf } from '../config/form-values';
@@ -90,7 +90,7 @@ export function isChanged(screen: ScreenRow): boolean {
     MatIconModule,
     MatInputModule,
     MatProgressBarModule,
-    MatSelectModule,
+    SearchableSelectModule,
     MatTooltipModule,
     LocalizePipe,
     TranslatePipe,

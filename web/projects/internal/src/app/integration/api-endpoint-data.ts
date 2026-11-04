@@ -13,6 +13,7 @@ import {
   I18nService,
   LocalizePipe,
   TranslatePipe,
+  SearchableSelectModule,
 } from '@dynamic-cube/shared';
 import { QuerySourceInfo } from '../apps-control/lovs/lov-builder-model';
 import {
@@ -36,6 +37,7 @@ import {
 @Component({
   selector: 'dc-api-endpoint-data',
   imports: [
+    SearchableSelectModule,
     FormsModule,
     JsonPipe,
     LocalizePipe,

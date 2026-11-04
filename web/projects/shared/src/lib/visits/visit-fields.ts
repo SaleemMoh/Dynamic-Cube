@@ -3,9 +3,9 @@ import { FormsModule } from '@angular/forms';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { LocalizePipe, TranslatePipe } from '../i18n/translate.pipe';
 import { VisitField } from './visits.api';
+import { SearchableSelectModule } from '../forms/select-auto-search';
 
 /**
  * The form fields a visit type asks for (text, notes, number, date, list, tick box), editing a plain values object.
@@ -13,7 +13,7 @@ import { VisitField } from './visits.api';
  */
 @Component({
   selector: 'dc-visit-fields',
-  imports: [FormsModule, MatCheckboxModule, MatFormFieldModule, MatInputModule, MatSelectModule, LocalizePipe, TranslatePipe],
+  imports: [FormsModule, MatCheckboxModule, MatFormFieldModule, MatInputModule, SearchableSelectModule, LocalizePipe, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @for (f of fields(); track f.code) {

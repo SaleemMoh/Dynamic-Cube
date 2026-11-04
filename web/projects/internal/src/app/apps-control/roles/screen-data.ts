@@ -4,15 +4,14 @@ import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { AppsControlApi, ConfigRow, LocalizePipe, TranslatePipe } from '@dynamic-cube/shared';
+import { AppsControlApi, ConfigRow, LocalizePipe, TranslatePipe, SearchableSelectModule } from '@dynamic-cube/shared';
 import { catchError, map, of } from 'rxjs';
 import { GrantRow, GrantType, ScreenList, ScreenNode, screenLists } from './role-models';
 
 /** The values of one list a role may see on a screen, picked from the list's values (or typed when it has none to show). */
 @Component({
   selector: 'dc-grant-values',
-  imports: [FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, LocalizePipe, TranslatePipe],
+  imports: [FormsModule, MatFormFieldModule, MatInputModule, SearchableSelectModule, LocalizePipe, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (options().length) {
@@ -89,7 +88,7 @@ export class GrantValues {
  */
 @Component({
   selector: 'dc-screen-data',
-  imports: [FormsModule, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule, GrantValues, LocalizePipe, TranslatePipe],
+  imports: [FormsModule, MatFormFieldModule, MatIconModule, MatInputModule, SearchableSelectModule, GrantValues, LocalizePipe, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="dc-data">

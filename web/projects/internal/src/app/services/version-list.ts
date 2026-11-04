@@ -7,11 +7,10 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
-import { AppsControlApi, BusinessAppContext, ConfigRow, LocalizePipe, problemMessages, ServicesApi, TranslatePipe, VersionDefinition } from '@dynamic-cube/shared';
+import { AppsControlApi, BusinessAppContext, ConfigRow, LocalizePipe, problemMessages, ServicesApi, TranslatePipe, VersionDefinition, SearchableSelectModule } from '@dynamic-cube/shared';
 import { firstValueFrom } from 'rxjs';
 import { DraftsService } from '../apps-control/drafts.service';
 import { PrivilegesService } from '../apps-control/privileges.service';
@@ -35,7 +34,7 @@ const STARTER: VersionDefinition = {
  */
 @Component({
   selector: 'dc-version-list',
-  imports: [SubmitButton, DatePipe, FormsModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule, MatTableModule, MatTooltipModule, RouterLink, LocalizePipe, TranslatePipe],
+  imports: [SubmitButton, DatePipe, FormsModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, SearchableSelectModule, MatTableModule, MatTooltipModule, RouterLink, LocalizePipe, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header class="dc-page__header dc-versions__header">

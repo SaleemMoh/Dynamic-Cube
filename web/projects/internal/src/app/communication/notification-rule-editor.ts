@@ -8,26 +8,9 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import {
-  AppsControlApi,
-  CHANNELS,
-  ChannelPreview,
-  CommunicationApi,
-  ConfigRow,
-  I18nService,
-  JsonLogicRule,
-  LocalizePipe,
-  MessageTemplateWording,
-  RuleEditor,
-  RuleVariable,
-  TranslatePipe,
-  localize,
-  problemMessages,
-  fieldPath,
-} from '@dynamic-cube/shared';
+import { AppsControlApi, CHANNELS, ChannelPreview, CommunicationApi, ConfigRow, I18nService, JsonLogicRule, LocalizePipe, MessageTemplateWording, RuleEditor, RuleVariable, TranslatePipe, localize, problemMessages, fieldPath, SearchableSelectModule } from '@dynamic-cube/shared';
 import { catchError, debounceTime, of, switchMap } from 'rxjs';
 import { ConfigEditorData } from '../apps-control/config/config-editor';
 import { DraftsService } from '../apps-control/drafts.service';
@@ -91,7 +74,7 @@ export function fromRows(rows: RecipientRow[]): { kind: string; value?: JsonLogi
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    MatSelectModule,
+    SearchableSelectModule,
     MatTooltipModule,
     LocalizePipe,
     TranslatePipe,

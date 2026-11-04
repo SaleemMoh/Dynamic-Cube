@@ -7,10 +7,9 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { ChannelPreview, CommunicationApi, LocalizePipe, MessageTemplateWording, RichTextEditor, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
+import { ChannelPreview, CommunicationApi, LocalizePipe, MessageTemplateWording, RichTextEditor, TranslatePipe, problemMessages, SearchableSelectModule } from '@dynamic-cube/shared';
 import { catchError, debounceTime, filter, of, switchMap } from 'rxjs';
 import { ConfigEditorData } from '../apps-control/config/config-editor';
 import { DraftsService } from '../apps-control/drafts.service';
@@ -55,7 +54,7 @@ export function samplePaths(value: unknown, prefix = ''): string[] {
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
-    MatSelectModule,
+    SearchableSelectModule,
     MatTabsModule,
     RichTextEditor,
     LocalizePipe,

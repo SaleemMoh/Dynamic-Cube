@@ -7,7 +7,6 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
   DecisionsApi,
@@ -15,6 +14,7 @@ import {
   TraceStep,
   TranslatePipe,
   problemMessages,
+  SearchableSelectModule,
 } from '@dynamic-cube/shared';
 import { firstValueFrom } from 'rxjs';
 import { AnswersOf, Matrix, MatrixInput, SOURCE_ICONS, cellInputs, varsOf } from './matrix-model';
@@ -131,7 +131,7 @@ export function simulatorInputs(m: Matrix, rows?: string[]): MatrixInput[] {
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    MatSelectModule,
+    SearchableSelectModule,
     MatTooltipModule,
     TranslatePipe,
   ],

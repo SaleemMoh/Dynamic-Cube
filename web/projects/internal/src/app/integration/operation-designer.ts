@@ -10,7 +10,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
@@ -30,6 +29,7 @@ import {
   TestOperationResult,
   TranslatePipe,
   problemMessages,
+  SearchableSelectModule,
 } from '@dynamic-cube/shared';
 import { catchError, of } from 'rxjs';
 import { ConfigEditorData } from '../apps-control/config/config-editor';
@@ -86,7 +86,7 @@ const OUTCOMES: IntegrationOutcome[] = [
     MatIconModule,
     MatInputModule,
     MatProgressBarModule,
-    MatSelectModule,
+    SearchableSelectModule,
     MatTabsModule,
     MatTooltipModule,
     LocalizePipe,

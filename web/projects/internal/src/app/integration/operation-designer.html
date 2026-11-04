@@ -266,15 +266,15 @@
                             [ngModelOptions]="{ updateOn: 'blur' }"
                             [attr.aria-label]="'od.param.name' | dcTranslate"
                           />
-                          <select
-                            class="od-cell"
+                          <mat-select
+                            class="dc-compact-select od-cell"
                             [ngModel]="param.location"
                             (ngModelChange)="setParameter(i, { location: $event })"
                             [disabled]="param.location === 'PATH'"
                             [attr.aria-label]="'od.param.location' | dcTranslate"
                           >
                             @for (l of locations; track l) {
-                              <option
+                              <mat-option
                                 [value]="l"
                                 [disabled]="
                                   (l === 'PATH' && param.location !== 'PATH') ||
@@ -287,9 +287,9 @@
                                     : 'od.location.' + l
                                   ) | dcTranslate
                                 }}
-                              </option>
+                              </mat-option>
                             }
-                          </select>
+                          </mat-select>
                           <input
                             class="od-cell od-mono"
                             dir="ltr"
@@ -476,16 +476,16 @@
                         [placeholder]="'od.codePlaceholder' | dcTranslate"
                         [attr.aria-label]="'od.codeValue' | dcTranslate"
                       />
-                      <select
-                        class="od-cell"
+                      <mat-select
+                        class="dc-compact-select od-cell"
                         [ngModel]="c.outcome"
                         (ngModelChange)="setCode(i, { outcome: $event })"
                         [attr.aria-label]="'od.outcome' | dcTranslate"
                       >
                         @for (o of outcomes; track o) {
-                          <option [value]="o">{{ 'od.outcome.' + o | dcTranslate }}</option>
+                          <mat-option [value]="o">{{ 'od.outcome.' + o | dcTranslate }}</mat-option>
                         }
-                      </select>
+                      </mat-select>
                       <input
                         class="od-cell"
                         dir="rtl"

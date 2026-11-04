@@ -2,8 +2,7 @@ import { ChangeDetectionStrategy, Component, input, model } from '@angular/core'
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSelectModule } from '@angular/material/select';
-import { TranslatePipe } from '@dynamic-cube/shared';
+import { TranslatePipe, SearchableSelectModule } from '@dynamic-cube/shared';
 
 export interface FilterOption {
   value: string;
@@ -13,7 +12,7 @@ export interface FilterOption {
 /** The DGA filter panel above a table: a status list, a search field and the dark search button. */
 @Component({
   selector: 'dc-list-filter',
-  imports: [FormsModule, MatFormFieldModule, MatIconModule, MatSelectModule, TranslatePipe],
+  imports: [FormsModule, MatFormFieldModule, MatIconModule, SearchableSelectModule, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <form class="dc-filter" role="search" (ngSubmit)="term.set(draft)">

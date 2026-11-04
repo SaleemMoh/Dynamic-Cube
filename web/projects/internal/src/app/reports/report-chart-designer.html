@@ -215,11 +215,15 @@
         }
         <label class="cd-opt">
           {{ 'rp.cd.sort' | dcTranslate }}
-          <select class="cd-cell" [ngModel]="c.sort" (ngModelChange)="set({ sort: $event })">
+          <mat-select
+            class="dc-compact-select cd-cell"
+            [ngModel]="c.sort"
+            (ngModelChange)="set({ sort: $event })"
+          >
             @for (s of sorts; track s) {
-              <option [value]="s">{{ 'rp.cd.sort.' + s | dcTranslate }}</option>
+              <mat-option [value]="s">{{ 'rp.cd.sort.' + s | dcTranslate }}</mat-option>
             }
-          </select>
+          </mat-select>
         </label>
         <label class="cd-opt">
           {{ 'rp.cd.limit' | dcTranslate }}
@@ -256,32 +260,32 @@
       [attr.aria-label]="'rp.cd.label' | dcTranslate"
     />
     @if (zone !== 'series') {
-      <select
-        class="cd-chip__select"
+      <mat-select
+        class="dc-compact-select cd-chip__select"
         [ngModel]="f.aggregate ?? ''"
         (ngModelChange)="setOn(zone, i, { aggregate: $event || null }, f)"
         [attr.aria-label]="'rp.column.aggregate' | dcTranslate"
       >
         @if (f.column) {
-          <option value="">{{ 'rp.cd.asIs' | dcTranslate }}</option>
+          <mat-option value="">{{ 'rp.cd.asIs' | dcTranslate }}</mat-option>
         }
         @for (a of aggregatesOf(f); track a) {
-          <option [value]="a">{{ 'rp.aggregate.' + a | dcTranslate }}</option>
+          <mat-option [value]="a">{{ 'rp.aggregate.' + a | dcTranslate }}</mat-option>
         }
-      </select>
+      </mat-select>
     }
     @if (!f.aggregate && categoryOf(f.column) === 'DATE') {
-      <select
-        class="cd-chip__select"
+      <mat-select
+        class="dc-compact-select cd-chip__select"
         [ngModel]="f.bucket ?? ''"
         (ngModelChange)="setOn(zone, i, { bucket: $event || null }, f)"
         [attr.aria-label]="'rp.cd.bucket' | dcTranslate"
       >
-        <option value="">{{ 'rp.cd.bucket.none' | dcTranslate }}</option>
+        <mat-option value="">{{ 'rp.cd.bucket.none' | dcTranslate }}</mat-option>
         @for (b of buckets; track b) {
-          <option [value]="b">{{ 'rp.cd.bucket.' + b | dcTranslate }}</option>
+          <mat-option [value]="b">{{ 'rp.cd.bucket.' + b | dcTranslate }}</mat-option>
         }
-      </select>
+      </mat-select>
     }
     <button
       type="button"
@@ -296,19 +300,19 @@
 
 <!-- Adding a field by choosing it (the same as dragging it here). -->
 <ng-template #adder let-zone="zone">
-  <select
+  <mat-select
     #pick
-    class="cd-add"
-    (change)="add(zone, pick.value); pick.value = ''"
+    class="dc-compact-select cd-add"
+    (selectionChange)="add(zone, pick.value); pick.value = ''"
     [attr.aria-label]="'rp.cd.addField' | dcTranslate"
     [attr.data-testid]="'cd-add-' + zone"
   >
-    <option value="">+ {{ 'rp.cd.addField' | dcTranslate }}</option>
+    <mat-option value="">+ {{ 'rp.cd.addField' | dcTranslate }}</mat-option>
     @if (zone !== 'series') {
-      <option [value]="rowCount">{{ 'rp.cd.rows' | dcTranslate }}</option>
+      <mat-option [value]="rowCount">{{ 'rp.cd.rows' | dcTranslate }}</mat-option>
     }
     @for (f of fields(); track f.ref) {
-      <option [value]="f.ref">{{ fieldLabel(f) }} ({{ f.ref }})</option>
+      <mat-option [value]="f.ref">{{ fieldLabel(f) }} ({{ f.ref }})</mat-option>
     }
-  </select>
+  </mat-select>
 </ng-template>

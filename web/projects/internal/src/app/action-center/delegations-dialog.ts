@@ -6,14 +6,13 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { LocalizePipe, TranslatePipe, WorkflowApi, problemMessages } from '@dynamic-cube/shared';
+import { LocalizePipe, TranslatePipe, WorkflowApi, problemMessages, SearchableSelectModule } from '@dynamic-cube/shared';
 import { firstValueFrom } from 'rxjs';
 
 /** Out of office: who acts on my tasks between two dates. The delegate sees my tasks in their own inbox. */
 @Component({
   selector: 'dc-delegations-dialog',
-  imports: [FormsModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule, LocalizePipe, TranslatePipe],
+  imports: [FormsModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatIconModule, MatInputModule, SearchableSelectModule, LocalizePipe, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <h2 mat-dialog-title>{{ 'delegations.title' | dcTranslate }}</h2>

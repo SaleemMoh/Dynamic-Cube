@@ -13,7 +13,6 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -25,6 +24,7 @@ import {
   LocalizePipe,
   TranslatePipe,
   problemMessages,
+  SearchableSelectModule,
 } from '@dynamic-cube/shared';
 import { firstValueFrom } from 'rxjs';
 import { DraftsService } from '../../apps-control/drafts.service';
@@ -63,7 +63,7 @@ import { MATRIX_TRANSLATIONS } from './matrix-translations';
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    MatSelectModule,
+    SearchableSelectModule,
     MatTabsModule,
     MatTooltipModule,
     MatrixConnections,

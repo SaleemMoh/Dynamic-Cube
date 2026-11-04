@@ -7,9 +7,8 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { ConfigRow, I18nService, LocalizePipe, StructuredInput, StructuredShape, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
+import { ConfigRow, I18nService, LocalizePipe, StructuredInput, StructuredShape, TranslatePipe, problemMessages, SearchableSelectModule } from '@dynamic-cube/shared';
 import { DraftsService } from '../drafts.service';
 import { PermissionCards } from './permission-cards';
 import { RoleMenus } from './role-menus';
@@ -81,7 +80,7 @@ const CODE = /^[A-Za-z][A-Za-z0-9_-]{0,99}$/;
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    MatSelectModule,
+    SearchableSelectModule,
     MatTooltipModule,
     PermissionCards,
     RoleMenus,

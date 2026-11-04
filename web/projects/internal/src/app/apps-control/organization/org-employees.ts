@@ -7,10 +7,9 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { AppsControlApi, ConfigRow, LocalizePipe, LocalizedText, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
+import { AppsControlApi, ConfigRow, LocalizePipe, LocalizedText, TranslatePipe, problemMessages, SearchableSelectModule } from '@dynamic-cube/shared';
 import { firstValueFrom } from 'rxjs';
 import { payloadOf } from '../config/form-values';
 import { DraftsService } from '../drafts.service';
@@ -71,7 +70,7 @@ export function employeesOf(users: ConfigRow[], units: string[]): EmployeeRow[] 
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    MatSelectModule,
+    SearchableSelectModule,
     MatSlideToggleModule,
     MatTooltipModule,
     LocalizePipe,

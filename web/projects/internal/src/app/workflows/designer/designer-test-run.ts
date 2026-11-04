@@ -4,8 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { I18nService, JsonValue, LocalizePipe, TranslatePipe, localize } from '@dynamic-cube/shared';
+import { I18nService, JsonValue, LocalizePipe, TranslatePipe, localize, SearchableSelectModule } from '@dynamic-cube/shared';
 import { DesignerCanvas } from './designer-canvas';
 import { NodeDef } from './designer-model';
 import { DesignerReferences } from './designer-references';
@@ -19,7 +18,7 @@ import { TestLogEntry, TestState, choose, startRun, waiting } from './test-run';
  */
 @Component({
   selector: 'dc-designer-test-run',
-  imports: [FormsModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule, LocalizePipe, TranslatePipe, DesignerCanvas],
+  imports: [FormsModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, SearchableSelectModule, LocalizePipe, TranslatePipe, DesignerCanvas],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="dc-test">

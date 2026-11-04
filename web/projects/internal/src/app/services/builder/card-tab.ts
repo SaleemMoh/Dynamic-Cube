@@ -4,16 +4,15 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { I18nService, LocalizePipe, ServiceCardDefinition, ServiceChannel, TranslatePipe } from '@dynamic-cube/shared';
+import { I18nService, LocalizePipe, ServiceCardDefinition, ServiceChannel, TranslatePipe, SearchableSelectModule } from '@dynamic-cube/shared';
 import { BuilderStore } from './builder-store';
 import { move } from './builder-model';
 
 /** What the portal's service page says before the service is started, with a preview of it. */
 @Component({
   selector: 'dc-builder-card-tab',
-  imports: [FormsModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule, MatTooltipModule, LocalizePipe, TranslatePipe],
+  imports: [FormsModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, SearchableSelectModule, MatTooltipModule, LocalizePipe, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="dc-ct">

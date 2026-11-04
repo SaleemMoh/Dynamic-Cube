@@ -16,7 +16,6 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
   AppsControlApi,
@@ -25,6 +24,7 @@ import {
   LocalizePipe,
   LocalizedText,
   TranslatePipe,
+  SearchableSelectModule,
 } from '@dynamic-cube/shared';
 import { catchError, forkJoin, of } from 'rxjs';
 import { MenuTreeNode, buildMenuTree } from '../menus/menu-tree';
@@ -71,7 +71,7 @@ interface AppChoice {
     MatFormFieldModule,
     MatIconModule,
     MatProgressBarModule,
-    MatSelectModule,
+    SearchableSelectModule,
     MatTooltipModule,
     GrantValues,
     LocalizePipe,

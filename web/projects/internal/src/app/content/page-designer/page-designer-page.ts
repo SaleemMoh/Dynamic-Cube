@@ -17,7 +17,6 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router } from '@angular/router';
@@ -40,6 +39,7 @@ import {
   problemMessages,
   readPageDesign,
   starterPage,
+  SearchableSelectModule,
 } from '@dynamic-cube/shared';
 import { catchError, firstValueFrom, of } from 'rxjs';
 import { FullWindow } from '../../common/full-window';
@@ -104,7 +104,7 @@ type Selection = { type: 'block'; id: string } | { type: 'section'; index: numbe
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    MatSelectModule,
+    SearchableSelectModule,
     MatTooltipModule,
     LocalizePipe,
     NgTemplateOutlet,

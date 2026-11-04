@@ -6,7 +6,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
 import {
@@ -15,6 +14,7 @@ import {
   PaymentsApi,
   TranslatePipe,
   billStatusBadge,
+  SearchableSelectModule,
 } from '@dynamic-cube/shared';
 import { debounceTime } from 'rxjs';
 
@@ -29,7 +29,7 @@ import { debounceTime } from 'rxjs';
     MatIconModule,
     MatInputModule,
     MatPaginatorModule,
-    MatSelectModule,
+    SearchableSelectModule,
     MatTableModule,
     RouterLink,
     TranslatePipe,

@@ -8,7 +8,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
   AppsControlApi,
@@ -18,6 +17,7 @@ import {
   I18nService,
   TranslatePipe,
   problemMessages,
+  SearchableSelectModule,
 } from '@dynamic-cube/shared';
 import { catchError, firstValueFrom, of } from 'rxjs';
 import { DraftsService } from '../drafts.service';
@@ -46,7 +46,7 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     MatIconModule,
     MatInputModule,
     MatProgressBarModule,
-    MatSelectModule,
+    SearchableSelectModule,
     MatTooltipModule,
     DualList,
     TranslatePipe,

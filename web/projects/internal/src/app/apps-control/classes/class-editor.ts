@@ -7,8 +7,7 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { AppsControlApi, ConfigRow, LocalizePipe, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
+import { AppsControlApi, ConfigRow, LocalizePipe, TranslatePipe, problemMessages, SearchableSelectModule } from '@dynamic-cube/shared';
 import { catchError, of } from 'rxjs';
 import { DraftsService } from '../drafts.service';
 import { PrivilegesService } from '../privileges.service';
@@ -58,7 +57,7 @@ const CODE = /^[A-Z][A-Z0-9_-]{0,50}$/;
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    MatSelectModule,
+    SearchableSelectModule,
     LocalizePipe,
     TranslatePipe,
   ],

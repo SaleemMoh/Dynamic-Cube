@@ -7,9 +7,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSelectModule } from '@angular/material/select';
 import { ActivatedRoute } from '@angular/router';
-import { AppsControlApi, IntegrationApi, LocalizePipe, TestOperationResult, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
+import { AppsControlApi, IntegrationApi, LocalizePipe, TestOperationResult, TranslatePipe, problemMessages, SearchableSelectModule } from '@dynamic-cube/shared';
 import { firstValueFrom } from 'rxjs';
 import { OutcomeChip } from '../common/outcome-chip';
 
@@ -40,7 +39,7 @@ interface OperationRow {
     MatIconModule,
     MatInputModule,
     MatProgressBarModule,
-    MatSelectModule,
+    SearchableSelectModule,
     LocalizePipe,
     OutcomeChip,
     TranslatePipe,

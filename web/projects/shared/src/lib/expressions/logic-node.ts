@@ -15,7 +15,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { I18nService } from '../i18n/i18n.service';
 import { LocalizedText, localize } from '../i18n/language';
@@ -31,6 +30,7 @@ import {
   NO_VALUE_OPS,
   writeValue,
 } from './logic-model';
+import { SearchableSelectModule } from '../forms/select-auto-search';
 
 type ValueKind = LogicValue['kind'];
 
@@ -139,7 +139,7 @@ export class LogicFieldPicker {
 /** A fixed value, typed or chosen as the compared field allows (its options, class values or list values). */
 @Component({
   selector: 'dc-logic-fixed',
-  imports: [FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, TranslatePipe],
+  imports: [FormsModule, MatFormFieldModule, MatInputModule, SearchableSelectModule, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @let options = choices();
@@ -311,7 +311,7 @@ function newCompare(): LogicCondition {
     MatIconModule,
     MatInputModule,
     MatMenuModule,
-    MatSelectModule,
+    SearchableSelectModule,
     MatTooltipModule,
     TranslatePipe,
     LogicFieldPicker,

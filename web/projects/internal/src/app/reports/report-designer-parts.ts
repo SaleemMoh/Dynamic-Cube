@@ -13,6 +13,7 @@ import {
   ReportFilterDef,
   ReportTileDef,
   TranslatePipe,
+  SearchableSelectModule,
 } from '@dynamic-cube/shared';
 import { QuerySourceInfo, USER_FACTS } from '../apps-control/lovs/lov-builder-model';
 import {
@@ -51,6 +52,7 @@ export interface LovOption {
 @Component({
   selector: 'dc-report-designer-parts',
   imports: [
+    SearchableSelectModule,
     FormsModule,
     MatButtonModule,
     MatButtonToggleModule,

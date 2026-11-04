@@ -9,9 +9,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { I18nService, JsonLogicRule, LocalizePipe, LocalizedText, RuleEditor, RuleVariable, TranslatePipe, answerField, localize } from '@dynamic-cube/shared';
+import { I18nService, JsonLogicRule, LocalizePipe, LocalizedText, RuleEditor, RuleVariable, TranslatePipe, answerField, localize, SearchableSelectModule } from '@dynamic-cube/shared';
 import { ActionDef, AssignmentDef, NodeDef, NodeType, Outlet, WorkflowDraft, newAction, replaceNode } from './designer-model';
 import { DesignerReferences } from './designer-references';
 import { DesignerStore } from './designer-store';
@@ -35,7 +34,7 @@ const CODE = /^[A-Z][A-Z0-9_-]{0,50}$/;
     MatIconModule,
     MatInputModule,
     MatMenuModule,
-    MatSelectModule,
+    SearchableSelectModule,
     MatTooltipModule,
     LocalizePipe,
     TranslatePipe,

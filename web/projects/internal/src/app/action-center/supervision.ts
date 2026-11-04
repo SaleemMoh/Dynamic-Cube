@@ -7,8 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSelectModule } from '@angular/material/select';
-import { SlaState, TranslatePipe, WorkflowApi } from '@dynamic-cube/shared';
+import { SlaState, TranslatePipe, WorkflowApi, SearchableSelectModule } from '@dynamic-cube/shared';
 import { debounceTime } from 'rxjs';
 import { TaskTable } from './task-table';
 
@@ -23,7 +22,7 @@ import { TaskTable } from './task-table';
     MatInputModule,
     MatPaginatorModule,
     MatProgressBarModule,
-    MatSelectModule,
+    SearchableSelectModule,
     TaskTable,
     TranslatePipe,
   ],

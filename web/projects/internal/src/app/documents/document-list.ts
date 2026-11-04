@@ -6,10 +6,9 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
-import { AppsControlApi, BusinessAppContext, docStatusBadge, DOCUMENT_STATUSES, DocumentsApi, DocumentStatus, LocalizePipe, TranslatePipe } from '@dynamic-cube/shared';
+import { AppsControlApi, BusinessAppContext, docStatusBadge, DOCUMENT_STATUSES, DocumentsApi, DocumentStatus, LocalizePipe, TranslatePipe, SearchableSelectModule } from '@dynamic-cube/shared';
 import { debounceTime } from 'rxjs';
 import { BranchNames } from '../common/branch-names';
 
@@ -23,7 +22,7 @@ import { BranchNames } from '../common/branch-names';
     MatIconModule,
     MatInputModule,
     MatPaginatorModule,
-    MatSelectModule,
+    SearchableSelectModule,
     MatTableModule,
     RouterLink,
     LocalizePipe,

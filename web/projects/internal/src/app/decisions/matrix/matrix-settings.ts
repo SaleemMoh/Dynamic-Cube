@@ -2,13 +2,13 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
 import { FormsModule } from '@angular/forms';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
 import {
   FormOption,
   StructuredColumn,
   StructuredInput,
   StructuredShape,
   TranslatePipe,
+  SearchableSelectModule,
 } from '@dynamic-cube/shared';
 import { Matrix, inputFields, projectFields } from './matrix-model';
 
@@ -40,7 +40,7 @@ const TYPES: FormOption[] = ['number', 'text', 'option', 'boolean', 'date', 'lis
     FormsModule,
     MatExpansionModule,
     MatFormFieldModule,
-    MatSelectModule,
+    SearchableSelectModule,
     StructuredInput,
     TranslatePipe,
   ],

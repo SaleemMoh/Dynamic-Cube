@@ -6,7 +6,6 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
   AppsControlApi,
@@ -15,6 +14,7 @@ import {
   LocalizePipe,
   TranslatePipe,
   TranslationDictionary,
+  SearchableSelectModule,
 } from '@dynamic-cube/shared';
 import { catchError, of } from 'rxjs';
 import { BundleDef, PrerequisiteDef, ServiceDraft, freeCode } from './builder-model';
@@ -130,7 +130,7 @@ const LINKED_TRANSLATIONS: TranslationDictionary = {
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    MatSelectModule,
+    SearchableSelectModule,
     MatTooltipModule,
     LocalizePipe,
     TranslatePipe,

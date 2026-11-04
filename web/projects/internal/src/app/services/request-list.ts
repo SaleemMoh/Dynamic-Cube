@@ -6,17 +6,16 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
-import { BusinessAppContext, LocalizePipe, ServicesApi, StatusCategory, TranslatePipe } from '@dynamic-cube/shared';
+import { BusinessAppContext, LocalizePipe, ServicesApi, StatusCategory, TranslatePipe, SearchableSelectModule } from '@dynamic-cube/shared';
 import { debounceTime } from 'rxjs';
 import { BranchNames } from '../common/branch-names';
 
 /** Submitted requests (processing arrives with the workflow engine and Action Center). */
 @Component({
   selector: 'dc-request-list',
-  imports: [DatePipe, DecimalPipe, FormsModule, MatFormFieldModule, MatIconModule, MatInputModule, MatPaginatorModule, MatSelectModule, MatTableModule, RouterLink, LocalizePipe, TranslatePipe],
+  imports: [DatePipe, DecimalPipe, FormsModule, MatFormFieldModule, MatIconModule, MatInputModule, MatPaginatorModule, SearchableSelectModule, MatTableModule, RouterLink, LocalizePipe, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header class="dc-page__header">

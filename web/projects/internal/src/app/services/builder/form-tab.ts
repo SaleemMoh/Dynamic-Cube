@@ -9,22 +9,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { NgTemplateOutlet } from '@angular/common';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import {
-  I18nService,
-  IntegrationDisplay,
-  JsonLogicRule,
-  LocalizePipe,
-  QuestionUse,
-  RuleEditor,
-  RuleVariable,
-  SectionDefinition,
-  StepDefinition,
-  StepType,
-  TranslatePipe,
-  localize,
-} from '@dynamic-cube/shared';
+import { I18nService, IntegrationDisplay, JsonLogicRule, LocalizePipe, QuestionUse, RuleEditor, RuleVariable, SectionDefinition, StepDefinition, StepType, TranslatePipe, localize, SearchableSelectModule } from '@dynamic-cube/shared';
 import { firstValueFrom } from 'rxjs';
 import { ConfigEditor, ConfigEditorData } from '../../apps-control/config/config-editor';
 import { SERVICE_SECTIONS } from '../../apps-control/config/module-sections';
@@ -74,7 +60,7 @@ const CODE = /^[A-Z][A-Z0-9_-]{0,50}$/;
     MatIconModule,
     MatInputModule,
     MatMenuModule,
-    MatSelectModule,
+    SearchableSelectModule,
     NgTemplateOutlet,
     MatTooltipModule,
     LocalizePipe,

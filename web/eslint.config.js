@@ -36,6 +36,12 @@ module.exports = defineConfig([
   {
     files: ['**/*.html'],
     extends: [angular.configs.templateRecommended, angular.configs.templateAccessibility],
-    rules: {},
+    rules: {
+      // A Material select inside a label is the label's control.
+      '@angular-eslint/template/label-has-associated-control': [
+        'error',
+        { controlComponents: ['mat-select'] },
+      ],
+    },
   },
 ]);

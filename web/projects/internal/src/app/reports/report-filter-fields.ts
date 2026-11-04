@@ -3,13 +3,13 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import {
   AppsControlApi,
   I18nService,
   LovItem,
   ReportFilterDef,
   TranslatePipe,
+  SearchableSelectModule,
 } from '@dynamic-cube/shared';
 import { catchError, forkJoin, map, of } from 'rxjs';
 import { joinValues, splitValues } from './report-model';
@@ -23,7 +23,7 @@ const NONE: string[] = [];
  */
 @Component({
   selector: 'dc-report-filter-fields',
-  imports: [FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, TranslatePipe],
+  imports: [FormsModule, MatFormFieldModule, MatInputModule, SearchableSelectModule, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @for (f of filters(); track f.name) {

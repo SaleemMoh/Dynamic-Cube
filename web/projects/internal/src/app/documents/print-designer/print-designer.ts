@@ -15,9 +15,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { I18nService, TranslatePipe } from '@dynamic-cube/shared';
+import { I18nService, TranslatePipe, SearchableSelectModule } from '@dynamic-cube/shared';
 import {
   PRINT_FIELDS,
   PageSize,
@@ -66,7 +65,7 @@ interface Drag {
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    MatSelectModule,
+    SearchableSelectModule,
     MatTooltipModule,
     TranslatePipe,
   ],

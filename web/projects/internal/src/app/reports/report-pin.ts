@@ -6,7 +6,6 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import {
   DashboardSummary,
   DashboardView,
@@ -16,6 +15,7 @@ import {
   ReportsApi,
   TranslatePipe,
   problemMessages,
+  SearchableSelectModule,
 } from '@dynamic-cube/shared';
 import { catchError, firstValueFrom, map, of } from 'rxjs';
 import { cleanFilters } from './report-model';
@@ -47,7 +47,7 @@ interface PinChoice {
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
-    MatSelectModule,
+    SearchableSelectModule,
     TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,

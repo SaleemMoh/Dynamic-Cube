@@ -19,6 +19,7 @@ export * from './lib/forms/dynamic-form';
 export * from './lib/forms/icons';
 export * from './lib/forms/dual-list';
 export * from './lib/forms/select-search';
+export * from './lib/forms/select-auto-search';
 export * from './lib/forms/icon-picker';
 export * from './lib/forms/rich-text-editor';
 export * from './lib/forms/structured-input';

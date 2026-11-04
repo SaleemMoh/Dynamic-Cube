@@ -124,16 +124,16 @@
                         <span class="ad-chip">{{
                           'pa.location.' + param.location | dcTranslate
                         }}</span>
-                        <select
-                          class="ad-cell"
+                        <mat-select
+                          class="dc-compact-select ad-cell"
                           [ngModel]="param.type"
                           (ngModelChange)="setParameter(i, { type: $event })"
                           [attr.aria-label]="'pa.param.type' | dcTranslate"
                         >
                           @for (t of types; track t) {
-                            <option [value]="t">{{ 'pa.type.' + t | dcTranslate }}</option>
+                            <mat-option [value]="t">{{ 'pa.type.' + t | dcTranslate }}</mat-option>
                           }
-                        </select>
+                        </mat-select>
                         <mat-checkbox
                           [ngModel]="param.isRequired || param.location === 'PATH'"
                           [disabled]="param.location === 'PATH'"

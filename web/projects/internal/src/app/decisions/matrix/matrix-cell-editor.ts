@@ -13,9 +13,14 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { I18nService, LocalizePipe, LogicChip, TranslatePipe } from '@dynamic-cube/shared';
+import {
+  I18nService,
+  LocalizePipe,
+  LogicChip,
+  TranslatePipe,
+  SearchableSelectModule,
+} from '@dynamic-cube/shared';
 import { firstValueFrom } from 'rxjs';
 import { MatrixInputEditor, MatrixInputEditorData } from './matrix-input-editor';
 import {
@@ -79,7 +84,7 @@ export interface MatrixCellEditorResult {
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    MatSelectModule,
+    SearchableSelectModule,
     MatTooltipModule,
     TranslatePipe,
   ],
@@ -467,28 +472,30 @@ export interface MatrixCellEditorResult {
                             <tr>
                               @if (sizes().length) {
                                 <td>
-                                  <select
+                                  <mat-select
                                     [ngModel]="b.size ?? ''"
                                     (ngModelChange)="setBand(gi, ci, bi, { size: $event || null })"
-                                    class="mx-ce__in"
+                                    class="dc-compact-select mx-ce__in"
                                   >
-                                    <option value="">{{ 'mx.cell.allSizes' | dcTranslate }}</option>
+                                    <mat-option value="">{{
+                                      'mx.cell.allSizes' | dcTranslate
+                                    }}</mat-option>
                                     @for (s of sizes(); track s.code) {
-                                      <option [value]="s.code">{{ s.code }}</option>
+                                      <mat-option [value]="s.code">{{ s.code }}</mat-option>
                                     }
-                                  </select>
+                                  </mat-select>
                                 </td>
                               }
                               <td class="mx-ce__range">
-                                <select
+                                <mat-select
                                   [ngModel]="b.minInclusive"
                                   (ngModelChange)="setBand(gi, ci, bi, { minInclusive: $event })"
-                                  class="mx-ce__op"
+                                  class="dc-compact-select mx-ce__op"
                                   [attr.aria-label]="'mx.cell.from' | dcTranslate"
                                 >
-                                  <option [ngValue]="true">≥</option>
-                                  <option [ngValue]="false">&gt;</option>
-                                </select>
+                                  <mat-option [value]="true">≥</mat-option>
+                                  <mat-option [value]="false">&gt;</mat-option>
+                                </mat-select>
                                 <input
                                   type="number"
                                   dir="ltr"
@@ -498,15 +505,15 @@ export interface MatrixCellEditorResult {
                                 />
                               </td>
                               <td class="mx-ce__range">
-                                <select
+                                <mat-select
                                   [ngModel]="b.maxInclusive"
                                   (ngModelChange)="setBand(gi, ci, bi, { maxInclusive: $event })"
-                                  class="mx-ce__op"
+                                  class="dc-compact-select mx-ce__op"
                                   [attr.aria-label]="'mx.cell.to' | dcTranslate"
                                 >
-                                  <option [ngValue]="true">≤</option>
-                                  <option [ngValue]="false">&lt;</option>
-                                </select>
+                                  <mat-option [value]="true">≤</mat-option>
+                                  <mat-option [value]="false">&lt;</mat-option>
+                                </mat-select>
                                 <input
                                   type="number"
                                   dir="ltr"

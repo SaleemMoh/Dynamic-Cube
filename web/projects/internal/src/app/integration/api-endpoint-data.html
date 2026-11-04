@@ -14,28 +14,28 @@
 @if (def().kind === 'QUERY') {
   <h3>{{ 'pa.source' | dcTranslate }}</h3>
   <div class="ed-row">
-    <select
-      class="ed-cell"
+    <mat-select
+      class="dc-compact-select ed-cell"
       [ngModel]="query().from.kind"
       (ngModelChange)="setFrom($event, '')"
       [attr.aria-label]="'pa.source' | dcTranslate"
     >
       @for (k of kinds; track k) {
-        <option [value]="k">{{ 'pa.source.' + k | dcTranslate }}</option>
+        <mat-option [value]="k">{{ 'pa.source.' + k | dcTranslate }}</mat-option>
       }
-    </select>
-    <select
-      class="ed-cell ed-grow"
+    </mat-select>
+    <mat-select
+      class="dc-compact-select ed-cell ed-grow"
       [ngModel]="query().from.code"
       (ngModelChange)="setFrom(query().from.kind, $event)"
       data-testid="pa-source"
       [attr.aria-label]="'pa.source' | dcTranslate"
     >
-      <option value="">—</option>
+      <mat-option value="">—</mat-option>
       @for (s of sourcesOf(query().from.kind); track s.code) {
-        <option [value]="s.code">{{ sourceName(s) }}</option>
+        <mat-option [value]="s.code">{{ sourceName(s) }}</mat-option>
       }
-    </select>
+    </mat-select>
     <code class="ed-alias" dir="ltr">{{ query().from.alias }}</code>
   </div>
   @if (query().from.kind === 'CLASS') {
@@ -44,29 +44,29 @@
 
   @for (j of query().joins; track $index; let i = $index) {
     <div class="ed-row">
-      <select class="ed-cell" [ngModel]="j.type" (ngModelChange)="setJoin(i, { type: $event })">
-        <option value="INNER">{{ 'pa.join.type.INNER' | dcTranslate }}</option>
-        <option value="LEFT">{{ 'pa.join.type.LEFT' | dcTranslate }}</option>
-      </select>
-      <select
-        class="ed-cell"
+      <mat-select class="dc-compact-select ed-cell" [ngModel]="j.type" (ngModelChange)="setJoin(i, { type: $event })">
+        <mat-option value="INNER">{{ 'pa.join.type.INNER' | dcTranslate }}</mat-option>
+        <mat-option value="LEFT">{{ 'pa.join.type.LEFT' | dcTranslate }}</mat-option>
+      </mat-select>
+      <mat-select
+        class="dc-compact-select ed-cell"
         [ngModel]="j.kind"
         (ngModelChange)="setJoin(i, { kind: $event, code: '' })"
       >
         @for (k of kinds; track k) {
-          <option [value]="k">{{ 'pa.source.' + k | dcTranslate }}</option>
+          <mat-option [value]="k">{{ 'pa.source.' + k | dcTranslate }}</mat-option>
         }
-      </select>
-      <select
-        class="ed-cell ed-grow"
+      </mat-select>
+      <mat-select
+        class="dc-compact-select ed-cell ed-grow"
         [ngModel]="j.code"
         (ngModelChange)="setJoin(i, { code: $event })"
       >
-        <option value="">—</option>
+        <mat-option value="">—</mat-option>
         @for (s of sourcesOf(j.kind); track s.code) {
-          <option [value]="s.code">{{ sourceName(s) }}</option>
+          <mat-option [value]="s.code">{{ sourceName(s) }}</mat-option>
         }
-      </select>
+      </mat-select>
       <code class="ed-alias" dir="ltr">{{ j.alias }}</code>
       <button
         matIconButton
@@ -79,31 +79,31 @@
     </div>
     <div class="ed-row ed-indent">
       <span>{{ 'pa.join.on' | dcTranslate }}</span>
-      <select
-        class="ed-cell ed-grow"
+      <mat-select
+        class="dc-compact-select ed-cell ed-grow"
         dir="ltr"
         [ngModel]="j.on[0]?.left ?? ''"
         (ngModelChange)="setJoinOn(i, 'left', $event)"
       >
-        <option value="">—</option>
+        <mat-option value="">—</mat-option>
         @for (c of columns(); track c.ref) {
           @if (!c.ref.startsWith(j.alias + '.')) {
-            <option [value]="c.ref">{{ c.ref }}</option>
+            <mat-option [value]="c.ref">{{ c.ref }}</mat-option>
           }
         }
-      </select>
+      </mat-select>
       <span>=</span>
-      <select
-        class="ed-cell ed-grow"
+      <mat-select
+        class="dc-compact-select ed-cell ed-grow"
         dir="ltr"
         [ngModel]="j.on[0]?.right ?? ''"
         (ngModelChange)="setJoinOn(i, 'right', $event)"
       >
-        <option value="">—</option>
+        <mat-option value="">—</mat-option>
         @for (c of columnsOf(j.alias); track c.ref) {
-          <option [value]="c.ref">{{ c.ref }}</option>
+          <mat-option [value]="c.ref">{{ c.ref }}</mat-option>
         }
-      </select>
+      </mat-select>
     </div>
   }
   <button
@@ -127,18 +127,18 @@
         (ngModelChange)="setField(i, { name: $event })"
         [attr.aria-label]="'pa.field.name' | dcTranslate"
       />
-      <select
-        class="ed-cell ed-grow"
+      <mat-select
+        class="dc-compact-select ed-cell ed-grow"
         dir="ltr"
         [ngModel]="f.column"
         (ngModelChange)="setField(i, { column: $event })"
         [attr.aria-label]="'pa.field.column' | dcTranslate"
       >
-        <option value="">—</option>
+        <mat-option value="">—</mat-option>
         @for (c of columns(); track c.ref) {
-          <option [value]="c.ref">{{ c.ref }}</option>
+          <mat-option [value]="c.ref">{{ c.ref }}</mat-option>
         }
-      </select>
+      </mat-select>
       <button
         matIconButton
         type="button"
@@ -174,56 +174,56 @@
   }
   @for (c of query().conditions; track $index; let i = $index) {
     <div class="ed-row">
-      <select
-        class="ed-cell ed-grow"
+      <mat-select
+        class="dc-compact-select ed-cell ed-grow"
         dir="ltr"
         [ngModel]="c.column"
         (ngModelChange)="setCondition(i, { column: $event })"
       >
-        <option value="">—</option>
+        <mat-option value="">—</mat-option>
         @for (col of columns(); track col.ref) {
-          <option [value]="col.ref">{{ col.ref }}</option>
+          <mat-option [value]="col.ref">{{ col.ref }}</mat-option>
         }
-      </select>
-      <select class="ed-cell" [ngModel]="c.op" (ngModelChange)="setCondition(i, { op: $event })">
+      </mat-select>
+      <mat-select class="dc-compact-select ed-cell" [ngModel]="c.op" (ngModelChange)="setCondition(i, { op: $event })">
         @for (op of operators(c); track op) {
-          <option [value]="op">{{ 'pa.op.' + op | dcTranslate }}</option>
+          <mat-option [value]="op">{{ 'pa.op.' + op | dcTranslate }}</mat-option>
         }
-      </select>
+      </mat-select>
       @if (c.op !== 'IS_EMPTY' && c.op !== 'IS_NOT_EMPTY') {
-        <select
-          class="ed-cell"
+        <mat-select
+          class="dc-compact-select ed-cell"
           [ngModel]="c.source"
           (ngModelChange)="setCondition(i, { source: $event })"
         >
           @for (s of conditionSources; track s) {
-            <option [value]="s">{{ 'pa.condition.' + s | dcTranslate }}</option>
+            <mat-option [value]="s">{{ 'pa.condition.' + s | dcTranslate }}</mat-option>
           }
-        </select>
+        </mat-select>
         @switch (c.source) {
           @case ('PARAM') {
-            <select
-              class="ed-cell ed-grow"
+            <mat-select
+              class="dc-compact-select ed-cell ed-grow"
               dir="ltr"
               [ngModel]="c.param"
               (ngModelChange)="setCondition(i, { param: $event })"
             >
-              <option value="">—</option>
+              <mat-option value="">—</mat-option>
               @for (p of params(); track p) {
-                <option [value]="p">{{ p }}</option>
+                <mat-option [value]="p">{{ p }}</mat-option>
               }
-            </select>
+            </mat-select>
           }
           @case ('USER') {
-            <select
-              class="ed-cell ed-grow"
+            <mat-select
+              class="dc-compact-select ed-cell ed-grow"
               [ngModel]="c.user"
               (ngModelChange)="setCondition(i, { user: $event })"
             >
               @for (f of facts; track f) {
-                <option [value]="f">{{ 'pa.fact.' + f | dcTranslate }}</option>
+                <mat-option [value]="f">{{ 'pa.fact.' + f | dcTranslate }}</mat-option>
               }
-            </select>
+            </mat-select>
           }
           @default {
             <input
@@ -259,25 +259,25 @@
   <h3>{{ 'pa.sort' | dcTranslate }}</h3>
   @for (s of query().sort; track $index; let i = $index) {
     <div class="ed-row">
-      <select
-        class="ed-cell ed-grow"
+      <mat-select
+        class="dc-compact-select ed-cell ed-grow"
         dir="ltr"
         [ngModel]="s.column"
         (ngModelChange)="setSort(i, { column: $event })"
       >
-        <option value="">—</option>
+        <mat-option value="">—</mat-option>
         @for (col of columns(); track col.ref) {
-          <option [value]="col.ref">{{ col.ref }}</option>
+          <mat-option [value]="col.ref">{{ col.ref }}</mat-option>
         }
-      </select>
-      <select
-        class="ed-cell"
+      </mat-select>
+      <mat-select
+        class="dc-compact-select ed-cell"
         [ngModel]="s.direction"
         (ngModelChange)="setSort(i, { direction: $event })"
       >
-        <option value="ASC">↑ ASC</option>
-        <option value="DESC">↓ DESC</option>
-      </select>
+        <mat-option value="ASC">↑ ASC</mat-option>
+        <mat-option value="DESC">↓ DESC</mat-option>
+      </mat-select>
       <button
         matIconButton
         type="button"
@@ -320,19 +320,19 @@
   </div>
 } @else {
   <h3>{{ 'pa.function' | dcTranslate }}</h3>
-  <select
-    class="ed-cell"
+  <mat-select
+    class="dc-compact-select ed-cell"
     [ngModel]="def().function ?? ''"
     (ngModelChange)="setFunction($event)"
     data-testid="pa-function"
   >
-    <option value="">—</option>
+    <mat-option value="">—</mat-option>
     @for (f of functions(); track f.code) {
-      <option [value]="f.code">
+      <mat-option [value]="f.code">
         {{ { ar: f.nameAr, en: f.nameEn } | dcLocalize }} ({{ f.code }})
-      </option>
+      </mat-option>
     }
-  </select>
+  </mat-select>
   @if (fn(); as f) {
     <p class="ed-muted">{{ { ar: f.descriptionAr, en: f.descriptionEn } | dcLocalize }}</p>
     <h3>{{ 'pa.inputs' | dcTranslate }}</h3>
@@ -347,18 +347,18 @@
             <small class="ed-optional">{{ 'pa.input.optional' | dcTranslate }}</small>
           }</span
         >
-        <select
-          class="ed-cell"
+        <mat-select
+          class="dc-compact-select ed-cell"
           dir="ltr"
           [ngModel]="binding(input.name).parameter ?? ''"
           (ngModelChange)="setBinding(input.name, { parameter: $event || null })"
           [attr.aria-label]="'pa.input.from' | dcTranslate"
         >
-          <option value="">{{ 'pa.input.fixed' | dcTranslate }}</option>
+          <mat-option value="">{{ 'pa.input.fixed' | dcTranslate }}</mat-option>
           @for (p of params(); track p) {
-            <option [value]="p">{{ p }}</option>
+            <mat-option [value]="p">{{ p }}</mat-option>
           }
-        </select>
+        </mat-select>
         @if (!binding(input.name).parameter) {
           <input
             class="ed-cell ed-grow"

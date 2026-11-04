@@ -6,7 +6,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
@@ -16,6 +15,7 @@ import {
   LocalizePipe,
   PublicApiAdmin,
   TranslatePipe,
+  SearchableSelectModule,
 } from '@dynamic-cube/shared';
 import { catchError, of } from 'rxjs';
 import { PUBLIC_API_TRANSLATIONS } from './public-api-translations';
@@ -31,7 +31,7 @@ import { PUBLIC_API_TRANSLATIONS } from './public-api-translations';
     MatFormFieldModule,
     MatIconModule,
     MatPaginatorModule,
-    MatSelectModule,
+    SearchableSelectModule,
     MatTableModule,
     MatTooltipModule,
     TranslatePipe,

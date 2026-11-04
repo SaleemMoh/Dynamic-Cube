@@ -5,7 +5,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { LocalizedText } from '../i18n/language';
 import { LocalizePipe, TranslatePipe } from '../i18n/translate.pipe';
@@ -15,6 +14,7 @@ import { LogicChip } from '../expressions/logic-chip';
 import { LogicField } from '../expressions/logic-fields';
 import { LogicContexts } from '../expressions/logic-text';
 import { FormOption } from './form-schema';
+import { SearchableSelectModule } from './select-auto-search';
 
 /**
  * Where a rule edited by the Logic Builder takes its fields from: a fixed list, a named context the app registered
@@ -142,7 +142,7 @@ export function rowsMap(rows: Row[], raw = false): Row {
     MatButtonToggleModule,
     MatCheckboxModule,
     MatIconModule,
-    MatSelectModule,
+    SearchableSelectModule,
     MatTooltipModule,
     LocalizePipe,
     TranslatePipe,

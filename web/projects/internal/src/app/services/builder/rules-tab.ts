@@ -6,9 +6,8 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { JsonLogicRule, LevelFeatureDefinition, LocalizePipe, RuleEditor, RuleVariable, ServiceLevelDefinition, TranslatePipe } from '@dynamic-cube/shared';
+import { JsonLogicRule, LevelFeatureDefinition, LocalizePipe, RuleEditor, RuleVariable, ServiceLevelDefinition, TranslatePipe, SearchableSelectModule } from '@dynamic-cube/shared';
 import { BuilderReferences } from './builder-references';
 import { BuilderStore } from './builder-store';
 import { LinkedServices } from './linked-services';
@@ -27,7 +26,7 @@ type FeeKind = 'fixed' | 'formula' | 'bracket';
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    MatSelectModule,
+    SearchableSelectModule,
     MatTooltipModule,
     TranslatePipe,
     LocalizePipe,

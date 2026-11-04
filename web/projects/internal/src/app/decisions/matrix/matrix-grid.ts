@@ -20,7 +20,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
   I18nService,
@@ -28,6 +27,7 @@ import {
   LogicChip,
   LogicField,
   TranslatePipe,
+  SearchableSelectModule,
 } from '@dynamic-cube/shared';
 import { firstValueFrom } from 'rxjs';
 import {
@@ -84,7 +84,7 @@ interface HeaderDialogData {
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
-    MatSelectModule,
+    SearchableSelectModule,
     TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,

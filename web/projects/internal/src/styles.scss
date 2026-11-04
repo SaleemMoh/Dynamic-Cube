@@ -598,3 +598,17 @@ body.dc-full-window-open {
 }
 
 /* A dialog filling the window (.dc-dialog-max) is styled in the shared base stylesheet (DialogChrome). */
+
+// Selects in compact designer rows (they replaced native selects): sized by their content like a native select, not
+// stretched to the row; `ed-grow` ones take the free space.
+.dc-compact-select.mat-mdc-select {
+  display: inline-block;
+  width: auto;
+  min-width: 7rem;
+}
+.dc-compact-select.mat-mdc-select.ed-grow {
+  flex: 1 1 7rem;
+}
+.dc-compact-select .mat-mdc-select-arrow-wrapper {
+  margin-inline-start: 6px;
+}

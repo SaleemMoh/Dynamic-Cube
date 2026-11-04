@@ -7,10 +7,9 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { Router, RouterLink } from '@angular/router';
-import { BusinessAppContext, ESTABLISHMENT_IDENTIFIER_TYPES, FormValue, I18nService, INDIVIDUAL_IDENTIFIER_TYPES, LocalizePipe, PartyApi, PartyKind, TranslatePipe } from '@dynamic-cube/shared';
+import { BusinessAppContext, ESTABLISHMENT_IDENTIFIER_TYPES, FormValue, I18nService, INDIVIDUAL_IDENTIFIER_TYPES, LocalizePipe, PartyApi, PartyKind, TranslatePipe, SearchableSelectModule } from '@dynamic-cube/shared';
 import { debounceTime, firstValueFrom } from 'rxjs';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormDialog, FormDialogData } from '../common/form-dialog';
@@ -26,7 +25,7 @@ import { PrivilegesService } from '../apps-control/privileges.service';
     MatIconModule,
     MatInputModule,
     MatPaginatorModule,
-    MatSelectModule,
+    SearchableSelectModule,
     MatTableModule,
     RouterLink,
     LocalizePipe,

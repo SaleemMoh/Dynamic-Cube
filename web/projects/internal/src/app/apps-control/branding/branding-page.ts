@@ -6,20 +6,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatSelectModule } from '@angular/material/select';
-import {
-  AppsControlApi,
-  AuthImageSrc,
-  ConfigRow,
-  EntityContact,
-  FooterLink,
-  I18nService,
-  LocalizePipe,
-  SocialLink,
-  TranslatePipe,
-  problemMessages,
-  themeVariables,
-} from '@dynamic-cube/shared';
+import { AppsControlApi, AuthImageSrc, ConfigRow, EntityContact, FooterLink, I18nService, LocalizePipe, SocialLink, TranslatePipe, problemMessages, themeVariables, SearchableSelectModule } from '@dynamic-cube/shared';
 import { firstValueFrom } from 'rxjs';
 import { ExportButton } from '../change-sets/export-button';
 import { AppBrandingEditor, BrandingTarget } from './app-branding';
@@ -79,7 +66,7 @@ const PRESETS = ['#ca9f45', '#1b8354', '#136f40', '#0e7490', '#1d4ed8', '#4338ca
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    MatSelectModule,
+    SearchableSelectModule,
     MatTooltipModule,
     LocalizePipe,
     TranslatePipe,

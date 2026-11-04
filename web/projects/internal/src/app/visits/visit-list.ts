@@ -7,10 +7,9 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
-import { AppsControlApi, ConfigRow, LocalizePipe, TranslatePipe, VISIT_STATUSES, VisitStatus, VisitsApi, visitStatusBadge } from '@dynamic-cube/shared';
+import { AppsControlApi, ConfigRow, LocalizePipe, TranslatePipe, VISIT_STATUSES, VisitStatus, VisitsApi, visitStatusBadge, SearchableSelectModule } from '@dynamic-cube/shared';
 import { catchError, debounceTime, of } from 'rxjs';
 
 /** Field visits: search by number, request, establishment or address; filter by status, type and overdue. */
@@ -24,7 +23,7 @@ import { catchError, debounceTime, of } from 'rxjs';
     MatIconModule,
     MatInputModule,
     MatPaginatorModule,
-    MatSelectModule,
+    SearchableSelectModule,
     MatTableModule,
     RouterLink,
     LocalizePipe,

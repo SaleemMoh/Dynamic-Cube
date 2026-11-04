@@ -7,10 +7,9 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
-import { AppsControlApi, ConfigRow, TranslatePipe, pickIcon, problemMessages } from '@dynamic-cube/shared';
+import { AppsControlApi, ConfigRow, TranslatePipe, pickIcon, problemMessages, SearchableSelectModule } from '@dynamic-cube/shared';
 import { firstValueFrom } from 'rxjs';
 import { DraftsService } from '../apps-control/drafts.service';
 import { HomeSetting, METRICS, Tile, homeProblems, normalizeHome } from './home-model';
@@ -31,7 +30,7 @@ import { SubmitButton } from '../apps-control/submit-button';
     MatIconModule,
     MatInputModule,
     MatProgressBarModule,
-    MatSelectModule,
+    SearchableSelectModule,
     MatTooltipModule,
     TranslatePipe,
   ],

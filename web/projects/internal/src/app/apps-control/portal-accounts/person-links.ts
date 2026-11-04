@@ -6,9 +6,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { AppsControlApi, I18nService, PartyApi, PartySummary, RelationshipInfo, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
+import { AppsControlApi, I18nService, PartyApi, PartySummary, RelationshipInfo, TranslatePipe, problemMessages, SearchableSelectModule } from '@dynamic-cube/shared';
 import { Observable, catchError, debounceTime, distinctUntilChanged, firstValueFrom, map, of, switchMap } from 'rxjs';
 import { PrivilegesService } from '../privileges.service';
 
@@ -21,7 +20,7 @@ const ESTABLISHMENT_NUMBER = /^[0-9]{10}$/;
  */
 @Component({
   selector: 'dc-person-links',
-  imports: [FormsModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, MatProgressBarModule, MatSelectModule, TranslatePipe],
+  imports: [FormsModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, MatProgressBarModule, SearchableSelectModule, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="dc-plinks" data-testid="person-links">

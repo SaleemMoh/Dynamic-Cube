@@ -5,8 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { I18nService, LocalizePipe, TranslatePipe, VisitDetail, VisitFields, VisitsApi, missingVisitFields, problemMessages } from '@dynamic-cube/shared';
+import { I18nService, LocalizePipe, TranslatePipe, VisitDetail, VisitFields, VisitsApi, missingVisitFields, problemMessages, SearchableSelectModule } from '@dynamic-cube/shared';
 import { firstValueFrom } from 'rxjs';
 
 /** `yyyy-MM-ddTHH:mm` in local time, as a datetime-local input wants it. */
@@ -18,7 +17,7 @@ function localInput(at: Date): string {
 /** Assigns the inspector and the date (the inspectors holding the type's role, least busy first). */
 @Component({
   selector: 'dc-visit-schedule-dialog',
-  imports: [FormsModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, LocalizePipe, TranslatePipe],
+  imports: [FormsModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule, SearchableSelectModule, LocalizePipe, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <h2 mat-dialog-title>{{ (data.visit.inspector ? 'visits.reschedule' : 'visits.schedule') | dcTranslate }}</h2>
@@ -108,7 +107,7 @@ export class VisitScheduleDialog {
 /** Records a visit's result by hand: the outcome, the type's fields and the report. */
 @Component({
   selector: 'dc-visit-outcome-dialog',
-  imports: [FormsModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, LocalizePipe, TranslatePipe, VisitFields],
+  imports: [FormsModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule, SearchableSelectModule, LocalizePipe, TranslatePipe, VisitFields],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <h2 mat-dialog-title>{{ 'visits.record' | dcTranslate }}</h2>

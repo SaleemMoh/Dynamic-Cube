@@ -8,7 +8,6 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
 import { NgTemplateOutlet } from '@angular/common';
 import { JsonValue, jsonLogic } from '../expressions/jsonlogic';
@@ -21,6 +20,7 @@ import { RowsInput } from './rows-input';
 import { ROW_FORM } from './row-form';
 import { pickIcon } from './icon-picker';
 import { LOV_SOURCE } from './lov-source';
+import { SearchableSelectModule } from './select-auto-search';
 
 export type FormValue = Record<string, unknown>;
 
@@ -40,7 +40,7 @@ export type FormValue = Record<string, unknown>;
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    MatSelectModule,
+    SearchableSelectModule,
     MatTabsModule,
     DualList,
     StructuredInput,

@@ -13,6 +13,7 @@ import {
   TranslatePipe,
   TryEndpointResult,
   problemMessages,
+  SearchableSelectModule,
 } from '@dynamic-cube/shared';
 import { catchError, firstValueFrom, of } from 'rxjs';
 
@@ -24,6 +25,7 @@ import { catchError, firstValueFrom, of } from 'rxjs';
 @Component({
   selector: 'dc-api-endpoint-try',
   imports: [
+    SearchableSelectModule,
     FormsModule,
     LocalizePipe,
     MatButtonModule,
@@ -79,14 +81,19 @@ import { catchError, firstValueFrom, of } from 'rxjs';
     }
     <label class="et-input">
       <span>{{ 'pa.tryAs' | dcTranslate }}</span>
-      <select [ngModel]="client()" (ngModelChange)="client.set($event)" data-testid="pa-try-client">
-        <option [ngValue]="null">{{ 'pa.tryAsNone' | dcTranslate }}</option>
+      <mat-select
+        class="dc-compact-select"
+        [ngModel]="client()"
+        (ngModelChange)="client.set($event)"
+        data-testid="pa-try-client"
+      >
+        <mat-option [value]="null">{{ 'pa.tryAsNone' | dcTranslate }}</mat-option>
         @for (c of clients(); track c.code) {
-          <option [ngValue]="c.code">
+          <mat-option [value]="c.code">
             {{ { ar: c.nameAr, en: c.nameEn } | dcLocalize }} ({{ c.code }})
-          </option>
+          </mat-option>
         }
-      </select>
+      </mat-select>
     </label>
     @if (client()) {
       <div class="et-pair">
@@ -194,7 +201,7 @@ import { catchError, firstValueFrom, of } from 'rxjs';
       color: var(--dga-text-3, #6c737f);
     }
     .et-input input,
-    .et-input select {
+    .et-input mat-select {
       width: 100%;
       min-width: 0;
       box-sizing: border-box;

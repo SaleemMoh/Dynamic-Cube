@@ -7,7 +7,6 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
   ASSISTANT_LINE_KINDS,
@@ -23,6 +22,7 @@ import {
   RuleVariable,
   ServicesApi,
   TranslatePipe,
+  SearchableSelectModule,
 } from '@dynamic-cube/shared';
 import { of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -47,7 +47,7 @@ type Part = 'assistant' | 'readiness' | 'summary' | 'result';
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    MatSelectModule,
+    SearchableSelectModule,
     MatTooltipModule,
     NgTemplateOutlet,
     RuleEditor,

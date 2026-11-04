@@ -21,6 +21,7 @@ import {
   PublicApiInfo,
   TranslatePipe,
   problemMessages,
+  SearchableSelectModule,
 } from '@dynamic-cube/shared';
 import { catchError, of } from 'rxjs';
 import { ConfigEditorData } from '../apps-control/config/config-editor';
@@ -56,6 +57,7 @@ const TYPES: ApiParameterType[] = ['TEXT', 'NUMBER', 'DATE', 'BOOLEAN'];
 @Component({
   selector: 'dc-api-endpoint-designer',
   imports: [
+    SearchableSelectModule,
     ApiEndpointData,
     ApiEndpointTry,
     FormsModule,

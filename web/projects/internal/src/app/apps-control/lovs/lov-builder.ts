@@ -22,7 +22,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -36,6 +35,7 @@ import {
   problemMessages,
   SelectSearch,
   matchesSearch,
+  SearchableSelectModule,
 } from '@dynamic-cube/shared';
 import { catchError, firstValueFrom, of } from 'rxjs';
 import { ConfigEditor, ConfigEditorData } from '../config/config-editor';
@@ -89,7 +89,7 @@ type Preview = LovPreview;
     MatIconModule,
     MatInputModule,
     MatProgressBarModule,
-    MatSelectModule,
+    SearchableSelectModule,
     MatTabsModule,
     MatTooltipModule,
     LocalizePipe,

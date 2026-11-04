@@ -8,9 +8,8 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { DocumentsApi, I18nService, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
+import { DocumentsApi, I18nService, TranslatePipe, problemMessages, SearchableSelectModule } from '@dynamic-cube/shared';
 import { catchError, debounceTime, firstValueFrom, switchMap } from 'rxjs';
 import { DraftsService } from '../apps-control/drafts.service';
 import { ConfigEditorData } from '../apps-control/config/config-editor';
@@ -62,7 +61,7 @@ const SAMPLE_LINES = [
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    MatSelectModule,
+    SearchableSelectModule,
     PrintDesigner,
     TranslatePipe,
   ],

@@ -126,28 +126,28 @@
           [placeholder]="'db.filter.labelEn' | dcTranslate"
           [attr.aria-label]="'db.filter.labelEn' | dcTranslate"
         />
-        <select
-          class="ed-cell"
+        <mat-select
+          class="dc-compact-select ed-cell"
           [ngModel]="f.type"
           (ngModelChange)="setFilterType(i, $event)"
           [attr.aria-label]="'db.filter.type' | dcTranslate"
         >
           @for (t of filterTypes; track t) {
-            <option [value]="t">{{ 'db.filter.type.' + t | dcTranslate }}</option>
+            <mat-option [value]="t">{{ 'db.filter.type.' + t | dcTranslate }}</mat-option>
           }
-        </select>
+        </mat-select>
         @if (f.type === 'LIST') {
-          <select
-            class="ed-cell"
+          <mat-select
+            class="dc-compact-select ed-cell"
             [ngModel]="f.lov ?? ''"
             (ngModelChange)="setFilter(i, { lov: $event || null })"
             [attr.aria-label]="'db.filter.lov' | dcTranslate"
           >
-            <option value="">—</option>
+            <mat-option value="">—</mat-option>
             @for (l of lovs(); track l.code) {
-              <option [value]="l.code">{{ name(l) }}</option>
+              <mat-option [value]="l.code">{{ name(l) }}</mat-option>
             }
-          </select>
+          </mat-select>
           <mat-checkbox
             [ngModel]="f.multiple"
             (ngModelChange)="setFilter(i, { multiple: $event })"
@@ -193,51 +193,51 @@
         <div class="de-widget__row">
           <label class="de-field de-field--wide">
             <span>{{ 'db.widget.report' | dcTranslate }}</span>
-            <select
-              class="ed-cell"
+            <mat-select
+              class="dc-compact-select ed-cell"
               [ngModel]="w.report"
               (ngModelChange)="setReport(i, $event)"
               data-testid="db-widget-report"
             >
-              <option value="">—</option>
+              <mat-option value="">—</mat-option>
               @for (r of reports(); track r.code) {
-                <option [value]="r.code">{{ name(r) }}</option>
+                <mat-option [value]="r.code">{{ name(r) }}</mat-option>
               }
-            </select>
+            </mat-select>
           </label>
           <label class="de-field">
             <span>{{ 'db.widget.kind' | dcTranslate }}</span>
-            <select
-              class="ed-cell"
+            <mat-select
+              class="dc-compact-select ed-cell"
               [ngModel]="w.kind"
               (ngModelChange)="setKind(i, $event)"
               data-testid="db-widget-kind"
             >
               @for (k of kinds; track k) {
-                <option [value]="k">{{ 'db.widget.kind.' + k | dcTranslate }}</option>
+                <mat-option [value]="k">{{ 'db.widget.kind.' + k | dcTranslate }}</mat-option>
               }
-            </select>
+            </mat-select>
           </label>
           @if (w.kind !== 'TABLE') {
             <label class="de-field">
               <span>{{ 'db.widget.item' | dcTranslate }}</span>
-              <select
-                class="ed-cell"
+              <mat-select
+                class="dc-compact-select ed-cell"
                 [ngModel]="w.item ?? ''"
                 (ngModelChange)="setWidget(i, { item: $event || null })"
                 data-testid="db-widget-item"
               >
-                <option value="">—</option>
+                <mat-option value="">—</mat-option>
                 @if (w.kind === 'TILE') {
                   @for (t of view?.tiles ?? []; track t.name) {
-                    <option [value]="t.name">{{ label(t) }}</option>
+                    <mat-option [value]="t.name">{{ label(t) }}</mat-option>
                   }
                 } @else {
                   @for (c of view?.charts ?? []; track c.name) {
-                    <option [value]="c.name">{{ title(c) }}</option>
+                    <mat-option [value]="c.name">{{ title(c) }}</mat-option>
                   }
                 }
-              </select>
+              </mat-select>
             </label>
           } @else {
             <label class="de-field de-field--narrow">
@@ -254,15 +254,15 @@
           }
           <label class="de-field">
             <span>{{ 'db.widget.span' | dcTranslate }}</span>
-            <select
-              class="ed-cell"
+            <mat-select
+              class="dc-compact-select ed-cell"
               [ngModel]="w.span"
               (ngModelChange)="setWidget(i, { span: +$event })"
             >
               @for (s of spans; track s) {
-                <option [ngValue]="s">{{ 'db.widget.span.' + s | dcTranslate }}</option>
+                <mat-option [value]="s">{{ 'db.widget.span.' + s | dcTranslate }}</mat-option>
               }
-            </select>
+            </mat-select>
           </label>
           <span class="de-acts">
             <button
@@ -319,19 +319,21 @@
             @for (f of view!.filters; track f.name) {
               <div class="de-bind" [attr.data-bind]="f.name">
                 <span class="de-bind__name">{{ label(f) }}</span>
-                <select
-                  class="ed-cell"
+                <mat-select
+                  class="dc-compact-select ed-cell"
                   [ngModel]="sourceKey(w, f)"
                   (ngModelChange)="setSource(i, f, $event)"
                 >
                   @for (c of candidates(f); track c.name) {
-                    <option [value]="'BOUND:' + c.name">
+                    <mat-option [value]="'BOUND:' + c.name">
                       {{ 'db.widget.from' | dcTranslate }}: {{ label(c) }}
-                    </option>
+                    </mat-option>
                   }
-                  <option value="FIXED">{{ 'db.widget.fixed' | dcTranslate }}</option>
-                  <option value="DEFAULT">{{ 'db.widget.reportDefault' | dcTranslate }}</option>
-                </select>
+                  <mat-option value="FIXED">{{ 'db.widget.fixed' | dcTranslate }}</mat-option>
+                  <mat-option value="DEFAULT">{{
+                    'db.widget.reportDefault' | dcTranslate
+                  }}</mat-option>
+                </mat-select>
                 @if (sourceKey(w, f) === 'FIXED') {
                   <input
                     class="ed-cell"

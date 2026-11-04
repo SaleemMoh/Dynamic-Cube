@@ -30,6 +30,7 @@ import {
   ReportsApi,
   TranslatePipe,
   problemMessages,
+  SearchableSelectModule,
 } from '@dynamic-cube/shared';
 import { catchError, debounceTime, distinctUntilChanged, map, of, switchMap, tap } from 'rxjs';
 import { QuerySourceInfo } from '../apps-control/lovs/lov-builder-model';
@@ -76,6 +77,7 @@ const CATEGORY_ICONS: Record<string, string> = {
 @Component({
   selector: 'dc-report-chart-designer',
   imports: [
+    SearchableSelectModule,
     CdkDrag,
     CdkDropList,
     FormsModule,

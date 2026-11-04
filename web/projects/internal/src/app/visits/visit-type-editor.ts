@@ -8,22 +8,8 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import {
-  AppsControlApi,
-  ConfigRow,
-  LocalizePipe,
-  OutcomeKind,
-  TranslatePipe,
-  VisitField,
-  VisitFieldType,
-  VisitMode,
-  VisitOutcome,
-  StructuredInput,
-  StructuredShape,
-  problemMessages,
-} from '@dynamic-cube/shared';
+import { AppsControlApi, ConfigRow, LocalizePipe, OutcomeKind, TranslatePipe, VisitField, VisitFieldType, VisitMode, VisitOutcome, StructuredInput, StructuredShape, problemMessages, SearchableSelectModule } from '@dynamic-cube/shared';
 import { catchError, of } from 'rxjs';
 import { ConfigEditorData } from '../apps-control/config/config-editor';
 import { DraftsService } from '../apps-control/drafts.service';
@@ -94,7 +80,7 @@ const OUTCOME_MAP: StructuredShape = { kind: 'map', keyLabel: t('قيمة الج
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    MatSelectModule,
+    SearchableSelectModule,
     MatTooltipModule,
     StructuredInput,
     LocalizePipe,

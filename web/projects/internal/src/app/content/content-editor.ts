@@ -7,8 +7,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { AppsControlApi, ConfigRow, LocalizePipe, MarkdownView, TranslatePipe, pageSlug, problemMessages } from '@dynamic-cube/shared';
+import { AppsControlApi, ConfigRow, LocalizePipe, MarkdownView, TranslatePipe, pageSlug, problemMessages, SearchableSelectModule } from '@dynamic-cube/shared';
 import { catchError, of } from 'rxjs';
 import { ConfigEditorData } from '../apps-control/config/config-editor';
 import { DraftsService } from '../apps-control/drafts.service';
@@ -31,7 +30,7 @@ const CODE = /^[A-Z][A-Z0-9_-]{0,50}$/;
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
-    MatSelectModule,
+    SearchableSelectModule,
     LocalizePipe,
     MarkdownView,
     TranslatePipe,

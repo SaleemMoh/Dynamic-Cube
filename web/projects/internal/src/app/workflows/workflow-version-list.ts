@@ -7,11 +7,10 @@ import { MAT_DIALOG_DATA, MatDialog, MatDialogModule } from '@angular/material/d
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
-import { AppsControlApi, BusinessAppContext, ConfigRow, LocalizePipe, problemMessages, TranslatePipe } from '@dynamic-cube/shared';
+import { AppsControlApi, BusinessAppContext, ConfigRow, LocalizePipe, problemMessages, TranslatePipe, SearchableSelectModule } from '@dynamic-cube/shared';
 import { DraftsService } from '../apps-control/drafts.service';
 import { PrivilegesService } from '../apps-control/privileges.service';
 import { GraphDefinition, WorkflowGraph } from './workflow-graph';
@@ -77,7 +76,7 @@ export class WorkflowGraphDialog {
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    MatSelectModule,
+    SearchableSelectModule,
     MatTableModule,
     MatTooltipModule,
     RouterLink,

@@ -8,24 +8,10 @@ import { MAT_DIALOG_DATA, MatDialog, MatDialogModule } from '@angular/material/d
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import {
-  AppsControlApi,
-  ConfigRow,
-  DecisionResult,
-  DecisionsApi,
-  EvaluationView,
-  LocalizePipe,
-  StructuredColumn,
-  StructuredInput,
-  StructuredShape,
-  TraceStep,
-  TranslatePipe,
-  problemMessages,
-} from '@dynamic-cube/shared';
+import { AppsControlApi, ConfigRow, DecisionResult, DecisionsApi, EvaluationView, LocalizePipe, StructuredColumn, StructuredInput, StructuredShape, TraceStep, TranslatePipe, problemMessages, SearchableSelectModule } from '@dynamic-cube/shared';
 import { firstValueFrom } from 'rxjs';
 import { DraftsService } from '../apps-control/drafts.service';
 import { PrivilegesService } from '../apps-control/privileges.service';
@@ -278,7 +264,7 @@ export function traceText(step: TraceStep): string {
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    MatSelectModule,
+    SearchableSelectModule,
     MatTableModule,
     MatTabsModule,
     MatTooltipModule,

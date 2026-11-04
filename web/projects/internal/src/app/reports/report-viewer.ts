@@ -9,7 +9,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSelectModule } from '@angular/material/select';
 import { Router, RouterLink } from '@angular/router';
 import {
   AppsControlApi,
@@ -25,6 +24,7 @@ import {
   TranslatePipe,
   problemMessages,
   saveBlob,
+  SearchableSelectModule,
 } from '@dynamic-cube/shared';
 import { catchError, firstValueFrom, forkJoin, map, of, tap } from 'rxjs';
 import { cleanFilters, exportFileName, joinValues, splitValues } from './report-model';
@@ -51,7 +51,7 @@ const NONE: string[] = [];
     MatInputModule,
     MatMenuModule,
     MatProgressBarModule,
-    MatSelectModule,
+    SearchableSelectModule,
     ReportResult,
     RouterLink,
     TranslatePipe,

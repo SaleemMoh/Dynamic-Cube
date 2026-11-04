@@ -21,6 +21,7 @@ import {
   ReportsApi,
   TranslatePipe,
   problemMessages,
+  SearchableSelectModule,
 } from '@dynamic-cube/shared';
 import { catchError, firstValueFrom, map, of } from 'rxjs';
 import { ConfigEditorData } from '../apps-control/config/config-editor';
@@ -63,6 +64,7 @@ const KINDS: DashboardWidgetKind[] = ['CHART', 'TILE', 'TABLE'];
 @Component({
   selector: 'dc-dashboard-editor',
   imports: [
+    SearchableSelectModule,
     FormsModule,
     MatButtonModule,
     MatCheckboxModule,

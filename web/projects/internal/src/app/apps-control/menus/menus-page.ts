@@ -15,7 +15,6 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router } from '@angular/router';
 import {
@@ -25,6 +24,7 @@ import {
   LocalizePipe,
   TranslatePipe,
   problemMessages,
+  SearchableSelectModule,
 } from '@dynamic-cube/shared';
 import { catchError, firstValueFrom, forkJoin, of } from 'rxjs';
 import { ConfigEditor, ConfigEditorData } from '../config/config-editor';
@@ -69,7 +69,7 @@ const order = (r: ConfigRow) => Number(r['displayOrder'] ?? 0);
     MatFormFieldModule,
     MatIconModule,
     MatProgressBarModule,
-    MatSelectModule,
+    SearchableSelectModule,
     MatTooltipModule,
     NgTemplateOutlet,
     LocalizePipe,
