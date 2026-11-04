@@ -69,6 +69,11 @@
   grid-column: 1 / -1;
 }
 
+/* A checkbox beside fields sits on their middle line, not at the top of the row. */
+.dc-form__field--check:not(.dc-form__field--wide) {
+  justify-content: center;
+}
+
 .dc-form__hint {
   color: var(--mat-sys-on-surface-variant);
   padding-inline-start: 2.5rem;

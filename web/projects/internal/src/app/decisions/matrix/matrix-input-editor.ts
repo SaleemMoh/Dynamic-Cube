@@ -157,7 +157,7 @@ const QUESTION_TYPES: Record<string, string> = {
               <mat-option [value]="null">—</mat-option>
               @for (s of data.matrix.optionSets; track s.code) {
                 <mat-option [value]="s.code"
-                  >{{ { ar: s.nameAr, en: s.nameEn } | dcLocalize }} ({{ s.code }})</mat-option
+                  >{{ { ar: s.nameAr, en: s.nameEn } | dcLocalize }}</mat-option
                 >
               }
             </mat-select>
@@ -320,7 +320,7 @@ const QUESTION_TYPES: Record<string, string> = {
                   <mat-option [value]="source().operation">{{ source().operation }}</mat-option>
                 }
                 @for (o of refs.operations(); track o.code) {
-                  <mat-option [value]="o.code">{{ o.name | dcLocalize }} ({{ o.code }})</mat-option>
+                  <mat-option [value]="o.code">{{ o.name | dcLocalize }}</mat-option>
                 }
               </mat-select>
             </mat-form-field>
@@ -377,7 +377,7 @@ const QUESTION_TYPES: Record<string, string> = {
                   <mat-option [value]="null">—</mat-option>
                   @for (q of refs.questions(); track q.code) {
                     <mat-option [value]="q.code"
-                      >{{ { ar: q.nameAr, en: q.nameEn } | dcLocalize }} ({{ q.code }})</mat-option
+                      >{{ { ar: q.nameAr, en: q.nameEn } | dcLocalize }}</mat-option
                     >
                   }
                 </mat-select>
@@ -481,7 +481,7 @@ const QUESTION_TYPES: Record<string, string> = {
               data-testid="mx-source-party"
             >
               @for (f of refs.partyFacts(); track f.code) {
-                <mat-option [value]="f.code">{{ f.name | dcLocalize }} ({{ f.code }})</mat-option>
+                <mat-option [value]="f.code">{{ f.name | dcLocalize }}</mat-option>
               }
             </mat-select>
           </mat-form-field>
@@ -519,7 +519,7 @@ const QUESTION_TYPES: Record<string, string> = {
                 >
                   @for (f of projectColumns(); track f.path) {
                     <mat-option [value]="f.path"
-                      >{{ f.label | dcLocalize }} ({{ f.path }})</mat-option
+                      >{{ f.label | dcLocalize }}</mat-option
                     >
                   }
                 </mat-select>

@@ -90,7 +90,7 @@ import { catchError, firstValueFrom, of } from 'rxjs';
         <mat-option [value]="null">{{ 'pa.tryAsNone' | dcTranslate }}</mat-option>
         @for (c of clients(); track c.code) {
           <mat-option [value]="c.code">
-            {{ { ar: c.nameAr, en: c.nameEn } | dcLocalize }} ({{ c.code }})
+            {{ { ar: c.nameAr, en: c.nameEn } | dcLocalize }}
           </mat-option>
         }
       </mat-select>

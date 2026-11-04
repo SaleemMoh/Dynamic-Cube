@@ -6,6 +6,7 @@
           <div
             class="dc-form__field"
             [class.dc-form__field--wide]="wide(section, field)"
+            [class.dc-form__field--check]="field.type === 'checkbox'"
             [style.grid-column]="span(section, field)"
             [attr.data-field]="field.code"
           >

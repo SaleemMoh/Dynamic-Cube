@@ -300,7 +300,7 @@ type Part = 'assistant' | 'readiness' | 'summary' | 'result';
               data-testid="panel-summary-questions"
             >
               @for (q of questions(); track q.path) {
-                <mat-option [value]="q.code">{{ q.label | dcLocalize }} ({{ q.code }})</mat-option>
+                <mat-option [value]="q.code">{{ q.label | dcLocalize }}</mat-option>
               }
             </mat-select>
           </mat-form-field>

@@ -95,7 +95,7 @@
                 data-testid="recipient-codes"
               >
                 @for (o of r.kind === 'ROLE' ? roleOptions() : userOptions(); track o.value) {
-                  <mat-option [value]="o.value">{{ o.label | dcLocalize }} ({{ o.value }})</mat-option>
+                  <mat-option [value]="o.value">{{ o.label | dcLocalize }}</mat-option>
                 }
               </mat-select>
             </mat-form-field>
@@ -116,7 +116,7 @@
       <mat-label>{{ 'notifyRule.template' | dcTranslate }}</mat-label>
       <mat-select [ngModel]="templateCode()" (ngModelChange)="templateCode.set($event)" data-testid="rule-template">
         @for (t of templateOptions(); track t.code) {
-          <mat-option [value]="t.code">{{ { ar: t.nameAr, en: t.nameEn } | dcLocalize }} ({{ t.code }})</mat-option>
+          <mat-option [value]="t.code">{{ { ar: t.nameAr, en: t.nameEn } | dcLocalize }}</mat-option>
         }
       </mat-select>
     </mat-form-field>

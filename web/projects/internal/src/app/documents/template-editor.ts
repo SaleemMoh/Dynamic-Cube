@@ -9,7 +9,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { DocumentsApi, I18nService, TranslatePipe, problemMessages, SearchableSelectModule } from '@dynamic-cube/shared';
+import { DocumentsApi, I18nService, LocalizePipe, TranslatePipe, problemMessages, SearchableSelectModule } from '@dynamic-cube/shared';
 import { catchError, debounceTime, firstValueFrom, switchMap } from 'rxjs';
 import { DraftsService } from '../apps-control/drafts.service';
 import { ConfigEditorData } from '../apps-control/config/config-editor';
@@ -53,6 +53,7 @@ const SAMPLE_LINES = [
   selector: 'dc-document-template-editor',
   imports: [
     SubmitButton,
+    LocalizePipe,
     FormsModule,
     MatButtonModule,
     MatButtonToggleModule,
@@ -71,7 +72,7 @@ const SAMPLE_LINES = [
       <span>
         {{ 'docTemplates.editor' | dcTranslate }}
         @if (data.row) {
-          <span dir="ltr">{{ data.row.code }}</span>
+          «{{ { ar: data.row.nameAr || data.row.code, en: data.row.nameEn || data.row.code } | dcLocalize }}»
         }
       </span>
       <span class="dc-tpl__grow"></span>

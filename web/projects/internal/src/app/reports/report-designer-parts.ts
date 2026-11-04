@@ -108,11 +108,11 @@ export class ReportDesignerParts {
   }
 
   protected sourceName(s: QuerySourceInfo): string {
-    return `${this.i18n.localize({ ar: s.nameAr, en: s.nameEn })} (${s.code})`;
+    return this.i18n.localize({ ar: s.nameAr, en: s.nameEn }) || s.code;
   }
 
   protected lovName(l: LovOption): string {
-    return `${this.i18n.localize({ ar: l.nameAr, en: l.nameEn })} (${l.code})`;
+    return this.i18n.localize({ ar: l.nameAr, en: l.nameEn }) || l.code;
   }
 
   protected columnsOf(alias: string) {

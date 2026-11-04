@@ -99,7 +99,7 @@ import { MATRIX_TRANSLATIONS } from './matrix-translations';
         >
           @for (r of matrixRuleSets(); track r.code) {
             <mat-option [value]="r.code"
-              >{{ { ar: r.nameAr, en: r.nameEn } | dcLocalize }} ({{ r.code }})</mat-option
+              >{{ { ar: r.nameAr, en: r.nameEn } | dcLocalize }}</mat-option
             >
           }
         </mat-select>
@@ -322,7 +322,7 @@ import { MATRIX_TRANSLATIONS } from './matrix-translations';
                 <mat-option [value]="null">{{ 'mx.grid.rowsInputAll' | dcTranslate }}</mat-option>
                 @for (i of listInputs(); track i.code) {
                   <mat-option [value]="i.code"
-                    >{{ { ar: i.nameAr, en: i.nameEn } | dcLocalize }} ({{ i.code }})</mat-option
+                    >{{ { ar: i.nameAr, en: i.nameEn } | dcLocalize }}</mat-option
                   >
                 }
               </mat-select>

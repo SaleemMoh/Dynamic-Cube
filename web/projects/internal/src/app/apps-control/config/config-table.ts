@@ -10,8 +10,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
-import { AppsControlApi, BusinessAppContext, configLevel, ConfigRow, I18nService, LocalizePipe, problemMessages, TranslatePipe } from '@dynamic-cube/shared';
-import { firstValueFrom } from 'rxjs';
+import { AppsControlApi, BusinessAppContext, configLevel, ConfigRow, I18nService, LocalizedText, LocalizePipe, problemMessages, TranslatePipe } from '@dynamic-cube/shared';
+import { HttpClient } from '@angular/common/http';
+import { Observable, catchError, firstValueFrom, forkJoin, map, of } from 'rxjs';
 import { JsonImport } from '../change-sets/json-import';
 import { ConfirmData, ConfirmDialog } from '../confirm-dialog';
 import { DraftsService } from '../drafts.service';
@@ -99,7 +100,10 @@ import { ConfigBulkAction, ConfigBulkData, ConfigRowAction, ConfigType, scopeOf 
       </ng-container>
       <ng-container matColumnDef="name">
         <th mat-header-cell *matHeaderCellDef>{{ 'config.name' | dcTranslate }}</th>
-        <td mat-cell *matCellDef="let row">{{ { ar: row.nameAr, en: row.nameEn } | dcLocalize }}</td>
+        <td mat-cell *matCellDef="let row">
+          <span class="dc-cfg-name">{{ { ar: row.nameAr || row.code, en: row.nameEn || row.code } | dcLocalize }}</span>
+          <small class="dc-cfg-code" dir="ltr">{{ row.code }}</small>
+        </td>
       </ng-container>
       <ng-container matColumnDef="level">
         <th mat-header-cell *matHeaderCellDef>{{ 'config.level' | dcTranslate }}</th>
@@ -200,6 +204,18 @@ import { ConfigBulkAction, ConfigBulkData, ConfigRowAction, ConfigType, scopeOf 
       font-size: 12px;
       white-space: nowrap;
     }
+    .dc-cfg-name {
+      display: block;
+      font-weight: 500;
+    }
+    .dc-cfg-code {
+      display: block;
+      /* Under the name, on the reading side, whatever the page direction. */
+      width: fit-content;
+      font-family: ui-monospace, monospace;
+      font-size: 11px;
+      color: var(--dga-gray-500, #6c737f);
+    }
     .dc-level--entity {
       background: #eff8ff;
       color: #175cd3;
@@ -237,7 +253,6 @@ export class ConfigTable {
   protected readonly canDelete = computed(() => !this.singleton() && this.privileges.can(this.resource(), 'DELETE'));
   protected readonly columns = computed(() => [
     'select',
-    'code',
     'name',
     ...(scopeOf(this.type()) === 'none' ? [] : ['level']),
     ...(this.type().columns ?? []),
@@ -260,6 +275,34 @@ export class ConfigTable {
     return term ? rows.filter((r) => `${r.code} ${r.nameAr} ${r.nameEn}`.toLowerCase().includes(term)) : rows;
   });
 
+  private readonly http = inject(HttpClient);
+  /**
+   * Names of the rows the list's reference columns point to (services, workflows, templates, class values…), by
+   * column and code, so the table shows names rather than codes.
+   */
+  private readonly refNames = rxResource({
+    params: () => this.type(),
+    stream: ({ params: type }) => {
+      const fields = (type.columns ?? [])
+        .map((c) => type.fields.find((f) => f.code === c))
+        .filter((f): f is NonNullable<typeof f> => !!f && !!(f.ref || f.refDomains || f.optionsUrl));
+      if (!fields.length) return of({} as Record<string, Map<string, LocalizedText>>);
+      const named = (rows: { code: string; nameAr?: string | null; nameEn?: string | null }[]) =>
+        new Map(rows.map((r) => [r.code, { ar: r.nameAr || r.code, en: r.nameEn || r.code }] as const));
+      const load = (f: (typeof fields)[number]): Observable<Map<string, LocalizedText>> =>
+        (f.ref
+          ? this.api.list(f.ref)
+          : f.refDomains
+            ? this.api.classDomains(f.refDomains)
+            : this.http.get<{ code: string; nameAr: string; nameEn: string }[]>(f.optionsUrl!)
+        ).pipe(
+          map(named),
+          catchError(() => of(new Map<string, LocalizedText>())),
+        );
+      return forkJoin(Object.fromEntries(fields.map((f) => [f.code, load(f)])));
+    },
+  });
+
   protected label(column: string) {
     return this.type().fields.find((f) => f.code === column)?.label ?? { ar: column, en: column };
   }
@@ -277,9 +320,11 @@ export class ConfigTable {
       if (typeof v === 'object') return JSON.stringify(v);
       if (v === '*' && field?.allOption) return this.i18n.localize(field.allOption);
       const option = field?.options?.find((o) => o.value === v);
-      return option ? this.i18n.localize(option.label) : String(v);
+      if (option) return this.i18n.localize(option.label);
+      const named = column ? this.refNames.value()?.[column]?.get(String(v)) : undefined;
+      return named ? this.i18n.localize(named) : String(v);
     };
-    return Array.isArray(value) ? value.map(text).join('، ') : text(value);
+    return Array.isArray(value) ? value.map(text).join(this.i18n.language() === 'ar' ? '، ' : ', ') : text(value);
   }
 
   protected async openAction(action: ConfigRowAction, row: ConfigRow): Promise<void> {

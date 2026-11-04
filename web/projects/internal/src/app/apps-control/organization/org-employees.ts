@@ -155,7 +155,7 @@ export function employeesOf(users: ConfigRow[], units: string[]): EmployeeRow[] 
           <input matInput name="user" [ngModel]="userText()" (ngModelChange)="userText.set($event)" [matAutocomplete]="auto" data-testid="org-emp-user" />
           <mat-autocomplete #auto="matAutocomplete" (optionSelected)="userText.set($event.option.value)">
             @for (u of matches(); track u.code) {
-              <mat-option [value]="u.code">{{ { ar: u.nameAr || u.code, en: u.nameEn || u.code } | dcLocalize }} ({{ u.code }})</mat-option>
+              <mat-option [value]="u.code">{{ { ar: u.nameAr || u.code, en: u.nameEn || u.code } | dcLocalize }}</mat-option>
             }
           </mat-autocomplete>
         </mat-form-field>

@@ -128,7 +128,7 @@
             <mat-select [value]="c.provider.code" (selectionChange)="chooseProvider($event.value)">
               @for (p of providers(); track p.code) {
                 <mat-option [value]="p.code"
-                  >{{ { ar: p.nameAr, en: p.nameEn } | dcLocalize }} ({{ p.code }})</mat-option
+                  >{{ { ar: p.nameAr, en: p.nameEn } | dcLocalize }}</mat-option
                 >
               }
             </mat-select>
@@ -251,7 +251,7 @@
             >
               @for (x of connections(); track x.code) {
                 <mat-option [value]="x.code"
-                  >{{ { ar: x.nameAr, en: x.nameEn } | dcLocalize }} ({{ x.code }})</mat-option
+                  >{{ { ar: x.nameAr, en: x.nameEn } | dcLocalize }}</mat-option
                 >
               }
             </mat-select>
@@ -263,7 +263,7 @@
             <mat-option [value]="null">{{ 'od.none' | dcTranslate }}</mat-option>
             @for (e of envelopes(); track e.code) {
               <mat-option [value]="e.code"
-                >{{ { ar: e.nameAr, en: e.nameEn } | dcLocalize }} ({{ e.code }})</mat-option
+                >{{ { ar: e.nameAr, en: e.nameEn } | dcLocalize }}</mat-option
               >
             }
           </mat-select>

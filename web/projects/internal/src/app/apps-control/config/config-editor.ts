@@ -47,7 +47,7 @@ export interface ConfigEditorData {
     <h2 mat-dialog-title>
       {{ data.type.title | dcLocalize }} — {{ (data.row ? 'config.edit' : 'config.new') | dcTranslate }}
       @if (data.row) {
-        <span dir="ltr">{{ data.row.code }}</span>
+        «{{ { ar: data.row.nameAr || data.row.code, en: data.row.nameEn || data.row.code } | dcLocalize }}»
       }
     </h2>
     <mat-dialog-content>
@@ -93,7 +93,7 @@ export class ConfigEditor {
       const fields = [...this.data.type.fields, ...this.scopeFields()];
       const lookups = fields.filter((f) => f.ref || f.refDomains || f.optionsUrl);
       const coded = (rows: { code: string; nameAr: string; nameEn: string }[]) =>
-        rows.map((r): FormOption => ({ value: r.code, label: { ar: `${r.nameAr} (${r.code})`, en: `${r.nameEn} (${r.code})` } }));
+        rows.map((r): FormOption => ({ value: r.code, label: { ar: r.nameAr || r.code, en: r.nameEn || r.code } }));
       const sources = lookups.map((f) =>
         f.ref
           ? this.api.list(f.ref).pipe(map(coded))
@@ -255,11 +255,13 @@ export class ConfigEditor {
   private buildSchema(options: Map<string, FormOption[]>): FormSchema {
     const type = this.data.type;
     const editing = this.data.row !== null;
+    // The names first, side by side; then the code and "active" on one row.
+    const long = !!type.nameLabels;
     const general: FormField[] = [
-      { code: 'code', type: 'text', label: { ar: 'الرمز', en: 'Code' }, required: true, readonly: editing || this.isSingleton },
-      { code: 'nameAr', type: type.nameLabels ? 'textarea' : 'text', label: type.nameLabels?.ar ?? { ar: 'الاسم بالعربية', en: 'Arabic name' }, required: true },
-      { code: 'nameEn', type: type.nameLabels ? 'textarea' : 'text', label: type.nameLabels?.en ?? { ar: 'الاسم بالإنجليزية', en: 'English name' }, required: true },
-      { code: 'isActive', type: 'checkbox', label: { ar: 'فعال', en: 'Active' } },
+      { code: 'nameAr', type: long ? 'textarea' : 'text', width: long ? 'full' : 'half', label: type.nameLabels?.ar ?? { ar: 'الاسم بالعربية', en: 'Arabic name' }, required: true },
+      { code: 'nameEn', type: long ? 'textarea' : 'text', width: long ? 'full' : 'half', label: type.nameLabels?.en ?? { ar: 'الاسم بالإنجليزية', en: 'English name' }, required: true },
+      { code: 'code', type: 'text', width: 'half', label: { ar: 'الرمز', en: 'Code' }, required: true, readonly: editing || this.isSingleton },
+      { code: 'isActive', type: 'checkbox', width: 'half', label: { ar: 'فعال', en: 'Active' } },
     ];
     const details: FormField[] = type.fields.map((f) => ({
       code: f.code,
@@ -286,7 +288,7 @@ export class ConfigEditor {
     return {
       code: type.entityType,
       sections: [
-        { code: 'general', title: { ar: 'البيانات الأساسية', en: 'General' }, fields: general },
+        { code: 'general', title: { ar: 'البيانات الأساسية', en: 'General' }, columns: 2, fields: general },
         ...(details.length ? [{ code: 'details', title: { ar: 'التفاصيل', en: 'Details' }, fields: details }] : []),
         ...(level.length ? [{ code: 'level', title: { ar: 'المستوى', en: 'Level' }, fields: level }] : []),
       ],

@@ -28,6 +28,9 @@ export type FormValue = Record<string, unknown>;
  * Renders a {@link FormSchema}: visibility and conditional requirements are JSONLogic rules evaluated on every change,
  * exactly as the server will re-evaluate them on submit.
  */
+/** Field types that take the whole row unless given a width (long text, lists, nested data, files). */
+const WIDE_TYPES: string[] = ['checkbox', 'textarea', 'dualList', 'structured', 'file', 'rows'];
+
 @Component({
   selector: 'dc-dynamic-form',
   imports: [
@@ -124,7 +127,7 @@ export class DynamicForm {
   /** Where a field sits in its section's grid: a share of six tracks when the section has columns. */
   protected span(section: FormSection, field: FormField): string | null {
     if (!section.columns) return null;
-    const width = field.width ?? (field.type === 'checkbox' || field.type === 'textarea' ? 'full' : null);
+    const width = field.width ?? (WIDE_TYPES.includes(field.type) ? 'full' : null);
     const tracks = width === 'full' ? 6 : width === 'half' ? 3 : width === 'third' ? 2 : 6 / Math.min(3, Math.max(1, section.columns));
     return `span ${tracks}`;
   }
@@ -133,13 +136,7 @@ export class DynamicForm {
   protected wide(section: FormSection, field: FormField): boolean {
     return (
       !section.columns &&
-      (field.width === 'full' ||
-        field.type === 'checkbox' ||
-        field.type === 'textarea' ||
-        field.type === 'dualList' ||
-        field.type === 'structured' ||
-        field.type === 'file' ||
-        field.type === 'rows')
+      (field.width === 'full' || (field.width !== 'half' && field.width !== 'third' && WIDE_TYPES.includes(field.type)))
     );
   }
 

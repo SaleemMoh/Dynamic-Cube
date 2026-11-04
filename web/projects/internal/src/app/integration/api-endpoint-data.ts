@@ -73,7 +73,7 @@ export class ApiEndpointData {
   }
 
   protected sourceName(s: QuerySourceInfo): string {
-    return `${this.i18n.localize({ ar: s.nameAr, en: s.nameEn })} (${s.code})`;
+    return this.i18n.localize({ ar: s.nameAr, en: s.nameEn }) || s.code;
   }
 
   protected columnsOf(alias: string) {

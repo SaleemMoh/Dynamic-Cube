@@ -114,22 +114,19 @@ const RESOURCE = 'apps-control.classes';
           }
           <div class="dc-scroll">
             <table mat-table [dataSource]="dataSource" matSort class="dc-table" data-testid="values-table">
-              <ng-container matColumnDef="code">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'classes.value' | dcTranslate }}</th>
-                <td mat-cell *matCellDef="let row" class="mono">{{ valueCode(row) }}</td>
-              </ng-container>
-              <ng-container matColumnDef="nameAr">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'config.nameAr' | dcTranslate }}</th>
-                <td mat-cell *matCellDef="let row" dir="rtl">{{ row.nameAr }}</td>
-              </ng-container>
-              <ng-container matColumnDef="nameEn">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'config.nameEn' | dcTranslate }}</th>
-                <td mat-cell *matCellDef="let row" dir="ltr">{{ row.nameEn }}</td>
+              <ng-container matColumnDef="name">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'config.name' | dcTranslate }}</th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="dc-value-name">{{ { ar: row.nameAr || valueCode(row), en: row.nameEn || valueCode(row) } | dcLocalize }}</span>
+                  <small class="dc-value-code mono" dir="ltr">{{ valueCode(row) }}</small>
+                </td>
               </ng-container>
               @for (attribute of shownAttributes(); track attribute.code) {
                 <ng-container [matColumnDef]="'attr:' + attribute.code">
                   <th mat-header-cell *matHeaderCellDef>{{ { ar: attribute.nameAr, en: attribute.nameEn } | dcLocalize }}</th>
-                  <td mat-cell *matCellDef="let row">{{ attributeValue(row, attribute.code) }}</td>
+                  <td mat-cell *matCellDef="let row">
+                    <span class="dc-value-attr" [title]="attributeValue(row, attribute.code)">{{ attributeValue(row, attribute.code) }}</span>
+                  </td>
                 </ng-container>
               }
               <ng-container matColumnDef="companies">
@@ -199,6 +196,25 @@ const RESOURCE = 'apps-control.classes';
     </div>
   `,
   styles: `
+    /* Long values (descriptions) keep a readable width and show two lines; the whole text is in the tooltip. */
+    .dc-value-attr {
+      display: -webkit-box;
+      min-width: 9rem;
+      max-width: 18rem;
+      overflow: hidden;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+    .dc-value-name {
+      display: block;
+    }
+    .dc-value-code {
+      display: block;
+      /* Under the name, on the reading side, whatever the page direction. */
+      width: fit-content;
+      font-size: 11px;
+      color: var(--dga-gray-500, #6c737f);
+    }
     .dc-scroll {
       max-height: calc(100vh - 360px);
       min-height: 12rem;
@@ -236,9 +252,7 @@ export class ClassesPage {
   protected readonly values = computed(() => (this.valuesResource.hasValue() ? (this.valuesResource.value() as DomainRow[]) : []));
   protected readonly shownAttributes = computed(() => (this.cls()?.attributes ?? []).slice(0, 3));
   protected readonly columns = computed(() => [
-    'code',
-    'nameAr',
-    'nameEn',
+    'name',
     ...(this.cls()?.valuesPerCompany ? ['companies'] : []),
     ...this.shownAttributes().map((a) => 'attr:' + a.code),
     'isActive',
@@ -272,6 +286,11 @@ export class ClassesPage {
   private readonly paginator = viewChild(MatPaginator);
 
   constructor() {
+    // The name column sorts by the name in the page's language.
+    this.dataSource.sortingDataAccessor = (row, column) =>
+      column === 'name'
+        ? String((this.i18n.language() === 'ar' ? row.nameAr : row.nameEn) || row.code).toLowerCase()
+        : ((row as unknown as Record<string, string | number>)[column] ?? '');
     this.dataSource.filterPredicate = (row, term) => `${row.code} ${row.nameAr} ${row.nameEn}`.toLowerCase().includes(term);
     effect(() => (this.dataSource.data = this.values()));
     effect(() => (this.dataSource.filter = this.search().trim().toLowerCase()));

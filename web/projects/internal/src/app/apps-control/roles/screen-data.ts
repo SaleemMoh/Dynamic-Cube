@@ -152,7 +152,7 @@ export class GrantValues {
               <mat-label>{{ 'roles.data.addList' | dcTranslate }}</mat-label>
               <mat-select [ngModel]="null" (ngModelChange)="add(screen, $event)" [attr.data-testid]="'add-list-' + screen.code">
                 @for (lov of others(screen); track lov.code) {
-                  <mat-option [value]="lov.code">{{ { ar: lov.nameAr, en: lov.nameEn } | dcLocalize }} ({{ lov.code }})</mat-option>
+                  <mat-option [value]="lov.code">{{ { ar: lov.nameAr, en: lov.nameEn } | dcLocalize }}</mat-option>
                 }
               </mat-select>
             </mat-form-field>

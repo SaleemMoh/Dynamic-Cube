@@ -344,7 +344,7 @@ export class OperationDesigner {
   }
 
   protected rowName(row: ConfigRow | null): string {
-    return row ? `${this.i18n.localize({ ar: row.nameAr, en: row.nameEn })} (${row.code})` : '';
+    return row ? this.i18n.localize({ ar: row.nameAr, en: row.nameEn }) || row.code : '';
   }
 
   // ---------------------------------------------------------------- save

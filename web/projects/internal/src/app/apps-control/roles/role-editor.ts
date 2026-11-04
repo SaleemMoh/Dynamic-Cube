@@ -573,7 +573,7 @@ export class RoleEditor {
         label: { ar: 'القائمة', en: 'List' },
         type: 'select',
         required: true,
-        options: this.data.lovs.map((l) => ({ value: l.code, label: { ar: `${l.nameAr} (${l.code})`, en: `${l.nameEn} (${l.code})` } })),
+        options: this.data.lovs.map((l) => ({ value: l.code, label: { ar: l.nameAr || l.code, en: l.nameEn || l.code } })),
       },
       {
         key: 'resourceCode',

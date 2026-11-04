@@ -169,7 +169,7 @@ export interface MatrixCellEditorResult {
             >
               @for (s of data.matrix.scales; track s.code) {
                 <mat-option [value]="s.code"
-                  >{{ { ar: s.nameAr, en: s.nameEn } | dcLocalize }} ({{ s.code }}) ·
+                  >{{ { ar: s.nameAr, en: s.nameEn } | dcLocalize }} ·
                   {{ scaleText(s.code) }}</mat-option
                 >
               }
@@ -344,7 +344,7 @@ export interface MatrixCellEditorResult {
                             <mat-icon fontSet="material-symbols-outlined">{{
                               sourceIcons[i.source.kind]
                             }}</mat-icon>
-                            {{ { ar: i.nameAr, en: i.nameEn } | dcLocalize }} ({{ i.code }})
+                            {{ { ar: i.nameAr, en: i.nameEn } | dcLocalize }}
                           </mat-option>
                         }
                       </mat-select>

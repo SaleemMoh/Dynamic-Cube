@@ -329,7 +329,7 @@
     <mat-option value="">—</mat-option>
     @for (f of functions(); track f.code) {
       <mat-option [value]="f.code">
-        {{ { ar: f.nameAr, en: f.nameEn } | dcLocalize }} ({{ f.code }})
+        {{ { ar: f.nameAr, en: f.nameEn } | dcLocalize }}
       </mat-option>
     }
   </mat-select>

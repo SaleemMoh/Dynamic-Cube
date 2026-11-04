@@ -6,7 +6,7 @@
         <mat-label>{{ 'builder.archetypeTemplate' | dcTranslate }}</mat-label>
         <mat-select [ngModel]="archetypeCode()" (ngModelChange)="openArchetype($event)" data-testid="builder-archetype">
           @for (a of refs.archetypes(); track a.code) {
-            <mat-option [value]="a.code">{{ serviceName(a) }} ({{ a.code }})</mat-option>
+            <mat-option [value]="a.code">{{ serviceName(a) }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
@@ -16,7 +16,7 @@
       <mat-label>{{ 'versions.service' | dcTranslate }}</mat-label>
       <mat-select [ngModel]="current()" (ngModelChange)="open($event, null)" data-testid="builder-service">
         @for (s of services.value() ?? []; track s.code) {
-          <mat-option [value]="s.code">{{ serviceName(s) }} ({{ s.code }})</mat-option>
+          <mat-option [value]="s.code">{{ serviceName(s) }}</mat-option>
         }
       </mat-select>
     </mat-form-field>

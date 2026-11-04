@@ -59,7 +59,7 @@
             <mat-option [value]="null">—</mat-option>
             @for (c of otherClasses; track c.code) {
               <mat-option [value]="c.code"
-                >{{ { ar: c.nameAr, en: c.nameEn } | dcLocalize }} ({{ c.code }})</mat-option
+                >{{ { ar: c.nameAr, en: c.nameEn } | dcLocalize }}</mat-option
               >
             }
           </mat-select>
@@ -180,7 +180,7 @@
                 >
                   @for (l of lovs(); track l.code) {
                     <mat-option [value]="l.code"
-                      >{{ { ar: l.nameAr, en: l.nameEn } | dcLocalize }} ({{ l.code }})</mat-option
+                      >{{ { ar: l.nameAr, en: l.nameEn } | dcLocalize }}</mat-option
                     >
                   }
                 </mat-select>

@@ -379,7 +379,7 @@
             <mat-label>{{ 'builder.operation' | dcTranslate }}</mat-label>
             <mat-select [ngModel]="call?.operation ?? ''" (ngModelChange)="integration(s.path.step, { operation: $event })" data-testid="step-operation">
               @for (o of refs.operations(); track o.code) {
-                <mat-option [value]="o.code">{{ { ar: o.nameAr, en: o.nameEn } | dcLocalize }} ({{ o.code }})</mat-option>
+                <mat-option [value]="o.code">{{ { ar: o.nameAr, en: o.nameEn } | dcLocalize }}</mat-option>
               }
             </mat-select>
           </mat-form-field>

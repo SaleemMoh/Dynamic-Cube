@@ -284,7 +284,7 @@ export function traceText(step: TraceStep): string {
         <mat-label>{{ 'decisions.ruleSet' | dcTranslate }}</mat-label>
         <mat-select [ngModel]="ruleSet()" (ngModelChange)="choose($event)" data-testid="rule-set">
           @for (r of ruleSets.value() ?? []; track r.code) {
-            <mat-option [value]="r.code">{{ { ar: r.nameAr, en: r.nameEn } | dcLocalize }} ({{ r.code }})</mat-option>
+            <mat-option [value]="r.code">{{ { ar: r.nameAr, en: r.nameEn } | dcLocalize }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
@@ -302,7 +302,7 @@ export function traceText(step: TraceStep): string {
           <table mat-table [dataSource]="rows()" class="dc-table">
             <ng-container matColumnDef="code">
               <th mat-header-cell *matHeaderCellDef>{{ 'versions.version' | dcTranslate }}</th>
-              <td mat-cell *matCellDef="let row" dir="ltr" class="dc-code">{{ row.code }}</td>
+              <td mat-cell *matCellDef="let row" dir="ltr" class="dc-code">{{ row.code.slice(row.code.lastIndexOf('/') + 1) }}</td>
             </ng-container>
             <ng-container matColumnDef="name">
               <th mat-header-cell *matHeaderCellDef>{{ 'config.name' | dcTranslate }}</th>

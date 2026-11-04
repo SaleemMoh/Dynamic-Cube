@@ -179,7 +179,7 @@ const LINKED_TRANSLATIONS: TranslationDictionary = {
                 >
                   @for (s of others(); track s.code) {
                     <mat-option [value]="s.code"
-                      >{{ { ar: s.nameAr, en: s.nameEn } | dcLocalize }} ({{ s.code }})</mat-option
+                      >{{ { ar: s.nameAr, en: s.nameEn } | dcLocalize }}</mat-option
                     >
                   }
                 </mat-select>
@@ -193,7 +193,7 @@ const LINKED_TRANSLATIONS: TranslationDictionary = {
                 >
                   @for (d of documentTypes(); track d.code) {
                     <mat-option [value]="d.code"
-                      >{{ { ar: d.nameAr, en: d.nameEn } | dcLocalize }} ({{ d.code }})</mat-option
+                      >{{ { ar: d.nameAr, en: d.nameEn } | dcLocalize }}</mat-option
                     >
                   }
                 </mat-select>
@@ -249,7 +249,7 @@ const LINKED_TRANSLATIONS: TranslationDictionary = {
                 <mat-option [value]="null">{{ 'ls.none' | dcTranslate }}</mat-option>
                 @for (s of others(); track s.code) {
                   <mat-option [value]="s.code"
-                    >{{ { ar: s.nameAr, en: s.nameEn } | dcLocalize }} ({{ s.code }})</mat-option
+                    >{{ { ar: s.nameAr, en: s.nameEn } | dcLocalize }}</mat-option
                   >
                 }
               </mat-select>
@@ -303,7 +303,7 @@ const LINKED_TRANSLATIONS: TranslationDictionary = {
             >
               @for (s of bundleable(); track s.code) {
                 <mat-option [value]="s.code"
-                  >{{ { ar: s.nameAr, en: s.nameEn } | dcLocalize }} ({{ s.code }})</mat-option
+                  >{{ { ar: s.nameAr, en: s.nameEn } | dcLocalize }}</mat-option
                 >
               }
             </mat-select>

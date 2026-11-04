@@ -129,7 +129,7 @@ type Selection = { type: 'block'; id: string } | { type: 'section'; index: numbe
           >
             @for (p of pages.value() ?? []; track p.code) {
               <mat-option [value]="p.code"
-                >{{ { ar: p.nameAr, en: p.nameEn } | dcLocalize }} ({{ p.code }})</mat-option
+                >{{ { ar: p.nameAr, en: p.nameEn } | dcLocalize }}</mat-option
               >
             }
           </mat-select>

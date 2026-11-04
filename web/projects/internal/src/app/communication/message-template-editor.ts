@@ -65,7 +65,7 @@ export function samplePaths(value: unknown, prefix = ''): string[] {
     <h2 mat-dialog-title>
       {{ 'msgTemplates.editor' | dcTranslate }}
       @if (data.row) {
-        <span dir="ltr">{{ data.row.code }}</span>
+        «{{ { ar: data.row.nameAr || data.row.code, en: data.row.nameEn || data.row.code } | dcLocalize }}»
       }
     </h2>
     <mat-dialog-content class="dc-msg">

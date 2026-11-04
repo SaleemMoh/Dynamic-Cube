@@ -10,7 +10,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
-import { AppsControlApi, BusinessAppContext, ConfigRow, LocalizePipe, problemMessages, TranslatePipe, SearchableSelectModule } from '@dynamic-cube/shared';
+import { AppsControlApi, BusinessAppContext, ConfigRow, I18nService, LocalizePipe, problemMessages, TranslatePipe, SearchableSelectModule } from '@dynamic-cube/shared';
 import { DraftsService } from '../apps-control/drafts.service';
 import { PrivilegesService } from '../apps-control/privileges.service';
 import { GraphDefinition, WorkflowGraph } from './workflow-graph';
@@ -49,7 +49,7 @@ const STARTER = {
   imports: [MatButtonModule, MatDialogModule, TranslatePipe, WorkflowGraph],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <h2 mat-dialog-title dir="ltr">{{ data.code }}</h2>
+    <h2 mat-dialog-title>{{ data.title }}</h2>
     <mat-dialog-content><dc-workflow-graph [definition]="data.definition" /></mat-dialog-content>
     <mat-dialog-actions align="end"
       ><button matButton mat-dialog-close>
@@ -59,7 +59,7 @@ const STARTER = {
   `,
 })
 export class WorkflowGraphDialog {
-  protected readonly data = inject<{ code: string; definition: GraphDefinition }>(MAT_DIALOG_DATA);
+  protected readonly data = inject<{ title: string; definition: GraphDefinition }>(MAT_DIALOG_DATA);
 }
 
 /**
@@ -156,7 +156,7 @@ export class WorkflowGraphDialog {
     <table mat-table [dataSource]="rows()" class="dc-table">
       <ng-container matColumnDef="code">
         <th mat-header-cell *matHeaderCellDef>{{ 'versions.version' | dcTranslate }}</th>
-        <td mat-cell *matCellDef="let row" dir="ltr" class="dc-code">{{ row.code }}</td>
+        <td mat-cell *matCellDef="let row" dir="ltr" class="dc-code">{{ row.code.slice(row.code.lastIndexOf('/') + 1) }}</td>
       </ng-container>
       <ng-container matColumnDef="name">
         <th mat-header-cell *matHeaderCellDef>{{ 'config.name' | dcTranslate }}</th>
@@ -253,6 +253,7 @@ export class WorkflowVersionList {
   private readonly privileges = inject(PrivilegesService);
   protected readonly columns = ['code', 'name', 'published', 'state', 'actions'];
   private readonly appContext = inject(BusinessAppContext);
+  private readonly i18nNames = inject(I18nService);
   protected readonly workflows = rxResource({ params: () => ({ app: this.appContext.current() }), stream: ({ params }) => this.api.list('wf.workflow', null, params.app) });
   private readonly versions = rxResource({ stream: () => this.api.list('wf.workflow-version') });
   private readonly allRows = computed(() => this.versions.value() ?? []);
@@ -330,9 +331,17 @@ export class WorkflowVersionList {
     }
   }
 
+  /** "Workflow name · Version 2" for a version row. */
+  private versionTitle(row: ConfigRow): string {
+    const code = row.code.slice(0, row.code.lastIndexOf('/'));
+    const workflow = (this.workflows.value() ?? []).find((w) => w.code === code);
+    const name = workflow ? this.i18nNames.localize({ ar: workflow.nameAr, en: workflow.nameEn }) : code;
+    return `${name} · ${this.i18nNames.localize({ ar: row.nameAr, en: row.nameEn })}`;
+  }
+
   protected showGraph(row: ConfigRow): void {
     this.dialog.open(WorkflowGraphDialog, {
-      data: { code: row.code, definition: row['definition'] },
+      data: { title: this.versionTitle(row), definition: row['definition'] },
       width: '72rem',
       maxWidth: '95vw',
     });

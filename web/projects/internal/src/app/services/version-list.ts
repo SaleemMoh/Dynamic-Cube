@@ -53,7 +53,7 @@ const STARTER: VersionDefinition = {
         <mat-form-field subscriptSizing="dynamic">
           <mat-select id="dc-version-service" [ngModel]="service()" (ngModelChange)="chooseService($event)" data-testid="version-service">
             @for (s of services.value() ?? []; track s.code) {
-              <mat-option [value]="s.code">{{ { ar: s.nameAr, en: s.nameEn } | dcLocalize }} ({{ s.code }})</mat-option>
+              <mat-option [value]="s.code">{{ { ar: s.nameAr, en: s.nameEn } | dcLocalize }}</mat-option>
             }
           </mat-select>
         </mat-form-field>
@@ -88,7 +88,7 @@ const STARTER: VersionDefinition = {
     <table mat-table [dataSource]="rows()" class="dc-table">
       <ng-container matColumnDef="code">
         <th mat-header-cell *matHeaderCellDef>{{ 'versions.version' | dcTranslate }}</th>
-        <td mat-cell *matCellDef="let row" dir="ltr" class="dc-code">{{ row.code }}</td>
+        <td mat-cell *matCellDef="let row" dir="ltr" class="dc-code">{{ row.code.slice(row.code.lastIndexOf('/') + 1) }}</td>
       </ng-container>
       <ng-container matColumnDef="name">
         <th mat-header-cell *matHeaderCellDef>{{ 'config.name' | dcTranslate }}</th>

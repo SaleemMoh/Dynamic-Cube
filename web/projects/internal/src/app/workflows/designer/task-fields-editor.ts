@@ -227,7 +227,7 @@ export interface DecisionChoice {
           data-testid="task-recalculate"
         >
           @for (d of decisions(); track d.code) {
-            <mat-option [value]="d.code">{{ d.label }} ({{ d.code }})</mat-option>
+            <mat-option [value]="d.code">{{ d.label }}</mat-option>
           }
         </mat-select>
         <mat-hint>{{ 'designer.recalculateHint' | dcTranslate }}</mat-hint>

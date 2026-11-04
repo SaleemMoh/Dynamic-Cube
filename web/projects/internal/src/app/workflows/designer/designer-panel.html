@@ -36,7 +36,7 @@
         <mat-select [ngModel]="a.resumeAt ?? null" (ngModelChange)="action(i, { resumeAt: $event })">
           <mat-option [value]="null">{{ 'designer.sameTask' | dcTranslate }}</mat-option>
           @for (t of tasks(); track t.code) {
-            <mat-option [value]="t.code">{{ name(t) }} ({{ t.code }})</mat-option>
+            <mat-option [value]="t.code">{{ name(t) }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
@@ -45,7 +45,7 @@
         <mat-label>{{ 'designer.field.to' | dcTranslate }}</mat-label>
         <mat-select [ngModel]="a.to ?? null" (ngModelChange)="action(i, { to: $event })" data-testid="action-to">
           @for (t of targets(); track t.code) {
-            <mat-option [value]="t.code">{{ name(t) }} ({{ t.code }})</mat-option>
+            <mat-option [value]="t.code">{{ name(t) }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
@@ -89,7 +89,7 @@
     <mat-select [ngModel]="e.edge.to" (ngModelChange)="retarget($event)" data-testid="edge-to">
       @for (t of nodes(); track t.code) {
         @if (t.type !== 'START' && t.code !== e.from.code) {
-          <mat-option [value]="t.code">{{ name(t) }} ({{ t.code }})</mat-option>
+          <mat-option [value]="t.code">{{ name(t) }}</mat-option>
         }
       }
     </mat-select>
@@ -167,7 +167,7 @@
             <mat-label>{{ 'designer.field.role' | dcTranslate }}</mat-label>
             <mat-select [ngModel]="n.assignment?.role ?? null" (ngModelChange)="assignment({ role: $event })" data-testid="assign-role">
               @for (r of refs.roles(); track r.value) {
-                <mat-option [value]="r.value">{{ r.label | dcLocalize }} ({{ r.value }})</mat-option>
+                <mat-option [value]="r.value">{{ r.label | dcLocalize }}</mat-option>
               }
             </mat-select>
           </mat-form-field>
@@ -177,7 +177,7 @@
             <mat-label>{{ 'designer.field.user' | dcTranslate }}</mat-label>
             <mat-select [ngModel]="n.assignment?.user ?? null" (ngModelChange)="assignment({ user: $event })">
               @for (u of refs.users(); track u.value) {
-                <mat-option [value]="u.value">{{ u.label | dcLocalize }} ({{ u.value }})</mat-option>
+                <mat-option [value]="u.value">{{ u.label | dcLocalize }}</mat-option>
               }
             </mat-select>
           </mat-form-field>
@@ -198,7 +198,7 @@
                 <mat-label>{{ 'designer.field.orgUnit' | dcTranslate }}</mat-label>
                 <mat-select [ngModel]="n.assignment.orgUnit ?? null" (ngModelChange)="assignment({ orgUnit: $event })" data-testid="assign-org-unit">
                   @for (u of refs.orgUnits(); track u.value) {
-                    <mat-option [value]="u.value">{{ u.label | dcLocalize }} ({{ u.value }})</mat-option>
+                    <mat-option [value]="u.value">{{ u.label | dcLocalize }}</mat-option>
                   }
                 </mat-select>
               </mat-form-field>
@@ -220,7 +220,7 @@
                   <mat-option value="">{{ 'designer.lastActor' | dcTranslate }}</mat-option>
                   @for (t of tasks(); track t.code) {
                     @if (t.code !== n.code) {
-                      <mat-option [value]="t.code">{{ name(t) }} ({{ t.code }})</mat-option>
+                      <mat-option [value]="t.code">{{ name(t) }}</mat-option>
                     }
                   }
                 </mat-select>
@@ -241,7 +241,7 @@
               <mat-select [ngModel]="n.assignment.position ?? null" (ngModelChange)="assignment({ position: $event })" data-testid="assign-position">
                 <mat-option [value]="null">{{ 'designer.anyoneInUnit' | dcTranslate }}</mat-option>
                 @for (p of refs.positions(); track p.value) {
-                  <mat-option [value]="p.value">{{ p.label | dcLocalize }} ({{ p.value }})</mat-option>
+                  <mat-option [value]="p.value">{{ p.label | dcLocalize }}</mat-option>
                 }
               </mat-select>
             </mat-form-field>
@@ -250,7 +250,7 @@
               <mat-select [ngModel]="n.assignment.role ?? null" (ngModelChange)="assignment({ role: $event })">
                 <mat-option [value]="null">—</mat-option>
                 @for (r of refs.roles(); track r.value) {
-                  <mat-option [value]="r.value">{{ r.label | dcLocalize }} ({{ r.value }})</mat-option>
+                  <mat-option [value]="r.value">{{ r.label | dcLocalize }}</mat-option>
                 }
               </mat-select>
             </mat-form-field>
@@ -268,7 +268,7 @@
             <mat-select [ngModel]="n.assignment?.step ?? null" (ngModelChange)="assignment({ step: $event })">
               @for (t of tasks(); track t.code) {
                 @if (t.code !== n.code) {
-                  <mat-option [value]="t.code">{{ name(t) }} ({{ t.code }})</mat-option>
+                  <mat-option [value]="t.code">{{ name(t) }}</mat-option>
                 }
               }
             </mat-select>
@@ -278,7 +278,7 @@
             <mat-select [ngModel]="n.assignment?.role ?? null" (ngModelChange)="assignment({ role: $event })">
               <mat-option [value]="null">—</mat-option>
               @for (r of refs.roles(); track r.value) {
-                <mat-option [value]="r.value">{{ r.label | dcLocalize }} ({{ r.value }})</mat-option>
+                <mat-option [value]="r.value">{{ r.label | dcLocalize }}</mat-option>
               }
             </mat-select>
           </mat-form-field>
@@ -297,7 +297,7 @@
           <mat-label>{{ 'designer.field.distributorRole' | dcTranslate }}</mat-label>
           <mat-select [ngModel]="n.assignment!.distributorRole ?? null" (ngModelChange)="assignment({ distributorRole: $event })">
             @for (r of refs.roles(); track r.value) {
-              <mat-option [value]="r.value">{{ r.label | dcLocalize }} ({{ r.value }})</mat-option>
+              <mat-option [value]="r.value">{{ r.label | dcLocalize }}</mat-option>
             }
           </mat-select>
         </mat-form-field>
@@ -307,7 +307,7 @@
         <mat-select multiple [ngModel]="n.excludeActorsOf ?? []" (ngModelChange)="patch({ excludeActorsOf: $event })">
           @for (t of tasks(); track t.code) {
             @if (t.code !== n.code) {
-              <mat-option [value]="t.code">{{ name(t) }} ({{ t.code }})</mat-option>
+              <mat-option [value]="t.code">{{ name(t) }}</mat-option>
             }
           }
         </mat-select>
@@ -427,7 +427,7 @@
         <mat-select [ngModel]="n.sla?.escalateToRole ?? null" (ngModelChange)="sla({ escalateToRole: $event })">
           <mat-option [value]="null">—</mat-option>
           @for (r of refs.roles(); track r.value) {
-            <mat-option [value]="r.value">{{ r.label | dcLocalize }} ({{ r.value }})</mat-option>
+            <mat-option [value]="r.value">{{ r.label | dcLocalize }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
@@ -476,7 +476,7 @@
           <mat-form-field subscriptSizing="dynamic">
             <mat-select [ngModel]="b" (ngModelChange)="branch(i, $event)" [attr.aria-label]="'designer.section.branches' | dcTranslate">
               @for (t of targets(); track t.code) {
-                <mat-option [value]="t.code">{{ name(t) }} ({{ t.code }})</mat-option>
+                <mat-option [value]="t.code">{{ name(t) }}</mat-option>
               }
             </mat-select>
           </mat-form-field>
@@ -526,7 +526,7 @@
               <mat-label>{{ 'designer.field.to' | dcTranslate }}</mat-label>
               <mat-select [ngModel]="r.to" (ngModelChange)="route(i, { to: $event })">
                 @for (t of targets(); track t.code) {
-                  <mat-option [value]="t.code">{{ name(t) }} ({{ t.code }})</mat-option>
+                  <mat-option [value]="t.code">{{ name(t) }}</mat-option>
                 }
               </mat-select>
             </mat-form-field>
@@ -557,7 +557,7 @@
         <mat-label>{{ 'designer.field.default' | dcTranslate }}</mat-label>
         <mat-select [ngModel]="n.default ?? null" (ngModelChange)="patch({ default: $event })" data-testid="gateway-default">
           @for (t of targets(); track t.code) {
-            <mat-option [value]="t.code">{{ name(t) }} ({{ t.code }})</mat-option>
+            <mat-option [value]="t.code">{{ name(t) }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
@@ -568,7 +568,7 @@
         <mat-label>{{ 'designer.field.ruleSet' | dcTranslate }}</mat-label>
         <mat-select [ngModel]="n.ruleSet ?? null" (ngModelChange)="patch({ ruleSet: $event })" data-testid="decision-rule-set">
           @for (r of refs.ruleSets(); track r.value) {
-            <mat-option [value]="r.value">{{ r.label | dcLocalize }} ({{ r.value }})</mat-option>
+            <mat-option [value]="r.value">{{ r.label | dcLocalize }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
@@ -603,7 +603,7 @@
         <mat-label>{{ 'designer.field.operation' | dcTranslate }}</mat-label>
         <mat-select [ngModel]="n.operation ?? null" (ngModelChange)="patch({ operation: $event })" data-testid="integration-operation">
           @for (o of refs.operations(); track o.value) {
-            <mat-option [value]="o.value">{{ o.label | dcLocalize }} ({{ o.value }})</mat-option>
+            <mat-option [value]="o.value">{{ o.label | dcLocalize }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
@@ -633,7 +633,7 @@
         <mat-select [ngModel]="n.failed ?? null" (ngModelChange)="patch({ failed: $event })" data-testid="integration-failed">
           <mat-option [value]="null">{{ 'designer.failedStops' | dcTranslate }}</mat-option>
           @for (t of targets(); track t.code) {
-            <mat-option [value]="t.code">{{ name(t) }} ({{ t.code }})</mat-option>
+            <mat-option [value]="t.code">{{ name(t) }}</mat-option>
           }
         </mat-select>
         <mat-hint>{{ 'designer.failedHint' | dcTranslate }}</mat-hint>
@@ -645,7 +645,7 @@
         <mat-label>{{ 'designer.field.childService' | dcTranslate }}</mat-label>
         <mat-select [ngModel]="n.childService ?? null" (ngModelChange)="patch({ childService: $event })" data-testid="sub-request-service">
           @for (o of refs.services(); track o.value) {
-            <mat-option [value]="o.value">{{ o.label | dcLocalize }} ({{ o.value }})</mat-option>
+            <mat-option [value]="o.value">{{ o.label | dcLocalize }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
@@ -665,7 +665,7 @@
           <mat-label>{{ 'designer.field.childNotApproved' | dcTranslate }}</mat-label>
           <mat-select [ngModel]="n.failed ?? null" (ngModelChange)="patch({ failed: $event })" data-testid="sub-request-failed">
             @for (t of targets(); track t.code) {
-              <mat-option [value]="t.code">{{ name(t) }} ({{ t.code }})</mat-option>
+              <mat-option [value]="t.code">{{ name(t) }}</mat-option>
             }
           </mat-select>
         </mat-form-field>
@@ -699,7 +699,7 @@
         <mat-label>{{ 'designer.field.documentType' | dcTranslate }}</mat-label>
         <mat-select [ngModel]="n.documentType ?? null" (ngModelChange)="patch({ documentType: $event })" data-testid="document-type">
           @for (d of refs.documentTypes(); track d.value) {
-            <mat-option [value]="d.value">{{ d.label | dcLocalize }} ({{ d.value }})</mat-option>
+            <mat-option [value]="d.value">{{ d.label | dcLocalize }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
@@ -778,7 +778,7 @@
         <mat-select [ngModel]="n.provider ?? null" (ngModelChange)="patch({ provider: $event })" data-testid="payment-provider">
           <mat-option [value]="null">{{ 'designer.defaultProvider' | dcTranslate }}</mat-option>
           @for (p of refs.providers(); track p.value) {
-            <mat-option [value]="p.value">{{ p.label | dcLocalize }} ({{ p.value }})</mat-option>
+            <mat-option [value]="p.value">{{ p.label | dcLocalize }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
@@ -833,7 +833,7 @@
         <mat-label>{{ 'designer.field.expired' | dcTranslate }}</mat-label>
         <mat-select [ngModel]="n.expired ?? null" (ngModelChange)="patch({ expired: $event })" data-testid="payment-expired">
           @for (t of targets(); track t.code) {
-            <mat-option [value]="t.code">{{ name(t) }} ({{ t.code }})</mat-option>
+            <mat-option [value]="t.code">{{ name(t) }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
@@ -844,7 +844,7 @@
         <mat-label>{{ 'designer.field.visitType' | dcTranslate }}</mat-label>
         <mat-select [ngModel]="n.visitType ?? null" (ngModelChange)="patch({ visitType: $event })" data-testid="visit-type">
           @for (v of refs.visitTypes(); track v.value) {
-            <mat-option [value]="v.value">{{ v.label | dcLocalize }} ({{ v.value }})</mat-option>
+            <mat-option [value]="v.value">{{ v.label | dcLocalize }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
@@ -917,7 +917,7 @@
             <mat-label>{{ 'designer.field.to' | dcTranslate }}</mat-label>
             <mat-select [ngModel]="r.to" (ngModelChange)="setOutcomeTarget(i, $event)">
               @for (t of targets(); track t.code) {
-                <mat-option [value]="t.code">{{ name(t) }} ({{ t.code }})</mat-option>
+                <mat-option [value]="t.code">{{ name(t) }}</mat-option>
               }
             </mat-select>
           </mat-form-field>
@@ -940,7 +940,7 @@
         <mat-label>{{ 'designer.field.visitCancelled' | dcTranslate }}</mat-label>
         <mat-select [ngModel]="n.cancelled ?? null" (ngModelChange)="patch({ cancelled: $event })" data-testid="visit-cancelled">
           @for (t of targets(); track t.code) {
-            <mat-option [value]="t.code">{{ name(t) }} ({{ t.code }})</mat-option>
+            <mat-option [value]="t.code">{{ name(t) }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
@@ -993,7 +993,7 @@
       }}</mat-label>
       <mat-select [ngModel]="n.next ?? null" (ngModelChange)="patch({ next: $event })" data-testid="node-next">
         @for (t of targets(); track t.code) {
-          <mat-option [value]="t.code">{{ name(t) }} ({{ t.code }})</mat-option>
+          <mat-option [value]="t.code">{{ name(t) }}</mat-option>
         }
       </mat-select>
     </mat-form-field>

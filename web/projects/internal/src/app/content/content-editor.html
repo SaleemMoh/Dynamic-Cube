@@ -22,7 +22,7 @@
         <mat-select [ngModel]="serviceCode()" (ngModelChange)="serviceCode.set($event)" data-testid="content-service">
           <mat-option [value]="null">{{ 'content.noService' | dcTranslate }}</mat-option>
           @for (s of serviceOptions(); track s.code) {
-            <mat-option [value]="s.code">{{ s.name | dcLocalize }} ({{ s.code }})</mat-option>
+            <mat-option [value]="s.code">{{ s.name | dcLocalize }}</mat-option>
           }
         </mat-select>
         <mat-hint>{{ 'content.serviceHint' | dcTranslate }}</mat-hint>

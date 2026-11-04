@@ -56,7 +56,7 @@ interface OperationRow {
       <mat-form-field subscriptSizing="dynamic">
         <mat-select id="dc-operation" [ngModel]="selectedCode()" (ngModelChange)="choose($event)" data-testid="operation-select">
           @for (op of operations(); track op.code) {
-            <mat-option [value]="op.code">{{ { ar: op.nameAr, en: op.nameEn } | dcLocalize }} ({{ op.code }})</mat-option>
+            <mat-option [value]="op.code">{{ { ar: op.nameAr, en: op.nameEn } | dcLocalize }}</mat-option>
           }
         </mat-select>
       </mat-form-field>

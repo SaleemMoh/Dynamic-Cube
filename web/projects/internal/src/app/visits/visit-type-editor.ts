@@ -130,7 +130,7 @@ const OUTCOME_MAP: StructuredShape = { kind: 'map', keyLabel: t('قيمة الج
             <mat-select [ngModel]="inspectorRole()" (ngModelChange)="inspectorRole.set($event)" data-testid="vte-role">
               <mat-option [value]="null">{{ 'visitTypes.anyone' | dcTranslate }}</mat-option>
               @for (r of roles(); track r.code) {
-                <mat-option [value]="r.code">{{ { ar: r.nameAr, en: r.nameEn } | dcLocalize }} ({{ r.code }})</mat-option>
+                <mat-option [value]="r.code">{{ { ar: r.nameAr, en: r.nameEn } | dcLocalize }}</mat-option>
               }
             </mat-select>
           </mat-form-field>
@@ -251,7 +251,7 @@ const OUTCOME_MAP: StructuredShape = { kind: 'map', keyLabel: t('قيمة الج
               <mat-label>{{ 'visitTypes.createOperation' | dcTranslate }}</mat-label>
               <mat-select [ngModel]="createOperation()" (ngModelChange)="createOperation.set($event)" data-testid="vte-create-op">
                 @for (op of operations(); track op.code) {
-                  <mat-option [value]="op.code">{{ { ar: op.nameAr, en: op.nameEn } | dcLocalize }} ({{ op.code }})</mat-option>
+                  <mat-option [value]="op.code">{{ { ar: op.nameAr, en: op.nameEn } | dcLocalize }}</mat-option>
                 }
               </mat-select>
             </mat-form-field>
@@ -264,7 +264,7 @@ const OUTCOME_MAP: StructuredShape = { kind: 'map', keyLabel: t('قيمة الج
               <mat-select [ngModel]="resultOperation()" (ngModelChange)="resultOperation.set($event)">
                 <mat-option [value]="null">{{ 'visitTypes.noPolling' | dcTranslate }}</mat-option>
                 @for (op of operations(); track op.code) {
-                  <mat-option [value]="op.code">{{ { ar: op.nameAr, en: op.nameEn } | dcLocalize }} ({{ op.code }})</mat-option>
+                  <mat-option [value]="op.code">{{ { ar: op.nameAr, en: op.nameEn } | dcLocalize }}</mat-option>
                 }
               </mat-select>
             </mat-form-field>

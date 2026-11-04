@@ -6,7 +6,7 @@
         <mat-label>{{ 'designer.archetypeWorkflow' | dcTranslate }}</mat-label>
         <mat-select [ngModel]="archetypeCode()" (ngModelChange)="openArchetype($event)" data-testid="designer-archetype">
           @for (a of archetypes.value() ?? []; track a.code) {
-            <mat-option [value]="a.code">{{ { ar: a.nameAr, en: a.nameEn } | dcLocalize }} ({{ a.code }})</mat-option>
+            <mat-option [value]="a.code">{{ { ar: a.nameAr, en: a.nameEn } | dcLocalize }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
@@ -16,7 +16,7 @@
       <mat-label>{{ 'wfVersions.workflow' | dcTranslate }}</mat-label>
       <mat-select [ngModel]="workflow()" (ngModelChange)="open($event, null)" data-testid="designer-workflow">
         @for (w of workflows.value() ?? []; track w.code) {
-          <mat-option [value]="w.code">{{ { ar: w.nameAr, en: w.nameEn } | dcLocalize }} ({{ w.code }})</mat-option>
+          <mat-option [value]="w.code">{{ { ar: w.nameAr, en: w.nameEn } | dcLocalize }}</mat-option>
         }
       </mat-select>
     </mat-form-field>

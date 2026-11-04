@@ -46,7 +46,7 @@ import { firstValueFrom } from 'rxjs';
           <mat-label>{{ 'delegations.delegate' | dcTranslate }}</mat-label>
           <mat-select [(ngModel)]="delegate" data-testid="delegate">
             @for (s of staff.value() ?? []; track s.userName) {
-              <mat-option [value]="s.userName">{{ { ar: s.nameAr, en: s.nameEn } | dcLocalize }} ({{ s.userName }})</mat-option>
+              <mat-option [value]="s.userName">{{ { ar: s.nameAr, en: s.nameEn } | dcLocalize }}</mat-option>
             }
           </mat-select>
         </mat-form-field>

@@ -312,7 +312,7 @@
       <mat-option [value]="rowCount">{{ 'rp.cd.rows' | dcTranslate }}</mat-option>
     }
     @for (f of fields(); track f.ref) {
-      <mat-option [value]="f.ref">{{ fieldLabel(f) }} ({{ f.ref }})</mat-option>
+      <mat-option [value]="f.ref">{{ fieldLabel(f) }}</mat-option>
     }
   </mat-select>
 </ng-template>

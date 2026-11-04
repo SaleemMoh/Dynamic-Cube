@@ -259,9 +259,11 @@ export class DomainEditor {
     );
 
     const general: FormField[] = [
-      { code: 'code', type: 'text', label: { ar: 'الرمز', en: 'Code' }, required: true, readonly: editing },
-      { code: 'nameAr', type: 'text', label: { ar: 'الاسم بالعربية', en: 'Arabic name' }, required: true },
-      { code: 'nameEn', type: 'text', label: { ar: 'الاسم بالإنجليزية', en: 'English name' }, required: true },
+      // Names side by side, then the code and order; dates on one row; the two ticks on one row.
+      { code: 'nameAr', type: 'text', width: 'half', label: { ar: 'الاسم بالعربية', en: 'Arabic name' }, required: true },
+      { code: 'nameEn', type: 'text', width: 'half', label: { ar: 'الاسم بالإنجليزية', en: 'English name' }, required: true },
+      { code: 'code', type: 'text', width: 'half', label: { ar: 'الرمز', en: 'Code' }, required: true, readonly: editing },
+      { code: 'displayOrder', type: 'number', width: 'half', label: { ar: 'الترتيب', en: 'Display order' } },
       ...(parentClass ? [{ code: 'parentCode', type: 'select', label: { ar: 'القيمة الأعلى', en: 'Parent value' }, options: parents } satisfies FormField] : []),
       ...(this.data.cls.valuesPerCompany
         ? [
@@ -276,16 +278,15 @@ export class DomainEditor {
             } satisfies FormField,
           ]
         : []),
-      { code: 'displayOrder', type: 'number', label: { ar: 'الترتيب', en: 'Display order' } },
-      { code: 'effectiveFrom', type: 'date', label: { ar: 'يسري من', en: 'Effective from' } },
-      { code: 'effectiveTo', type: 'date', label: { ar: 'يسري حتى', en: 'Effective to' } },
-      { code: 'isDefault', type: 'checkbox', label: { ar: 'القيمة الافتراضية', en: 'Default value' } },
-      { code: 'isActive', type: 'checkbox', label: { ar: 'فعال', en: 'Active' } },
+      { code: 'effectiveFrom', type: 'date', width: 'half', label: { ar: 'يسري من', en: 'Effective from' } },
+      { code: 'effectiveTo', type: 'date', width: 'half', label: { ar: 'يسري حتى', en: 'Effective to' } },
+      { code: 'isDefault', type: 'checkbox', width: 'half', label: { ar: 'القيمة الافتراضية', en: 'Default value' } },
+      { code: 'isActive', type: 'checkbox', width: 'half', label: { ar: 'فعال', en: 'Active' } },
       { code: 'detailsAr', type: 'textarea', label: { ar: 'التفاصيل بالعربية', en: 'Details (Arabic)' } },
       { code: 'detailsEn', type: 'textarea', label: { ar: 'التفاصيل بالإنجليزية', en: 'Details (English)' } },
     ];
     const sections = [
-      { code: 'general', title: { ar: 'البيانات الأساسية', en: 'General' }, fields: general },
+      { code: 'general', title: { ar: 'البيانات الأساسية', en: 'General' }, columns: 2, fields: general },
       ...kinds,
       ...(parameters.length ? [{ code: 'parameters', title: { ar: 'المعاملات', en: 'Parameters' }, fields: parameters }] : []),
     ];
