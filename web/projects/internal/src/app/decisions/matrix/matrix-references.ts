@@ -32,6 +32,20 @@ export interface IntegrationStep {
   result: string;
 }
 
+/** A workflow deciding with a rule set, and the service it belongs to. */
+export interface MatrixUse {
+  workflow: string;
+  workflowName: LocalizedText;
+  /** Its decision steps naming the rule set. */
+  steps: { code: string; name: LocalizedText }[];
+  service: string | null;
+  serviceName: LocalizedText | null;
+  /** The service's latest version. */
+  version: number | null;
+  /** That version's panel shows the result to the applicant while filling. */
+  liveResult: boolean;
+}
+
 /** A workflow decision step and the rule set it evaluates. */
 export interface DecisionStep {
   workflow: string;
@@ -334,6 +348,45 @@ export class MatrixReferences {
       this.questions().find((q) => q.code === code) ??
       this.pendingQuestions().find((q) => q.code === code)
     );
+  }
+
+  /**
+   * Who uses the rule set: each workflow with a decision step naming it, the service owning that workflow (with its
+   * latest version) and whether that version's panel shows the result live on the portal.
+   */
+  usedBy(ruleSet: string | null): MatrixUse[] {
+    if (!ruleSet) return [];
+    const steps = this.decisionSteps().filter(
+      (d) => d.ruleSet.toLowerCase() === ruleSet.toLowerCase(),
+    );
+    const workflows = [...new Set(steps.map((d) => d.workflow))];
+    return workflows.map((workflow) => {
+      const mine = steps.filter((d) => d.workflow === workflow);
+      const row = this.workflowRows().find((w) => w.code === workflow);
+      const service = (row?.['serviceCode'] as string | null | undefined) || null;
+      const serviceRow = service ? this.serviceRows().find((r) => r.code === service) : undefined;
+      const latest = service
+        ? this.serviceVersionRows()
+            .filter((v) => v.code.startsWith(service + '/'))
+            .sort((a, b) => versionNumber(b.code) - versionNumber(a.code))[0]
+        : undefined;
+      const result = (
+        latest?.['definition'] as
+          | { panel?: { result?: { enabled?: boolean; step?: string | null } | null } | null }
+          | undefined
+      )?.panel?.result;
+      return {
+        workflow,
+        workflowName: mine[0].workflowName,
+        steps: mine.map((d) => ({ code: d.step, name: d.stepName })),
+        service,
+        serviceName: serviceRow
+          ? { ar: String(serviceRow.nameAr || service), en: String(serviceRow.nameEn || service) }
+          : null,
+        version: latest ? versionNumber(latest.code) : null,
+        liveResult: !!result?.enabled && (!result.step || mine.some((d) => d.step === result.step)),
+      };
+    });
   }
 
   /** Reads the service versions again (after saving a new one). */

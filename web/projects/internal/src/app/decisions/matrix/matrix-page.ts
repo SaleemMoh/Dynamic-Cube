@@ -15,6 +15,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -67,6 +68,7 @@ import { MATRIX_TRANSLATIONS } from './matrix-translations';
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
+    MatMenuModule,
     SearchableSelectModule,
     MatTabsModule,
     MatTooltipModule,
@@ -145,6 +147,21 @@ import { MATRIX_TRANSLATIONS } from './matrix-translations';
         <mat-icon fontSet="material-symbols-outlined">history_edu</mat-icon>
         {{ 'decisions.versions' | dcTranslate }}
       </a>
+      <button
+        matIconButton
+        type="button"
+        [matMenuTriggerFor]="more"
+        [attr.aria-label]="'mx.more' | dcTranslate"
+        data-testid="mx-more"
+      >
+        <mat-icon fontSet="material-symbols-outlined">more_vert</mat-icon>
+      </button>
+      <mat-menu #more="matMenu">
+        <button mat-menu-item type="button" (click)="jsonOpen.set(true)" data-testid="mx-open-json">
+          <mat-icon fontSet="material-symbols-outlined">data_object</mat-icon>
+          {{ 'mx.jsonMenu' | dcTranslate }}
+        </button>
+      </mat-menu>
     </div>
 
     @if (notes().length) {
@@ -166,6 +183,124 @@ import { MATRIX_TRANSLATIONS } from './matrix-translations';
         · <strong>{{ 'mx.unsaved' | dcTranslate }}</strong>
       }
     </p>
+
+    @if (ruleSet()) {
+      <section class="mx-used" data-testid="mx-used-by">
+        <span class="mx-used__label">{{ 'mx.used.title' | dcTranslate }}</span>
+        @for (u of usedBy(); track u.workflow) {
+          <div class="mx-used__flow">
+            @if (u.service) {
+              <span class="mx-node">
+                <mat-icon fontSet="material-symbols-outlined">design_services</mat-icon>
+                <span>
+                  <small>{{ 'mx.used.service' | dcTranslate }}</small>
+                  <strong>{{ u.serviceName | dcLocalize }}</strong>
+                  <span dir="ltr" class="mx-code"
+                    >{{ u.service }}
+                    @if (u.version) {
+                      · v{{ u.version }}
+                    }
+                  </span>
+                </span>
+                <a
+                  matButton
+                  [routerLink]="['/services/builder']"
+                  [queryParams]="{ service: u.service }"
+                  data-testid="mx-used-builder"
+                  >{{ 'mx.used.openBuilder' | dcTranslate }}</a
+                >
+              </span>
+              <mat-icon class="mx-used__arrow" fontSet="material-symbols-outlined"
+                >arrow_forward</mat-icon
+              >
+            }
+            <span class="mx-node">
+              <mat-icon fontSet="material-symbols-outlined">account_tree</mat-icon>
+              <span>
+                <small>{{ 'mx.used.workflow' | dcTranslate }}</small>
+                <strong>{{ u.workflowName | dcLocalize }}</strong>
+                <span class="mx-used__steps">
+                  @for (st of u.steps; track st.code) {
+                    {{ 'mx.used.decisionStep' | dcTranslate }}
+                    <b>{{ st.name | dcLocalize }}</b>
+                    <span dir="ltr" class="mx-code">{{ st.code }}</span>
+                  }
+                  @if (regradedAfter(u.workflow); as tasks) {
+                    @if (tasks.length) {
+                      · {{ 'mx.used.regraded' | dcTranslate }}
+                      @for (t of tasks; track t.step; let last = $last) {
+                        <b>{{ t.stepName | dcLocalize }}</b
+                        >{{ last ? '' : '، ' }}
+                      }
+                    }
+                  }
+                </span>
+              </span>
+              <a
+                matButton
+                [routerLink]="['/workflows/designer']"
+                [queryParams]="{ workflowCode: u.workflow }"
+                data-testid="mx-used-designer"
+                >{{ 'mx.used.openDesigner' | dcTranslate }}</a
+              >
+            </span>
+            <mat-icon class="mx-used__arrow" fontSet="material-symbols-outlined"
+              >arrow_forward</mat-icon
+            >
+            <span class="mx-node mx-node--this">
+              <mat-icon fontSet="material-symbols-outlined">grid_on</mat-icon>
+              <span>
+                <small>{{ 'mx.used.thisMatrix' | dcTranslate }}</small>
+                <strong dir="ltr" class="mx-code">{{ ruleSet() }}</strong>
+              </span>
+            </span>
+            @if (u.liveResult) {
+              <span class="mx-used__live" [matTooltip]="'mx.used.liveHint' | dcTranslate">
+                <mat-icon fontSet="material-symbols-outlined">bolt</mat-icon>
+                {{ 'mx.used.live' | dcTranslate }}
+              </span>
+            }
+          </div>
+        } @empty {
+          <div class="mx-used__flow mx-used__none" data-testid="mx-used-none">
+            <mat-icon fontSet="material-symbols-outlined">link_off</mat-icon>
+            <span>{{ 'mx.used.none' | dcTranslate }}</span>
+            <a matButton routerLink="/workflows/designer">{{
+              'mx.used.openDesigner' | dcTranslate
+            }}</a>
+          </div>
+        }
+      </section>
+    }
+
+    @if (jsonOpen()) {
+      <section class="mx-json" data-testid="mx-json-panel">
+        <header>
+          <strong>JSON</strong>
+          <span class="dc-muted">{{ 'mx.jsonHint' | dcTranslate }}</span>
+          <button
+            matIconButton
+            type="button"
+            (click)="jsonOpen.set(false)"
+            [attr.aria-label]="'mx.close' | dcTranslate"
+          >
+            <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+          </button>
+        </header>
+        <textarea
+          class="mx-page__json"
+          dir="ltr"
+          rows="20"
+          spellcheck="false"
+          [ngModel]="jsonText()"
+          (ngModelChange)="jsonText.set($event)"
+          data-testid="mx-json"
+        ></textarea>
+        <button matButton="tonal" type="button" (click)="applyJson()" data-testid="mx-json-apply">
+          {{ 'mx.applyJson' | dcTranslate }}
+        </button>
+      </section>
+    }
 
     <mat-tab-group
       mat-stretch-tabs="false"
@@ -211,68 +346,90 @@ import { MATRIX_TRANSLATIONS } from './matrix-translations';
             [form]="form()"
             (matrixChange)="update($event)"
             (formChange)="form.set($event)"
+            (openShared)="openShared($event)"
           />
         </div>
       </mat-tab>
-      <mat-tab [label]="'mx.tab.inputs' | dcTranslate">
+      <mat-tab [label]="'mx.tab.setup' | dcTranslate">
         <div class="mx-page__tab">
-          <p class="dc-muted">{{ 'mx.inputsHint' | dcTranslate }}</p>
-          <table class="dc-table mx-inputs" data-testid="mx-inputs">
-            <thead>
-              <tr>
-                <th>{{ 'mx.source.title' | dcTranslate }}</th>
-                <th>{{ 'mx.code' | dcTranslate }}</th>
-                <th>{{ 'config.name' | dcTranslate }}</th>
-                <th>{{ 'mx.input.type' | dcTranslate }}</th>
-                <th>{{ 'mx.inputs.from' | dcTranslate }}</th>
-                <th>{{ 'mx.inputs.usedIn' | dcTranslate }}</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (i of matrix().inputs; track i.code) {
+          <nav class="mx-parts" role="tablist">
+            @for (p of sharedParts; track p) {
+              <button
+                type="button"
+                role="tab"
+                class="mx-part"
+                [class.mx-part--on]="sharedPart() === p"
+                [attr.aria-selected]="sharedPart() === p"
+                (click)="sharedPart.set(p)"
+                [attr.data-testid]="'mx-shared-' + p"
+              >
+                {{ 'mx.setup.part.' + p | dcTranslate }}
+              </button>
+            }
+          </nav>
+          <p class="mx-parts__hint">
+            <mat-icon fontSet="material-symbols-outlined">info</mat-icon>
+            {{ 'mx.setup.hint.' + sharedPart() | dcTranslate }}
+          </p>
+          @if (sharedPart() === 'data') {
+            <table class="dc-table mx-inputs" data-testid="mx-inputs">
+              <thead>
                 <tr>
-                  <td>
-                    <span class="mx-inputs__src"
-                      ><mat-icon fontSet="material-symbols-outlined">{{
-                        icons[i.source.kind]
-                      }}</mat-icon>
-                      {{ 'mx.source.' + i.source.kind | dcTranslate }}</span
-                    >
-                  </td>
-                  <td dir="ltr" class="mx-code">{{ i.code }}</td>
-                  <td>{{ { ar: i.nameAr, en: i.nameEn } | dcLocalize }}</td>
-                  <td>{{ 'mx.type.' + i.type | dcTranslate }}</td>
-                  <td dir="ltr" class="mx-code">{{ detail(i) }}</td>
-                  <td>{{ usage().get(i.code) ?? 0 }}</td>
-                  <td>
-                    @if (canCreate()) {
-                      <button
-                        matIconButton
-                        type="button"
-                        (click)="editInput(i)"
-                        [attr.aria-label]="'mx.input.edit' | dcTranslate"
-                        [attr.data-testid]="'mx-edit-input-' + i.code"
-                      >
-                        <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
-                      </button>
-                    }
-                  </td>
+                  <th>{{ 'mx.source.title' | dcTranslate }}</th>
+                  <th>{{ 'mx.code' | dcTranslate }}</th>
+                  <th>{{ 'config.name' | dcTranslate }}</th>
+                  <th>{{ 'mx.input.type' | dcTranslate }}</th>
+                  <th>{{ 'mx.inputs.from' | dcTranslate }}</th>
+                  <th>{{ 'mx.inputs.usedIn' | dcTranslate }}</th>
+                  <th></th>
                 </tr>
-              }
-            </tbody>
-          </table>
-          @if (canCreate()) {
-            <button matButton type="button" (click)="newInput()" data-testid="mx-add-input">
-              <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
-              {{ 'mx.input.new' | dcTranslate }}
-            </button>
+              </thead>
+              <tbody>
+                @for (i of matrix().inputs; track i.code) {
+                  <tr>
+                    <td>
+                      <span class="mx-inputs__src"
+                        ><mat-icon fontSet="material-symbols-outlined">{{
+                          icons[i.source.kind]
+                        }}</mat-icon>
+                        {{ 'mx.source.' + i.source.kind | dcTranslate }}</span
+                      >
+                    </td>
+                    <td dir="ltr" class="mx-code">{{ i.code }}</td>
+                    <td>{{ { ar: i.nameAr, en: i.nameEn } | dcLocalize }}</td>
+                    <td>{{ 'mx.type.' + i.type | dcTranslate }}</td>
+                    <td dir="ltr" class="mx-code">{{ detail(i) }}</td>
+                    <td>{{ usage().get(i.code) ?? 0 }}</td>
+                    <td>
+                      @if (canCreate()) {
+                        <button
+                          matIconButton
+                          type="button"
+                          (click)="editInput(i)"
+                          [attr.aria-label]="'mx.input.edit' | dcTranslate"
+                          [attr.data-testid]="'mx-edit-input-' + i.code"
+                        >
+                          <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
+                        </button>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+            @if (canCreate()) {
+              <button matButton type="button" (click)="newInput()" data-testid="mx-add-input">
+                <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+                {{ 'mx.input.new' | dcTranslate }}
+              </button>
+            }
+          } @else {
+            <dc-matrix-settings
+              [matrix]="matrix()"
+              [part]="sharedPart() === 'grades' ? 'grades' : 'rules'"
+              (matrixChange)="update($event)"
+            />
           }
-        </div>
-      </mat-tab>
-      <mat-tab [label]="'mx.tab.settings' | dcTranslate">
-        <div class="mx-page__tab">
-          <dc-matrix-settings [matrix]="matrix()" (matrixChange)="update($event)" />
         </div>
       </mat-tab>
       <mat-tab [label]="'mx.tab.simulator' | dcTranslate">
@@ -289,22 +446,6 @@ import { MATRIX_TRANSLATIONS } from './matrix-translations';
             [editable]="canCreate()"
             (fix)="editInput($event)"
           />
-        </div>
-      </mat-tab>
-      <mat-tab [label]="'mx.tab.json' | dcTranslate">
-        <div class="mx-page__tab">
-          <textarea
-            class="mx-page__json"
-            dir="ltr"
-            rows="28"
-            spellcheck="false"
-            [ngModel]="jsonText()"
-            (ngModelChange)="jsonText.set($event)"
-            data-testid="mx-json"
-          ></textarea>
-          <button matButton="tonal" type="button" (click)="applyJson()" data-testid="mx-json-apply">
-            {{ 'mx.applyJson' | dcTranslate }}
-          </button>
         </div>
       </mat-tab>
     </mat-tab-group>
@@ -345,6 +486,138 @@ import { MATRIX_TRANSLATIONS } from './matrix-translations';
     }
   `,
   styles: `
+    .mx-used {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin: 0 0 1rem;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--dga-gray-200, #e5e7eb);
+      border-radius: 12px;
+      background: var(--dga-gray-25, #fcfcfd);
+    }
+    .mx-used__label {
+      font-weight: 600;
+    }
+    .mx-used__flow {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    @media (min-width: 1100px) {
+      .mx-used__flow {
+        flex-wrap: nowrap;
+      }
+    }
+    .mx-node {
+      display: inline-flex;
+      flex: 1 1 0;
+      flex-wrap: wrap;
+      min-width: 12rem;
+      align-items: center;
+      gap: 0.25rem 0.5rem;
+      padding: 0.4rem 0.6rem;
+      border: 1px solid var(--dga-gray-200, #e5e7eb);
+      border-radius: 10px;
+      background: #fff;
+    }
+    .mx-node > span {
+      display: flex;
+      flex: 1 1 0;
+      min-width: 0;
+      flex-direction: column;
+      line-height: 1.35;
+    }
+    .mx-node small {
+      color: var(--dga-gray-500, #6c737f);
+      font-size: 12px;
+    }
+    .mx-node > a {
+      flex-basis: 100%;
+      justify-content: flex-start;
+    }
+    .mx-node .mx-code {
+      margin-inline-start: 4px;
+    }
+    .mx-node--this {
+      flex: none;
+      min-width: 0;
+      border-color: var(--dynamic-cube-gold-600, #b8862f);
+      background: var(--dynamic-cube-gold-25, #fdfaf3);
+    }
+    .mx-used__steps {
+      font-size: 13px;
+    }
+    .mx-used__arrow {
+      color: var(--dga-gray-400, #9da4ae);
+    }
+    :host-context([dir='rtl']) .mx-used__arrow {
+      transform: scaleX(-1);
+    }
+    .mx-used__live {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 10px;
+      border-radius: 999px;
+      background: var(--dga-success-50, #ecfdf3);
+      color: var(--dga-success-700, #067647);
+      font-size: 13px;
+    }
+    .mx-used__live mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+    .mx-used__none {
+      color: var(--dga-warning-700, #b54708);
+    }
+    .mx-json {
+      margin-bottom: 1rem;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--dga-gray-200, #e5e7eb);
+      border-radius: 12px;
+    }
+    .mx-json header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .mx-json header button {
+      margin-inline-start: auto;
+    }
+    .mx-parts {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 0.5rem;
+    }
+    .mx-part {
+      padding: 6px 14px;
+      border: 1px solid var(--dga-gray-300, #d2d6db);
+      border-radius: 999px;
+      background: #fff;
+      font: inherit;
+      cursor: pointer;
+    }
+    .mx-part--on {
+      border-color: var(--dynamic-cube-gold-600, #b8862f);
+      background: var(--dynamic-cube-gold-25, #fdfaf3);
+      font-weight: 600;
+    }
+    .mx-parts__hint {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      margin: 0 0 1rem;
+      color: var(--dga-gray-600, #4d5761);
+    }
+    .mx-parts__hint mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      flex: none;
+    }
     .mx-page__bar {
       display: flex;
       flex-wrap: wrap;
@@ -464,6 +737,12 @@ export class MatrixPage {
   protected readonly notes = signal<string[]>([]);
   protected readonly errors = signal<string[]>([]);
   protected readonly tab = signal(0);
+  /** The parts of the Shared setup tab: what the matrix reads, grades and scales, rules applied to every sector. */
+  protected readonly sharedParts = ['data', 'grades', 'rules'] as const;
+  protected readonly sharedPart = signal<'data' | 'grades' | 'rules'>('data');
+  protected readonly jsonOpen = signal(false);
+  /** The services and workflows deciding with this rule set. */
+  protected readonly usedBy = computed(() => this.refs.usedBy(this.ruleSet()));
   protected readonly jsonText = signal('');
   protected readonly canCreate = computed(() => this.privileges.can('decisions.config', 'CREATE'));
 
@@ -531,6 +810,24 @@ export class MatrixPage {
         })),
       ),
     );
+  }
+
+  /** The workflow's tasks whose fields the matrix reads: the grade is worked out again after them. */
+  protected regradedAfter(workflow: string) {
+    const steps = new Set(
+      this.matrix()
+        .inputs.filter((i) => i.source.kind === 'reviewer' && i.source.step)
+        .map((i) => i.source.step!.toLowerCase()),
+    );
+    return this.refs
+      .tasks()
+      .filter((t) => t.workflow === workflow && steps.has(t.step.toLowerCase()));
+  }
+
+  /** Opens a part of the Shared setup tab (from a link on the sector page). */
+  protected openShared(part: 'data' | 'grades' | 'rules'): void {
+    this.sharedPart.set(part);
+    this.tab.set(2);
   }
 
   protected choose(code: string): void {

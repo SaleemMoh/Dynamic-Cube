@@ -47,109 +47,114 @@ const TYPES: FormOption[] = ['number', 'text', 'option', 'boolean', 'date', 'lis
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <mat-accordion multi>
-      <mat-expansion-panel expanded>
-        <mat-expansion-panel-header>{{
-          'mx.settings.grades' | dcTranslate
-        }}</mat-expansion-panel-header>
-        <p class="dc-muted">{{ 'mx.settings.gradesHint' | dcTranslate }}</p>
-        <dc-structured-input
-          [shape]="gradesShape"
-          [ngModel]="matrix().grades"
-          (ngModelChange)="set({ grades: $event ?? [] })"
-          testId="mx-grades"
-        />
-        <mat-form-field subscriptSizing="dynamic" class="mx-set__below">
-          <mat-label>{{ 'mx.settings.belowWorst' | dcTranslate }}</mat-label>
-          <mat-select
-            [ngModel]="matrix().belowWorst ?? 'stay'"
-            (ngModelChange)="set({ belowWorst: $event })"
+      @if (part() === 'grades') {
+        <mat-expansion-panel expanded>
+          <mat-expansion-panel-header>{{
+            'mx.settings.grades' | dcTranslate
+          }}</mat-expansion-panel-header>
+          <p class="dc-muted">{{ 'mx.settings.gradesHint' | dcTranslate }}</p>
+          <dc-structured-input
+            [shape]="gradesShape"
+            [ngModel]="matrix().grades"
+            (ngModelChange)="set({ grades: $event ?? [] })"
+            testId="mx-grades"
+          />
+          <mat-form-field subscriptSizing="dynamic" class="mx-set__below">
+            <mat-label>{{ 'mx.settings.belowWorst' | dcTranslate }}</mat-label>
+            <mat-select
+              [ngModel]="matrix().belowWorst ?? 'stay'"
+              (ngModelChange)="set({ belowWorst: $event })"
+            >
+              <mat-option value="stay">{{
+                'mx.settings.belowWorst.stay' | dcTranslate
+              }}</mat-option>
+              <mat-option value="notGraded">{{
+                'mx.settings.belowWorst.notGraded' | dcTranslate
+              }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </mat-expansion-panel>
+        <mat-expansion-panel>
+          <mat-expansion-panel-header
+            >{{ 'mx.settings.scales' | dcTranslate }} ({{
+              matrix().scales.length
+            }})</mat-expansion-panel-header
           >
-            <mat-option value="stay">{{ 'mx.settings.belowWorst.stay' | dcTranslate }}</mat-option>
-            <mat-option value="notGraded">{{
-              'mx.settings.belowWorst.notGraded' | dcTranslate
-            }}</mat-option>
-          </mat-select>
-        </mat-form-field>
-      </mat-expansion-panel>
-      <mat-expansion-panel>
-        <mat-expansion-panel-header
-          >{{ 'mx.settings.scales' | dcTranslate }} ({{
-            matrix().scales.length
-          }})</mat-expansion-panel-header
-        >
-        <p class="dc-muted">{{ 'mx.settings.scalesHint' | dcTranslate }}</p>
-        <dc-structured-input
-          [shape]="scalesShape"
-          [ngModel]="matrix().scales"
-          (ngModelChange)="set({ scales: $event ?? [] })"
-          testId="mx-scales"
-        />
-      </mat-expansion-panel>
-      <mat-expansion-panel>
-        <mat-expansion-panel-header>{{
-          'mx.settings.sizes' | dcTranslate
-        }}</mat-expansion-panel-header>
-        <p class="dc-muted">{{ 'mx.settings.sizesHint' | dcTranslate }}</p>
-        <dc-structured-input
-          [shape]="sizesShape()"
-          [ngModel]="matrix().sizes ?? { input: '', categories: [] }"
-          (ngModelChange)="setSizes($event)"
-          testId="mx-sizes"
-        />
-      </mat-expansion-panel>
-      <mat-expansion-panel>
-        <mat-expansion-panel-header
-          >{{ 'mx.settings.optionSets' | dcTranslate }} ({{
-            matrix().optionSets.length
-          }})</mat-expansion-panel-header
-        >
-        <dc-structured-input
-          [shape]="optionSetsShape"
-          [ngModel]="matrix().optionSets"
-          (ngModelChange)="set({ optionSets: $event ?? [] })"
-          testId="mx-option-sets"
-        />
-      </mat-expansion-panel>
-      <mat-expansion-panel>
-        <mat-expansion-panel-header
-          >{{ 'mx.settings.gates' | dcTranslate }} ({{
-            matrix().gates.length
-          }})</mat-expansion-panel-header
-        >
-        <p class="dc-muted">{{ 'mx.settings.gatesHint' | dcTranslate }}</p>
-        <dc-structured-input
-          [shape]="gatesShape()"
-          [ngModel]="matrix().gates"
-          (ngModelChange)="set({ gates: $event ?? [] })"
-          testId="mx-gates"
-        />
-      </mat-expansion-panel>
-      <mat-expansion-panel>
-        <mat-expansion-panel-header
-          >{{ 'mx.settings.adjustments' | dcTranslate }} ({{
-            matrix().adjustments.length
-          }})</mat-expansion-panel-header
-        >
-        <p class="dc-muted">{{ 'mx.settings.adjustmentsHint' | dcTranslate }}</p>
-        <dc-structured-input
-          [shape]="adjustmentsShape()"
-          [ngModel]="matrix().adjustments"
-          (ngModelChange)="set({ adjustments: $event ?? [] })"
-          testId="mx-adjustments"
-        />
-      </mat-expansion-panel>
-      <mat-expansion-panel>
-        <mat-expansion-panel-header>{{
-          'mx.settings.projects' | dcTranslate
-        }}</mat-expansion-panel-header>
-        <p class="dc-muted">{{ 'mx.settings.projectsHint' | dcTranslate }}</p>
-        <dc-structured-input
-          [shape]="projectsShape()"
-          [ngModel]="matrix().projects ?? emptyProjects"
-          (ngModelChange)="setProjects($event)"
-          testId="mx-projects"
-        />
-      </mat-expansion-panel>
+          <p class="dc-muted">{{ 'mx.settings.scalesHint' | dcTranslate }}</p>
+          <dc-structured-input
+            [shape]="scalesShape"
+            [ngModel]="matrix().scales"
+            (ngModelChange)="set({ scales: $event ?? [] })"
+            testId="mx-scales"
+          />
+        </mat-expansion-panel>
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>{{
+            'mx.settings.sizes' | dcTranslate
+          }}</mat-expansion-panel-header>
+          <p class="dc-muted">{{ 'mx.settings.sizesHint' | dcTranslate }}</p>
+          <dc-structured-input
+            [shape]="sizesShape()"
+            [ngModel]="matrix().sizes ?? { input: '', categories: [] }"
+            (ngModelChange)="setSizes($event)"
+            testId="mx-sizes"
+          />
+        </mat-expansion-panel>
+        <mat-expansion-panel>
+          <mat-expansion-panel-header
+            >{{ 'mx.settings.optionSets' | dcTranslate }} ({{
+              matrix().optionSets.length
+            }})</mat-expansion-panel-header
+          >
+          <dc-structured-input
+            [shape]="optionSetsShape"
+            [ngModel]="matrix().optionSets"
+            (ngModelChange)="set({ optionSets: $event ?? [] })"
+            testId="mx-option-sets"
+          />
+        </mat-expansion-panel>
+      } @else {
+        <mat-expansion-panel expanded>
+          <mat-expansion-panel-header
+            >{{ 'mx.settings.gates' | dcTranslate }} ({{
+              matrix().gates.length
+            }})</mat-expansion-panel-header
+          >
+          <p class="dc-muted">{{ 'mx.settings.gatesHint' | dcTranslate }}</p>
+          <dc-structured-input
+            [shape]="gatesShape()"
+            [ngModel]="matrix().gates"
+            (ngModelChange)="set({ gates: $event ?? [] })"
+            testId="mx-gates"
+          />
+        </mat-expansion-panel>
+        <mat-expansion-panel>
+          <mat-expansion-panel-header
+            >{{ 'mx.settings.adjustments' | dcTranslate }} ({{
+              matrix().adjustments.length
+            }})</mat-expansion-panel-header
+          >
+          <p class="dc-muted">{{ 'mx.settings.adjustmentsHint' | dcTranslate }}</p>
+          <dc-structured-input
+            [shape]="adjustmentsShape()"
+            [ngModel]="matrix().adjustments"
+            (ngModelChange)="set({ adjustments: $event ?? [] })"
+            testId="mx-adjustments"
+          />
+        </mat-expansion-panel>
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>{{
+            'mx.settings.projects' | dcTranslate
+          }}</mat-expansion-panel-header>
+          <p class="dc-muted">{{ 'mx.settings.projectsHint' | dcTranslate }}</p>
+          <dc-structured-input
+            [shape]="projectsShape()"
+            [ngModel]="matrix().projects ?? emptyProjects"
+            (ngModelChange)="setProjects($event)"
+            testId="mx-projects"
+          />
+        </mat-expansion-panel>
+      }
     </mat-accordion>
   `,
   styles: `
@@ -161,6 +166,8 @@ const TYPES: FormOption[] = ['number', 'text', 'option', 'boolean', 'date', 'lis
 })
 export class MatrixSettings {
   readonly matrix = input.required<Matrix>();
+  /** Which settings to show: grades, scales, sizes and answer lists; or the gates, adjustments and projects. */
+  readonly part = input<'grades' | 'rules'>('grades');
   readonly matrixChange = output<Matrix>();
   protected readonly emptyProjects = { input: '', valueField: '', fields: [], rules: [] };
 

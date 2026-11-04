@@ -329,6 +329,16 @@ import { MatrixReferences } from './matrix-references';
                           }}</mat-option>
                         }
                       </mat-select>
+                      <button
+                        matIconButton
+                        type="button"
+                        (click)="openShared.emit('grades')"
+                        [matTooltip]="'mx.sec.editScales' | dcTranslate"
+                        [attr.aria-label]="'mx.sec.editScales' | dcTranslate"
+                        data-testid="sx-edit-scales"
+                      >
+                        <mat-icon fontSet="material-symbols-outlined">tune</mat-icon>
+                      </button>
                     } @else {
                       —
                     }
@@ -677,8 +687,8 @@ import { MatrixReferences } from './matrix-references';
                               type="button"
                               (click)="editInput(c.input)"
                               [disabled]="!editable()"
-                              [matTooltip]="'mx.cell.editSource' | dcTranslate"
-                              [attr.aria-label]="'mx.cell.editSource' | dcTranslate"
+                              [matTooltip]="'mx.sec.editInput' | dcTranslate"
+                              [attr.aria-label]="'mx.sec.editInput' | dcTranslate"
                             >
                               <mat-icon fontSet="material-symbols-outlined">tune</mat-icon>
                             </button>
@@ -1708,6 +1718,8 @@ export class MatrixSectors {
   /** The application form of the service deciding with the matrix (null when no service does). */
   readonly form = input<FormLink | null>(null);
   readonly formChange = output<FormLink>();
+  /** Asks the page to open a part of its Shared setup tab (scales, the inputs…). */
+  readonly openShared = output<'data' | 'grades' | 'rules'>();
 
   private readonly dialog = inject(MatDialog);
   private readonly i18n = inject(I18nService);

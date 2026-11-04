@@ -76,6 +76,16 @@ the request already knows, and that a business user can change.
   questions, operations, task fields, answers no longer in the bank, bank weights changed).
 - The workflow designer's decision step offers the matrix rule sets and opens the matrix.
 
+### Page layout
+Tabs: **Overview** (the grid) | **Sectors** (the sector page below) | **Shared setup** | **Try it** (the simulator) |
+**Checks** (broken links). Shared setup holds what every sector shares, in three parts: *Data the matrix reads* (the
+inputs and their sources), *Grades & scales* (grades, scales, sizes, answer lists) and *Eligibility & reductions*
+(gates, adjustments, projects); the sector page links to it (a track's scale). The JSON definition is in the page's
+"…" menu. A **Used by** bar under the rule set shows the chain the link is worked out from: the service (latest
+version) → its workflow's decision step naming the rule set (and the review tasks whose fields the matrix reads, after
+which the grade is worked out again) → this matrix, and whether the service's panel shows the grade live; with links
+to the Service Builder and the Workflow designer, or how to link it when nothing uses it.
+
 ### Sector page (classification setup)
 The designer opens on a **Sectors** tab modelled on the reviewed system: the sectors, then one sector's page with three
 tabs, all on one screen.
