@@ -45,6 +45,7 @@ import {
   syncFromBank,
 } from './matrix-model';
 import { MatrixReferences } from './matrix-references';
+import { MatrixSectors } from './matrix-sectors';
 import { MatrixSettings } from './matrix-settings';
 import { MatrixSimulator } from './matrix-simulator';
 import { MATRIX_TRANSLATIONS } from './matrix-translations';
@@ -68,6 +69,7 @@ import { MATRIX_TRANSLATIONS } from './matrix-translations';
     MatTooltipModule,
     MatrixConnections,
     MatrixGrid,
+    MatrixSectors,
     MatrixSettings,
     MatrixSimulator,
     RouterLink,
@@ -168,6 +170,16 @@ import { MATRIX_TRANSLATIONS } from './matrix-translations';
       [selectedIndex]="tab()"
       (selectedIndexChange)="tab.set($event)"
     >
+      <mat-tab [label]="'mx.tab.sectors' | dcTranslate">
+        <div class="mx-page__tab">
+          <dc-matrix-sectors
+            [matrix]="matrix()"
+            [references]="refs"
+            [editable]="canCreate()"
+            (matrixChange)="update($event)"
+          />
+        </div>
+      </mat-tab>
       <mat-tab [label]="'mx.tab.grid' | dcTranslate">
         <div class="mx-page__tab">
           <div class="mx-page__rows-input">
