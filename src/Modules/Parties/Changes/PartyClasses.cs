@@ -8,8 +8,8 @@ using Microsoft.EntityFrameworkCore;
 namespace DynamicCube.Modules.Parties.Changes;
 
 /// <summary>
-/// The Party Registry's classes in Class/Domain: relationship, credential and sanction types, edited as
-/// <c>party.relationship-type</c>, <c>party.credential-type</c> and <c>party.sanction-type</c>.
+/// The Party Registry's classes in Class/Domain: relationship, credential and sanction types, edited in Classes &amp;
+/// domains like any other class (values <c>apps.domain</c>, e.g. <c>PARTY_RELATIONSHIP_TYPE/OWNER</c>).
 /// </summary>
 public static class PartyClasses
 {

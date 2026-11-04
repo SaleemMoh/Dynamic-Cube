@@ -370,16 +370,18 @@
       }
     },
     {
-      "entityType": "svc.category",
-      "entityCode": "CLASSIFICATION",
+      "entityType": "apps.domain",
+      "entityCode": "SVC_CATEGORY/CLASSIFICATION",
       "operation": "CREATE",
       "payload": {
         "nameAr": "التصنيف",
         "nameEn": "Classification",
-        "descriptionAr": "تصنيف مقدمي خدمات المدن في القطاعات والدرجات.",
-        "descriptionEn": "Classifying city service providers into sectors and grades.",
-        "icon": "workspace_premium",
-        "displayOrder": 10
+        "displayOrder": 10,
+        "attributes": {
+          "DESCRIPTION_AR": "تصنيف مقدمي خدمات المدن في القطاعات والدرجات.",
+          "DESCRIPTION_EN": "Classifying city service providers into sectors and grades.",
+          "ICON": "workspace_premium"
+        }
       }
     },
     {

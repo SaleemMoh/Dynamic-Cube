@@ -2,16 +2,18 @@
   "title": "NHC — supplier registration: a prerequisite (a valid classification certificate), a bundled service (tender alerts) and a sub-request its workflow opens (financial statement)",
   "items": [
     {
-      "entityType": "svc.category",
-      "entityCode": "SUPPLIERS",
+      "entityType": "apps.domain",
+      "entityCode": "SVC_CATEGORY/SUPPLIERS",
       "operation": "CREATE",
       "payload": {
         "nameAr": "خدمات الموردين",
         "nameEn": "Supplier services",
-        "descriptionAr": "التسجيل موردًا لدى الشركة الوطنية للإسكان وما يرتبط به من طلبات",
-        "descriptionEn": "Registering as a National Housing Company supplier and the requests linked to it",
-        "icon": "local_shipping",
-        "displayOrder": 30
+        "displayOrder": 30,
+        "attributes": {
+          "DESCRIPTION_AR": "التسجيل موردًا لدى الشركة الوطنية للإسكان وما يرتبط به من طلبات",
+          "DESCRIPTION_EN": "Registering as a National Housing Company supplier and the requests linked to it",
+          "ICON": "local_shipping"
+        }
       }
     },
     {

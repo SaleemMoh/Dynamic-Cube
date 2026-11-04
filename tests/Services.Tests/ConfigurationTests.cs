@@ -146,11 +146,11 @@ public sealed class ConfigurationTests(DatabaseFixture fixture) : IAsyncLifetime
         var category = TestHost.Unique("CAT");
         ServicePayload Payload(string? categoryCode) => new() { NameAr = "خدمة", NameEn = "Service", PartyKinds = [Platform.Parties.PartyKind.Establishment], CategoryCode = categoryCode };
 
-        // Categories are values of class SVC_CATEGORY (Class/Domain), published in their own change set; one in use
+        // Categories are values of class SVC_CATEGORY, published in a Classes & domains change set; one in use
         // cannot be deleted.
-        await _host.PublishAsync(AppsControlAreas.DataDictionary, new Change(ServiceChangeTypes.Category, category, ChangeOperation.Create, new { nameAr = "التصاريح", nameEn = "Permits", icon = "event" }));
+        await _host.PublishAsync(AppsControlAreas.DataDictionary, new Change(AppsControlChangeTypes.Domain, $"SVC_CATEGORY/{category}", ChangeOperation.Create, new { nameAr = "التصاريح", nameEn = "Permits", attributes = new Dictionary<string, object> { ["ICON"] = "event" } }));
         await _host.PublishAsync(ServiceChangeTypes.Area, [.. sample.Questions(), new Change(ServiceChangeTypes.Service, sample.Service, ChangeOperation.Create, Payload(category))]);
-        await Should.ThrowAsync<ChangeSetException>(() => _host.PublishAsync(AppsControlAreas.DataDictionary, new Change(ServiceChangeTypes.Category, category, ChangeOperation.Delete, null)));
+        await Should.ThrowAsync<ChangeSetException>(() => _host.PublishAsync(AppsControlAreas.DataDictionary, new Change(AppsControlChangeTypes.Domain, $"SVC_CATEGORY/{category}", ChangeOperation.Delete, null)));
 
         var bad = sample.Definition();
         bad.Card = new ServiceCardDefinition

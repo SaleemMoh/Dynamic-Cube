@@ -2,16 +2,18 @@
   "title": "NHC — classification services",
   "items": [
     {
-      "entityType": "svc.category",
-      "entityCode": "CLASSIFICATION",
+      "entityType": "apps.domain",
+      "entityCode": "SVC_CATEGORY/CLASSIFICATION",
       "operation": "CREATE",
       "payload": {
         "nameAr": "تصنيف المقاولين والمكاتب الهندسية",
         "nameEn": "Contractors & engineering offices classification",
-        "descriptionAr": "إصدار شهادات التصنيف وتجديدها وتعديلها للمجالات التسعة",
-        "descriptionEn": "Issuing, renewing and changing classification certificates for the nine domains",
-        "icon": "workspace_premium",
-        "displayOrder": 10
+        "displayOrder": 10,
+        "attributes": {
+          "DESCRIPTION_AR": "إصدار شهادات التصنيف وتجديدها وتعديلها للمجالات التسعة",
+          "DESCRIPTION_EN": "Issuing, renewing and changing classification certificates for the nine domains",
+          "ICON": "workspace_premium"
+        }
       }
     },
     {

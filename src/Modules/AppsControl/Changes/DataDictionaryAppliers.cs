@@ -308,15 +308,6 @@ internal sealed class ClassApplier(AppsControlDbContext db) : ConfigApplier<Dict
     }
 }
 
-public sealed class ExternalCodePayload
-{
-    public string ProviderCode { get; set; } = string.Empty;
-
-    public string ExternalCode { get; set; } = string.Empty;
-
-    public CodeDirection Direction { get; set; } = CodeDirection.Both;
-}
-
 /// <summary>A lookup value. The entity code is <c>CLASS/CODE</c>.</summary>
 public sealed class DomainPayload : ConfigPayload
 {
@@ -340,8 +331,6 @@ public sealed class DomainPayload : ConfigPayload
 
     /// <summary>Companies the value serves, or ["*"] for all (required for classes with values per company, empty otherwise).</summary>
     public List<string> Companies { get; set; } = [];
-
-    public List<ExternalCodePayload> ExternalCodes { get; set; } = [];
 }
 
 internal sealed class DomainApplier(AppsControlDbContext db, IEnumerable<IDomainRules> rules, IServiceProvider services) : ConfigApplier<DomainValue, DomainPayload>(db)
@@ -353,7 +342,7 @@ internal sealed class DomainApplier(AppsControlDbContext db, IEnumerable<IDomain
     public override string ResourceCode => AppsControlResources.Classes;
 
     protected override IQueryable<DomainValue> Query(AppsControlDbContext context) =>
-        context.Domains.Include(d => d.Class).Include(d => d.ParentDomain).Include(d => d.ExternalCodes);
+        context.Domains.Include(d => d.Class).Include(d => d.ParentDomain);
 
     protected override IQueryable<DomainValue> ListQuery(AppsControlDbContext context, string? parent) =>
         Query(context).Where(d => d.Class!.Code == parent).OrderBy(d => d.DisplayOrder).ThenBy(d => d.Code);
@@ -473,30 +462,21 @@ internal sealed class DomainApplier(AppsControlDbContext db, IEnumerable<IDomain
 
         var attributes = payload.Attributes ?? [];
         await AttributeValues.ValidateAsync(cls.Attributes, attributes, refs, errors, "attributes.", cancellationToken, InListAsync);
+        // The owning module's rules (and the defaults they fill in); their problems name attributes like the checks above.
+        var ruleErrors = new ValidationErrors();
         foreach (var rule in rules.Where(r => r.ClassCode == cls.Code))
         {
-            await rule.ValidateAsync(entity.Code, attributes, errors, cancellationToken);
+            await rule.ValidateAsync(entity.Code, attributes, ruleErrors, cancellationToken);
         }
+
+        ruleErrors.CopyTo(errors, field => "attributes." + field);
 
         entity.Attributes = attributes.ToJsonString();
-
-        ChildSync.RequireUnique(payload.ExternalCodes, x => (x.ProviderCode, x.Direction), "externalCodes", errors);
-        foreach (var (x, i) in payload.ExternalCodes.Select((x, i) => (x, i)))
-        {
-            errors.Code($"externalCodes[{i}].providerCode", x.ProviderCode, ValidationErrors.GeneralCode());
-            errors.Required($"externalCodes[{i}].externalCode", x.ExternalCode);
-            errors.MaxLength($"externalCodes[{i}].externalCode", x.ExternalCode, 200);
-        }
 
         if (errors.HasErrors || refs.IsValidating)
         {
             return;
         }
-
-        var codes = payload.ExternalCodes
-            .Select(x => new DomainExternalCode { DomainId = entity.Id, ProviderCode = x.ProviderCode, ExternalCode = x.ExternalCode, Direction = x.Direction })
-            .ToList();
-        ChildSync.Sync(entity.ExternalCodes, codes, x => (x.ProviderCode, x.Direction), (from, to) => to.ExternalCode = from.ExternalCode);
 
         if (payload.IsDefault)
         {
@@ -522,10 +502,6 @@ internal sealed class DomainApplier(AppsControlDbContext db, IEnumerable<IDomain
             EffectiveFrom = entity.EffectiveFrom,
             EffectiveTo = entity.EffectiveTo,
             Companies = entity.Companies,
-            ExternalCodes = entity.ExternalCodes
-                .OrderBy(x => x.ProviderCode)
-                .Select(x => new ExternalCodePayload { ProviderCode = x.ProviderCode, ExternalCode = x.ExternalCode, Direction = x.Direction })
-                .ToList(),
         });
 
     protected override async Task BeforeDeleteAsync(AppsControlDbContext context, DomainValue entity, CancellationToken cancellationToken)

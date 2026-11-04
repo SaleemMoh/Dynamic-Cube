@@ -30,7 +30,6 @@ erDiagram
     class ||--o{ domain : "has values (restrict)"
     class |o--o{ class : "parent_class_id (e.g. CITY → REGION)"
     domain |o--o{ domain : "parent_domain_id"
-    domain ||--o{ domain_external_code : "provider codes (cascade)"
 ```
 
 ### `apps.class` — the classes (entity `DictionaryClass`)
@@ -68,7 +67,7 @@ erDiagram
 | `is_required` | bool | |
 | `validation` | jsonb | Hints checked on save: `min`, `max`, `maxLength`, `pattern` |
 | `display_order` | int | |
-| `is_reportable` | bool | Becomes a column of the report view |
+| `is_reportable` | bool | Tick *Available in reports and queries*: becomes a typed column of the class view |
 
 ### `apps.domain` — the values (entity `DomainValue`)
 
@@ -87,25 +86,12 @@ erDiagram
 | `companies` | text[] | Companies served (classes with values per company), `["*"]` for all; empty otherwise |
 | `is_active`, `owner`, `entity_code`, `business_app`, `shared_apps`, audit columns, `xmin` | | As on `class` |
 
-### `apps.domain_external_code` — provider codes (entity `DomainExternalCode`)
-
-Translates a value to and from an integration provider's code (e.g. the commerce registry calls a relationship type
-`"2"` where we say `PARTNER`).
-
-| Column | Type | Meaning |
-|---|---|---|
-| `id` | uuid PK | |
-| `domain_id` | uuid FK → `domain.id`, cascade | |
-| `provider_code` | varchar(100) | The provider (Integration Manager provider code) |
-| `external_code` | varchar(200) | Its code |
-| `direction` | text `In` / `Out` / `Both` | Used when reading their data, sending ours, or both. Unique per (`domain_id, provider_code, direction`) |
-
 ### Views `apps.v_class_<code>` — one per class, for the query builder
 
 Generated (not migrations) for **every** class each time it is published — not only when an attribute is marked
-*for reports*. The view always has the fixed value columns (`id, code, class_code, name_ar, name_en, details_ar,
-details_en, parent_code, display_order, is_default, is_active, effective_from, effective_to, companies`); the *for
-reports* tick (`is_reportable`) only decides whether an attribute **also** becomes a typed column
+*Available in reports and queries*. The view always has the fixed value columns (`id, code, class_code, name_ar, name_en, details_ar,
+details_en, parent_code, display_order, is_default, is_active, effective_from, effective_to, companies`); the *Available in
+reports and queries* tick (`is_reportable`) only decides whether an attribute **also** becomes a typed column
 (`(attributes->>'CAPITAL_LIMIT')::numeric AS capital_limit`). A `-` in a code becomes `_` in SQL names.
 
 Who reads them: the **visual query builder** (`Lovs/LovQueryService.cs` + `LovQueryCompiler.cs`), where a class
@@ -128,19 +114,18 @@ columns, instead of every report writing `attributes->>'X'` casts and a `class_i
 
 | Your layer | File | What it does for classes and domains |
 |---|---|---|
-| **Domain** (DB models) | `src/Modules/AppsControl/Domain/DataDictionary.cs` | `DictionaryClass`, `AttributeDefinition`, `DomainValue`, `DomainExternalCode`, `ClassSetting`, enums `AttributeDataType`, `AttributeGroup`, `CodeDirection` |
+| **Domain** (DB models) | `src/Modules/AppsControl/Domain/DataDictionary.cs` | `DictionaryClass`, `AttributeDefinition`, `DomainValue`, `ClassSetting`, enums `AttributeDataType`, `AttributeGroup`, `CodeDirection` |
 | | `src/Shared/Platform/Configuration/ConfigEntity.cs` | Base class of `DictionaryClass` and `DomainValue`: `Id, Code, NameAr, NameEn, IsActive, Owner, EntityCode, BusinessApp, SharedApps` + audit columns |
 | **Application** (DTOs) | `src/Modules/AppsControl/Changes/DataDictionaryAppliers.cs` (top of file) | `ClassPayload` (+ `AttributeDefinitionPayload`), `DomainPayload` (+ `ExternalCodePayload`). They extend `ConfigPayload` (`src/Shared/Platform/Configuration/ConfigApplier.cs`): code, names, active, level |
 | (Mapping) | same file | `ApplyAsync` = DTO → entity with validation; `ToPayloadAsync` = entity → DTO for reads |
 | (Contracts for other modules) | `src/Shared/Platform/DataDictionary/DataDictionaryContracts.cs` | `IDataDictionaryReader` (read values), `DictionaryValue` (the DTO other modules get), `IDomainRules` (a module's extra rules for its class), `CatalogClass` (a class a module ships) |
-| **DataAccess** | `src/Modules/AppsControl/Persistence/AppsControlDbContext.cs` | `DbSet`s `Classes`, `AttributeDefinitions`, `Domains`, `DomainExternalCodes`; mapping in `OnModelCreating` (tables, indexes, jsonb, text[], FKs, delete behaviour) |
+| **DataAccess** | `src/Modules/AppsControl/Persistence/AppsControlDbContext.cs` | `DbSet`s `Classes`, `AttributeDefinitions`, `Domains`; mapping in `OnModelCreating` (tables, indexes, jsonb, text[], FKs, delete behaviour) |
 | | `src/Shared/Platform/Persistence/ConfigModelBuilderExtensions.cs` | `ConfigTable<T>()`: the common mapping of every configuration table (unique code, name lengths, row version…) |
 | | `src/Modules/AppsControl/Persistence/Migrations/` | EF Core migrations of schema `apps` |
 | (Seed) | `src/Modules/AppsControl/Seeding/AppsControlSeeder.cs` + `SystemCatalog.cs` | Creates/updates the product's classes on every run of the Migrator: Apps Control's own and those declared by each module (`SeedModuleClassesAsync`), then regenerates all report views |
 | **Repository** | — | None. Appliers and services query `AppsControlDbContext` directly (`Query()` / `FindAsync()` in the applier) |
 | **Business** (managers) | `Changes/DataDictionaryAppliers.cs` → `ClassApplier` | Validates and saves a class: code pattern, unique view name, parent class, attribute codes/types/references, settings; when attributes change, checks every existing value still fits; removes deleted attributes from values' JSON; keeps attributes in sync (`ChildSync`) |
-| | `Changes/DataDictionaryAppliers.cs` → `DomainApplier` | Validates and saves a value: class exists, dates, companies, parent (no cycles), attribute values against the definitions (`AttributeValues.ValidateAsync`), the owning module's rules (`IDomainRules`), external codes, single default; refuses deletes of parents or of values still used |
-| | `Changes/DomainBackedApplier.cs` | Some modules' configuration types are stored as values of a class but edited on their own screen (`svc.category` → class `SVC_CATEGORY`, `party.relationship-type`, `party.credential-type`, `party.sanction-type`) |
+| | `Changes/DataDictionaryAppliers.cs` → `DomainApplier` | Validates and saves a value: class exists, dates, companies, parent (no cycles), attribute values against the definitions (`AttributeValues.ValidateAsync`), the owning module's rules (`IDomainRules`), single default; refuses deletes of parents or of values still used |
 | | `DataDictionary/AttributeValues.cs` | Type checks of attribute values (number, date, bool, references, required, min/max/pattern) |
 | | `DataDictionary/ClassViewGenerator.cs` | Publish hook: drops and recreates `v_class_<code>` for every class in the published change set |
 | | `DataDictionary/DataDictionaryReader.cs` | Implements `IDataDictionaryReader` for the other modules (values per class, cached for the request; dates applied to "active") |
@@ -191,13 +176,12 @@ Saving a **class** is the same with `apps.class` and `ClassApplier`; deleting se
 | Who | How | Code |
 |---|---|---|
 | **Other backend modules** (today Services and Parties) | Never touch `apps.domain`. They inject `IDataDictionaryReader` (kernel interface) and call `ValuesAsync("SVC_CATEGORY")` / `FindAsync(class, code)` / `SettingsAsync(class)`, receiving `DictionaryValue` records | Contract `src/Shared/Platform/DataDictionary/DataDictionaryContracts.cs`; implementation `DataDictionary/DataDictionaryReader.cs`; users e.g. `src/Modules/Services/Runtime/PortalCatalog.cs`, `src/Modules/Parties/Services/PartyFactsProvider.cs` |
-| **Modules that own a class** | Declare it (code, attributes, starting values) in their `SystemCatalogContribution.Classes`; Apps Control's seeder creates it as `System`-owned. Optional `IDomainRules` adds checks and blocks deleting a value still in use | e.g. `src/Modules/Services/Changes/ServiceClasses.cs` (`SVC_CATEGORY`, `SVC_QUESTION_TYPE` + `ServiceCategoryRules`), `src/Modules/Parties/Changes/PartyClasses.cs`, Workflow, Documents, Visits, Communication module files |
+| **Modules that own a class** | Their lists are edited in Classes & domains like any class; their menu items (e.g. *Service categories*, *Relationship types*) open that screen on the class. They declare it (code, attributes, starting values) in their `SystemCatalogContribution.Classes`; Apps Control's seeder creates it as `System`-owned. Optional `IDomainRules` adds checks and blocks deleting a value still in use | e.g. `src/Modules/Services/Changes/ServiceClasses.cs` (`SVC_CATEGORY`, `SVC_QUESTION_TYPE` + `ServiceCategoryRules`), `src/Modules/Parties/Changes/PartyClasses.cs`, Workflow, Documents, Visits, Communication module files |
 | **Lists of values** (part 2) | A list of source type `Class` points to a class (`apps.lov.class_id`) and serves its active values, filtered by the user's grants and company | `src/Modules/AppsControl/Lovs/LovService.cs` |
 | **Attributes of type `LovRef`** | A class field whose options come from a list of values; checked on save against every value of the list | `DomainApplier.InListAsync` |
 | **Reports, query builder, data objects** | Read the generated views `apps.v_class_<code>` as tables | `DataDictionary/ClassViewGenerator.cs`; Reports module; `Lovs/LovQueryCompiler.cs` |
 | **Logic Builder, workflow designer, generic config forms (Angular)** | Offer a class's values in pickers (`classDomains(code)`) | `web/projects/shared/src/lib/expressions/logic-fields.ts`, `internal/.../workflows/designer/designer-references.ts`, `internal/.../apps-control/config/config-editor.ts` |
 | **Public API** | System functions return class values to partner systems | `DataDictionary/ClassValuesFunction.cs`, `LookupsFunction.cs` |
-| **Integrations** | External codes translate values to provider codes | `apps.domain_external_code`, read through `DictionaryValue.ExternalCodes` |
 | **Companies** | Classes with values per company limit values to companies; the user's current company filters runtime reads | `LovService.ForCompany` |
 | **Security** | Screen privileges of resource `apps-control.classes` guard reads and writes; the row level (entity/app) limits who sees and edits a row | `ConfigApplier` (scope checks), `Access/ConfigScopes.cs` |
 
@@ -228,11 +212,11 @@ Saving a **class** is the same with `apps.class` and `ClassApplier`; deleting se
 - **Deleting an attribute** removes its key from every value's JSON in the same transaction.
 - **Inactive or out-of-date values** are kept (old requests still show them) but are not offered in lists.
 
-## 1.8 Review points raised by the owner
+## 1.8 Review points raised by the owner (decided)
 
-| # | Question | Finding | Proposal (waiting for the owner's decision) |
+| # | Question | Finding | Decision |
 |---|---|---|---|
-| 1 | Is `apps.domain_external_code` needed? | **No code reads it.** It is filled only if a package or JSON import sends `externalCodes`; the value screen has no field for it; `DictionaryValue.ExternalCodes` is never used. The one real case (party relationship types ↔ commerce registry codes) is stored instead as a JSON attribute `EXTERNAL_CODES` on class `PARTY_RELATIONSHIP_TYPE` and read by `Modules/Parties/Changes/PartyClasses.cs`. Response-code translation for integrations lives in the Integration Manager's operations. | Drop the table, the entity, the `externalCodes` payload field and `DictionaryValue.ExternalCodes` (one migration). If provider codes are needed for other classes later, use an attribute like Parties does. |
-| 2 | Are the `v_class_*` views only for reports, created by the *for reports* tick? | See *Views* above: created for every class; the tick only adds attribute columns; read by the query builder (query lists of values, reports/dashboards, public API read endpoints). | Keep. Optionally rename the tick to *Available in reports and queries* so its effect is clear. |
-| 5 | What is `DomainBackedApplier`? | Four configuration types are stored as values of a class but keep their own change type, screen and privileges: `svc.category` → `SVC_CATEGORY`, `party.relationship-type`, `party.credential-type`, `party.sanction-type` → `PARTY_*` classes. Each is a second way to edit the same rows (one through the data dictionary as `apps.domain`, one through the module screen). It was kept when these lists moved into the data dictionary (ADR-0032) so module screens, module privileges and existing packages kept working. | Remove it: the module screens open the data dictionary on their class, everything is saved as `apps.domain`, and the four types and their applier disappear. Cost: whoever maintains these lists needs the data dictionary privilege; three demo packages and two config packages are rewritten from `svc.category` etc. to `apps.domain` with `CLASS/CODE`. Module rules (`IDomainRules`) keep working as they already run in `DomainApplier`. |
+| 1 | Is `apps.domain_external_code` needed? | **No code reads it.** It is filled only if a package or JSON import sends `externalCodes`; the value screen has no field for it; `DictionaryValue.ExternalCodes` is never used. The one real case (party relationship types ↔ commerce registry codes) is stored instead as a JSON attribute `EXTERNAL_CODES` on class `PARTY_RELATIONSHIP_TYPE` and read by `Modules/Parties/Changes/PartyClasses.cs`. Response-code translation for integrations lives in the Integration Manager's operations. | **Done:** the table, entity, `externalCodes` field and `DictionaryValue.ExternalCodes` are removed (migration `DropDomainExternalCodes`). Provider codes for a class, when needed, are an attribute (as `EXTERNAL_CODES` on relationship types). |
+| 2 | Are the `v_class_*` views only for reports, created by the *for reports* tick? | See *Views* above: created for every class; the tick only adds attribute columns; read by the query builder (query lists of values, reports/dashboards, public API read endpoints). | **Kept;** the tick is now called *Available in reports and queries*. |
+| 5 | What is `DomainBackedApplier`? | Four configuration types are stored as values of a class but keep their own change type, screen and privileges: `svc.category` → `SVC_CATEGORY`, `party.relationship-type`, `party.credential-type`, `party.sanction-type` → `PARTY_*` classes. Each is a second way to edit the same rows (one through the data dictionary as `apps.domain`, one through the module screen). It was kept when these lists moved into the data dictionary (ADR-0032) so module screens, module privileges and existing packages kept working. | **Done:** removed with the change types `svc.category`, `party.relationship-type`, `party.credential-type`, `party.sanction-type`. These four lists are edited only in Classes & domains (as `apps.domain`, e.g. `SVC_CATEGORY/PERMITS`); their menu items open that screen on the class; module rules (`IDomainRules`) still validate and fill defaults, and their problems are reported on `attributes.<CODE>`. Packages were converted. |
 

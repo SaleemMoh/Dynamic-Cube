@@ -2,6 +2,8 @@
 
 **Status:** Accepted. Extends [04-apps-control §4.8](../04-apps-control.md) and [ADR-0031](0031-entities-business-apps-levels.md).
 
+**Update (owner review, November 2026):** the separate change types and screens kept for service categories and party relationship, credential and sanction types were removed: these lists are edited in Classes & domains like every class (as `apps.domain`, e.g. `SVC_CATEGORY/PERMITS`), and their menu items open that screen on the class. The `domain_external_code` table was removed as unused.
+
 ## Context
 Class/Domain is the platform's place for lists of values: a class with typed attributes (one of them `JSON`) and its
 values. Over time several modules added their own small tables for lists that are nothing more than a code, names, an

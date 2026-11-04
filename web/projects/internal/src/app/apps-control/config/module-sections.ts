@@ -391,32 +391,6 @@ const identifierTypes = (kind: 'INDIVIDUAL' | 'ESTABLISHMENT') =>
 /** Party Registry configuration screens (internal system → Party registry). */
 export const PARTY_SECTIONS: ConfigSection[] = [
   {
-    path: 'relationship-types',
-    title: t('أنواع العلاقات', 'Relationship types'),
-    resource: 'party.config',
-    types: [
-      {
-        entityType: 'party.relationship-type',
-        title: t('أنواع العلاقات', 'Relationship types'),
-        key: 'code',
-        columns: ['canAct', 'displayOrder'],
-        fields: [
-          {
-            code: 'canAct',
-            type: 'checkbox',
-            label: t('يحق له التمثيل في البوابة', 'May act for the party in the portal'),
-          },
-          number('displayOrder', t('الترتيب', 'Display order'), 0),
-          json(
-            'externalCodes',
-            t('رموز الجهات الخارجية', 'Provider codes'),
-            table(col('provider', t('المزود', 'Provider'), 'text', LTR_REQ), col('code', t('الرمز لدى المزود', 'Code at the provider'), 'text', LTR_REQ)),
-          ),
-        ],
-      },
-    ],
-  },
-  {
     path: 'record-lists',
     title: t('قوائم السجلات', 'Record lists'),
     resource: 'party.config',
@@ -633,7 +607,7 @@ export const PARTY_SECTIONS: ConfigSection[] = [
             code: 'defaultRelationshipCode',
             type: 'select',
             label: t('نوع العلاقة الافتراضي', 'Default relationship type'),
-            ref: 'party.relationship-type',
+            refDomains: 'PARTY_RELATIONSHIP_TYPE',
           },
           path('statusPath', t('مسار الحالة', 'Status path'), t('مثال: Status', 'e.g. Status')),
           json('activeStatuses', t('الحالات المقبولة', 'Accepted statuses'), list(), t('فارغ: كل الحالات. مثال: Active', 'Empty: every status. e.g. Active')),
@@ -713,67 +687,6 @@ export const PARTY_SECTIONS: ConfigSection[] = [
       },
     ],
   },
-  {
-    path: 'credential-types',
-    title: t('أنواع الشهادات', 'Credential types'),
-    resource: 'party.config',
-    types: [
-      {
-        entityType: 'party.credential-type',
-        title: t('أنواع الشهادات', 'Credential types'),
-        key: 'code',
-        columns: ['partyKind', 'issuerAr'],
-        fields: [
-          {
-            code: 'partyKind',
-            type: 'select',
-            label: t('نوع الطرف', 'Party kind'),
-            options: partyKinds,
-            required: true,
-            defaultValue: 'ESTABLISHMENT',
-          },
-          { code: 'issuerAr', type: 'text', label: t('جهة الإصدار بالعربية', 'Issuer (Arabic)') },
-          {
-            code: 'issuerEn',
-            type: 'text',
-            label: t('جهة الإصدار بالإنجليزية', 'Issuer (English)'),
-          },
-          {
-            code: 'hasExpiry',
-            type: 'checkbox',
-            label: t('لها تاريخ انتهاء', 'Has an expiry date'),
-            defaultValue: true,
-          },
-        ],
-      },
-    ],
-  },
-  {
-    path: 'sanction-types',
-    title: t('أنواع الجزاءات', 'Sanction types'),
-    resource: 'party.config',
-    types: [
-      {
-        entityType: 'party.sanction-type',
-        title: t('أنواع الجزاءات', 'Sanction types'),
-        key: 'code',
-        columns: ['blocksApplications', 'defaultDays'],
-        fields: [
-          {
-            code: 'blocksApplications',
-            type: 'checkbox',
-            label: t('يمنع تقديم الطلبات', 'Blocks new requests'),
-            defaultValue: true,
-          },
-          {
-            code: 'defaultDays',
-            type: 'number',
-            label: t('المدة الافتراضية (يوم)', 'Default duration (days)'),
-          },
-        ],
-      },
-    ],
-  },
 ];
 
 /** Services configuration screens (internal system → Services); versions have their own screen. */
@@ -834,7 +747,7 @@ export const SERVICE_SECTIONS: ConfigSection[] = [
             code: 'categoryCode',
             type: 'select',
             label: t('التصنيف', 'Category'),
-            ref: 'svc.category',
+            refDomains: 'SVC_CATEGORY',
           },
           {
             code: 'icon',
@@ -942,38 +855,6 @@ export const SERVICE_SECTIONS: ConfigSection[] = [
             ref: 'wf.workflow',
             hint: t('اختياري: يصبح المسار نسخة من آخر إصدار منشور للمسار.', "Optional: it becomes a copy of the workflow's latest published version."),
           },
-        ],
-      },
-    ],
-  },
-  {
-    path: 'categories',
-    title: t('تصنيفات الخدمات', 'Service categories'),
-    resource: 'services.config',
-    types: [
-      {
-        entityType: 'svc.category',
-        title: t('تصنيفات الخدمات', 'Service categories'),
-        key: 'code',
-        columns: ['icon', 'displayOrder'],
-        // The portal shows a tab per category on its home page and a filter in its search.
-        fields: [
-          {
-            code: 'descriptionAr',
-            type: 'textarea',
-            label: t('الوصف بالعربية', 'Arabic description'),
-          },
-          {
-            code: 'descriptionEn',
-            type: 'textarea',
-            label: t('الوصف بالإنجليزية', 'English description'),
-          },
-          {
-            code: 'icon',
-            type: 'icon',
-            label: t('الأيقونة', 'Icon'),
-          },
-          number('displayOrder', t('الترتيب', 'Display order'), 0),
         ],
       },
     ],

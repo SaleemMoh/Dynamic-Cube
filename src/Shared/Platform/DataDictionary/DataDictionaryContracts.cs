@@ -33,9 +33,6 @@ public sealed record CatalogClass(
     string? DescriptionAr = null,
     string? DescriptionEn = null);
 
-/// <summary>A provider's code for a value (e.g. a relationship type as the commerce registry names it).</summary>
-public sealed record DictionaryExternalCode(string Provider, string Code, string Direction);
-
 /// <summary>A value of a class as other modules read it.</summary>
 public sealed record DictionaryValue(
     string Code,
@@ -48,7 +45,6 @@ public sealed record DictionaryValue(
     bool IsActive,
     bool IsDefault,
     JsonObject Attributes,
-    IReadOnlyList<DictionaryExternalCode> ExternalCodes,
     string? EntityCode = null,
     string? BusinessApp = null,
     IReadOnlyList<string>? Companies = null)

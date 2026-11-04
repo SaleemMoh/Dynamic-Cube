@@ -26,7 +26,7 @@ internal static class Packages
             var exists = await host.AsAsync("admin", sp => sp.GetRequiredService<ServicesDbContext>().Services.AsNoTracking().AnyAsync(s => s.Code == "SITE_VISIT"));
             if (!exists)
             {
-                await ServicesAsync(host, [.. Items("portal-services.json").Where(i => i.EntityType.StartsWith("svc.", StringComparison.Ordinal))]);
+                await ServicesAsync(host, [.. Items("portal-services.json").Where(i => i.EntityType.StartsWith("svc.", StringComparison.Ordinal) || i.EntityCode.StartsWith("SVC_CATEGORY/", StringComparison.Ordinal))]);
             }
         }
         finally
@@ -41,7 +41,7 @@ internal static class Packages
     /// </summary>
     public static async Task ServicesAsync(TestHost host, List<Change> items)
     {
-        var categories = items.Where(i => i.EntityType == ServiceChangeTypes.Category).ToList();
+        var categories = items.Where(i => i.EntityType == AppsControlChangeTypes.Domain).ToList();
         if (categories.Count > 0)
         {
             await host.PublishAsync(AppsControlAreas.DataDictionary, [.. categories]);

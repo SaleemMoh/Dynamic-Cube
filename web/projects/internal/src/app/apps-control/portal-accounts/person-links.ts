@@ -234,7 +234,7 @@ export class PersonLinks {
   protected readonly links = rxResource({ params: () => this.nationalId(), stream: ({ params }) => this.parties.personLinks(params) });
   protected readonly current = computed(() => (this.links.value()?.links ?? []).filter((l) => !l.endedAt));
   protected readonly types = rxResource({
-    stream: () => this.appsControl.list('party.relationship-type').pipe(map((rows) => rows.filter((r) => r.isActive))),
+    stream: () => this.appsControl.classDomains('PARTY_RELATIONSHIP_TYPE'),
   });
 
   protected readonly adding = signal(false);

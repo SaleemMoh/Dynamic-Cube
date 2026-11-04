@@ -53,42 +53,48 @@
       }
     },
     {
-      "entityType": "svc.category",
-      "entityCode": "PERMITS",
+      "entityType": "apps.domain",
+      "entityCode": "SVC_CATEGORY/PERMITS",
       "operation": "CREATE",
       "payload": {
         "nameAr": "التصاريح",
         "nameEn": "Permits",
-        "descriptionAr": "تصاريح الفعاليات والأنشطة المؤقتة.",
-        "descriptionEn": "Permits for events and temporary activities.",
-        "icon": "event_available",
-        "displayOrder": 20
+        "displayOrder": 20,
+        "attributes": {
+          "DESCRIPTION_AR": "تصاريح الفعاليات والأنشطة المؤقتة.",
+          "DESCRIPTION_EN": "Permits for events and temporary activities.",
+          "ICON": "event_available"
+        }
       }
     },
     {
-      "entityType": "svc.category",
-      "entityCode": "LICENSES",
+      "entityType": "apps.domain",
+      "entityCode": "SVC_CATEGORY/LICENSES",
       "operation": "CREATE",
       "payload": {
         "nameAr": "الرخص",
         "nameEn": "Licences",
-        "descriptionAr": "رخص اللوحات والمحلات.",
-        "descriptionEn": "Signboard and shop licences.",
-        "icon": "storefront",
-        "displayOrder": 30
+        "displayOrder": 30,
+        "attributes": {
+          "DESCRIPTION_AR": "رخص اللوحات والمحلات.",
+          "DESCRIPTION_EN": "Signboard and shop licences.",
+          "ICON": "storefront"
+        }
       }
     },
     {
-      "entityType": "svc.category",
-      "entityCode": "CERTIFICATES",
+      "entityType": "apps.domain",
+      "entityCode": "SVC_CATEGORY/CERTIFICATES",
       "operation": "CREATE",
       "payload": {
         "nameAr": "الشهادات",
         "nameEn": "Certificates",
-        "descriptionAr": "شهادات إتمام الأعمال والزيارات الميدانية.",
-        "descriptionEn": "Works completion certificates and site visits.",
-        "icon": "verified",
-        "displayOrder": 40
+        "displayOrder": 40,
+        "attributes": {
+          "DESCRIPTION_AR": "شهادات إتمام الأعمال والزيارات الميدانية.",
+          "DESCRIPTION_EN": "Works completion certificates and site visits.",
+          "ICON": "verified"
+        }
       }
     },
     {

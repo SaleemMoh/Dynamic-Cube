@@ -156,9 +156,9 @@ result.
   and a window of days around the issue or expiry date. One open request per document and service; rules see the
   document as `document`; the workflow's document step with `target: SOURCE` amends it (validity KEEP, RESET, RENEW
   or EXTEND). See [ADR-0021](adr/0021-follow-up-services.md).
-- **Category** (1g) `svc.category` — names, description, icon and order; a service names a category, which groups
+- **Category** (1g) — names, description, icon and order; a service names a category, which groups
   it in the portal (home tabs, search filter, header menu). Categories are values of class `SVC_CATEGORY` in
-  Class/Domain ([ADR-0032](adr/0032-lookups-in-class-domain.md)).
+  Class/Domain ([ADR-0032](adr/0032-lookups-in-class-domain.md)), edited in Classes & domains.
 - **Service card** (1g) — `definition.card` of a version: target audience, numbered steps, terms of use,
   required documents (with notes), channels (`PORTAL`, `MOBILE_APP`, `BRANCH`, `CALL_CENTER`), FAQ link, phone and
   email. Duration comes from the levels and cost from the fees (fixed amounts and bracket ranges; *depends on the

@@ -94,6 +94,9 @@ internal static class ServicesCatalog
 {
     public const string MenuGroup = "SERVICES";
 
+    /// <summary>Apps Control's Classes &amp; domains screen: the module's lists that are classes are edited there.</summary>
+    private const string ClassesResource = "apps-control.classes";
+
     public static SystemCatalogContribution Contribution { get; } = new()
     {
         Module = "services",
@@ -113,7 +116,7 @@ internal static class ServicesCatalog
             new("services.versions", "إصدارات الخدمات", "Service versions", "/services/versions", ServiceResources.Config, "history_edu", 30),
             new("services.builder", "منشئ الخدمات", "Service builder", "/services/builder", ServiceResources.Config, "construction", 35),
             new("services.questions", "بنك الأسئلة", "Question bank", "/services/questions", ServiceResources.Config, "quiz", 40),
-            new("services.categories", "تصنيفات الخدمات", "Service categories", "/services/categories", ServiceResources.Config, "category", 50),
+            new("services.categories", "تصنيفات الخدمات", "Service categories", "/apps-control/classes/SVC_CATEGORY", ClassesResource, "category", 50),
         ],
     };
 }

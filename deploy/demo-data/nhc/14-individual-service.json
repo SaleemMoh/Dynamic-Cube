@@ -306,16 +306,18 @@
       }
     },
     {
-      "entityType": "svc.category",
-      "entityCode": "INDIVIDUALS",
+      "entityType": "apps.domain",
+      "entityCode": "SVC_CATEGORY/INDIVIDUALS",
       "operation": "CREATE",
       "payload": {
         "nameAr": "خدمات الأفراد",
         "nameEn": "Services for individuals",
-        "descriptionAr": "خدمات يقدمها الأفراد لأنفسهم، مثل التأهيل المهني",
-        "descriptionEn": "Services people apply for themselves, such as professional qualification",
-        "icon": "person",
-        "displayOrder": 20
+        "displayOrder": 20,
+        "attributes": {
+          "DESCRIPTION_AR": "خدمات يقدمها الأفراد لأنفسهم، مثل التأهيل المهني",
+          "DESCRIPTION_EN": "Services people apply for themselves, such as professional qualification",
+          "ICON": "person"
+        }
       }
     },
     {

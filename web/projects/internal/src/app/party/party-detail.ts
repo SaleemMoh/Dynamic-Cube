@@ -408,8 +408,8 @@ export class PartyDetail {
   }
 
   protected async addDelegate(): Promise<void> {
-    const types = await firstValueFrom(this.appsControl.list('party.relationship-type'));
-    const options: FormOption[] = types.filter((t) => t.isActive).map((t) => ({ value: t.code, label: { ar: t.nameAr, en: t.nameEn } }));
+    const types = await firstValueFrom(this.appsControl.classDomains('PARTY_RELATIONSHIP_TYPE'));
+    const options: FormOption[] = types.map((t) => ({ value: t.code, label: { ar: t.nameAr, en: t.nameEn } }));
     this.openForm({
       title: this.i18n.translate('party.addRelationship'),
       submitLabel: this.i18n.translate('config.save'),
@@ -450,8 +450,8 @@ export class PartyDetail {
   }
 
   protected async addSanction(): Promise<void> {
-    const types = await firstValueFrom(this.appsControl.list('party.sanction-type'));
-    const options: FormOption[] = types.filter((t) => t.isActive).map((t) => ({ value: t.code, label: { ar: t.nameAr, en: t.nameEn } }));
+    const types = await firstValueFrom(this.appsControl.classDomains('PARTY_SANCTION_TYPE'));
+    const options: FormOption[] = types.map((t) => ({ value: t.code, label: { ar: t.nameAr, en: t.nameEn } }));
     this.openForm({
       title: this.i18n.translate('party.addSanction'),
       submitLabel: this.i18n.translate('config.save'),

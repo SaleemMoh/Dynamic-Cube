@@ -128,27 +128,4 @@ public sealed class DomainValue : ConfigEntity
     /// explicitly); empty for values of other classes.
     /// </summary>
     public List<string> Companies { get; set; } = [];
-
-    public List<DomainExternalCode> ExternalCodes { get; } = [];
-}
-
-public enum CodeDirection
-{
-    In,
-    Out,
-    Both,
-}
-
-/// <summary>Translates a domain value to and from an integration provider's code.</summary>
-public sealed class DomainExternalCode : IAuditable
-{
-    public Guid Id { get; set; } = Guid.CreateVersion7();
-
-    public Guid DomainId { get; set; }
-
-    public string ProviderCode { get; set; } = string.Empty;
-
-    public string ExternalCode { get; set; } = string.Empty;
-
-    public CodeDirection Direction { get; set; } = CodeDirection.Both;
 }

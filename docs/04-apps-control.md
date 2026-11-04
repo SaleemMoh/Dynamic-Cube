@@ -29,7 +29,7 @@ are kept; the implementation is adapted for a single-entity, on-prem, multi-app 
 | Company Setup | `entity` (single row) + org structure |
 | — | `org_unit_type`, `org_unit`, `position` (new) |
 | Menu Groups Setup / Menus Setup | `menu_group`, `menu` (+ item types) |
-| Class – Domain Setup | `class`, `class_attribute`, `domain`, `domain_external_code` |
+| Class – Domain Setup | `class`, `class_attribute`, `domain` |
 | List of Values Setup | `data_object`, `lov` |
 | Link Classes with Screens | Form schema: a field references an LOV |
 | Menu – Value Setup | `lov_binding` (screen ↔ LOV, selection mode) |
@@ -314,12 +314,12 @@ Indexes: unique (`class_id`, `code`); GIN on `attributes`.
 The value form is generated from the class: *General*, then one tab per kind of field (texts, choices, numbers, dates)
 and *Parameters*, like the legacy Flex Values / Dates / Numbers tabs but with any number of named, typed fields.
 
-**`domain_external_code`** — `domain_id`, `provider_code` (integration provider, e.g. `MCI`),
-`external_code`, `direction` (`IN` | `OUT` | `BOTH`). Translates provider lookups (e.g. MCI
-relation types) to and from domain values.
+Provider codes for a class's values, when an integration needs them, are an attribute of the class (as
+`EXTERNAL_CODES` on `PARTY_RELATIONSHIP_TYPE`); the former `domain_external_code` table was removed (never read).
 
-**Generated views** — for each class with reportable attributes the platform maintains
-`apps.v_class_<code>` exposing `code`, names, parent, and every attribute as a typed column.
+**Generated views** — for every class the platform maintains `apps.v_class_<code>` exposing `code`, names, parent,
+and every attribute ticked *Available in reports and queries* as a typed column; the query builder (query lists,
+reports, public API read endpoints) reads them.
 Views are regenerated when attribute definitions are published. The report builder sees normal
 columns.
 

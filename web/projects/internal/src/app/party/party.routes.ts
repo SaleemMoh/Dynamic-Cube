@@ -3,6 +3,10 @@ import { PARTY_SECTIONS } from '../apps-control/config/module-sections';
 
 export const PARTY_ROUTES: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'parties' },
+  // These lists are classes of the data dictionary, edited in Classes & domains.
+  { path: 'relationship-types', redirectTo: '/apps-control/classes/PARTY_RELATIONSHIP_TYPE' },
+  { path: 'credential-types', redirectTo: '/apps-control/classes/PARTY_CREDENTIAL_TYPE' },
+  { path: 'sanction-types', redirectTo: '/apps-control/classes/PARTY_SANCTION_TYPE' },
   { path: 'parties', loadComponent: () => import('./party-list').then((m) => m.PartyList) },
   { path: 'parties/:id', loadComponent: () => import('./party-detail').then((m) => m.PartyDetail) },
   ...PARTY_SECTIONS.map((section) => ({

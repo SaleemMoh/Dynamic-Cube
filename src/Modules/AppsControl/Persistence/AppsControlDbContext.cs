@@ -57,8 +57,6 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
 
     public DbSet<DomainValue> Domains => Set<DomainValue>();
 
-    public DbSet<DomainExternalCode> DomainExternalCodes => Set<DomainExternalCode>();
-
     public DbSet<DataObject> DataObjects => Set<DataObject>();
 
     public DbSet<DataScopeBinding> DataScopeBindings => Set<DataScopeBinding>();
@@ -272,16 +270,7 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
             b.HasIndex(e => e.Attributes).HasMethod("gin");
             b.HasOne(e => e.Class).WithMany().HasForeignKey(e => e.ClassId).OnDelete(DeleteBehavior.Restrict);
             b.HasOne(e => e.ParentDomain).WithMany().HasForeignKey(e => e.ParentDomainId).OnDelete(DeleteBehavior.Restrict);
-            b.HasMany(e => e.ExternalCodes).WithOne().HasForeignKey(x => x.DomainId).OnDelete(DeleteBehavior.Cascade);
         }, uniqueCode: false);
-        modelBuilder.Entity<DomainExternalCode>(b =>
-        {
-            b.ToTable("domain_external_code", Schema);
-            b.Property(e => e.ProviderCode).HasMaxLength(100).IsRequired();
-            b.Property(e => e.ExternalCode).HasMaxLength(200).IsRequired();
-            b.HasIndex(e => new { e.ProviderCode, e.ExternalCode, e.Direction });
-            b.HasIndex(e => new { e.DomainId, e.ProviderCode, e.Direction }).IsUnique();
-        });
 
         Config<DataObject>(modelBuilder, "data_object", b =>
         {

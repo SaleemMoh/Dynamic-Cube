@@ -35,7 +35,6 @@ internal sealed class DataDictionaryReader(AppsControlDbContext context, TimePro
         var rows = await context.Domains.AsNoTracking()
             .Where(d => d.Class!.Code == classCode)
             .Include(d => d.ParentDomain)
-            .Include(d => d.ExternalCodes)
             .OrderBy(d => d.DisplayOrder).ThenBy(d => d.Code)
             .ToListAsync(cancellationToken);
         var values = rows.Select(d => new DictionaryValue(
@@ -49,7 +48,6 @@ internal sealed class DataDictionaryReader(AppsControlDbContext context, TimePro
             d.IsActive && (d.EffectiveFrom == null || d.EffectiveFrom <= today) && (d.EffectiveTo == null || d.EffectiveTo >= today),
             d.IsDefault,
             JsonNode.Parse(d.Attributes) as JsonObject ?? [],
-            [.. d.ExternalCodes.Select(x => new DictionaryExternalCode(x.ProviderCode, x.ExternalCode, x.Direction.ToString().ToUpperInvariant()))],
             d.EntityCode,
             d.BusinessApp,
             d.Companies)).ToList();

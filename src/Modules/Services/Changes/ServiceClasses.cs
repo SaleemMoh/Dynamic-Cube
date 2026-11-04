@@ -8,7 +8,7 @@ namespace DynamicCube.Modules.Services.Changes;
 /// <summary>The Services module's classes in Class/Domain.</summary>
 public static class ServiceClasses
 {
-    /// <summary>Catalog categories (edited as <c>svc.category</c>): icon and descriptions as attributes.</summary>
+    /// <summary>Catalog categories (values of class <c>SVC_CATEGORY</c>, edited in Classes &amp; domains): icon and descriptions as attributes.</summary>
     public const string Category = "SVC_CATEGORY";
 
     internal static IReadOnlyList<CatalogClass> All { get; } =

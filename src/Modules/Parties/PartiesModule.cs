@@ -82,6 +82,9 @@ internal static class PartiesCatalog
 {
     public const string MenuGroup = "PARTY";
 
+    /// <summary>Apps Control's Classes &amp; domains screen: the module's lists that are classes are edited there.</summary>
+    private const string ClassesResource = "apps-control.classes";
+
     public static SystemCatalogContribution Contribution { get; } = new()
     {
         Module = "party",
@@ -97,13 +100,13 @@ internal static class PartiesCatalog
         Menus =
         [
             new("party.parties", "المتعاملون", "Parties", "/party/parties", PartyResources.Parties, "groups", 10),
-            new("party.relationship-types", "أنواع العلاقات", "Relationship types", "/party/relationship-types", PartyResources.Config, "share", 20),
+            new("party.relationship-types", "أنواع العلاقات", "Relationship types", "/apps-control/classes/PARTY_RELATIONSHIP_TYPE", ClassesResource, "share", 20),
             new("party.context-sources", "مصادر صفة التمثيل", "Acting context sources", "/party/context-sources", PartyResources.Config, "switch_account", 30),
             new("party.authority-types", "أنواع التفويض", "Authority types", "/party/authority-types", PartyResources.Config, "verified_user", 35),
             new("party.profile-fields", "بيانات الملف", "Profile fields", "/party/profile-fields", PartyResources.Config, "assignment_ind", 40),
             new("party.record-lists", "قوائم السجلات", "Record lists", "/party/record-lists", PartyResources.Config, "table_rows", 45),
-            new("party.credential-types", "أنواع الشهادات", "Credential types", "/party/credential-types", PartyResources.Config, "workspace_premium", 50),
-            new("party.sanction-types", "أنواع الجزاءات", "Sanction types", "/party/sanction-types", PartyResources.Config, "gavel", 60),
+            new("party.credential-types", "أنواع الشهادات", "Credential types", "/apps-control/classes/PARTY_CREDENTIAL_TYPE", ClassesResource, "workspace_premium", 50),
+            new("party.sanction-types", "أنواع الجزاءات", "Sanction types", "/apps-control/classes/PARTY_SANCTION_TYPE", ClassesResource, "gavel", 60),
         ],
     };
 }

@@ -165,7 +165,6 @@ export class DomainEditor {
       effectiveTo: fromDate(value['effectiveTo']),
       companies: this.data.cls.valuesPerCompany ? onlyAll((value['companies'] as string[] | null) ?? []) : [],
       attributes,
-      externalCodes: (this.data.row?.['externalCodes'] as unknown[] | undefined) ?? [],
     };
     try {
       await this.drafts.addChange('apps.domain', `${this.data.cls.code}/${code}`, this.data.row ? 'UPDATE' : 'CREATE', payload, { submit });

@@ -76,13 +76,6 @@ public static class AppsControlModule
         AddApplier<ClassApplier>(services);
         AddApplier<DomainApplier>(services);
 
-        // Types kept as values of a class, each under its own change type and screen.
-        foreach (var type in DomainBackedTypes.All)
-        {
-            services.AddScoped(sp => new DomainBackedApplier(sp.GetRequiredService<AppsControlDbContext>(), type, sp.GetServices<IDomainRules>()));
-            services.AddScoped<IConfigApplier>(sp => sp.GetServices<DomainBackedApplier>().Single(a => a.EntityType == type.EntityType));
-            services.AddScoped<IChangeApplier<AppsControlDbContext>>(sp => sp.GetServices<DomainBackedApplier>().Single(a => a.EntityType == type.EntityType));
-        }
         AddApplier<DataObjectApplier>(services);
         AddApplier<LovApplier>(services);
         AddApplier<SettingApplier>(services);

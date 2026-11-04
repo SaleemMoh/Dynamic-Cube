@@ -27,7 +27,7 @@ This confirms the design below: a shared connection and envelope, many operation
 
 | Concept | Description |
 |---|---|
-| **Provider** | The external party (e.g. `MCI`, `NIC`, `DGA`); used by `domain_external_code` mappings |
+| **Provider** | The external party (e.g. `MCI`, `NIC`, `DGA`); referred to by provider codes kept as class attributes (e.g. `EXTERNAL_CODES`) |
 | **Connection** | Base URL per environment, timeouts, TLS settings, auth profile, retry & circuit-breaker policy. Shared by many operations |
 | **Auth profile** | `NONE` · `BASIC` · `API_KEY` · `OAUTH2_CLIENT_CREDENTIALS` (token cached until expiry) · `WS_SECURITY` (SOAP UsernameToken, password as text or digest; ADR-0044) · `MTLS` (later). Credentials in the secret store, never in plain tables |
 | **Envelope profile** | How to read a response: success condition (e.g. `statusDetails.code` + `data.responseCode`), business-error path, message path. Defined once per provider family |

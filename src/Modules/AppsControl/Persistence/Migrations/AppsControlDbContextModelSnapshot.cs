@@ -959,45 +959,120 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.ToTable("data_scope_binding", "apps");
                 });
 
-            modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.DomainExternalCode", b =>
+            modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.DictionaryClass", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<string>("Direction")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
-                        .HasColumnName("direction");
+                    b.Property<bool>("AllowMultiAssign")
+                        .HasColumnType("boolean")
+                        .HasColumnName("allow_multi_assign");
 
-                    b.Property<Guid>("DomainId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("domain_id");
+                    b.Property<string>("BusinessApp")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("business_app");
 
-                    b.Property<string>("ExternalCode")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("external_code");
-
-                    b.Property<string>("ProviderCode")
+                    b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("provider_code");
+                        .HasColumnName("code");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("DescriptionAr")
+                        .HasColumnType("text")
+                        .HasColumnName("description_ar");
+
+                    b.Property<string>("DescriptionEn")
+                        .HasColumnType("text")
+                        .HasColumnName("description_en");
+
+                    b.Property<string>("EntityCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("entity_code");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<bool>("IsHierarchical")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_hierarchical");
+
+                    b.Property<string>("NameAr")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("name_ar");
+
+                    b.Property<string>("NameEn")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("name_en");
+
+                    b.Property<string>("Owner")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("owner");
+
+                    b.Property<Guid?>("ParentClassId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("parent_class_id");
+
+                    b.Property<uint>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<string>("Settings")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("settings");
+
+                    b.PrimitiveCollection<List<string>>("SharedApps")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("shared_apps");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("updated_by");
+
+                    b.Property<bool>("ValuesPerCompany")
+                        .HasColumnType("boolean")
+                        .HasColumnName("values_per_company");
 
                     b.HasKey("Id")
-                        .HasName("pk_domain_external_code");
+                        .HasName("pk_class");
 
-                    b.HasIndex("DomainId", "ProviderCode", "Direction")
+                    b.HasIndex("Code")
                         .IsUnique()
-                        .HasDatabaseName("ix_domain_external_code_domain_id_provider_code_direction");
+                        .HasDatabaseName("ix_class_code");
 
-                    b.HasIndex("ProviderCode", "ExternalCode", "Direction")
-                        .HasDatabaseName("ix_domain_external_code_provider_code_external_code_direction");
+                    b.HasIndex("ParentClassId")
+                        .HasDatabaseName("ix_class_parent_class_id");
 
-                    b.ToTable("domain_external_code", "apps");
+                    b.ToTable("class", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.DomainValue", b =>
@@ -1477,122 +1552,6 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasDatabaseName("ix_installation_code");
 
                     b.ToTable("installation", "apps");
-                });
-
-            modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.DictionaryClass", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<bool>("AllowMultiAssign")
-                        .HasColumnType("boolean")
-                        .HasColumnName("allow_multi_assign");
-
-                    b.Property<string>("BusinessApp")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("business_app");
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("code");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)")
-                        .HasColumnName("created_by");
-
-                    b.Property<string>("DescriptionAr")
-                        .HasColumnType("text")
-                        .HasColumnName("description_ar");
-
-                    b.Property<string>("DescriptionEn")
-                        .HasColumnType("text")
-                        .HasColumnName("description_en");
-
-                    b.Property<string>("EntityCode")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("entity_code");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_active");
-
-                    b.Property<bool>("IsHierarchical")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_hierarchical");
-
-                    b.Property<string>("NameAr")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("name_ar");
-
-                    b.Property<string>("NameEn")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("name_en");
-
-                    b.Property<string>("Owner")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
-                        .HasColumnName("owner");
-
-                    b.Property<Guid?>("ParentClassId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("parent_class_id");
-
-                    b.Property<uint>("RowVersion")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
-                    b.Property<string>("Settings")
-                        .IsRequired()
-                        .HasColumnType("jsonb")
-                        .HasColumnName("settings");
-
-                    b.PrimitiveCollection<List<string>>("SharedApps")
-                        .IsRequired()
-                        .HasColumnType("text[]")
-                        .HasColumnName("shared_apps");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)")
-                        .HasColumnName("updated_by");
-
-                    b.Property<bool>("ValuesPerCompany")
-                        .HasColumnType("boolean")
-                        .HasColumnName("values_per_company");
-
-                    b.HasKey("Id")
-                        .HasName("pk_class");
-
-                    b.HasIndex("Code")
-                        .IsUnique()
-                        .HasDatabaseName("ix_class_code");
-
-                    b.HasIndex("ParentClassId")
-                        .HasDatabaseName("ix_class_parent_class_id");
-
-                    b.ToTable("class", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.Lov", b =>
@@ -3524,14 +3483,15 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.Navigation("Lov");
                 });
 
-            modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.DomainExternalCode", b =>
+            modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.DictionaryClass", b =>
                 {
-                    b.HasOne("DynamicCube.Modules.AppsControl.Domain.DomainValue", null)
-                        .WithMany("ExternalCodes")
-                        .HasForeignKey("DomainId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_domain_external_code_domain_domain_id");
+                    b.HasOne("DynamicCube.Modules.AppsControl.Domain.DictionaryClass", "ParentClass")
+                        .WithMany()
+                        .HasForeignKey("ParentClassId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_class_class_parent_class_id");
+
+                    b.Navigation("ParentClass");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.DomainValue", b =>
@@ -3552,17 +3512,6 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.Navigation("Class");
 
                     b.Navigation("ParentDomain");
-                });
-
-            modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.DictionaryClass", b =>
-                {
-                    b.HasOne("DynamicCube.Modules.AppsControl.Domain.DictionaryClass", "ParentClass")
-                        .WithMany()
-                        .HasForeignKey("ParentClassId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_class_class_parent_class_id");
-
-                    b.Navigation("ParentClass");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.Lov", b =>
@@ -3891,11 +3840,6 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.DataObject", b =>
                 {
                     b.Navigation("ScopeBindings");
-                });
-
-            modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.DomainValue", b =>
-                {
-                    b.Navigation("ExternalCodes");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.DictionaryClass", b =>

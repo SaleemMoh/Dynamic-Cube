@@ -51,9 +51,6 @@ export const EXTRA_TEMPLATE_ENTITIES: TemplateEntity[] = [
       json('attributes', t('قيم الخصائص', 'Attribute values'), '{"MIN_CAPITAL": 50000}', { defaultValue: {} }),
       { code: 'effectiveFrom', type: 'date', label: t('يسري من', 'Effective from') },
       { code: 'effectiveTo', type: 'date', label: t('يسري حتى', 'Effective to') },
-      json('externalCodes', t('رموز الأنظمة الأخرى', 'External codes'), '[{"providerCode": "MCI", "externalCode": "17", "direction": "BOTH"}]', {
-        defaultValue: [],
-      }),
     ],
   },
   {
