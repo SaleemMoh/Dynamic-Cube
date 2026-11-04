@@ -76,6 +76,23 @@ the request already knows, and that a business user can change.
   questions, operations, task fields, answers no longer in the bank, bank weights changed).
 - The workflow designer's decision step offers the matrix rule sets and opens the matrix.
 
+### Sector page (classification setup)
+The designer opens on a **Sectors** tab modelled on the reviewed system: the sectors, then one sector's page with three
+tabs, all on one screen.
+- **Classification criteria**: the sector's tracks; under the chosen track its groups, under a group its criteria, under
+  a criterion its bands (per size, copied to every size in one click) or scored answers, edited in the tables. A track
+  linked to a shared calculation says with which sectors and offers "change this sector only" (its own copy).
+- **Questions** and **Application form**: the form of the service whose workflow decides with the rule set (a decision
+  step naming it → the workflow's service → its latest version). A question shows for a sector when its "visible when"
+  names the sector's value in the question listing the sectors applied for (`{"in": ["RE", {"var": "CLS_DOMAINS"}]}`,
+  joined with `or`); no rule shows it to every sector, any other rule is left to the Service Builder. Adding a question
+  creates the bank question, the matrix input reading it, its place in the form step for this sector and, when chosen,
+  a criterion in a group.
+- **One save**: the matrix version and, when the form changed, the service's next version with the new bank questions
+  are saved by the same click — each area's rows in one change set (the draft, or one sent for approval), the service's
+  first so a matrix is not saved over a form that failed. The rest of the service (fees, card, rules) stays in the
+  Service Builder. The former grid is the **Overview** tab.
+
 ### NHC demo (package 37)
 The service *Contractor classification (scoring matrix)* (`CLM-…`) on the April 2026 guide: the sectors and their
 questions from the bank (11 with weighted answers), data fetched from four mock sources (Qawaem financial statements,

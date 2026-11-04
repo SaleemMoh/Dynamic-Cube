@@ -3,6 +3,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { AppsControlApi, ConfigRow, LocalizedText, TaskField } from '@dynamic-cube/shared';
 import { catchError, of } from 'rxjs';
 import { MatrixInput, bankQuestionCode } from './matrix-model';
+import type { FormLink } from './matrix-form';
 
 /** A human task of a workflow, with the fields the employee fills in on it. */
 export interface ReviewTask {
@@ -82,6 +83,9 @@ export class MatrixReferences {
   private readonly versionRows = signal<ConfigRow[]>([]);
   private readonly operationRows = signal<ConfigRow[]>([]);
   private readonly serviceVersionRows = signal<ConfigRow[]>([]);
+  private readonly serviceRows = signal<ConfigRow[]>([]);
+  /** Bank questions added on the page and not saved yet (read like the bank's own). */
+  readonly pendingQuestions = signal<ConfigRow[]>([]);
   readonly partyFacts = signal<PartyFact[]>([]);
   /** Values of the lists of values bank questions take their answers from, read once per list. */
   private readonly lovAnswers = signal<Record<string, BankAnswer[]>>({});
@@ -93,6 +97,7 @@ export class MatrixReferences {
     this.load('wf.workflow-version', this.versionRows);
     this.load('integ.operation', this.operationRows);
     this.load('svc.service-version', this.serviceVersionRows);
+    this.load('svc.service', this.serviceRows);
     this.http
       .get<{ code: string; nameAr: string; nameEn: string }[]>(
         '/api/services/v1/admin/fill-sources',
@@ -324,7 +329,56 @@ export class MatrixReferences {
   }
 
   question(code: string | null | undefined): ConfigRow | undefined {
-    return code ? this.questions().find((q) => q.code === code) : undefined;
+    if (!code) return undefined;
+    return (
+      this.questions().find((q) => q.code === code) ??
+      this.pendingQuestions().find((q) => q.code === code)
+    );
+  }
+
+  /** Reads the service versions again (after saving a new one). */
+  reloadServiceVersions(): void {
+    this.load('svc.service-version', this.serviceVersionRows);
+  }
+
+  /**
+   * The application forms of the services whose workflow decides with the rule set (a decision step naming it): each
+   * service's latest version, newest services first.
+   */
+  formsOf(ruleSet: string | null): Omit<FormLink, 'newQuestions'>[] {
+    if (!ruleSet) return [];
+    const workflows = new Set(
+      this.decisionSteps()
+        .filter((d) => d.ruleSet.toLowerCase() === ruleSet.toLowerCase())
+        .map((d) => d.workflow),
+    );
+    const services = [
+      ...new Set(
+        this.workflowRows()
+          .filter((w) => workflows.has(w.code) && w['serviceCode'])
+          .map((w) => String(w['serviceCode'])),
+      ),
+    ];
+    return services.flatMap((service) => {
+      const versions = this.serviceVersionRows()
+        .filter((v) => v.code.startsWith(service + '/'))
+        .sort((a, b) => versionNumber(b.code) - versionNumber(a.code));
+      const latest = versions[0];
+      const definition = latest?.['definition'] as FormLink['definition'] | undefined;
+      if (!latest || !definition?.steps) return [];
+      const row = this.serviceRows().find((r) => r.code === service);
+      return [
+        {
+          service,
+          serviceName: {
+            ar: String(row?.nameAr || service),
+            en: String(row?.nameEn || service),
+          },
+          version: versionNumber(latest.code),
+          definition,
+        },
+      ];
+    });
   }
 
   operation(code: string | null | undefined): OperationInfo | undefined {

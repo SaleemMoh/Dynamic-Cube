@@ -5,11 +5,13 @@ import {
   effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -44,6 +46,7 @@ import {
   shareIdentical,
   syncFromBank,
 } from './matrix-model';
+import { FormLink, questionPayload } from './matrix-form';
 import { MatrixReferences } from './matrix-references';
 import { MatrixSectors } from './matrix-sectors';
 import { MatrixSettings } from './matrix-settings';
@@ -176,7 +179,9 @@ import { MATRIX_TRANSLATIONS } from './matrix-translations';
             [matrix]="matrix()"
             [references]="refs"
             [editable]="canCreate()"
+            [form]="form()"
             (matrixChange)="update($event)"
+            (formChange)="form.set($event)"
           />
         </div>
       </mat-tab>
@@ -427,6 +432,7 @@ export class MatrixPage {
   private readonly api = inject(AppsControlApi);
   private readonly decisions = inject(DecisionsApi);
   private readonly dialog = inject(MatDialog);
+  private readonly snackBar = inject(MatSnackBar);
   private readonly i18n = inject(I18nService);
   protected readonly drafts = inject(DraftsService);
   private readonly privileges = inject(PrivilegesService);
@@ -448,7 +454,13 @@ export class MatrixPage {
   protected readonly base = signal<string | null>(null);
   protected readonly matrix = signal<Matrix>(emptyMatrix());
   private readonly saved = signal<string>(JSON.stringify(emptyMatrix()));
-  protected readonly dirty = computed(() => JSON.stringify(this.matrix()) !== this.saved());
+  /** The application form of the service deciding with this matrix, edited on the sector page and saved with it. */
+  protected readonly form = signal<FormLink | null>(null);
+  private readonly formSaved = signal<string>('null');
+  protected readonly formDirty = computed(() => JSON.stringify(this.form()) !== this.formSaved());
+  protected readonly dirty = computed(
+    () => JSON.stringify(this.matrix()) !== this.saved() || this.formDirty(),
+  );
   protected readonly notes = signal<string[]>([]);
   protected readonly errors = signal<string[]>([]);
   protected readonly tab = signal(0);
@@ -495,10 +507,37 @@ export class MatrixPage {
     effect(() => {
       this.jsonText.set(JSON.stringify(this.matrix(), null, 2));
     });
+    // The linked service's latest form. Once read it is kept (with what was changed and saved to a draft here) until
+    // a newer version of the service is published and nothing is changed here, or another rule set is chosen.
+    effect(() => {
+      const found = this.refs.formsOf(this.ruleSet())[0] ?? null;
+      const current = untracked(() => this.form());
+      if (current && found?.service === current.service && found.version <= current.version) return;
+      if (current && untracked(() => this.formDirty())) return;
+      const form = found ? { ...found, newQuestions: [] } : null;
+      this.form.set(form);
+      this.formSaved.set(JSON.stringify(form));
+    });
+    // Questions added on the page read like the bank's own until they are saved.
+    effect(() =>
+      this.refs.pendingQuestions.set(
+        (this.form()?.newQuestions ?? []).map((q) => ({
+          ...questionPayload(q),
+          code: q.code,
+          nameAr: q.nameAr,
+          nameEn: q.nameEn,
+          isActive: true,
+          owner: 'ENTITY' as const,
+        })),
+      ),
+    );
   }
 
   protected choose(code: string): void {
     this.ruleSet.set(code);
+    // The form of the new rule set's service is read afresh.
+    this.form.set(null);
+    this.formSaved.set('null');
     this.errors.set([]);
     const latest = this.versions()[0];
     if (latest) this.load(latest);
@@ -637,23 +676,60 @@ export class MatrixPage {
     }
   }
 
+  /**
+   * Saves the matrix as the rule set's next version and, when its application form changed here, the service's next
+   * version (with the bank questions added here) in the same click: each area's changes go into one change set — my
+   * draft, or one sent for approval at once. The service goes first: a matrix is not saved over a form that failed.
+   */
   protected async save(submit = false): Promise<void> {
     const code = this.ruleSet();
     if (!code) return;
     this.errors.set([]);
     const n = this.nextNumber();
+    const form = this.formDirty() ? this.form() : null;
     try {
-      if (!submit) await this.dropDraftCopy(`${code}/${n}`);
-      await this.drafts.addChange(
-        'dec.rule-set-version',
-        `${code}/${n}`,
-        'CREATE',
-        {
-          nameAr: `الإصدار ${n}`,
-          nameEn: `Version ${n}`,
-          configuration: syncFromBank(this.matrix(), this.refs.answersOf),
-        },
-        { submit },
+      if (form) {
+        const next = this.refs.formsOf(code).find((f) => f.service === form.service);
+        const number = Math.max(form.version, next?.version ?? 0) + 1;
+        await this.saveTogether(
+          [
+            ...form.newQuestions.map((q) => ({
+              entityType: 'svc.question',
+              entityCode: q.code,
+              payload: questionPayload(q),
+            })),
+            {
+              entityType: 'svc.service-version',
+              entityCode: `${form.service}/${number}`,
+              payload: {
+                nameAr: `الإصدار ${number}`,
+                nameEn: `Version ${number}`,
+                definition: form.definition,
+              },
+            },
+          ],
+          submit,
+        );
+        // The questions now wait in the services change set; what was saved stays on the page as it is.
+        const kept = { ...form, newQuestions: [] };
+        this.form.set(kept);
+        this.formSaved.set(JSON.stringify(kept));
+        this.refs.loadQuestions();
+        this.refs.reloadServiceVersions();
+      }
+      await this.saveTogether(
+        [
+          {
+            entityType: 'dec.rule-set-version',
+            entityCode: `${code}/${n}`,
+            payload: {
+              nameAr: `الإصدار ${n}`,
+              nameEn: `Version ${n}`,
+              configuration: syncFromBank(this.matrix(), this.refs.answersOf),
+            },
+          },
+        ],
+        submit,
       );
       this.saved.set(JSON.stringify(this.matrix()));
       this.versionRows.reload();
@@ -662,10 +738,61 @@ export class MatrixPage {
     }
   }
 
+  /**
+   * Adds new rows of one area in one change set: my draft (replacing my earlier copy of the same row), or a change set
+   * of their own sent at once (published at once where the area needs no approval).
+   */
+  private async saveTogether(
+    items: { entityType: string; entityCode: string; payload: unknown }[],
+    submit: boolean,
+  ): Promise<void> {
+    const types = await firstValueFrom(this.drafts.types());
+    const type = types.find((t) => t.entityType === items[0].entityType);
+    if (!type) throw new Error(`Unknown entity type ${items[0].entityType}`);
+    const toDraft = type.requiresApproval && !submit;
+    let id: string;
+    if (toDraft) {
+      for (const item of items) await this.dropDraftCopy(item.entityType, item.entityCode);
+      const drafts = await firstValueFrom(
+        this.api.changeSets({ status: 'DRAFT', area: type.area, mine: true }),
+      );
+      id =
+        drafts[0]?.id ??
+        (await firstValueFrom(this.api.createChangeSet(type.area, this.i18n.translate('mx.title'))))
+          .changeSet.id;
+    } else {
+      id = (
+        await firstValueFrom(this.api.createChangeSet(type.area, this.i18n.translate('mx.title')))
+      ).changeSet.id;
+    }
+    try {
+      for (const item of items)
+        await firstValueFrom(
+          this.api.addItem(id, item.entityType, item.entityCode, 'CREATE', item.payload),
+        );
+      if (!toDraft) await firstValueFrom(this.api.submit(id));
+    } catch (error) {
+      // A change set made for this save is not left behind half filled.
+      if (!toDraft) await firstValueFrom(this.api.discard(id)).catch(() => undefined);
+      throw error;
+    }
+    this.snackBar.open(
+      this.i18n.translate(
+        toDraft
+          ? 'drafts.added'
+          : submit && type.requiresApproval
+            ? 'drafts.submitted'
+            : 'drafts.saved',
+      ),
+      undefined,
+      { duration: 4000 },
+    );
+  }
+
   /** Saving again while designing replaces this version in my own draft instead of failing as a duplicate. */
-  private async dropDraftCopy(versionCode: string): Promise<void> {
+  private async dropDraftCopy(entityType: string, entityCode: string): Promise<void> {
     const type = (await firstValueFrom(this.drafts.types())).find(
-      (t) => t.entityType === 'dec.rule-set-version',
+      (t) => t.entityType === entityType,
     );
     if (!type?.requiresApproval) return;
     for (const draft of await firstValueFrom(
@@ -674,9 +801,7 @@ export class MatrixPage {
       const detail = await firstValueFrom(this.api.changeSet(draft.id));
       const item = detail.items.find(
         (i) =>
-          i.entityType === 'dec.rule-set-version' &&
-          i.entityCode === versionCode &&
-          i.operation === 'CREATE',
+          i.entityType === entityType && i.entityCode === entityCode && i.operation === 'CREATE',
       );
       if (item) await firstValueFrom(this.api.removeItem(draft.id, item.id));
     }
