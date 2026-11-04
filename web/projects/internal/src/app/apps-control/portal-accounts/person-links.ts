@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { rxResource, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -20,7 +21,7 @@ const ESTABLISHMENT_NUMBER = /^[0-9]{10}$/;
  */
 @Component({
   selector: 'dc-person-links',
-  imports: [FormsModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, MatProgressBarModule, SearchableSelectModule, TranslatePipe],
+  imports: [FormsModule, MatAutocompleteModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, MatProgressBarModule, SearchableSelectModule, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="dc-plinks" data-testid="person-links">
@@ -59,7 +60,7 @@ const ESTABLISHMENT_NUMBER = /^[0-9]{10}$/;
             >
           }
           @if (l.services.length) {
-            <span class="dc-muted mono" dir="ltr">{{ l.services.join(', ') }}</span>
+            <span class="dc-muted">{{ serviceNames(l.services) }}</span>
           }
           @if (canEdit() && l.source !== 'INTEGRATION') {
             <button
@@ -85,15 +86,23 @@ const ESTABLISHMENT_NUMBER = /^[0-9]{10}$/;
           <div class="dc-plinks__grid">
             <mat-form-field subscriptSizing="dynamic">
               <mat-label>{{ 'personLinks.number' | dcTranslate }}</mat-label>
+              <mat-icon matPrefix fontSet="material-symbols-outlined">search</mat-icon>
               <input
                 matInput
-                dir="ltr"
-                inputmode="numeric"
-                maxlength="10"
-                [ngModel]="number()"
-                (ngModelChange)="number.set($event.trim())"
+                dir="auto"
+                [ngModel]="selected() ?? query()"
+                (ngModelChange)="pick($event)"
+                [matAutocomplete]="establishments"
                 data-testid="person-links-number"
               />
+              <mat-autocomplete #establishments="matAutocomplete" [displayWith]="display">
+                @for (p of matches(); track p.id) {
+                  <mat-option [value]="p">
+                    {{ i18n.localize({ ar: p.nameAr, en: p.nameEn }) }}
+                    <span class="dc-muted mono" dir="ltr">{{ p.identifier }}</span>
+                  </mat-option>
+                }
+              </mat-autocomplete>
               <mat-hint>{{ 'personLinks.numberHint' | dcTranslate }}</mat-hint>
             </mat-form-field>
             <mat-form-field subscriptSizing="dynamic">
@@ -130,7 +139,11 @@ const ESTABLISHMENT_NUMBER = /^[0-9]{10}$/;
             </mat-form-field>
             <mat-form-field subscriptSizing="dynamic">
               <mat-label>{{ 'personLinks.services' | dcTranslate }}</mat-label>
-              <input matInput dir="ltr" [ngModel]="services()" (ngModelChange)="services.set($event)" />
+              <mat-select multiple [ngModel]="services()" (ngModelChange)="services.set($event)" data-testid="person-links-services">
+                @for (s of serviceList.value() ?? []; track s.code) {
+                  <mat-option [value]="s.code">{{ i18n.localize({ ar: s.nameAr, en: s.nameEn }) }}</mat-option>
+                }
+              </mat-select>
               <mat-hint>{{ 'personLinks.servicesHint' | dcTranslate }}</mat-hint>
             </mat-form-field>
           </div>
@@ -238,12 +251,36 @@ export class PersonLinks {
   });
 
   protected readonly adding = signal(false);
-  protected readonly number = signal('');
+  /** The establishment's number: the one picked, or 10 digits typed for one not registered yet. */
+  protected readonly number = computed(() => this.selected()?.identifier ?? this.query().trim());
   protected readonly relationship = signal('MANAGER');
   protected readonly nameAr = signal('');
   protected readonly nameEn = signal('');
   protected readonly validTo = signal('');
-  protected readonly services = signal('');
+  protected readonly services = signal<string[]>([]);
+  /** The services a link may be limited to (none chosen: all services). */
+  protected readonly serviceList = rxResource({ stream: () => this.appsControl.list('svc.service') });
+  /** What is typed in the establishment field, and the registered establishment picked from the matches. */
+  protected readonly query = signal('');
+  protected readonly selected = signal<PartySummary | null>(null);
+  /** Registered establishments matching the name or number typed. */
+  protected readonly matches = toSignal(
+    toObservable(this.query).pipe(
+      debounceTime(250),
+      distinctUntilChanged(),
+      switchMap((q) =>
+        q.trim().length >= 2
+          ? this.parties.search(q.trim(), 'ESTABLISHMENT', 0, 10).pipe(
+              map((page) => page.items),
+              catchError(() => of([] as PartySummary[])),
+            )
+          : of([] as PartySummary[]),
+      ),
+    ),
+    { initialValue: [] as PartySummary[] },
+  );
+  protected readonly display = (p: PartySummary | string | null): string =>
+    !p ? '' : typeof p === 'string' ? p : `${this.i18n.localize({ ar: p.nameAr, en: p.nameEn })} (${p.identifier})`;
   protected readonly busy = signal(false);
   protected readonly errors = signal<string[]>([]);
 
@@ -262,18 +299,39 @@ export class PersonLinks {
       ),
     ),
   );
-  protected readonly found = computed(() => this.lookup() ?? null);
+  protected readonly found = computed(() => this.selected() ?? this.lookup() ?? null);
   protected readonly looked = computed(() => this.lookup() === null);
   protected readonly canLink = computed(
     () => ESTABLISHMENT_NUMBER.test(this.number()) && !!this.relationship() && (!!this.found() || (!!this.nameAr().trim() && !!this.nameEn().trim())),
   );
 
+  /** Typing searches again; choosing a match picks that establishment. */
+  protected pick(value: PartySummary | string | null): void {
+    if (value && typeof value === 'object') {
+      this.selected.set(value);
+      return;
+    }
+    this.selected.set(null);
+    this.query.set(value ?? '');
+  }
+
+  protected serviceNames(codes: string[]): string {
+    const rows = this.serviceList.value() ?? [];
+    return codes
+      .map((c) => {
+        const row = rows.find((r) => r.code === c);
+        return row ? this.i18n.localize({ ar: row.nameAr, en: row.nameEn }) : c;
+      })
+      .join('، ');
+  }
+
   protected startAdding(): void {
-    this.number.set('');
+    this.query.set('');
+    this.selected.set(null);
     this.nameAr.set('');
     this.nameEn.set('');
     this.validTo.set('');
-    this.services.set('');
+    this.services.set([]);
     this.errors.set([]);
     this.adding.set(true);
   }
@@ -286,9 +344,7 @@ export class PersonLinks {
         establishmentNameAr: this.found() ? null : this.nameAr().trim(),
         establishmentNameEn: this.found() ? null : this.nameEn().trim(),
         relationshipCode: this.relationship(),
-        services: this.services()
-          .split(/[\s,]+/)
-          .filter(Boolean),
+        services: this.services(),
         validFrom: null,
         validTo: this.validTo() || null,
         personNameAr: name,

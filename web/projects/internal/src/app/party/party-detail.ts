@@ -410,6 +410,10 @@ export class PartyDetail {
   protected async addDelegate(): Promise<void> {
     const types = await firstValueFrom(this.appsControl.classDomains('PARTY_RELATIONSHIP_TYPE'));
     const options: FormOption[] = types.map((t) => ({ value: t.code, label: { ar: t.nameAr, en: t.nameEn } }));
+    const services: FormOption[] = (await firstValueFrom(this.appsControl.list('svc.service'))).map((r) => ({
+      value: r.code,
+      label: { ar: r.nameAr || r.code, en: r.nameEn || r.code },
+    }));
     this.openForm({
       title: this.i18n.translate('party.addRelationship'),
       submitLabel: this.i18n.translate('config.save'),
@@ -423,7 +427,7 @@ export class PartyDetail {
             fields: [
               { code: 'individualIdentifier', type: 'text', label: this.text('party.individualId'), required: true, hint: this.text('party.individualIdHint') },
               { code: 'relationshipCode', type: 'select', label: this.text('party.relationship'), required: true, options },
-              { code: 'services', type: 'textarea', label: this.text('party.services'), hint: this.text('party.servicesHint') },
+              { code: 'services', type: 'select', multiple: true, label: this.text('party.services'), hint: this.text('party.servicesHint'), options: services },
               { code: 'validFrom', type: 'date', label: this.text('party.validFrom') },
               { code: 'validTo', type: 'date', label: this.text('party.validTo') },
             ],
@@ -435,7 +439,7 @@ export class PartyDetail {
           this.api.addRelationship(this.id(), {
             individualIdentifier: String(v['individualIdentifier'] ?? '').trim(),
             relationshipCode: String(v['relationshipCode']),
-            services: String(v['services'] ?? '').split(/[\s,]+/).filter(Boolean),
+            services: Array.isArray(v['services']) ? (v['services'] as string[]) : [],
             validFrom: dateOnly(v['validFrom']),
             validTo: dateOnly(v['validTo']),
           }),
