@@ -173,18 +173,6 @@ import { MATRIX_TRANSLATIONS } from './matrix-translations';
       [selectedIndex]="tab()"
       (selectedIndexChange)="tab.set($event)"
     >
-      <mat-tab [label]="'mx.tab.sectors' | dcTranslate">
-        <div class="mx-page__tab">
-          <dc-matrix-sectors
-            [matrix]="matrix()"
-            [references]="refs"
-            [editable]="canCreate()"
-            [form]="form()"
-            (matrixChange)="update($event)"
-            (formChange)="form.set($event)"
-          />
-        </div>
-      </mat-tab>
       <mat-tab [label]="'mx.tab.grid' | dcTranslate">
         <div class="mx-page__tab">
           <div class="mx-page__rows-input">
@@ -211,6 +199,18 @@ import { MATRIX_TRANSLATIONS } from './matrix-translations';
             [references]="refs"
             [editable]="canCreate()"
             (matrixChange)="update($event)"
+          />
+        </div>
+      </mat-tab>
+      <mat-tab [label]="'mx.tab.sectors' | dcTranslate">
+        <div class="mx-page__tab">
+          <dc-matrix-sectors
+            [matrix]="matrix()"
+            [references]="refs"
+            [editable]="canCreate()"
+            [form]="form()"
+            (matrixChange)="update($event)"
+            (formChange)="form.set($event)"
           />
         </div>
       </mat-tab>
