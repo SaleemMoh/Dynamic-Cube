@@ -18147,11 +18147,6 @@
           "labelEn": "Average years of experience of engineers"
          },
          {
-          "output": "score_pct",
-          "labelAr": "النتيجة الفنية الإجمالية من هيئة الحكومة الرقمية (%)",
-          "labelEn": "Overall technical result from the Digital Government Authority (%)"
-         },
-         {
           "output": "saudi_engineers",
           "labelAr": "عدد المهندسين السعوديين",
           "labelEn": "Number of Saudi engineers"
@@ -18170,6 +18165,11 @@
           "output": "saudi_women",
           "labelAr": "عدد السعوديات",
           "labelEn": "Number of Saudi women"
+         },
+         {
+          "output": "technicians",
+          "labelAr": "عدد الفنيين",
+          "labelEn": "Number of technicians"
          }
         ]
        }
@@ -18417,7 +18417,7 @@
          "questions": [
           {
            "code": "MX_COMMERCIAL_LICENSE_PROVIDED",
-           "required": true
+           "required": false
           },
           {
            "code": "MX_COMMERCIAL_LICENSE_NUMBER",
@@ -18425,7 +18425,7 @@
           },
           {
            "code": "MX_IS_BRANCH",
-           "required": true
+           "required": false
           },
           {
            "code": "MX_PARENT_LICENSE_NUMBER",
@@ -18433,7 +18433,7 @@
           },
           {
            "code": "MX_HOUSING_LICENSE_PROVIDED",
-           "required": true
+           "required": false
           },
           {
            "code": "MX_HOUSING_LICENSE_NUMBER",
@@ -18441,7 +18441,7 @@
           },
           {
            "code": "MX_HAS_HOUSING_LEASE",
-           "required": true
+           "required": false
           }
          ]
         }
@@ -18921,7 +18921,7 @@
          "questions": [
           {
            "code": "MX_CREDIT_CONSENT_INQUIRY",
-           "required": true
+           "required": false
           }
          ]
         }
@@ -18941,7 +18941,7 @@
          "questions": [
           {
            "code": "MX_WITHDRAWN_PROJECTS_DECLARED",
-           "required": true
+           "required": false
           },
           {
            "code": "MX_WITHDRAWN_PROJECTS_LIST",
@@ -18957,23 +18957,23 @@
           },
           {
            "code": "MX_DECLARATION_DATA_ACCURACY",
-           "required": true
+           "required": false
           },
           {
            "code": "MX_DECLARATION_CONSENT_DISCLOSURE",
-           "required": true
+           "required": false
           },
           {
            "code": "MX_DECLARATION_INFO_EXCHANGE",
-           "required": true
+           "required": false
           },
           {
            "code": "MX_DECLARATION_ACCURACY_UNDERTAKING",
-           "required": true
+           "required": false
           },
           {
            "code": "MX_DECLARATION_ACCEPTANCE",
-           "required": true
+           "required": false
           }
          ]
         }

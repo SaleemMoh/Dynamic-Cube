@@ -347,15 +347,41 @@ export class TaskInputsCard {
       ...Object.keys(decision.before ?? {}),
       ...Object.keys(decision.after ?? {}),
     ]);
-    return [...keys]
+    const top = [...keys]
       .filter((key) => !HIDDEN.has(key))
+      // Lists and objects would only show as a count; the result's items are listed one by one below.
+      .filter((key) => !isNested(decision.before?.[key]) && !isNested(decision.after?.[key]))
       .map((key) => ({
         key,
         before: shown(decision.before?.[key]),
         after: shown(decision.after?.[key]),
-      }))
+      }));
+    return [...top, ...this.itemLines(decision)]
       .filter((line) => line.before !== '' || line.after !== '')
       .map((line) => ({ ...line, changed: line.before !== line.after }));
+  }
+
+  /**
+   * One line per value of each element of the result's items (e.g. a scoring matrix's sectors with their final,
+   * expected and track grades), named after the element.
+   */
+  private itemLines(decision: RecalculatedDecision): Omit<ResultLine, 'changed'>[] {
+    const before = asItems(decision.before?.['items']);
+    const after = asItems(decision.after?.['items']);
+    const lines: Omit<ResultLine, 'changed'>[] = [];
+    const count = Math.max(before.length, after.length);
+    for (let i = 0; i < count; i++) {
+      const element = after[i] ?? before[i];
+      const name = itemName(element, this.i18n.language());
+      const fields = new Set([...Object.keys(before[i] ?? {}), ...Object.keys(after[i] ?? {})]);
+      for (const field of [...fields].filter((f) => !ITEM_NAMES.has(f))) {
+        const was = before[i]?.[field];
+        const now = after[i]?.[field];
+        if (isNested(was) || isNested(now)) continue;
+        lines.push({ key: `${name} · ${field}`, before: shown(was), after: shown(now) });
+      }
+    }
+    return lines;
   }
 
   /** Works the decisions out again after a pause in typing; a late answer to an older question is dropped. */
@@ -372,6 +398,39 @@ export class TaskInputsCard {
       }
     }, delay);
   }
+}
+
+/** The fields that name an element of a result's items (shown in the line's name, not as lines). */
+const ITEM_NAMES = new Set([
+  'code',
+  'nameAr',
+  'nameEn',
+  'name',
+  'sector',
+  'sectorNameAr',
+  'sectorNameEn',
+]);
+
+function isNested(value: unknown): boolean {
+  return value !== null && typeof value === 'object';
+}
+
+function asItems(value: unknown): Record<string, unknown>[] {
+  return Array.isArray(value)
+    ? value.filter((v): v is Record<string, unknown> => isNested(v) && !Array.isArray(v))
+    : [];
+}
+
+function itemName(element: Record<string, unknown> | undefined, language: string): string {
+  const pick = (...keys: string[]) =>
+    keys.map((k) => element?.[k]).find((v) => typeof v === 'string' && v);
+  return String(
+    (language === 'ar'
+      ? pick('nameAr', 'sectorNameAr', 'name')
+      : pick('nameEn', 'sectorNameEn', 'name')) ??
+      pick('code', 'sector') ??
+      '?',
+  );
 }
 
 /** A result value as text; lists and objects are summarised, not shown. */

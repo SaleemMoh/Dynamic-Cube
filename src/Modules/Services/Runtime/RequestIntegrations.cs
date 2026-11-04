@@ -83,7 +83,8 @@ internal sealed class RequestIntegrations(IServiceProvider services, TimeProvide
             }
         }
 
-        var values = step.Display.ToDictionary(d => d.Output, d => Output(result, d.Output), StringComparer.Ordinal);
+        // An output listed twice for display is shown once.
+        var values = step.Display.Select(d => d.Output).Distinct(StringComparer.Ordinal).ToDictionary(o => o, o => Output(result, o), StringComparer.Ordinal);
         return new IntegrationStepRun(true, result.Code, result.MessageAr, result.MessageEn, clock.GetUtcNow(), values);
     }
 

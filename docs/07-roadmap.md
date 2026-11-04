@@ -584,7 +584,7 @@ agency, checked with the provider), **automation rules** on open tasks (assign t
 once or repeating; test and log), a **calculator page** on the portal (public rule sets, prefilled from the firm's data)
 and **integration evidence** on the request page. NHC demo packages 28–36.
 
-Later: the configurable classification engine (review §6, CE-1/CE-2), automation actions beyond tasks (abandoned
+Later: automation actions beyond tasks (abandoned
 drafts, applicant reminders), testing an unsaved automation rule from its editor.
 
 ## Logic Builder (ADR-0049) ✅
@@ -598,6 +598,24 @@ Table cells (rule set steps and results, rows column rules) show the rule as a s
 
 Later: fields over registered tables and columns where rules read table rows, date functions, named reusable
 conditions.
+
+## Scoring matrix (ADR-0050) ✅
+
+The configurable classification engine of the NHCI review (§6, CE-1 to CE-4). A new decision engine, `MATRIX`: rows
+(sectors) by columns (tracks), each cell scored by points (criteria with bands per size, answers or direct values, groups
+with a minimum, a scale to the grade), the worst grade, a formula, the same as another cell, or a **shared
+calculation**; with grades, sizes, scales, gates, adjustments and the projects that count. The reviewed system's guide
+export is imported (the April 2026 guide and version 372 grade exactly as the reviewed system did). Inputs say where
+each value comes from (a bank question, a task field, an operation's output, the firm, a formula, project totals) and
+the matrix **reads a request itself** in a workflow decision step, grading only the sectors applied for. The **question
+bank weighs answers** (points or a grade) and the matrix follows it; a calculation common to all sectors (governance) is
+**shared** and can be made different for one sector later; cells are **copied or linked** from one sector to another.
+Designer with the grid, the cell editor, a simulator and a *Connections* tab that checks every link. NHC demo package
+37: *Contractor classification (scoring matrix)* with data from Qawaem, the sector authority, the register and Ifaa,
+the live grade on the portal, the credit rating entered in the financial review and the general manager's approval.
+
+Later: version compare and where-used for matrices, the grade ladder on the request page, the reviewed system's three
+review lanes in one workflow, project rules over the firm's record lists in the designer.
 
 ## AI-assisted setup (decided, not started)
 

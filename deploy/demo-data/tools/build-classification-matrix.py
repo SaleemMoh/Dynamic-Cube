@@ -331,7 +331,8 @@ def main(import_path, out_path):
                       'textEn': f"We fetch the data from {spec['nameEn']}; it goes straight into the grade.",
                       'integration': {'operation': spec['code'], 'inputs': inputs_map, 'required': False, 'showResult': True,
                                       'outputs': [{'output': o, 'question': q} for o, q, _ in outs],
-                                      'display': [{'output': o, 'labelAr': i['nameAr'], 'labelEn': i['nameEn']} for o, _, i in outs[:8]]}})
+                                      'display': [{'output': o, 'labelAr': i['nameAr'], 'labelEn': i['nameEn']}
+                                                  for n, (o, _, i) in enumerate(outs) if o not in [x[0] for x in outs[:n]]][:8]}})
     # The fetched values are shown read-only (a step's outputs must be questions the version asks).
     steps.append({'code': 'SOURCES_DATA', 'type': 'FORM', 'titleAr': 'البيانات من الجهات', 'titleEn': 'Data from the sources', 'sections': [
         {'code': spec['step'][0], 'titleAr': spec['nameAr'], 'titleEn': spec['nameEn'], 'columns': 2,
@@ -339,7 +340,8 @@ def main(import_path, out_path):
         for guide_op, spec in OPERATIONS.items() if filled.get(guide_op)]})
     by_section = {}
     for code, entry in sorted(placed.items(), key=lambda kv: kv[1]['order']):
-        use = {'code': question_names[code], 'required': entry['required']}
+        # A yes/no question is a checkbox: unticked is "no", so it is never required (required would force "yes").
+        use = {'code': question_names[code], 'required': entry['required'] and inputs[code]['type'] != 'boolean'}
         conditions = []
         if entry['sectors'] != all_sectors:
             conditions.append({'or': [{'in': [s, {'var': 'CLS_DOMAINS'}]} for s in sorted(entry['sectors'])]})
