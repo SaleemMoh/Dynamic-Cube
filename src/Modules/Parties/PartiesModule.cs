@@ -4,7 +4,7 @@ using DynamicCube.Modules.Parties.Persistence;
 using DynamicCube.Modules.Parties.Services;
 using DynamicCube.Platform;
 using DynamicCube.Platform.ChangeSets;
-using DynamicCube.Platform.Lookups;
+using DynamicCube.Platform.DataDictionary;
 using DynamicCube.Platform.Parties;
 using DynamicCube.Platform.Security;
 using Microsoft.AspNetCore.Builder;

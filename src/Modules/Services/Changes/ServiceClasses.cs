@@ -1,6 +1,6 @@
 using DynamicCube.Modules.Services.Persistence;
 using DynamicCube.Platform.Configuration;
-using DynamicCube.Platform.Lookups;
+using DynamicCube.Platform.DataDictionary;
 using Microsoft.EntityFrameworkCore;
 
 namespace DynamicCube.Modules.Services.Changes;
@@ -15,9 +15,9 @@ public static class ServiceClasses
     [
         new(Category, "تصنيفات الخدمات", "Service categories",
         [
-            new("ICON", "الأيقونة", "Icon", LookupAttributeTypes.Text),
-            new("DESCRIPTION_AR", "الوصف بالعربية", "Arabic description", LookupAttributeTypes.Text),
-            new("DESCRIPTION_EN", "الوصف بالإنجليزية", "English description", LookupAttributeTypes.Text),
+            new("ICON", "الأيقونة", "Icon", DictionaryAttributeTypes.Text),
+            new("DESCRIPTION_AR", "الوصف بالعربية", "Arabic description", DictionaryAttributeTypes.Text),
+            new("DESCRIPTION_EN", "الوصف بالإنجليزية", "English description", DictionaryAttributeTypes.Text),
         ],
         [],
         "تجمع الخدمات في دليل البوابة (تبويبات الصفحة الرئيسية وتصفية البحث).",

@@ -34,7 +34,7 @@ public static class AppsControlAreas
     public const string Organization = "apps.organization";
     public const string Security = "apps.security";
     public const string Menus = "apps.menus";
-    public const string Lookups = "apps.lookups";
+    public const string DataDictionary = "apps.lookups";
     public const string Lovs = "apps.lovs";
     public const string Settings = "apps.settings";
     public const string UiTexts = "apps.ui-texts";

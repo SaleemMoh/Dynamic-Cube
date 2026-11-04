@@ -3,7 +3,7 @@ using DynamicCube.Modules.AppsControl.Persistence;
 using DynamicCube.Platform.PublicApi;
 using Microsoft.EntityFrameworkCore;
 
-namespace DynamicCube.Modules.AppsControl.Lookups;
+namespace DynamicCube.Modules.AppsControl.DataDictionary;
 
 /// <summary>
 /// The values of a class (ADR-0042): active and in effect today, serving the call's company and allowed by the caller's data

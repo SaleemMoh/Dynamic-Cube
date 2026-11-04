@@ -51,7 +51,7 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
 
     public DbSet<Menu> Menus => Set<Menu>();
 
-    public DbSet<LookupClass> Classes => Set<LookupClass>();
+    public DbSet<DictionaryClass> Classes => Set<DictionaryClass>();
 
     public DbSet<AttributeDefinition> AttributeDefinitions => Set<AttributeDefinition>();
 
@@ -247,7 +247,7 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
             b.HasOne(e => e.Resource).WithMany().HasForeignKey(e => e.ResourceId).OnDelete(DeleteBehavior.Restrict);
         });
 
-        Config<LookupClass>(modelBuilder, "class", b =>
+        Config<DictionaryClass>(modelBuilder, "class", b =>
         {
             b.HasOne(e => e.ParentClass).WithMany().HasForeignKey(e => e.ParentClassId).OnDelete(DeleteBehavior.Restrict);
             b.HasMany(e => e.Attributes).WithOne().HasForeignKey(a => a.ClassId).OnDelete(DeleteBehavior.Cascade);

@@ -24,8 +24,8 @@ public enum AttributeGroup
     Parameter,
 }
 
-/// <summary>Lookup type, e.g. <c>SECTOR</c>, <c>REGION</c>, <c>REQUEST_STATUS</c>.</summary>
-public sealed class LookupClass : ConfigEntity
+/// <summary>Data dictionary class (a type of value), e.g. <c>SECTOR</c>, <c>REGION</c>, <c>REQUEST_STATUS</c>.</summary>
+public sealed class DictionaryClass : ConfigEntity
 {
     public string? DescriptionAr { get; set; }
 
@@ -34,7 +34,7 @@ public sealed class LookupClass : ConfigEntity
     /// <summary>Class whose values are the parents of this class's values (e.g. CITY → REGION).</summary>
     public Guid? ParentClassId { get; set; }
 
-    public LookupClass? ParentClass { get; set; }
+    public DictionaryClass? ParentClass { get; set; }
 
     public bool IsHierarchical { get; set; }
 
@@ -97,12 +97,12 @@ public sealed class AttributeDefinition : IAuditable
     public bool IsReportable { get; set; } = true;
 }
 
-/// <summary>Lookup value of a class.</summary>
+/// <summary>Data dictionary value of a class.</summary>
 public sealed class DomainValue : ConfigEntity
 {
     public Guid ClassId { get; set; }
 
-    public LookupClass? Class { get; set; }
+    public DictionaryClass? Class { get; set; }
 
     public Guid? ParentDomainId { get; set; }
 

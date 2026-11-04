@@ -5,7 +5,7 @@ using DynamicCube.Modules.Services.Runtime;
 using DynamicCube.Platform;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Communication;
-using DynamicCube.Platform.Lookups;
+using DynamicCube.Platform.DataDictionary;
 using DynamicCube.Platform.PublicApi;
 using DynamicCube.Platform.Security;
 using DynamicCube.Platform.Services;

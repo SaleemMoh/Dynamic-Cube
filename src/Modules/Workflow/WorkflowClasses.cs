@@ -1,5 +1,5 @@
 using System.Text.Json.Nodes;
-using DynamicCube.Platform.Lookups;
+using DynamicCube.Platform.DataDictionary;
 
 namespace DynamicCube.Modules.Workflow;
 
@@ -17,9 +17,9 @@ internal static class WorkflowClasses
     public const string EndOutcome = "WF_END_OUTCOME";
     public const string UnitSource = "WF_UNIT_SOURCE";
 
-    private static readonly CatalogClassField Icon = new("ICON", "الأيقونة", "Icon", LookupAttributeTypes.Text);
-    private static readonly CatalogClassField HintAr = new("HINT_AR", "الوصف بالعربية", "Arabic hint", LookupAttributeTypes.Text);
-    private static readonly CatalogClassField HintEn = new("HINT_EN", "الوصف بالإنجليزية", "English hint", LookupAttributeTypes.Text);
+    private static readonly CatalogClassField Icon = new("ICON", "الأيقونة", "Icon", DictionaryAttributeTypes.Text);
+    private static readonly CatalogClassField HintAr = new("HINT_AR", "الوصف بالعربية", "Arabic hint", DictionaryAttributeTypes.Text);
+    private static readonly CatalogClassField HintEn = new("HINT_EN", "الوصف بالإنجليزية", "English hint", DictionaryAttributeTypes.Text);
 
     private static CatalogValue Step(string code, string ar, string en, string icon, string hintAr, string hintEn) =>
         new(code, ar, en, new JsonObject { ["ICON"] = icon, ["HINT_AR"] = hintAr, ["HINT_EN"] = hintEn });

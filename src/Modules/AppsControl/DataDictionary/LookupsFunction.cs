@@ -5,7 +5,7 @@ using DynamicCube.Modules.AppsControl.Persistence;
 using DynamicCube.Platform.PublicApi;
 using Microsoft.EntityFrameworkCore;
 
-namespace DynamicCube.Modules.AppsControl.Lookups;
+namespace DynamicCube.Modules.AppsControl.DataDictionary;
 
 /// <summary>
 /// Several classes and lists of values in one call (ADR-0042): each class's values in effect today that serve the call's

@@ -5,7 +5,7 @@ using DynamicCube.Modules.AppsControl.Persistence;
 using DynamicCube.Platform.ChangeSets;
 using Microsoft.EntityFrameworkCore;
 
-namespace DynamicCube.Modules.AppsControl.Lookups;
+namespace DynamicCube.Modules.AppsControl.DataDictionary;
 
 /// <summary>
 /// Maintains <c>apps.v_class_&lt;code&gt;</c>: one typed view per class with the fixed domain columns plus every reportable
@@ -47,7 +47,7 @@ internal sealed class ClassViewGenerator : IChangeSetPublishHook<AppsControlDbCo
         }
     }
 
-    internal static string BuildSql(LookupClass cls)
+    internal static string BuildSql(DictionaryClass cls)
     {
         var sql = new StringBuilder();
         sql.Append("CREATE VIEW apps.").Append(Quote(ViewName(cls.Code))).Append(" AS SELECT d.id, d.code, c.code AS class_code, d.name_ar, d.name_en, ")

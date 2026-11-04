@@ -25,7 +25,7 @@ public sealed class ReportQueryTests(AppsControlFixture fixture) : IAsyncLifetim
 
         _sector = Harness.Unique("SECTOR");
         await _harness.PublishAsync(
-            AppsControlAreas.Lookups,
+            AppsControlAreas.DataDictionary,
             new Change(AppsControlChangeTypes.Class, _sector, ChangeOperation.Create, new
             {
                 nameAr = "قطاعات",
@@ -33,11 +33,11 @@ public sealed class ReportQueryTests(AppsControlFixture fixture) : IAsyncLifetim
                 isHierarchical = true,
                 attributes = new[] { new { code = "STAFF", nameAr = "الموظفون", nameEn = "Staff", dataType = "NUMBER" } },
             }),
-            LookupTests.DomainChange(_sector, "ICT", "تقنية المعلومات", "ICT", new { STAFF = 100 }),
-            LookupTests.DomainChange(_sector, "BUILD", "البناء", "Building", new { STAFF = 50 }),
-            LookupTests.DomainChange(_sector, "SOFTWARE", "برمجيات", "Software", new { STAFF = 40 }, parent: "ICT"),
-            LookupTests.DomainChange(_sector, "NETWORKS", "شبكات", "Networks", new { STAFF = 20 }, parent: "ICT"),
-            LookupTests.DomainChange(_sector, "ROADS", "طرق", "Roads", new { STAFF = 30 }, parent: "BUILD"));
+            DataDictionaryTests.DomainChange(_sector, "ICT", "تقنية المعلومات", "ICT", new { STAFF = 100 }),
+            DataDictionaryTests.DomainChange(_sector, "BUILD", "البناء", "Building", new { STAFF = 50 }),
+            DataDictionaryTests.DomainChange(_sector, "SOFTWARE", "برمجيات", "Software", new { STAFF = 40 }, parent: "ICT"),
+            DataDictionaryTests.DomainChange(_sector, "NETWORKS", "شبكات", "Networks", new { STAFF = 20 }, parent: "ICT"),
+            DataDictionaryTests.DomainChange(_sector, "ROADS", "طرق", "Roads", new { STAFF = 30 }, parent: "BUILD"));
     }
 
     public ValueTask DisposeAsync() => _harness.DisposeAsync();

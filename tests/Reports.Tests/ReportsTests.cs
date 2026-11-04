@@ -31,7 +31,7 @@ public sealed class ReportsTests(DatabaseFixture fixture) : IAsyncLifetime
         Change Value(string code, string ar, string en, int staff, string? parent = null) =>
             new(AppsControlChangeTypes.Domain, $"{_sector}/{code}", ChangeOperation.Create, new { nameAr = ar, nameEn = en, attributes = new { STAFF = staff }, parentCode = parent });
         await _host.PublishAsync(
-            AppsControlAreas.Lookups,
+            AppsControlAreas.DataDictionary,
             new Change(AppsControlChangeTypes.Class, _sector, ChangeOperation.Create, new
             {
                 nameAr = "قطاعات",

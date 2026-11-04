@@ -2,7 +2,7 @@ using System.Text.Json.Nodes;
 using DynamicCube.Modules.Parties.Changes;
 using DynamicCube.Modules.Parties.Domain;
 using DynamicCube.Modules.Parties.Persistence;
-using DynamicCube.Platform.Lookups;
+using DynamicCube.Platform.DataDictionary;
 using DynamicCube.Platform.Parties;
 using DynamicCube.Platform.Security;
 using DynamicCube.Platform.Services;
@@ -84,7 +84,7 @@ public sealed record AddSanctionRequest(string TypeCode, string Reason, DateOnly
 public sealed record LiftSanctionRequest(string Reason);
 
 /// <summary>Employee-side registry operations: search, detail, manual registration and records.</summary>
-internal sealed class PartyAdminService(PartiesDbContext context, PartyDirectory directory, ProfileService profiles, ICurrentUser user, IServiceProvider services, ILookupDirectory lookups, TimeProvider clock)
+internal sealed class PartyAdminService(PartiesDbContext context, PartyDirectory directory, ProfileService profiles, ICurrentUser user, IServiceProvider services, IDataDictionaryReader lookups, TimeProvider clock)
 {
     /// <param name="app">Only parties with a request for a service of this business app.</param>
     public async Task<(IReadOnlyList<PartySummary> Items, int Total)> SearchAsync(string? search, PartyKind? kind, int skip, int take, CancellationToken cancellationToken, string? app = null)
@@ -481,21 +481,21 @@ internal sealed class PartyAdminService(PartiesDbContext context, PartyDirectory
     internal static PartySummary Summary(Party p) =>
         new(p.Id, p.Kind, p.NameAr, p.NameEn, p.Status, p.PrimaryIdentifier.Type, p.PrimaryIdentifier.Value, p.Source);
 
-    private static RelationshipInfo Relationship(Relationship r, IReadOnlyDictionary<string, LookupValue> types) =>
+    private static RelationshipInfo Relationship(Relationship r, IReadOnlyDictionary<string, DictionaryValue> types) =>
         new(r.Id, r.IndividualId, r.Individual!.NameAr, r.Individual.PrimaryIdentifier.Value, r.PrincipalId, r.Principal!.NameAr, r.Principal.PrimaryIdentifier.Value,
             r.RelationshipCode, NameAr(types, r.RelationshipCode), NameEn(types, r.RelationshipCode), types.TryGetValue(r.RelationshipCode, out var type) && type.Flag(PartyClasses.CanAct),
             r.Services, r.ValidFrom, r.ValidTo, r.Source, r.SourceReference, r.EndedAt);
 
     /// <summary>The values of a type class by code, inactive ones included (records keep the types they were given).</summary>
-    private async Task<IReadOnlyDictionary<string, LookupValue>> TypesAsync(string classCode, CancellationToken cancellationToken) =>
+    private async Task<IReadOnlyDictionary<string, DictionaryValue>> TypesAsync(string classCode, CancellationToken cancellationToken) =>
         (await lookups.ValuesAsync(classCode, cancellationToken, includeInactive: true)).ToDictionary(t => t.Code, StringComparer.Ordinal);
 
-    private async Task<LookupValue?> ActiveTypeAsync(string classCode, string? code, CancellationToken cancellationToken) =>
+    private async Task<DictionaryValue?> ActiveTypeAsync(string classCode, string? code, CancellationToken cancellationToken) =>
         string.IsNullOrWhiteSpace(code) ? null : await lookups.FindAsync(classCode, code.Trim(), cancellationToken) is { IsActive: true } type ? type : null;
 
-    private static int Order(IReadOnlyDictionary<string, LookupValue> types, string code) => types.TryGetValue(code, out var type) ? type.DisplayOrder : int.MaxValue;
+    private static int Order(IReadOnlyDictionary<string, DictionaryValue> types, string code) => types.TryGetValue(code, out var type) ? type.DisplayOrder : int.MaxValue;
 
-    private static string NameAr(IReadOnlyDictionary<string, LookupValue> types, string code) => types.TryGetValue(code, out var type) ? type.NameAr : code;
+    private static string NameAr(IReadOnlyDictionary<string, DictionaryValue> types, string code) => types.TryGetValue(code, out var type) ? type.NameAr : code;
 
-    private static string NameEn(IReadOnlyDictionary<string, LookupValue> types, string code) => types.TryGetValue(code, out var type) ? type.NameEn : code;
+    private static string NameEn(IReadOnlyDictionary<string, DictionaryValue> types, string code) => types.TryGetValue(code, out var type) ? type.NameEn : code;
 }

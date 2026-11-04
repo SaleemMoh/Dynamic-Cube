@@ -87,7 +87,7 @@ public sealed class AccessTests(AppsControlFixture fixture) : IAsyncLifetime
     public async Task Maker_cannot_approve_own_change_set()
     {
         var code = Harness.Unique("TEXT");
-        var id = await _harness.DraftAsync(AppsControlAreas.Lookups, LookupTests.ClassChange(code, []));
+        var id = await _harness.DraftAsync(AppsControlAreas.DataDictionary, DataDictionaryTests.ClassChange(code, []));
         await _harness.AsAsync("maker", sp => sp.GetRequiredService<ChangeSetService<AppsControlDbContext>>().SubmitAsync(id, CancellationToken.None));
 
         await Should.ThrowAsync<ChangeSetException>(() => _harness.AsAsync("maker", sp =>

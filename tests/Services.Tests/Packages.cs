@@ -44,7 +44,7 @@ internal static class Packages
         var categories = items.Where(i => i.EntityType == ServiceChangeTypes.Category).ToList();
         if (categories.Count > 0)
         {
-            await host.PublishAsync(AppsControlAreas.Lookups, [.. categories]);
+            await host.PublishAsync(AppsControlAreas.DataDictionary, [.. categories]);
         }
 
         await host.PublishAsync(ServiceChangeTypes.Area, [.. items.Except(categories)]);

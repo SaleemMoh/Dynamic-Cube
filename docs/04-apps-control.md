@@ -278,7 +278,7 @@ types are classes, edited on their module's screens or here. See [ADR-0032](adr/
 | `is_hierarchical` | Values may have a parent value within the same class |
 | `allow_multi_assign` | |
 | `values_per_company` | Values may be limited to companies (legacy *Company Lookups*); it cannot be turned off while values are limited |
-| `settings` | jsonb list of named values of the class itself (`code`, names, `value`) — the legacy class flex values; modules read them through `ILookupDirectory.SettingsAsync` |
+| `settings` | jsonb list of named values of the class itself (`code`, names, `value`) — the legacy class flex values; modules read them through `IDataDictionaryReader.SettingsAsync` |
 
 A legacy *virtual* class (values from an LOV) is
 a field of type `LOV_REF` here: the field takes its options from the list of values directly.
@@ -307,7 +307,7 @@ Domain Value / Date / Number Parameters).
 | `display_order`, `is_default` | One default per class, or per company when values are per company |
 | `attributes` | jsonb, validated against `class_attribute` |
 | `effective_from`, `effective_to`, `is_active` | |
-| `companies` | text[]: the companies the value serves when the class has values per company, or `["*"]` for all of them (required for such classes; empty for other classes). Modules read it as `LookupValue.Companies` / `Serves(company)`; it is a column of the generated view |
+| `companies` | text[]: the companies the value serves when the class has values per company, or `["*"]` for all of them (required for such classes; empty for other classes). Modules read it as `DictionaryValue.Companies` / `Serves(company)`; it is a column of the generated view |
 
 Indexes: unique (`class_id`, `code`); GIN on `attributes`.
 

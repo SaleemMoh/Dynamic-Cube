@@ -1,7 +1,7 @@
 using System.Text.Json.Nodes;
 using DynamicCube.Modules.Parties.Persistence;
 using DynamicCube.Platform.Configuration;
-using DynamicCube.Platform.Lookups;
+using DynamicCube.Platform.DataDictionary;
 using DynamicCube.Platform.Parties;
 using Microsoft.EntityFrameworkCore;
 
@@ -30,8 +30,8 @@ public static class PartyClasses
     [
         new(RelationshipType, "أنواع العلاقات", "Relationship types",
         [
-            new(CanAct, "يمنح صفة التمثيل", "Gives an acting context", LookupAttributeTypes.Bool),
-            new(ExternalCodes, "رموز المزودين", "Provider codes", LookupAttributeTypes.Json),
+            new(CanAct, "يمنح صفة التمثيل", "Gives an acting context", DictionaryAttributeTypes.Bool),
+            new(ExternalCodes, "رموز المزودين", "Provider codes", DictionaryAttributeTypes.Json),
         ],
         [
             // MCI relation codes from the MCI integration guide lookups.
@@ -46,18 +46,18 @@ public static class PartyClasses
         "How an individual relates to a party (owner, partner, manager, delegate…); those that give an acting context let them apply for it."),
         new(CredentialType, "أنواع الوثائق", "Credential types",
         [
-            new(PartyKind, "نوع المتعامل", "Party kind", LookupAttributeTypes.Text),
-            new("ISSUER_AR", "الجهة المصدرة بالعربية", "Issuer (Arabic)", LookupAttributeTypes.Text),
-            new("ISSUER_EN", "الجهة المصدرة بالإنجليزية", "Issuer (English)", LookupAttributeTypes.Text),
-            new(HasExpiry, "لها تاريخ انتهاء", "Has an expiry date", LookupAttributeTypes.Bool),
+            new(PartyKind, "نوع المتعامل", "Party kind", DictionaryAttributeTypes.Text),
+            new("ISSUER_AR", "الجهة المصدرة بالعربية", "Issuer (Arabic)", DictionaryAttributeTypes.Text),
+            new("ISSUER_EN", "الجهة المصدرة بالإنجليزية", "Issuer (English)", DictionaryAttributeTypes.Text),
+            new(HasExpiry, "لها تاريخ انتهاء", "Has an expiry date", DictionaryAttributeTypes.Bool),
         ],
         [],
         "وثائق تصدرها جهات أخرى وتُسجل للمتعامل (شهادات، تراخيص).",
         "Records issued by other authorities and kept for a party (certificates, licenses)."),
         new(SanctionType, "أنواع الجزاءات", "Sanction types",
         [
-            new(BlocksApplications, "يمنع التقديم", "Blocks applications", LookupAttributeTypes.Bool),
-            new(DefaultDays, "المدة الافتراضية (أيام)", "Default duration (days)", LookupAttributeTypes.Number),
+            new(BlocksApplications, "يمنع التقديم", "Blocks applications", DictionaryAttributeTypes.Bool),
+            new(DefaultDays, "المدة الافتراضية (أيام)", "Default duration (days)", DictionaryAttributeTypes.Number),
         ],
         [new("APPLICATION_BAN", "منع من التقديم", "Ban from applying", new JsonObject { [BlocksApplications] = true, [DefaultDays] = 180 })],
         "جزاءات تُسجل على المتعامل وتتحقق منها قواعد الأهلية.",
@@ -65,7 +65,7 @@ public static class PartyClasses
     ];
 
     /// <summary>The provider codes of a relationship type (<c>[{provider, code}]</c>).</summary>
-    public static IEnumerable<(string Provider, string Code)> ProviderCodes(LookupValue type)
+    public static IEnumerable<(string Provider, string Code)> ProviderCodes(DictionaryValue type)
     {
         ArgumentNullException.ThrowIfNull(type);
         return Codes(type.Attributes);
@@ -77,7 +77,7 @@ public static class PartyClasses
             .Select(c => (Text(c, "provider") ?? string.Empty, Text(c, "code") ?? string.Empty));
 
     /// <summary>A missing flag takes its default (credentials expire and sanctions block applications unless said otherwise).</summary>
-    public static bool Flag(LookupValue value, string attribute, bool fallback)
+    public static bool Flag(DictionaryValue value, string attribute, bool fallback)
     {
         ArgumentNullException.ThrowIfNull(value);
         return value.Attributes[attribute] is null ? fallback : value.Flag(attribute);
@@ -98,7 +98,7 @@ public static class PartyClasses
 }
 
 /// <summary>Provider codes are complete and translate to one relationship type only; a type in use cannot be deleted.</summary>
-internal sealed class RelationshipTypeRules(PartiesDbContext context, ILookupDirectory lookups) : IDomainRules
+internal sealed class RelationshipTypeRules(PartiesDbContext context, IDataDictionaryReader lookups) : IDomainRules
 {
     public string ClassCode => PartyClasses.RelationshipType;
 

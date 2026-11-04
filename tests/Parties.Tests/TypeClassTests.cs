@@ -4,7 +4,7 @@ using DynamicCube.Modules.Parties.Domain;
 using DynamicCube.Modules.Parties.Services;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Configuration;
-using DynamicCube.Platform.Lookups;
+using DynamicCube.Platform.DataDictionary;
 using DynamicCube.Platform.Parties;
 using DynamicCube.Tests.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,10 +26,10 @@ public sealed class TypeClassTests(DatabaseFixture fixture) : IAsyncLifetime
     public async ValueTask DisposeAsync() => await _host.DisposeAsync();
 
     private Task<Guid> PublishAsync(string type, string code, object? payload, ChangeOperation operation = ChangeOperation.Create) =>
-        _host.PublishAsync(AppsControlAreas.Lookups, new Change(type, code, operation, payload));
+        _host.PublishAsync(AppsControlAreas.DataDictionary, new Change(type, code, operation, payload));
 
-    private Task<LookupValue?> FindAsync(string classCode, string code) =>
-        _host.AsAsync("admin", sp => sp.GetRequiredService<ILookupDirectory>().FindAsync(classCode, code, CancellationToken.None));
+    private Task<DictionaryValue?> FindAsync(string classCode, string code) =>
+        _host.AsAsync("admin", sp => sp.GetRequiredService<IDataDictionaryReader>().FindAsync(classCode, code, CancellationToken.None));
 
     [Fact]
     public async Task The_product_starts_with_the_relationship_types_and_their_provider_codes()

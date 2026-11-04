@@ -52,7 +52,7 @@ public sealed class ScopeTests(AppsControlFixture fixture) : IAsyncLifetime
             new Change(AppsControlChangeTypes.Entity, entity, ChangeOperation.Create, new { nameAr = "جهة", nameEn = "Second entity" }),
             App(appA),
             App(appB, entity));
-        await _harness.PublishAsync(AppsControlAreas.Lookups, Class(classA, appA), Class(classB, appB), Class(shared));
+        await _harness.PublishAsync(AppsControlAreas.DataDictionary, Class(classA, appA), Class(classB, appB), Class(shared));
         await _harness.PublishAsync(
             AppsControlAreas.Security,
             new Change(AppsControlChangeTypes.Role, role, ChangeOperation.Create, new
@@ -85,21 +85,21 @@ public sealed class ScopeTests(AppsControlFixture fixture) : IAsyncLifetime
 
         // A new row without a level takes the clerk's app; another app or a shared row is refused.
         var mine = Harness.Unique("CLS_MINE");
-        await AddAsync(clerk, AppsControlAreas.Lookups, Class(mine));
+        await AddAsync(clerk, AppsControlAreas.DataDictionary, Class(mine));
         var drafted = await _harness.AsAsync(clerk, async sp =>
         {
             var applier = sp.GetServices<IConfigApplier>().Single(a => a.EntityType == AppsControlChangeTypes.Class);
             return applier.Normalize(mine, JsonSerializer.Serialize(new { nameAr = "x", nameEn = "x" }));
         });
         drafted.ShouldNotBeNull();
-        (await Should.ThrowAsync<ChangeValidationException>(() => AddAsync(clerk, AppsControlAreas.Lookups, Class(Harness.Unique("CLS_X"), appB)))).Errors.Keys.ShouldContain("businessApp");
-        (await Should.ThrowAsync<ChangeValidationException>(() => AddAsync(clerk, AppsControlAreas.Lookups, Class(Harness.Unique("CLS_Y"), "")))).Errors.Keys.ShouldContain("entityCode");
+        (await Should.ThrowAsync<ChangeValidationException>(() => AddAsync(clerk, AppsControlAreas.DataDictionary, Class(Harness.Unique("CLS_X"), appB)))).Errors.Keys.ShouldContain("businessApp");
+        (await Should.ThrowAsync<ChangeValidationException>(() => AddAsync(clerk, AppsControlAreas.DataDictionary, Class(Harness.Unique("CLS_Y"), "")))).Errors.Keys.ShouldContain("entityCode");
         (await Should.ThrowAsync<ChangeValidationException>(() => AddAsync(
-            clerk, AppsControlAreas.Lookups, new Change(AppsControlChangeTypes.Class, shared, ChangeOperation.Update, new { nameAr = "x", nameEn = "x", attributes = Array.Empty<object>() })))).Errors.Keys.ShouldContain("code");
+            clerk, AppsControlAreas.DataDictionary, new Change(AppsControlChangeTypes.Class, shared, ChangeOperation.Update, new { nameAr = "x", nameEn = "x", attributes = Array.Empty<object>() })))).Errors.Keys.ShouldContain("code");
 
         // An app of another entity cannot be given with this entity.
         var mismatch = await Should.ThrowAsync<ChangeValidationException>(() => _harness.DraftAsync(
-            AppsControlAreas.Lookups,
+            AppsControlAreas.DataDictionary,
             new Change(AppsControlChangeTypes.Class, Harness.Unique("CLS_Z"), ChangeOperation.Create, new { nameAr = "x", nameEn = "x", attributes = Array.Empty<object>(), entityCode = "ENTITY", businessApp = appB })));
         mismatch.Errors.Keys.ShouldContain("businessApp");
     }
@@ -120,7 +120,7 @@ public sealed class ScopeTests(AppsControlFixture fixture) : IAsyncLifetime
         var id = await _harness.AsAsync(maker, async sp =>
         {
             var service = sp.GetRequiredService<ChangeSetService<AppsControlDbContext>>();
-            var changeSet = await service.CreateAsync(AppsControlAreas.Lookups, "scope test", CancellationToken.None);
+            var changeSet = await service.CreateAsync(AppsControlAreas.DataDictionary, "scope test", CancellationToken.None);
             await service.AddItemAsync(changeSet.Id, AppsControlChangeTypes.Class, code, ChangeOperation.Create, JsonSerializer.Serialize(Class(code).Payload), CancellationToken.None);
             await service.SubmitAsync(changeSet.Id, CancellationToken.None);
             return changeSet.Id;
@@ -157,7 +157,7 @@ public sealed class ScopeTests(AppsControlFixture fixture) : IAsyncLifetime
         (await _harness.AccessAsync(clerkAb)).Scope.Apps!.ShouldBe([appA, appB], ignoreOrder: true);
         var shared = Harness.Unique("CLS_SHARED_AB");
         await _harness.PublishAsync(
-            AppsControlAreas.Lookups,
+            AppsControlAreas.DataDictionary,
             new Change(AppsControlChangeTypes.Class, shared, ChangeOperation.Create, new { nameAr = "مشترك", nameEn = "Shared", attributes = Array.Empty<object>(), businessApps = new[] { appA, appB } }));
         var row = (await ListAsync("admin", AppsControlChangeTypes.Class, appB)).Single(c => c.GetProperty("code").GetString() == shared);
         row.GetProperty("businessApp").GetString().ShouldBe(appA);
@@ -167,7 +167,7 @@ public sealed class ScopeTests(AppsControlFixture fixture) : IAsyncLifetime
         // Staff of A see it; changing it needs both apps.
         (await ListAsync(clerkA, AppsControlChangeTypes.Class)).ShouldContain(c => c.GetProperty("code").GetString() == shared);
         var update = new Change(AppsControlChangeTypes.Class, shared, ChangeOperation.Update, new { nameAr = "مشترك ٢", nameEn = "Shared 2", attributes = Array.Empty<object>() });
-        (await Should.ThrowAsync<ChangeValidationException>(() => AddAsync(clerkA, AppsControlAreas.Lookups, update))).Errors.Keys.ShouldContain("code");
-        await AddAsync(clerkAb, AppsControlAreas.Lookups, update);
+        (await Should.ThrowAsync<ChangeValidationException>(() => AddAsync(clerkA, AppsControlAreas.DataDictionary, update))).Errors.Keys.ShouldContain("code");
+        await AddAsync(clerkAb, AppsControlAreas.DataDictionary, update);
     }
 }

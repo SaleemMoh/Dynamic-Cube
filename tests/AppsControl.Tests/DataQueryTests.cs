@@ -28,7 +28,7 @@ public sealed class DataQueryTests(AppsControlFixture fixture) : IAsyncLifetime
 
         _sector = Harness.Unique("SECTOR");
         await _harness.PublishAsync(
-            AppsControlAreas.Lookups,
+            AppsControlAreas.DataDictionary,
             new Change(AppsControlChangeTypes.Class, _sector, ChangeOperation.Create, new
             {
                 nameAr = "قطاعات",
@@ -36,20 +36,20 @@ public sealed class DataQueryTests(AppsControlFixture fixture) : IAsyncLifetime
                 isHierarchical = true,
                 attributes = new[] { new { code = "ACTIVE_SINCE", nameAr = "منذ", nameEn = "Since", dataType = "NUMBER" } },
             }),
-            LookupTests.DomainChange(_sector, "CONSTRUCTION", "مقاولات", "Construction", new { ACTIVE_SINCE = 1990 }),
-            LookupTests.DomainChange(_sector, "ICT", "تقنية المعلومات", "ICT", new { ACTIVE_SINCE = 2010 }),
-            LookupTests.DomainChange(_sector, "CONSULTING", "استشارات", "Consulting", new { ACTIVE_SINCE = 2000 }),
-            LookupTests.DomainChange(_sector, "SOFTWARE", "برمجيات", "Software", new { ACTIVE_SINCE = 2015 }, parent: "ICT"));
+            DataDictionaryTests.DomainChange(_sector, "CONSTRUCTION", "مقاولات", "Construction", new { ACTIVE_SINCE = 1990 }),
+            DataDictionaryTests.DomainChange(_sector, "ICT", "تقنية المعلومات", "ICT", new { ACTIVE_SINCE = 2010 }),
+            DataDictionaryTests.DomainChange(_sector, "CONSULTING", "استشارات", "Consulting", new { ACTIVE_SINCE = 2000 }),
+            DataDictionaryTests.DomainChange(_sector, "SOFTWARE", "برمجيات", "Software", new { ACTIVE_SINCE = 2015 }, parent: "ICT"));
 
         (_main, _sub, _banks) = (Harness.Unique("CO"), Harness.Unique("CO"), Harness.Unique("BANKS"));
         await _harness.PublishAsync(AppsControlAreas.System,
             new Change(AppsControlChangeTypes.Company, _main, ChangeOperation.Create, new { nameAr = "شركة", nameEn = "Main" }),
             new Change(AppsControlChangeTypes.Company, _sub, ChangeOperation.Create, new { nameAr = "شركة", nameEn = "Subsidiary" }));
-        await _harness.PublishAsync(AppsControlAreas.Lookups,
+        await _harness.PublishAsync(AppsControlAreas.DataDictionary,
             new Change(AppsControlChangeTypes.Class, _banks, ChangeOperation.Create, new { nameAr = "بنوك", nameEn = "Banks", valuesPerCompany = true, attributes = Array.Empty<object>() }));
         Change Bank(string code, string[] companies) =>
             new(AppsControlChangeTypes.Domain, $"{_banks}/{code}", ChangeOperation.Create, new { nameAr = "بنك", nameEn = code, companies });
-        await _harness.PublishAsync(AppsControlAreas.Lookups, Bank("SHARED", ["*"]), Bank("MAIN_ONLY", [_main]), Bank("SUB_ONLY", [_sub]));
+        await _harness.PublishAsync(AppsControlAreas.DataDictionary, Bank("SHARED", ["*"]), Bank("MAIN_ONLY", [_main]), Bank("SUB_ONLY", [_sub]));
     }
 
     public ValueTask DisposeAsync() => _harness.DisposeAsync();

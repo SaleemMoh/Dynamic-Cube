@@ -892,7 +892,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.ToTable("installation", "apps");
                 });
 
-            modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.LookupClass", b =>
+            modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.DictionaryClass", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
@@ -2578,7 +2578,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.AttributeDefinition", b =>
                 {
-                    b.HasOne("DynamicCube.Modules.AppsControl.Domain.LookupClass", null)
+                    b.HasOne("DynamicCube.Modules.AppsControl.Domain.DictionaryClass", null)
                         .WithMany("Attributes")
                         .HasForeignKey("ClassId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -2617,7 +2617,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.DomainValue", b =>
                 {
-                    b.HasOne("DynamicCube.Modules.AppsControl.Domain.LookupClass", "Class")
+                    b.HasOne("DynamicCube.Modules.AppsControl.Domain.DictionaryClass", "Class")
                         .WithMany()
                         .HasForeignKey("ClassId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -2635,9 +2635,9 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.Navigation("ParentDomain");
                 });
 
-            modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.LookupClass", b =>
+            modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.DictionaryClass", b =>
                 {
-                    b.HasOne("DynamicCube.Modules.AppsControl.Domain.LookupClass", "ParentClass")
+                    b.HasOne("DynamicCube.Modules.AppsControl.Domain.DictionaryClass", "ParentClass")
                         .WithMany()
                         .HasForeignKey("ParentClassId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -2648,7 +2648,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.Lov", b =>
                 {
-                    b.HasOne("DynamicCube.Modules.AppsControl.Domain.LookupClass", "Class")
+                    b.HasOne("DynamicCube.Modules.AppsControl.Domain.DictionaryClass", "Class")
                         .WithMany()
                         .HasForeignKey("ClassId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -2943,7 +2943,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.Navigation("ExternalCodes");
                 });
 
-            modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.LookupClass", b =>
+            modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.DictionaryClass", b =>
                 {
                     b.Navigation("Attributes");
                 });

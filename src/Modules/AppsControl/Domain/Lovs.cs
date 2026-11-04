@@ -87,7 +87,7 @@ public sealed class Lov : ConfigEntity
 
     public Guid? ClassId { get; set; }
 
-    public LookupClass? Class { get; set; }
+    public DictionaryClass? Class { get; set; }
 
     public Guid? DataObjectId { get; set; }
 

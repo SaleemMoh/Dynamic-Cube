@@ -84,11 +84,11 @@ public sealed class PublicApiTests(DatabaseFixture fixture) : IAsyncLifetime
             new Change(AppsControlChangeTypes.Company, _companyA, ChangeOperation.Create, new { nameAr = "أ", nameEn = "A" }),
             new Change(AppsControlChangeTypes.Company, _companyB, ChangeOperation.Create, new { nameAr = "ب", nameEn = "B" }));
         await _host.PublishAsync(
-            AppsControlAreas.Lookups,
+            AppsControlAreas.DataDictionary,
             new Change(AppsControlChangeTypes.Class, _class, ChangeOperation.Create, new { nameAr = "مناطق", nameEn = "Regions", valuesPerCompany = true, attributes = Array.Empty<object>() }));
         Change Value(string code, string[] companies) =>
             new(AppsControlChangeTypes.Domain, $"{_class}/{code}", ChangeOperation.Create, new { nameAr = "منطقة " + code, nameEn = "Region " + code, companies });
-        await _host.PublishAsync(AppsControlAreas.Lookups, Value("R1", ["*"]), Value("R2", [_companyA]), Value("R3", [_companyB]));
+        await _host.PublishAsync(AppsControlAreas.DataDictionary, Value("R1", ["*"]), Value("R2", [_companyA]), Value("R3", [_companyB]));
     }
 
     public async ValueTask DisposeAsync()

@@ -28,7 +28,7 @@ public sealed class ApprovalPolicyTests(AppsControlFixture fixture) : IAsyncLife
             var policy = sp.GetRequiredService<IChangeApprovalPolicy>();
             return (
                 await policy.RequiresApprovalAsync(AppsControlAreas.UiTexts, CancellationToken.None),
-                await policy.RequiresApprovalAsync(AppsControlAreas.Lookups, CancellationToken.None),
+                await policy.RequiresApprovalAsync(AppsControlAreas.DataDictionary, CancellationToken.None),
                 await policy.RequiresApprovalAsync(AppsControlAreas.Governance, CancellationToken.None));
         });
 
@@ -57,7 +57,7 @@ public sealed class ApprovalPolicyTests(AppsControlFixture fixture) : IAsyncLife
     public async Task Save_and_publish_is_refused_where_approval_is_required_and_stores_nothing_when_invalid()
     {
         await Should.ThrowAsync<ChangeSetException>(() =>
-            SaveAsync(AppsControlAreas.Lookups, AppsControlChangeTypes.Class, Harness.Unique("CLS"), ChangeOperation.Create, """{"nameAr":"أ","nameEn":"A"}"""));
+            SaveAsync(AppsControlAreas.DataDictionary, AppsControlChangeTypes.Class, Harness.Unique("CLS"), ChangeOperation.Create, """{"nameAr":"أ","nameEn":"A"}"""));
 
         var bad = Harness.Unique("bad").ToLowerInvariant();
         await Should.ThrowAsync<ChangeValidationException>(() =>

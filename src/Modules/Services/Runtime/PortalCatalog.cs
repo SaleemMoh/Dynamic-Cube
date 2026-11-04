@@ -3,7 +3,7 @@ using DynamicCube.Modules.Services.Definitions;
 using DynamicCube.Modules.Services.Domain;
 using DynamicCube.Modules.Services.Persistence;
 using DynamicCube.Platform.Documents;
-using DynamicCube.Platform.Lookups;
+using DynamicCube.Platform.DataDictionary;
 using DynamicCube.Platform.Parties;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -182,7 +182,7 @@ public sealed class PortalCatalogService(ServicesDbContext context, ServiceCatal
 
     /// <summary>The categories: values of class <c>SVC_CATEGORY</c>.</summary>
     private async Task<List<PortalCategory>> CategoriesAsync(CancellationToken cancellationToken) =>
-        providers.GetService<ILookupDirectory>() is { } lookups
+        providers.GetService<IDataDictionaryReader>() is { } lookups
             ? [.. (await lookups.ValuesAsync(ServiceClasses.Category, cancellationToken))
                 .Select(c => new PortalCategory(c.Code, c.NameAr, c.NameEn, c.Text("DESCRIPTION_AR"), c.Text("DESCRIPTION_EN"), c.Text("ICON")))]
             : [];

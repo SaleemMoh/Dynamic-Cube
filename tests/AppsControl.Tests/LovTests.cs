@@ -22,11 +22,11 @@ public sealed class LovTests(AppsControlFixture fixture) : IAsyncLifetime
 
         _class = Harness.Unique("SECTOR");
         await _harness.PublishAsync(
-            AppsControlAreas.Lookups,
-            LookupTests.ClassChange(_class, [new { code = "ACTIVE_SINCE", nameAr = "منذ", nameEn = "Since", dataType = "NUMBER" }]),
-            LookupTests.DomainChange(_class, "CONSTRUCTION", "مقاولات", "Construction", new { ACTIVE_SINCE = 1990 }),
-            LookupTests.DomainChange(_class, "ICT", "تقنية المعلومات", "ICT", new { ACTIVE_SINCE = 2010 }),
-            LookupTests.DomainChange(_class, "CONSULTING", "استشارات", "Consulting", new { ACTIVE_SINCE = 2000 }));
+            AppsControlAreas.DataDictionary,
+            DataDictionaryTests.ClassChange(_class, [new { code = "ACTIVE_SINCE", nameAr = "منذ", nameEn = "Since", dataType = "NUMBER" }]),
+            DataDictionaryTests.DomainChange(_class, "CONSTRUCTION", "مقاولات", "Construction", new { ACTIVE_SINCE = 1990 }),
+            DataDictionaryTests.DomainChange(_class, "ICT", "تقنية المعلومات", "ICT", new { ACTIVE_SINCE = 2010 }),
+            DataDictionaryTests.DomainChange(_class, "CONSULTING", "استشارات", "Consulting", new { ACTIVE_SINCE = 2000 }));
     }
 
     public ValueTask DisposeAsync() => _harness.DisposeAsync();

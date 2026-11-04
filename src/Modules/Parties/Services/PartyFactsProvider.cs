@@ -2,14 +2,14 @@ using System.Text.Json.Nodes;
 using DynamicCube.Modules.Parties.Changes;
 using DynamicCube.Modules.Parties.Domain;
 using DynamicCube.Modules.Parties.Persistence;
-using DynamicCube.Platform.Lookups;
+using DynamicCube.Platform.DataDictionary;
 using DynamicCube.Platform.Parties;
 using Microsoft.EntityFrameworkCore;
 
 namespace DynamicCube.Modules.Parties.Services;
 
 /// <summary>Party facts for rules in other modules (eligibility, fees, prefill).</summary>
-internal sealed class PartyFactsProvider(PartiesDbContext context, ProfileService profiles, ILookupDirectory lookups, TimeProvider clock) : IPartyFacts
+internal sealed class PartyFactsProvider(PartiesDbContext context, ProfileService profiles, IDataDictionaryReader lookups, TimeProvider clock) : IPartyFacts
 {
     public async Task<PartyFacts?> GetAsync(Guid partyId, bool refreshProfile, CancellationToken cancellationToken)
     {

@@ -2,11 +2,11 @@ using DynamicCube.Modules.AppsControl.Access;
 using DynamicCube.Modules.AppsControl.Domain;
 using DynamicCube.Modules.AppsControl.Lovs;
 using DynamicCube.Modules.AppsControl.Persistence;
-using DynamicCube.Platform.Lookups;
+using DynamicCube.Platform.DataDictionary;
 using DynamicCube.Platform.PublicApi;
 using Microsoft.EntityFrameworkCore;
 
-namespace DynamicCube.Modules.AppsControl.Lookups;
+namespace DynamicCube.Modules.AppsControl.DataDictionary;
 
 /// <summary>
 /// A class's values as a public API caller may see them (ADR-0042): those in effect today that serve the call's company,
@@ -14,9 +14,9 @@ namespace DynamicCube.Modules.AppsControl.Lookups;
 /// account (a grant of some values, or a list that requires a grant the account lacks) keeps only what it allows. A class
 /// that no list limits shows all its values. The designer's try as administrator sees every value.
 /// </summary>
-internal sealed class ApiClassValues(AppsControlDbContext context, ILookupDirectory lookups, ApiAccess access, GrantResolver grants)
+internal sealed class ApiClassValues(AppsControlDbContext context, IDataDictionaryReader lookups, ApiAccess access, GrantResolver grants)
 {
-    public async Task<IReadOnlyList<LookupValue>> ValuesAsync(string classCode, ApiCaller caller, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<DictionaryValue>> ValuesAsync(string classCode, ApiCaller caller, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(caller);
         var values = (await lookups.ValuesAsync(classCode, cancellationToken))

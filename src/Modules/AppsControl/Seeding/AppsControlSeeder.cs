@@ -1,9 +1,9 @@
 using DynamicCube.Modules.AppsControl.Changes;
 using DynamicCube.Modules.AppsControl.Domain;
-using DynamicCube.Modules.AppsControl.Lookups;
+using DynamicCube.Modules.AppsControl.DataDictionary;
 using DynamicCube.Modules.AppsControl.Persistence;
 using DynamicCube.Platform.ChangeSets;
-using DynamicCube.Platform.Lookups;
+using DynamicCube.Platform.DataDictionary;
 using DynamicCube.Platform.Security;
 using Microsoft.EntityFrameworkCore;
 
@@ -128,7 +128,7 @@ public sealed class AppsControlSeeder(
 
         await UpsertAsync(context.Positions, SystemCatalog.Positions.Select(p => (p.Code, p.NameAr, p.NameEn, (Action<Position>)(_ => { }))), cancellationToken);
 
-        var classes = await UpsertAsync(context.Classes, SystemCatalog.Classes.Select(c => (c.Code, c.NameAr, c.NameEn, (Action<LookupClass>)(_ => { }))), cancellationToken);
+        var classes = await UpsertAsync(context.Classes, SystemCatalog.Classes.Select(c => (c.Code, c.NameAr, c.NameEn, (Action<DictionaryClass>)(_ => { }))), cancellationToken);
         await context.SaveChangesAsync(cancellationToken);
         foreach (var definition in SystemCatalog.Classes)
         {
@@ -200,7 +200,7 @@ public sealed class AppsControlSeeder(
 
     private async Task SeedModuleClassesAsync(IReadOnlyList<CatalogClass> definitions, CancellationToken cancellationToken)
     {
-        var classes = await UpsertAsync(context.Classes.Include(c => c.Attributes), definitions.Select(c => (c.Code, c.NameAr, c.NameEn, (Action<LookupClass>)(e =>
+        var classes = await UpsertAsync(context.Classes.Include(c => c.Attributes), definitions.Select(c => (c.Code, c.NameAr, c.NameEn, (Action<DictionaryClass>)(e =>
         {
             e.DescriptionAr = c.DescriptionAr;
             e.DescriptionEn = c.DescriptionEn;
@@ -222,11 +222,11 @@ public sealed class AppsControlSeeder(
                 row.NameEn = attribute.NameEn;
                 row.DataType = attribute.DataType switch
                 {
-                    LookupAttributeTypes.Number => AttributeDataType.Number,
-                    LookupAttributeTypes.Date => AttributeDataType.Date,
-                    LookupAttributeTypes.Bool => AttributeDataType.Bool,
-                    LookupAttributeTypes.DomainRef => AttributeDataType.DomainRef,
-                    LookupAttributeTypes.Json => AttributeDataType.Json,
+                    DictionaryAttributeTypes.Number => AttributeDataType.Number,
+                    DictionaryAttributeTypes.Date => AttributeDataType.Date,
+                    DictionaryAttributeTypes.Bool => AttributeDataType.Bool,
+                    DictionaryAttributeTypes.DomainRef => AttributeDataType.DomainRef,
+                    DictionaryAttributeTypes.Json => AttributeDataType.Json,
                     _ => AttributeDataType.Text,
                 };
                 row.RefClassCode = attribute.RefClass;

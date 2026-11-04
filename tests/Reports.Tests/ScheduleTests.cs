@@ -32,7 +32,7 @@ public sealed class ScheduleTests(DatabaseFixture fixture) : IAsyncLifetime
         _report = TestHost.Unique("REGIONS");
         _schedule = TestHost.Unique("DAILY_REGIONS");
         await _host.PublishAsync(
-            AppsControlAreas.Lookups,
+            AppsControlAreas.DataDictionary,
             new Change(AppsControlChangeTypes.Class, _class, ChangeOperation.Create, new { nameAr = "مناطق", nameEn = "Regions", attributes = Array.Empty<object>() }),
             new Change(AppsControlChangeTypes.Domain, $"{_class}/R1", ChangeOperation.Create, new { nameAr = "الرياض", nameEn = "Riyadh" }),
             new Change(AppsControlChangeTypes.Domain, $"{_class}/R2", ChangeOperation.Create, new { nameAr = "مكة", nameEn = "Makkah" }));

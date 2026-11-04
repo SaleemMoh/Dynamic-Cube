@@ -4,7 +4,7 @@ using DynamicCube.Modules.Parties.Changes;
 using DynamicCube.Modules.Parties.Domain;
 using DynamicCube.Modules.Parties.Persistence;
 using DynamicCube.Platform.Integration;
-using DynamicCube.Platform.Lookups;
+using DynamicCube.Platform.DataDictionary;
 using DynamicCube.Platform.Parties;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -42,7 +42,7 @@ internal sealed partial class ContextService(
     IApplicantIdentity applicant,
     IIntegrationGateway gateway,
     TimeProvider clock,
-    ILookupDirectory lookups,
+    IDataDictionaryReader lookups,
     ILogger<ContextService> logger)
 {
     /// <summary>The signed-in individual, registered when missing.</summary>
@@ -128,7 +128,7 @@ internal sealed partial class ContextService(
         return warnings;
     }
 
-    private async Task ApplyAsync(Party individual, ContextSource source, IReadOnlyList<JsonNode?> items, IReadOnlyList<LookupValue> types, DateTimeOffset now, CancellationToken cancellationToken)
+    private async Task ApplyAsync(Party individual, ContextSource source, IReadOnlyList<JsonNode?> items, IReadOnlyList<DictionaryValue> types, DateTimeOffset now, CancellationToken cancellationToken)
     {
         var existing = await context.Relationships
             .Where(r => r.IndividualId == individual.Id && r.Source == RecordSource.Integration && r.SourceReference == source.Code && r.EndedAt == null)
@@ -237,7 +237,7 @@ internal sealed partial class ContextService(
     public static ActingContext Self(Party individual) =>
         new(individual.Id, individual.Kind, individual.NameAr, individual.NameEn, individual.PrimaryIdentifier.Type, individual.PrimaryIdentifier.Value, null, null, null, [], null);
 
-    private static LookupValue? RelationshipTypeOf(ContextSource source, JsonNode? item, IReadOnlyList<LookupValue> types)
+    private static DictionaryValue? RelationshipTypeOf(ContextSource source, JsonNode? item, IReadOnlyList<DictionaryValue> types)
     {
         var code = JsonPaths.ReadText(item, source.RelationCodePath)?.Trim();
         if (code is not null)

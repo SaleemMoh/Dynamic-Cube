@@ -1,10 +1,10 @@
 using System.Text.Json.Nodes;
 using DynamicCube.Platform.Configuration;
 
-namespace DynamicCube.Platform.Lookups;
+namespace DynamicCube.Platform.DataDictionary;
 
 /// <summary>Data types of class attributes, as Apps Control names them.</summary>
-public static class LookupAttributeTypes
+public static class DictionaryAttributeTypes
 {
     public const string Text = "TEXT";
     public const string Number = "NUMBER";
@@ -34,10 +34,10 @@ public sealed record CatalogClass(
     string? DescriptionEn = null);
 
 /// <summary>A provider's code for a value (e.g. a relationship type as the commerce registry names it).</summary>
-public sealed record LookupExternalCode(string Provider, string Code, string Direction);
+public sealed record DictionaryExternalCode(string Provider, string Code, string Direction);
 
 /// <summary>A value of a class as other modules read it.</summary>
-public sealed record LookupValue(
+public sealed record DictionaryValue(
     string Code,
     string NameAr,
     string NameEn,
@@ -48,7 +48,7 @@ public sealed record LookupValue(
     bool IsActive,
     bool IsDefault,
     JsonObject Attributes,
-    IReadOnlyList<LookupExternalCode> ExternalCodes,
+    IReadOnlyList<DictionaryExternalCode> ExternalCodes,
     string? EntityCode = null,
     string? BusinessApp = null,
     IReadOnlyList<string>? Companies = null)
@@ -68,12 +68,12 @@ public sealed record LookupValue(
 }
 
 /// <summary>Values of the Class/Domain lookups (implemented by Apps Control).</summary>
-public interface ILookupDirectory
+public interface IDataDictionaryReader
 {
     /// <summary>The values of a class, in display order (active ones only unless asked).</summary>
-    Task<IReadOnlyList<LookupValue>> ValuesAsync(string classCode, CancellationToken cancellationToken, bool includeInactive = false);
+    Task<IReadOnlyList<DictionaryValue>> ValuesAsync(string classCode, CancellationToken cancellationToken, bool includeInactive = false);
 
-    Task<LookupValue?> FindAsync(string classCode, string code, CancellationToken cancellationToken);
+    Task<DictionaryValue?> FindAsync(string classCode, string code, CancellationToken cancellationToken);
 
     /// <summary>The settings stored on a class (code → value); empty for a class without settings.</summary>
     Task<IReadOnlyDictionary<string, string?>> SettingsAsync(string classCode, CancellationToken cancellationToken);

@@ -141,7 +141,7 @@ public sealed class RegistryTests(DatabaseFixture fixture) : IAsyncLifetime
     {
         var credentialType = TestHost.Unique("DGA_TECH");
         // Credential types are values of class PARTY_CREDENTIAL_TYPE (Class/Domain); an expiry date is required by default.
-        await _host.PublishAsync(AppsControlAreas.Lookups, new Change(PartyChangeTypes.CredentialType, credentialType, ChangeOperation.Create, new
+        await _host.PublishAsync(AppsControlAreas.DataDictionary, new Change(PartyChangeTypes.CredentialType, credentialType, ChangeOperation.Create, new
         {
             nameAr = "شهادة التصنيف الفني",
             nameEn = "Technical classification certificate",

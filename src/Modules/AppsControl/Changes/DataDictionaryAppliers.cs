@@ -1,10 +1,10 @@
 using System.Text.Json.Nodes;
 using DynamicCube.Modules.AppsControl.Access;
 using DynamicCube.Modules.AppsControl.Domain;
-using DynamicCube.Modules.AppsControl.Lookups;
+using DynamicCube.Modules.AppsControl.DataDictionary;
 using DynamicCube.Modules.AppsControl.Lovs;
 using DynamicCube.Modules.AppsControl.Persistence;
-using DynamicCube.Platform.Lookups;
+using DynamicCube.Platform.DataDictionary;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -58,22 +58,22 @@ public sealed class ClassPayload : ConfigPayload
     public List<ClassSetting> Settings { get; set; } = [];
 }
 
-internal sealed class ClassApplier(AppsControlDbContext db) : ConfigApplier<LookupClass, ClassPayload>(db)
+internal sealed class ClassApplier(AppsControlDbContext db) : ConfigApplier<DictionaryClass, ClassPayload>(db)
 {
     public override string EntityType => AppsControlChangeTypes.Class;
 
-    public override string Area => AppsControlAreas.Lookups;
+    public override string Area => AppsControlAreas.DataDictionary;
 
     public override string ResourceCode => AppsControlResources.Classes;
 
     protected override System.Text.RegularExpressions.Regex CodePattern => ValidationErrors.IdentifierCode();
 
-    protected override IQueryable<LookupClass> Query(AppsControlDbContext context) =>
+    protected override IQueryable<DictionaryClass> Query(AppsControlDbContext context) =>
         context.Classes.Include(c => c.ParentClass).Include(c => c.Attributes);
 
-    protected override Guid? ParentOf(LookupClass entity) => entity.ParentClassId;
+    protected override Guid? ParentOf(DictionaryClass entity) => entity.ParentClassId;
 
-    protected override async Task ApplyAsync(LookupClass entity, ClassPayload payload, RefResolver refs, ValidationErrors errors, LookupClass? existing, CancellationToken cancellationToken)
+    protected override async Task ApplyAsync(DictionaryClass entity, ClassPayload payload, RefResolver refs, ValidationErrors errors, DictionaryClass? existing, CancellationToken cancellationToken)
     {
         var viewName = ClassViewGenerator.ViewName(entity.Code);
         var sameView = await refs.Context.Classes.AsNoTracking()
@@ -229,7 +229,7 @@ internal sealed class ClassApplier(AppsControlDbContext db) : ConfigApplier<Look
         });
     }
 
-    protected override Task<ClassPayload> ToPayloadAsync(AppsControlDbContext context, LookupClass entity, CancellationToken cancellationToken) =>
+    protected override Task<ClassPayload> ToPayloadAsync(AppsControlDbContext context, DictionaryClass entity, CancellationToken cancellationToken) =>
         Task.FromResult(new ClassPayload
         {
             DescriptionAr = entity.DescriptionAr,
@@ -259,7 +259,7 @@ internal sealed class ClassApplier(AppsControlDbContext db) : ConfigApplier<Look
             Settings = entity.Settings,
         });
 
-    protected override async Task BeforeDeleteAsync(AppsControlDbContext context, LookupClass entity, CancellationToken cancellationToken)
+    protected override async Task BeforeDeleteAsync(AppsControlDbContext context, DictionaryClass entity, CancellationToken cancellationToken)
     {
         if (await context.Domains.AnyAsync(d => d.ClassId == entity.Id, cancellationToken))
         {
@@ -268,7 +268,7 @@ internal sealed class ClassApplier(AppsControlDbContext db) : ConfigApplier<Look
     }
 
     /// <summary>Existing values must stay valid when definitions change (generated views cast them to the declared types).</summary>
-    private static async Task CheckExistingValuesAsync(RefResolver refs, LookupClass existing, List<AttributeDefinition> definitions, ValidationErrors errors, CancellationToken cancellationToken)
+    private static async Task CheckExistingValuesAsync(RefResolver refs, DictionaryClass existing, List<AttributeDefinition> definitions, ValidationErrors errors, CancellationToken cancellationToken)
     {
         var before = existing.Attributes.ToDictionary(a => a.Code, StringComparer.Ordinal);
         var changed = definitions
@@ -348,7 +348,7 @@ internal sealed class DomainApplier(AppsControlDbContext db, IEnumerable<IDomain
 {
     public override string EntityType => AppsControlChangeTypes.Domain;
 
-    public override string Area => AppsControlAreas.Lookups;
+    public override string Area => AppsControlAreas.DataDictionary;
 
     public override string ResourceCode => AppsControlResources.Classes;
 

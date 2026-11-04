@@ -2,7 +2,7 @@ using DynamicCube.Modules.Parties.Domain;
 using DynamicCube.Modules.Parties.Persistence;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Integration;
-using DynamicCube.Platform.Lookups;
+using DynamicCube.Platform.DataDictionary;
 using DynamicCube.Platform.Parties;
 using Microsoft.EntityFrameworkCore;
 
@@ -159,7 +159,7 @@ public sealed class ContextSourcePayload : ConfigPayload
     public int DisplayOrder { get; set; }
 }
 
-internal sealed class ContextSourceApplier(PartiesDbContext db, ILookupDirectory lookups) : PartyApplier<ContextSource, ContextSourcePayload>(db)
+internal sealed class ContextSourceApplier(PartiesDbContext db, IDataDictionaryReader lookups) : PartyApplier<ContextSource, ContextSourcePayload>(db)
 {
     public override string EntityType => PartyChangeTypes.ContextSource;
 

@@ -6,7 +6,7 @@ using DynamicCube.Modules.Parties.Domain;
 using DynamicCube.Modules.Parties.Persistence;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Integration;
-using DynamicCube.Platform.Lookups;
+using DynamicCube.Platform.DataDictionary;
 using DynamicCube.Platform.Parties;
 using Microsoft.EntityFrameworkCore;
 
@@ -53,7 +53,7 @@ internal sealed class AuthorityService(
     ContextService contexts,
     PartyDirectory directory,
     IIntegrationGateway gateway,
-    ILookupDirectory lookups,
+    IDataDictionaryReader lookups,
     TimeProvider clock)
 {
     private const int MaxNumber = 100;

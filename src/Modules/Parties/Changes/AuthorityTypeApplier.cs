@@ -1,7 +1,7 @@
 using DynamicCube.Modules.Parties.Domain;
 using DynamicCube.Modules.Parties.Persistence;
 using DynamicCube.Platform.ChangeSets;
-using DynamicCube.Platform.Lookups;
+using DynamicCube.Platform.DataDictionary;
 using DynamicCube.Platform.Parties;
 
 namespace DynamicCube.Modules.Parties.Changes;
@@ -42,7 +42,7 @@ public sealed class AuthorityTypePayload : ConfigPayload
 }
 
 /// <summary>Authority types: the relationship they record (one that allows acting), the firm's identifier and the check.</summary>
-internal sealed class AuthorityTypeApplier(PartiesDbContext db, ILookupDirectory lookups) : PartyApplier<AuthorityType, AuthorityTypePayload>(db)
+internal sealed class AuthorityTypeApplier(PartiesDbContext db, IDataDictionaryReader lookups) : PartyApplier<AuthorityType, AuthorityTypePayload>(db)
 {
     public override string EntityType => PartyChangeTypes.AuthorityType;
 

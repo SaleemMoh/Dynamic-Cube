@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 using DynamicCube.Modules.AppsControl.Changes;
 using DynamicCube.Modules.AppsControl.Domain;
 
-namespace DynamicCube.Modules.AppsControl.Lookups;
+namespace DynamicCube.Modules.AppsControl.DataDictionary;
 
 /// <summary>Validates domain attribute values (JSON) against the class's typed attribute definitions.</summary>
 internal static class AttributeValues

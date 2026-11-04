@@ -6,7 +6,7 @@ layered solution (Domain, Application, DataAccess, Repository, Business, WebAPI)
 | # | Part | Status |
 |---|---|---|
 | 0 | [How the solution is organized](#how-the-solution-is-organized) (this page) | ✅ |
-| 1 | [Apps Control — Classes and domains](01-apps-control-classes-and-domains.md) | ✅ |
+| 1 | [Apps Control — Classes and domains (the data dictionary)](01-apps-control-data-dictionary.md) | ✅ (review points open) |
 | 2 | Apps Control — Lists of values (LOVs) | next |
 | … | Menus, roles and privileges, organization, users, settings, then the other modules | later |
 
@@ -35,7 +35,7 @@ src/Modules/AppsControl/      ← one project = one module (Apps Control)
     Persistence/              ← its DbContext + migrations (= your PRJ.DataAccess, for this module only)
     Seeding/                  ← its seed data             (= the seed part of PRJ.DataAccess)
     Changes/                  ← DTOs ("payloads") + the "managers" that validate and save them
-    Lookups/, Lovs/, Access/  ← read-side services ("managers" that answer questions)
+    DataDictionary/, Lovs/, Access/  ← read-side services ("managers" that answer questions)
     Endpoints/                ← its HTTP endpoints        (= your controllers)
     AppsControlModule.cs      ← registers all of the above in DI and maps the endpoints
 src/Modules/Services/         ← another module, same inside shape
@@ -54,8 +54,8 @@ database, so there is no network call between modules.
 | **PRJ.Domain** | Database models | `src/Modules/<Module>/Domain/*.cs`. Common base classes (e.g. `ConfigEntity`: id, code, Arabic/English name, active, owner, audit columns) in `src/Shared/Platform/Configuration` and `…/Persistence` |
 | **PRJ.Application** | DTOs, enums, mappers, templates | **DTOs** = the *payload* classes next to their applier (`Changes/*Appliers.cs`, e.g. `ClassPayload`) and the `record` responses in `Endpoints/*.cs`. **Enums** live with the entity in `Domain/`. **Mappers**: no AutoMapper; each applier maps by hand in two methods: `ApplyAsync` (DTO → entity) and `ToPayloadAsync` (entity → DTO). **Templates**: `src/Shared/Platform/Templates/LiquidRenderer.cs` (Liquid templates for messages and documents). **DTOs shared between modules** ("contracts") in `src/Shared/Platform/<Area>/*Contracts.cs` |
 | **PRJ.DataAccess** | DbContext and seed | `src/Modules/<Module>/Persistence/<Module>DbContext.cs` (one DbContext **per module**, one PostgreSQL **schema** per module) and `Persistence/Migrations/`; seed in `Seeding/<Module>Seeder.cs`; migrations and seeds are run by `src/Tools/Migrator` (not at API start-up) |
-| **PRJ.Repository** | Repositories (interface + class) | **No repository layer.** The DbContext's `DbSet<T>` is used directly (EF Core is already a repository and unit of work). Reusable queries sit in the class that needs them (`Query()`/`FindAsync()` in appliers, services like `LookupDirectory`) |
-| **PRJ.Business** | Managers that use the repositories | **Appliers** (`Changes/`) for every configuration write: validate a payload and copy it onto the entity. **Services** (`Lookups/`, `Lovs/`, `Access/`, `Runtime/`…) for reads and runtime logic. The generic save pipeline (`ChangeSetService`) is in the kernel |
+| **PRJ.Repository** | Repositories (interface + class) | **No repository layer.** The DbContext's `DbSet<T>` is used directly (EF Core is already a repository and unit of work). Reusable queries sit in the class that needs them (`Query()`/`FindAsync()` in appliers, services like `DataDictionaryReader`) |
+| **PRJ.Business** | Managers that use the repositories | **Appliers** (`Changes/`) for every configuration write: validate a payload and copy it onto the entity. **Services** (`DataDictionary/`, `Lovs/`, `Access/`, `Runtime/`…) for reads and runtime logic. The generic save pipeline (`ChangeSetService`) is in the kernel |
 | **PRJ.WebAPI** | Controllers and middleware | `src/Modules/<Module>/Endpoints/*.cs`: **Minimal API** endpoints (`group.MapGet(...)`) instead of controller classes. The three **hosts** `src/Hosts/Internal.Api`, `External.Api`, `Worker` hold `Program.cs` and the middleware (`src/Shared/Hosting`). Each host loads the modules it needs |
 | **PRJ.GlobalComponents** | Shared helpers | `src/Shared/Platform` (the kernel: base entities, change sets, audit, outbox, JSONLogic evaluator, cross-module contracts) and `src/Shared/Hosting` (host set-up) |
 | **PRJ-internal-app** | Angular for staff | `web/projects/internal` |

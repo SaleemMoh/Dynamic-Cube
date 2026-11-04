@@ -1,22 +1,26 @@
-# 1. Apps Control — Classes and domains
+# 1. Apps Control — Classes and domains (the data dictionary)
 
 ← [Handover index](README.md) · next: 2. Lists of values (LOVs)
 
 ## 1.1 What it is
 
-**One generic lookup store instead of one table per lookup.** A **class** is a lookup type (`REGION`, `SECTOR`,
+On screen it is called **Classes & domains**; in the code it is the **data dictionary** (folders `DataDictionary/`,
+interface `IDataDictionaryReader`, record `DictionaryValue`, entity `DictionaryClass`). Database names did not change
+(`apps.class`, `apps.domain`, change types `apps.class` / `apps.domain`, change area `apps.lookups`).
+
+**One data dictionary instead of one table per list.** A **class** is a type of value (`REGION`, `SECTOR`,
 `SVC_CATEGORY`); a **domain** is one value of it (`REGION/RIYADH`). Each class declares its own typed **attributes**
 (extra columns, e.g. an icon, a capital limit, a reference to another class), and each value stores them in a JSON column
-validated against those definitions. So an administrator adds a new lookup — with its own fields — without a migration
+validated against those definitions. So an administrator adds a new class — with its own fields — without a migration
 or a deployment.
 
 If you know Oracle EBS: a class is a *value set*, attributes are *descriptive flexfields*, domains are the *values*.
 
 Typical uses:
-- Business lookups (regions, cities under regions, sectors, grades).
+- Business lists (regions, cities under regions, sectors, grades).
 - Option lists of the other modules (service categories, answer types, party relationship types, document validity
   modes, visit outcomes, message channels…) — the modules declare those classes, administrators maintain their values.
-- The source of most lists of values (part 2), report columns, Logic Builder value pickers and public API lookups.
+- The source of most lists of values (part 2), report columns, Logic Builder value pickers and the public API's class values.
 
 ## 1.2 Tables (schema `apps`)
 
@@ -29,7 +33,7 @@ erDiagram
     domain ||--o{ domain_external_code : "provider codes (cascade)"
 ```
 
-### `apps.class` — the lookup types (entity `LookupClass`)
+### `apps.class` — the classes (entity `DictionaryClass`)
 
 | Column | Type | Meaning |
 |---|---|---|
@@ -96,13 +100,20 @@ Translates a value to and from an integration provider's code (e.g. the commerce
 | `external_code` | varchar(200) | Its code |
 | `direction` | text `In` / `Out` / `Both` | Used when reading their data, sending ours, or both. Unique per (`domain_id, provider_code, direction`) |
 
-### Views `apps.v_class_<code>` — one per class, for reports
+### Views `apps.v_class_<code>` — one per class, for the query builder
 
-Generated (not migrations) every time a class is published: the fixed value columns (`id, code, class_code, name_ar,
-name_en, details_ar, details_en, parent_code, display_order, is_default, is_active, effective_from, effective_to,
-companies`) **plus one typed column per reportable attribute** (`(attributes->>'CAPITAL_LIMIT')::numeric AS
-capital_limit`). Reports, the query builder and data objects read these views as ordinary tables. A `-` in a code becomes
-`_` in SQL names.
+Generated (not migrations) for **every** class each time it is published — not only when an attribute is marked
+*for reports*. The view always has the fixed value columns (`id, code, class_code, name_ar, name_en, details_ar,
+details_en, parent_code, display_order, is_default, is_active, effective_from, effective_to, companies`); the *for
+reports* tick (`is_reportable`) only decides whether an attribute **also** becomes a typed column
+(`(attributes->>'CAPITAL_LIMIT')::numeric AS capital_limit`). A `-` in a code becomes `_` in SQL names.
+
+Who reads them: the **visual query builder** (`Lovs/LovQueryService.cs` + `LovQueryCompiler.cs`), where a class
+appears as a source next to the registered tables. That builder serves three features: lists of values of type
+*query*, **reports and dashboards** (`Lovs/ReportQueries.cs`), and the public API's *read data* endpoints
+(`Lovs/DataQueries.cs`). Everything else (screens, other modules, list-of-values of type *class*) reads `apps.domain`
+directly through EF. The view exists so a class can be joined, filtered and grouped like an ordinary table with typed
+columns, instead of every report writing `attributes->>'X'` casts and a `class_id` filter.
 
 ### Kernel tables involved on every save
 
@@ -117,35 +128,35 @@ capital_limit`). Reports, the query builder and data objects read these views as
 
 | Your layer | File | What it does for classes and domains |
 |---|---|---|
-| **Domain** (DB models) | `src/Modules/AppsControl/Domain/Lookups.cs` | `LookupClass`, `AttributeDefinition`, `DomainValue`, `DomainExternalCode`, `ClassSetting`, enums `AttributeDataType`, `AttributeGroup`, `CodeDirection` |
-| | `src/Shared/Platform/Configuration/ConfigEntity.cs` | Base class of `LookupClass` and `DomainValue`: `Id, Code, NameAr, NameEn, IsActive, Owner, EntityCode, BusinessApp, SharedApps` + audit columns |
-| **Application** (DTOs) | `src/Modules/AppsControl/Changes/LookupAppliers.cs` (top of file) | `ClassPayload` (+ `AttributeDefinitionPayload`), `DomainPayload` (+ `ExternalCodePayload`). They extend `ConfigPayload` (`src/Shared/Platform/Configuration/ConfigApplier.cs`): code, names, active, level |
+| **Domain** (DB models) | `src/Modules/AppsControl/Domain/DataDictionary.cs` | `DictionaryClass`, `AttributeDefinition`, `DomainValue`, `DomainExternalCode`, `ClassSetting`, enums `AttributeDataType`, `AttributeGroup`, `CodeDirection` |
+| | `src/Shared/Platform/Configuration/ConfigEntity.cs` | Base class of `DictionaryClass` and `DomainValue`: `Id, Code, NameAr, NameEn, IsActive, Owner, EntityCode, BusinessApp, SharedApps` + audit columns |
+| **Application** (DTOs) | `src/Modules/AppsControl/Changes/DataDictionaryAppliers.cs` (top of file) | `ClassPayload` (+ `AttributeDefinitionPayload`), `DomainPayload` (+ `ExternalCodePayload`). They extend `ConfigPayload` (`src/Shared/Platform/Configuration/ConfigApplier.cs`): code, names, active, level |
 | (Mapping) | same file | `ApplyAsync` = DTO → entity with validation; `ToPayloadAsync` = entity → DTO for reads |
-| (Contracts for other modules) | `src/Shared/Platform/Lookups/LookupContracts.cs` | `ILookupDirectory` (read values), `LookupValue` (the DTO other modules get), `IDomainRules` (a module's extra rules for its class), `CatalogClass` (a class a module ships) |
+| (Contracts for other modules) | `src/Shared/Platform/DataDictionary/DataDictionaryContracts.cs` | `IDataDictionaryReader` (read values), `DictionaryValue` (the DTO other modules get), `IDomainRules` (a module's extra rules for its class), `CatalogClass` (a class a module ships) |
 | **DataAccess** | `src/Modules/AppsControl/Persistence/AppsControlDbContext.cs` | `DbSet`s `Classes`, `AttributeDefinitions`, `Domains`, `DomainExternalCodes`; mapping in `OnModelCreating` (tables, indexes, jsonb, text[], FKs, delete behaviour) |
 | | `src/Shared/Platform/Persistence/ConfigModelBuilderExtensions.cs` | `ConfigTable<T>()`: the common mapping of every configuration table (unique code, name lengths, row version…) |
 | | `src/Modules/AppsControl/Persistence/Migrations/` | EF Core migrations of schema `apps` |
 | (Seed) | `src/Modules/AppsControl/Seeding/AppsControlSeeder.cs` + `SystemCatalog.cs` | Creates/updates the product's classes on every run of the Migrator: Apps Control's own and those declared by each module (`SeedModuleClassesAsync`), then regenerates all report views |
 | **Repository** | — | None. Appliers and services query `AppsControlDbContext` directly (`Query()` / `FindAsync()` in the applier) |
-| **Business** (managers) | `Changes/LookupAppliers.cs` → `ClassApplier` | Validates and saves a class: code pattern, unique view name, parent class, attribute codes/types/references, settings; when attributes change, checks every existing value still fits; removes deleted attributes from values' JSON; keeps attributes in sync (`ChildSync`) |
-| | `Changes/LookupAppliers.cs` → `DomainApplier` | Validates and saves a value: class exists, dates, companies, parent (no cycles), attribute values against the definitions (`AttributeValues.ValidateAsync`), the owning module's rules (`IDomainRules`), external codes, single default; refuses deletes of parents or of values still used |
+| **Business** (managers) | `Changes/DataDictionaryAppliers.cs` → `ClassApplier` | Validates and saves a class: code pattern, unique view name, parent class, attribute codes/types/references, settings; when attributes change, checks every existing value still fits; removes deleted attributes from values' JSON; keeps attributes in sync (`ChildSync`) |
+| | `Changes/DataDictionaryAppliers.cs` → `DomainApplier` | Validates and saves a value: class exists, dates, companies, parent (no cycles), attribute values against the definitions (`AttributeValues.ValidateAsync`), the owning module's rules (`IDomainRules`), external codes, single default; refuses deletes of parents or of values still used |
 | | `Changes/DomainBackedApplier.cs` | Some modules' configuration types are stored as values of a class but edited on their own screen (`svc.category` → class `SVC_CATEGORY`, `party.relationship-type`, `party.credential-type`, `party.sanction-type`) |
-| | `Lookups/AttributeValues.cs` | Type checks of attribute values (number, date, bool, references, required, min/max/pattern) |
-| | `Lookups/ClassViewGenerator.cs` | Publish hook: drops and recreates `v_class_<code>` for every class in the published change set |
-| | `Lookups/LookupDirectory.cs` | Implements `ILookupDirectory` for the other modules (values per class, cached for the request; dates applied to "active") |
-| | `Lookups/ClassValuesFunction.cs`, `ClassesFunction.cs`, `LookupsFunction.cs`, `ApiClassValues.cs` | Class values offered to partner systems by the public API (part "Public API") |
+| | `DataDictionary/AttributeValues.cs` | Type checks of attribute values (number, date, bool, references, required, min/max/pattern) |
+| | `DataDictionary/ClassViewGenerator.cs` | Publish hook: drops and recreates `v_class_<code>` for every class in the published change set |
+| | `DataDictionary/DataDictionaryReader.cs` | Implements `IDataDictionaryReader` for the other modules (values per class, cached for the request; dates applied to "active") |
+| | `DataDictionary/ClassValuesFunction.cs`, `ClassesFunction.cs`, `LookupsFunction.cs`, `ApiClassValues.cs` | Class values offered to partner systems by the public API (part "Public API") |
 | | `src/Shared/Platform/ChangeSets/ChangeSetService.cs` | The generic save manager (drafts, submit, approve, publish in one transaction) |
 | | `src/Shared/Platform/Configuration/ConfigApplier.cs` | Base of every applier: create/update/delete rules (exists? product-owned? in the user's entity and app?), generic list/get/export |
 | **WebAPI** | `src/Modules/AppsControl/Endpoints/AdminEndpoints.cs` | Generic reads `GET /admin/{type}` (list, `?parent=` = class code for values) and `GET /admin/{type}/{code}`; writes `POST /change-sets/apply`, `/change-sets/submit-change`, `/change-sets/{id}/items`, then `/submit`, `/approve`, `/publish`; counts `GET /admin/counts/apps.class` |
 | | `src/Modules/AppsControl/Endpoints/MeEndpoints.cs` | Runtime read for any signed-in screen: `GET /classes/{code}/domains?parent=` (active values of the user's company) |
-| | `src/Modules/AppsControl/AppsControlModule.cs` | DI registration (`AddApplier<ClassApplier>`, `AddApplier<DomainApplier>`, the view generator hook, `ILookupDirectory`) and route groups (`/api/apps-control/v1`) |
+| | `src/Modules/AppsControl/AppsControlModule.cs` | DI registration (`AddApplier<ClassApplier>`, `AddApplier<DomainApplier>`, the view generator hook, `IDataDictionaryReader`) and route groups (`/api/apps-control/v1`) |
 | **Angular (internal)** | `web/projects/internal/src/app/apps-control/classes/classes-page.ts` | Master–detail screen: classes on the left, values of the selected class on the right (routes `/apps-control/classes` and `/classes/:code`) |
 | | `…/classes/class-editor.ts` (+ `.html`, `.scss`) | Class dialog: details, attributes table, settings |
 | | `…/classes/domain-editor.ts` | Value dialog: **builds its form from the class's attributes** (a select for `DomainRef`/`LovRef`, a date picker for `Date`…) |
 | | `…/classes/class-models.ts` | TypeScript DTOs `ClassRow`, `AttributeDefinition`, `DomainRow` |
 | | `…/apps-control/drafts.service.ts` | Decides how to save: apply now (no approval), submit at once, or add to the user's draft |
 | **Angular (shared lib)** | `web/projects/shared/src/lib/apps-control/apps-control.api.ts` | `list()`, `get()`, `counts()`, `applyNow()`, `submitChange()`, `addItem()`, `classDomains()` |
-| **Tests** | `tests/AppsControl.Tests/LookupTests.cs`, `ClassFieldTests.cs` | Classes, values, attributes, hierarchy, views, per-company values, field types |
+| **Tests** | `tests/AppsControl.Tests/DataDictionaryTests.cs`, `ClassFieldTests.cs` | Classes, values, attributes, hierarchy, views, per-company values, field types |
 
 ## 1.4 What happens when you save a value (end to end)
 
@@ -179,14 +190,14 @@ Saving a **class** is the same with `apps.class` and `ClassApplier`; deleting se
 
 | Who | How | Code |
 |---|---|---|
-| **Other backend modules** (today Services and Parties) | Never touch `apps.domain`. They inject `ILookupDirectory` (kernel interface) and call `ValuesAsync("SVC_CATEGORY")` / `FindAsync(class, code)` / `SettingsAsync(class)`, receiving `LookupValue` records | Contract `src/Shared/Platform/Lookups/LookupContracts.cs`; implementation `Lookups/LookupDirectory.cs`; users e.g. `src/Modules/Services/Runtime/PortalCatalog.cs`, `src/Modules/Parties/Services/PartyFactsProvider.cs` |
+| **Other backend modules** (today Services and Parties) | Never touch `apps.domain`. They inject `IDataDictionaryReader` (kernel interface) and call `ValuesAsync("SVC_CATEGORY")` / `FindAsync(class, code)` / `SettingsAsync(class)`, receiving `DictionaryValue` records | Contract `src/Shared/Platform/DataDictionary/DataDictionaryContracts.cs`; implementation `DataDictionary/DataDictionaryReader.cs`; users e.g. `src/Modules/Services/Runtime/PortalCatalog.cs`, `src/Modules/Parties/Services/PartyFactsProvider.cs` |
 | **Modules that own a class** | Declare it (code, attributes, starting values) in their `SystemCatalogContribution.Classes`; Apps Control's seeder creates it as `System`-owned. Optional `IDomainRules` adds checks and blocks deleting a value still in use | e.g. `src/Modules/Services/Changes/ServiceClasses.cs` (`SVC_CATEGORY`, `SVC_QUESTION_TYPE` + `ServiceCategoryRules`), `src/Modules/Parties/Changes/PartyClasses.cs`, Workflow, Documents, Visits, Communication module files |
 | **Lists of values** (part 2) | A list of source type `Class` points to a class (`apps.lov.class_id`) and serves its active values, filtered by the user's grants and company | `src/Modules/AppsControl/Lovs/LovService.cs` |
 | **Attributes of type `LovRef`** | A class field whose options come from a list of values; checked on save against every value of the list | `DomainApplier.InListAsync` |
-| **Reports, query builder, data objects** | Read the generated views `apps.v_class_<code>` as tables | `Lookups/ClassViewGenerator.cs`; Reports module; `Lovs/LovQueryCompiler.cs` |
+| **Reports, query builder, data objects** | Read the generated views `apps.v_class_<code>` as tables | `DataDictionary/ClassViewGenerator.cs`; Reports module; `Lovs/LovQueryCompiler.cs` |
 | **Logic Builder, workflow designer, generic config forms (Angular)** | Offer a class's values in pickers (`classDomains(code)`) | `web/projects/shared/src/lib/expressions/logic-fields.ts`, `internal/.../workflows/designer/designer-references.ts`, `internal/.../apps-control/config/config-editor.ts` |
-| **Public API** | System functions return class values to partner systems | `Lookups/ClassValuesFunction.cs`, `LookupsFunction.cs` |
-| **Integrations** | External codes translate values to provider codes | `apps.domain_external_code`, read through `LookupValue.ExternalCodes` |
+| **Public API** | System functions return class values to partner systems | `DataDictionary/ClassValuesFunction.cs`, `LookupsFunction.cs` |
+| **Integrations** | External codes translate values to provider codes | `apps.domain_external_code`, read through `DictionaryValue.ExternalCodes` |
 | **Companies** | Classes with values per company limit values to companies; the user's current company filters runtime reads | `LovService.ForCompany` |
 | **Security** | Screen privileges of resource `apps-control.classes` guard reads and writes; the row level (entity/app) limits who sees and edits a row | `ConfigApplier` (scope checks), `Access/ConfigScopes.cs` |
 
@@ -196,12 +207,12 @@ Saving a **class** is the same with `apps.class` and `ClassApplier`; deleting se
 1. In the module's `…Module.cs` (or a `…Classes.cs` next to it), add a `CatalogClass("VIS_RESULT", …, attributes, starting values)`
    to its `SystemCatalogContribution.Classes`.
 2. Run the Migrator (or `docker compose … up -d --build`): the class appears, product-owned, with its starting values.
-3. Read it with `ILookupDirectory.ValuesAsync("VIS_RESULT")`. If some values must not be deleted while used, add an
+3. Read it with `IDataDictionaryReader.ValuesAsync("VIS_RESULT")`. If some values must not be deleted while used, add an
    `IDomainRules` implementation and register it in the module.
 
-**An administrator's own lookup** — no code: Apps Control → Classes → New class, add attributes, then values.
+**An administrator's own class** — no code: Apps Control → Classes → New class, add attributes, then values.
 
-**Add a new attribute data type** — enum `AttributeDataType` (`Domain/Lookups.cs`), its check in
+**Add a new attribute data type** — enum `AttributeDataType` (`Domain/DataDictionary.cs`), its check in
 `AttributeValues.Check`, its SQL cast in `ClassViewGenerator.BuildSql`, the TypeScript union `AttributeDataType` and
 `DATA_TYPES` in `class-models.ts`, its form control in `domain-editor.ts` (`FIELD_TYPES`), and a test in
 `ClassFieldTests.cs`. Stored as text, so no migration is needed.
@@ -210,9 +221,18 @@ Saving a **class** is the same with `apps.class` and `ClassApplier`; deleting se
 
 - **Codes, not ids, cross boundaries.** DTOs, change items, packages and references between classes use codes
   (`ref_class_code`, `CLASS/CODE`), so a package exported from test imports into production.
-- **No migration for new lookups or attributes.** Attribute values are JSON; the typed view is regenerated on publish.
+- **No migration for new classes or attributes.** Attribute values are JSON; the typed view is regenerated on publish.
 - **Product-owned classes** (`owner = System`) cannot be edited through the screens; their **values** can (unless a
   module rule prevents it).
 - **Changing an attribute's type or making it required** is refused while existing values would break; fix the values first.
 - **Deleting an attribute** removes its key from every value's JSON in the same transaction.
 - **Inactive or out-of-date values** are kept (old requests still show them) but are not offered in lists.
+
+## 1.8 Review points raised by the owner
+
+| # | Question | Finding | Proposal (waiting for the owner's decision) |
+|---|---|---|---|
+| 1 | Is `apps.domain_external_code` needed? | **No code reads it.** It is filled only if a package or JSON import sends `externalCodes`; the value screen has no field for it; `DictionaryValue.ExternalCodes` is never used. The one real case (party relationship types ↔ commerce registry codes) is stored instead as a JSON attribute `EXTERNAL_CODES` on class `PARTY_RELATIONSHIP_TYPE` and read by `Modules/Parties/Changes/PartyClasses.cs`. Response-code translation for integrations lives in the Integration Manager's operations. | Drop the table, the entity, the `externalCodes` payload field and `DictionaryValue.ExternalCodes` (one migration). If provider codes are needed for other classes later, use an attribute like Parties does. |
+| 2 | Are the `v_class_*` views only for reports, created by the *for reports* tick? | See *Views* above: created for every class; the tick only adds attribute columns; read by the query builder (query lists of values, reports/dashboards, public API read endpoints). | Keep. Optionally rename the tick to *Available in reports and queries* so its effect is clear. |
+| 5 | What is `DomainBackedApplier`? | Four configuration types are stored as values of a class but keep their own change type, screen and privileges: `svc.category` → `SVC_CATEGORY`, `party.relationship-type`, `party.credential-type`, `party.sanction-type` → `PARTY_*` classes. Each is a second way to edit the same rows (one through the data dictionary as `apps.domain`, one through the module screen). It was kept when these lists moved into the data dictionary (ADR-0032) so module screens, module privileges and existing packages kept working. | Remove it: the module screens open the data dictionary on their class, everything is saved as `apps.domain`, and the four types and their applier disappear. Cost: whoever maintains these lists needs the data dictionary privilege; three demo packages and two config packages are rewritten from `svc.category` etc. to `apps.domain` with `CLASS/CODE`. Module rules (`IDomainRules`) keep working as they already run in `DomainApplier`. |
+

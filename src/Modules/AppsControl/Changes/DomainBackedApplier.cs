@@ -3,11 +3,11 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using DynamicCube.Modules.AppsControl.Domain;
-using DynamicCube.Modules.AppsControl.Lookups;
+using DynamicCube.Modules.AppsControl.DataDictionary;
 using DynamicCube.Modules.AppsControl.Persistence;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Configuration;
-using DynamicCube.Platform.Lookups;
+using DynamicCube.Platform.DataDictionary;
 using Microsoft.EntityFrameworkCore;
 
 namespace DynamicCube.Modules.AppsControl.Changes;
@@ -47,7 +47,7 @@ internal sealed class DomainBackedApplier(AppsControlDbContext db, DomainBackedT
 {
     public override string EntityType => type.EntityType;
 
-    public override string Area => AppsControlAreas.Lookups;
+    public override string Area => AppsControlAreas.DataDictionary;
 
     public override string ResourceCode => type.ResourceCode;
 

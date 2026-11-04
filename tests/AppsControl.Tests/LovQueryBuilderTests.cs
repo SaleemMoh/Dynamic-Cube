@@ -25,19 +25,19 @@ public sealed class LovQueryBuilderTests(AppsControlFixture fixture) : IAsyncLif
         _sector = Harness.Unique("SECTOR");
         _group = Harness.Unique("GROUP");
         await _harness.PublishAsync(
-            AppsControlAreas.Lookups,
-            LookupTests.ClassChange(_group, []),
-            LookupTests.DomainChange(_group, "BUILD", "البناء", "Building", null),
-            LookupTests.DomainChange(_group, "TECH", "التقنية", "Technology", null),
-            LookupTests.ClassChange(_sector,
+            AppsControlAreas.DataDictionary,
+            DataDictionaryTests.ClassChange(_group, []),
+            DataDictionaryTests.DomainChange(_group, "BUILD", "البناء", "Building", null),
+            DataDictionaryTests.DomainChange(_group, "TECH", "التقنية", "Technology", null),
+            DataDictionaryTests.ClassChange(_sector,
             [
                 new { code = "ACTIVE_SINCE", nameAr = "منذ", nameEn = "Since", dataType = "NUMBER" },
                 new { code = "GROUP_CODE", nameAr = "المجموعة", nameEn = "Group", dataType = "TEXT" },
                 new { code = "OWNER", nameAr = "المسؤول", nameEn = "Owner", dataType = "TEXT" },
             ]),
-            LookupTests.DomainChange(_sector, "CONSTRUCTION", "مقاولات", "Construction", new { ACTIVE_SINCE = 1990, GROUP_CODE = "BUILD", OWNER = "admin" }),
-            LookupTests.DomainChange(_sector, "ICT", "تقنية المعلومات", "ICT", new { ACTIVE_SINCE = 2010, GROUP_CODE = "TECH", OWNER = "someone" }),
-            LookupTests.DomainChange(_sector, "CONSULTING", "استشارات", "Consulting", new { ACTIVE_SINCE = 2000, GROUP_CODE = "BUILD", OWNER = "admin" }));
+            DataDictionaryTests.DomainChange(_sector, "CONSTRUCTION", "مقاولات", "Construction", new { ACTIVE_SINCE = 1990, GROUP_CODE = "BUILD", OWNER = "admin" }),
+            DataDictionaryTests.DomainChange(_sector, "ICT", "تقنية المعلومات", "ICT", new { ACTIVE_SINCE = 2010, GROUP_CODE = "TECH", OWNER = "someone" }),
+            DataDictionaryTests.DomainChange(_sector, "CONSULTING", "استشارات", "Consulting", new { ACTIVE_SINCE = 2000, GROUP_CODE = "BUILD", OWNER = "admin" }));
     }
 
     public ValueTask DisposeAsync() => _harness.DisposeAsync();

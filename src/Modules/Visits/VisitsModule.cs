@@ -5,7 +5,7 @@ using DynamicCube.Modules.Visits.Runtime;
 using DynamicCube.Platform;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Communication;
-using DynamicCube.Platform.Lookups;
+using DynamicCube.Platform.DataDictionary;
 using DynamicCube.Platform.Security;
 using DynamicCube.Platform.Visits;
 using Microsoft.AspNetCore.Builder;

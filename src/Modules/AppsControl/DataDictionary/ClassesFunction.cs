@@ -3,7 +3,7 @@ using DynamicCube.Modules.AppsControl.Persistence;
 using DynamicCube.Platform.PublicApi;
 using Microsoft.EntityFrameworkCore;
 
-namespace DynamicCube.Modules.AppsControl.Lookups;
+namespace DynamicCube.Modules.AppsControl.DataDictionary;
 
 /// <summary>
 /// Classes and their values (ADR-0042) — get all or get some: with no class codes, every active class; with codes

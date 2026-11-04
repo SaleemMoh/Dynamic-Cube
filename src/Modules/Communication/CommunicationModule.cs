@@ -5,7 +5,7 @@ using DynamicCube.Modules.Communication.Runtime;
 using DynamicCube.Platform;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Communication;
-using DynamicCube.Platform.Lookups;
+using DynamicCube.Platform.DataDictionary;
 using DynamicCube.Platform.Security;
 using DynamicCube.Platform.Templates;
 using Microsoft.AspNetCore.Builder;

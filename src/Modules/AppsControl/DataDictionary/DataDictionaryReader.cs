@@ -1,30 +1,30 @@
 using System.Text.Json.Nodes;
 using DynamicCube.Modules.AppsControl.Domain;
 using DynamicCube.Modules.AppsControl.Persistence;
-using DynamicCube.Platform.Lookups;
+using DynamicCube.Platform.DataDictionary;
 using Microsoft.EntityFrameworkCore;
 
-namespace DynamicCube.Modules.AppsControl.Lookups;
+namespace DynamicCube.Modules.AppsControl.DataDictionary;
 
 /// <summary>Class/Domain values for the other modules; each class is read once per request.</summary>
-internal sealed class LookupDirectory(AppsControlDbContext context, TimeProvider clock) : ILookupDirectory
+internal sealed class DataDictionaryReader(AppsControlDbContext context, TimeProvider clock) : IDataDictionaryReader
 {
-    private readonly Dictionary<string, IReadOnlyList<LookupValue>> _classes = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, IReadOnlyList<DictionaryValue>> _classes = new(StringComparer.Ordinal);
 
-    public async Task<IReadOnlyList<LookupValue>> ValuesAsync(string classCode, CancellationToken cancellationToken, bool includeInactive = false)
+    public async Task<IReadOnlyList<DictionaryValue>> ValuesAsync(string classCode, CancellationToken cancellationToken, bool includeInactive = false)
     {
         var all = await LoadAsync(classCode, cancellationToken);
         return includeInactive ? all : [.. all.Where(v => v.IsActive)];
     }
 
-    public async Task<LookupValue?> FindAsync(string classCode, string code, CancellationToken cancellationToken) =>
+    public async Task<DictionaryValue?> FindAsync(string classCode, string code, CancellationToken cancellationToken) =>
         (await LoadAsync(classCode, cancellationToken)).FirstOrDefault(v => v.Code == code);
 
     public async Task<IReadOnlyDictionary<string, string?>> SettingsAsync(string classCode, CancellationToken cancellationToken) =>
         (await context.Classes.AsNoTracking().Where(c => c.Code == classCode).Select(c => c.Settings).SingleOrDefaultAsync(cancellationToken) ?? [])
             .ToDictionary(s => s.Code, s => s.Value, StringComparer.Ordinal);
 
-    private async Task<IReadOnlyList<LookupValue>> LoadAsync(string classCode, CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<DictionaryValue>> LoadAsync(string classCode, CancellationToken cancellationToken)
     {
         if (_classes.TryGetValue(classCode, out var cached))
         {
@@ -38,7 +38,7 @@ internal sealed class LookupDirectory(AppsControlDbContext context, TimeProvider
             .Include(d => d.ExternalCodes)
             .OrderBy(d => d.DisplayOrder).ThenBy(d => d.Code)
             .ToListAsync(cancellationToken);
-        var values = rows.Select(d => new LookupValue(
+        var values = rows.Select(d => new DictionaryValue(
             d.Code,
             d.NameAr,
             d.NameEn,
@@ -49,7 +49,7 @@ internal sealed class LookupDirectory(AppsControlDbContext context, TimeProvider
             d.IsActive && (d.EffectiveFrom == null || d.EffectiveFrom <= today) && (d.EffectiveTo == null || d.EffectiveTo >= today),
             d.IsDefault,
             JsonNode.Parse(d.Attributes) as JsonObject ?? [],
-            [.. d.ExternalCodes.Select(x => new LookupExternalCode(x.ProviderCode, x.ExternalCode, x.Direction.ToString().ToUpperInvariant()))],
+            [.. d.ExternalCodes.Select(x => new DictionaryExternalCode(x.ProviderCode, x.ExternalCode, x.Direction.ToString().ToUpperInvariant()))],
             d.EntityCode,
             d.BusinessApp,
             d.Companies)).ToList();

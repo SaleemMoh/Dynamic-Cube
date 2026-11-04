@@ -9,7 +9,7 @@ using Shouldly;
 
 namespace DynamicCube.Modules.AppsControl.Tests;
 
-public sealed class LookupTests(AppsControlFixture fixture) : IAsyncLifetime
+public sealed class DataDictionaryTests(AppsControlFixture fixture) : IAsyncLifetime
 {
     private Harness _harness = null!;
 
@@ -27,7 +27,7 @@ public sealed class LookupTests(AppsControlFixture fixture) : IAsyncLifetime
         var region = Harness.Unique("REGION");
         var sector = Harness.Unique("SECTOR");
         await _harness.PublishAsync(
-            AppsControlAreas.Lookups,
+            AppsControlAreas.DataDictionary,
             ClassChange(region, []),
             DomainChange(region, "R1", "الرياض", "Riyadh", null),
             ClassChange(sector,
@@ -59,7 +59,7 @@ public sealed class LookupTests(AppsControlFixture fixture) : IAsyncLifetime
     {
         var region = Harness.Unique("SAUDI-REGION");
         await _harness.PublishAsync(
-            AppsControlAreas.Lookups,
+            AppsControlAreas.DataDictionary,
             ClassChange(region, [new { code = "GOV-CODE", nameAr = "رمز الإمارة", nameEn = "Emirate code", dataType = "TEXT" }]),
             DomainChange(region, "EASTERN-1", "الشرقية", "Eastern", new Dictionary<string, object> { ["GOV-CODE"] = "5" }));
 
@@ -74,12 +74,12 @@ public sealed class LookupTests(AppsControlFixture fixture) : IAsyncLifetime
         row["gov_code"].ShouldBe("5");
 
         var reserved = await Should.ThrowAsync<ChangeValidationException>(() => _harness.DraftAsync(
-            AppsControlAreas.Lookups,
+            AppsControlAreas.DataDictionary,
             ClassChange(Harness.Unique("CLS"), [new { code = "NAME-AR", nameAr = "س", nameEn = "S", dataType = "TEXT" }])));
         reserved.Errors.Keys.ShouldContain("attributes[0].code");
 
         var sameColumn = await Should.ThrowAsync<ChangeValidationException>(() => _harness.DraftAsync(
-            AppsControlAreas.Lookups,
+            AppsControlAreas.DataDictionary,
             ClassChange(Harness.Unique("CLS"),
             [
                 new { code = "A-B", nameAr = "س", nameEn = "S", dataType = "TEXT" },
@@ -88,7 +88,7 @@ public sealed class LookupTests(AppsControlFixture fixture) : IAsyncLifetime
         sameColumn.Errors.Keys.ShouldContain("attributes[1].code");
 
         var sameView = await Should.ThrowAsync<ChangeValidationException>(() => _harness.DraftAsync(
-            AppsControlAreas.Lookups,
+            AppsControlAreas.DataDictionary,
             ClassChange(region.Replace('-', '_'), [])));
         sameView.Errors.Keys.ShouldContain("code");
     }
@@ -97,20 +97,20 @@ public sealed class LookupTests(AppsControlFixture fixture) : IAsyncLifetime
     public async Task Values_are_validated_against_attribute_definitions()
     {
         var sector = Harness.Unique("SECTOR");
-        await _harness.PublishAsync(AppsControlAreas.Lookups, ClassChange(sector,
+        await _harness.PublishAsync(AppsControlAreas.DataDictionary, ClassChange(sector,
         [
             new { code = "MIN_CAPITAL", nameAr = "رأس المال", nameEn = "Minimum capital", dataType = "NUMBER", isRequired = true, validation = new { min = 0 } },
         ]));
 
         var ex = await Should.ThrowAsync<ChangeValidationException>(() => _harness.DraftAsync(
-            AppsControlAreas.Lookups,
+            AppsControlAreas.DataDictionary,
             DomainChange(sector, "BAD", "س", "Bad", new { MIN_CAPITAL = -5, COLOR = "red" })));
 
         ex.Errors.Keys.ShouldContain("attributes.MIN_CAPITAL");
         ex.Errors.Keys.ShouldContain("attributes.COLOR");
 
         var missing = await Should.ThrowAsync<ChangeValidationException>(() => _harness.DraftAsync(
-            AppsControlAreas.Lookups,
+            AppsControlAreas.DataDictionary,
             DomainChange(sector, "EMPTY", "س", "Empty", new { })));
         missing.Errors["attributes.MIN_CAPITAL"].ShouldContain("Required.");
     }
@@ -120,12 +120,12 @@ public sealed class LookupTests(AppsControlFixture fixture) : IAsyncLifetime
     {
         var cls = Harness.Unique("COLOR");
         await _harness.PublishAsync(
-            AppsControlAreas.Lookups,
+            AppsControlAreas.DataDictionary,
             ClassChange(cls, [new { code = "SHADE", nameAr = "درجة", nameEn = "Shade", dataType = "TEXT" }]),
             DomainChange(cls, "RED", "أحمر", "Red", new { SHADE = "dark" }));
 
         var ex = await Should.ThrowAsync<ChangeValidationException>(() => _harness.DraftAsync(
-            AppsControlAreas.Lookups,
+            AppsControlAreas.DataDictionary,
             ClassChange(cls, [new { code = "SHADE", nameAr = "درجة", nameEn = "Shade", dataType = "NUMBER" }], ChangeOperation.Update)));
 
         ex.Errors["attributes"].ShouldContain(m => m.Contains("RED", StringComparison.Ordinal));
@@ -135,7 +135,7 @@ public sealed class LookupTests(AppsControlFixture fixture) : IAsyncLifetime
     public async Task System_rows_cannot_be_changed_through_change_sets()
     {
         var ex = await Should.ThrowAsync<ChangeValidationException>(() => _harness.DraftAsync(
-            AppsControlAreas.Lookups,
+            AppsControlAreas.DataDictionary,
             ClassChange("ENTITY_KIND", [], ChangeOperation.Update)));
 
         ex.Errors["code"].ShouldContain(m => m.Contains("maintained by the product", StringComparison.Ordinal));
@@ -146,13 +146,13 @@ public sealed class LookupTests(AppsControlFixture fixture) : IAsyncLifetime
     {
         var cls = Harness.Unique("ACTIVITY");
         await _harness.PublishAsync(
-            AppsControlAreas.Lookups,
+            AppsControlAreas.DataDictionary,
             new Change(AppsControlChangeTypes.Class, cls, ChangeOperation.Create, new { nameAr = "نشاط", nameEn = "Activity", isHierarchical = true }),
             DomainChange(cls, "A", "أ", "A", null),
             DomainChange(cls, "B", "ب", "B", null, parent: "A"));
 
         var ex = await Should.ThrowAsync<ChangeValidationException>(() => _harness.DraftAsync(
-            AppsControlAreas.Lookups,
+            AppsControlAreas.DataDictionary,
             DomainChange(cls, "A", "أ", "A", null, parent: "B", ChangeOperation.Update)));
 
         ex.Errors.Keys.ShouldContain("parentCode");
@@ -163,7 +163,7 @@ public sealed class LookupTests(AppsControlFixture fixture) : IAsyncLifetime
     {
         var cls = Harness.Unique("TREE");
         await _harness.PublishAsync(
-            AppsControlAreas.Lookups,
+            AppsControlAreas.DataDictionary,
             new Change(AppsControlChangeTypes.Class, cls, ChangeOperation.Create, new { nameAr = "شجرة", nameEn = "Tree", isHierarchical = true }),
             DomainChange(cls, "Z", "ي", "Z", null),
             DomainChange(cls, "M", "م", "M", null, parent: "Z"),
@@ -184,11 +184,11 @@ public sealed class LookupTests(AppsControlFixture fixture) : IAsyncLifetime
     {
         var cls = Harness.Unique("SIZE");
         await _harness.PublishAsync(
-            AppsControlAreas.Lookups,
+            AppsControlAreas.DataDictionary,
             ClassChange(cls, [new { code = "WIDTH", nameAr = "عرض", nameEn = "Width", dataType = "NUMBER" }]),
             DomainChange(cls, "L", "كبير", "Large", new { WIDTH = 3 }));
 
-        await _harness.PublishAsync(AppsControlAreas.Lookups, ClassChange(cls, [], ChangeOperation.Update));
+        await _harness.PublishAsync(AppsControlAreas.DataDictionary, ClassChange(cls, [], ChangeOperation.Update));
 
         var attributes = await _harness.AsAsync("admin", sp => sp.GetRequiredService<AppsControlDbContext>().Domains
             .Where(d => d.Class!.Code == cls && d.Code == "L").Select(d => d.Attributes).SingleAsync());

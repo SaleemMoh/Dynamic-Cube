@@ -3,7 +3,7 @@ using System.Data.Common;
 using System.Text.Json;
 using DynamicCube.Modules.AppsControl.Access;
 using DynamicCube.Modules.AppsControl.Domain;
-using DynamicCube.Modules.AppsControl.Lookups;
+using DynamicCube.Modules.AppsControl.DataDictionary;
 using DynamicCube.Modules.AppsControl.Persistence;
 using DynamicCube.Platform.Configuration;
 using Microsoft.EntityFrameworkCore;

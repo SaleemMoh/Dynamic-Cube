@@ -210,8 +210,8 @@ public sealed class ConnectedAppTests(AppsControlFixture fixture) : IAsyncLifeti
             Item(itemHelp, app, null, group, null));
         var (ownList, otherList, entityList) = (Harness.Unique("PMS_LIST"), Harness.Unique("HRV_LIST"), Harness.Unique("ORG_LIST"));
         var listClass = Harness.Unique("PRIORITY");
-        await _harness.PublishAsync(AppsControlAreas.Lookups, new Change(AppsControlChangeTypes.Class, listClass, ChangeOperation.Create, new { nameAr = "الأولوية", nameEn = "Priority" }));
-        await _harness.PublishAsync(AppsControlAreas.Lookups, new Change(AppsControlChangeTypes.Domain, listClass + "/HIGH", ChangeOperation.Create, new { nameAr = "عالية", nameEn = "High" }));
+        await _harness.PublishAsync(AppsControlAreas.DataDictionary, new Change(AppsControlChangeTypes.Class, listClass, ChangeOperation.Create, new { nameAr = "الأولوية", nameEn = "Priority" }));
+        await _harness.PublishAsync(AppsControlAreas.DataDictionary, new Change(AppsControlChangeTypes.Domain, listClass + "/HIGH", ChangeOperation.Create, new { nameAr = "عالية", nameEn = "High" }));
         await _harness.PublishAsync(AppsControlAreas.Lovs,
             new Change(AppsControlChangeTypes.Lov, ownList, ChangeOperation.Create, new { nameAr = "قائمة", nameEn = "Own", sourceType = "CLASS", classCode = listClass, businessApp = app }),
             new Change(AppsControlChangeTypes.Lov, otherList, ChangeOperation.Create, new { nameAr = "قائمة", nameEn = "Other", sourceType = "CLASS", classCode = listClass, businessApp = other }),
