@@ -17,7 +17,7 @@ server).
 | `SYS_MENU` | 175 | `sys_menu`, key **(appsid, menu_code)**; `OBJECT_NAME` (e.g. `dashboard.settings.menu`) becomes the app's screen in `sys_resources` |
 | `DD_CLASSES` | 182 | `dd_classes`; the 62 used flex slots become typed attributes (`dd_class_attributes`) |
 | `DD_DOMAIN` | 637 | `dd_domain`, system values (no instance/company) |
-| `DD_COMPANY_DOMAIN` | 8,042 | `dd_domain`, key **(class, instid, cmp_num, value)**; `ACTIVE_FLAG` is `1` on 1,195, `0` on 7 and empty on 6,840: empty is imported as **active** for now (open question to the owner) |
+| `DD_COMPANY_DOMAIN` | 8,042 | `dd_domain`, key **(class, instid, cmp_num, value)**; `ACTIVE_FLAG` is `1` on 1,195, `0` on 7 and empty on 6,840: only `1` is active, empty means **inactive** (owner's answer); system values (`DD_DOMAIN`, no flag) are active |
 | `DD_COMPANY_DOMAIN_VIRTUAL_VALUES` | 2 | the value's list-of-values attribute |
 | `DD_LOVS` | 139 | `dd_lovs`: the lists that read a class become *Class* lists (117); the ones that run Oracle SQL on tables that are not here (employee, expense, project, document-owner views) are **not imported** and listed in the report, to be rebuilt with the query builder |
 | `SYS_ROLES` | 86 | `sys_roles`, key **(instid, cmp_num, role_code)** |

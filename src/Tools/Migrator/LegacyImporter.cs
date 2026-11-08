@@ -399,7 +399,8 @@ internal sealed partial class LegacyImporter(IServiceProvider services, PackageL
             {
                 nameAr = ar,
                 nameEn = en,
-                isActive = !r.ContainsKey("ACTIVE_FLAG") || Flag(V(r, "ACTIVE_FLAG")),
+                // DD_DOMAIN has no flag (active); a DD_COMPANY_DOMAIN value is active only when its flag is 1 (owner's rule).
+                isActive = !r.ContainsKey("ACTIVE_FLAG") || Flag(V(r, "ACTIVE_FLAG"), empty: false),
                 detailsAr = NullIfEmpty(V(r, "DOMAIN_DESC_DETAIL_NTV")),
                 detailsEn = NullIfEmpty(V(r, "DOMAIN_DESC_DETAIL_FRN")),
                 displayOrder = Number(V(r, "ORDERBY")),
