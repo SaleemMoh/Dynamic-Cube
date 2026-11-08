@@ -49,8 +49,8 @@ export interface DomainRow extends ConfigRow {
   attributes: Record<string, unknown>;
   effectiveFrom: string | null;
   effectiveTo: string | null;
-  /** Companies the value serves (classes with values per company), or just `*` for all of them. */
-  companies?: string[];
+  /** The company of a value of one company (`instid/cmp_num`); null for a value of every company. */
+  companyCode?: string | null;
 }
 
 export const DATA_TYPES: AttributeDataType[] = ['TEXT', 'TEXTAREA', 'NUMBER', 'DATE', 'BOOL', 'DOMAIN_REF', 'LOV_REF', 'JSON'];

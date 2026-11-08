@@ -397,7 +397,7 @@
         "draftExpiryDays": 30,
         "onNewVersion": "CONTINUE",
         "numberPrefix": "QLF",
-        "companyCode": "MAIN",
+        "companyCode": "ENTITY/MAIN",
         "branchQuestion": "IND_REGION",
         "businessApp": "CLASSIFICATION"
       }

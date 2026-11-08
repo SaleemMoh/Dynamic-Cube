@@ -11,6 +11,24 @@ namespace DynamicCube.Modules.AppsControl.Changes;
 /// </summary>
 internal static class MenuTrees
 {
+    /// <summary>The app part of a menu key must name the row's tree: its channel, or the connected app it belongs to.</summary>
+    public static void CheckKeyApp(ConfigEntity entity, string? key, string? channel, ValidationErrors errors)
+    {
+        var (app, _) = AppScopedKey.Parse(key ?? string.Empty);
+        var tree = string.IsNullOrWhiteSpace(channel) ? entity.BusinessApp : channel.Trim();
+        if (app != tree)
+        {
+            errors.Add("code", tree is null
+                ? $"'{key}' names app {app}, but the row belongs to no app; write the code alone."
+                : $"'{key}' must start with its app: {tree}/{AppScopedKey.Parse(key ?? string.Empty).Key}.");
+        }
+    }
+
+    /// <summary>Rows of the tree a menu key names.</summary>
+    public static IQueryable<T> InTree<T>(IQueryable<T> rows, string? app)
+        where T : ConfigEntity, IMenuTreeRow =>
+        app is null ? rows.Where(r => r.AppId == null && r.BusinessApp == null) : rows.Where(r => r.App!.Code == app || (r.AppId == null && r.BusinessApp == app));
+
     /// <summary>Checks the channel against the row's app and returns the channel id (null for a connected app's tree).</summary>
     public static async Task<Guid?> ChannelAsync(ConfigEntity entity, string? appCode, RefResolver refs, ValidationErrors errors, CancellationToken cancellationToken)
     {
@@ -67,9 +85,22 @@ internal sealed class MenuGroupApplier(AppsControlDbContext db) : ConfigApplier<
         (parent is null ? Query(context) : Query(context).Where(g => g.App!.Code == parent || (g.AppId == null && g.BusinessApp == parent)))
             .OrderBy(g => g.App!.Code).ThenBy(g => g.DisplayOrder);
 
+    protected override Task<MenuGroup?> FindAsync(AppsControlDbContext context, string entityCode, CancellationToken cancellationToken)
+    {
+        var (app, code) = AppScopedKey.Parse(entityCode);
+        return MenuTrees.InTree(Query(context), app).SingleOrDefaultAsync(g => g.Code == code, cancellationToken);
+    }
+
+    protected override void ValidateKey(string entityCode, ValidationErrors errors) => AppScopedKey.Validate(entityCode, errors);
+
+    protected override string CodeFromKey(string entityCode) => AppScopedKey.Parse(entityCode).Key;
+
+    protected override string EntityCodeOf(MenuGroup entity) => entity.Key;
+
     protected override async Task ApplyAsync(MenuGroup entity, MenuGroupPayload payload, RefResolver refs, ValidationErrors errors, MenuGroup? existing, CancellationToken cancellationToken)
     {
         entity.AppId = await MenuTrees.ChannelAsync(entity, payload.AppCode, refs, errors, cancellationToken);
+        MenuTrees.CheckKeyApp(entity, payload.Code, payload.AppCode, errors);
         entity.DisplayOrder = payload.DisplayOrder;
         entity.Icon = payload.Icon;
         errors.MaxLength("icon", payload.Icon, 100);
@@ -123,9 +154,22 @@ internal sealed class MenuApplier(AppsControlDbContext db) : ConfigApplier<Menu,
 
     protected override Guid? ParentOf(Menu entity) => entity.ParentId;
 
+    protected override Task<Menu?> FindAsync(AppsControlDbContext context, string entityCode, CancellationToken cancellationToken)
+    {
+        var (app, code) = AppScopedKey.Parse(entityCode);
+        return MenuTrees.InTree(Query(context), app).SingleOrDefaultAsync(m => m.Code == code, cancellationToken);
+    }
+
+    protected override void ValidateKey(string entityCode, ValidationErrors errors) => AppScopedKey.Validate(entityCode, errors);
+
+    protected override string CodeFromKey(string entityCode) => AppScopedKey.Parse(entityCode).Key;
+
+    protected override string EntityCodeOf(Menu entity) => entity.Key;
+
     protected override async Task ApplyAsync(Menu entity, MenuPayload payload, RefResolver refs, ValidationErrors errors, Menu? existing, CancellationToken cancellationToken)
     {
         entity.AppId = await MenuTrees.ChannelAsync(entity, payload.AppCode, refs, errors, cancellationToken);
+        MenuTrees.CheckKeyApp(entity, payload.Code, payload.AppCode, errors);
         entity.MenuGroupId = await refs.MenuGroupAsync(payload.GroupCode, "groupCode", errors, cancellationToken);
         if (entity.MenuGroupId is { } groupId && groupId != Guid.Empty
             && await refs.Context.MenuGroups.AsNoTracking().Where(g => g.Id == groupId).Select(g => new { g.AppId, g.BusinessApp }).SingleAsync(cancellationToken) is var group
@@ -157,7 +201,7 @@ internal sealed class MenuApplier(AppsControlDbContext db) : ConfigApplier<Menu,
                 errors.Add("parentCode", "A menu item cannot be under itself or one of its own items.");
             }
         }
-        else if (payload.ParentCode == entity.Code && entity.Code.Length > 0)
+        else if (payload.ParentCode is not null && payload.ParentCode == payload.Code && entity.Code.Length > 0)
         {
             errors.Add("parentCode", "A menu item cannot be its own parent.");
         }
@@ -202,8 +246,8 @@ internal sealed class MenuApplier(AppsControlDbContext db) : ConfigApplier<Menu,
         Task.FromResult(new MenuPayload
         {
             AppCode = entity.App?.Code,
-            GroupCode = entity.MenuGroup?.Code,
-            ParentCode = entity.Parent?.Code,
+            GroupCode = entity.MenuGroup is null ? null : MenuKey.Format(entity.App?.Code ?? entity.BusinessApp, entity.MenuGroup.Code),
+            ParentCode = entity.Parent is null ? null : MenuKey.Format(entity.App?.Code ?? entity.BusinessApp, entity.Parent.Code),
             ItemType = entity.ItemType,
             Target = entity.Target,
             ResourceCode = entity.Resource?.Code,

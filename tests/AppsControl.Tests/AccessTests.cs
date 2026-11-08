@@ -128,7 +128,7 @@ public sealed class AccessTests(AppsControlFixture fixture) : IAsyncLifetime
         var role = Harness.Unique("CLERK");
         await _harness.PublishAsync(
             AppsControlAreas.Security,
-            new Change(AppsControlChangeTypes.Role, role, ChangeOperation.Create, new { nameAr = "كاتب", nameEn = "Clerk", menus = new[] { "apps-control.lovs" } }),
+            new Change(AppsControlChangeTypes.Role, role, ChangeOperation.Create, new { nameAr = "كاتب", nameEn = "Clerk", menus = new[] { "INTERNAL/apps-control.lovs" } }),
             new Change(AppsControlChangeTypes.User, userName, ChangeOperation.Create, new { nameAr = "كاتب", nameEn = "Clerk", roles = new[] { new { roleCode = role, companyCode = "*", branches = new[] { "*" } } } }));
 
         var (access, menu) = await _harness.AsAsync(userName, async sp =>

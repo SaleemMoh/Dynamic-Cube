@@ -30,8 +30,8 @@ internal sealed class StaffDirectory(AppsControlDbContext context, AccessResolve
         if (query.Role is { } role)
         {
             // Held directly, or as a default role of a unit the user is placed in.
-            var roleActive = context.Roles.Any(r => r.Code == role && r.IsActive);
-            users = users.Where(u => context.UserRoles.Any(r => r.UserId == u.Id && r.Role!.Code == role && r.Role.IsActive
+            var roleActive = context.Roles.Any(r => (r.CompanyCode == null ? r.Code : r.EntityCode + "/" + r.CompanyCode + "/" + r.Code) == role && r.IsActive);
+            users = users.Where(u => context.UserRoles.Any(r => r.UserId == u.Id && (r.Role!.CompanyCode == null ? r.Role.Code : r.Role.EntityCode + "/" + r.Role.CompanyCode + "/" + r.Role.Code) == role && r.Role.IsActive
                     && (r.EffectiveFrom == null || r.EffectiveFrom <= today) && (r.EffectiveTo == null || r.EffectiveTo >= today))
                 || (roleActive && context.UserAssignments.Any(a => a.UserId == u.Id && a.OrgUnit!.IsActive && a.OrgUnit.DefaultRoles.Contains(role)
                     && (a.EffectiveFrom == null || a.EffectiveFrom <= today) && (a.EffectiveTo == null || a.EffectiveTo >= today))));
@@ -77,10 +77,10 @@ internal sealed class StaffDirectory(AppsControlDbContext context, AccessResolve
         var ids = rows.Select(r => r.Id).ToList();
         var roles = await context.UserRoles.AsNoTracking()
             .Where(r => ids.Contains(r.UserId) && r.Role!.IsActive && (r.EffectiveFrom == null || r.EffectiveFrom <= today) && (r.EffectiveTo == null || r.EffectiveTo >= today))
-            .Select(r => new { r.UserId, r.Role!.Code, r.CompanyCode, r.Branches })
+            .Select(r => new { r.UserId, Code = (r.Role!.CompanyCode == null ? r.Role.Code : r.Role.EntityCode + "/" + r.Role.CompanyCode + "/" + r.Role.Code), r.CompanyCode, r.Branches })
             .ToListAsync(cancellationToken);
         var departments = await DepartmentRoles.OfUsersByCompanyAsync(context, ids, today, cancellationToken);
-        var activeRoles = departments.Count == 0 ? [] : await context.Roles.AsNoTracking().Where(r => r.IsActive).Select(r => r.Code).ToListAsync(cancellationToken);
+        var activeRoles = departments.Count == 0 ? [] : await context.Roles.AsNoTracking().Where(r => r.IsActive).Select(r => (r.CompanyCode == null ? r.Code : r.EntityCode + "/" + r.CompanyCode + "/" + r.Code)).ToListAsync(cancellationToken);
         roles.AddRange(departments.SelectMany(d => d.Value.Where(x => activeRoles.Contains(x.Role)).Select(x => new
         {
             UserId = d.Key,

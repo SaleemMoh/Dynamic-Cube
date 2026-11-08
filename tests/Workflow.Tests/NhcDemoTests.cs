@@ -118,7 +118,7 @@ public sealed class NhcDemoTests
                     new[] { "REGIONS", "REQUEST_STATUS", "CERTIFICATE_CHECK", "LOOKUPS", "CLASSES" }.Select(ApiResources.Of), ignoreOrder: true);
                 var caller = (await access.ResolveAsync(new ApiAccessRequest(client.Code, client.Account, ApiResources.Of("REGIONS"), null, null, false), CancellationToken.None)).Caller;
                 caller.ShouldNotBeNull();
-                caller.Company.ShouldBe("MAIN");
+                caller.Company.ShouldBe("ENTITY/MAIN");
                 var runner = sp.GetRequiredService<Integration.Runtime.PublicApiRunner>();
                 var all = await runner.RunAsync(endpoint, new Dictionary<string, string>(), new Dictionary<string, string?>(), caller, false, CancellationToken.None);
                 var makkah = await runner.RunAsync(endpoint, new Dictionary<string, string>(), new Dictionary<string, string?> { ["name"] = "mak" }, caller, false, CancellationToken.None);

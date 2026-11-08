@@ -66,7 +66,7 @@ internal sealed class ClassApplier(AppsControlDbContext db) : ConfigApplier<Dict
 
     public override string ResourceCode => AppsControlResources.Classes;
 
-    protected override System.Text.RegularExpressions.Regex CodePattern => ValidationErrors.IdentifierCode();
+    protected override System.Text.RegularExpressions.Regex CodePattern => ValidationErrors.ClassCode();
 
     protected override IQueryable<DictionaryClass> Query(AppsControlDbContext context) =>
         context.Classes.Include(c => c.ParentClass).Include(c => c.Attributes);
@@ -92,16 +92,15 @@ internal sealed class ClassApplier(AppsControlDbContext db) : ConfigApplier<Dict
         if (existing is { ValuesPerCompany: true } && !payload.ValuesPerCompany)
         {
             var limited = await refs.Context.Domains.AsNoTracking()
-                .Where(d => d.ClassId == existing.Id && d.Companies.Count > 0 && !d.Companies.Contains(CompanyScope.All))
+                .Where(d => d.ClassId == existing.Id && d.CompanyCode != null)
                 .OrderBy(d => d.Code).Select(d => d.Code).Take(5).ToListAsync(cancellationToken);
             if (limited.Count > 0)
             {
-                errors.Add("valuesPerCompany", $"Values {string.Join(", ", limited)} are limited to companies; open them to every company first.");
+                errors.Add("valuesPerCompany", $"Values {string.Join(", ", limited)} belong to one company; delete them or make them values of every company first.");
             }
         }
 
         // Values of a class that starts having values per company serve all companies until limited.
-        var startsPerCompany = existing is { ValuesPerCompany: false } && payload.ValuesPerCompany;
         entity.ValuesPerCompany = payload.ValuesPerCompany;
         if (payload.ParentClassCode == entity.Code)
         {
@@ -197,12 +196,6 @@ internal sealed class ClassApplier(AppsControlDbContext db) : ConfigApplier<Dict
         if (errors.HasErrors || refs.IsValidating)
         {
             return;
-        }
-
-        if (startsPerCompany)
-        {
-            await refs.Context.Domains.Where(d => d.ClassId == entity.Id && d.Companies.Count == 0)
-                .ExecuteUpdateAsync(u => u.SetProperty(d => d.Companies, new List<string> { CompanyScope.All }), cancellationToken);
         }
 
         var removed = entity.Attributes.Select(a => a.Code).Except(definitions.Select(d => d.Code)).ToList();
@@ -329,8 +322,8 @@ public sealed class DomainPayload : ConfigPayload
 
     public DateOnly? EffectiveTo { get; set; }
 
-    /// <summary>Companies the value serves, or ["*"] for all (required for classes with values per company, empty otherwise).</summary>
-    public List<string> Companies { get; set; } = [];
+    /// <summary>The company of a company value (<c>instid/cmp_num</c>), taken from the key; null for a value of every company.</summary>
+    public string? CompanyCode { get; set; }
 }
 
 internal sealed class DomainApplier(AppsControlDbContext db, IEnumerable<IDomainRules> rules, IServiceProvider services) : ConfigApplier<DomainValue, DomainPayload>(db)
@@ -352,34 +345,51 @@ internal sealed class DomainApplier(AppsControlDbContext db, IEnumerable<IDomain
 
     protected override Guid? ParentOf(DomainValue entity) => entity.ParentDomainId;
 
-    protected override Task<DomainValue?> FindAsync(AppsControlDbContext context, string entityCode, CancellationToken cancellationToken) =>
-        DomainKey.TryParse(entityCode, out var classCode, out var code)
-            ? Query(context).SingleOrDefaultAsync(d => d.Class!.Code == classCode && d.Code == code, cancellationToken)
-            : Task.FromResult<DomainValue?>(null);
+    protected override Task<DomainValue?> FindAsync(AppsControlDbContext context, string entityCode, CancellationToken cancellationToken)
+    {
+        if (!DomainKey.TryParse(entityCode, out var classCode, out var companyKey, out var code))
+        {
+            return Task.FromResult<DomainValue?>(null);
+        }
+
+        if (companyKey is null)
+        {
+            return Query(context).SingleOrDefaultAsync(d => d.Class!.Code == classCode && d.CompanyCode == null && d.Code == code, cancellationToken);
+        }
+
+        _ = CompanyKey.TryParse(companyKey, out var instid, out var number);
+        return Query(context).SingleOrDefaultAsync(d => d.Class!.Code == classCode && d.EntityCode == instid && d.CompanyCode == number && d.Code == code, cancellationToken);
+    }
 
     protected override void ValidateKey(string entityCode, ValidationErrors errors)
     {
-        if (!DomainKey.TryParse(entityCode, out var classCode, out var code))
+        if (!DomainKey.TryParse(entityCode, out var classCode, out var companyKey, out var code))
         {
-            errors.Add("code", "Use CLASS/CODE.");
+            errors.Add("code", "Use CLASS/CODE, or CLASS/instid/cmp_num/CODE for a value of one company.");
             return;
         }
 
-        errors.Code("classCode", classCode, ValidationErrors.IdentifierCode());
+        errors.Code("classCode", classCode, ValidationErrors.ClassCode());
+        if (companyKey is not null && CompanyKey.TryParse(companyKey, out var instid, out var number))
+        {
+            errors.Code("companyCode", instid, ValidationErrors.GeneralCode());
+            errors.Code("companyCode", number, ValidationErrors.GeneralCode());
+        }
+
         errors.Code("code", code, ValidationErrors.GeneralCode());
     }
 
     protected override string CodeFromKey(string entityCode) =>
         DomainKey.TryParse(entityCode, out _, out var code) ? code : entityCode;
 
-    protected override string EntityCodeOf(DomainValue entity) => DomainKey.Format(entity.Class?.Code ?? string.Empty, entity.Code);
+    protected override string EntityCodeOf(DomainValue entity) => DomainKey.Format(entity.Class?.Code ?? string.Empty, entity.CompanyKey, entity.Code);
 
     protected override async Task ApplyAsync(DomainValue entity, DomainPayload payload, RefResolver refs, ValidationErrors errors, DomainValue? existing, CancellationToken cancellationToken)
     {
         var context = refs.Context;
-        if (!DomainKey.TryParse(payload.Code!, out var classCode, out _))
+        if (!DomainKey.TryParse(payload.Code!, out var classCode, out var companyKey, out _))
         {
-            errors.Add("code", "Use CLASS/CODE.");
+            errors.Add("code", "Use CLASS/CODE, or CLASS/instid/cmp_num/CODE for a value of one company.");
             return;
         }
 
@@ -407,28 +417,29 @@ internal sealed class DomainApplier(AppsControlDbContext db, IEnumerable<IDomain
             errors.Add("effectiveTo", "Must not be before the start date.");
         }
 
-        // With values per company the companies are chosen, "*" for all of them (ADR-0036); other classes have none.
-        entity.Companies = [.. payload.Companies.Where(c => !string.IsNullOrWhiteSpace(c)).Select(c => c.Trim()).Distinct(StringComparer.Ordinal)];
-        if (entity.Companies.Contains(CompanyScope.All))
+        // A value of one company (key CLASS/instid/cmp_num/CODE) needs a class with values per company; its instance is the
+        // company's.
+        if (payload.CompanyCode is { Length: > 0 } given && given != companyKey)
         {
-            entity.Companies = cls.ValuesPerCompany ? [CompanyScope.All] : [];
+            errors.Add("companyCode", $"The value's company is the one in its key ({companyKey ?? "none"}).");
         }
 
-        if (entity.Companies.Count > 0 && !cls.ValuesPerCompany)
+        entity.CompanyCode = null;
+        if (companyKey is not null && CompanyKey.TryParse(companyKey, out var instid, out var number))
         {
-            errors.Add("companies", $"Class {cls.Code} does not have values per company.");
-        }
-        else if (cls.ValuesPerCompany && entity.Companies.Count == 0)
-        {
-            errors.Add("companies", "Choose the companies the value serves, or all companies (*).");
-        }
-        else if (entity.Companies.Count > 0 && !CompanyScope.IsAll(entity.Companies))
-        {
-            var known = await context.Companies.AsNoTracking().Where(c => entity.Companies.Contains(c.Code)).Select(c => c.Code).ToListAsync(cancellationToken);
-            foreach (var code in entity.Companies.Where(c => !known.Contains(c) && !refs.IsPendingCreate(AppsControlChangeTypes.Company, c)))
+            if (!cls.ValuesPerCompany)
             {
-                errors.Add("companies", $"Company '{code}' does not exist.");
+                errors.Add("companyCode", $"Class {cls.Code} does not have values per company.");
             }
+
+            if (!await context.Companies.AsNoTracking().AnyAsync(c => c.EntityCode == instid && c.Code == number, cancellationToken)
+                && !refs.IsPendingCreate(AppsControlChangeTypes.Company, companyKey))
+            {
+                errors.Add("companyCode", $"Company '{companyKey}' does not exist.");
+            }
+
+            entity.EntityCode = instid;
+            entity.CompanyCode = number;
         }
 
         // Parent value: from the parent class when the class has one, otherwise from the same (hierarchical) class.
@@ -480,11 +491,11 @@ internal sealed class DomainApplier(AppsControlDbContext db, IEnumerable<IDomain
 
         if (payload.IsDefault)
         {
-            // Only one default value per class, or per company: values serving one of the same companies stop being the default.
-            var companies = entity.Companies;
+            // Only one default value per class, or per company: a company's default replaces that company's; a value of every
+            // company replaces every default.
+            var (valueInstid, valueNumber) = (entity.EntityCode, entity.CompanyCode);
             await context.Domains.Where(d => d.ClassId == cls.Id && d.Id != entity.Id && d.IsDefault
-                    && (companies.Count == 0 || companies.Contains(CompanyScope.All) || d.Companies.Count == 0 || d.Companies.Contains(CompanyScope.All)
-                        || d.Companies.Any(c => companies.Contains(c))))
+                    && (valueNumber == null || d.CompanyCode == null || (d.EntityCode == valueInstid && d.CompanyCode == valueNumber)))
                 .ExecuteUpdateAsync(s => s.SetProperty(d => d.IsDefault, false), cancellationToken);
         }
     }
@@ -501,7 +512,7 @@ internal sealed class DomainApplier(AppsControlDbContext db, IEnumerable<IDomain
             Attributes = JsonNode.Parse(entity.Attributes) as JsonObject,
             EffectiveFrom = entity.EffectiveFrom,
             EffectiveTo = entity.EffectiveTo,
-            Companies = entity.Companies,
+            CompanyCode = entity.CompanyKey,
         });
 
     protected override async Task BeforeDeleteAsync(AppsControlDbContext context, DomainValue entity, CancellationToken cancellationToken)

@@ -334,7 +334,7 @@
         "roles": [
           {
             "roleCode": "CLS_REQUEST_MANAGER",
-            "companyCode": "MAIN",
+            "companyCode": "ENTITY/MAIN",
             "branches": [
               "HQ"
             ]
@@ -362,7 +362,7 @@
         "roles": [
           {
             "roleCode": "CLS_REQUEST_MANAGER",
-            "companyCode": "MAIN",
+            "companyCode": "ENTITY/MAIN",
             "branches": [
               "JED"
             ]
@@ -390,7 +390,7 @@
         "roles": [
           {
             "roleCode": "CLS_REQUEST_MANAGER",
-            "companyCode": "MAIN",
+            "companyCode": "ENTITY/MAIN",
             "branches": [
               "DMM"
             ]
@@ -458,7 +458,7 @@
         "roles": [
           {
             "roleCode": "CLS_GOV_AUDITOR",
-            "companyCode": "MAIN",
+            "companyCode": "ENTITY/MAIN",
             "branches": [
               "*"
             ]
@@ -526,7 +526,7 @@
         "roles": [
           {
             "roleCode": "CLS_PROJECTS_AUDITOR",
-            "companyCode": "MAIN",
+            "companyCode": "ENTITY/MAIN",
             "branches": [
               "*"
             ]
@@ -594,7 +594,7 @@
         "roles": [
           {
             "roleCode": "CLS_AUDIT_MANAGER",
-            "companyCode": "MAIN",
+            "companyCode": "ENTITY/MAIN",
             "branches": [
               "*"
             ]
@@ -602,7 +602,7 @@
         ],
         "privileges": [
           {
-            "companyCode": "MAIN",
+            "companyCode": "ENTITY/MAIN",
             "resourceCode": "action-center.supervision",
             "actions": [
               "VIEW"

@@ -237,7 +237,7 @@ internal static class ConnectEndpoints
         AppsControlDbContext db, CallingApp app, AccessSnapshot access, string company, CancellationToken cancellationToken)
     {
         var rows = await db.Branches.AsNoTracking()
-            .Where(b => b.CompanyCode == company && b.IsActive)
+            .Where(b => b.EntityCode + "/" + b.CompanyCode == company && b.IsActive)
             .OrderBy(b => b.DisplayOrder).ThenBy(b => b.Code)
             .Select(b => new ConnectPlace(b.Code, b.NameAr, b.NameEn))
             .ToListAsync(cancellationToken);
@@ -248,7 +248,7 @@ internal static class ConnectEndpoints
 
     private static async Task<List<ConnectPlace>> PlacesAsync(IQueryable<Company> companies, List<string> codes, CancellationToken cancellationToken)
     {
-        var rows = await companies.AsNoTracking().Where(c => codes.Contains(c.Code)).Select(c => new ConnectPlace(c.Code, c.NameAr, c.NameEn)).ToListAsync(cancellationToken);
+        var rows = await companies.AsNoTracking().Where(c => codes.Contains(c.EntityCode + "/" + c.Code)).Select(c => new ConnectPlace(c.EntityCode + "/" + c.Code, c.NameAr, c.NameEn)).ToListAsync(cancellationToken);
         return [.. codes.Select(code => rows.First(r => r.Code == code))];
     }
 

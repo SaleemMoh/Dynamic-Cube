@@ -20,13 +20,24 @@ export interface ConfigPackage {
 
 const isObject = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
 
-/** The change-item key of a row: its code, `APP/CODE` for app-scoped rows, or the singleton's fixed code. */
+/** The change-item key of a row: its code, `APP/CODE` for app-scoped and menu rows, `instid/cmp_num` for companies, or the singleton's fixed code. */
 export function rowKey(row: Record<string, unknown>, key: ConfigType['key']): string | null {
   if (typeof key === 'object') return key.singleton;
   const code = typeof row['code'] === 'string' ? row['code'].trim() : '';
   if (!code) return null;
   const app = typeof row['appCode'] === 'string' ? row['appCode'].trim() : '';
-  return key === 'appScoped' && app && !code.includes('/') ? `${app}/${code}` : code;
+  if (code.includes('/')) return code;
+  if (key === 'tree') {
+    // Menu rows: the tree is the channel, or the connected app the row belongs to.
+    const owner = typeof row['businessApp'] === 'string' ? row['businessApp'].trim() : '';
+    const tree = app || owner;
+    return tree ? `${tree}/${code}` : code;
+  }
+  if (key === 'company') {
+    const instance = typeof row['entityCode'] === 'string' ? row['entityCode'].trim() : '';
+    return instance ? `${instance}/${code}` : code;
+  }
+  return key === 'appScoped' && app ? `${app}/${code}` : code;
 }
 
 /**

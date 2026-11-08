@@ -29,7 +29,7 @@ internal static class DepartmentRoles
 
         var branches = (await context.Branches.AsNoTracking()
             .Where(b => b.IsActive && b.OrgUnitCode != null)
-            .Join(context.OrgUnits.AsNoTracking(), b => b.OrgUnitCode, u => u.Code, (b, u) => new { b.Code, b.CompanyCode, u.Path })
+            .Join(context.OrgUnits.AsNoTracking(), b => b.OrgUnitCode, u => u.Code, (b, u) => new { b.Code, CompanyCode = b.EntityCode + "/" + b.CompanyCode, u.Path })
             .ToListAsync(cancellationToken))
             .Select(b => (b.Code, b.CompanyCode, Path: b.Path.ToString()))
             .ToList();

@@ -23,7 +23,7 @@ public sealed class BranchPlacementTests(DatabaseFixture fixture)
     {
         await using var applicant = await Applicant.CreateAsync(fixture);
         var host = applicant.Host;
-        var (company, west, east) = (TestHost.Unique("CO"), TestHost.Unique("WEST"), TestHost.Unique("EAST"));
+        var (company, west, east) = ("ENTITY/" + TestHost.Unique("CO"), TestHost.Unique("WEST"), TestHost.Unique("EAST"));
         var (region, service, role) = (TestHost.Unique("CITY"), TestHost.Unique("BRANCHED"), TestHost.Unique("CLERK"));
         await host.PublishAsync(AppsControlAreas.System,
             new Change(AppsControlChangeTypes.Company, company, ChangeOperation.Create, new { nameAr = "شركة", nameEn = "Company", displayOrder = 999 }),

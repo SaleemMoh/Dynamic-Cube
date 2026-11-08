@@ -44,7 +44,7 @@ erDiagram
 | `reference_class_id` | uuid FK → `dd_classes.id` | Values of this class hang under values of the parent class (CITY → REGION) |
 | `is_hierarchical` | bool | Values hang under values of the **same** class (a tree) |
 | `virtual_enable_multiple_assign` | bool | Stored and edited on the class screen, but no logic reads it yet (kept from the original design) |
-| `values_per_company` | bool | Each value lists the companies it serves (or `*` = all) |
+| `values_per_company` | bool | Values may belong to one company each (key `CLASS/instid/cmp_num/VALUE`) besides values of every company (`CLASS/VALUE`) |
 | `settings` | jsonb | Named values stored on the class itself: `[{code, nameAr, nameEn, value}]` |
 | `is_active` | bool | |
 | `owner` | text `System` / `Entity` | `System` = shipped with the product (a module's class): cannot be changed or deleted through the screens |
@@ -84,14 +84,14 @@ erDiagram
 | `is_default` | bool | One default per class (or per company for classes with values per company); setting one clears the others |
 | `attributes` | jsonb (GIN index) | The class's attribute values: `{"CAPITAL_LIMIT": 5000000, "ICON": "home"}` |
 | `effective_from`, `effective_to` | date | A value outside its dates is read as inactive |
-| `cmp_nums` | text[] | Companies served (classes with values per company), `["*"]` for all; empty otherwise |
-| `active_flag`, `owner`, `instid`, `business_app`, `shared_apps`, audit columns, `xmin` | | As on `dd_classes` (`active_flag` is `is_active` there) |
+| `instid`, `cmp_num` | varchar | The one company a value serves (classes with values per company, like legacy `DD_COMPANY_DOMAIN`); empty for a value of every company. Unique: `(class_id, value)` for every-company values, `(class_id, instid, cmp_num, value)` for company values, so the same code can exist in two companies |
+| `active_flag`, `owner`, `business_app`, `shared_apps`, audit columns, `xmin` | | As on `dd_classes` (`active_flag` is `is_active` there) |
 
 ### Views `apps.v_class_<code>` — one per class, for the query builder
 
 Generated (not migrations) for **every** class each time it is published — not only when an attribute is marked
 *Available in reports and queries*. The view always has the fixed value columns (`id, code, class_code, name_ar, name_en, details_ar,
-details_en, parent_code, display_order, is_default, is_active, effective_from, effective_to, companies`); the *Available in
+details_en, parent_code, display_order, is_default, is_active, effective_from, effective_to, companies`; `companies` holds the value's company key `instid/cmp_num`, or nothing for every company); the *Available in
 reports and queries* tick (`is_reportable`) only decides whether an attribute **also** becomes a typed column
 (`(attributes->>'CAPITAL_LIMIT')::numeric AS capital_limit`). A `-` in a code becomes `_` in SQL names. The view keeps these column names whatever the table columns are called
 (`d.value AS code`, `d.domain_desc_ntv AS name_ar`…), so lists, reports and API endpoints written against a view do not change.

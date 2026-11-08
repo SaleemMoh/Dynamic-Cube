@@ -41,15 +41,15 @@ public sealed class DataQueryTests(AppsControlFixture fixture) : IAsyncLifetime
             DataDictionaryTests.DomainChange(_sector, "CONSULTING", "استشارات", "Consulting", new { ACTIVE_SINCE = 2000 }),
             DataDictionaryTests.DomainChange(_sector, "SOFTWARE", "برمجيات", "Software", new { ACTIVE_SINCE = 2015 }, parent: "ICT"));
 
-        (_main, _sub, _banks) = (Harness.Unique("CO"), Harness.Unique("CO"), Harness.Unique("BANKS"));
+        (_main, _sub, _banks) = ("ENTITY/" + Harness.Unique("CO"), "ENTITY/" + Harness.Unique("CO"), Harness.Unique("BANKS"));
         await _harness.PublishAsync(AppsControlAreas.System,
             new Change(AppsControlChangeTypes.Company, _main, ChangeOperation.Create, new { nameAr = "شركة", nameEn = "Main" }),
             new Change(AppsControlChangeTypes.Company, _sub, ChangeOperation.Create, new { nameAr = "شركة", nameEn = "Subsidiary" }));
         await _harness.PublishAsync(AppsControlAreas.DataDictionary,
             new Change(AppsControlChangeTypes.Class, _banks, ChangeOperation.Create, new { nameAr = "بنوك", nameEn = "Banks", valuesPerCompany = true, attributes = Array.Empty<object>() }));
-        Change Bank(string code, string[] companies) =>
-            new(AppsControlChangeTypes.Domain, $"{_banks}/{code}", ChangeOperation.Create, new { nameAr = "بنك", nameEn = code, companies });
-        await _harness.PublishAsync(AppsControlAreas.DataDictionary, Bank("SHARED", ["*"]), Bank("MAIN_ONLY", [_main]), Bank("SUB_ONLY", [_sub]));
+        Change Bank(string code, string? company) =>
+            new(AppsControlChangeTypes.Domain, company is null ? $"{_banks}/{code}" : $"{_banks}/{company}/{code}", ChangeOperation.Create, new { nameAr = "بنك", nameEn = code });
+        await _harness.PublishAsync(AppsControlAreas.DataDictionary, Bank("SHARED", null), Bank("MAIN_ONLY", _main), Bank("SUB_ONLY", _sub));
     }
 
     public ValueTask DisposeAsync() => _harness.DisposeAsync();

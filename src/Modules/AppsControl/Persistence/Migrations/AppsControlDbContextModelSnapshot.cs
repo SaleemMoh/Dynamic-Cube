@@ -749,6 +749,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("order_num");
 
                     b.Property<string>("EntityCode")
+                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("instid");
@@ -808,9 +809,9 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_sys_company_profile");
 
-                    b.HasIndex("Code")
+                    b.HasIndex("EntityCode", "Code")
                         .IsUnique()
-                        .HasDatabaseName("ix_sys_company_profile_code");
+                        .HasDatabaseName("ix_sys_company_profile_entity_code_code");
 
                     b.ToTable("sys_company_profile", "apps");
                 });
@@ -1101,10 +1102,10 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("value");
 
-                    b.PrimitiveCollection<List<string>>("Companies")
-                        .IsRequired()
-                        .HasColumnType("text[]")
-                        .HasColumnName("cmp_nums");
+                    b.Property<string>("CompanyCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("cmp_num");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -1204,7 +1205,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
 
                     b.HasIndex("ClassId", "Code")
                         .IsUnique()
-                        .HasDatabaseName("ix_dd_domain_class_id_code");
+                        .HasDatabaseName("ix_dd_domain_class_id_code")
+                        .HasFilter("cmp_num IS NULL");
+
+                    b.HasIndex("ClassId", "EntityCode", "CompanyCode", "Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_dd_domain_class_id_entity_code_company_code_code")
+                        .HasFilter("cmp_num IS NOT NULL");
 
                     b.ToTable("dd_domain", "apps");
                 });
@@ -1944,13 +1951,6 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_sys_menu");
 
-                    b.HasIndex("AppId")
-                        .HasDatabaseName("ix_sys_menu_app_id");
-
-                    b.HasIndex("Code")
-                        .IsUnique()
-                        .HasDatabaseName("ix_sys_menu_code");
-
                     b.HasIndex("MenuGroupId")
                         .HasDatabaseName("ix_sys_menu_menu_group_id");
 
@@ -1959,6 +1959,12 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
 
                     b.HasIndex("ResourceId")
                         .HasDatabaseName("ix_sys_menu_resource_id");
+
+                    b.HasIndex("AppId", "BusinessApp", "Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_sys_menu_app_id_business_app_code");
+
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("AppId", "BusinessApp", "Code"), false);
 
                     b.ToTable("sys_menu", "apps");
                 });
@@ -2053,12 +2059,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_sys_menu_groups");
 
-                    b.HasIndex("AppId")
-                        .HasDatabaseName("ix_sys_menu_groups_app_id");
-
-                    b.HasIndex("Code")
+                    b.HasIndex("AppId", "BusinessApp", "Code")
                         .IsUnique()
-                        .HasDatabaseName("ix_sys_menu_groups_code");
+                        .HasDatabaseName("ix_sys_menu_groups_app_id_business_app_code");
+
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("AppId", "BusinessApp", "Code"), false);
 
                     b.ToTable("sys_menu_groups", "apps");
                 });
@@ -2539,6 +2544,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("role_code");
 
+                    b.Property<string>("CompanyCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("cmp_num");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -2614,7 +2624,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
 
                     b.HasIndex("Code")
                         .IsUnique()
-                        .HasDatabaseName("ix_sys_roles_code");
+                        .HasDatabaseName("ix_sys_roles_code")
+                        .HasFilter("cmp_num IS NULL");
+
+                    b.HasIndex("EntityCode", "CompanyCode", "Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_sys_roles_entity_code_company_code_code")
+                        .HasFilter("cmp_num IS NOT NULL");
 
                     b.ToTable("sys_roles", "apps");
                 });

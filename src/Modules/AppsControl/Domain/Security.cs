@@ -42,8 +42,52 @@ public sealed class Resource : ConfigEntity
     public List<string> AvailableActions { get; set; } = [PrivilegeActions.View];
 }
 
+/// <summary>
+/// A role of one company is keyed like the legacy Apps Control: instance, company number and role code, written
+/// <c>instid/cmp_num/role_code</c> (e.g. <c>12/99/ADMIN</c>). A role of no company (held in any company) keeps its code.
+/// </summary>
+public static class RoleKey
+{
+    public static string Format(string? instid, string? cmpNum, string code) =>
+        string.IsNullOrEmpty(cmpNum) ? code : $"{instid}/{cmpNum}/{code}";
+
+    /// <summary>Splits a key; a key without slashes is a role of no company (instid and cmp_num empty).</summary>
+    public static bool TryParse(string? key, out string instid, out string cmpNum, out string code)
+    {
+        instid = cmpNum = code = string.Empty;
+        if (string.IsNullOrEmpty(key))
+        {
+            return false;
+        }
+
+        var parts = key.Split('/');
+        if (parts.Length == 1)
+        {
+            code = key;
+            return true;
+        }
+
+        if (parts.Length != 3 || parts.Any(p => p.Length == 0))
+        {
+            return false;
+        }
+
+        (instid, cmpNum, code) = (parts[0], parts[1], parts[2]);
+        return true;
+    }
+}
+
 public sealed class Role : ConfigEntity
 {
+    /// <summary>The company number (<c>cmp_num</c>) of a role of one company, with its instance in <c>instid</c>; null for a role held in any company.</summary>
+    public string? CompanyCode { get; set; }
+
+    /// <summary>The role's key: <c>instid/cmp_num/role_code</c>, or the code alone for a role of no company.</summary>
+    public string Key => RoleKey.Format(EntityCode, CompanyCode, Code);
+
+    /// <summary>The key of the role's company, null for a role of no company.</summary>
+    public string? CompanyKey => CompanyCode is null ? null : Domain.CompanyKey.Format(EntityCode, CompanyCode);
+
     /// <summary>Null means the role spans all apps.</summary>
     public Guid? AppId { get; set; }
 

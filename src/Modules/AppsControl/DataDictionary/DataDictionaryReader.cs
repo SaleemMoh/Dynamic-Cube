@@ -50,7 +50,7 @@ internal sealed class DataDictionaryReader(AppsControlDbContext context, TimePro
             JsonNode.Parse(d.Attributes) as JsonObject ?? [],
             d.EntityCode,
             d.BusinessApp,
-            d.Companies)).ToList();
+            d.CompanyKey is { } company ? [company] : [])).ToList();
         _classes[classCode] = values;
         return values;
     }

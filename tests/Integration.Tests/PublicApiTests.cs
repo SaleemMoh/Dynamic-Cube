@@ -78,7 +78,7 @@ public sealed class PublicApiTests(DatabaseFixture fixture) : IAsyncLifetime
         }
 
         _host = new TestHost(fixture.ConnectionString);
-        (_class, _companyA, _companyB) = (TestHost.Unique("REGIONS"), TestHost.Unique("CO"), TestHost.Unique("CO"));
+        (_class, _companyA, _companyB) = (TestHost.Unique("REGIONS"), "ENTITY/" + TestHost.Unique("CO"), "ENTITY/" + TestHost.Unique("CO"));
         await _host.PublishAsync(
             AppsControlAreas.System,
             new Change(AppsControlChangeTypes.Company, _companyA, ChangeOperation.Create, new { nameAr = "أ", nameEn = "A" }),
@@ -86,9 +86,10 @@ public sealed class PublicApiTests(DatabaseFixture fixture) : IAsyncLifetime
         await _host.PublishAsync(
             AppsControlAreas.DataDictionary,
             new Change(AppsControlChangeTypes.Class, _class, ChangeOperation.Create, new { nameAr = "مناطق", nameEn = "Regions", valuesPerCompany = true, attributes = Array.Empty<object>() }));
-        Change Value(string code, string[] companies) =>
-            new(AppsControlChangeTypes.Domain, $"{_class}/{code}", ChangeOperation.Create, new { nameAr = "منطقة " + code, nameEn = "Region " + code, companies });
-        await _host.PublishAsync(AppsControlAreas.DataDictionary, Value("R1", ["*"]), Value("R2", [_companyA]), Value("R3", [_companyB]));
+        // A value of every company (CLASS/CODE) and values of one company (CLASS/instid/cmp_num/CODE).
+        Change Value(string code, string? company) =>
+            new(AppsControlChangeTypes.Domain, company is null ? $"{_class}/{code}" : $"{_class}/{company}/{code}", ChangeOperation.Create, new { nameAr = "منطقة " + code, nameEn = "Region " + code });
+        await _host.PublishAsync(AppsControlAreas.DataDictionary, Value("R1", null), Value("R2", _companyA), Value("R3", _companyB));
     }
 
     public async ValueTask DisposeAsync()

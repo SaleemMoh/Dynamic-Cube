@@ -77,7 +77,8 @@ export interface ConfigType {
   entityType: string;
   title: LocalizedText;
   /** How the change-item key is formed: the code, `APP/CODE` for app-scoped rows, or a fixed singleton code. */
-  key: 'code' | 'appScoped' | { singleton: string };
+  /** How a row is keyed: its code; app/code; tree/code (menus); instid/cmp_num (companies); or one fixed row. */
+  key: 'code' | 'appScoped' | 'tree' | 'company' | { singleton: string };
   /** Extra list columns (payload fields). */
   columns?: string[];
   fields: ConfigField[];
@@ -172,7 +173,7 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
       {
         entityType: 'apps.company',
         title: t('الشركات', 'Companies'),
-        key: 'code',
+        key: 'company',
         scope: 'entity',
         columns: ['crNumber', 'displayOrder'],
         fields: [
@@ -647,7 +648,7 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
       {
         entityType: 'apps.menu',
         title: t('عناصر القائمة', 'Menu items'),
-        key: 'code',
+        key: 'tree',
         columns: ['appCode', 'groupCode', 'target'],
         fields: [
           { ...appRef, hint: t('فارغ لقوائم التطبيق المرتبط', 'Empty for a connected app’s menus') },
@@ -701,7 +702,7 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
       {
         entityType: 'apps.menu-group',
         title: t('مجموعات القوائم', 'Menu groups'),
-        key: 'code',
+        key: 'tree',
         columns: ['appCode'],
         fields: [
           { ...appRef, hint: t('فارغ لقوائم التطبيق المرتبط', 'Empty for a connected app’s menus') },

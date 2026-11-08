@@ -82,6 +82,10 @@ public sealed partial class ValidationErrors
     [GeneratedRegex("^[A-Z][A-Z0-9_\\-]{0,50}$")]
     public static partial Regex IdentifierCode();
 
+    /// <summary>A data dictionary class: an identifier that may also have lower case letters (legacy classes such as <c>Task_priority</c>).</summary>
+    [GeneratedRegex("^[A-Za-z][A-Za-z0-9_\\-]{0,50}$")]
+    public static partial Regex ClassCode();
+
     /// <summary>Usernames as issued by the identity provider.</summary>
     [GeneratedRegex("^[A-Za-z0-9][A-Za-z0-9_.@\\-]{0,255}$")]
     public static partial Regex UserName();

@@ -130,7 +130,7 @@ public sealed class ReportQueryTests(AppsControlFixture fixture) : IAsyncLifetim
     [Fact]
     public async Task Rows_of_a_table_keep_the_viewers_company_and_branches()
     {
-        var (company, other, riyadh, jeddah) = (Harness.Unique("CO"), Harness.Unique("CO2"), Harness.Unique("RUH"), Harness.Unique("JED"));
+        var (company, other, riyadh, jeddah) = ("ENTITY/" + Harness.Unique("CO"), "ENTITY/" + Harness.Unique("CO2"), Harness.Unique("RUH"), Harness.Unique("JED"));
         var (role, user) = (Harness.Unique("ROLE"), Harness.Unique("staff").ToLowerInvariant());
         await _harness.PublishAsync(AppsControlAreas.System,
             new Change(AppsControlChangeTypes.Company, company, ChangeOperation.Create, new { nameAr = "شركة", nameEn = "Company" }),

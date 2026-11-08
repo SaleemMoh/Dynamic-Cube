@@ -34,7 +34,7 @@ public static class ClassDomainMigrations
                        s.created_at, s.created_by, s.updated_at, s.updated_by, s.entity_code, s.business_app
                 FROM {sourceTable} s CROSS JOIN apps.dd_classes k
                 WHERE k.class_code = '{classCode}'
-                ON CONFLICT (class_id, value) DO NOTHING;
+                ON CONFLICT (class_id, value) WHERE cmp_num IS NULL DO NOTHING;
                 RETURN;
               END IF;
               IF to_regclass('apps.class') IS NULL THEN

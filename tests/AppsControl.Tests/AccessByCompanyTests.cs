@@ -28,7 +28,7 @@ public sealed class AccessByCompanyTests(AppsControlFixture fixture) : IAsyncLif
     [Fact]
     public async Task Access_comes_from_roles_in_a_company_the_department_and_personal_privileges()
     {
-        var (company, riyadh, jeddah) = (Harness.Unique("CO"), Harness.Unique("RUH"), Harness.Unique("JED"));
+        var (company, riyadh, jeddah) = ("ENTITY/" + Harness.Unique("CO"), Harness.Unique("RUH"), Harness.Unique("JED"));
         var (clerk, departmentRole, unitType, unit) = (Harness.Unique("CLERK"), Harness.Unique("DEPT"), Harness.Unique("TYPE"), Harness.Unique("UNIT"));
         var user = Harness.Unique("staff").ToLowerInvariant();
         await _harness.PublishAsync(AppsControlAreas.System,
@@ -79,7 +79,7 @@ public sealed class AccessByCompanyTests(AppsControlFixture fixture) : IAsyncLif
     [Fact]
     public async Task All_is_an_explicit_choice_branches_need_their_company_and_personal_actions_must_exist_on_the_screen()
     {
-        var (company, other, branch) = (Harness.Unique("CO"), Harness.Unique("CO2"), Harness.Unique("BR"));
+        var (company, other, branch) = ("ENTITY/" + Harness.Unique("CO"), "ENTITY/" + Harness.Unique("CO2"), Harness.Unique("BR"));
         var role = Harness.Unique("ROLE");
         await _harness.PublishAsync(AppsControlAreas.System,
             new Change(AppsControlChangeTypes.Company, company, ChangeOperation.Create, new { nameAr = "شركة", nameEn = "Company" }),
@@ -114,7 +114,7 @@ public sealed class AccessByCompanyTests(AppsControlFixture fixture) : IAsyncLif
     [Fact]
     public async Task Access_applies_for_the_company_the_person_works_in()
     {
-        var (first, second, branch, unitType, unit) = (Harness.Unique("CO1"), Harness.Unique("CO2"), Harness.Unique("BR"), Harness.Unique("TYPE"), Harness.Unique("UNIT"));
+        var (first, second, branch, unitType, unit) = ("ENTITY/" + Harness.Unique("CO1"), "ENTITY/" + Harness.Unique("CO2"), Harness.Unique("BR"), Harness.Unique("TYPE"), Harness.Unique("UNIT"));
         var (clerk, everywhere, department) = (Harness.Unique("CLERK"), Harness.Unique("ALLCO"), Harness.Unique("DEPT"));
         var user = Harness.Unique("staff").ToLowerInvariant();
         await _harness.PublishAsync(AppsControlAreas.System,

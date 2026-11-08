@@ -12,7 +12,7 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router } from '@angular/router';
 import { AppsControlApi, I18nService, LocalizePipe, TranslatePipe, problemMessages } from '@dynamic-cube/shared';
-import { firstValueFrom } from 'rxjs';
+import { catchError, firstValueFrom, of } from 'rxjs';
 import { ConfirmData, ConfirmDialog } from '../confirm-dialog';
 import { DraftsService } from '../drafts.service';
 import { DetailsData, DetailsDialog, displayValue } from '../master/details-dialog';
@@ -132,10 +132,10 @@ const RESOURCE = 'apps-control.classes';
               <ng-container matColumnDef="companies">
                 <th mat-header-cell *matHeaderCellDef>{{ 'classes.companies' | dcTranslate }}</th>
                 <td mat-cell *matCellDef="let row" class="mono">
-                  @if (row.companies?.includes('*')) {
+                  @if (!row.companyCode) {
                     <span class="dc-muted">{{ 'access.allCompanies' | dcTranslate }}</span>
                   } @else {
-                    {{ row.companies?.join(', ') }}
+                    {{ companyName(row.companyCode) }}
                   }
                 </td>
               </ng-container>
@@ -240,6 +240,8 @@ export class ClassesPage {
   protected readonly errors = signal<string[]>([]);
   protected readonly search = signal('');
   protected readonly classes = rxResource({ stream: () => this.api.list('apps.class') });
+  /** Company names by key (instid/cmp_num), for values of one company. */
+  private readonly companies = rxResource({ stream: () => this.api.list('apps.company').pipe(catchError(() => of([]))) });
   private readonly counts = rxResource({ stream: () => this.api.counts('apps.class') });
   private readonly classRows = computed(() => (this.classes.hasValue() ? (this.classes.value() as ClassRow[]) : []));
 
@@ -308,7 +310,13 @@ export class ClassesPage {
   }
 
   protected valueCode(row: DomainRow): string {
-    return row.code.slice(row.code.indexOf('/') + 1);
+    return row.code.slice(row.code.lastIndexOf('/') + 1);
+  }
+
+  /** A company's name and key, e.g. "Main company (5/10)". */
+  protected companyName(key: string | null | undefined): string {
+    const row = (this.companies.hasValue() ? this.companies.value() : []).find((c) => c.code === key);
+    return row ? `${this.i18n.localize({ ar: row.nameAr, en: row.nameEn })} (${key})` : (key ?? '');
   }
 
   protected attributeValue(row: DomainRow, code: string): string {
@@ -351,7 +359,7 @@ export class ClassesPage {
         { label: { ar: 'يسري من', en: 'Effective from' }, value: row.effectiveFrom ?? '', ltr: true },
         { label: { ar: 'يسري حتى', en: 'Effective to' }, value: row.effectiveTo ?? '', ltr: true },
         ...(cls?.valuesPerCompany
-          ? [{ label: { ar: 'الشركات', en: 'Companies' }, value: row.companies?.includes('*') ? this.i18n.translate('access.allCompanies') : (row.companies ?? []).join(', '), ltr: true }]
+          ? [{ label: { ar: 'الشركات', en: 'Companies' }, value: !row.companyCode ? this.i18n.translate('access.allCompanies') : this.companyName(row.companyCode), ltr: true }]
           : []),
         ...(cls?.attributes ?? []).map((a) => ({ label: { ar: a.nameAr, en: a.nameEn }, value: displayValue(row.attributes?.[a.code]) })),
       ],

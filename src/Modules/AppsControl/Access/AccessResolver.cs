@@ -98,13 +98,13 @@ public sealed partial class AccessResolver(
         var held = await context.UserRoles.AsNoTracking()
             .Where(r => r.UserId == user.Id && r.Role!.IsActive && (r.Role.AppId == null || r.Role.AppId == app)
                 && (r.EffectiveFrom == null || r.EffectiveFrom <= today) && (r.EffectiveTo == null || r.EffectiveTo >= today))
-            .Select(r => new { r.RoleId, r.Role!.Code, r.Role.BusinessApp, r.Role.SharedApps, r.CompanyCode, r.Branches, r.Role.OverrideCompanies })
+            .Select(r => new { r.RoleId, Code = (r.Role!.CompanyCode == null ? r.Role.Code : r.Role.EntityCode + "/" + r.Role.CompanyCode + "/" + r.Role.Code), r.Role.BusinessApp, r.Role.SharedApps, r.CompanyCode, r.Branches, r.Role.OverrideCompanies })
             .ToListAsync(cancellationToken);
         var department = await DepartmentRoles.OfUserByCompanyAsync(context, user.Id, today, cancellationToken);
         var departmentCodes = department.Select(d => d.Role).Distinct().ToList();
         var departmentRoles = await context.Roles.AsNoTracking()
-            .Where(r => departmentCodes.Contains(r.Code) && r.IsActive && (r.AppId == null || r.AppId == app))
-            .Select(r => new { r.Id, r.Code, r.BusinessApp, r.SharedApps, r.OverrideCompanies })
+            .Where(r => departmentCodes.Contains((r.CompanyCode == null ? r.Code : r.EntityCode + "/" + r.CompanyCode + "/" + r.Code)) && r.IsActive && (r.AppId == null || r.AppId == app))
+            .Select(r => new { r.Id, Code = (r.CompanyCode == null ? r.Code : r.EntityCode + "/" + r.CompanyCode + "/" + r.Code), r.BusinessApp, r.SharedApps, r.OverrideCompanies })
             .ToListAsync(cancellationToken);
         held.AddRange(department.Join(departmentRoles, d => d.Role, r => r.Code, (d, r) => new
         {
@@ -129,12 +129,11 @@ public sealed partial class AccessResolver(
         var opened = held.Select(r => r.CompanyCode).Concat(personalRows.Select(p => p.CompanyCode)).ToHashSet(StringComparer.Ordinal);
         var companies = (await context.Companies.AsNoTracking()
             .Where(c => c.IsActive)
-            .OrderBy(c => c.DisplayOrder).ThenBy(c => c.Code)
-            .Select(c => new { c.Code, c.EntityCode })
+            .OrderBy(c => c.EntityCode).ThenBy(c => c.DisplayOrder).ThenBy(c => c.Code)
+            .Select(c => new { Key = c.EntityCode + "/" + c.Code, c.EntityCode })
             .ToListAsync(cancellationToken))
-            .Where(c => (user.EntityCode is null || c.EntityCode is null || c.EntityCode == user.EntityCode)
-                && (opened.Contains(CompanyScope.All) || opened.Contains(c.Code)))
-            .Select(c => c.Code)
+            .Where(c => (opened.Contains(CompanyScope.All) && (user.EntityCode is null || c.EntityCode == user.EntityCode)) || opened.Contains(c.Key))
+            .Select(c => c.Key)
             .ToList();
         var (company, chosen) = CurrentCompany(companies, requestedCompany, user.LastCompanyCode);
 

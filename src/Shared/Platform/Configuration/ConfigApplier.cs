@@ -106,7 +106,23 @@ public class ConfigRefs<TContext>(TContext context, ChangeSet? draft)
             return null;
         }
 
-        var id = await set.Where(e => e.Code == code).Select(e => (Guid?)e.Id).SingleOrDefaultAsync(cancellationToken);
+        return await ResolveMatchAsync(set.Where(e => e.Code == code), entityType, code, field, errors, cancellationToken);
+    }
+
+    /// <summary>
+    /// Like <see cref="ResolveAsync{T}"/> for rows with a composite key: <paramref name="matches"/> is the row the key
+    /// <paramref name="code"/> names.
+    /// </summary>
+    public async Task<Guid?> ResolveMatchAsync<T>(IQueryable<T> matches, string entityType, string? code, string field, ValidationErrors errors, CancellationToken cancellationToken)
+        where T : ConfigEntity
+    {
+        ArgumentNullException.ThrowIfNull(errors);
+        if (string.IsNullOrWhiteSpace(code))
+        {
+            return null;
+        }
+
+        var id = await matches.Select(e => (Guid?)e.Id).SingleOrDefaultAsync(cancellationToken);
         if (id is null && IsPendingCreate(entityType, code))
         {
             return Guid.Empty;

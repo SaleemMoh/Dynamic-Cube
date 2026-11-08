@@ -22,7 +22,7 @@ internal static class AppScopedKey
         var (app, key) = Parse(entityCode);
         if (app is not null)
         {
-            errors.Code("appCode", app, ValidationErrors.IdentifierCode());
+            errors.Code("appCode", app, ValidationErrors.GeneralCode());
         }
 
         errors.Code("code", key, ValidationErrors.GeneralCode());

@@ -47,7 +47,7 @@
     },
     {
       "entityType": "apps.company",
-      "entityCode": "MAIN",
+      "entityCode": "ENTITY/MAIN",
       "operation": "UPSERT",
       "payload": {
         "nameAr": "شركة إن إتش سي للابتكار",
@@ -65,7 +65,7 @@
       "payload": {
         "nameAr": "فرع الرياض (المقر الرئيسي)",
         "nameEn": "Riyadh branch (head office)",
-        "companyCode": "MAIN",
+        "companyCode": "ENTITY/MAIN",
         "orgUnitCode": "REQ_RUH",
         "regionCode": "RIYADH",
         "city": "الرياض",
@@ -80,7 +80,7 @@
       "payload": {
         "nameAr": "فرع جدة",
         "nameEn": "Jeddah branch",
-        "companyCode": "MAIN",
+        "companyCode": "ENTITY/MAIN",
         "orgUnitCode": "REQ_JED",
         "regionCode": "MAKKAH",
         "city": "جدة",
@@ -94,7 +94,7 @@
       "payload": {
         "nameAr": "فرع الدمام",
         "nameEn": "Dammam branch",
-        "companyCode": "MAIN",
+        "companyCode": "ENTITY/MAIN",
         "orgUnitCode": "REQ_DMM",
         "regionCode": "EASTERN",
         "city": "الدمام",
@@ -114,7 +114,7 @@
           "EXTERNAL"
         ],
         "companies": [
-          "MAIN"
+          "ENTITY/MAIN"
         ],
         "branches": [
           "*"

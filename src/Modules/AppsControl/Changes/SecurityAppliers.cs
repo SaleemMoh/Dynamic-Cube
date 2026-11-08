@@ -168,17 +168,79 @@ internal sealed class RoleApplier(AppsControlDbContext db, JsonLogicEvaluator ev
             .AsSplitQuery();
 
     protected override IQueryable<Role> ListQuery(AppsControlDbContext context, string? parent) =>
-        context.Roles.Include(r => r.App).OrderBy(r => r.Code);
+        (parent is null ? context.Roles : context.Roles.Where(r => r.EntityCode + "/" + r.CompanyCode == parent))
+            .Include(r => r.App).OrderBy(r => r.EntityCode).ThenBy(r => r.CompanyCode).ThenBy(r => r.Code);
+
+    protected override Task<Role?> FindAsync(AppsControlDbContext context, string entityCode, CancellationToken cancellationToken)
+    {
+        if (!RoleKey.TryParse(entityCode, out var instid, out var number, out var code))
+        {
+            return Task.FromResult<Role?>(null);
+        }
+
+        return number.Length == 0
+            ? Query(context).SingleOrDefaultAsync(r => r.CompanyCode == null && r.Code == code, cancellationToken)
+            : Query(context).SingleOrDefaultAsync(r => r.EntityCode == instid && r.CompanyCode == number && r.Code == code, cancellationToken);
+    }
+
+    protected override void ValidateKey(string entityCode, ValidationErrors errors)
+    {
+        if (!RoleKey.TryParse(entityCode, out var instid, out var number, out var code))
+        {
+            errors.Add("code", $"'{entityCode}' is not a role key: a role code, or instid/cmp_num/role_code for a role of one company.");
+            return;
+        }
+
+        if (number.Length > 0)
+        {
+            errors.Code("entityCode", instid, ValidationErrors.GeneralCode());
+            errors.Code("companyCode", number, ValidationErrors.GeneralCode());
+        }
+
+        errors.Code("code", code, CodePattern);
+    }
+
+    protected override string CodeFromKey(string entityCode) => RoleKey.TryParse(entityCode, out _, out _, out var code) ? code : entityCode;
+
+    protected override string EntityCodeOf(Role entity) => entity.Key;
 
     protected override async Task ApplyAsync(Role entity, RolePayload payload, RefResolver refs, ValidationErrors errors, Role? existing, CancellationToken cancellationToken)
     {
+        // A role of one company takes its instance and company from the key.
+        _ = RoleKey.TryParse(payload.Code, out var instid, out var number, out _);
+        if (number.Length > 0)
+        {
+            if (payload.EntityCode is { Length: > 0 } given && given != instid)
+            {
+                errors.Add("entityCode", $"Role {payload.Code} belongs to instance {instid}.");
+            }
+
+            if (!await refs.Context.Companies.AnyAsync(c => c.EntityCode == instid && c.Code == number, cancellationToken)
+                && !refs.IsPendingCreate(AppsControlChangeTypes.Company, CompanyKey.Format(instid, number)))
+            {
+                errors.Add("companyCode", $"Company '{CompanyKey.Format(instid, number)}' does not exist.");
+            }
+
+            if (payload.Overrides.Count > 0)
+            {
+                errors.Add("overrides", "A role of one company cannot differ by company.");
+            }
+
+            entity.EntityCode = instid;
+            entity.CompanyCode = number;
+        }
+        else
+        {
+            entity.CompanyCode = null;
+        }
+
         entity.AppId = await refs.AppAsync(payload.AppCode, "appCode", errors, cancellationToken);
         entity.ReferenceCode = payload.ReferenceCode;
 
         // The role's own contents, then those of each company where it differs (ADR-0036).
         var (privileges, grants, menus) = await ContentsAsync(entity, payload.Privileges, payload.Grants, payload.Menus, null, string.Empty, refs, errors, cancellationToken);
         ChildSync.RequireUnique(payload.Overrides, o => CompanyApplier.Blank(o.CompanyCode), "overrides", errors);
-        var companies = await refs.Context.Companies.AsNoTracking().Select(c => c.Code).ToListAsync(cancellationToken);
+        var companies = await refs.Context.Companies.AsNoTracking().Select(c => c.EntityCode + "/" + c.Code).ToListAsync(cancellationToken);
         var overrideCompanies = new List<string>();
         foreach (var (o, i) in payload.Overrides.Select((o, i) => (o, i)))
         {
@@ -359,12 +421,13 @@ internal sealed class RoleApplier(AppsControlDbContext db, JsonLogicEvaluator ev
     {
         if (await context.UserRoles.AnyAsync(r => r.RoleId == entity.Id, cancellationToken))
         {
-            throw new DynamicCube.Platform.ChangeSets.ChangeSetException($"Role '{entity.Code}' is still assigned to users.");
+            throw new DynamicCube.Platform.ChangeSets.ChangeSetException($"Role '{entity.Key}' is still assigned to users.");
         }
 
-        if (await context.OrgUnits.Where(u => u.DefaultRoles.Contains(entity.Code)).Select(u => u.Code).FirstOrDefaultAsync(cancellationToken) is { } unit)
+        var key = entity.Key;
+        if (await context.OrgUnits.Where(u => u.DefaultRoles.Contains(key)).Select(u => u.Code).FirstOrDefaultAsync(cancellationToken) is { } unit)
         {
-            throw new DynamicCube.Platform.ChangeSets.ChangeSetException($"Role '{entity.Code}' is a default role of department {unit}; remove it there first.");
+            throw new DynamicCube.Platform.ChangeSets.ChangeSetException($"Role '{key}' is a default role of department {unit}; remove it there first.");
         }
     }
 
@@ -557,8 +620,8 @@ internal sealed class UserApplier(AppsControlDbContext db) : ConfigApplier<UserA
         }
 
         ChildSync.RequireUnique(payload.Roles, r => (r.RoleCode, r.OrgUnitCode, r.CompanyCode?.Trim()), "roles", errors);
-        var companies = await refs.Context.Companies.AsNoTracking().Select(c => c.Code).ToListAsync(cancellationToken);
-        var branches = await refs.Context.Branches.AsNoTracking().Select(b => new { b.Code, b.CompanyCode }).ToListAsync(cancellationToken);
+        var companies = await refs.Context.Companies.AsNoTracking().Select(c => c.EntityCode + "/" + c.Code).ToListAsync(cancellationToken);
+        var branches = await refs.Context.Branches.AsNoTracking().Select(b => new { b.Code, CompanyCode = b.EntityCode + "/" + b.CompanyCode }).ToListAsync(cancellationToken);
         var roles = new List<UserRole>();
         foreach (var (r, i) in payload.Roles.Select((r, i) => (r, i)))
         {
@@ -569,7 +632,22 @@ internal sealed class UserApplier(AppsControlDbContext db) : ConfigApplier<UserA
 
             var roleId = await refs.RoleAsync(r.RoleCode, $"roles[{i}].roleCode", errors, cancellationToken);
             var orgUnitId = await refs.OrgUnitAsync(r.OrgUnitCode, $"roles[{i}].orgUnitCode", errors, cancellationToken);
-            var company = CheckCompany(r.CompanyCode, companies, refs, $"roles[{i}]", errors);
+            // A role of one company is held in that company.
+            var companyIn = r.CompanyCode;
+            if (RoleKey.TryParse(r.RoleCode, out var roleInstid, out var roleNumber, out _) && roleNumber.Length > 0)
+            {
+                var roleCompany = CompanyKey.Format(roleInstid, roleNumber);
+                if (string.IsNullOrWhiteSpace(companyIn))
+                {
+                    companyIn = roleCompany;
+                }
+                else if (companyIn.Trim() != roleCompany)
+                {
+                    errors.Add($"roles[{i}].companyCode", $"Role {r.RoleCode} belongs to company {roleCompany}.");
+                }
+            }
+
+            var company = CheckCompany(companyIn, companies, refs, $"roles[{i}]", errors);
             var roleBranches = CheckBranches(company, r.Branches, branches.Select(b => (b.Code, b.CompanyCode)).ToList(), refs, $"roles[{i}]", errors);
             roles.Add(new UserRole
             {
@@ -713,7 +791,7 @@ internal sealed class UserApplier(AppsControlDbContext db) : ConfigApplier<UserA
                 .OrderBy(r => r.Role?.Code)
                 .Select(r => new UserRolePayload
                 {
-                    RoleCode = r.Role?.Code ?? string.Empty,
+                    RoleCode = r.Role?.Key ?? string.Empty,
                     OrgUnitCode = r.OrgUnit?.Code,
                     EffectiveFrom = r.EffectiveFrom,
                     EffectiveTo = r.EffectiveTo,

@@ -19,7 +19,7 @@ The other modules keep their names for now.
 | Arabic / English | `_NTV` / `_FRN` (`ROLE_DESC_NTV`) | the same (`role_desc_ntv`, `role_desc_frn`) |
 | Instance / company | `INSTID`, `CMP_NUM`, `CMP_NUMS` | the same (`instid`, `cmp_num`, `cmp_nums`) |
 | Order | `ORDERBY` (domain), `ORDER_NUM` (others) | the same |
-| Keys | natural composite keys (`INSTID, CMP_NUM, ROLE_CODE`) | `id` (uuid) plus a unique code column named like the legacy one (`role_code`, `menu_code`) |
+| Keys | natural composite keys (`INSTID, CMP_NUM, ROLE_CODE`) | `id` (uuid) for links, plus the **same composite key** as a unique index: company `instid, cmp_num`; role `instid, cmp_num, role_code` (or `role_code` alone for a role of no company); menu and menu group `appsid, code`; class value `class, instid, cmp_num, value` (or `class, value` for every company). Change sets, packages and the API join the parts with `/` (`5/2`, `5/2/ADMIN`, `11/M010-000-000`, `BANKS/5/2/RJHI`) |
 | Extra values | fixed `FLEX_VALUE_1..10`, `FLEX_DATE_1..5`, `FLEX_NUMBER_1..5` columns | typed attributes defined per class (`dd_class_attributes`), values in one `attributes` column |
 
 Columns with no legacy counterpart keep their own snake_case name (`is_active`, `effective_from`, `owner`,
@@ -60,7 +60,7 @@ values, reports and API endpoints that read a class are unchanged.
 | `sys_change_areas` (`change_area`) | `code`→`area_code`, `entity_code`→`instid`, `name_ar`→`area_desc_ntv`, `name_en`→`area_desc_frn` |
 | `dd_classes` (`class`) | `allow_multi_assign`→`virtual_enable_multiple_assign`, `code`→`class_code`, `description_ar`→`class_long_desc_ntv`, `description_en`→`class_long_desc_frn`, `entity_code`→`instid`, `name_ar`→`class_desc_ntv`, `name_en`→`class_desc_frn`, `parent_class_id`→`reference_class_id` |
 | `dd_class_attributes` (`class_attribute`) | `code`→`attribute_code`, `data_type`→`attribute_type`, `display_order`→`order_num`, `name_ar`→`attribute_label_ntv`, `name_en`→`attribute_label_frn` |
-| `dd_domain` (`domain`) | `code`→`value`, `companies`→`cmp_nums`, `details_ar`→`domain_desc_detail_ntv`, `details_en`→`domain_desc_detail_frn`, `display_order`→`orderby`, `entity_code`→`instid`, `is_active`→`active_flag`, `name_ar`→`domain_desc_ntv`, `name_en`→`domain_desc_frn` |
+| `dd_domain` (`domain`) | `code`→`value`, `companies` (a list)→`cmp_num` (one company per row, with `instid`), `details_ar`→`domain_desc_detail_ntv`, `details_en`→`domain_desc_detail_frn`, `display_order`→`orderby`, `entity_code`→`instid`, `is_active`→`active_flag`, `name_ar`→`domain_desc_ntv`, `name_en`→`domain_desc_frn` |
 | `dd_lovs` (`lov`) | `class_id`→`ref_class_id`, `code`→`lov_code`, `entity_code`→`instid`, `name_ar`→`lov_desc_ntv`, `name_en`→`lov_desc_frn`, `sql_text`→`sqlstmt`, `value_column`→`value_field` |
 | `dd_data_objects` (`data_object`) | `code`→`object_code`, `entity_code`→`instid`, `name_ar`→`object_desc_ntv`, `name_en`→`object_desc_frn` |
 | `dd_data_scope_bindings` (`data_scope_binding`) | `column_name`→`value_field` |
@@ -84,13 +84,13 @@ values, reports and API endpoints that read a class are unchanged.
 | `SYS_USER_APPS` (view) | worked out by the access resolver | from the user's roles, as the view does. |
 | `DD_CLASSES` | `dd_classes` + `dd_class_attributes` | the 20 fixed flex slots and their label columns become typed attribute rows (no limit, types text/number/date/class/LOV…). `CLASS_TYPE` (system / company domain) → `values_per_company` (+ `owner`); `REFERENCE_CLASS_CODE` → `reference_class_id` (a key to the class); `VIRTUAL_REF_LOV_CODE` → an attribute of type LOV; `VIRTUAL_ENABLE_MULTIPLE_ASSIGN` as in legacy. Not carried: `CLASS_INPUT_SOURCE`, `CLASS_CATEGORY`. |
 | `DD_DOMAIN` | `dd_domain` | `VALUE`, `DOMAIN_DESC_NTV/FRN`, `DOMAIN_DESC_DETAIL_NTV/FRN`, `ORDERBY`, `ACTIVE_FLAG` as in legacy; `FLEX_*` → `attributes`. |
-| `DD_COMPANY_DOMAIN` | `dd_domain` with `cmp_nums` | one table for system and company values: a class with `values_per_company` lists the companies on each value (or "all"). |
+| `DD_COMPANY_DOMAIN` | `dd_domain` with `instid, cmp_num` | one table for system and company values: a system value has no company; a company value is one row per company, as in legacy (the class needs `values_per_company`). |
 | `DD_COMPANY_DOMAIN_VIRTUAL_VALUES` | `dd_domain.attributes` (LOV attribute, several values) | |
 | `DD_LOVS` | `dd_lovs` | `LOV_CODE`, `SQLSTMT`, `VALUE_FIELD` as in legacy; `REF_CLASS_CODE` → `ref_class_id` (a key to the class). We add sources Data object and Query (builder). |
 | `SYS_MENU` | `sys_menu` + `sys_resources` | `MENU_CODE`, `MENU_DESC_NTV/FRN`, `MENU_LONG_DESC_NTV/FRN`, `ORDER_NUM`, `MENU_ICON`, `SHOW_FLAG` as in legacy; `PARENT_MENU_CODE` → `parent_menu_id` (a key); `GENERAL_DETAIL_FLAG` → `item_type`; `OBJECT_NAME` → the screen in `sys_resources`; `MENU_LEVEL_NUM` is worked out from the parent. |
 | `SYS_MENU_GROUPS` | `sys_menu_groups` | `MENU_GROUP_CODE`, `MENU_GROUP_DES_NTV/FRN`, `MENU_GROUP_ORDER`, `MENU_ICON`. |
 | `SYS_MENU_LOVS` | `sys_menu_lovs` / `dd_data_scope_bindings` | which list filters a screen's data; `VALUE_FIELD` is the column it filters (`dd_data_scope_bindings.value_field`). |
-| `SYS_ROLES` | `sys_roles` | `ROLE_CODE`, `ROLE_DESC_NTV/FRN`, `IS_ACTIVE`, `REF_CODE` as in legacy; per company: `override_cmp_nums` and `cmp_num` on `sys_user_roles`. |
+| `SYS_ROLES` | `sys_roles` | `ROLE_CODE`, `ROLE_DESC_NTV/FRN`, `IS_ACTIVE`, `REF_CODE` as in legacy; a role belongs to one company (`instid, cmp_num`) as in legacy; Dynamic Cube's own roles have no company and may list `override_cmp_nums`. |
 | `SYS_ROLE_MENUS` | `sys_role_menus` + `sys_role_privileges` | legacy gives a whole screen; we also store its actions (view, create, edit…). |
 | `SYS_ROLE_MENU_LOVS` | `sys_role_menu_lovs` | one row per value in legacy; one row per role/screen/list with `value_codes` and `default_value_code` here. |
 | `SYS_USER_ROLES` | `sys_user_roles` | plus `branches`, `effective_from/to` and the org unit it came from. |

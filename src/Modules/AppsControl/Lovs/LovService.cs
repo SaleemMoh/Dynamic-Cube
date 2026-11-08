@@ -89,7 +89,7 @@ public sealed class LovService(AppsControlDbContext context, GrantResolver grant
     /// company and those serving this one. No company (the portal): every value.
     /// </summary>
     internal static IQueryable<DomainValue> ForCompany(IQueryable<DomainValue> domains, string? company) =>
-        company is null ? domains : domains.Where(d => d.Companies.Count == 0 || d.Companies.Contains(CompanyScope.All) || d.Companies.Contains(company));
+        company is null ? domains : domains.Where(d => d.CompanyCode == null || d.EntityCode + "/" + d.CompanyCode == company);
 
     private async Task<List<LovItem>> ClassValuesAsync(Lov lov, AccessSnapshot access, string? parent, string? search, GrantSet grant, int limit, int offset, CancellationToken cancellationToken)
     {

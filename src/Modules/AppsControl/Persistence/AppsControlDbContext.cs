@@ -96,12 +96,15 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
             b.Property(e => e.Companies).HasColumnType("text[]");
             b.Property(e => e.Branches).HasColumnType("text[]");
         });
+        // Keyed like the legacy Apps Control: instance and company number.
         Config<Company>(modelBuilder, "company", b =>
         {
+            b.HasIndex(e => new { e.EntityCode, e.Code }).IsUnique();
+            b.Property(e => e.EntityCode).IsRequired();
             b.Property(e => e.CrNumber).HasMaxLength(50);
             b.Property(e => e.UnifiedNumber).HasMaxLength(50);
             b.Property(e => e.VatNumber).HasMaxLength(50);
-        });
+        }, uniqueCode: false);
         Config<Branch>(modelBuilder, "branch", b =>
         {
             b.Property(e => e.CompanyCode).HasMaxLength(100);
@@ -203,15 +206,19 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
             b.HasOne(e => e.App).WithMany().HasForeignKey(e => e.AppId).OnDelete(DeleteBehavior.Restrict);
             b.HasOne(e => e.Parent).WithMany().HasForeignKey(e => e.ParentId).OnDelete(DeleteBehavior.Restrict);
         });
+        // A role of one company is keyed by instance, company number and code; a role of no company by its code.
         Config<Role>(modelBuilder, "role", b =>
         {
+            b.Property(e => e.CompanyCode).HasMaxLength(100);
+            b.HasIndex(e => e.Code).IsUnique().HasFilter("cmp_num IS NULL");
+            b.HasIndex(e => new { e.EntityCode, e.CompanyCode, e.Code }).IsUnique().HasFilter("cmp_num IS NOT NULL");
             b.Property(e => e.ReferenceCode).HasMaxLength(100);
             b.HasOne(e => e.App).WithMany().HasForeignKey(e => e.AppId).OnDelete(DeleteBehavior.Restrict);
             b.HasMany(e => e.Privileges).WithOne().HasForeignKey(p => p.RoleId).OnDelete(DeleteBehavior.Cascade);
             b.HasMany(e => e.Grants).WithOne().HasForeignKey(g => g.RoleId).OnDelete(DeleteBehavior.Cascade);
             b.HasMany(e => e.Menus).WithOne().HasForeignKey(m => m.RoleId).OnDelete(DeleteBehavior.Cascade);
             b.Property(e => e.OverrideCompanies).HasColumnType("text[]");
-        });
+        }, uniqueCode: false);
         modelBuilder.Entity<RoleMenu>(b =>
         {
             b.ToTable("role_menu", Schema);
@@ -230,20 +237,23 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
             b.HasOne(e => e.Resource).WithMany().HasForeignKey(e => e.ResourceId).OnDelete(DeleteBehavior.Restrict);
         });
 
+        // Menu groups and items are keyed by their app (channel, or connected app) and code.
         Config<MenuGroup>(modelBuilder, "menu_group", b =>
         {
+            b.HasIndex(e => new { e.AppId, e.BusinessApp, e.Code }).IsUnique().AreNullsDistinct(false);
             b.Property(e => e.Icon).HasMaxLength(100);
             b.HasOne(e => e.App).WithMany().HasForeignKey(e => e.AppId).OnDelete(DeleteBehavior.Restrict);
-        });
+        }, uniqueCode: false);
         Config<Menu>(modelBuilder, "menu", b =>
         {
+            b.HasIndex(e => new { e.AppId, e.BusinessApp, e.Code }).IsUnique().AreNullsDistinct(false);
             b.Property(e => e.Target).HasMaxLength(1000);
             b.Property(e => e.Icon).HasMaxLength(4000);
             b.HasOne(e => e.App).WithMany().HasForeignKey(e => e.AppId).OnDelete(DeleteBehavior.Restrict);
             b.HasOne(e => e.MenuGroup).WithMany().HasForeignKey(e => e.MenuGroupId).OnDelete(DeleteBehavior.Restrict);
             b.HasOne(e => e.Parent).WithMany().HasForeignKey(e => e.ParentId).OnDelete(DeleteBehavior.Restrict);
             b.HasOne(e => e.Resource).WithMany().HasForeignKey(e => e.ResourceId).OnDelete(DeleteBehavior.Restrict);
-        });
+        }, uniqueCode: false);
 
         Config<DictionaryClass>(modelBuilder, "class", b =>
         {
@@ -264,8 +274,10 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
         });
         Config<DomainValue>(modelBuilder, "domain", b =>
         {
-            b.HasIndex(e => new { e.ClassId, e.Code }).IsUnique();
-            b.Property(e => e.Companies).HasColumnType("text[]");
+            // Keyed like the legacy DD_DOMAIN (class, value) and DD_COMPANY_DOMAIN (class, instance, company, value).
+            b.HasIndex(e => new { e.ClassId, e.Code }).IsUnique().HasFilter("cmp_num IS NULL");
+            b.HasIndex(e => new { e.ClassId, e.EntityCode, e.CompanyCode, e.Code }).IsUnique().HasFilter("cmp_num IS NOT NULL");
+            b.Property(e => e.CompanyCode).HasMaxLength(100);
             b.Property(e => e.Attributes).HasColumnType("jsonb");
             b.HasIndex(e => e.Attributes).HasMethod("gin");
             b.HasOne(e => e.Class).WithMany().HasForeignKey(e => e.ClassId).OnDelete(DeleteBehavior.Restrict);

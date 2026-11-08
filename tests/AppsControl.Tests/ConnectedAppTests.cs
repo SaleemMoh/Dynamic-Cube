@@ -96,14 +96,17 @@ public sealed class ConnectedAppTests(AppsControlFixture fixture) : IAsyncLifeti
             availableActions = actions.Length == 0 ? ["VIEW"] : actions,
         });
 
+    // Menu rows are keyed by their tree (the channel, or the connected app) and code.
+    private static string Key(string? tree, string code) => tree is null ? code : $"{tree}/{code}";
+
     private static Change Item(string code, string? app, string? channel, string? group, string? resource) =>
-        new(AppsControlChangeTypes.Menu, code, ChangeOperation.Create, new
+        new(AppsControlChangeTypes.Menu, Key(channel ?? app, code), ChangeOperation.Create, new
         {
             nameAr = "عنصر",
             nameEn = "Item " + code,
             businessApp = app,
             appCode = channel,
-            groupCode = group,
+            groupCode = group is null ? null : Key(channel ?? app, group),
             itemType = "SCREEN",
             target = "/" + code.ToLowerInvariant(),
             resourceCode = resource,
@@ -149,7 +152,7 @@ public sealed class ConnectedAppTests(AppsControlFixture fixture) : IAsyncLifeti
         // Menus: the app's tree opens its own screens; a channel's tree never opens a connected app's screens.
         var group = Harness.Unique("PMS_G");
         await _harness.PublishAsync(AppsControlAreas.Menus,
-            new Change(AppsControlChangeTypes.MenuGroup, group, ChangeOperation.Create, new { nameAr = "مجموعة", nameEn = "Group", businessApp = app }),
+            new Change(AppsControlChangeTypes.MenuGroup, Key(app, group), ChangeOperation.Create, new { nameAr = "مجموعة", nameEn = "Group", businessApp = app }),
             Item(Harness.Unique("PMS_M"), app, null, group, projects));
         (await Problems(AppsControlAreas.Menus, Item(Harness.Unique("PMS_M"), app, null, group, staff))).ShouldContain("resourceCode", "another app's screen");
         (await Problems(AppsControlAreas.Menus, Item(Harness.Unique("INT_M"), null, "INTERNAL", null, projects))).ShouldContain("resourceCode", "a connected app's screen on a channel");
@@ -158,7 +161,7 @@ public sealed class ConnectedAppTests(AppsControlFixture fixture) : IAsyncLifeti
     [Fact]
     public async Task The_connected_app_api_serves_the_apps_own_menu_screens_and_lists_to_its_signed_in_users_only()
     {
-        var (app, other, company, branch, elsewhere) = (Harness.Unique("PMS"), Harness.Unique("HRV"), Harness.Unique("CO"), Harness.Unique("BR"), Harness.Unique("CO2"));
+        var (app, other, company, branch, elsewhere) = (Harness.Unique("PMS"), Harness.Unique("HRV"), "ENTITY/" + Harness.Unique("CO"), Harness.Unique("BR"), "ENTITY/" + Harness.Unique("CO2"));
         await _harness.PublishAsync(AppsControlAreas.System,
             new Change(AppsControlChangeTypes.Company, company, ChangeOperation.Create, new { nameAr = "شركة", nameEn = "Company" }),
             new Change(AppsControlChangeTypes.Company, elsewhere, ChangeOperation.Create, new { nameAr = "شركة", nameEn = "Elsewhere" }),
@@ -204,7 +207,7 @@ public sealed class ConnectedAppTests(AppsControlFixture fixture) : IAsyncLifeti
             }));
         var (group, itemProjects, itemReports, itemHelp) = (Harness.Unique("PMS_G"), Harness.Unique("PMS_P"), Harness.Unique("PMS_R"), Harness.Unique("PMS_H"));
         await _harness.PublishAsync(AppsControlAreas.Menus,
-            new Change(AppsControlChangeTypes.MenuGroup, group, ChangeOperation.Create, new { nameAr = "مجموعة", nameEn = "Group", businessApp = app }),
+            new Change(AppsControlChangeTypes.MenuGroup, Key(app, group), ChangeOperation.Create, new { nameAr = "مجموعة", nameEn = "Group", businessApp = app }),
             Item(itemProjects, app, null, group, projects),
             Item(itemReports, app, null, group, reports),
             Item(itemHelp, app, null, group, null));

@@ -23,7 +23,7 @@ public sealed class RoleOverrideTests(AppsControlFixture fixture) : IAsyncLifeti
     [Fact]
     public async Task Holders_of_a_role_in_a_company_where_it_differs_get_that_companys_version()
     {
-        var (main, sub, role) = (Harness.Unique("CO"), Harness.Unique("CO"), Harness.Unique("CLERK"));
+        var (main, sub, role) = ("ENTITY/" + Harness.Unique("CO"), "ENTITY/" + Harness.Unique("CO"), Harness.Unique("CLERK"));
         var (inMain, inSub, everywhere) = (Harness.Unique("main").ToLowerInvariant(), Harness.Unique("sub").ToLowerInvariant(), Harness.Unique("all").ToLowerInvariant());
         await _harness.PublishAsync(AppsControlAreas.System,
             new Change(AppsControlChangeTypes.Company, main, ChangeOperation.Create, new { nameAr = "شركة", nameEn = "Main" }),

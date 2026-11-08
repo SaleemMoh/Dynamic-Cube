@@ -1,4 +1,5 @@
 using DynamicCube.Hosting;
+using DynamicCube.Migrator;
 using DynamicCube.Modules.AppsControl;
 using DynamicCube.Modules.AppsControl.Persistence;
 using DynamicCube.Modules.AppsControl.Seeding;
@@ -107,8 +108,16 @@ try
 
     logger.LogInformation("All migrations applied");
 
+    // The legacy Apps Control export (LegacyImport:Folder, the unzipped CSV files; never in the repository): the first run
+    // replaces the installation's data with it, later runs update it. No demo data is loaded with it.
+    if (builder.Configuration["LegacyImport:Folder"] is { Length: > 0 } legacyFolder && File.Exists(Path.Combine(legacyFolder, "SYS_COMPANY_PROFILE.csv")))
+    {
+        await new LegacyImporter(host.Services, host.Services.GetRequiredService<PackageLoader>(), identity.ActAs, logger)
+            .RunAsync(legacyFolder, builder.Configuration.GetValue<bool>("LegacyImport:Refresh"), CancellationToken.None);
+    }
+
     // Demo data (DemoData:Name, e.g. "nhc"): loaded once, into an installation that does not have it yet.
-    if (builder.Configuration["DemoData:Name"] is { Length: > 0 } demo && !string.Equals(demo, "none", StringComparison.OrdinalIgnoreCase))
+    else if (builder.Configuration["DemoData:Name"] is { Length: > 0 } demo && !string.Equals(demo, "none", StringComparison.OrdinalIgnoreCase))
     {
         var folder = Path.Combine(builder.Configuration["DemoData:Root"] ?? Path.Combine(AppContext.BaseDirectory, "demo-data"), demo);
         if (!Directory.Exists(folder))

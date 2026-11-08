@@ -124,8 +124,11 @@ public sealed class DomainValue : ConfigEntity
     public DateOnly? EffectiveTo { get; set; }
 
     /// <summary>
-    /// Companies the value serves when its class has values per company, or just <see cref="CompanyScope.All"/> (chosen
-    /// explicitly); empty for values of other classes.
+    /// The company number (<c>cmp_num</c>) of a company value, with its instance in <c>instid</c> (the legacy
+    /// <c>DD_COMPANY_DOMAIN</c>); null for a value of every company (the legacy <c>DD_DOMAIN</c>).
     /// </summary>
-    public List<string> Companies { get; set; } = [];
+    public string? CompanyCode { get; set; }
+
+    /// <summary>The key of the value's company (<c>instid/cmp_num</c>), null for a value of every company.</summary>
+    public string? CompanyKey => CompanyCode is null ? null : Domain.CompanyKey.Format(EntityCode, CompanyCode);
 }

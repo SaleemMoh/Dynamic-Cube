@@ -80,33 +80,39 @@ public sealed class ClassFieldTests(AppsControlFixture fixture) : IAsyncLifetime
     [Fact]
     public async Task A_class_with_values_per_company_limits_values_to_companies()
     {
-        var (main, sub, cls) = (Harness.Unique("CO"), Harness.Unique("CO"), Harness.Unique("BANKS"));
+        var (main, sub, cls) = ("ENTITY/" + Harness.Unique("CO"), "ENTITY/" + Harness.Unique("CO"), Harness.Unique("BANKS"));
         await _harness.PublishAsync(AppsControlAreas.System,
             new Change(AppsControlChangeTypes.Company, main, ChangeOperation.Create, new { nameAr = "شركة", nameEn = "Main" }),
             new Change(AppsControlChangeTypes.Company, sub, ChangeOperation.Create, new { nameAr = "شركة", nameEn = "Subsidiary" }));
         await _harness.PublishAsync(AppsControlAreas.DataDictionary,
             new Change(AppsControlChangeTypes.Class, cls, ChangeOperation.Create, new { nameAr = "بنوك", nameEn = "Banks", valuesPerCompany = true, attributes = Array.Empty<object>() }));
-        Change Bank(string code, string[] companies, bool isDefault = false) =>
-            new(AppsControlChangeTypes.Domain, $"{cls}/{code}", ChangeOperation.Create, new { nameAr = "بنك", nameEn = code, companies, isDefault });
+        // Keyed like the legacy DD_DOMAIN / DD_COMPANY_DOMAIN: CLASS/VALUE for every company, CLASS/instid/cmp_num/VALUE for one.
+        Change Bank(string code, string? company, bool isDefault = false, string? name = null) =>
+            new(AppsControlChangeTypes.Domain, company is null ? $"{cls}/{code}" : $"{cls}/{company}/{code}", ChangeOperation.Create,
+                new { nameAr = "بنك", nameEn = name ?? code, isDefault });
         await _harness.PublishAsync(AppsControlAreas.DataDictionary,
-            Bank("SHARED", ["*"], isDefault: true), Bank("MAIN_ONLY", [main], isDefault: true), Bank("SUB_ONLY", [sub], isDefault: true));
+            Bank("SHARED", null, isDefault: true), Bank("MAIN_ONLY", main, isDefault: true), Bank("SUB_ONLY", sub, isDefault: true),
+            Bank("LOCAL", main, name: "Local bank of Main"), Bank("LOCAL", sub, name: "Local bank of Subsidiary"));
 
         var values = await _harness.AsAsync("admin", sp => sp.GetRequiredService<IDataDictionaryReader>().ValuesAsync(cls, CancellationToken.None));
-        values.Where(v => v.Serves(main)).Select(v => v.Code).ShouldBe(["MAIN_ONLY", "SHARED"], ignoreOrder: true);
-        values.Where(v => v.Serves(sub)).Select(v => v.Code).ShouldBe(["SHARED", "SUB_ONLY"], ignoreOrder: true);
+        values.Where(v => v.Serves(main)).Select(v => v.Code).ShouldBe(["LOCAL", "MAIN_ONLY", "SHARED"], ignoreOrder: true);
+        values.Where(v => v.Serves(sub)).Select(v => v.Code).ShouldBe(["LOCAL", "SHARED", "SUB_ONLY"], ignoreOrder: true);
+        values.Where(v => v.Code == "LOCAL").Select(v => v.NameEn).ShouldBe(["Local bank of Main", "Local bank of Subsidiary"], ignoreOrder: true, "the same value in two companies");
         values.Where(v => v.IsDefault).Select(v => v.Code).ShouldBe(["MAIN_ONLY", "SUB_ONLY"], ignoreOrder: true, "one default per company");
 
-        (await Should.ThrowAsync<ChangeValidationException>(() => _harness.DraftAsync(AppsControlAreas.DataDictionary, Bank("NOWHERE", [Harness.Unique("NONE")]))))
-            .Errors.Keys.ShouldContain("companies");
-        (await Should.ThrowAsync<ChangeValidationException>(() => _harness.DraftAsync(AppsControlAreas.DataDictionary, Bank("UNCHOSEN", []))))
-            .Errors.Keys.ShouldContain("companies", "all companies is chosen explicitly (*), not left empty");
+        (await Should.ThrowAsync<ChangeValidationException>(() => _harness.DraftAsync(AppsControlAreas.DataDictionary, Bank("NOWHERE", "ENTITY/" + Harness.Unique("NONE")))))
+            .Errors.Keys.ShouldContain("companyCode");
+        (await Should.ThrowAsync<ChangeValidationException>(() => _harness.DraftAsync(AppsControlAreas.DataDictionary,
+            new Change(AppsControlChangeTypes.Class, cls, ChangeOperation.Update, new { nameAr = "بنوك", nameEn = "Banks", valuesPerCompany = true, attributes = Array.Empty<object>() }),
+            Bank("LOCAL", main))))
+            .Errors.Keys.ShouldContain("code", "the value already exists in that company");
         (await Should.ThrowAsync<ChangeValidationException>(() => _harness.DraftAsync(AppsControlAreas.DataDictionary,
             new Change(AppsControlChangeTypes.Class, cls, ChangeOperation.Update, new { nameAr = "بنوك", nameEn = "Banks", valuesPerCompany = false, attributes = Array.Empty<object>() }))))
-            .Errors.Keys.ShouldContain("valuesPerCompany", "values limited to a company must be opened first");
+            .Errors.Keys.ShouldContain("valuesPerCompany", "values of one company must go first");
         var plain = Harness.Unique("PLAIN");
         await _harness.PublishAsync(AppsControlAreas.DataDictionary, Class(plain, []));
         (await Should.ThrowAsync<ChangeValidationException>(() => _harness.DraftAsync(AppsControlAreas.DataDictionary,
-            new Change(AppsControlChangeTypes.Domain, $"{plain}/X", ChangeOperation.Create, new { nameAr = "س", nameEn = "X", companies = new[] { main } }))))
-            .Errors.Keys.ShouldContain("companies", "the class does not have values per company");
+            new Change(AppsControlChangeTypes.Domain, $"{plain}/{main}/X", ChangeOperation.Create, new { nameAr = "س", nameEn = "X" }))))
+            .Errors.Keys.ShouldContain("companyCode", "the class does not have values per company");
     }
 }

@@ -24,19 +24,22 @@ public sealed class MenuTreeTests(AppsControlFixture fixture) : IAsyncLifetime
     private static Change App(string code, string kind, params string[] channels) =>
         new(AppsControlChangeTypes.BusinessApp, code, ChangeOperation.Create, new { nameAr = "تطبيق", nameEn = "App " + code, kind, channels, companies = new[] { "*" }, branches = new[] { "*" } });
 
+    // Menu rows are keyed by their tree (the channel, or the connected app) and code.
+    private static string Key(string? tree, string code) => tree is null ? code : $"{tree}/{code}";
+
     private static Change Group(string code, string? app, string? channel) =>
-        new(AppsControlChangeTypes.MenuGroup, code, ChangeOperation.Create, new { nameAr = "مجموعة", nameEn = "Group " + code, businessApp = app, appCode = channel });
+        new(AppsControlChangeTypes.MenuGroup, Key(channel ?? app, code), ChangeOperation.Create, new { nameAr = "مجموعة", nameEn = "Group " + code, businessApp = app, appCode = channel });
 
     // Hidden: the tests share the internal system's menu with other tests that check it exactly.
     private static Change Item(string code, string? app, string? channel, string? group = null, string? parent = null, string type = "GROUP", ChangeOperation operation = ChangeOperation.Create) =>
-        new(AppsControlChangeTypes.Menu, code, operation, new
+        new(AppsControlChangeTypes.Menu, Key(channel ?? app, code), operation, new
         {
             nameAr = "عنصر",
             nameEn = "Item " + code,
             businessApp = app,
             appCode = channel,
-            groupCode = group,
-            parentCode = parent,
+            groupCode = group is null ? null : Key(channel ?? app, group),
+            parentCode = parent is null ? null : Key(channel ?? app, parent),
             itemType = type,
             target = type == "GROUP" ? null : "/hr/" + code,
             isVisible = false,
@@ -59,8 +62,8 @@ public sealed class MenuTreeTests(AppsControlFixture fixture) : IAsyncLifetime
             Item(digital, hr, null, parent: sub, type: "SCREEN"));
 
         var tree = await _harness.AsAsync("admin", sp => sp.GetServices<IConfigApplier>().Single(a => a.EntityType == AppsControlChangeTypes.Menu).ListAsync(hr, CancellationToken.None));
-        tree.Select(m => m.GetProperty("code").GetString()).ShouldBe([board, sub, digital], ignoreOrder: true);
-        tree.Single(m => m.GetProperty("code").GetString() == digital).GetProperty("parentCode").GetString().ShouldBe(sub);
+        tree.Select(m => m.GetProperty("code").GetString()).ShouldBe([Key(hr, board), Key(hr, sub), Key(hr, digital)], ignoreOrder: true);
+        tree.Single(m => m.GetProperty("code").GetString() == Key(hr, digital)).GetProperty("parentCode").GetString().ShouldBe(Key(hr, sub));
         tree.ShouldAllBe(m => m.GetProperty("appCode").ValueKind == JsonValueKind.Null);
 
         (await Problems(Item(Harness.Unique("X"), hr, "INTERNAL", group: root))).ShouldContain("appCode", "a connected app's menu has no channel");

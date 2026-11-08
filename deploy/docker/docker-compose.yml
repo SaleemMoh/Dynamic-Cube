@@ -63,9 +63,10 @@ services:
   # folder theirs belong to root, so uploads and issued documents could not be written ("the file could not be uploaded").
   files-permissions:
     image: busybox:1.37
-    command: ["sh", "-c", "chown -R 1654:1654 /data/files"]
+    command: ["sh", "-c", "chown -R 1654:1654 /data/files /data/legacy"]
     volumes:
       - files:/data/files
+      - ./legacy-data:/data/legacy
     restart: "no"
 
   migrator:
@@ -77,16 +78,28 @@ services:
         ASSEMBLY: DynamicCube.Migrator.dll
     environment:
       <<: *dotnet-env
-      # Demo data loaded once into an empty installation (deploy/demo-data/<name>); "none" for an empty system.
-      DemoData__Name: ${DEMO_DATA:-nhc}
+      # Demo data loaded once into an empty installation (deploy/demo-data/<name>, e.g. nhc); "none" for an empty system.
+      DemoData__Name: ${DEMO_DATA:-none}
+      # The legacy Apps Control export (the CSV files put in deploy/docker/legacy-data, never in git): the first run
+      # replaces the installation's data with it; later runs only add missing sign-in accounts. Its report and the
+      # one-time passwords of the new accounts are written to the same folder.
+      LegacyImport__Folder: /data/legacy
+      # Sign-in accounts for the imported users are created in Keycloak.
+      AppsControl__Identity__Provider: Keycloak
+      AppsControl__Identity__BaseUrl: http://keycloak:8080
+      Secrets__KEYCLOAK_ADMIN__clientSecret: dev-accounts-secret
       # Containers reach the mock gateway by its service name; browsers on localhost.
       DemoData__Variables__GATEWAY_URL: http://mock-gateway:8080
       DemoData__Variables__GATEWAY_PUBLIC_URL: http://localhost:5090
+    volumes:
+      - ./legacy-data:/data/legacy
     depends_on:
       postgres:
         condition: service_healthy
       files-permissions:
         condition: service_completed_successfully
+      keycloak:
+        condition: service_started
     restart: "no"
 
   internal-api:

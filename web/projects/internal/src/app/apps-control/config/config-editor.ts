@@ -195,6 +195,16 @@ export class ConfigEditor {
     }
     const code = String(value['code'] ?? '').trim();
     const app = value['appCode'] as string | null | undefined;
+    if (key === 'tree') {
+      // A menu row is keyed by its tree: the channel, or the connected app it belongs to.
+      const tree = app || (value['businessApps'] as string[] | null | undefined)?.[0] || null;
+      return tree ? `${tree}/${code}` : code;
+    }
+    if (key === 'company') {
+      // A company is keyed by its instance and number (instid/cmp_num).
+      const instance = value['entityCode'] as string | null | undefined;
+      return instance ? `${instance}/${code}` : code;
+    }
     return key === 'appScoped' && app ? `${app}/${code}` : code;
   }
 
@@ -225,6 +235,9 @@ export class ConfigEditor {
     };
     if (row && this.data.type.key === 'appScoped' && row.code.includes('/')) {
       value['code'] = row.code.slice(row.code.indexOf('/') + 1);
+    }
+    if (row && (this.data.type.key === 'tree' || this.data.type.key === 'company') && row.code.includes('/')) {
+      value['code'] = row.code.slice(row.code.lastIndexOf('/') + 1);
     }
     // A new row starts in the business app chosen in the header.
     value['entityCode'] = row ? (row['entityCode'] ?? null) : null;

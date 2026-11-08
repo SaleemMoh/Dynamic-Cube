@@ -14,7 +14,7 @@ public sealed class BranchTaskTests(DatabaseFixture fixture)
     public async Task A_queued_task_reaches_the_role_holders_of_its_branch_only()
     {
         await using var host = new WorkflowHost(fixture);
-        var (company, north, south) = (Unique("CO"), Unique("NORTH"), Unique("SOUTH"));
+        var (company, north, south) = ("ENTITY/" + Unique("CO"), Unique("NORTH"), Unique("SOUTH"));
         await host.Host.PublishAsync(AppsControlAreas.System,
             new Change(AppsControlChangeTypes.Company, company, ChangeOperation.Create, new { nameAr = "شركة", nameEn = "Company", displayOrder = 999 }),
             new Change(AppsControlChangeTypes.Branch, north, ChangeOperation.Create, new { nameAr = "شمال", nameEn = "North", companyCode = company }),

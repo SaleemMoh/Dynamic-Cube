@@ -106,7 +106,8 @@ export class DomainEditor {
           map((page) => page.items.map((i): FormOption => ({ value: i.value, label: { ar: i.labelAr, en: i.labelEn } }))),
           catchError(() => of<FormOption[]>([])),
         );
-      // "All companies" is a choice of its own (`*`); an empty choice is not valid (ADR-0036).
+      // A value serves every company, or belongs to one (its key is then CLASS/instid/cmp_num/VALUE, as the legacy
+      // DD_COMPANY_DOMAIN).
       const companies = cls.valuesPerCompany
         ? this.api.list('apps.company').pipe(
             map((rows) => [
@@ -151,7 +152,9 @@ export class DomainEditor {
       return;
     }
 
-    const code = this.data.row ? this.data.row.code.slice(this.data.cls.code.length + 1) : String(value['code'] ?? '').trim();
+    const code = this.data.row ? valueCode(this.data.row.code) : String(value['code'] ?? '').trim();
+    const company = this.data.cls.valuesPerCompany ? (value['companyCode'] as string | null) : null;
+    const key = company && company !== '*' ? `${this.data.cls.code}/${company}/${code}` : `${this.data.cls.code}/${code}`;
     const payload = {
       nameAr: value['nameAr'],
       nameEn: value['nameEn'],
@@ -163,11 +166,10 @@ export class DomainEditor {
       isDefault: value['isDefault'] ?? false,
       effectiveFrom: fromDate(value['effectiveFrom']),
       effectiveTo: fromDate(value['effectiveTo']),
-      companies: this.data.cls.valuesPerCompany ? onlyAll((value['companies'] as string[] | null) ?? []) : [],
       attributes,
     };
     try {
-      await this.drafts.addChange('apps.domain', `${this.data.cls.code}/${code}`, this.data.row ? 'UPDATE' : 'CREATE', payload, { submit });
+      await this.drafts.addChange('apps.domain', this.data.row ? this.data.row.code : key, this.data.row ? 'UPDATE' : 'CREATE', payload, { submit });
       this.ref.close(true);
     } catch (error) {
       this.errors.set(problemMessages(error));
@@ -200,7 +202,7 @@ export class DomainEditor {
   private initialValue(): FormValue {
     const row = this.data.row;
     const value: FormValue = {
-      code: row ? row.code.slice(this.data.cls.code.length + 1) : null,
+      code: row ? valueCode(row.code) : null,
       nameAr: row?.nameAr ?? null,
       nameEn: row?.nameEn ?? null,
       isActive: row?.isActive ?? true,
@@ -211,7 +213,7 @@ export class DomainEditor {
       isDefault: row?.isDefault ?? false,
       effectiveFrom: toDate(row?.effectiveFrom),
       effectiveTo: toDate(row?.effectiveTo),
-      companies: row?.companies ?? [],
+      companyCode: row ? (row.companyCode ?? '*') : '*',
     };
     for (const attribute of this.data.cls.attributes) {
       const current = row?.attributes?.[attribute.code];
@@ -268,12 +270,12 @@ export class DomainEditor {
       ...(this.data.cls.valuesPerCompany
         ? [
             {
-              code: 'companies',
+              code: 'companyCode',
               type: 'select',
-              multiple: true,
-              label: { ar: 'الشركات', en: 'Companies' },
-              hint: { ar: 'اختر الشركات أو «كل الشركات»', en: 'Choose companies, or "All companies"' },
+              label: { ar: 'الشركة', en: 'Company' },
+              hint: { ar: 'قيمة لكل الشركات، أو لشركة واحدة (لا تتغير بعد الحفظ)', en: 'A value of every company, or of one company (fixed once saved)' },
               required: true,
+              readonly: editing,
               options: companies,
             } satisfies FormField,
           ]
@@ -295,7 +297,7 @@ export class DomainEditor {
   }
 }
 
-/** "All companies" alone when it is among the chosen ones. */
-function onlyAll(companies: string[]): string[] {
-  return companies.includes('*') ? ['*'] : companies;
+/** The value's own code, the last part of its key (CLASS/VALUE or CLASS/instid/cmp_num/VALUE). */
+function valueCode(key: string): string {
+  return key.slice(key.lastIndexOf('/') + 1);
 }

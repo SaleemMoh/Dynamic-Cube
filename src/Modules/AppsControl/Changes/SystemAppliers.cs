@@ -372,7 +372,8 @@ internal sealed class BusinessAppApplier(AppsControlDbContext db) : ConfigApplie
 
     public override string ResourceCode => AppsControlResources.Installation;
 
-    protected override System.Text.RegularExpressions.Regex CodePattern => ValidationErrors.IdentifierCode();
+    // Any code, as the legacy Apps Control's APPSID (e.g. 4).
+    protected override System.Text.RegularExpressions.Regex CodePattern => ValidationErrors.GeneralCode();
 
     protected override IQueryable<BusinessApplication> Query(AppsControlDbContext context) => context.BusinessApps;
 
@@ -390,7 +391,14 @@ internal sealed class BusinessAppApplier(AppsControlDbContext db) : ConfigApplie
         errors.MaxLength("descriptionAr", payload.DescriptionAr, 2000);
         errors.MaxLength("descriptionEn", payload.DescriptionEn, 2000);
         errors.MaxLength("baseUrl", payload.BaseUrl, 500);
-        entity.EntityCode ??= GovernmentEntity.SingletonCode;
+
+        // An app of an organization by default; a connected app may serve the whole installation (several instances, as
+        // the legacy apps of SYS_APPS_COMPANY do) when it is given no organization.
+        if (payload.Kind != AppKind.Connected || payload.EntityCode is null)
+        {
+            entity.EntityCode ??= GovernmentEntity.SingletonCode;
+        }
+
         entity.BusinessApp = null;
         entity.Icon = payload.Icon;
         entity.DescriptionAr = payload.DescriptionAr;
@@ -420,9 +428,11 @@ internal sealed class BusinessAppApplier(AppsControlDbContext db) : ConfigApplie
         entity.BaseUrl = payload.Kind == AppKind.Connected && !string.IsNullOrWhiteSpace(payload.BaseUrl) ? payload.BaseUrl.Trim() : null;
         await SignInAsync(entity, payload, refs, errors, cancellationToken);
 
-        // Companies of the app's organization, and branches of those companies; "all" is chosen explicitly (ADR-0036).
+        // Companies (keys instid/cmp_num) of the app's organization — of any instance for an app of the whole installation —
+        // and branches of those companies; "all" is chosen explicitly (ADR-0036).
         entity.Companies = AllOrCodes(payload.Companies, "companies", "Choose companies, or all companies (*).", errors);
-        var companies = await refs.Context.Companies.AsNoTracking().Where(c => entity.Companies.Contains(c.Code)).Select(c => new { c.Code, c.EntityCode }).ToListAsync(cancellationToken);
+        var companies = await refs.Context.Companies.AsNoTracking().Where(c => entity.Companies.Contains(c.EntityCode + "/" + c.Code))
+            .Select(c => new { Code = c.EntityCode + "/" + c.Code, c.EntityCode }).ToListAsync(cancellationToken);
         foreach (var code in entity.Companies.Where(c => c != CompanyScope.All))
         {
             var company = companies.FirstOrDefault(c => c.Code == code);
@@ -430,7 +440,7 @@ internal sealed class BusinessAppApplier(AppsControlDbContext db) : ConfigApplie
             {
                 errors.Add("companies", $"Company '{code}' does not exist.");
             }
-            else if (company is not null && company.EntityCode != entity.EntityCode)
+            else if (company is not null && entity.EntityCode is not null && company.EntityCode != entity.EntityCode)
             {
                 errors.Add("companies", $"Company {code} belongs to organization {company.EntityCode}, not {entity.EntityCode}.");
             }
@@ -438,7 +448,7 @@ internal sealed class BusinessAppApplier(AppsControlDbContext db) : ConfigApplie
 
         entity.Branches = AllOrCodes(payload.Branches, "branches", "Choose branches, or all branches (*).", errors);
         var allCompanies = CompanyScope.IsAll(entity.Companies);
-        var branches = await refs.Context.Branches.AsNoTracking().Where(b => entity.Branches.Contains(b.Code)).Select(b => new { b.Code, b.CompanyCode, b.EntityCode }).ToListAsync(cancellationToken);
+        var branches = await refs.Context.Branches.AsNoTracking().Where(b => entity.Branches.Contains(b.Code)).Select(b => new { b.Code, CompanyCode = b.EntityCode + "/" + b.CompanyCode, b.EntityCode }).ToListAsync(cancellationToken);
         foreach (var code in entity.Branches.Where(c => c != CompanyScope.All))
         {
             var branch = branches.FirstOrDefault(b => b.Code == code);
@@ -446,7 +456,7 @@ internal sealed class BusinessAppApplier(AppsControlDbContext db) : ConfigApplie
             {
                 errors.Add("branches", $"Branch '{code}' does not exist.");
             }
-            else if (branch is not null && (allCompanies ? branch.EntityCode != entity.EntityCode : !entity.Companies.Contains(branch.CompanyCode)))
+            else if (branch is not null && (allCompanies ? entity.EntityCode is not null && branch.EntityCode != entity.EntityCode : !entity.Companies.Contains(branch.CompanyCode)))
             {
                 errors.Add("branches", $"Branch {code} belongs to company {branch.CompanyCode}, which the app is not enabled for.");
             }

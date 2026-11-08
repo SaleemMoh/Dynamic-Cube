@@ -33,7 +33,8 @@ public sealed class CompanyTests(AppsControlFixture fixture) : IAsyncLifetime
     [Fact]
     public async Task Branches_take_their_companys_organization_and_one_is_the_default()
     {
-        var (organization, company) = (Harness.Unique("ORG"), Harness.Unique("CO"));
+        var organization = Harness.Unique("ORG");
+        var company = organization + "/" + Harness.Unique("CO");
         var (riyadh, jeddah) = (Harness.Unique("RUH"), Harness.Unique("JED"));
         await _harness.PublishAsync(
             AppsControlAreas.System,
@@ -52,7 +53,8 @@ public sealed class CompanyTests(AppsControlFixture fixture) : IAsyncLifetime
     [Fact]
     public async Task An_app_is_a_dynamic_cube_app_on_channels_or_a_connected_app_enabled_for_companies_of_its_organization()
     {
-        var (organization, company, branch) = (Harness.Unique("ORG"), Harness.Unique("CO"), Harness.Unique("BR"));
+        var (organization, branch) = (Harness.Unique("ORG"), Harness.Unique("BR"));
+        var company = organization + "/" + Harness.Unique("CO");
         await _harness.PublishAsync(
             AppsControlAreas.System,
             new Change(AppsControlChangeTypes.Entity, organization, ChangeOperation.Create, new { nameAr = "جهة", nameEn = "Group" }),
@@ -65,7 +67,7 @@ public sealed class CompanyTests(AppsControlFixture fixture) : IAsyncLifetime
         (await Problems(new { nameAr = "ت", nameEn = "A", kind = "DYNAMIC_CUBE", channels = Array.Empty<string>() })).ShouldContain("channels");
         (await Problems(new { nameAr = "ت", nameEn = "A", kind = "DYNAMIC_CUBE", channels = new[] { "MOBILE" } })).ShouldContain("channels");
         (await Problems(new { nameAr = "ت", nameEn = "A", kind = "CONNECTED", channels = new[] { "INTERNAL" } })).ShouldContain("channels");
-        (await Problems(new { nameAr = "ت", nameEn = "A", kind = "DYNAMIC_CUBE", channels = new[] { "INTERNAL" }, companies = new[] { company }, branches = new[] { "*" } }))
+        (await Problems(new { nameAr = "ت", nameEn = "A", entityCode = "ENTITY", kind = "DYNAMIC_CUBE", channels = new[] { "INTERNAL" }, companies = new[] { company }, branches = new[] { "*" } }))
             .ShouldContain("companies", "the company belongs to another organization than the default one");
         var unchosen = await Problems(new { nameAr = "ت", nameEn = "A", kind = "DYNAMIC_CUBE", channels = new[] { "INTERNAL" } });
         unchosen.ShouldContain("companies", "all companies is an explicit choice, not an empty list");
@@ -90,7 +92,7 @@ public sealed class CompanyTests(AppsControlFixture fixture) : IAsyncLifetime
     [Fact]
     public async Task A_branch_needs_an_existing_company_and_a_company_with_branches_cannot_be_deleted()
     {
-        var (company, branch) = (Harness.Unique("CO"), Harness.Unique("BR"));
+        var (company, branch) = ("ENTITY/" + Harness.Unique("CO"), Harness.Unique("BR"));
         (await Should.ThrowAsync<ChangeValidationException>(() => _harness.DraftAsync(AppsControlAreas.System, Branch(branch, Harness.Unique("NOPE")))))
             .Errors.Keys.ShouldContain("companyCode");
 

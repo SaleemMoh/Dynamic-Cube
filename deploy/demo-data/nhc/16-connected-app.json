@@ -10,7 +10,7 @@
         "nameEn": "Projects management system",
         "kind": "CONNECTED",
         "companies": [
-          "MAIN"
+          "ENTITY/MAIN"
         ],
         "branches": [
           "*"
@@ -180,14 +180,14 @@
         "roles": [
           {
             "roleCode": "CLS_REQUEST_MANAGER",
-            "companyCode": "MAIN",
+            "companyCode": "ENTITY/MAIN",
             "branches": [
               "HQ"
             ]
           },
           {
             "roleCode": "PMS_PROJECT_MANAGER",
-            "companyCode": "MAIN",
+            "companyCode": "ENTITY/MAIN",
             "branches": [
               "HQ"
             ]
@@ -215,7 +215,7 @@
         "roles": [
           {
             "roleCode": "CLS_AUDIT_MANAGER",
-            "companyCode": "MAIN",
+            "companyCode": "ENTITY/MAIN",
             "branches": [
               "*"
             ]
@@ -230,7 +230,7 @@
         ],
         "privileges": [
           {
-            "companyCode": "MAIN",
+            "companyCode": "ENTITY/MAIN",
             "resourceCode": "action-center.supervision",
             "actions": [
               "VIEW"
@@ -327,7 +327,7 @@
     },
     {
       "entityType": "apps.menu-group",
-      "entityCode": "PMS_WORK",
+      "entityCode": "PMS/PMS_WORK",
       "operation": "CREATE",
       "payload": {
         "nameAr": "العمل اليومي",
@@ -339,7 +339,7 @@
     },
     {
       "entityType": "apps.menu-group",
-      "entityCode": "PMS_INSIGHTS",
+      "entityCode": "PMS/PMS_INSIGHTS",
       "operation": "CREATE",
       "payload": {
         "nameAr": "المتابعة",
@@ -351,13 +351,13 @@
     },
     {
       "entityType": "apps.menu",
-      "entityCode": "PMS_M_PROJECTS",
+      "entityCode": "PMS/PMS_M_PROJECTS",
       "operation": "CREATE",
       "payload": {
         "nameAr": "المشاريع",
         "nameEn": "Projects",
         "businessApp": "PMS",
-        "groupCode": "PMS_WORK",
+        "groupCode": "PMS/PMS_WORK",
         "itemType": "SCREEN",
         "target": "/projects",
         "icon": "folder",
@@ -367,13 +367,13 @@
     },
     {
       "entityType": "apps.menu",
-      "entityCode": "PMS_M_CONTRACTORS",
+      "entityCode": "PMS/PMS_M_CONTRACTORS",
       "operation": "CREATE",
       "payload": {
         "nameAr": "المقاولون",
         "nameEn": "Contractors",
         "businessApp": "PMS",
-        "groupCode": "PMS_WORK",
+        "groupCode": "PMS/PMS_WORK",
         "itemType": "SCREEN",
         "target": "/contractors",
         "icon": "groups",
@@ -383,13 +383,13 @@
     },
     {
       "entityType": "apps.menu",
-      "entityCode": "PMS_M_REPORTS",
+      "entityCode": "PMS/PMS_M_REPORTS",
       "operation": "CREATE",
       "payload": {
         "nameAr": "تقارير المشاريع",
         "nameEn": "Project reports",
         "businessApp": "PMS",
-        "groupCode": "PMS_INSIGHTS",
+        "groupCode": "PMS/PMS_INSIGHTS",
         "itemType": "SCREEN",
         "target": "/reports",
         "icon": "bar_chart",
@@ -399,13 +399,13 @@
     },
     {
       "entityType": "apps.menu",
-      "entityCode": "PMS_M_HELP",
+      "entityCode": "PMS/PMS_M_HELP",
       "operation": "CREATE",
       "payload": {
         "nameAr": "دليل الاستخدام",
         "nameEn": "User guide",
         "businessApp": "PMS",
-        "groupCode": "PMS_INSIGHTS",
+        "groupCode": "PMS/PMS_INSIGHTS",
         "itemType": "SCREEN",
         "target": "/help",
         "icon": "help",

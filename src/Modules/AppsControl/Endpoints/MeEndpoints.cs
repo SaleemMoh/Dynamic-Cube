@@ -131,15 +131,15 @@ internal static class MeEndpoints
     private static async Task<WorkspaceInfo> WorkspaceAsync(AccessSnapshot access, AppsControlDbContext db, CancellationToken cancellationToken)
     {
         var codes = access.Companies.ToList();
-        var companies = await db.Companies.AsNoTracking().Where(c => codes.Contains(c.Code)).ToListAsync(cancellationToken);
+        var companies = await db.Companies.AsNoTracking().Where(c => codes.Contains(c.EntityCode + "/" + c.Code)).ToListAsync(cancellationToken);
         var entityCodes = companies.Select(c => c.EntityCode).OfType<string>().Distinct().ToList();
         var entities = await db.Entities.AsNoTracking().Where(e => entityCodes.Contains(e.Code)).ToDictionaryAsync(e => e.Code, cancellationToken);
         var list = codes
-            .Select(code => companies.Single(c => c.Code == code))
+            .Select(code => companies.Single(c => c.Key == code))
             .Select(c =>
             {
                 var entity = c.EntityCode is null ? null : entities.GetValueOrDefault(c.EntityCode);
-                return new WorkspaceCompany(c.Code, c.NameAr, c.NameEn, c.EntityCode, entity?.NameAr, entity?.NameEn);
+                return new WorkspaceCompany(c.Key, c.NameAr, c.NameEn, c.EntityCode, entity?.NameAr, entity?.NameEn);
             })
             .ToList();
         return new WorkspaceInfo(access.Company, access.CompanyChosen, list);

@@ -1,6 +1,7 @@
-# Legacy Apps Control data → Dynamic Cube: import plan
+# Legacy Apps Control data → Dynamic Cube: import
 
-Status: **plan, waiting for agreement**. Source: the owner's export of the Oracle Apps Control (28 CSV files).
+Status: **built** (composite keys and the importer; the run is in section 3). Screens that pick a company, role or
+value still need a pass for the instance/company filters (step 4.1, open). Source: the owner's export of the Oracle Apps Control (28 CSV files).
 Decisions already taken: remove the whole demo; **composite keys as in legacy**; users get a sign-in account with a
 one-time password, with their companies and roles; the data is **not** committed to git (read from a folder on the
 server).
@@ -18,19 +19,20 @@ server).
 | `DD_DOMAIN` | 637 | `dd_domain`, system values (no instance/company) |
 | `DD_COMPANY_DOMAIN` | 8,042 | `dd_domain`, key **(class, instid, cmp_num, value)**; 6,847 are inactive and stay inactive |
 | `DD_COMPANY_DOMAIN_VIRTUAL_VALUES` | 2 | the value's list-of-values attribute |
-| `DD_LOVS` | 139 | `dd_lovs`: 120 that read a class become *Class* lists; 19 that read other legacy tables (employee, expense, project, document-owner views) are kept with their SQL but **inactive** (Oracle SQL on tables that are not here) |
-| `SYS_MENU_LOVS` | 174 | `sys_menu_lovs` / `dd_data_scope_bindings` |
+| `DD_LOVS` | 139 | `dd_lovs`: the lists that read a class become *Class* lists (117); the ones that run Oracle SQL on tables that are not here (employee, expense, project, document-owner views) are **not imported** and listed in the report, to be rebuilt with the query builder |
 | `SYS_ROLES` | 86 | `sys_roles`, key **(instid, cmp_num, role_code)** |
 | `SYS_ROLE_MENUS` | 420 | `sys_role_menus` + view privilege on the screen |
 | `SYS_ROLE_MENU_LOVS` | 7,893 | `sys_role_menu_lovs`: one row per role/screen/list (751) with the values in `value_codes` and the default value |
 | `SYS_USERS` | 365 | `sys_users` (name, email, phone, employee id); a Keycloak account each |
-| `SYS_USERINSTANCES` / `SYS_USERINSTANCES_COMPANIES` | 399 / 522 | the user's instances and companies (default company → `last_cmp_num`) |
+| `SYS_USERINSTANCES` | 399 | the user's default instance |
 | `SYS_USER_ROLES` | 271 | `sys_user_roles` (161 users have roles) |
 
 **Not imported**: every password, OTP code and token (`USERPWD`, `PASSWORD_*`, `OTPCODE`, `BI_USER_PWD`,
 `REMEMBER_TOKEN`, `INSTDBPWD`, `DB_PSWD`, `SYSTEM_LOGIN_PWD`, `EMAIL_SETTINGS.USER_PWD`); instance database connections;
 `SYS_SYSTEM_PROFILE` / `SYS_USER_SYSTEMS` (logins to other databases); `EMAIL_SETTINGS` (SMTP is set once in
-Communication settings, its password in the secret store); `SYS_MENU_DOMAIN` (declined). `USERS`,
+Communication settings, its password in the secret store); `SYS_MENU_DOMAIN` (declined); `SYS_MENU_LOVS` and
+`SYS_USERINSTANCES_COMPANIES` (a user's companies come from the roles they hold); the legacy Configuration Center
+(`APPSID` 5, replaced by Dynamic Cube). `USERS`,
 `AUTHENTICATABLE_USERS`, `BAS_COMPANIES`, `SYS_COMPANY_USERS`, `NOTIFICATIONS` are empty in the export.
 
 ## 2. Composite keys (the design change)
@@ -50,29 +52,44 @@ What follows from it:
 - Tables keep the `id` (uuid) for foreign keys; the composite key is the unique business key.
 - Change sets, packages, exports and the API name such a row by its key parts joined with `/`
   (`5/2` for a company, `12/99/ADMIN` for a role, `REGION/5/2/RIYADH` for a company value).
-- The *current company* (header, workspace picker, requests, tasks, documents) becomes the pair instance + company.
+- The *current company* (header, workspace picker, requests, tasks, documents) is the key `instid/cmp_num`.
 - Values per company become one row per company (as `DD_COMPANY_DOMAIN`) instead of one row with a company list.
-- Role company overrides are no longer needed (a role already belongs to one company) and are removed.
+- A role of one company cannot have company overrides; overrides stay for roles of no company (Dynamic Cube's own).
 - Screens: company, role and value pickers show the instance and company; the role screen and the class values screen
   get an instance/company filter.
 
-## 3. The import
+## 3. The import (built)
 
-- `Migrator` gets a **legacy import**: `LegacyImport:Folder=/data/legacy` (the unzipped CSV folder, mounted into the
-  container, never in git) and `LegacyImport:Replace=true`.
-- *Replace* empties every module's data (configuration, requests, tasks, documents, reports, change sets, audit),
-  seeds what the product itself needs (admin, Dynamic Cube's own apps, menus, screens and system classes), and removes
-  the demo users from Keycloak.
-- It then loads the file in the order of section 1, as published change sets (so the audit shows the import), and
-  reports what it skipped and why.
-- **Sign-in**: one Keycloak account per user (username = `USERID`, email kept) with a random one-time password and
-  "change password at first sign-in". The passwords are written once to a file in the import folder for the
-  administrator to hand out, and are not stored anywhere else.
-- Running it again with the same folder updates rows and adds missing ones.
+`src/Tools/Migrator/LegacyImporter.cs` (with `LegacyCsv.cs`). The migrator runs it instead of the demo when
+`LegacyImport:Folder` names a folder holding `SYS_COMPANY_PROFILE.csv`. In Docker that folder is
+`deploy/docker/legacy-data/` (mounted as `/data/legacy`; nothing in it is committed).
+
+- **First run** (the first legacy company is not there yet): every module's data is emptied (configuration, requests,
+  tasks, documents, reports, change sets, audit), what the product itself needs is seeded again (admin, Dynamic
+  Cube's own apps, menus, screens, system classes), then the file is loaded as published change sets in the order of
+  section 1, so the audit shows the import.
+- **A run that stopped part way** carries on: rows already there are left alone, the rest is created.
+- **Later runs** only create missing sign-in accounts. `LegacyImport:Refresh=true` applies the file again (updates rows).
+- **Sign-in**: one Keycloak account per user (username = `USERID`, with spaces as `.`; e-mail kept unless another
+  account has it), with a random one-time password the user changes at first sign-in. The passwords are written to
+  `one-time-passwords-<date>.csv` in the folder, even when the run stops part way, and are stored nowhere else.
+- **Report**: `import-report.txt` in the folder lists what was loaded and every row left out or changed, with the
+  reason (about 320 lines for the owner's file: role screens and list grants on items that are not imported screens,
+  e-mails used twice, SQL lists, the Configuration Center, one class whose code differs only in case from another,
+  user names Keycloak does not take).
+- Speed: about 15 minutes on the first run (8,700 class values); a later run takes seconds.
+- Docker's Keycloak keeps no data between restarts: its accounts (and so the one-time passwords) are created again by
+  the next run.
+
+Check after a run (Docker):
+
+    docker compose -f deploy/docker/docker-compose.yml exec postgres psql -U dynamic_cube -d dynamic_cube -c "\dt apps.*"
+    docker compose -f deploy/docker/docker-compose.yml exec postgres psql -U dynamic_cube -d dynamic_cube -c "select count(*) from apps.sys_company_profile"
 
 ## 4. Steps
 
-1. Composite keys: tables, migration, change sets and API keys, current company as instance + company, screens. Tests.
-2. Importer: replace, CSV reader, mapping above, Keycloak accounts, skip report. Tests with a small sample file.
-3. Run on the dev database with the real file; check the screens (companies, classes and values per company, lists,
-   menus per app, roles and their grants, users and their access); docs and the owner's run command.
+1. ~~Composite keys: tables, migration, change sets and API keys, current company as instance + company.~~ Done, with
+   tests. Open: instance/company filters on the role and class-values screens.
+2. ~~Importer: replace, CSV reader, mapping above, Keycloak accounts, skip report.~~ Done.
+3. ~~Run on the dev database with the real file.~~ Done; the owner runs it with the command in
+   `deploy/docker/legacy-data/README.md`.

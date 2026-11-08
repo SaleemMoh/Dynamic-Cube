@@ -1,0 +1,5 @@
+# The legacy Apps Control export holds personal data (names, e-mails, phones) and the import writes one-time
+# passwords here: nothing in this folder but this file and the README goes into git.
+*
+!.gitignore
+!README.md
