@@ -40,7 +40,7 @@
               "on": [
                 {
                   "left": "r.branch_code",
-                  "right": "b.code"
+                  "right": "b.branch_code"
                 }
               ]
             }
@@ -93,7 +93,7 @@
             "name": "branch",
             "labelAr": "الفرع",
             "labelEn": "Branch",
-            "column": "b.name_ar",
+            "column": "b.branch_desc_ntv",
             "aggregate": null
           },
           {
@@ -231,7 +231,7 @@
             "name": "branch",
             "labelAr": "الفرع",
             "labelEn": "Branch",
-            "column": "b.name_ar",
+            "column": "b.branch_desc_ntv",
             "aggregate": null
           },
           {
@@ -297,7 +297,7 @@
               "on": [
                 {
                   "left": "r.branch_code",
-                  "right": "b.code"
+                  "right": "b.branch_code"
                 }
               ]
             }
@@ -451,7 +451,7 @@
             "type": "PIE",
             "x": [
               {
-                "column": "b.name_ar",
+                "column": "b.branch_desc_ntv",
                 "aggregate": null,
                 "bucket": null,
                 "labelAr": "الفرع",
@@ -539,7 +539,7 @@
             "name": "branch",
             "labelAr": "الفرع",
             "labelEn": "Branch",
-            "column": "b.name_ar",
+            "column": "b.branch_desc_ntv",
             "aggregate": null
           },
           {
@@ -593,7 +593,7 @@
               "on": [
                 {
                   "left": "t.branch_code",
-                  "right": "b.code"
+                  "right": "b.branch_code"
                 }
               ]
             }
@@ -634,7 +634,7 @@
             "name": "branch",
             "labelAr": "الفرع",
             "labelEn": "Branch",
-            "column": "b.name_ar",
+            "column": "b.branch_desc_ntv",
             "aggregate": null
           },
           {
@@ -755,7 +755,7 @@
             "name": "branch",
             "labelAr": "الفرع",
             "labelEn": "Branch",
-            "column": "b.name_ar",
+            "column": "b.branch_desc_ntv",
             "aggregate": null
           },
           {

@@ -9,26 +9,26 @@
         "nameAr": "الفروع",
         "nameEn": "Branches",
         "dbSchema": "apps",
-        "dbObject": "branch",
+        "dbObject": "sys_company_branches",
         "objectType": "TABLE",
         "columns": [
           {
-            "name": "code",
+            "name": "branch_code",
             "labelAr": "رمز الفرع",
             "labelEn": "Branch code"
           },
           {
-            "name": "name_ar",
+            "name": "branch_desc_ntv",
             "labelAr": "اسم الفرع بالعربية",
             "labelEn": "Arabic name"
           },
           {
-            "name": "name_en",
+            "name": "branch_desc_frn",
             "labelAr": "اسم الفرع بالإنجليزية",
             "labelEn": "English name"
           },
           {
-            "name": "company_code",
+            "name": "cmp_num",
             "labelAr": "الشركة",
             "labelEn": "Company"
           },
@@ -48,7 +48,7 @@
             "labelEn": "Active"
           },
           {
-            "name": "display_order",
+            "name": "order_num",
             "labelAr": "ترتيب العرض",
             "labelEn": "Display order"
           }
@@ -85,21 +85,21 @@
             }
           ],
           "map": {
-            "value": "b.code",
-            "labelAr": "b.name_ar",
-            "labelEn": "b.name_en",
+            "value": "b.branch_code",
+            "labelAr": "b.branch_desc_ntv",
+            "labelEn": "b.branch_desc_frn",
             "parent": "r.code"
           },
           "where": {
             "match": "ALL",
             "conditions": [
               {
-                "column": "b.company_code",
+                "column": "b.cmp_num",
                 "op": "IN",
                 "user": "COMPANY"
               },
               {
-                "column": "b.code",
+                "column": "b.branch_code",
                 "op": "IN",
                 "user": "BRANCHES"
               }
@@ -124,7 +124,7 @@
               "direction": "ASC"
             },
             {
-              "column": "b.display_order",
+              "column": "b.order_num",
               "direction": "ASC"
             }
           ],

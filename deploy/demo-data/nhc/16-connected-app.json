@@ -268,21 +268,21 @@
             }
           ],
           "map": {
-            "value": "b.code",
-            "labelAr": "b.name_ar",
-            "labelEn": "b.name_en",
+            "value": "b.branch_code",
+            "labelAr": "b.branch_desc_ntv",
+            "labelEn": "b.branch_desc_frn",
             "parent": "r.code"
           },
           "where": {
             "match": "ALL",
             "conditions": [
               {
-                "column": "b.company_code",
+                "column": "b.cmp_num",
                 "op": "IN",
                 "user": "COMPANY"
               },
               {
-                "column": "b.code",
+                "column": "b.branch_code",
                 "op": "IN",
                 "user": "BRANCHES"
               }
@@ -307,7 +307,7 @@
               "direction": "ASC"
             },
             {
-              "column": "b.display_order",
+              "column": "b.order_num",
               "direction": "ASC"
             }
           ],

@@ -28,30 +28,32 @@ Where the values come from (`source_type`):
 
 ## 2.2 Tables (schema `apps`)
 
+Table and column names follow the legacy Apps Control ([legacy mapping](legacy-apps-control-mapping.md)).
+
 ```mermaid
 erDiagram
-    lov }o--|| class : "class_id (Class source)"
-    lov }o--|| data_object : "data_object_id (DataObject source)"
-    lov ||--o{ lov_binding : "screen fields (cascade)"
-    lov ||--o{ lov_grant : "what each role sees (cascade)"
-    role ||--o{ lov_grant : "role_id"
-    resource |o--o{ lov_grant : "resource_id (one screen only)"
-    data_object ||--o{ data_scope_binding : "column filtered by a list (cascade)"
-    lov ||--o{ data_scope_binding : "lov_id"
-    user_privilege ||--o{ user_privilege_grant : "a person's own grants on a screen"
+    dd_lovs }o--|| dd_classes : "ref_class_id (Class source)"
+    dd_lovs }o--|| dd_data_objects : "data_object_id (DataObject source)"
+    dd_lovs ||--o{ sys_menu_lovs : "screen fields (cascade)"
+    dd_lovs ||--o{ sys_role_menu_lovs : "what each role sees (cascade)"
+    sys_roles ||--o{ sys_role_menu_lovs : "role_id"
+    sys_resources |o--o{ sys_role_menu_lovs : "resource_id (one screen only)"
+    dd_data_objects ||--o{ dd_data_scope_bindings : "column filtered by a list (cascade)"
+    dd_lovs ||--o{ dd_data_scope_bindings : "lov_id"
+    sys_user_privileges ||--o{ sys_user_privilege_lovs : "a person's own grants on a screen"
 ```
 
-### `apps.lov` — the lists (entity `Lov`)
+### `apps.dd_lovs` — the lists (entity `Lov`)
 
 | Column | Type | Meaning |
 |---|---|---|
-| `id`, `code`, `name_ar`, `name_en`, `is_active`, `owner`, `entity_code`, `business_app`, `shared_apps`, audit, `xmin` | | Common configuration columns (see part 1) |
+| `id`, `lov_code`, `lov_desc_ntv`, `lov_desc_frn`, `is_active`, `owner`, `instid`, `business_app`, `shared_apps`, audit, `xmin` | | Common configuration columns (see part 1) |
 | `source_type` | text | `Class`, `DataObject`, `Query`, `Sql`, `Integration` |
-| `class_id` | uuid FK → `class` | `Class` source |
-| `data_object_id` | uuid FK → `data_object` | `DataObject` source |
+| `ref_class_id` | uuid FK → `dd_classes` | `Class` source |
+| `data_object_id` | uuid FK → `dd_data_objects` | `DataObject` source |
 | `query` | jsonb | `Query` source: the builder's definition (`LovQueryDefinition`: from, joins, map, where, sort, distinct) |
-| `sql_text` | text | `Sql` source (max 8000 chars) |
-| `value_column`, `display_ar_column`, `display_en_column`, `parent_column` | varchar(63) | `DataObject` / `Sql`: which columns hold the value, the labels and the parent (cascading) |
+| `sqlstmt` | text | `Sql` source (max 8000 chars) |
+| `value_field`, `display_ar_column`, `display_en_column`, `parent_column` | varchar(63) | `DataObject` / `Sql`: which columns hold the value, the labels and the parent (cascading) |
 | `static_filter` | jsonb | `Class` source only: JSONLogic over each value (`attributes`, `code`, `parent`) — e.g. only sectors with `IS_CONSTRUCTION = true` |
 | `integration_operation_code` | varchar(100) | `Integration` source (not implemented) |
 | `search_mode` | text | `Full` (send the whole list, up to `max_rows`) or `Typeahead` (pages of 50 as the user types) |
@@ -60,39 +62,39 @@ erDiagram
 | `requires_grant` | bool | **Closed list:** a user without any grant sees nothing (otherwise: everything) |
 | `is_public` | bool | Served by the external host (portal, partners) |
 
-### `apps.lov_grant` — what a role may see (entity `LovGrant`)
+### `apps.sys_role_menu_lovs` — what a role may see (entity `LovGrant`)
 
 | Column | Type | Meaning |
 |---|---|---|
-| `role_id` | uuid FK → `role` | The role |
-| `lov_id` | uuid FK → `lov`, cascade | The list |
-| `resource_id` | uuid FK → `resource`, nullable | Empty: the role's grant everywhere; set: an override for **one screen** (wins over the general one on that screen) |
-| `company_code` | varchar(100), nullable | Empty: the role's own grant; set: the grant of the role when held in that company (role company override) |
+| `role_id` | uuid FK → `sys_roles` | The role |
+| `lov_id` | uuid FK → `dd_lovs`, cascade | The list |
+| `resource_id` | uuid FK → `sys_resources`, nullable | Empty: the role's grant everywhere; set: an override for **one screen** (wins over the general one on that screen) |
+| `cmp_num` | varchar(100), nullable | Empty: the role's own grant; set: the grant of the role when held in that company (role company override) |
 | `grant_type` | text | `All`, `Values`, `Rule`, `None` |
-| `granted_values` | text[] | `Values`: the codes allowed |
+| `value_codes` | text[] | `Values`: the codes allowed |
 | `rule` | jsonb | `Rule`: JSONLogic over the user context (`company`, `app`, `user.orgUnit(s)`, `user.positions`, `user.orgUnitAttributes`…) returning a value, a list, `true` (all) or `false`/null (none) — e.g. `{"var":"user.orgUnitAttributes.REGION"}` |
-| `default_value` | varchar(200) | Pre-selected value for this role |
+| `default_value_code` | varchar(200) | Pre-selected value for this role |
 
-Unique per (`role_id, lov_id, resource_id, company_code`). These rows are **not edited as their own type**: they are
+Unique per (`role_id, lov_id, resource_id, cmp_num`). These rows are **not edited as their own type**: they are
 part of the role's payload (`apps.role` → `grants`), so a role and its data permissions move together in packages.
 
-### `apps.user_privilege_grant` — a person's own grants (entity `UserPrivilegeGrant`)
+### `apps.sys_user_privilege_lovs` — a person's own grants (entity `UserPrivilegeGrant`)
 
 A personal privilege on a screen (part "Users") can carry grants on lists for that screen only: `user_privilege_id`,
-`lov_id`, `grant_type`, `granted_values` (text[]). They **only add** to what the person's roles give, within the
+`lov_id`, `grant_type`, `value_codes` (text[]). They **only add** to what the person's roles give, within the
 privilege's dates.
 
-### `apps.lov_binding` — list ↔ screen field (entity `LovBinding`)
+### `apps.sys_menu_lovs` — list ↔ screen field (entity `LovBinding`)
 
 `lov_id`, `resource_id`, `field_code` (unique per resource + field), `selection_mode`. Saved with the list; **no runtime
 code reads it** (see review points).
 
-### `apps.data_object` and `apps.data_scope_binding` — registered tables and their row filters
+### `apps.dd_data_objects` and `apps.dd_data_scope_bindings` — registered tables and their row filters
 
 | Table | Columns | Meaning |
 |---|---|---|
-| `data_object` | common columns + `db_schema`, `db_object` (varchar 63), `object_type` (`Table`/`View`), `columns` (jsonb: `name`, `dataType`, `labelAr/En`, `filterable`, `searchable`) | A table or view of a module schema (`AppsControl:DataObjectSchemas`) that lists, the query builder and reports may read. Only registered columns can be used |
-| `data_scope_binding` | `data_object_id` (cascade), `column_name`, `lov_id`, `applies_to` (text[] of resource codes; empty = everywhere) | "Filter column `branch_code` of this table by the user's grant on list `MY_BRANCHES`" — applied by every query-builder read of the table (query lists, reports, public API read endpoints) |
+| `dd_data_objects` | common columns (`object_code`, `object_desc_ntv/frn`…) + `db_schema`, `db_object` (varchar 63), `object_type` (`Table`/`View`), `columns` (jsonb: `name`, `dataType`, `labelAr/En`, `filterable`, `searchable`) | A table or view of a module schema (`AppsControl:DataObjectSchemas`) that lists, the query builder and reports may read. Only registered columns can be used |
+| `dd_data_scope_bindings` | `data_object_id` (cascade), `value_field` (the column filtered), `lov_id`, `applies_to` (text[] of resource codes; empty = everywhere) | "Filter column `branch_code` of this table by the user's grant on list `MY_BRANCHES`" — applied by every query-builder read of the table (query lists, reports, public API read endpoints) |
 
 ## 2.3 The code, mapped to your layers
 
@@ -165,8 +167,8 @@ an update of the role (`apps.role`) — the builder's *Access* step does it for 
 
 **A dropdown of a class** — Lists of values → New, source *Class*, pick the class; tick *Public* if the portal uses it.
 
-**"Only the branches of my company"** — source *Query* in the builder: Get `apps.branch` (data object), Filter
-`company_code = the user's company` (conditions can compare with the user's data), Map value/labels. Or keep a plain
+**"Only the branches of my company"** — source *Query* in the builder: Get `apps.sys_company_branches` (data object), Filter
+`cmp_num = the user's company` (conditions can compare with the user's data), Map value/labels. Or keep a plain
 list and give roles a grant of type *Rule* over the user context — `company`, `app`, `user.orgUnit`, `user.orgUnits`,
 `user.positions`, `user.orgUnitAttributes.REGION` … (e.g. `{"var": "user.orgUnitAttributes.REGION"}`).
 
@@ -187,7 +189,7 @@ role a grant on that list. Every query-builder read (lists, reports, API) is fil
 
 | # | Finding | Proposal |
 |---|---|---|
-| 1 | `apps.lov_binding` (list ↔ screen field) is saved but **no runtime code reads it**: dropdowns name their list in their own definition (question, attribute, report filter). | Drop the table, `LovBinding`, the `bindings` payload field and its form fields (one migration). |
+| 1 | `apps.sys_menu_lovs` (list ↔ screen field) is saved but **no runtime code reads it**: dropdowns name their list in their own definition (question, attribute, report filter). | Drop the table, `LovBinding`, the `bindings` payload field and its form fields (one migration). |
 | 2 | Source type `Integration` (and column `integration_operation_code`) is declared but saving it is refused ("becomes available with the Integration Manager"); lists from an operation's results are not built. | Remove the option and the column now; add it back as a real feature if needed (lists filled by an Integration Manager operation). |
 | 3 | `default_selection_mode` (`Single`/`Multi`) is stored and edited but nothing reads it: each field decides single or multiple itself. | Drop the column and the field. |
 | 4 | `search_mode` + `max_rows` both control page size; *Typeahead* pages by 50, *Full* sends up to `max_rows`. | Keep (works), but rename on screen to *Load all values* / *Search as you type* so the effect is clear. |

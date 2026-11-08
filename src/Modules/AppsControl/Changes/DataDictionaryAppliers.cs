@@ -209,7 +209,7 @@ internal sealed class ClassApplier(AppsControlDbContext db) : ConfigApplier<Dict
         foreach (var code in removed)
         {
             await refs.Context.Database.ExecuteSqlAsync(
-                $"UPDATE apps.domain SET attributes = attributes - {code} WHERE class_id = {entity.Id}",
+                $"UPDATE apps.dd_domain SET attributes = attributes - {code} WHERE class_id = {entity.Id}",
                 cancellationToken);
         }
 

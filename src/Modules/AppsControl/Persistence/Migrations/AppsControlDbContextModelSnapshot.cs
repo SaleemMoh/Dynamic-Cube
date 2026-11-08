@@ -49,7 +49,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("code");
+                        .HasColumnName("appsid");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -63,28 +63,28 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
 
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer")
-                        .HasColumnName("display_order");
+                        .HasColumnName("order_num");
 
                     b.Property<string>("EntityCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("entity_code");
+                        .HasColumnName("instid");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
-                        .HasColumnName("is_active");
+                        .HasColumnName("active_flag");
 
                     b.Property<string>("NameAr")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_ar");
+                        .HasColumnName("apps_des_ntv");
 
                     b.Property<string>("NameEn")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_en");
+                        .HasColumnName("apps_des_frn");
 
                     b.Property<string>("Owner")
                         .IsRequired()
@@ -113,13 +113,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("updated_by");
 
                     b.HasKey("Id")
-                        .HasName("pk_app");
+                        .HasName("pk_sys_apps_profile");
 
                     b.HasIndex("Code")
                         .IsUnique()
-                        .HasDatabaseName("ix_app_code");
+                        .HasDatabaseName("ix_sys_apps_profile_code");
 
-                    b.ToTable("app", "apps");
+                    b.ToTable("sys_apps_profile", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.AppBranding", b =>
@@ -137,7 +137,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("code");
+                        .HasColumnName("branding_code");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -152,7 +152,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.Property<string>("EntityCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("entity_code");
+                        .HasColumnName("instid");
 
                     b.Property<string>("FooterImageKey")
                         .HasMaxLength(100)
@@ -182,13 +182,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_ar");
+                        .HasColumnName("branding_desc_ntv");
 
                     b.Property<string>("NameEn")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_en");
+                        .HasColumnName("branding_desc_frn");
 
                     b.Property<string>("Owner")
                         .IsRequired()
@@ -222,13 +222,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("updated_by");
 
                     b.HasKey("Id")
-                        .HasName("pk_app_branding");
+                        .HasName("pk_sys_apps_branding");
 
                     b.HasIndex("Code")
                         .IsUnique()
-                        .HasDatabaseName("ix_app_branding_code");
+                        .HasDatabaseName("ix_sys_apps_branding_code");
 
-                    b.ToTable("app_branding", "apps");
+                    b.ToTable("sys_apps_branding", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.AttributeDefinition", b =>
@@ -251,17 +251,17 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(63)
                         .HasColumnType("character varying(63)")
-                        .HasColumnName("code");
+                        .HasColumnName("attribute_code");
 
                     b.Property<string>("DataType")
                         .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)")
-                        .HasColumnName("data_type");
+                        .HasColumnName("attribute_type");
 
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer")
-                        .HasColumnName("display_order");
+                        .HasColumnName("order_num");
 
                     b.Property<bool>("IsMultiple")
                         .HasColumnType("boolean")
@@ -279,13 +279,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_ar");
+                        .HasColumnName("attribute_label_ntv");
 
                     b.Property<string>("NameEn")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_en");
+                        .HasColumnName("attribute_label_frn");
 
                     b.Property<string>("RefClassCode")
                         .HasMaxLength(100)
@@ -302,13 +302,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("validation");
 
                     b.HasKey("Id")
-                        .HasName("pk_class_attribute");
+                        .HasName("pk_dd_class_attributes");
 
                     b.HasIndex("ClassId", "Code")
                         .IsUnique()
-                        .HasDatabaseName("ix_class_attribute_class_id_code");
+                        .HasDatabaseName("ix_dd_class_attributes_class_id_code");
 
-                    b.ToTable("class_attribute", "apps");
+                    b.ToTable("dd_class_attributes", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.Branch", b =>
@@ -331,13 +331,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("code");
+                        .HasColumnName("branch_code");
 
                     b.Property<string>("CompanyCode")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("company_code");
+                        .HasColumnName("cmp_num");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -351,12 +351,12 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
 
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer")
-                        .HasColumnName("display_order");
+                        .HasColumnName("order_num");
 
                     b.Property<string>("EntityCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("entity_code");
+                        .HasColumnName("instid");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
@@ -370,13 +370,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_ar");
+                        .HasColumnName("branch_desc_ntv");
 
                     b.Property<string>("NameEn")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_en");
+                        .HasColumnName("branch_desc_frn");
 
                     b.Property<string>("OrgUnitCode")
                         .HasMaxLength(100)
@@ -415,16 +415,16 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("updated_by");
 
                     b.HasKey("Id")
-                        .HasName("pk_branch");
+                        .HasName("pk_sys_company_branches");
 
                     b.HasIndex("Code")
                         .IsUnique()
-                        .HasDatabaseName("ix_branch_code");
+                        .HasDatabaseName("ix_sys_company_branches_code");
 
                     b.HasIndex("CompanyCode")
-                        .HasDatabaseName("ix_branch_company_code");
+                        .HasDatabaseName("ix_sys_company_branches_company_code");
 
-                    b.ToTable("branch", "apps");
+                    b.ToTable("sys_company_branches", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.BrandingAsset", b =>
@@ -476,9 +476,9 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("updated_by");
 
                     b.HasKey("Id")
-                        .HasName("pk_branding_asset");
+                        .HasName("pk_sys_branding_assets");
 
-                    b.ToTable("branding_asset", "apps");
+                    b.ToTable("sys_branding_assets", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.BusinessApplication", b =>
@@ -516,12 +516,12 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("code");
+                        .HasColumnName("business_app_code");
 
                     b.PrimitiveCollection<List<string>>("Companies")
                         .IsRequired()
                         .HasColumnType("text[]")
-                        .HasColumnName("companies");
+                        .HasColumnName("cmp_nums");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -536,21 +536,21 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.Property<string>("DescriptionAr")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)")
-                        .HasColumnName("description_ar");
+                        .HasColumnName("business_app_long_desc_ntv");
 
                     b.Property<string>("DescriptionEn")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)")
-                        .HasColumnName("description_en");
+                        .HasColumnName("business_app_long_desc_frn");
 
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer")
-                        .HasColumnName("display_order");
+                        .HasColumnName("order_num");
 
                     b.Property<string>("EntityCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("entity_code");
+                        .HasColumnName("instid");
 
                     b.Property<string>("Icon")
                         .HasMaxLength(100)
@@ -571,13 +571,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_ar");
+                        .HasColumnName("business_app_desc_ntv");
 
                     b.Property<string>("NameEn")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_en");
+                        .HasColumnName("business_app_desc_frn");
 
                     b.Property<string>("Owner")
                         .IsRequired()
@@ -611,17 +611,17 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("updated_by");
 
                     b.HasKey("Id")
-                        .HasName("pk_business_app");
+                        .HasName("pk_sys_business_apps");
 
                     b.HasIndex("ClientId")
                         .IsUnique()
-                        .HasDatabaseName("ix_business_app_client_id");
+                        .HasDatabaseName("ix_sys_business_apps_client_id");
 
                     b.HasIndex("Code")
                         .IsUnique()
-                        .HasDatabaseName("ix_business_app_code");
+                        .HasDatabaseName("ix_sys_business_apps_code");
 
-                    b.ToTable("business_app", "apps");
+                    b.ToTable("sys_business_apps", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.ChangeArea", b =>
@@ -639,7 +639,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("code");
+                        .HasColumnName("area_code");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -654,7 +654,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.Property<string>("EntityCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("entity_code");
+                        .HasColumnName("instid");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
@@ -664,13 +664,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_ar");
+                        .HasColumnName("area_desc_ntv");
 
                     b.Property<string>("NameEn")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_en");
+                        .HasColumnName("area_desc_frn");
 
                     b.Property<string>("Owner")
                         .IsRequired()
@@ -703,13 +703,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("updated_by");
 
                     b.HasKey("Id")
-                        .HasName("pk_change_area");
+                        .HasName("pk_sys_change_areas");
 
                     b.HasIndex("Code")
                         .IsUnique()
-                        .HasDatabaseName("ix_change_area_code");
+                        .HasDatabaseName("ix_sys_change_areas_code");
 
-                    b.ToTable("change_area", "apps");
+                    b.ToTable("sys_change_areas", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.Company", b =>
@@ -727,7 +727,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("code");
+                        .HasColumnName("cmp_num");
 
                     b.Property<string>("CrNumber")
                         .HasMaxLength(50)
@@ -746,28 +746,28 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
 
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer")
-                        .HasColumnName("display_order");
+                        .HasColumnName("order_num");
 
                     b.Property<string>("EntityCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("entity_code");
+                        .HasColumnName("instid");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
-                        .HasColumnName("is_active");
+                        .HasColumnName("active_flag");
 
                     b.Property<string>("NameAr")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_ar");
+                        .HasColumnName("cmp_des_ntv");
 
                     b.Property<string>("NameEn")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_en");
+                        .HasColumnName("cmp_des_frn");
 
                     b.Property<string>("Owner")
                         .IsRequired()
@@ -806,13 +806,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("vat_number");
 
                     b.HasKey("Id")
-                        .HasName("pk_company");
+                        .HasName("pk_sys_company_profile");
 
                     b.HasIndex("Code")
                         .IsUnique()
-                        .HasDatabaseName("ix_company_code");
+                        .HasDatabaseName("ix_sys_company_profile_code");
 
-                    b.ToTable("company", "apps");
+                    b.ToTable("sys_company_profile", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.DataObject", b =>
@@ -830,7 +830,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("code");
+                        .HasColumnName("object_code");
 
                     b.Property<string>("Columns")
                         .IsRequired()
@@ -862,7 +862,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.Property<string>("EntityCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("entity_code");
+                        .HasColumnName("instid");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
@@ -872,13 +872,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_ar");
+                        .HasColumnName("object_desc_ntv");
 
                     b.Property<string>("NameEn")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_en");
+                        .HasColumnName("object_desc_frn");
 
                     b.Property<string>("ObjectType")
                         .IsRequired()
@@ -913,13 +913,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("updated_by");
 
                     b.HasKey("Id")
-                        .HasName("pk_data_object");
+                        .HasName("pk_dd_data_objects");
 
                     b.HasIndex("Code")
                         .IsUnique()
-                        .HasDatabaseName("ix_data_object_code");
+                        .HasDatabaseName("ix_dd_data_objects_code");
 
-                    b.ToTable("data_object", "apps");
+                    b.ToTable("dd_data_objects", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.DataScopeBinding", b =>
@@ -937,7 +937,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(63)
                         .HasColumnType("character varying(63)")
-                        .HasColumnName("column_name");
+                        .HasColumnName("value_field");
 
                     b.Property<Guid>("DataObjectId")
                         .HasColumnType("uuid")
@@ -948,15 +948,15 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("lov_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_data_scope_binding");
+                        .HasName("pk_dd_data_scope_bindings");
 
                     b.HasIndex("DataObjectId")
-                        .HasDatabaseName("ix_data_scope_binding_data_object_id");
+                        .HasDatabaseName("ix_dd_data_scope_bindings_data_object_id");
 
                     b.HasIndex("LovId")
-                        .HasDatabaseName("ix_data_scope_binding_lov_id");
+                        .HasDatabaseName("ix_dd_data_scope_bindings_lov_id");
 
-                    b.ToTable("data_scope_binding", "apps");
+                    b.ToTable("dd_data_scope_bindings", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.DictionaryClass", b =>
@@ -967,7 +967,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
 
                     b.Property<bool>("AllowMultiAssign")
                         .HasColumnType("boolean")
-                        .HasColumnName("allow_multi_assign");
+                        .HasColumnName("virtual_enable_multiple_assign");
 
                     b.Property<string>("BusinessApp")
                         .HasMaxLength(100)
@@ -978,7 +978,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("code");
+                        .HasColumnName("class_code");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -992,16 +992,16 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
 
                     b.Property<string>("DescriptionAr")
                         .HasColumnType("text")
-                        .HasColumnName("description_ar");
+                        .HasColumnName("class_long_desc_ntv");
 
                     b.Property<string>("DescriptionEn")
                         .HasColumnType("text")
-                        .HasColumnName("description_en");
+                        .HasColumnName("class_long_desc_frn");
 
                     b.Property<string>("EntityCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("entity_code");
+                        .HasColumnName("instid");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
@@ -1015,13 +1015,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_ar");
+                        .HasColumnName("class_desc_ntv");
 
                     b.Property<string>("NameEn")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_en");
+                        .HasColumnName("class_desc_frn");
 
                     b.Property<string>("Owner")
                         .IsRequired()
@@ -1031,7 +1031,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
 
                     b.Property<Guid?>("ParentClassId")
                         .HasColumnType("uuid")
-                        .HasColumnName("parent_class_id");
+                        .HasColumnName("reference_class_id");
 
                     b.Property<uint>("RowVersion")
                         .IsConcurrencyToken()
@@ -1063,16 +1063,16 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("values_per_company");
 
                     b.HasKey("Id")
-                        .HasName("pk_class");
+                        .HasName("pk_dd_classes");
 
                     b.HasIndex("Code")
                         .IsUnique()
-                        .HasDatabaseName("ix_class_code");
+                        .HasDatabaseName("ix_dd_classes_code");
 
                     b.HasIndex("ParentClassId")
-                        .HasDatabaseName("ix_class_parent_class_id");
+                        .HasDatabaseName("ix_dd_classes_parent_class_id");
 
-                    b.ToTable("class", "apps");
+                    b.ToTable("dd_classes", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.DomainValue", b =>
@@ -1099,12 +1099,12 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("code");
+                        .HasColumnName("value");
 
                     b.PrimitiveCollection<List<string>>("Companies")
                         .IsRequired()
                         .HasColumnType("text[]")
-                        .HasColumnName("companies");
+                        .HasColumnName("cmp_nums");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -1118,15 +1118,15 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
 
                     b.Property<string>("DetailsAr")
                         .HasColumnType("text")
-                        .HasColumnName("details_ar");
+                        .HasColumnName("domain_desc_detail_ntv");
 
                     b.Property<string>("DetailsEn")
                         .HasColumnType("text")
-                        .HasColumnName("details_en");
+                        .HasColumnName("domain_desc_detail_frn");
 
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer")
-                        .HasColumnName("display_order");
+                        .HasColumnName("orderby");
 
                     b.Property<DateOnly?>("EffectiveFrom")
                         .HasColumnType("date")
@@ -1139,11 +1139,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.Property<string>("EntityCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("entity_code");
+                        .HasColumnName("instid");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
-                        .HasColumnName("is_active");
+                        .HasColumnName("active_flag");
 
                     b.Property<bool>("IsDefault")
                         .HasColumnType("boolean")
@@ -1153,13 +1153,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_ar");
+                        .HasColumnName("domain_desc_ntv");
 
                     b.Property<string>("NameEn")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_en");
+                        .HasColumnName("domain_desc_frn");
 
                     b.Property<string>("Owner")
                         .IsRequired()
@@ -1192,21 +1192,21 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("updated_by");
 
                     b.HasKey("Id")
-                        .HasName("pk_domain");
+                        .HasName("pk_dd_domain");
 
                     b.HasIndex("Attributes")
-                        .HasDatabaseName("ix_domain_attributes");
+                        .HasDatabaseName("ix_dd_domain_attributes");
 
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Attributes"), "gin");
 
                     b.HasIndex("ParentDomainId")
-                        .HasDatabaseName("ix_domain_parent_domain_id");
+                        .HasDatabaseName("ix_dd_domain_parent_domain_id");
 
                     b.HasIndex("ClassId", "Code")
                         .IsUnique()
-                        .HasDatabaseName("ix_domain_class_id_code");
+                        .HasDatabaseName("ix_dd_domain_class_id_code");
 
-                    b.ToTable("domain", "apps");
+                    b.ToTable("dd_domain", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.GovernmentEntity", b =>
@@ -1224,7 +1224,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("code");
+                        .HasColumnName("instid");
 
                     b.Property<string>("Contact")
                         .IsRequired()
@@ -1248,7 +1248,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.Property<string>("EntityCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("entity_code");
+                        .HasColumnName("ref_instid");
 
                     b.Property<string>("EntityKind")
                         .HasColumnType("text")
@@ -1271,7 +1271,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
-                        .HasColumnName("is_active");
+                        .HasColumnName("activeflag");
 
                     b.Property<string>("LoginImageKey")
                         .HasMaxLength(100)
@@ -1280,19 +1280,19 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
 
                     b.Property<string>("LogoFileKey")
                         .HasColumnType("text")
-                        .HasColumnName("logo_file_key");
+                        .HasColumnName("instlogo");
 
                     b.Property<string>("NameAr")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_ar");
+                        .HasColumnName("instname_ntv");
 
                     b.Property<string>("NameEn")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_en");
+                        .HasColumnName("instname_frn");
 
                     b.Property<string>("Owner")
                         .IsRequired()
@@ -1335,13 +1335,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("updated_by");
 
                     b.HasKey("Id")
-                        .HasName("pk_entity");
+                        .HasName("pk_sys_instance_profile");
 
                     b.HasIndex("Code")
                         .IsUnique()
-                        .HasDatabaseName("ix_entity_code");
+                        .HasDatabaseName("ix_sys_instance_profile_code");
 
-                    b.ToTable("entity", "apps");
+                    b.ToTable("sys_instance_profile", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.Holiday", b =>
@@ -1359,7 +1359,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("code");
+                        .HasColumnName("holiday_code");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -1374,7 +1374,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.Property<string>("EntityCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("entity_code");
+                        .HasColumnName("instid");
 
                     b.Property<DateOnly>("FromDate")
                         .HasColumnType("date")
@@ -1388,13 +1388,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_ar");
+                        .HasColumnName("holiday_desc_ntv");
 
                     b.Property<string>("NameEn")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_en");
+                        .HasColumnName("holiday_desc_frn");
 
                     b.Property<string>("Owner")
                         .IsRequired()
@@ -1427,13 +1427,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("updated_by");
 
                     b.HasKey("Id")
-                        .HasName("pk_holiday");
+                        .HasName("pk_bas_holidays");
 
                     b.HasIndex("Code")
                         .IsUnique()
-                        .HasDatabaseName("ix_holiday_code");
+                        .HasDatabaseName("ix_bas_holidays_code");
 
-                    b.ToTable("holiday", "apps");
+                    b.ToTable("bas_holidays", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.Installation", b =>
@@ -1457,7 +1457,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("code");
+                        .HasColumnName("install_code");
 
                     b.Property<string>("Copyright")
                         .HasColumnType("text")
@@ -1481,7 +1481,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.Property<string>("EntityCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("entity_code");
+                        .HasColumnName("instid");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
@@ -1495,13 +1495,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_ar");
+                        .HasColumnName("install_desc_ntv");
 
                     b.Property<string>("NameEn")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_en");
+                        .HasColumnName("install_desc_frn");
 
                     b.Property<string>("Owner")
                         .IsRequired()
@@ -1523,7 +1523,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.Property<string>("SystemType")
                         .IsRequired()
                         .HasColumnType("text")
-                        .HasColumnName("system_type");
+                        .HasColumnName("systemtypeid");
 
                     b.Property<string>("TimeZone")
                         .IsRequired()
@@ -1545,13 +1545,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("weekend_days");
 
                     b.HasKey("Id")
-                        .HasName("pk_installation");
+                        .HasName("pk_sys_installation");
 
                     b.HasIndex("Code")
                         .IsUnique()
-                        .HasDatabaseName("ix_installation_code");
+                        .HasDatabaseName("ix_sys_installation_code");
 
-                    b.ToTable("installation", "apps");
+                    b.ToTable("sys_installation", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.Lov", b =>
@@ -1567,13 +1567,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
 
                     b.Property<Guid?>("ClassId")
                         .HasColumnType("uuid")
-                        .HasColumnName("class_id");
+                        .HasColumnName("ref_class_id");
 
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("code");
+                        .HasColumnName("lov_code");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -1608,7 +1608,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.Property<string>("EntityCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("entity_code");
+                        .HasColumnName("instid");
 
                     b.Property<string>("IntegrationOperationCode")
                         .HasMaxLength(100)
@@ -1631,13 +1631,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_ar");
+                        .HasColumnName("lov_desc_ntv");
 
                     b.Property<string>("NameEn")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_en");
+                        .HasColumnName("lov_desc_frn");
 
                     b.Property<string>("Owner")
                         .IsRequired()
@@ -1683,7 +1683,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
 
                     b.Property<string>("SqlText")
                         .HasColumnType("text")
-                        .HasColumnName("sql_text");
+                        .HasColumnName("sqlstmt");
 
                     b.Property<string>("StaticFilter")
                         .HasColumnType("jsonb")
@@ -1701,22 +1701,22 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.Property<string>("ValueColumn")
                         .HasMaxLength(63)
                         .HasColumnType("character varying(63)")
-                        .HasColumnName("value_column");
+                        .HasColumnName("value_field");
 
                     b.HasKey("Id")
-                        .HasName("pk_lov");
+                        .HasName("pk_dd_lovs");
 
                     b.HasIndex("ClassId")
-                        .HasDatabaseName("ix_lov_class_id");
+                        .HasDatabaseName("ix_dd_lovs_class_id");
 
                     b.HasIndex("Code")
                         .IsUnique()
-                        .HasDatabaseName("ix_lov_code");
+                        .HasDatabaseName("ix_dd_lovs_code");
 
                     b.HasIndex("DataObjectId")
-                        .HasDatabaseName("ix_lov_data_object_id");
+                        .HasDatabaseName("ix_dd_lovs_data_object_id");
 
-                    b.ToTable("lov", "apps");
+                    b.ToTable("dd_lovs", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.LovBinding", b =>
@@ -1746,16 +1746,16 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("selection_mode");
 
                     b.HasKey("Id")
-                        .HasName("pk_lov_binding");
+                        .HasName("pk_sys_menu_lovs");
 
                     b.HasIndex("LovId")
-                        .HasDatabaseName("ix_lov_binding_lov_id");
+                        .HasDatabaseName("ix_sys_menu_lovs_lov_id");
 
                     b.HasIndex("ResourceId", "FieldCode")
                         .IsUnique()
-                        .HasDatabaseName("ix_lov_binding_resource_id_field_code");
+                        .HasDatabaseName("ix_sys_menu_lovs_resource_id_field_code");
 
-                    b.ToTable("lov_binding", "apps");
+                    b.ToTable("sys_menu_lovs", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.LovGrant", b =>
@@ -1767,12 +1767,12 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.Property<string>("CompanyCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("company_code");
+                        .HasColumnName("cmp_num");
 
                     b.Property<string>("DefaultValue")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
-                        .HasColumnName("default_value");
+                        .HasColumnName("default_value_code");
 
                     b.Property<string>("GrantType")
                         .IsRequired()
@@ -1783,7 +1783,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.PrimitiveCollection<List<string>>("GrantedValues")
                         .IsRequired()
                         .HasColumnType("text[]")
-                        .HasColumnName("granted_values");
+                        .HasColumnName("value_codes");
 
                     b.Property<Guid>("LovId")
                         .HasColumnType("uuid")
@@ -1802,21 +1802,21 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("rule");
 
                     b.HasKey("Id")
-                        .HasName("pk_lov_grant");
+                        .HasName("pk_sys_role_menu_lovs");
 
                     b.HasIndex("LovId")
-                        .HasDatabaseName("ix_lov_grant_lov_id");
+                        .HasDatabaseName("ix_sys_role_menu_lovs_lov_id");
 
                     b.HasIndex("ResourceId")
-                        .HasDatabaseName("ix_lov_grant_resource_id");
+                        .HasDatabaseName("ix_sys_role_menu_lovs_resource_id");
 
                     b.HasIndex("RoleId", "LovId", "ResourceId", "CompanyCode")
                         .IsUnique()
-                        .HasDatabaseName("ix_lov_grant_role_id_lov_id_resource_id_company_code");
+                        .HasDatabaseName("ix_sys_role_menu_lovs_role_id_lov_id_resource_id_company_code");
 
                     NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("RoleId", "LovId", "ResourceId", "CompanyCode"), false);
 
-                    b.ToTable("lov_grant", "apps");
+                    b.ToTable("sys_role_menu_lovs", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.Menu", b =>
@@ -1838,7 +1838,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("code");
+                        .HasColumnName("menu_code");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -1852,25 +1852,25 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
 
                     b.Property<string>("DescriptionAr")
                         .HasColumnType("text")
-                        .HasColumnName("description_ar");
+                        .HasColumnName("menu_long_desc_ntv");
 
                     b.Property<string>("DescriptionEn")
                         .HasColumnType("text")
-                        .HasColumnName("description_en");
+                        .HasColumnName("menu_long_desc_frn");
 
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer")
-                        .HasColumnName("display_order");
+                        .HasColumnName("order_num");
 
                     b.Property<string>("EntityCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("entity_code");
+                        .HasColumnName("instid");
 
                     b.Property<string>("Icon")
                         .HasMaxLength(4000)
                         .HasColumnType("character varying(4000)")
-                        .HasColumnName("icon");
+                        .HasColumnName("menu_icon");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
@@ -1878,7 +1878,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
 
                     b.Property<bool>("IsVisible")
                         .HasColumnType("boolean")
-                        .HasColumnName("is_visible");
+                        .HasColumnName("show_flag");
 
                     b.Property<string>("ItemType")
                         .IsRequired()
@@ -1894,13 +1894,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_ar");
+                        .HasColumnName("menu_desc_ntv");
 
                     b.Property<string>("NameEn")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_en");
+                        .HasColumnName("menu_desc_frn");
 
                     b.Property<string>("Owner")
                         .IsRequired()
@@ -1910,7 +1910,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
 
                     b.Property<Guid?>("ParentId")
                         .HasColumnType("uuid")
-                        .HasColumnName("parent_id");
+                        .HasColumnName("parent_menu_id");
 
                     b.Property<Guid?>("ResourceId")
                         .HasColumnType("uuid")
@@ -1942,25 +1942,25 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("updated_by");
 
                     b.HasKey("Id")
-                        .HasName("pk_menu");
+                        .HasName("pk_sys_menu");
 
                     b.HasIndex("AppId")
-                        .HasDatabaseName("ix_menu_app_id");
+                        .HasDatabaseName("ix_sys_menu_app_id");
 
                     b.HasIndex("Code")
                         .IsUnique()
-                        .HasDatabaseName("ix_menu_code");
+                        .HasDatabaseName("ix_sys_menu_code");
 
                     b.HasIndex("MenuGroupId")
-                        .HasDatabaseName("ix_menu_menu_group_id");
+                        .HasDatabaseName("ix_sys_menu_menu_group_id");
 
                     b.HasIndex("ParentId")
-                        .HasDatabaseName("ix_menu_parent_id");
+                        .HasDatabaseName("ix_sys_menu_parent_id");
 
                     b.HasIndex("ResourceId")
-                        .HasDatabaseName("ix_menu_resource_id");
+                        .HasDatabaseName("ix_sys_menu_resource_id");
 
-                    b.ToTable("menu", "apps");
+                    b.ToTable("sys_menu", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.MenuGroup", b =>
@@ -1982,7 +1982,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("code");
+                        .HasColumnName("menu_group_code");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -1996,17 +1996,17 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
 
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer")
-                        .HasColumnName("display_order");
+                        .HasColumnName("menu_group_order");
 
                     b.Property<string>("EntityCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("entity_code");
+                        .HasColumnName("instid");
 
                     b.Property<string>("Icon")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("icon");
+                        .HasColumnName("menu_icon");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
@@ -2016,13 +2016,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_ar");
+                        .HasColumnName("menu_group_des_ntv");
 
                     b.Property<string>("NameEn")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_en");
+                        .HasColumnName("menu_group_des_frn");
 
                     b.Property<string>("Owner")
                         .IsRequired()
@@ -2051,16 +2051,16 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("updated_by");
 
                     b.HasKey("Id")
-                        .HasName("pk_menu_group");
+                        .HasName("pk_sys_menu_groups");
 
                     b.HasIndex("AppId")
-                        .HasDatabaseName("ix_menu_group_app_id");
+                        .HasDatabaseName("ix_sys_menu_groups_app_id");
 
                     b.HasIndex("Code")
                         .IsUnique()
-                        .HasDatabaseName("ix_menu_group_code");
+                        .HasDatabaseName("ix_sys_menu_groups_code");
 
-                    b.ToTable("menu_group", "apps");
+                    b.ToTable("sys_menu_groups", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.OrgUnit", b =>
@@ -2083,7 +2083,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("code");
+                        .HasColumnName("unit_code");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -2111,7 +2111,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.Property<string>("EntityCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("entity_code");
+                        .HasColumnName("instid");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
@@ -2121,13 +2121,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_ar");
+                        .HasColumnName("unit_desc_ntv");
 
                     b.Property<string>("NameEn")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_en");
+                        .HasColumnName("unit_desc_frn");
 
                     b.Property<Guid>("OrgUnitTypeId")
                         .HasColumnType("uuid")
@@ -2141,7 +2141,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
 
                     b.Property<Guid?>("ParentId")
                         .HasColumnType("uuid")
-                        .HasColumnName("parent_id");
+                        .HasColumnName("parent_unit_id");
 
                     b.Property<string>("Path")
                         .IsRequired()
@@ -2169,24 +2169,24 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("updated_by");
 
                     b.HasKey("Id")
-                        .HasName("pk_org_unit");
+                        .HasName("pk_org_units");
 
                     b.HasIndex("Code")
                         .IsUnique()
-                        .HasDatabaseName("ix_org_unit_code");
+                        .HasDatabaseName("ix_org_units_code");
 
                     b.HasIndex("OrgUnitTypeId")
-                        .HasDatabaseName("ix_org_unit_org_unit_type_id");
+                        .HasDatabaseName("ix_org_units_org_unit_type_id");
 
                     b.HasIndex("ParentId")
-                        .HasDatabaseName("ix_org_unit_parent_id");
+                        .HasDatabaseName("ix_org_units_parent_id");
 
                     b.HasIndex("Path")
-                        .HasDatabaseName("ix_org_unit_path");
+                        .HasDatabaseName("ix_org_units_path");
 
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Path"), "gist");
 
-                    b.ToTable("org_unit", "apps");
+                    b.ToTable("org_units", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.OrgUnitType", b =>
@@ -2209,7 +2209,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("code");
+                        .HasColumnName("unit_type_code");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -2223,12 +2223,12 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
 
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer")
-                        .HasColumnName("display_order");
+                        .HasColumnName("order_num");
 
                     b.Property<string>("EntityCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("entity_code");
+                        .HasColumnName("instid");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
@@ -2238,13 +2238,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_ar");
+                        .HasColumnName("unit_type_desc_ntv");
 
                     b.Property<string>("NameEn")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_en");
+                        .HasColumnName("unit_type_desc_frn");
 
                     b.Property<string>("Owner")
                         .IsRequired()
@@ -2273,13 +2273,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("updated_by");
 
                     b.HasKey("Id")
-                        .HasName("pk_org_unit_type");
+                        .HasName("pk_org_unit_types");
 
                     b.HasIndex("Code")
                         .IsUnique()
-                        .HasDatabaseName("ix_org_unit_type_code");
+                        .HasDatabaseName("ix_org_unit_types_code");
 
-                    b.ToTable("org_unit_type", "apps");
+                    b.ToTable("org_unit_types", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.Position", b =>
@@ -2297,7 +2297,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("code");
+                        .HasColumnName("position_code");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -2312,7 +2312,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.Property<string>("EntityCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("entity_code");
+                        .HasColumnName("instid");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
@@ -2322,13 +2322,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_ar");
+                        .HasColumnName("position_desc_ntv");
 
                     b.Property<string>("NameEn")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_en");
+                        .HasColumnName("position_desc_frn");
 
                     b.Property<string>("Owner")
                         .IsRequired()
@@ -2357,13 +2357,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("updated_by");
 
                     b.HasKey("Id")
-                        .HasName("pk_position");
+                        .HasName("pk_org_positions");
 
                     b.HasIndex("Code")
                         .IsUnique()
-                        .HasDatabaseName("ix_position_code");
+                        .HasDatabaseName("ix_org_positions_code");
 
-                    b.ToTable("position", "apps");
+                    b.ToTable("org_positions", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.Privilege", b =>
@@ -2380,7 +2380,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.Property<string>("CompanyCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("company_code");
+                        .HasColumnName("cmp_num");
 
                     b.Property<string>("FieldRules")
                         .HasColumnType("jsonb")
@@ -2395,18 +2395,18 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("role_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_privilege");
+                        .HasName("pk_sys_role_privileges");
 
                     b.HasIndex("ResourceId")
-                        .HasDatabaseName("ix_privilege_resource_id");
+                        .HasDatabaseName("ix_sys_role_privileges_resource_id");
 
                     b.HasIndex("RoleId", "ResourceId", "CompanyCode")
                         .IsUnique()
-                        .HasDatabaseName("ix_privilege_role_id_resource_id_company_code");
+                        .HasDatabaseName("ix_sys_role_privileges_role_id_resource_id_company_code");
 
                     NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("RoleId", "ResourceId", "CompanyCode"), false);
 
-                    b.ToTable("privilege", "apps");
+                    b.ToTable("sys_role_privileges", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.Resource", b =>
@@ -2433,7 +2433,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("code");
+                        .HasColumnName("resource_code");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -2448,7 +2448,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.Property<string>("EntityCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("entity_code");
+                        .HasColumnName("instid");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
@@ -2458,13 +2458,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_ar");
+                        .HasColumnName("resource_desc_ntv");
 
                     b.Property<string>("NameEn")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_en");
+                        .HasColumnName("resource_desc_frn");
 
                     b.Property<string>("Owner")
                         .IsRequired()
@@ -2503,19 +2503,19 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("updated_by");
 
                     b.HasKey("Id")
-                        .HasName("pk_resource");
+                        .HasName("pk_sys_resources");
 
                     b.HasIndex("AppId")
-                        .HasDatabaseName("ix_resource_app_id");
+                        .HasDatabaseName("ix_sys_resources_app_id");
 
                     b.HasIndex("Code")
                         .IsUnique()
-                        .HasDatabaseName("ix_resource_code");
+                        .HasDatabaseName("ix_sys_resources_code");
 
                     b.HasIndex("ParentId")
-                        .HasDatabaseName("ix_resource_parent_id");
+                        .HasDatabaseName("ix_sys_resources_parent_id");
 
-                    b.ToTable("resource", "apps");
+                    b.ToTable("sys_resources", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.Role", b =>
@@ -2537,7 +2537,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("code");
+                        .HasColumnName("role_code");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -2552,7 +2552,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.Property<string>("EntityCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("entity_code");
+                        .HasColumnName("instid");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
@@ -2562,18 +2562,18 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_ar");
+                        .HasColumnName("role_desc_ntv");
 
                     b.Property<string>("NameEn")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_en");
+                        .HasColumnName("role_desc_frn");
 
                     b.PrimitiveCollection<List<string>>("OverrideCompanies")
                         .IsRequired()
                         .HasColumnType("text[]")
-                        .HasColumnName("override_companies");
+                        .HasColumnName("override_cmp_nums");
 
                     b.Property<string>("Owner")
                         .IsRequired()
@@ -2584,7 +2584,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.Property<string>("ReferenceCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("reference_code");
+                        .HasColumnName("ref_code");
 
                     b.Property<uint>("RowVersion")
                         .IsConcurrencyToken()
@@ -2607,16 +2607,16 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("updated_by");
 
                     b.HasKey("Id")
-                        .HasName("pk_role");
+                        .HasName("pk_sys_roles");
 
                     b.HasIndex("AppId")
-                        .HasDatabaseName("ix_role_app_id");
+                        .HasDatabaseName("ix_sys_roles_app_id");
 
                     b.HasIndex("Code")
                         .IsUnique()
-                        .HasDatabaseName("ix_role_code");
+                        .HasDatabaseName("ix_sys_roles_code");
 
-                    b.ToTable("role", "apps");
+                    b.ToTable("sys_roles", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.RoleMenu", b =>
@@ -2628,7 +2628,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.Property<string>("CompanyCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("company_code");
+                        .HasColumnName("cmp_num");
 
                     b.Property<Guid>("MenuId")
                         .HasColumnType("uuid")
@@ -2639,18 +2639,18 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("role_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_role_menu");
+                        .HasName("pk_sys_role_menus");
 
                     b.HasIndex("MenuId")
-                        .HasDatabaseName("ix_role_menu_menu_id");
+                        .HasDatabaseName("ix_sys_role_menus_menu_id");
 
                     b.HasIndex("RoleId", "MenuId", "CompanyCode")
                         .IsUnique()
-                        .HasDatabaseName("ix_role_menu_role_id_menu_id_company_code");
+                        .HasDatabaseName("ix_sys_role_menus_role_id_menu_id_company_code");
 
                     NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("RoleId", "MenuId", "CompanyCode"), false);
 
-                    b.ToTable("role_menu", "apps");
+                    b.ToTable("sys_role_menus", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.Setting", b =>
@@ -2672,7 +2672,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("code");
+                        .HasColumnName("setting_code");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -2692,12 +2692,12 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
 
                     b.Property<string>("Description")
                         .HasColumnType("text")
-                        .HasColumnName("description");
+                        .HasColumnName("setting_long_desc");
 
                     b.Property<string>("EntityCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("entity_code");
+                        .HasColumnName("instid");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
@@ -2715,13 +2715,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_ar");
+                        .HasColumnName("setting_desc_ntv");
 
                     b.Property<string>("NameEn")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_en");
+                        .HasColumnName("setting_desc_frn");
 
                     b.Property<string>("Owner")
                         .IsRequired()
@@ -2755,18 +2755,18 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("value");
 
                     b.HasKey("Id")
-                        .HasName("pk_setting");
+                        .HasName("pk_sys_settings");
 
                     b.HasIndex("AppId")
-                        .HasDatabaseName("ix_setting_app_id");
+                        .HasDatabaseName("ix_sys_settings_app_id");
 
                     b.HasIndex("Code", "AppId")
                         .IsUnique()
-                        .HasDatabaseName("ix_setting_code_app_id");
+                        .HasDatabaseName("ix_sys_settings_code_app_id");
 
                     NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("Code", "AppId"), false);
 
-                    b.ToTable("setting", "apps");
+                    b.ToTable("sys_settings", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.UiText", b =>
@@ -2788,7 +2788,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("code");
+                        .HasColumnName("text_code");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -2803,7 +2803,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.Property<string>("EntityCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("entity_code");
+                        .HasColumnName("instid");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
@@ -2813,13 +2813,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(4000)
                         .HasColumnType("character varying(4000)")
-                        .HasColumnName("name_ar");
+                        .HasColumnName("text_desc_ntv");
 
                     b.Property<string>("NameEn")
                         .IsRequired()
                         .HasMaxLength(4000)
                         .HasColumnType("character varying(4000)")
-                        .HasColumnName("name_en");
+                        .HasColumnName("text_desc_frn");
 
                     b.Property<string>("Owner")
                         .IsRequired()
@@ -2848,18 +2848,18 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("updated_by");
 
                     b.HasKey("Id")
-                        .HasName("pk_ui_text");
+                        .HasName("pk_sys_ui_texts");
 
                     b.HasIndex("AppId")
-                        .HasDatabaseName("ix_ui_text_app_id");
+                        .HasDatabaseName("ix_sys_ui_texts_app_id");
 
                     b.HasIndex("Code", "AppId")
                         .IsUnique()
-                        .HasDatabaseName("ix_ui_text_code_app_id");
+                        .HasDatabaseName("ix_sys_ui_texts_code_app_id");
 
                     NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("Code", "AppId"), false);
 
-                    b.ToTable("ui_text", "apps");
+                    b.ToTable("sys_ui_texts", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.UserAccount", b =>
@@ -2883,7 +2883,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)")
-                        .HasColumnName("code");
+                        .HasColumnName("userid");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -2898,12 +2898,12 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)")
-                        .HasColumnName("email");
+                        .HasColumnName("useremail");
 
                     b.Property<string>("EntityCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("entity_code");
+                        .HasColumnName("instid");
 
                     b.Property<string>("IdpSubject")
                         .HasMaxLength(128)
@@ -2923,28 +2923,28 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.Property<string>("LastCompanyCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("last_company_code");
+                        .HasColumnName("last_cmp_num");
 
                     b.Property<DateTimeOffset?>("LastLoginAt")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("last_login_at");
+                        .HasColumnName("last_login_date");
 
                     b.Property<string>("Mobile")
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)")
-                        .HasColumnName("mobile");
+                        .HasColumnName("userphoneno");
 
                     b.Property<string>("NameAr")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_ar");
+                        .HasColumnName("usernamentv");
 
                     b.Property<string>("NameEn")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasColumnName("name_en");
+                        .HasColumnName("usernamefrn");
 
                     b.Property<string>("NationalId")
                         .HasMaxLength(32)
@@ -2989,17 +2989,17 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("updated_by");
 
                     b.HasKey("Id")
-                        .HasName("pk_user_account");
+                        .HasName("pk_sys_users");
 
                     b.HasIndex("Code")
                         .IsUnique()
-                        .HasDatabaseName("ix_user_account_code");
+                        .HasDatabaseName("ix_sys_users_code");
 
                     b.HasIndex("IdpSubject")
                         .IsUnique()
-                        .HasDatabaseName("ix_user_account_idp_subject");
+                        .HasDatabaseName("ix_sys_users_idp_subject");
 
-                    b.ToTable("user_account", "apps");
+                    b.ToTable("sys_users", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.UserAssignment", b =>
@@ -3033,18 +3033,18 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("user_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_user_assignment");
+                        .HasName("pk_org_user_assignments");
 
                     b.HasIndex("OrgUnitId")
-                        .HasDatabaseName("ix_user_assignment_org_unit_id");
+                        .HasDatabaseName("ix_org_user_assignments_org_unit_id");
 
                     b.HasIndex("PositionId")
-                        .HasDatabaseName("ix_user_assignment_position_id");
+                        .HasDatabaseName("ix_org_user_assignments_position_id");
 
                     b.HasIndex("UserId")
-                        .HasDatabaseName("ix_user_assignment_user_id");
+                        .HasDatabaseName("ix_org_user_assignments_user_id");
 
-                    b.ToTable("user_assignment", "apps");
+                    b.ToTable("org_user_assignments", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.UserPrivilege", b =>
@@ -3062,7 +3062,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("company_code");
+                        .HasColumnName("cmp_num");
 
                     b.PrimitiveCollection<List<string>>("DeniedActions")
                         .IsRequired()
@@ -3086,15 +3086,15 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("user_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_user_privilege");
+                        .HasName("pk_sys_user_privileges");
 
                     b.HasIndex("ResourceId")
-                        .HasDatabaseName("ix_user_privilege_resource_id");
+                        .HasDatabaseName("ix_sys_user_privileges_resource_id");
 
                     b.HasIndex("UserId")
-                        .HasDatabaseName("ix_user_privilege_user_id");
+                        .HasDatabaseName("ix_sys_user_privileges_user_id");
 
-                    b.ToTable("user_privilege", "apps");
+                    b.ToTable("sys_user_privileges", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.UserPrivilegeGrant", b =>
@@ -3112,7 +3112,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.PrimitiveCollection<List<string>>("GrantedValues")
                         .IsRequired()
                         .HasColumnType("text[]")
-                        .HasColumnName("granted_values");
+                        .HasColumnName("value_codes");
 
                     b.Property<Guid>("LovId")
                         .HasColumnType("uuid")
@@ -3123,16 +3123,16 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("user_privilege_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_user_privilege_grant");
+                        .HasName("pk_sys_user_privilege_lovs");
 
                     b.HasIndex("LovId")
-                        .HasDatabaseName("ix_user_privilege_grant_lov_id");
+                        .HasDatabaseName("ix_sys_user_privilege_lovs_lov_id");
 
                     b.HasIndex("UserPrivilegeId", "LovId")
                         .IsUnique()
-                        .HasDatabaseName("ix_user_privilege_grant_user_privilege_id_lov_id");
+                        .HasDatabaseName("ix_sys_user_privilege_lovs_user_privilege_id_lov_id");
 
-                    b.ToTable("user_privilege_grant", "apps");
+                    b.ToTable("sys_user_privilege_lovs", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.UserRole", b =>
@@ -3150,7 +3150,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("company_code");
+                        .HasColumnName("cmp_num");
 
                     b.Property<DateOnly?>("EffectiveFrom")
                         .HasColumnType("date")
@@ -3173,18 +3173,18 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnName("user_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_user_role");
+                        .HasName("pk_sys_user_roles");
 
                     b.HasIndex("OrgUnitId")
-                        .HasDatabaseName("ix_user_role_org_unit_id");
+                        .HasDatabaseName("ix_sys_user_roles_org_unit_id");
 
                     b.HasIndex("RoleId")
-                        .HasDatabaseName("ix_user_role_role_id");
+                        .HasDatabaseName("ix_sys_user_roles_role_id");
 
                     b.HasIndex("UserId")
-                        .HasDatabaseName("ix_user_role_user_id");
+                        .HasDatabaseName("ix_sys_user_roles_user_id");
 
-                    b.ToTable("user_role", "apps");
+                    b.ToTable("sys_user_roles", "apps");
                 });
 
             modelBuilder.Entity("DynamicCube.Platform.Auditing.AuditEntry", b =>
@@ -3461,7 +3461,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasForeignKey("ClassId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_class_attribute_class_class_id");
+                        .HasConstraintName("fk_dd_class_attributes_class_class_id");
                 });
 
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.DataScopeBinding", b =>
@@ -3471,14 +3471,14 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasForeignKey("DataObjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_data_scope_binding_data_object_data_object_id");
+                        .HasConstraintName("fk_dd_data_scope_bindings_dd_data_objects_data_object_id");
 
                     b.HasOne("DynamicCube.Modules.AppsControl.Domain.Lov", "Lov")
                         .WithMany()
                         .HasForeignKey("LovId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_data_scope_binding_lovs_lov_id");
+                        .HasConstraintName("fk_dd_data_scope_bindings_lov_lov_id");
 
                     b.Navigation("Lov");
                 });
@@ -3489,7 +3489,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("ParentClassId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_class_class_parent_class_id");
+                        .HasConstraintName("fk_dd_classes_dd_classes_parent_class_id");
 
                     b.Navigation("ParentClass");
                 });
@@ -3501,13 +3501,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasForeignKey("ClassId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_domain_class_class_id");
+                        .HasConstraintName("fk_dd_domain_dd_classes_class_id");
 
                     b.HasOne("DynamicCube.Modules.AppsControl.Domain.DomainValue", "ParentDomain")
                         .WithMany()
                         .HasForeignKey("ParentDomainId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_domain_domain_parent_domain_id");
+                        .HasConstraintName("fk_dd_domain_dd_domain_parent_domain_id");
 
                     b.Navigation("Class");
 
@@ -3520,13 +3520,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("ClassId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_lov_class_class_id");
+                        .HasConstraintName("fk_dd_lovs_dd_classes_class_id");
 
                     b.HasOne("DynamicCube.Modules.AppsControl.Domain.DataObject", "DataObject")
                         .WithMany()
                         .HasForeignKey("DataObjectId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_lov_data_object_data_object_id");
+                        .HasConstraintName("fk_dd_lovs_dd_data_objects_data_object_id");
 
                     b.Navigation("Class");
 
@@ -3540,14 +3540,14 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasForeignKey("LovId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_lov_binding_lov_lov_id");
+                        .HasConstraintName("fk_sys_menu_lovs_dd_lovs_lov_id");
 
                     b.HasOne("DynamicCube.Modules.AppsControl.Domain.Resource", "Resource")
                         .WithMany()
                         .HasForeignKey("ResourceId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_lov_binding_resource_resource_id");
+                        .HasConstraintName("fk_sys_menu_lovs_resource_resource_id");
 
                     b.Navigation("Resource");
                 });
@@ -3559,20 +3559,20 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasForeignKey("LovId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_lov_grant_lov_lov_id");
+                        .HasConstraintName("fk_sys_role_menu_lovs_dd_lovs_lov_id");
 
                     b.HasOne("DynamicCube.Modules.AppsControl.Domain.Resource", "Resource")
                         .WithMany()
                         .HasForeignKey("ResourceId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_lov_grant_resource_resource_id");
+                        .HasConstraintName("fk_sys_role_menu_lovs_resource_resource_id");
 
                     b.HasOne("DynamicCube.Modules.AppsControl.Domain.Role", null)
                         .WithMany("Grants")
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_lov_grant_role_role_id");
+                        .HasConstraintName("fk_sys_role_menu_lovs_role_role_id");
 
                     b.Navigation("Lov");
 
@@ -3585,25 +3585,25 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("AppId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_menu_app_app_id");
+                        .HasConstraintName("fk_sys_menu_sys_apps_profile_app_id");
 
                     b.HasOne("DynamicCube.Modules.AppsControl.Domain.MenuGroup", "MenuGroup")
                         .WithMany()
                         .HasForeignKey("MenuGroupId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_menu_menu_group_menu_group_id");
+                        .HasConstraintName("fk_sys_menu_menu_group_menu_group_id");
 
                     b.HasOne("DynamicCube.Modules.AppsControl.Domain.Menu", "Parent")
                         .WithMany()
                         .HasForeignKey("ParentId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_menu_menu_parent_id");
+                        .HasConstraintName("fk_sys_menu_sys_menu_parent_id");
 
                     b.HasOne("DynamicCube.Modules.AppsControl.Domain.Resource", "Resource")
                         .WithMany()
                         .HasForeignKey("ResourceId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_menu_resource_resource_id");
+                        .HasConstraintName("fk_sys_menu_resource_resource_id");
 
                     b.Navigation("App");
 
@@ -3620,7 +3620,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("AppId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_menu_group_app_app_id");
+                        .HasConstraintName("fk_sys_menu_groups_sys_apps_profile_app_id");
 
                     b.Navigation("App");
                 });
@@ -3632,13 +3632,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasForeignKey("OrgUnitTypeId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_org_unit_org_unit_type_org_unit_type_id");
+                        .HasConstraintName("fk_org_units_org_unit_type_org_unit_type_id");
 
                     b.HasOne("DynamicCube.Modules.AppsControl.Domain.OrgUnit", "Parent")
                         .WithMany()
                         .HasForeignKey("ParentId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_org_unit_org_unit_parent_id");
+                        .HasConstraintName("fk_org_units_org_units_parent_id");
 
                     b.Navigation("OrgUnitType");
 
@@ -3652,14 +3652,14 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasForeignKey("ResourceId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_privilege_resource_resource_id");
+                        .HasConstraintName("fk_sys_role_privileges_resource_resource_id");
 
                     b.HasOne("DynamicCube.Modules.AppsControl.Domain.Role", null)
                         .WithMany("Privileges")
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_privilege_role_role_id");
+                        .HasConstraintName("fk_sys_role_privileges_role_role_id");
 
                     b.Navigation("Resource");
                 });
@@ -3670,13 +3670,13 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("AppId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_resource_app_app_id");
+                        .HasConstraintName("fk_sys_resources_sys_apps_profile_app_id");
 
                     b.HasOne("DynamicCube.Modules.AppsControl.Domain.Resource", "Parent")
                         .WithMany()
                         .HasForeignKey("ParentId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_resource_resource_parent_id");
+                        .HasConstraintName("fk_sys_resources_sys_resources_parent_id");
 
                     b.Navigation("App");
 
@@ -3689,7 +3689,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("AppId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_role_app_app_id");
+                        .HasConstraintName("fk_sys_roles_sys_apps_profile_app_id");
 
                     b.Navigation("App");
                 });
@@ -3701,14 +3701,14 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasForeignKey("MenuId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_role_menu_menus_menu_id");
+                        .HasConstraintName("fk_sys_role_menus_sys_menu_menu_id");
 
                     b.HasOne("DynamicCube.Modules.AppsControl.Domain.Role", null)
                         .WithMany("Menus")
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_role_menu_role_role_id");
+                        .HasConstraintName("fk_sys_role_menus_sys_roles_role_id");
 
                     b.Navigation("Menu");
                 });
@@ -3719,7 +3719,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("AppId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_setting_app_app_id");
+                        .HasConstraintName("fk_sys_settings_sys_apps_profile_app_id");
 
                     b.Navigation("App");
                 });
@@ -3730,7 +3730,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("AppId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_ui_text_app_app_id");
+                        .HasConstraintName("fk_sys_ui_texts_sys_apps_profile_app_id");
 
                     b.Navigation("App");
                 });
@@ -3742,20 +3742,20 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasForeignKey("OrgUnitId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_user_assignment_org_unit_org_unit_id");
+                        .HasConstraintName("fk_org_user_assignments_org_units_org_unit_id");
 
                     b.HasOne("DynamicCube.Modules.AppsControl.Domain.Position", "Position")
                         .WithMany()
                         .HasForeignKey("PositionId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_user_assignment_position_position_id");
+                        .HasConstraintName("fk_org_user_assignments_org_positions_position_id");
 
                     b.HasOne("DynamicCube.Modules.AppsControl.Domain.UserAccount", null)
                         .WithMany("Assignments")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_user_assignment_user_account_user_id");
+                        .HasConstraintName("fk_org_user_assignments_sys_users_user_id");
 
                     b.Navigation("OrgUnit");
 
@@ -3769,14 +3769,14 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasForeignKey("ResourceId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_user_privilege_resources_resource_id");
+                        .HasConstraintName("fk_sys_user_privileges_sys_resources_resource_id");
 
                     b.HasOne("DynamicCube.Modules.AppsControl.Domain.UserAccount", null)
                         .WithMany("Privileges")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_user_privilege_user_account_user_id");
+                        .HasConstraintName("fk_sys_user_privileges_sys_users_user_id");
 
                     b.Navigation("Resource");
                 });
@@ -3788,14 +3788,14 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasForeignKey("LovId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_user_privilege_grant_lovs_lov_id");
+                        .HasConstraintName("fk_sys_user_privilege_lovs_dd_lovs_lov_id");
 
                     b.HasOne("DynamicCube.Modules.AppsControl.Domain.UserPrivilege", null)
                         .WithMany("Grants")
                         .HasForeignKey("UserPrivilegeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_user_privilege_grant_user_privileges_user_privilege_id");
+                        .HasConstraintName("fk_sys_user_privilege_lovs_sys_user_privileges_user_privilege_");
 
                     b.Navigation("Lov");
                 });
@@ -3806,21 +3806,21 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("OrgUnitId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_user_role_org_unit_org_unit_id");
+                        .HasConstraintName("fk_sys_user_roles_org_units_org_unit_id");
 
                     b.HasOne("DynamicCube.Modules.AppsControl.Domain.Role", "Role")
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_user_role_roles_role_id");
+                        .HasConstraintName("fk_sys_user_roles_sys_roles_role_id");
 
                     b.HasOne("DynamicCube.Modules.AppsControl.Domain.UserAccount", null)
                         .WithMany("Roles")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_user_role_user_account_user_id");
+                        .HasConstraintName("fk_sys_user_roles_sys_users_user_id");
 
                     b.Navigation("OrgUnit");
 

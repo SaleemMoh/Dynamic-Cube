@@ -50,8 +50,12 @@ internal sealed class ClassViewGenerator : IChangeSetPublishHook<AppsControlDbCo
     internal static string BuildSql(DictionaryClass cls)
     {
         var sql = new StringBuilder();
-        sql.Append("CREATE VIEW apps.").Append(Quote(ViewName(cls.Code))).Append(" AS SELECT d.id, d.code, c.code AS class_code, d.name_ar, d.name_en, ")
-            .Append("d.details_ar, d.details_en, p.code AS parent_code, d.display_order, d.is_default, d.is_active, d.effective_from, d.effective_to, d.companies");
+        // The view keeps its own column names (code, name_ar…), which lists of values and reports use, over the
+        // legacy-named table columns (value, domain_desc_ntv…; see AppsControlNaming).
+        sql.Append("CREATE VIEW apps.").Append(Quote(ViewName(cls.Code)))
+            .Append(" AS SELECT d.id, d.value AS code, c.class_code AS class_code, d.domain_desc_ntv AS name_ar, d.domain_desc_frn AS name_en, ")
+            .Append("d.domain_desc_detail_ntv AS details_ar, d.domain_desc_detail_frn AS details_en, p.value AS parent_code, d.orderby AS display_order, ")
+            .Append("d.is_default, d.active_flag AS is_active, d.effective_from, d.effective_to, d.cmp_nums AS companies");
         foreach (var attribute in cls.Attributes.Where(a => a.IsReportable).OrderBy(a => a.DisplayOrder).ThenBy(a => a.Code))
         {
             var key = Literal(attribute.Code);
@@ -66,7 +70,7 @@ internal sealed class ClassViewGenerator : IChangeSetPublishHook<AppsControlDbCo
             sql.Append(", ").Append(expression).Append(" AS ").Append(Quote(SqlName(attribute.Code)));
         }
 
-        sql.Append(" FROM apps.domain d JOIN apps.class c ON c.id = d.class_id LEFT JOIN apps.domain p ON p.id = d.parent_domain_id WHERE c.code = ")
+        sql.Append(" FROM apps.dd_domain d JOIN apps.dd_classes c ON c.id = d.class_id LEFT JOIN apps.dd_domain p ON p.id = d.parent_domain_id WHERE c.class_code = ")
             .Append(Literal(cls.Code));
         return sql.ToString();
     }

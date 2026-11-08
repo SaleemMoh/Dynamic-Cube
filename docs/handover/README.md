@@ -8,7 +8,7 @@ layered solution (Domain, Application, DataAccess, Repository, Business, WebAPI)
 | 0 | [How the solution is organized](#how-the-solution-is-organized) (this page) | ✅ |
 | 1 | [Apps Control — Classes and domains (the data dictionary)](01-apps-control-data-dictionary.md) | ✅ (review points decided) |
 | 2 | [Apps Control — Lists of values (LOVs)](02-apps-control-lists-of-values.md) | ✅ (review points open) |
-| — | [Legacy Apps Control (Oracle) ↔ ours: table names and mapping](legacy-apps-control-mapping.md) | proposal (decisions open) |
+| — | [Legacy Apps Control (Oracle) ↔ ours: table and column names](legacy-apps-control-mapping.md) | done (Apps Control renamed); legacy gaps open |
 | 3 | Apps Control — Menus | next |
 | … | Roles and privileges, organization, users, settings, then the other modules | later |
 

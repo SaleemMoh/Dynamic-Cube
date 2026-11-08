@@ -16,10 +16,28 @@ public static class ClassDomainMigrations
         this MigrationBuilder migrationBuilder, string sourceTable, string classCode, string classNameAr, string classNameEn, string attributesSql, string displayOrderSql = "0")
     {
         ArgumentNullException.ThrowIfNull(migrationBuilder);
+        // Apps Control's tables carry the legacy names (dd_classes, dd_domain…) since they were renamed; a database
+        // upgraded from an older version may still run this before that rename, so either set of names is used.
         migrationBuilder.Sql($"""
             DO $$
             BEGIN
-              IF to_regclass('apps.class') IS NULL OR to_regclass('{sourceTable}') IS NULL THEN
+              IF to_regclass('{sourceTable}') IS NULL THEN
+                RETURN;
+              END IF;
+              IF to_regclass('apps.dd_classes') IS NOT NULL THEN
+                INSERT INTO apps.dd_classes (id, class_code, class_desc_ntv, class_desc_frn, is_active, owner, is_hierarchical, virtual_enable_multiple_assign, created_at, created_by)
+                SELECT gen_random_uuid(), '{classCode}', '{classNameAr}', '{classNameEn}', true, 'System', false, false, now(), 'migration'
+                WHERE NOT EXISTS (SELECT 1 FROM apps.dd_classes WHERE class_code = '{classCode}');
+                INSERT INTO apps.dd_domain (id, class_id, orderby, is_default, attributes, value, domain_desc_ntv, domain_desc_frn, active_flag, owner,
+                                            created_at, created_by, updated_at, updated_by, instid, business_app)
+                SELECT s.id, k.id, {displayOrderSql}, false, jsonb_strip_nulls({attributesSql}), s.code, s.name_ar, s.name_en, s.is_active, s.owner,
+                       s.created_at, s.created_by, s.updated_at, s.updated_by, s.entity_code, s.business_app
+                FROM {sourceTable} s CROSS JOIN apps.dd_classes k
+                WHERE k.class_code = '{classCode}'
+                ON CONFLICT (class_id, value) DO NOTHING;
+                RETURN;
+              END IF;
+              IF to_regclass('apps.class') IS NULL THEN
                 RETURN;
               END IF;
               INSERT INTO apps.class (id, code, name_ar, name_en, is_active, owner, is_hierarchical, allow_multi_assign, created_at, created_by)

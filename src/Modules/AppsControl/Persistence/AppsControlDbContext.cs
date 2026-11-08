@@ -329,6 +329,9 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
             b.HasIndex(e => new { e.Code, e.AppId }).IsUnique().AreNullsDistinct(false);
             b.HasOne(e => e.App).WithMany().HasForeignKey(e => e.AppId).OnDelete(DeleteBehavior.Restrict);
         }, uniqueCode: false);
+
+        // Table and column names after the legacy Apps Control (sys_ / dd_ …); see AppsControlNaming.
+        AppsControlNaming.Apply(modelBuilder);
     }
 
     private static void Config<T>(ModelBuilder modelBuilder, string table, Action<EntityTypeBuilder<T>>? configure = null, bool uniqueCode = true)

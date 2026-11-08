@@ -9,7 +9,7 @@ namespace DynamicCube.Modules.Parties.Changes;
 
 /// <summary>
 /// The Party Registry's classes in Class/Domain: relationship, credential and sanction types, edited in Classes &amp;
-/// domains like any other class (values <c>apps.domain</c>, e.g. <c>PARTY_RELATIONSHIP_TYPE/OWNER</c>).
+/// domains like any other class (values <c>apps.dd_domain</c>, e.g. <c>PARTY_RELATIONSHIP_TYPE/OWNER</c>).
 /// </summary>
 public static class PartyClasses
 {

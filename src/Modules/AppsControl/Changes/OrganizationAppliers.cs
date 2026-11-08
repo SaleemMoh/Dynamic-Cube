@@ -146,7 +146,7 @@ internal sealed class OrgUnitApplier(AppsControlDbContext db) : ConfigApplier<Or
             var oldPath = existing.Path.ToString();
             var movedPath = newPath.ToString();
             await context.Database.ExecuteSqlAsync(
-                $"UPDATE apps.org_unit SET path = {movedPath}::ltree || subpath(path, nlevel({oldPath}::ltree)) WHERE path <@ {oldPath}::ltree AND id <> {existing.Id}",
+                $"UPDATE apps.org_units SET path = {movedPath}::ltree || subpath(path, nlevel({oldPath}::ltree)) WHERE path <@ {oldPath}::ltree AND id <> {existing.Id}",
                 cancellationToken);
         }
 

@@ -40,7 +40,7 @@
               "on": [
                 {
                   "left": "r.branch_code",
-                  "right": "b.code"
+                  "right": "b.branch_code"
                 }
               ]
             }
@@ -194,7 +194,7 @@
             "type": "PIE",
             "x": [
               {
-                "column": "b.name_ar",
+                "column": "b.branch_desc_ntv",
                 "aggregate": null,
                 "bucket": null,
                 "labelAr": "الفرع",
