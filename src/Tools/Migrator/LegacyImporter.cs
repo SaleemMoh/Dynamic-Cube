@@ -583,6 +583,7 @@ internal sealed partial class LegacyImporter(IServiceProvider services, PackageL
             }
 
             var grants = new List<object>();
+            var grantScreens = new List<string>();
             foreach (var g in data["SYS_ROLE_MENU_LOVS"].Where(Mine).GroupBy(x => (Menu: $"{V(x, "APPSID")}/{V(x, "MENU_CODE")}", Lov: V(x, "LOV_CODE"))))
             {
                 if (!lovs.Contains(g.Key.Lov))
@@ -607,9 +608,16 @@ internal sealed partial class LegacyImporter(IServiceProvider services, PackageL
 
                 granted = [.. granted.Where(known.Contains)];
                 var defaultValue = g.Where(x => V(x, "DEFAULT_VALUE_FLAG") == "1").Select(x => V(x, "VALUE_CODE")).FirstOrDefault(granted.Contains);
+                grantScreens.Add(screen);
                 grants.Add(new { lovCode = g.Key.Lov, resourceCode = screen, grantType = granted.Count > 0 ? "VALUES" : "NONE", grantedValues = granted, defaultValue });
             }
 
+            // A menu item the role opens is a screen it may view, as in legacy.
+            var privileges = menus.Select(m => menuScreens[m]).OfType<string>()
+                .Concat(grantScreens)
+                .Distinct(StringComparer.Ordinal)
+                .Select(screen => new { resourceCode = screen, actions = ViewOnly })
+                .ToList();
             var (ar, en) = Names(V(r, "ROLE_DESC_NTV"), V(r, "ROLE_DESC_FRN"), code);
             keys.Add(key);
             items.Add(Item("apps.role", key, new
@@ -618,6 +626,7 @@ internal sealed partial class LegacyImporter(IServiceProvider services, PackageL
                 nameEn = en,
                 isActive = Flag(V(r, "IS_ACTIVE")),
                 referenceCode = NullIfEmpty(V(r, "REF_CODE")),
+                privileges,
                 menus = menus.Distinct(StringComparer.Ordinal).ToList(),
                 grants,
             }));
@@ -690,12 +699,19 @@ internal sealed partial class LegacyImporter(IServiceProvider services, PackageL
 
             var (ar, en) = Names(V(r, "USERNAMENTV"), V(r, "USERNAMEFRN"), name);
             var mobile = V(r, "USERPHONENO");
+            // Dynamic Cube's own administrator keeps the system level (every instance), with the legacy roles added.
+            var systemAdmin = string.Equals(name, "admin", StringComparison.OrdinalIgnoreCase);
+            if (systemAdmin && instance is not null)
+            {
+                Skip("SYS_USERS", name, $"Dynamic Cube's administrator: kept at system level (sees every instance) instead of instance {V(instance, "INSTID")}");
+            }
+
             _accounts[name] = (en, email.Length > 0 ? email : null);
             items.Add(Item("apps.user", name, new
             {
                 nameAr = ar,
                 nameEn = en,
-                entityCode = instance is null ? string.Empty : V(instance, "INSTID"),
+                entityCode = instance is null || systemAdmin ? string.Empty : V(instance, "INSTID"),
                 kind = "PERSON",
                 status = "ACTIVE",
                 email = email.Length > 0 ? email : null,

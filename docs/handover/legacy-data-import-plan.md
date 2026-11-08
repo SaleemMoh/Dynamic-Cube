@@ -73,11 +73,15 @@ What follows from it:
 - **Sign-in**: one Keycloak account per user (username = `USERID`, with spaces as `.`; e-mail kept unless another
   account has it), with a random one-time password the user changes at first sign-in. The passwords are written to
   `one-time-passwords-<date>.csv` in the folder, even when the run stops part way, and are stored nowhere else.
+- **Administrator**: the legacy user `admin` is Dynamic Cube's administrator. It keeps the system level (it sees every
+  instance) with the legacy roles added, instead of the legacy default instance.
 - **Report**: `import-report.txt` in the folder lists what was loaded and every row left out or changed, with the
-  reason (about 320 lines for the owner's file: role screens and list grants on items that are not imported screens,
+  reason (about 310 lines for the owner's file: role screens and list grants on items that are not imported screens,
   e-mails used twice, SQL lists, the Configuration Center, one class whose code differs only in case from another,
   user names Keycloak does not take).
 - Speed: about 15 minutes on the first run (8,700 class values); a later run takes seconds.
+- Users whose roles are in the legacy apps (connected apps) see only the dashboard in Dynamic Cube itself: their menus
+  and screens are served to those apps through the Connect API (see `docs/04-apps-control.md`).
 - Docker's Keycloak keeps no data between restarts: its accounts (and so the one-time passwords) are created again by
   the next run.
 
