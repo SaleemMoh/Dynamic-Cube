@@ -4,6 +4,7 @@ using DynamicCube.Modules.AppsControl.Access;
 using DynamicCube.Modules.AppsControl.Domain;
 using DynamicCube.Modules.AppsControl.Persistence;
 using DynamicCube.Platform.Expressions;
+using DynamicCube.Platform.Security;
 using Microsoft.EntityFrameworkCore;
 
 namespace DynamicCube.Modules.AppsControl.Lovs;
@@ -11,7 +12,8 @@ namespace DynamicCube.Modules.AppsControl.Lovs;
 /// <summary>
 /// Resolves a user's effective grant on an LOV: for each of the user's roles the screen-specific grant wins over the
 /// global one; results are unioned across roles, and with the person's own grants on the screen (personal privileges,
-/// ADR-0036). Users without any grant see everything unless the LOV requires a grant.
+/// ADR-0036). Users without any grant see everything unless the LOV requires a grant; the system administrator sees
+/// everything.
 /// </summary>
 public sealed class GrantResolver(AppsControlDbContext context, JsonLogicEvaluator evaluator, TimeProvider timeProvider)
 {
@@ -19,6 +21,13 @@ public sealed class GrantResolver(AppsControlDbContext context, JsonLogicEvaluat
     {
         ArgumentNullException.ThrowIfNull(lov);
         ArgumentNullException.ThrowIfNull(access);
+
+        // The system administrator sees every value of every list, as the legacy super-admin (ESPADM) did.
+        if (access.RoleIds.Count > 0
+            && await context.Roles.AsNoTracking().AnyAsync(r => r.Code == BuiltInRoles.SystemAdmin && access.RoleIds.Contains(r.Id), cancellationToken))
+        {
+            return GrantSet.Everything;
+        }
 
         // Each held role's own grants, or those of the company where it is held and differs (ADR-0036).
         var companies = access.RoleSources.Select(s => s.CompanyCode).OfType<string>().Distinct().ToList();

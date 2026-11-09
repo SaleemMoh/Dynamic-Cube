@@ -5,9 +5,11 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using DynamicCube.Modules.AppsControl.Accounts;
+using DynamicCube.Modules.AppsControl.Domain;
 using DynamicCube.Modules.AppsControl.Seeding;
 using DynamicCube.Platform.ChangeSets;
 using DynamicCube.Platform.Persistence;
+using DynamicCube.Platform.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -451,7 +453,8 @@ internal sealed partial class LegacyImporter(IServiceProvider services, PackageL
                 searchMode = "FULL",
                 maxRows = 500,
                 defaultSelectionMode = V(r, "VALUE_FIELD") == "select-multiple" ? "MULTI" : "SINGLE",
-                requiresGrant = false,
+                // Legacy lists show only the values granted to the user's roles (an empty list when none are).
+                requiresGrant = V(r, "SQLSTMT").Contains("ROLE_MENU_LOVS", StringComparison.OrdinalIgnoreCase),
                 isPublic = false,
             }));
         }
@@ -700,11 +703,19 @@ internal sealed partial class LegacyImporter(IServiceProvider services, PackageL
 
             var (ar, en) = Names(V(r, "USERNAMENTV"), V(r, "USERNAMEFRN"), name);
             var mobile = V(r, "USERPHONENO");
-            // Dynamic Cube's own administrator keeps the system level (every instance), with the legacy roles added.
+            // Dynamic Cube's own administrator keeps the system level (every instance), with the legacy roles added. The
+            // legacy super-admin (ESPADM, who saw every menu and every list value) becomes a system administrator too.
             var systemAdmin = string.Equals(name, "admin", StringComparison.OrdinalIgnoreCase);
-            if (systemAdmin && instance is not null)
+            var superAdmin = string.Equals(name, "ESPADM", StringComparison.OrdinalIgnoreCase);
+            if ((systemAdmin || superAdmin) && instance is not null)
             {
-                Skip("SYS_USERS", name, $"Dynamic Cube's administrator: kept at system level (sees every instance) instead of instance {V(instance, "INSTID")}");
+                Skip("SYS_USERS", name, $"{(superAdmin ? "the legacy super-admin" : "Dynamic Cube's administrator")}: kept at system level (sees every instance) instead of instance {V(instance, "INSTID")}");
+            }
+
+            if (systemAdmin || superAdmin)
+            {
+                userRoles.Add(new { roleCode = BuiltInRoles.SystemAdmin, companyCode = CompanyScope.All, branches = All });
+                systemAdmin = true;
             }
 
             _accounts[name] = (en, email.Length > 0 ? email : null);
