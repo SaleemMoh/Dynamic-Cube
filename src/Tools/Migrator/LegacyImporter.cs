@@ -170,7 +170,9 @@ internal sealed partial class LegacyImporter(IServiceProvider services, PackageL
                 var parent = V(r, "REF_INSTID");
                 if (parent.Length > 0 && (parent == code || !instanceCodes.Contains(parent)))
                 {
-                    Skip("SYS_INSTANCEPROFILE", code, $"its parent instance {parent} is not in SYS_INSTANCEPROFILE; imported without a parent");
+                    Skip("SYS_INSTANCEPROFILE", code, parent == code
+                        ? "it names itself as its parent instance; imported without a parent"
+                        : $"its parent instance {parent} is not in SYS_INSTANCEPROFILE; imported without a parent");
                     parent = string.Empty;
                 }
 
