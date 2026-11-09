@@ -48,6 +48,8 @@ export interface RoleEditorData {
   menus: MenuChoiceGroup[];
   /** Companies the role can differ in (the selector shows with two or more). */
   companies?: ConfigRow[];
+  /** The company a new role is created in (`instid/cmp_num`), as legacy roles are; none: a role of no company. */
+  company?: string | null;
   readonly?: boolean;
 }
 
@@ -164,7 +166,12 @@ const CODE = /^[A-Za-z][A-Za-z0-9_-]{0,99}$/;
         </div>
       </form>
 
-      @if ((data.companies?.length ?? 0) > 1) {
+      @if (ownCompany(); as own) {
+        <div class="dc-role-company" data-testid="role-own-company">
+          <span class="dc-pill">{{ 'roles.company' | dcTranslate }}: {{ companyName(own) | dcLocalize }} <span class="mono" dir="ltr">{{ own }}</span></span>
+          <p class="dc-muted dc-role-company__hint">{{ 'roles.ownCompanyHint' | dcTranslate }}</p>
+        </div>
+      } @else if ((data.companies?.length ?? 0) > 1) {
         <div class="dc-role-company" data-testid="role-company-bar">
           <mat-form-field subscriptSizing="dynamic">
             <mat-label>{{ 'roles.company' | dcTranslate }}</mat-label>
@@ -543,6 +550,19 @@ export class RoleEditor {
   protected readonly forward = computed(() => (this.i18n.direction() === 'rtl' ? 'chevron_left' : 'chevron_right'));
   protected readonly back = computed(() => (this.i18n.direction() === 'rtl' ? 'chevron_right' : 'chevron_left'));
 
+  /** The one company the role belongs to (legacy roles; `instid/cmp_num`), or null for a role of no company. */
+  protected readonly ownCompany = computed(() => {
+    const code = this.data.role?.code;
+    if (!code) return this.data.company ?? null;
+    const parts = code.split('/');
+    return parts.length === 3 ? `${parts[0]}/${parts[1]}` : null;
+  });
+
+  protected companyName(key: string): { ar: string; en: string } {
+    const c = (this.data.companies ?? []).find((x) => x.code === key);
+    return c ? { ar: c.nameAr, en: c.nameEn } : { ar: key, en: key };
+  }
+
   protected readonly form = new FormGroup({
     nameEn: new FormControl(this.data.role?.nameEn ?? '', { nonNullable: true, validators: Validators.required }),
     nameAr: new FormControl(this.data.role?.nameAr ?? '', { nonNullable: true, validators: Validators.required }),
@@ -791,8 +811,10 @@ export class RoleEditor {
         .filter((code) => this.sets.has(code))
         .map((code) => ({ companyCode: code, ...this.payloadOf(this.sets.get(code)!) })),
     };
+    // A new role of a company is keyed by it (instid/cmp_num/CODE), as in the legacy system.
+    const code = !this.data.role && this.data.company ? `${this.data.company}/${value.code.trim()}` : value.code.trim();
     try {
-      await this.drafts.addChange('apps.role', value.code.trim(), this.data.role ? 'UPDATE' : 'CREATE', payload, { submit });
+      await this.drafts.addChange('apps.role', code, this.data.role ? 'UPDATE' : 'CREATE', payload, { submit });
       this.ref.close(true);
     } catch (error) {
       this.errors.set(problemMessages(error));

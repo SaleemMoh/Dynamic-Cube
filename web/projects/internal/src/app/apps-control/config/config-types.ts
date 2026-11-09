@@ -158,8 +158,16 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
         title: t('الجهات', 'Organizations'),
         key: 'code',
         scope: 'none',
-        columns: ['entityKind'],
+        columns: ['parentCode', 'shortCode', 'entityKind'],
         fields: [
+          {
+            code: 'parentCode',
+            type: 'select',
+            label: t('الجهة الأم', 'Parent organization'),
+            ref: 'apps.entity',
+            hint: t('للجهات التابعة لمجموعة؛ فارغ: جهة مستقلة.', 'For organizations that belong to a group; empty: none.'),
+          },
+          { code: 'shortCode', type: 'text', label: t('الرمز المختصر', 'Short code') },
           {
             code: 'entityKind',
             type: 'select',
@@ -175,8 +183,15 @@ export const CONFIG_SECTIONS: ConfigSection[] = [
         title: t('الشركات', 'Companies'),
         key: 'company',
         scope: 'entity',
-        columns: ['crNumber', 'displayOrder'],
+        columns: ['abbreviation', 'crNumber', 'displayOrder'],
         fields: [
+          { code: 'abbreviation', type: 'text', label: t('الاسم المختصر', 'Abbreviation') },
+          {
+            code: 'defaultBusinessUnit',
+            type: 'text',
+            label: t('وحدة الأعمال الافتراضية', 'Default business unit'),
+            hint: t('رمز وحدة الأعمال في نظام ERP.', 'The business unit code in the ERP.'),
+          },
           { code: 'crNumber', type: 'text', label: t('السجل التجاري', 'CR number') },
           { code: 'unifiedNumber', type: 'text', label: t('الرقم الموحد', 'Unified number') },
           { code: 'vatNumber', type: 'text', label: t('الرقم الضريبي', 'VAT number') },

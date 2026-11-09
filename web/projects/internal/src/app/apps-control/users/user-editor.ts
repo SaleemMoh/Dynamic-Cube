@@ -31,7 +31,19 @@ import {
   rowProblems,
 } from './access-model';
 import { ACCESS_TRANSLATIONS } from './access-translations';
+import {
+  CompanyAdmission,
+  CompanyRow,
+  InstanceAdmission,
+  advancedRoles,
+  companyAdmissions,
+  companyProblems,
+  companyRows,
+  instanceAdmissions,
+  tableRoleEntries,
+} from './company-access';
 import { UserAccess } from './user-access';
+import { UserCompanies } from './user-companies';
 
 /**
  * A user's editor (ADR-0036): their details in one tab and their access in the other (roles by company and branches,
@@ -47,6 +59,7 @@ import { UserAccess } from './user-access';
     DynamicForm,
     SubmitButton,
     UserAccess,
+    UserCompanies,
     LocalizePipe,
     TranslatePipe,
   ],
@@ -90,12 +103,21 @@ import { UserAccess } from './user-access';
         @if (data.row; as row) {
           <mat-tab [label]="'user.tabAccess' | dcTranslate">
             <div class="dc-user-editor__tab" data-testid="user-access">
-              <dc-user-access
-                [user]="row"
+              <dc-user-companies
                 [readonly]="readonly()"
-                [(rows)]="rows"
-                [(personal)]="personal"
+                [(rows)]="companies"
+                [(defaultOrganization)]="defaultOrganization"
               />
+              <details class="dc-user-editor__advanced" [open]="advancedInUse">
+                <summary data-testid="user-advanced">{{ 'access.advanced' | dcTranslate }}</summary>
+                <p class="dc-muted">{{ 'access.advancedHint' | dcTranslate }}</p>
+                <dc-user-access
+                  [user]="row"
+                  [readonly]="readonly()"
+                  [(rows)]="rows"
+                  [(personal)]="personal"
+                />
+              </details>
             </div>
           </mat-tab>
         }
@@ -127,6 +149,15 @@ import { UserAccess } from './user-access';
     .dc-user-editor__tab {
       padding: 16px 4px 4px;
     }
+    .dc-user-editor__advanced {
+      margin-top: 20px;
+      border-top: 1px solid var(--dga-gray-200);
+      padding-top: 12px;
+    }
+    .dc-user-editor__advanced > summary {
+      cursor: pointer;
+      font-weight: 600;
+    }
   `,
 })
 export class UserEditor extends ConfigEditor {
@@ -140,10 +171,25 @@ export class UserEditor extends ConfigEditor {
     () => this.data.row?.owner === 'SYSTEM' || !this.privileges.can('apps-control.users', 'EDIT'),
   );
   private readonly storedRoles = (this.data.row?.['roles'] as RoleEntry[] | undefined) ?? [];
-  protected readonly rows = signal<AccessRow[]>(groupRoles(this.storedRoles));
+  private readonly storedInstances =
+    (this.data.row?.['instances'] as InstanceAdmission[] | undefined) ?? [];
+  /** The simple table: companies the person may enter and the roles they hold in each, in all branches. */
+  protected readonly companies = signal<CompanyRow[]>(
+    companyRows(
+      (this.data.row?.['companies'] as CompanyAdmission[] | undefined) ?? [],
+      this.storedRoles,
+    ),
+  );
+  protected readonly defaultOrganization = signal<string | null>(
+    this.storedInstances.find((i) => i.isDefault)?.entityCode ?? null,
+  );
+  /** The Advanced part: roles in every company, in some branches, or only within a unit. */
+  protected readonly rows = signal<AccessRow[]>(groupRoles(advancedRoles(this.storedRoles)));
   protected readonly personal = signal<PersonalPrivilege[]>(
     readPersonal(this.data.row?.['privileges']),
   );
+  /** The Advanced part opens by itself when the person already has something in it. */
+  protected readonly advancedInUse = this.rows().length > 0 || this.personal().length > 0;
 
   constructor() {
     super();
@@ -158,7 +204,7 @@ export class UserEditor extends ConfigEditor {
       this.tab.set(0);
       return;
     }
-    const problems = rowProblems(this.rows());
+    const problems = [...companyProblems(this.companies()), ...rowProblems(this.rows())];
     if (problems.length) {
       this.errors.set(
         problems.map((p) => this.i18n.translate(p.key).replace('{row}', String(p.row))),
@@ -168,9 +214,18 @@ export class UserEditor extends ConfigEditor {
     }
     const payload = this.payloadFrom(value);
     if (!payload) return;
-    payload['roles'] = flattenRoles(
-      this.rows().filter((r) => r.roles.length),
-      this.storedRoles,
+    payload['roles'] = [
+      ...tableRoleEntries(this.companies(), this.storedRoles),
+      ...flattenRoles(
+        this.rows().filter((r) => r.roles.length),
+        this.storedRoles,
+      ),
+    ];
+    payload['companies'] = companyAdmissions(this.companies());
+    payload['instances'] = instanceAdmissions(
+      this.companies(),
+      this.storedInstances,
+      this.defaultOrganization(),
     );
     payload['privileges'] = personalPayload(this.personal());
     this.saving.set(true);

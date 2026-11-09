@@ -2,7 +2,9 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, signal } f
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSelectModule } from '@angular/material/select';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router } from '@angular/router';
@@ -23,7 +25,7 @@ const RESOURCE = 'apps-control.roles';
 /** Roles on the start side (with how many users hold each); the chosen role's screens and permissions on the end side. */
 @Component({
   selector: 'dc-roles-page',
-  imports: [ExportButton, JsonImportButton, MatButtonModule, MatIconModule, MatProgressBarModule, MatTooltipModule, MasterList, PermissionCards, LocalizePipe, TranslatePipe],
+  imports: [ExportButton, JsonImportButton, MatButtonModule, MatFormFieldModule, MatSelectModule, MatIconModule, MatProgressBarModule, MatTooltipModule, MasterList, PermissionCards, LocalizePipe, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header class="dc-page__header dc-page__header--actions">
@@ -41,6 +43,19 @@ const RESOURCE = 'apps-control.roles';
         }
       </ul>
     }
+    <div class="dc-roles-filter">
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>{{ 'roles.filterCompany' | dcTranslate }}</mat-label>
+        <mat-select [value]="companyFilter()" (selectionChange)="companyFilter.set($event.value)" data-testid="roles-company-filter">
+          <mat-option [value]="allRoles">{{ 'roles.allRoles' | dcTranslate }}</mat-option>
+          <mat-option [value]="noCompany">{{ 'roles.noCompanyRoles' | dcTranslate }}</mat-option>
+          @for (c of companyChoices(); track c.code) {
+            <mat-option [value]="c.code">{{ { ar: c.nameAr, en: c.nameEn } | dcLocalize }} <span class="mono dc-muted" dir="ltr">{{ c.code }}</span></mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <span class="dc-muted">{{ 'roles.filterHint' | dcTranslate }}</span>
+    </div>
     <div class="dc-split">
       <dc-master-list
         testId="roles"
@@ -101,6 +116,17 @@ const RESOURCE = 'apps-control.roles';
     </div>
   `,
   styles: `
+    .dc-roles-filter {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      margin: 0 0 12px;
+    }
+    .dc-roles-filter mat-form-field {
+      min-width: 280px;
+      max-width: 100%;
+    }
     .dc-role-state {
       display: flex;
       flex-wrap: wrap;
@@ -151,7 +177,25 @@ export class RolesPage {
     this.lists.hasValue() ? screenTree(this.lists.value().resources, this.lists.value().menus, this.lists.value().groups, this.lists.value().businessApps) : [],
   );
 
-  private readonly roleRows = computed(() => (this.roles.hasValue() ? this.roles.value() : []));
+  protected readonly allRoles = '';
+  protected readonly noCompany = '-';
+  /** Roles of one company (`instid/cmp_num`), of no company, or all of them. */
+  protected readonly companyFilter = signal<string>('');
+  /** Companies that have roles, by organization. */
+  protected readonly companyChoices = computed(() => {
+    const companies = this.lists.hasValue() ? this.lists.value().companies : [];
+    const withRoles = new Set(
+      (this.roles.hasValue() ? this.roles.value() : []).map((r) => r.code.split('/')).filter((p) => p.length === 3).map((p) => `${p[0]}/${p[1]}`),
+    );
+    return companies.filter((c) => withRoles.has(c.code) || this.companyFilter() === c.code);
+  });
+  private readonly roleRows = computed(() => {
+    const rows = this.roles.hasValue() ? this.roles.value() : [];
+    const filter = this.companyFilter();
+    if (filter === this.allRoles) return rows;
+    if (filter === this.noCompany) return rows.filter((r) => !r.code.includes('/'));
+    return rows.filter((r) => r.code.startsWith(filter + '/'));
+  });
   protected readonly selected = computed(() => this.code() ?? this.roleRows()[0]?.code ?? null);
   /** The chosen role in full (list rows leave out privileges and grants). */
   protected readonly role = rxResource({
@@ -226,6 +270,7 @@ export class RolesPage {
       defaultBusinessApp: this.appContext.current(),
       menus: menuChoices(this.lists.value().menus, this.lists.value().groups, this.lists.value().businessApps),
       companies: this.lists.value().companies,
+      company: role ? null : this.companyFilter() && this.companyFilter() !== this.noCompany ? this.companyFilter() : null,
       readonly: readonly || (role !== null && role.owner === 'SYSTEM'),
     };
     const saved = await firstValueFrom(

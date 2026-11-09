@@ -5,6 +5,17 @@ export const ACCESS_TRANSLATIONS: TranslationDictionary = {
   ar: {
     'user.tabDetails': 'البيانات',
     'user.tabAccess': 'الصلاحيات',
+    'access.companies': 'الشركات والأدوار',
+    'access.companiesHint':
+      'الشركات التي يدخلها المستخدم والأدوار التي يحملها في كل شركة (في كل فروعها). النجمة: الشركة الافتراضية في جهتها.',
+    'access.defaultCompany': 'الشركة الافتراضية في جهتها',
+    'access.chooseRoles': 'اختر الأدوار',
+    'access.addCompany': 'إضافة شركة',
+    'access.defaultOrganization': 'الجهة الافتراضية',
+    'access.companyTwice': 'السطر {row}: الشركة مذكورة في سطر سابق.',
+    'access.advanced': 'خيارات متقدمة',
+    'access.advancedHint':
+      'أدوار في كل الشركات أو في فروع محددة، والأدوار من القسم، والصلاحيات الشخصية. لا يحتاجها معظم المستخدمين.',
     'access.roles': 'الأدوار حسب الشركة',
     'access.rolesHint':
       'اختر الشركة أو «كل الشركات»، والفروع أو «كل الفروع». الترك فارغاً لا يعني الكل.',
@@ -64,6 +75,17 @@ export const ACCESS_TRANSLATIONS: TranslationDictionary = {
   en: {
     'user.tabDetails': 'Details',
     'user.tabAccess': 'Access',
+    'access.companies': 'Companies and roles',
+    'access.companiesHint':
+      'The companies the user may enter and the roles they hold in each (in all its branches). The star: the default company of its organization.',
+    'access.defaultCompany': 'Default company of its organization',
+    'access.chooseRoles': 'Choose the roles',
+    'access.addCompany': 'Add a company',
+    'access.defaultOrganization': 'Default organization',
+    'access.companyTwice': 'Line {row}: the company is already on an earlier line.',
+    'access.advanced': 'Advanced',
+    'access.advancedHint':
+      'Roles in every company or in some branches, roles from the department, and personal privileges. Most users need none of these.',
     'access.roles': 'Roles by company',
     'access.rolesHint':
       'Choose a company or "All companies", and branches or "All branches". Leaving one empty does not mean all.',

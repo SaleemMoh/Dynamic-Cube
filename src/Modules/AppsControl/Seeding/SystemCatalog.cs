@@ -67,6 +67,7 @@ internal static class SystemCatalog
         new("apps-control.change-sets", "طلبات التغيير", "Change sets", "/apps-control/change-sets", AppsControlResources.ChangeSets, "fact_check", 10),
         new("apps-control.classes", "التصنيفات والقيم", "Classes & domains", "/apps-control/classes", AppsControlResources.Classes, "category", 20),
         new("apps-control.lovs", "قوائم القيم", "Lists of values", "/apps-control/lovs", AppsControlResources.Lovs, "filter_list", 30),
+        new("apps-control.structure", "الجهات والشركات", "Organizations & companies", "/apps-control/structure", AppsControlResources.Installation, "corporate_fare", 35),
         new("apps-control.organization", "الهيكل التنظيمي", "Organization structure", "/apps-control/organization", AppsControlResources.Organization, "account_tree", 40),
         new("apps-control.users", "المستخدمون", "Users", "/apps-control/users", AppsControlResources.Users, "group", 50),
         new("apps-control.portal-accounts", "حسابات البوابة", "Portal accounts", "/apps-control/portal-accounts", AppsControlResources.PortalAccounts, "badge", 55),
