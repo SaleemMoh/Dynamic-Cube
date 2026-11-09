@@ -166,13 +166,30 @@ internal sealed partial class LegacyImporter(IServiceProvider services, PackageL
             {
                 var code = V(r, "INSTID");
                 var (ar, en) = Names(V(r, "INSTNAME_NTV"), V(r, "INSTNAME_FRN"), code);
-                return Item("apps.entity", code, new { nameAr = ar, nameEn = en, isActive = Flag(V(r, "ACTIVEFLAG")) });
+                // The parent instance (a group and its organizations), when it is in the export.
+                var parent = V(r, "REF_INSTID");
+                if (parent.Length > 0 && (parent == code || !instanceCodes.Contains(parent)))
+                {
+                    Skip("SYS_INSTANCEPROFILE", code, $"its parent instance {parent} is not in SYS_INSTANCEPROFILE; imported without a parent");
+                    parent = string.Empty;
+                }
+
+                var shortCode = V(r, "INSTCODE");
+                return Item("apps.entity", code, new
+                {
+                    nameAr = ar,
+                    nameEn = en,
+                    isActive = Flag(V(r, "ACTIVEFLAG")),
+                    parentCode = parent.Length > 0 ? parent : null,
+                    shortCode = shortCode.Length is > 0 and <= 50 ? shortCode : null,
+                });
             })]),
         };
 
         // Companies: instance and company number.
         var companies = new HashSet<string>(StringComparer.Ordinal);
         var companyItems = new List<ConfigPackageItem>();
+        var branchItems = new List<ConfigPackageItem>();
         foreach (var r in data["SYS_COMPANY_PROFILE"])
         {
             var (instid, number) = (V(r, "INSTID"), V(r, "CMP_NUM"));
@@ -186,11 +203,30 @@ internal sealed partial class LegacyImporter(IServiceProvider services, PackageL
             if (companies.Add(key))
             {
                 var (ar, en) = Names(V(r, "CMP_DES_NTV"), V(r, "CMP_DES_FRN"), key);
-                companyItems.Add(Item("apps.company", key, new { nameAr = ar, nameEn = en, isActive = Flag(V(r, "ACTIVE_FLAG")) }));
+                var (abbreviation, businessUnit) = (V(r, "CMP_ABBREVIATION"), V(r, "DEFAULT_BU"));
+                companyItems.Add(Item("apps.company", key, new
+                {
+                    nameAr = ar,
+                    nameEn = en,
+                    isActive = Flag(V(r, "ACTIVE_FLAG")),
+                    abbreviation = abbreviation.Length is > 0 and <= 50 ? abbreviation : null,
+                    defaultBusinessUnit = businessUnit.Length is > 0 and <= 100 ? businessUnit : null,
+                }));
+
+                // The legacy system has no branches: every company gets one, its head office, used by default.
+                branchItems.Add(Item("apps.branch", $"{instid}-{number}-HO", new
+                {
+                    nameAr = "المكتب الرئيسي",
+                    nameEn = "Head office",
+                    isActive = true,
+                    companyCode = key,
+                    isDefault = true,
+                }));
             }
         }
 
         packages.Add(new("Legacy Apps Control: companies", companyItems));
+        packages.Add(new("Legacy Apps Control: branches", branchItems));
 
         // Apps: the legacy apps run on their own screens (apps managed by Dynamic Cube), in the companies SYS_APPS_COMPANY lists.
         var apps = new HashSet<string>(StringComparer.Ordinal);
@@ -231,7 +267,7 @@ internal sealed partial class LegacyImporter(IServiceProvider services, PackageL
         packages.Add(new("Legacy Apps Control: menus", menuItems));
         var (roleItems, roles) = Roles(data, companies, menus, lovs, values);
         packages.Add(new("Legacy Apps Control: roles", roleItems));
-        packages.Add(new("Legacy Apps Control: users", Users(data, instanceCodes, roles)));
+        packages.Add(new("Legacy Apps Control: users", Users(data, instanceCodes, companies, roles)));
         return packages;
     }
 
@@ -653,7 +689,7 @@ internal sealed partial class LegacyImporter(IServiceProvider services, PackageL
 
     private readonly Dictionary<string, (string NameEn, string? Email)> _accounts = new(StringComparer.Ordinal);
 
-    private List<ConfigPackageItem> Users(Legacy data, HashSet<string> instances, HashSet<string> roles)
+    private List<ConfigPackageItem> Users(Legacy data, HashSet<string> instances, HashSet<string> companies, HashSet<string> roles)
     {
         var items = new List<ConfigPackageItem>();
         var emails = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -687,6 +723,28 @@ internal sealed partial class LegacyImporter(IServiceProvider services, PackageL
 
             var userInstances = data["SYS_USERINSTANCES"].Where(i => V(i, "USERID") == id && instances.Contains(V(i, "INSTID"))).ToList();
             var instance = userInstances.FirstOrDefault(i => V(i, "DEFAULTINSTFLAG") == "1") ?? userInstances.FirstOrDefault();
+
+            // Every organization and company the person may enter, with the default ones, as in the legacy system.
+            var admittedInstances = userInstances.GroupBy(i => V(i, "INSTID"), StringComparer.Ordinal)
+                .Select(g => new { entityCode = g.Key, isDefault = instance is not null && V(instance, "INSTID") == g.Key })
+                .ToList();
+            var admitted = new List<(string Key, bool Flagged, string? Currency)>();
+            foreach (var g in data["SYS_USERINSTANCES_COMPANIES"].Where(c => V(c, "USERID") == id)
+                .GroupBy(c => $"{V(c, "INSTID")}/{V(c, "CMP_NUM")}", StringComparer.Ordinal))
+            {
+                if (!companies.Contains(g.Key))
+                {
+                    Skip("SYS_USERINSTANCES_COMPANIES", $"{id} → {g.Key}", "the company is not imported");
+                    continue;
+                }
+
+                var currency = g.Select(c => V(c, "DEFAULT_CURRENCY")).FirstOrDefault(c => c.Length > 0);
+                admitted.Add((g.Key, g.Any(c => V(c, "DEFAULT_CMP_FLAG") == "1"), currency is { Length: <= 50 } ? currency : null));
+            }
+
+            // One default company in each organization (the first flagged one).
+            var defaults = admitted.Where(c => c.Flagged).GroupBy(c => c.Key.Split('/')[0], StringComparer.Ordinal).Select(g => g.First().Key).ToHashSet(StringComparer.Ordinal);
+            var admittedCompanies = admitted.Select(c => new { companyCode = c.Key, isDefault = defaults.Contains(c.Key), defaultCurrency = c.Currency }).ToList();
             var userRoles = new List<object>();
             foreach (var ur in data["SYS_USER_ROLES"].Where(u => V(u, "USERID") == id))
             {
@@ -729,6 +787,8 @@ internal sealed partial class LegacyImporter(IServiceProvider services, PackageL
                 email = email.Length > 0 ? email : null,
                 mobile = mobile.Length is > 0 and <= 32 ? mobile : null,
                 roles = userRoles,
+                instances = admittedInstances,
+                companies = admittedCompanies,
             }));
         }
 

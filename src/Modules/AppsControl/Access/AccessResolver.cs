@@ -124,9 +124,17 @@ public sealed partial class AccessResolver(
             .Select(p => new { p.CompanyCode, p.Resource!.Code, p.Actions, p.DeniedActions })
             .ToListAsync(cancellationToken);
 
-        // The company the user works in (ADR-0036 step 5): one of the active companies their roles or personal privileges
-        // open (all of them when one is held in every company), within their organization.
-        var opened = held.Select(r => r.CompanyCode).Concat(personalRows.Select(p => p.CompanyCode)).ToHashSet(StringComparer.Ordinal);
+        // The company the user works in (ADR-0036 step 5): one of the active companies they are admitted to (legacy
+        // SYS_USERINSTANCES_COMPANIES) or their roles or personal privileges open (all of them when one is held in every
+        // company), within their organization.
+        var admitted = await context.UserCompanies.AsNoTracking().Where(c => c.UserId == user.Id)
+            .Select(c => new { Key = c.EntityCode + "/" + c.CompanyCode, c.EntityCode, c.IsDefault })
+            .ToListAsync(cancellationToken);
+        var defaultInstance = await context.UserInstances.AsNoTracking().Where(i => i.UserId == user.Id && i.IsDefault)
+            .Select(i => i.EntityCode).FirstOrDefaultAsync(cancellationToken) ?? user.EntityCode;
+        var defaultCompany = admitted.Where(c => c.IsDefault).OrderByDescending(c => c.EntityCode == defaultInstance).Select(c => c.Key).FirstOrDefault();
+        var opened = held.Select(r => r.CompanyCode).Concat(personalRows.Select(p => p.CompanyCode)).Concat(admitted.Select(c => c.Key))
+            .ToHashSet(StringComparer.Ordinal);
         var companies = (await context.Companies.AsNoTracking()
             .Where(c => c.IsActive)
             .OrderBy(c => c.EntityCode).ThenBy(c => c.DisplayOrder).ThenBy(c => c.Code)
@@ -135,7 +143,7 @@ public sealed partial class AccessResolver(
             .Where(c => (opened.Contains(CompanyScope.All) && (user.EntityCode is null || c.EntityCode == user.EntityCode)) || opened.Contains(c.Key))
             .Select(c => c.Key)
             .ToList();
-        var (company, chosen) = CurrentCompany(companies, requestedCompany, user.LastCompanyCode);
+        var (company, chosen) = CurrentCompany(companies, requestedCompany, user.LastCompanyCode, defaultCompany);
 
         // Only what is held in that company, or in every company, applies.
         var roles = held.Where(r => r.CompanyCode == CompanyScope.All || r.CompanyCode == company).ToList();
@@ -224,10 +232,10 @@ public sealed partial class AccessResolver(
     }
 
     /// <summary>
-    /// The company the request names when the user may work in it, else the one they last chose, else their first. Chosen
-    /// unless several are open and neither names one.
+    /// The company the request names when the user may work in it, else the one they last chose, else their default one,
+    /// else their first. Chosen unless several are open and none of these names one.
     /// </summary>
-    internal static (string? Company, bool Chosen) CurrentCompany(IReadOnlyList<string> companies, string? requested, string? last)
+    internal static (string? Company, bool Chosen) CurrentCompany(IReadOnlyList<string> companies, string? requested, string? last, string? preferred = null)
     {
         if (requested is not null && companies.Contains(requested, StringComparer.Ordinal))
         {
@@ -237,6 +245,12 @@ public sealed partial class AccessResolver(
         if (last is not null && companies.Contains(last, StringComparer.Ordinal))
         {
             return (last, true);
+        }
+
+        // The person's default company (legacy DEFAULT_CMP_FLAG of their default organization).
+        if (preferred is not null && companies.Contains(preferred, StringComparer.Ordinal))
+        {
+            return (preferred, true);
         }
 
         return (companies.Count > 0 ? companies[0] : null, companies.Count <= 1);

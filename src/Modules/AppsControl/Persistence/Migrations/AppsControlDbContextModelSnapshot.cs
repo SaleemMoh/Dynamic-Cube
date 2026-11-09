@@ -718,6 +718,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("Abbreviation")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("cmp_abbreviation");
+
                     b.Property<string>("BusinessApp")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
@@ -743,6 +748,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)")
                         .HasColumnName("created_by");
+
+                    b.Property<string>("DefaultBusinessUnit")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("default_bu");
 
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer")
@@ -1255,7 +1265,7 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.Property<string>("EntityCode")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("ref_instid");
+                        .HasColumnName("scope_instid");
 
                     b.Property<string>("EntityKind")
                         .HasColumnType("text")
@@ -1307,6 +1317,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .HasColumnType("character varying(64)")
                         .HasColumnName("owner");
 
+                    b.Property<string>("ParentCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("ref_instid");
+
                     b.Property<string>("PortalHeroImageKey")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
@@ -1327,6 +1342,11 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text[]")
                         .HasColumnName("shared_apps");
+
+                    b.Property<string>("ShortCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("instcode");
 
                     b.Property<string>("UnifiedNumber")
                         .HasColumnType("text")
@@ -3063,6 +3083,77 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.ToTable("org_user_assignments", "apps");
                 });
 
+            modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.UserCompany", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("CompanyCode")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("cmp_num");
+
+                    b.Property<string>("DefaultCurrency")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("default_currency");
+
+                    b.Property<string>("EntityCode")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("instid");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean")
+                        .HasColumnName("default_cmp_flag");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_sys_userinstances_companies");
+
+                    b.HasIndex("UserId", "EntityCode", "CompanyCode")
+                        .IsUnique()
+                        .HasDatabaseName("ix_sys_userinstances_companies_user_id_entity_code_company_code");
+
+                    b.ToTable("sys_userinstances_companies", "apps");
+                });
+
+            modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.UserInstance", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("EntityCode")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("instid");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean")
+                        .HasColumnName("defaultinstflag");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_sys_userinstances");
+
+                    b.HasIndex("UserId", "EntityCode")
+                        .IsUnique()
+                        .HasDatabaseName("ix_sys_userinstances_user_id_entity_code");
+
+                    b.ToTable("sys_userinstances", "apps");
+                });
+
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.UserPrivilege", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3778,6 +3869,26 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
                     b.Navigation("Position");
                 });
 
+            modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.UserCompany", b =>
+                {
+                    b.HasOne("DynamicCube.Modules.AppsControl.Domain.UserAccount", null)
+                        .WithMany("Companies")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_sys_userinstances_companies_sys_users_user_id");
+                });
+
+            modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.UserInstance", b =>
+                {
+                    b.HasOne("DynamicCube.Modules.AppsControl.Domain.UserAccount", null)
+                        .WithMany("Instances")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_sys_userinstances_sys_users_user_id");
+                });
+
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.UserPrivilege", b =>
                 {
                     b.HasOne("DynamicCube.Modules.AppsControl.Domain.Resource", "Resource")
@@ -3880,6 +3991,10 @@ namespace DynamicCube.Modules.AppsControl.Persistence.Migrations
             modelBuilder.Entity("DynamicCube.Modules.AppsControl.Domain.UserAccount", b =>
                 {
                     b.Navigation("Assignments");
+
+                    b.Navigation("Companies");
+
+                    b.Navigation("Instances");
 
                     b.Navigation("Privileges");
 

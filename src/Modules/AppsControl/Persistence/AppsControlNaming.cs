@@ -26,12 +26,13 @@ internal static class AppsControlNaming
     private static readonly Dictionary<Type, (string Table, Dictionary<string, string> Columns)> Tables = new()
     {
         [typeof(GovernmentEntity)] = ("sys_instance_profile", Columns(
-            ("Code", "instid"), ("EntityCode", "ref_instid"), ("NameAr", "instname_ntv"), ("NameEn", "instname_frn"),
+            ("Code", "instid"), ("EntityCode", "scope_instid"), ("ParentCode", "ref_instid"), ("ShortCode", "instcode"), ("NameAr", "instname_ntv"), ("NameEn", "instname_frn"),
             ("IsActive", "activeflag"), ("LogoFileKey", "instlogo"))),
         [typeof(Installation)] = ("sys_installation", Columns(
             ("Code", "install_code"), ("NameAr", "install_desc_ntv"), ("NameEn", "install_desc_frn"), ("SystemType", "systemtypeid"))),
         [typeof(Company)] = ("sys_company_profile", Columns(
-            ("Code", "cmp_num"), ("NameAr", "cmp_des_ntv"), ("NameEn", "cmp_des_frn"), ("IsActive", "active_flag"))),
+            ("Code", "cmp_num"), ("NameAr", "cmp_des_ntv"), ("NameEn", "cmp_des_frn"), ("IsActive", "active_flag"),
+            ("Abbreviation", "cmp_abbreviation"), ("DefaultBusinessUnit", "default_bu"))),
         [typeof(Branch)] = ("sys_company_branches", Columns(
             ("Code", "branch_code"), ("NameAr", "branch_desc_ntv"), ("NameEn", "branch_desc_frn"))),
         [typeof(App)] = ("sys_apps_profile", Columns(
@@ -49,6 +50,8 @@ internal static class AppsControlNaming
             ("Code", "role_code"), ("NameAr", "role_desc_ntv"), ("NameEn", "role_desc_frn"), ("ReferenceCode", "ref_code"),
             ("OverrideCompanies", "override_cmp_nums"))),
         [typeof(UserRole)] = ("sys_user_roles", Columns()),
+        [typeof(UserInstance)] = ("sys_userinstances", Columns(("IsDefault", "defaultinstflag"))),
+        [typeof(UserCompany)] = ("sys_userinstances_companies", Columns(("IsDefault", "default_cmp_flag"), ("DefaultCurrency", "default_currency"))),
         [typeof(Resource)] = ("sys_resources", Columns(
             ("Code", "resource_code"), ("NameAr", "resource_desc_ntv"), ("NameEn", "resource_desc_frn"))),
         [typeof(Menu)] = ("sys_menu", Columns(

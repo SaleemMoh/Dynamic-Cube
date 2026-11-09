@@ -13,6 +13,12 @@ public sealed class CompanyPayload : ConfigPayload
 
     public string? VatNumber { get; set; }
 
+    /// <summary>Short name (legacy <c>CMP_ABBREVIATION</c>).</summary>
+    public string? Abbreviation { get; set; }
+
+    /// <summary>Default business unit in the ERP (legacy <c>DEFAULT_BU</c>).</summary>
+    public string? DefaultBusinessUnit { get; set; }
+
     public int DisplayOrder { get; set; }
 }
 
@@ -78,7 +84,11 @@ internal sealed class CompanyApplier(AppsControlDbContext db) : ConfigApplier<Co
         errors.MaxLength("crNumber", payload.CrNumber, 50);
         errors.MaxLength("unifiedNumber", payload.UnifiedNumber, 50);
         errors.MaxLength("vatNumber", payload.VatNumber, 50);
+        errors.MaxLength("abbreviation", payload.Abbreviation, 50);
+        errors.MaxLength("defaultBusinessUnit", payload.DefaultBusinessUnit, 100);
         entity.EntityCode = instid;
+        entity.Abbreviation = Blank(payload.Abbreviation);
+        entity.DefaultBusinessUnit = Blank(payload.DefaultBusinessUnit);
         entity.BusinessApp = null;
         entity.CrNumber = Blank(payload.CrNumber);
         entity.UnifiedNumber = Blank(payload.UnifiedNumber);
@@ -92,6 +102,8 @@ internal sealed class CompanyApplier(AppsControlDbContext db) : ConfigApplier<Co
             CrNumber = entity.CrNumber,
             UnifiedNumber = entity.UnifiedNumber,
             VatNumber = entity.VatNumber,
+            Abbreviation = entity.Abbreviation,
+            DefaultBusinessUnit = entity.DefaultBusinessUnit,
             DisplayOrder = entity.DisplayOrder,
         });
 

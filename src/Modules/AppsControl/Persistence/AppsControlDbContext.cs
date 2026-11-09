@@ -39,6 +39,10 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
 
     public DbSet<UserPrivilege> UserPrivileges => Set<UserPrivilege>();
 
+    public DbSet<UserInstance> UserInstances => Set<UserInstance>();
+
+    public DbSet<UserCompany> UserCompanies => Set<UserCompany>();
+
     public DbSet<Resource> Resources => Set<Resource>();
 
     public DbSet<Role> Roles => Set<Role>();
@@ -104,6 +108,8 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
             b.Property(e => e.CrNumber).HasMaxLength(50);
             b.Property(e => e.UnifiedNumber).HasMaxLength(50);
             b.Property(e => e.VatNumber).HasMaxLength(50);
+            b.Property(e => e.Abbreviation).HasMaxLength(50);
+            b.Property(e => e.DefaultBusinessUnit).HasMaxLength(100);
         }, uniqueCode: false);
         Config<Branch>(modelBuilder, "branch", b =>
         {
@@ -123,6 +129,8 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
         });
         Config<GovernmentEntity>(modelBuilder, "entity", b =>
         {
+            b.Property(e => e.ParentCode).HasMaxLength(100);
+            b.Property(e => e.ShortCode).HasMaxLength(50);
             b.Property(e => e.FooterLinks).HasColumnType("jsonb").HasConversion(JsonColumn.Converter<List<FooterLink>>(), JsonColumn.Comparer<List<FooterLink>>());
             b.Property(e => e.InternalThemeColor).HasMaxLength(7);
             b.Property(e => e.PortalThemeColor).HasMaxLength(7);
@@ -182,6 +190,23 @@ public sealed class AppsControlDbContext(DbContextOptions<AppsControlDbContext> 
             b.HasOne(e => e.OrgUnit).WithMany().HasForeignKey(e => e.OrgUnitId).OnDelete(DeleteBehavior.Restrict);
             b.Property(e => e.CompanyCode).HasMaxLength(100).IsRequired();
             b.Property(e => e.Branches).HasColumnType("text[]");
+        });
+        modelBuilder.Entity<UserInstance>(b =>
+        {
+            b.ToTable("user_instance", Schema);
+            b.HasOne<UserAccount>().WithMany(u => u.Instances).HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+            b.Property(e => e.EntityCode).HasMaxLength(100).IsRequired();
+            b.HasIndex(e => new { e.UserId, e.EntityCode }).IsUnique();
+        });
+        modelBuilder.Entity<UserCompany>(b =>
+        {
+            b.ToTable("user_company", Schema);
+            b.HasOne<UserAccount>().WithMany(u => u.Companies).HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+            b.Property(e => e.EntityCode).HasMaxLength(100).IsRequired();
+            b.Property(e => e.CompanyCode).HasMaxLength(100).IsRequired();
+            b.Property(e => e.DefaultCurrency).HasMaxLength(50);
+            b.Ignore(e => e.CompanyKey);
+            b.HasIndex(e => new { e.UserId, e.EntityCode, e.CompanyCode }).IsUnique();
         });
         modelBuilder.Entity<UserPrivilege>(b =>
         {

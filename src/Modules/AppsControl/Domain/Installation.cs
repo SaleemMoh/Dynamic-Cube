@@ -42,6 +42,12 @@ public sealed class GovernmentEntity : ConfigEntity
     /// <summary>The default entity: the one an installation starts with, whose branding the apps show.</summary>
     public const string SingletonCode = "ENTITY";
 
+    /// <summary>The parent organization (legacy <c>REF_INSTID</c>), for organizations that belong to a group; optional.</summary>
+    public string? ParentCode { get; set; }
+
+    /// <summary>The organization's short code (legacy <c>INSTCODE</c>); optional.</summary>
+    public string? ShortCode { get; set; }
+
     /// <summary>Domain code of class <c>ENTITY_KIND</c>.</summary>
     public string? EntityKind { get; set; }
 

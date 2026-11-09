@@ -56,8 +56,54 @@ public sealed class UserAccount : ConfigEntity
 
     public List<UserRole> Roles { get; } = [];
 
+    /// <summary>The organizations the person may enter, one of them the default (legacy <c>SYS_USERINSTANCES</c>).</summary>
+    public List<UserInstance> Instances { get; } = [];
+
+    /// <summary>
+    /// The companies the person may enter, with the default one of each organization (legacy
+    /// <c>SYS_USERINSTANCES_COMPANIES</c>). Holding a role in a company also opens it.
+    /// </summary>
+    public List<UserCompany> Companies { get; } = [];
+
     /// <summary>Screens, actions and data given to this person alone (ADR-0036), besides those of their roles.</summary>
     public List<UserPrivilege> Privileges { get; } = [];
+}
+
+/// <summary>An organization (legacy instance) a user may enter (legacy <c>SYS_USERINSTANCES</c>).</summary>
+public sealed class UserInstance : IAuditable
+{
+    public Guid Id { get; set; } = Guid.CreateVersion7();
+
+    public Guid UserId { get; set; }
+
+    /// <summary>The organization's code (<c>instid</c>).</summary>
+    public string EntityCode { get; set; } = string.Empty;
+
+    /// <summary>The organization the person starts in (legacy <c>DEFAULTINSTFLAG</c>); one per person.</summary>
+    public bool IsDefault { get; set; }
+}
+
+/// <summary>A company a user may enter (legacy <c>SYS_USERINSTANCES_COMPANIES</c>).</summary>
+public sealed class UserCompany : IAuditable
+{
+    public Guid Id { get; set; } = Guid.CreateVersion7();
+
+    public Guid UserId { get; set; }
+
+    /// <summary>The company's organization (<c>instid</c>).</summary>
+    public string EntityCode { get; set; } = string.Empty;
+
+    /// <summary>The company's number in its organization (<c>cmp_num</c>).</summary>
+    public string CompanyCode { get; set; } = string.Empty;
+
+    /// <summary>The company the person starts in within its organization (legacy <c>DEFAULT_CMP_FLAG</c>); one per organization.</summary>
+    public bool IsDefault { get; set; }
+
+    /// <summary>The person's default currency in this company (legacy <c>DEFAULT_CURRENCY</c>); optional.</summary>
+    public string? DefaultCurrency { get; set; }
+
+    /// <summary>The company's key, <c>instid/cmp_num</c>.</summary>
+    public string CompanyKey => Domain.CompanyKey.Format(EntityCode, CompanyCode);
 }
 
 /// <summary>Placement of a user in an org unit with a position.</summary>

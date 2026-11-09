@@ -49,6 +49,12 @@ public sealed class Company : ConfigEntity
 
     public string? VatNumber { get; set; }
 
+    /// <summary>The company's short name, e.g. on documents (legacy <c>CMP_ABBREVIATION</c>); optional.</summary>
+    public string? Abbreviation { get; set; }
+
+    /// <summary>The company's default business unit in its ERP (legacy <c>DEFAULT_BU</c>); optional.</summary>
+    public string? DefaultBusinessUnit { get; set; }
+
     public int DisplayOrder { get; set; }
 
     /// <summary>The company's key, <c>instid/cmp_num</c> (see <see cref="CompanyKey"/>).</summary>

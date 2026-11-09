@@ -532,6 +532,35 @@ public sealed class UserPayload : ConfigPayload
 
     /// <summary>Screens and actions of this person alone (personal privileges), by company.</summary>
     public List<UserPrivilegePayload> Privileges { get; set; } = [];
+
+    /// <summary>
+    /// Organizations the person may enter (legacy <c>SYS_USERINSTANCES</c>); null keeps them as they are. The organizations
+    /// of <see cref="Companies"/> are added when missing.
+    /// </summary>
+    public List<UserInstancePayload>? Instances { get; set; }
+
+    /// <summary>Companies the person may enter (legacy <c>SYS_USERINSTANCES_COMPANIES</c>); null keeps them as they are.</summary>
+    public List<UserCompanyPayload>? Companies { get; set; }
+}
+
+public sealed class UserInstancePayload
+{
+    /// <summary>The organization's code (<c>instid</c>).</summary>
+    public string EntityCode { get; set; } = string.Empty;
+
+    /// <summary>The organization the person starts in; one at most.</summary>
+    public bool IsDefault { get; set; }
+}
+
+public sealed class UserCompanyPayload
+{
+    /// <summary>The company's key, <c>instid/cmp_num</c>.</summary>
+    public string CompanyCode { get; set; } = string.Empty;
+
+    /// <summary>The company the person starts in within its organization; one per organization at most.</summary>
+    public bool IsDefault { get; set; }
+
+    public string? DefaultCurrency { get; set; }
 }
 
 internal sealed class UserApplier(AppsControlDbContext db) : ConfigApplier<UserAccount, UserPayload>(db)
@@ -552,6 +581,8 @@ internal sealed class UserApplier(AppsControlDbContext db) : ConfigApplier<UserA
             .Include(u => u.Roles).ThenInclude(r => r.OrgUnit)
             .Include(u => u.Privileges).ThenInclude(p => p.Resource)
             .Include(u => u.Privileges).ThenInclude(p => p.Grants).ThenInclude(g => g.Lov)
+            .Include(u => u.Instances)
+            .Include(u => u.Companies)
             .AsSplitQuery();
 
     /// <summary>A user is listed under the business app they belong to, or the apps of their roles.</summary>
@@ -735,9 +766,23 @@ internal sealed class UserApplier(AppsControlDbContext db) : ConfigApplier<UserA
             privileges.Add(privilege);
         }
 
+        var (instances, admitted) = payload.Instances is null && payload.Companies is null
+            ? (null, null)
+            : await AdmissionsAsync(entity, payload, companies, refs, errors, cancellationToken);
+
         if (errors.HasErrors || refs.IsValidating)
         {
             return;
+        }
+
+        if (instances is not null && admitted is not null)
+        {
+            ChildSync.Sync(entity.Instances, instances, x => x.EntityCode, (from, to) => to.IsDefault = from.IsDefault);
+            ChildSync.Sync(entity.Companies, admitted, x => (x.EntityCode, x.CompanyCode), (from, to) =>
+            {
+                to.IsDefault = from.IsDefault;
+                to.DefaultCurrency = from.DefaultCurrency;
+            });
         }
 
         ChildSync.Sync(entity.Assignments, assignments, a => a.OrgUnitId, (from, to) =>
@@ -814,7 +859,81 @@ internal sealed class UserApplier(AppsControlDbContext db) : ConfigApplier<UserA
                         .Select(g => new UserGrantPayload { LovCode = g.Lov?.Code ?? string.Empty, GrantType = g.GrantType, GrantedValues = g.GrantedValues })],
                 })
                 .ToList(),
+            Instances = [.. entity.Instances.OrderByDescending(x => x.IsDefault).ThenBy(x => x.EntityCode, StringComparer.Ordinal)
+                .Select(x => new UserInstancePayload { EntityCode = x.EntityCode, IsDefault = x.IsDefault })],
+            Companies = [.. entity.Companies.OrderBy(c => c.EntityCode, StringComparer.Ordinal).ThenByDescending(c => c.IsDefault).ThenBy(c => c.CompanyCode, StringComparer.Ordinal)
+                .Select(c => new UserCompanyPayload { CompanyCode = c.CompanyKey, IsDefault = c.IsDefault, DefaultCurrency = c.DefaultCurrency })],
         });
+
+    /// <summary>
+    /// The organizations and companies the person may enter, as in the legacy Apps Control: each company's organization is
+    /// admitted too; one default organization, and one default company in each organization.
+    /// </summary>
+    private static async Task<(List<UserInstance>?, List<UserCompany>?)> AdmissionsAsync(
+        UserAccount entity, UserPayload payload, List<string> companies, RefResolver refs, ValidationErrors errors, CancellationToken cancellationToken)
+    {
+        var givenCompanies = payload.Companies ?? [.. entity.Companies.Select(c => new UserCompanyPayload { CompanyCode = c.CompanyKey, IsDefault = c.IsDefault, DefaultCurrency = c.DefaultCurrency })];
+        var givenInstances = payload.Instances ?? [.. entity.Instances.Select(i => new UserInstancePayload { EntityCode = i.EntityCode, IsDefault = i.IsDefault })];
+        ChildSync.RequireUnique(givenCompanies, c => c.CompanyCode?.Trim(), "companies", errors);
+        ChildSync.RequireUnique(givenInstances, i => i.EntityCode?.Trim(), "instances", errors);
+        var admitted = new List<UserCompany>();
+        foreach (var (c, i) in givenCompanies.Select((c, i) => (c, i)))
+        {
+            var key = c.CompanyCode?.Trim() ?? string.Empty;
+            if (key == CompanyScope.All || !CompanyKey.TryParse(key, out var instid, out var number))
+            {
+                errors.Add($"companies[{i}].companyCode", "Choose one company (instid/cmp_num).");
+                continue;
+            }
+
+            CheckCompany(key, companies, refs, $"companies[{i}]", errors);
+            errors.MaxLength($"companies[{i}].defaultCurrency", c.DefaultCurrency, 50);
+            admitted.Add(new UserCompany
+            {
+                UserId = entity.Id,
+                EntityCode = instid,
+                CompanyCode = number,
+                IsDefault = c.IsDefault,
+                DefaultCurrency = string.IsNullOrWhiteSpace(c.DefaultCurrency) ? null : c.DefaultCurrency.Trim(),
+            });
+        }
+
+        foreach (var many in admitted.Where(c => c.IsDefault).GroupBy(c => c.EntityCode).Where(g => g.Count() > 1))
+        {
+            errors.Add("companies", $"Only one default company in organization {many.Key}.");
+        }
+
+        var instances = new List<UserInstance>();
+        foreach (var (x, i) in givenInstances.Select((x, i) => (x, i)))
+        {
+            var code = x.EntityCode?.Trim() ?? string.Empty;
+            if (code.Length == 0)
+            {
+                errors.Add($"instances[{i}].entityCode", "Required.");
+                continue;
+            }
+
+            if (!await refs.Context.Entities.AsNoTracking().AnyAsync(e => e.Code == code, cancellationToken) && !refs.IsPendingCreate(AppsControlChangeTypes.Entity, code))
+            {
+                errors.Add($"instances[{i}].entityCode", $"Organization '{code}' does not exist.");
+            }
+
+            instances.Add(new UserInstance { UserId = entity.Id, EntityCode = code, IsDefault = x.IsDefault });
+        }
+
+        // A company opens its organization.
+        foreach (var code in admitted.Select(c => c.EntityCode).Distinct(StringComparer.Ordinal).Where(code => instances.All(x => x.EntityCode != code)).ToList())
+        {
+            instances.Add(new UserInstance { UserId = entity.Id, EntityCode = code });
+        }
+
+        if (instances.Count(x => x.IsDefault) > 1)
+        {
+            errors.Add("instances", "Only one default organization.");
+        }
+
+        return (instances, admitted);
+    }
 
     private static List<string> Actions(IEnumerable<string> values) =>
         [.. values.Where(a => !string.IsNullOrWhiteSpace(a)).Select(a => a.Trim().ToUpperInvariant()).Distinct(StringComparer.Ordinal)];

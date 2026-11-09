@@ -86,6 +86,12 @@ internal sealed class InstallationApplier(AppsControlDbContext db) : ConfigAppli
 
 public sealed class EntityPayload : ConfigPayload
 {
+    /// <summary>The parent organization's code (legacy <c>REF_INSTID</c>), or none.</summary>
+    public string? ParentCode { get; set; }
+
+    /// <summary>The organization's short code (legacy <c>INSTCODE</c>).</summary>
+    public string? ShortCode { get; set; }
+
     public string? EntityKind { get; set; }
 
     public string? UnifiedNumber { get; set; }
@@ -134,6 +140,9 @@ internal sealed partial class EntityApplier(AppsControlDbContext db) : ConfigApp
         entity.EntityCode = null;
         entity.BusinessApp = null;
         await refs.DomainAsync(EntityKindClass, payload.EntityKind, "entityKind", errors, cancellationToken);
+        entity.ParentCode = await ParentAsync(refs, payload, errors, cancellationToken);
+        errors.MaxLength("shortCode", payload.ShortCode, 50);
+        entity.ShortCode = string.IsNullOrWhiteSpace(payload.ShortCode) ? null : payload.ShortCode.Trim();
         errors.MaxLength("unifiedNumber", payload.UnifiedNumber, 50);
         errors.MaxLength("crNumber", payload.CrNumber, 50);
         entity.EntityKind = payload.EntityKind;
@@ -168,6 +177,44 @@ internal sealed partial class EntityApplier(AppsControlDbContext db) : ConfigApp
         entity.FooterLinks = payload.FooterLinks
             .Select(l => new FooterLink { LabelAr = l.LabelAr.Trim(), LabelEn = l.LabelEn.Trim(), Url = l.Url.Trim() })
             .ToList();
+    }
+
+    /// <summary>The parent organization: an existing one (or one created in the same change set), never itself or below it.</summary>
+    private static async Task<string?> ParentAsync(RefResolver refs, EntityPayload payload, ValidationErrors errors, CancellationToken cancellationToken)
+    {
+        var parent = string.IsNullOrWhiteSpace(payload.ParentCode) ? null : payload.ParentCode.Trim();
+        if (parent is null)
+        {
+            return null;
+        }
+
+        if (parent == payload.Code)
+        {
+            errors.Add("parentCode", "An organization cannot be its own parent.");
+            return null;
+        }
+
+        var parents = await refs.Context.Entities.AsNoTracking().Where(e => e.ParentCode != null)
+            .ToDictionaryAsync(e => e.Code, e => e.ParentCode!, StringComparer.Ordinal, cancellationToken);
+        if (!parents.ContainsKey(parent) && !await refs.Context.Entities.AnyAsync(e => e.Code == parent, cancellationToken)
+            && !refs.IsPendingCreate(AppsControlChangeTypes.Entity, parent))
+        {
+            errors.Add("parentCode", $"Organization '{parent}' does not exist.");
+            return null;
+        }
+
+        // Walking up from the parent must never reach this organization.
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        for (var at = parent; at is not null && seen.Add(at); at = parents.GetValueOrDefault(at))
+        {
+            if (at == payload.Code)
+            {
+                errors.Add("parentCode", $"Organization '{parent}' is below {payload.Code}; choose another parent.");
+                return null;
+            }
+        }
+
+        return parent;
     }
 
     private const int MaxFooterLinks = 12;
@@ -292,6 +339,8 @@ internal sealed partial class EntityApplier(AppsControlDbContext db) : ConfigApp
     protected override Task<EntityPayload> ToPayloadAsync(AppsControlDbContext context, GovernmentEntity entity, CancellationToken cancellationToken) =>
         Task.FromResult(new EntityPayload
         {
+            ParentCode = entity.ParentCode,
+            ShortCode = entity.ShortCode,
             EntityKind = entity.EntityKind,
             UnifiedNumber = entity.UnifiedNumber,
             CrNumber = entity.CrNumber,
@@ -320,6 +369,11 @@ internal sealed partial class EntityApplier(AppsControlDbContext db) : ConfigApp
         if (await context.Companies.AnyAsync(c => c.EntityCode == entity.Code, cancellationToken))
         {
             throw new DynamicCube.Platform.ChangeSets.ChangeSetException($"Organization {entity.Code} still has companies; delete them first.");
+        }
+
+        if (await context.Entities.Where(e => e.ParentCode == entity.Code).Select(e => e.Code).FirstOrDefaultAsync(cancellationToken) is { } child)
+        {
+            throw new DynamicCube.Platform.ChangeSets.ChangeSetException($"Organization {child} belongs to {entity.Code}; give it another parent first.");
         }
     }
 }
