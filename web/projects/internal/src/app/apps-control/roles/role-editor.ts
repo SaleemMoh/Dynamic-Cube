@@ -11,7 +11,6 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { ConfigRow, I18nService, LocalizePipe, StructuredInput, StructuredShape, TranslatePipe, problemMessages, SearchableSelectModule } from '@dynamic-cube/shared';
 import { DraftsService } from '../drafts.service';
 import { PermissionCards } from './permission-cards';
-import { RoleMenus } from './role-menus';
 import {
   GrantRow,
   MenuChoiceGroup,
@@ -26,6 +25,8 @@ import {
   splitGrants,
 } from './role-models';
 import { ScreenData } from './screen-data';
+import { MenuAccess, screensWithMenus } from './role-access';
+import { RoleAccessTree } from './role-access-tree';
 import { SubmitButton } from '../submit-button';
 import { ALL } from '../users/access-model';
 
@@ -85,7 +86,7 @@ const CODE = /^[A-Za-z][A-Za-z0-9_-]{0,99}$/;
     SearchableSelectModule,
     MatTooltipModule,
     PermissionCards,
-    RoleMenus,
+    RoleAccessTree,
     ScreenData,
     StructuredInput,
     LocalizePipe,
@@ -209,7 +210,23 @@ const CODE = /^[A-Za-z][A-Za-z0-9_-]{0,99}$/;
         </div>
       }
 
-      <h3 class="dc-step"><span>1</span> {{ 'roles.selectPrivileges' | dcTranslate }}</h3>
+      <h3 class="dc-step"><span>1</span> {{ 'roles.access.title' | dcTranslate }}</h3>
+      <p class="dc-muted dc-step__hint">{{ 'roles.access.hint' | dcTranslate }}</p>
+      <dc-role-access-tree
+        [groups]="data.menus"
+        [screens]="data.screens"
+        [lovs]="data.lovs"
+        [access]="menuAccess()"
+        [readonly]="contentReadonly()"
+        (changed)="setMenuAccess($event)"
+      />
+
+      <details class="dc-other" [open]="otherScreens().length > 0">
+        <summary>
+          <span class="dc-step dc-step--small"><span>2</span> {{ 'roles.access.other' | dcTranslate }}</span>
+          <span class="dc-count">{{ otherScreens().length }}</span>
+        </summary>
+        <p class="dc-muted dc-step__hint">{{ 'roles.access.otherHint' | dcTranslate }}</p>
       <div class="dc-picker" [class.dc-picker--readonly]="contentReadonly()">
         @if (!contentReadonly()) {
           <section class="dc-picker__list" data-testid="available-screens">
@@ -294,7 +311,7 @@ const CODE = /^[A-Za-z][A-Za-z0-9_-]{0,99}$/;
         }
         <section class="dc-picker__list" data-testid="role-screens">
           <header>
-            {{ 'roles.roleScreens' | dcTranslate }} <span class="dc-count">{{ selected().length }}</span>
+            {{ 'roles.roleScreens' | dcTranslate }} <span class="dc-count">{{ otherScreens().length }}</span>
           </header>
           <div class="dc-picker__search">
             <mat-form-field subscriptSizing="dynamic">
@@ -324,28 +341,25 @@ const CODE = /^[A-Za-z][A-Za-z0-9_-]{0,99}$/;
         </section>
       </div>
 
-      <h3 class="dc-step"><span>2</span> {{ 'roles.selectPermissions' | dcTranslate }}</h3>
+      <h4 class="dc-other__title">{{ 'roles.selectPermissions' | dcTranslate }}</h4>
       <dc-permission-cards
-        [screens]="selectedScreens()"
+        [screens]="otherScreens()"
         [permissions]="permissions()"
         [readonly]="contentReadonly()"
         (toggled)="grant($event)"
         (removed)="remove([$event])"
       />
 
-      <h3 class="dc-step"><span>3</span> {{ 'roles.data.title' | dcTranslate }}</h3>
-      <p class="dc-muted dc-step__hint">{{ 'roles.data.hint' | dcTranslate }}</p>
+      <h4 class="dc-other__title">{{ 'roles.data.title' | dcTranslate }}</h4>
       <dc-screen-data
-        [screens]="selectedScreens()"
+        [screens]="otherScreens()"
         [lovs]="data.lovs"
         [grants]="screenGrants()"
         [readonly]="contentReadonly()"
         (grantsChange)="screenGrants.set($event)"
       />
 
-      <h3 class="dc-step"><span>4</span> {{ 'roles.menus.title' | dcTranslate }}</h3>
-      <p class="dc-muted dc-step__hint">{{ 'roles.menus.hint' | dcTranslate }}</p>
-      <dc-role-menus [groups]="data.menus" [selected]="menus()" [readonly]="contentReadonly()" (selectedChange)="menus.set($event)" />
+      </details>
 
       <mat-expansion-panel class="dc-grants">
         <mat-expansion-panel-header>
@@ -503,6 +517,26 @@ const CODE = /^[A-Za-z][A-Za-z0-9_-]{0,99}$/;
     .dc-grants {
       margin-top: 24px;
     }
+    .dc-other {
+      margin-top: 20px;
+      padding: 4px 14px 14px;
+      border: 1px solid var(--dga-gray-200);
+      border-radius: var(--shell-radius-lg, 8px);
+    }
+    .dc-other > summary {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+    .dc-step--small {
+      margin: 10px 0;
+      font-size: 16px;
+    }
+    .dc-other__title {
+      margin: 20px 0 10px;
+      font-size: 15px;
+    }
     .dc-grants__json {
       width: 100%;
     }
@@ -540,13 +574,17 @@ export class RoleEditor {
       .map((c) => this.byCode.get(c)!)
       .filter(Boolean),
   );
+  /** Screens opened by a menu item: given in the menu tree, not in "Other screens". */
+  private readonly menuScreens = screensWithMenus(this.data.menus);
+  /** The role's screens that no menu item opens (edited in "Other screens"). */
+  protected readonly otherScreens = computed(() => this.selectedScreens().filter((s) => !this.menuScreens.has(s.code)));
   protected readonly available = computed(() =>
     this.filter(
-      this.data.screens.filter((s) => !this.selected().includes(s.code)),
+      this.data.screens.filter((s) => !this.selected().includes(s.code) && !this.menuScreens.has(s.code)),
       this.availableSearch(),
     ),
   );
-  protected readonly chosen = computed(() => this.filter(this.selectedScreens(), this.chosenSearch()));
+  protected readonly chosen = computed(() => this.filter(this.otherScreens(), this.chosenSearch()));
   protected readonly forward = computed(() => (this.i18n.direction() === 'rtl' ? 'chevron_left' : 'chevron_right'));
   protected readonly back = computed(() => (this.i18n.direction() === 'rtl' ? 'chevron_right' : 'chevron_left'));
 
@@ -621,6 +659,17 @@ export class RoleEditor {
     ],
   };
   protected readonly menus = signal<string[]>(this.data.role?.menus ?? []);
+  /** Menus, screens and data as the menu tree shows them. */
+  protected readonly menuAccess = computed<MenuAccess>(() => ({ menus: this.menus(), permissions: this.permissions(), grants: this.screenGrants() }));
+
+  protected setMenuAccess(access: MenuAccess): void {
+    this.menus.set(access.menus);
+    this.permissions.set(access.permissions);
+    this.screenGrants.set(access.grants);
+    // Screens in the role: those kept in order, then those the menus opened.
+    const now = roleScreens(this.data.screens, access.permissions);
+    this.selected.update((s) => [...s.filter((c) => now.includes(c)), ...now.filter((c) => !s.includes(c))]);
+  }
 
   /** Whose contents are shown: all companies (null) or one company (its override, or the role as it is). */
   protected readonly company = signal<string | null>(null);

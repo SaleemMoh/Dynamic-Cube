@@ -52,7 +52,8 @@ export interface ScreenList {
 export interface MenuChoiceGroup {
   code: string;
   name: LocalizedText;
-  items: { code: string; name: LocalizedText; app: string | null }[];
+  /** Each item with the screen it opens (its resource), if any. */
+  items: { code: string; name: LocalizedText; app: string | null; resource?: string | null }[];
 }
 
 /** A resource as the role editor shows it. */
@@ -212,7 +213,12 @@ export function screenLists(screen: ScreenNode, lovs: ConfigRow[], grants: Grant
 export function menuChoices(menus: ConfigRow[], groups: ConfigRow[], apps: ConfigRow[] = []): MenuChoiceGroup[] {
   const order = (r: ConfigRow) => Number(r['displayOrder'] ?? 0);
   const sorted = [...groups].sort((a, b) => order(a) - order(b) || a.code.localeCompare(b.code));
-  const item = (m: ConfigRow) => ({ code: m.code, name: { ar: m.nameAr, en: m.nameEn } as LocalizedText, app: (m['appCode'] as string | null) ?? null });
+  const item = (m: ConfigRow) => ({
+    code: m.code,
+    name: { ar: m.nameAr, en: m.nameEn } as LocalizedText,
+    app: (m['appCode'] as string | null) ?? null,
+    resource: (m['resourceCode'] as string | null) ?? null,
+  });
   const items = (group: string | null) =>
     menus
       .filter((m) => ((m['groupCode'] as string | null) ?? null) === group && m['itemType'] !== 'GROUP')
