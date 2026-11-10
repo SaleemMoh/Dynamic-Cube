@@ -196,8 +196,8 @@ internal static class AdminEndpoints
             Dictionary<string, int>? counts = type switch
             {
                 AppsControlChangeTypes.Class => await db.Domains.GroupBy(d => d.Class!.Code).ToDictionaryAsync(g => g.Key, g => g.Count(), ct),
-                AppsControlChangeTypes.Role => await db.UserRoles.GroupBy(r => r.Role!.Code).ToDictionaryAsync(g => g.Key, g => g.Select(r => r.UserId).Distinct().Count(), ct),
-                AppsControlChangeTypes.MenuGroup => await db.Menus.Where(m => m.MenuGroup != null).GroupBy(m => m.MenuGroup!.Code).ToDictionaryAsync(g => g.Key, g => g.Count(), ct),
+                AppsControlChangeTypes.Role => await AdminCounts.UsersPerRoleAsync(db, ct),
+                AppsControlChangeTypes.MenuGroup => await AdminCounts.MenusPerGroupAsync(db, ct),
                 _ => null,
             };
             return counts is null ? Results.NotFound() : Results.Ok(counts);

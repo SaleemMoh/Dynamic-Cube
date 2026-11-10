@@ -77,4 +77,27 @@ public sealed class OrganizationLikeLegacyTests(AppsControlFixture fixture) : IA
         })));
         ex.Errors.Keys.ShouldContain("companies");
     }
+
+    [Fact]
+    public async Task Users_are_counted_per_role_of_each_company()
+    {
+        var (first, second) = ("ENTITY/" + Harness.Unique("CO"), "ENTITY/" + Harness.Unique("CO"));
+        var (code, user) = (Harness.Unique("SALEEM"), Harness.Unique("u").ToLowerInvariant());
+        await _harness.PublishAsync(AppsControlAreas.System,
+            new Change(AppsControlChangeTypes.Company, first, ChangeOperation.Create, new { nameAr = "شركة", nameEn = "First" }),
+            new Change(AppsControlChangeTypes.Company, second, ChangeOperation.Create, new { nameAr = "شركة", nameEn = "Second" }));
+        await _harness.PublishAsync(AppsControlAreas.Security,
+            new Change(AppsControlChangeTypes.Role, $"{first}/{code}", ChangeOperation.Create, new { nameAr = "دور", nameEn = "Role" }),
+            new Change(AppsControlChangeTypes.Role, $"{second}/{code}", ChangeOperation.Create, new { nameAr = "دور", nameEn = "Role" }));
+        await _harness.PublishAsync(AppsControlAreas.Security, new Change(AppsControlChangeTypes.User, user, ChangeOperation.Create, new
+        {
+            nameAr = "موظف",
+            nameEn = "Staff",
+            roles = new[] { new { roleCode = $"{first}/{code}", companyCode = first, branches = new[] { "*" } } },
+        }));
+
+        var counts = await _harness.AsAsync("admin", sp => Endpoints.AdminCounts.UsersPerRoleAsync(sp.GetRequiredService<AppsControlDbContext>(), CancellationToken.None));
+        counts[$"{first}/{code}"].ShouldBe(1, "counted under the role's own key, as the roles list names it");
+        counts.ShouldNotContainKey($"{second}/{code}");
+    }
 }
